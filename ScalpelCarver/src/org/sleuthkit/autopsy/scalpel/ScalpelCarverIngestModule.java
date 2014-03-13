@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -50,13 +52,13 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Scalpel carving ingest module
  */
-public class ScalpelCarverIngestModule { // extends IngestModuleAbstractFile { // disable autodiscovery for now  {
+class ScalpelCarverIngestModule { // extends IngestModuleAbstractFile { // disable autodiscovery for now  {
     
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
     
     private static ScalpelCarverIngestModule instance;
-    private final String MODULE_NAME = "Scalpel Carver";
-    private final String MODULE_DESCRIPTION = "Carves files from unallocated space at ingest time.\nCarved files are reanalyzed and displayed in the directory tree.";
+    private final String MODULE_NAME = NbBundle.getMessage(ScalpelCarverIngestModule.class, "ScalpelCarverIngestModule.moduleName");
+    private final String MODULE_DESCRIPTION = NbBundle.getMessage(ScalpelCarverIngestModule.class,                                                                  "ScalpelCarverIngestModule.moduleDesc.text");
     private final String MODULE_VERSION = Version.getVersion();
     private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver";
     private String moduleOutputDirPath;

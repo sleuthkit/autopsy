@@ -19,12 +19,13 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Representation of single keyword to search for
  */
-public class Keyword {
+class Keyword {
     private String keywordString;   // keyword to search for
     private boolean isLiteral;  // false if reg exp
     private BlackboardAttribute.ATTRIBUTE_TYPE keywordType = null;
@@ -72,7 +73,7 @@ public class Keyword {
 
     @Override
     public String toString() {
-        return "Keyword{" + "query=" + keywordString + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType + '}';
+        return NbBundle.getMessage(this.getClass(), "Keyword.toString.text", keywordString, isLiteral, keywordType);
     }
     
     

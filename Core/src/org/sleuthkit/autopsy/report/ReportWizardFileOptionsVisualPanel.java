@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,7 +39,7 @@ import javax.swing.event.ListDataListener;
  * 
  * @author jwallace
  */
-public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
+class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     private List<FileReportDataTypes> options;
     private Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
     private ListModel<FileReportDataTypes> model;
@@ -52,7 +54,7 @@ public class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     
     @Override
     public String getName() {
-        return "Configure File Report";
+        return NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsVisualPanel.getName.text");
     }
     
     /**

@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
@@ -132,7 +134,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             @Override
             public int nextPage() {
                 if (!hasNextPage()) {
-                    throw new IllegalStateException("No next page.");
+                    throw new IllegalStateException(
+                            NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextPage.exception.msg"));
                 }
                 ++currentPage;
                 return currentPage;
@@ -141,7 +144,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             @Override
             public int previousPage() {
                 if (!hasPreviousPage()) {
-                    throw new IllegalStateException("No previous page.");
+                    throw new IllegalStateException(
+                            NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousPage.exception.msg"));
                 }
                 --currentPage;
                 return currentPage;
@@ -149,27 +153,32 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             @Override
             public boolean hasNextItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasNextItem.exception.msg"));
             }
 
             @Override
             public boolean hasPreviousItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasPreviousItem.exception.msg"));
             }
 
             @Override
             public int nextItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextItem.exception.msg"));
             }
 
             @Override
             public int previousItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousItem.exception.msg"));
             }
 
             @Override
             public int currentItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.currentItem.exception.msg"));
             }
 
             @Override
@@ -184,7 +193,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             @Override
             public String toString() {
-                return "Extracted Text";
+                return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.toString");
             }
 
             @Override
@@ -264,12 +273,12 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return "Text";
+        return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getTitle");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays extracted text from files and keyword-search results. Requires Keyword Search ingest to be run on a file to activate this viewer. ";
+        return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.toolTip");
     }
 
     @Override
@@ -311,19 +320,15 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public int isPreferred(Node node,
-            boolean isSupported) {
+    public int isPreferred(Node node) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        if (isSupported) {
-            if (art == null) {
-                return 4;
-            } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                return 6;
-            } else {
-                return 4;
-            }
+
+        if (art == null) {
+            return 4;
+        } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            return 6;
         } else {
-            return 0;
+            return 4;
         }
     }
 
@@ -428,13 +433,13 @@ public class ExtractedContentViewer implements DataContentViewer {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = FileKnown.KNOWN.equals(((AbstractFile)contentObj).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = "<p style='font-style:italic'>" + name + " is a known file (based on MD5 hash) and does not have text in the index.</p>";
+                    msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
                 }
             }
             if (msg == null) {
-                 msg = "<p style='font-style:italic'>" + name + " does not have text in the index.<br/>It may have no text, not been analyzed yet, or keyword search was not enabled during ingest.</p>";
+                 msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", name);
             }
-            String htmlMsg = "<span style='font-style:italic'>" + msg + "</span>";
+            String htmlMsg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
             return htmlMsg;
         }
 

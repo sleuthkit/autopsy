@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Performs a regular expression query to the SOLR/Lucene instance. 
  */
-public class TermComponentQuery implements KeywordSearchQuery {
+class TermComponentQuery implements KeywordSearchQuery {
 
     private static final int TERMS_UNLIMITED = -1;
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
@@ -82,6 +82,11 @@ public class TermComponentQuery implements KeywordSearchQuery {
         this.field = field;
     }
 
+    @Override
+    public void setSubstringQuery() {
+        queryEscaped = ".*" + queryEscaped + ".*";
+    }
+    
     @Override
     public void escape() {
         queryEscaped = Pattern.quote(termsQuery);

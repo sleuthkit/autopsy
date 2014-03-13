@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -48,56 +50,61 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     }
     
     private void customInit(String reportName, String reportPath) {
-        reportLabel.setText(reportName);
-        pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
-        pathLabel.setToolTipText(reportPath);
-        
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
-        
-        processingLabel.setText("Queuing...");
+
+        reportLabel.setText(reportName);        
+        processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
         STATUS = ReportStatus.QUEUING;
         
+        if (reportPath != null) {
+            pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
+            pathLabel.setToolTipText(reportPath);
+
         // Add the "link" effect to the pathLabel
-        final String linkPath = reportPath;
-        pathLabel.addMouseListener(new MouseListener() {
+            final String linkPath = reportPath;
+            pathLabel.addMouseListener(new MouseListener() {
 
-            @Override
-            public void mouseClicked(MouseEvent e) {
-            }
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                }
 
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
+                @Override
+                public void mousePressed(MouseEvent e) {
+                }
 
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                File file = new File(linkPath);
-                try {
-                    Desktop.getDesktop().open(file);
-                } catch (IOException ex) {
-                } catch (IllegalArgumentException ex) {
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    File file = new File(linkPath);
                     try {
-                        // try to open the parent path if the file doens't exist
-                        Desktop.getDesktop().open(file.getParentFile());
-                    } catch (IOException ex1) {
+                        Desktop.getDesktop().open(file);
+                    } catch (IOException ex) {
+                    } catch (IllegalArgumentException ex) {
+                        try {
+                            // try to open the parent path if the file doens't exist
+                            Desktop.getDesktop().open(file.getParentFile());
+                        } catch (IOException ex1) {
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                pathLabel.setForeground(Color.DARK_GRAY);
-                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    pathLabel.setForeground(Color.DARK_GRAY);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                pathLabel.setForeground(Color.BLACK);
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
-            
-        });
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    pathLabel.setForeground(Color.BLACK);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+
+            });
+        }
+        else {
+            pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
+        }
     }
     
     /**
@@ -131,8 +138,9 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png")));
-                cancelButton.setToolTipText("Cancel");
-                processingLabel.setText("Starting report...");
+                cancelButton.setToolTipText(
+                        NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.cancelButton.text"));
+                processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
                 STATUS = ReportStatus.RUNNING;
             }
         });
@@ -230,10 +238,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             public void run() {
                 if (STATUS != ReportStatus.CANCELED) {
                     STATUS = ReportStatus.COMPLETE;
-                    processingLabel.setText("Complete");
+                    processingLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
                     reportProgressBar.setValue(reportProgressBar.getMaximum());
                     cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png")));
-                    cancelButton.setToolTipText("Complete");
+                    cancelButton.setToolTipText(
+                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
                 }
             }
         });
@@ -344,13 +354,14 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             default:
                 STATUS = ReportStatus.CANCELED;
                 cancelButton.setEnabled(false);
-                cancelButton.setToolTipText("Canceled");
+                cancelButton.setToolTipText(
+                        NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.cancelButton.toolTipText"));
                 reportProgressBar.setIndeterminate(false);
                 reportProgressBar.setValue(0);
                 reportProgressBar.setForeground(Color.RED);
                 reportProgressBar.setBackground(Color.RED);
                 processingLabel.setForeground(Color.RED);
-                processingLabel.setText("Canceled");
+                processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;
         }
     }

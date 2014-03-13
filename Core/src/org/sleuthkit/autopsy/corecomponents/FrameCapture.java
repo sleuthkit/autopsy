@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Interface used to capture frames from a video file.
  */
-public interface FrameCapture {
+ interface FrameCapture {
     
     /**
      * @param file the video file to use

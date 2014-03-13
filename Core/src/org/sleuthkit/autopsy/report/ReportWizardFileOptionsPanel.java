@@ -24,19 +24,21 @@ import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 
 /**
  * Wizard panel that allows configuration of File Report options.
  * 
  * @author jwallace
  */
-public class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor>{
+ class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor>{
     private WizardDescriptor wiz;
     private ReportWizardFileOptionsVisualPanel component;
     private JButton finishButton;
     
     ReportWizardFileOptionsPanel() {
-        finishButton = new JButton("Finish");
+        finishButton = new JButton(
+                NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);
         
         finishButton.addActionListener(new ActionListener() {

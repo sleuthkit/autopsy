@@ -24,13 +24,18 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
 import org.openide.nodes.AbstractNode;
@@ -40,7 +45,9 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -56,14 +63,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 // service provider when DataResultViewers can be made compatible with node 
 // multi-selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
-public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
+ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     //flag to keep track if images are being loaded
     private int curPage;
     private int totalPages;
     private int curPageImages;
-    private int iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;    
+    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;    
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
@@ -239,13 +246,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
         
-        iconSize = ThumbnailViewNode.ICON_SIZE_MEDIUM;   //default size
+        iconSize = ImageUtils.ICON_SIZE_MEDIUM;   //default size
         switch(thumbnailSizeComboBox.getSelectedIndex()) {
             case 0:
-                iconSize = ThumbnailViewNode.ICON_SIZE_SMALL;
+                iconSize = ImageUtils.ICON_SIZE_SMALL;
                 break;
             case 2:
-                iconSize = ThumbnailViewNode.ICON_SIZE_LARGE;
+                iconSize = ImageUtils.ICON_SIZE_LARGE;
                 break;
         }                    
 
@@ -289,9 +296,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (selectedNode == null) {
             return false;
         }
-        //TODO quering children will need to change after lazy loading of original nodes works.
-        //we will need to query children of the datamodel object instead, 
-        //or force children creation, breaking the lazy loading.
+        
         Children ch = selectedNode.getChildren();
         for (Node n : ch.getNodes()) {
             if (ThumbnailViewChildren.isSupported(n)) {
@@ -327,7 +332,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     
     @Override
     public String getTitle() {
-        return "Thumbnail";
+        return NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.title");
     }
 
     @Override
@@ -380,8 +385,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
         
         if (newPage > totalPages || newPage < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + totalPages,
-                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataResultViewerThumbnail.goToPageTextField.msgDlg",
+                                                              totalPages),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataResultViewerThumbnail.goToPageTextField.err"),
+                                          JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -407,7 +417,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
                 goToPageField.setEnabled(false);
-                progress = ProgressHandleFactory.createHandle("Generating Thumbnails...");
+                progress = ProgressHandleFactory.createHandle(
+                        NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
                 Node root = em.getRootContext();
@@ -421,7 +432,17 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             protected void done() {
                 progress.finish();
                 setCursor(null);
-                updateControls();        
+                updateControls();  
+                // see if any exceptions were thrown
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    NotifyDescriptor d =
+                        new NotifyDescriptor.Message("Error making thumbnails: " + ex.getMessage(), 
+                            NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(d);
+                    logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage());
+                }
             }
         }.execute();
 
@@ -435,7 +456,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
         } else {
-            pageNumLabel.setText(Integer.toString(curPage) + " of " + Integer.toString(totalPages));
+            pageNumLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
+                                        Integer.toString(curPage), Integer.toString(totalPages)));
             final int imagesFrom = (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = curPageImages + (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);

@@ -23,6 +23,8 @@ import java.awt.EventQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -31,13 +33,14 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.IngestModuleException;
 import org.sleuthkit.datamodel.Content;
 
 /**
  * Worker thread that runs a data source-level ingest module (image, file set virt dir, etc). 
  * Used to process only a single data-source and single module. 
  */
-public class IngestDataSourceThread extends SwingWorker<Void, Void> {
+ class IngestDataSourceThread extends SwingWorker<Void, Void> {
 
     private final Logger logger = Logger.getLogger(IngestDataSourceThread.class.getName());
     private ProgressHandle progress;
@@ -68,20 +71,20 @@ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
     }
     
     Content getContent() {
-        return pipelineContext.getScheduledTask().getContent();
+        return pipelineContext.getDataSourceTask().getContent();
     }
 
     IngestModuleDataSource getModule() {
         return module;
     }
     
-    public void init() {
+    public void init() throws IngestModuleException{
         
         logger.log(Level.INFO, "Initializing module: " + module.getName());
         try {
             module.init(init);
             inited = true;
-        } catch (Exception e) {
+        } catch (IngestModuleException e) {
             logger.log(Level.INFO, "Failed initializing module: " + module.getName() + ", will not run.");
             //will not run
             inited = false;
@@ -94,13 +97,17 @@ public class IngestDataSourceThread extends SwingWorker<Void, Void> {
 
         logger.log(Level.INFO, "Pending module: " + module.getName());
         
-        final String displayName = module.getName() + " dataSource id:" + dataSource.getId();
-        progress = ProgressHandleFactory.createHandle(displayName + " (Pending...)", new Cancellable() {
+        final String displayName = NbBundle.getMessage(this.getClass(), "IngestDataSourceThread.displayName.text",
+                                                       module.getName(),
+                                                       dataSource.getId());
+        progress = ProgressHandleFactory.createHandle(
+                NbBundle.getMessage(this.getClass(), "IngestDataSourceThread.progress.pending", displayName), new Cancellable() {
             @Override
             public boolean cancel() {
                 logger.log(Level.INFO, "DataSource ingest module " + module.getName() + " cancelled by user.");
                 if (progress != null) {
-                    progress.setDisplayName(displayName + " (Cancelling...)");
+                    progress.setDisplayName(
+                            NbBundle.getMessage(this.getClass(), "IngestDataSourceThread.progress.cancelling", displayName));
                 }
                 return IngestDataSourceThread.this.cancel(true);
             }

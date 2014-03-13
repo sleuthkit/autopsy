@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * Toolbar for Ingest
  *
  */
-public class IngestMessagesToolbar extends javax.swing.JPanel {
+ class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private IngestMessagesButton ingestMessagesButton = new IngestMessagesButton();
     private static volatile IngestMessagesToolbar instance;
@@ -143,7 +143,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
+                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     setEnabled(evt.getNewValue() != null);
                 }
             }

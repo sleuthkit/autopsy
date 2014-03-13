@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.datamodel;
  *
  * @author dfickling
  */
-public interface AutopsyItemVisitor<T> {
+ interface AutopsyItemVisitor<T> {
 
     T visit(ExtractedContent ec);
 
@@ -52,14 +52,16 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(EmailExtracted ee);
 
-    T visit(Tags t);
-
+    T visit(TagsNodeKey tagsNodeKey);
+    
+    T visit(InterestingHits ih);
+        
     T visit(DataSources i);
 
     T visit(Views v);
 
     T visit(Results r);
-
+    
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -128,15 +130,19 @@ public interface AutopsyItemVisitor<T> {
         public T visit(HashsetHits hh) {
             return defaultVisit(hh);
         }
-
+        
+        @Override
+        public T visit(InterestingHits ih) {
+            return defaultVisit(ih);
+        }
         @Override
         public T visit(EmailExtracted ee) {
             return defaultVisit(ee);
         }
 
         @Override
-        public T visit(Tags t) {
-            return defaultVisit(t);
+        public T visit(TagsNodeKey tagsNodeKey) {
+            return defaultVisit(tagsNodeKey);
         }
 
         @Override

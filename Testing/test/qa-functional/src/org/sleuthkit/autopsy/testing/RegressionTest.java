@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,7 @@ import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -185,7 +186,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureHash() {
         logger.info("Hash Configure");
-        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Set Configuration", false, false);
         JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
         List<String> databases = new ArrayList<String>();
         databases.add(System.getProperty("nsrl_path"));
@@ -193,9 +194,9 @@ public class RegressionTest extends TestCase {
         for (String database : databases) {
             JButtonOperator importButtonOperator = new JButtonOperator(hashMainDialogOperator, "Import");
             importButtonOperator.pushNoBlock();
-            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Add Hash Database", false, false);
+            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
-            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Browse", 0);
+            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();
             JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
             fileChooserOperator.chooseFile(database);
@@ -236,7 +237,7 @@ public class RegressionTest extends TestCase {
         JTableOperator jto = new JTableOperator(jdo, 0);
         jto.clickOnCell(0, 0);
         JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
-        if (!jcbo.isSelected()) {
+        if (!(jcbo.isSelected())) {
             jcbo.doClick();
         }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
@@ -268,14 +269,13 @@ public class RegressionTest extends TestCase {
         }
         logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
         while (man.isIngestRunning()) {
-
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
-        boolean sleep = true;
         while (man.areModulesRunning()) {
-            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
+           new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
+        
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis() - start) + "ms");
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
@@ -302,12 +302,12 @@ public class RegressionTest extends TestCase {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
-        JListOperator listOperator = new JListOperator(reportDialogOperator); 
+        JListOperator listOperator = new JListOperator(reportDialogOperator);
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Next");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
-        listOperator.clickOnItem(2, 1); 
+        listOperator.clickOnItem(1, 1);
         new Timeout("pausing", 1000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 1000).sleep();

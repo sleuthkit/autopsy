@@ -44,11 +44,11 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="configurationPanel" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="descriptionScrollPane" min="-2" pref="32" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="configurationPanel" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="modulesScrollPane" max="32767" attributes="0"/>
+                  <Component id="modulesScrollPane" pref="208" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>

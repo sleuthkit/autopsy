@@ -26,10 +26,11 @@ import java.util.logging.Level;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public class ReportExcel implements TableReportModule {
+ class ReportExcel implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
     
@@ -121,40 +122,6 @@ public class ReportExcel implements TableReportModule {
         }
     }
     
-
-    /**
-     * Start a new worksheet for the given data type.
-     * @param name data type name
-     */
-    @Override
-    public void startDataType(String name) {
-        // Create a worksheet for the data type (assumed to be an artifact type).
-        name = escapeForExcel(name);
-        sheet = wb.createSheet(name);
-        sheet.setAutobreaks(true);
-        rowIndex = 0;
-        artifactsCount = 0;
-        
-        // Add a title row to the worksheet.
-        Row row = sheet.createRow(rowIndex);
-        row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue(name);
-        ++rowIndex;
-        
-        // Add an artifacts count row. The actual count will be filled in later.
-        row = sheet.createRow(rowIndex);
-        row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Number of artifacts:");
-        ++rowIndex;
-
-        // Add an empty row as a separator.
-        sheet.createRow(rowIndex);
-        ++rowIndex;
-                        
-        // There will be at least two columns, one each for the artifacts count and its label.
-        sheetColCount = 2;
-    }
-
     /**
      * Start a new worksheet for the given data type.
      * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.     
@@ -162,7 +129,8 @@ public class ReportExcel implements TableReportModule {
      * @param name Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
-    public void startDataType(String name, String comment) {
+    @Override
+    public void startDataType(String name, String description) {
         // Create a worksheet for the data type (assumed to be an artifact type).
         name = escapeForExcel(name);
         sheet = wb.createSheet(name);
@@ -179,14 +147,14 @@ public class ReportExcel implements TableReportModule {
         // Add an artifacts count row. The actual count will be filled in later.
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Number of artifacts:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.numAartifacts.text"));
         ++rowIndex;
 
         // Add a comment row, if a comment was supplied.
-        if (!comment.isEmpty()) {
+        if (!description.isEmpty()) {
             row = sheet.createRow(rowIndex);
             row.setRowStyle(setStyle);
-            row.createCell(0).setCellValue(comment);
+            row.createCell(0).setCellValue(description);
             ++rowIndex;
         }
         
@@ -310,12 +278,12 @@ public class ReportExcel implements TableReportModule {
 
     @Override
     public String getName() {
-        return "Results - Excel";
+        return NbBundle.getMessage(this.getClass(), "ReportExcel.getName.text");
     }
 
     @Override
     public String getDescription() {
-        return "An XLS formatted report which is meant to be viewed in Excel.";
+        return NbBundle.getMessage(this.getClass(), "ReportExcel.getDesc.text");
     }
 
     @Override
@@ -325,7 +293,7 @@ public class ReportExcel implements TableReportModule {
 
     @Override
     public String getFilePath() {
-        return "Excel.xlsx";
+        return NbBundle.getMessage(this.getClass(), "ReportExcel.getFilePath.text");
     }
     
     /**
@@ -339,12 +307,12 @@ public class ReportExcel implements TableReportModule {
     }
     
     private void writeSummaryWorksheet() {
-        sheet = wb.createSheet("Summary");
+        sheet = wb.createSheet(NbBundle.getMessage(this.getClass(), "ReportExcel.sheetName.text"));
         rowIndex = 0;
         
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Summary");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.summary"));
         ++rowIndex;
 
         sheet.createRow(rowIndex);
@@ -354,25 +322,25 @@ public class ReportExcel implements TableReportModule {
                
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Case Name:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.caseName"));
         row.createCell(1).setCellValue(currentCase.getName());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Case Number:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.caseNum"));
         row.createCell(1).setCellValue(currentCase.getNumber());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Examiner:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.examiner"));
         row.createCell(1).setCellValue(currentCase.getExaminer());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Number of Images:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.numImages"));
         row.createCell(1).setCellValue(currentCase.getImageIDs().length);
         ++rowIndex;
         

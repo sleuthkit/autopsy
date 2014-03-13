@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
@@ -46,7 +48,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
     private static final String HIGHLIGHT_POST = "</span>";
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
-    private static final String NO_MATCHES = "<html><pre><span style='background:yellow'>There were no keyword hits on this page. <br />Keyword could have been in file name. <br />Advance to another page for hits or choose Extracted Text to view original text..</span></pre></html>";
+
     private Content content;
     private String keywordHitQuery;
     private Server solrServer;
@@ -221,7 +223,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int nextPage() {
         if (!hasNextPage()) {
-            throw new IllegalStateException("No next page.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextPage.exception.msg"));
         }
         int idx = pages.indexOf(this.currentPage);
         currentPage = pages.get(idx + 1);
@@ -231,7 +234,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int previousPage() {
         if (!hasPreviousPage()) {
-            throw new IllegalStateException("No previous page.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousPage.exception.msg"));
         }
         int idx = pages.indexOf(this.currentPage);
         currentPage = pages.get(idx - 1);
@@ -257,7 +261,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int nextItem() {
         if (!hasNextItem()) {
-            throw new IllegalStateException("No next item.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) + 1;
         pagesToHits.put(currentPage, cur);
@@ -267,7 +272,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int previousItem() {
         if (!hasPreviousItem()) {
-            throw new IllegalStateException("No previous item.");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) - 1;
         pagesToHits.put(currentPage, cur);
@@ -364,11 +370,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
             Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
             if (responseHighlightID == null) {
-                return NO_MATCHES;
+                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
+
             }
             List<String> contentHighlights = responseHighlightID.get(highLightField);
             if (contentHighlights == null) {
-                return NO_MATCHES;
+                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
             } else {
                 // extracted content (minus highlight tags) is HTML-escaped
                 String highlightedContent = contentHighlights.get(0).trim();
@@ -388,7 +395,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public String toString() {
-        return "Search Results";
+        return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
     }
 
     @Override

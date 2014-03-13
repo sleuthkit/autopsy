@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,21 +20,19 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -54,7 +52,7 @@ public class HashsetHits implements AutopsyVisitableItem {
 
     public HashsetHits(SleuthkitCase skCase) {
         this.skCase = skCase;
-        hashSetHitsMap = new LinkedHashMap<String, Set<Long>>();
+        hashSetHitsMap = new LinkedHashMap<>();
     }
 
     @SuppressWarnings("deprecation")
@@ -79,16 +77,15 @@ public class HashsetHits implements AutopsyVisitableItem {
                 hashSetHitsMap.get(value).add(artifactId);
 
             }
-           
+
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
-        }
-        finally {
+        } finally {
             if (rs != null) {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
+                    logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
                 }
             }
         }
@@ -113,8 +110,8 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
+        public boolean isLeafTypeNode() {
+            return false;
         }
 
         @Override
@@ -131,9 +128,9 @@ public class HashsetHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>("Name",
-                    "Name",
-                    "no description",
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.desc"),
                     getName()));
 
             return s;
@@ -164,11 +161,6 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public TYPE getDisplayableItemNodeType() {
-            return TYPE.ARTIFACT;
-        }
-
-        @Override
         public boolean isLeafTypeNode() {
             return true;
         }
@@ -182,9 +174,9 @@ public class HashsetHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>("Name",
-                    "Name",
-                    "no description",
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "HashsetHits.createSheet.name.desc"),
                     getName()));
 
             return s;

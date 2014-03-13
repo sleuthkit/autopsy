@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -29,18 +29,23 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class ResultsNode extends DisplayableItemNode {
 
-    public static final String NAME = "Results";
+    public static final String NAME = NbBundle.getMessage(ResultsNode.class, "ResultsNode.name.text");
 
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase),
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new Tags(sleuthkitCase) //TODO move to the top of the tree 
-                )), Lookups.singleton(NAME));
+                new InterestingHits(sleuthkitCase),
+                new TagsNodeKey())), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
     }
 
     @Override
@@ -57,15 +62,10 @@ public class ResultsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>("Name",
-                "Name",
-                "no description",
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.desc"),
                 NAME));
         return s;
-    }
-
-    @Override
-    public TYPE getDisplayableItemNodeType() {
-        return TYPE.META;
     }
 }

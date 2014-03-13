@@ -21,13 +21,14 @@ package org.sleuthkit.autopsy.menuactions;
 
 import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 
 /**
  * Menu item that displays DataContentViewers
  */
-public class DataContentMenu extends CallableSystemAction implements Presenter.Menu {
+ class DataContentMenu extends CallableSystemAction implements Presenter.Menu {
 
     DataContentMenu(){}
 
@@ -43,7 +44,7 @@ public class DataContentMenu extends CallableSystemAction implements Presenter.M
 
     @Override
     public String getName() {
-        return "DataContent Menu";
+        return NbBundle.getMessage(this.getClass(), "DataContentMenu.getName.text");
     }
 
     @Override

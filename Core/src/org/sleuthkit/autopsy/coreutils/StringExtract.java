@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
@@ -78,7 +80,8 @@ public class StringExtract {
         unicodeTable = StringExtractUnicodeTable.getInstance();
 
         if (unicodeTable == null) {
-            throw new IllegalStateException("Unicode table not properly initialized, cannot instantiate StringExtract");
+            throw new IllegalStateException(
+                    NbBundle.getMessage(StringExtract.class, "StringExtract.illegalStateException.cannotInit.msg"));
         }
 
         setEnabledScripts(SUPPORTED_SCRIPTS);

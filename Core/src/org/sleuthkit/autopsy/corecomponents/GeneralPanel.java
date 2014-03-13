@@ -18,17 +18,23 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 
 final class GeneralPanel extends javax.swing.JPanel {
 
     private final GeneralOptionsPanelController controller;
-    private final static String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";
-    private final static String USE_LOCAL_TIME = "useLocalTime";
+    private static final String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";
+    private static final String USE_LOCAL_TIME = "useLocalTime";
+    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
+    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true
+    private final Preferences prefs = NbPreferences.forModule(this.getClass());
 
     GeneralPanel(GeneralOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
+        ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
         // TODO listen to changes in form fields and call controller.changed()
     }
 
@@ -48,6 +54,9 @@ final class GeneralPanel extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         useLocalTimeRB = new javax.swing.JRadioButton();
         useGMTTimeRB = new javax.swing.JRadioButton();
+        jLabel3 = new javax.swing.JLabel();
+        dataSourcesHideKnownCB = new javax.swing.JCheckBox();
+        viewsHideKnownCB = new javax.swing.JCheckBox();
 
         buttonGroup1.add(useBestViewerRB);
         useBestViewerRB.setSelected(true);
@@ -73,6 +82,17 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         buttonGroup3.add(useGMTTimeRB);
         org.openide.awt.Mnemonics.setLocalizedText(useGMTTimeRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useGMTTimeRB.text")); // NOI18N
+        useGMTTimeRB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useGMTTimeRBActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel3.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesHideKnownCB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.dataSourcesHideKnownCB.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(viewsHideKnownCB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.viewsHideKnownCB.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -81,16 +101,27 @@ final class GeneralPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(useLocalTimeRB)
-                            .addComponent(keepCurrentViewerRB)
-                            .addComponent(useBestViewerRB)
-                            .addComponent(useGMTTimeRB))))
-                .addGap(0, 112, Short.MAX_VALUE))
+                            .addComponent(jLabel2)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(useLocalTimeRB)
+                                    .addComponent(useGMTTimeRB))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel3)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(keepCurrentViewerRB)
+                                    .addComponent(useBestViewerRB)
+                                    .addComponent(dataSourcesHideKnownCB)
+                                    .addComponent(viewsHideKnownCB))))
+                        .addGap(0, 13, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -101,12 +132,18 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(keepCurrentViewerRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(dataSourcesHideKnownCB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(viewsHideKnownCB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useLocalTimeRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useGMTTimeRB)
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addContainerGap(30, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -114,18 +151,26 @@ final class GeneralPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_useBestViewerRBActionPerformed
 
+    private void useGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useGMTTimeRBActionPerformed
+         ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
+    }//GEN-LAST:event_useGMTTimeRBActionPerformed
+
     void load() {
-        boolean keepPreferredViewer = NbPreferences.forModule(GeneralPanel.class).getBoolean(KEEP_PREFERRED_VIEWER, false);
+        boolean keepPreferredViewer = prefs.getBoolean(KEEP_PREFERRED_VIEWER, false);
         keepCurrentViewerRB.setSelected(keepPreferredViewer);
         useBestViewerRB.setSelected(!keepPreferredViewer);
-        boolean useLocalTime = NbPreferences.forModule(GeneralPanel.class).getBoolean(USE_LOCAL_TIME, true);
+        boolean useLocalTime = prefs.getBoolean(USE_LOCAL_TIME, true);
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
+        dataSourcesHideKnownCB.setSelected(prefs.getBoolean(DS_HIDE_KNOWN, false));
+        viewsHideKnownCB.setSelected(prefs.getBoolean(VIEWS_HIDE_KNOWN, true));
     }
 
     void store() {
-        NbPreferences.forModule(GeneralPanel.class).putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
-        NbPreferences.forModule(GeneralPanel.class).putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
+        prefs.putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
+        prefs.putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
+        prefs.putBoolean(DS_HIDE_KNOWN, dataSourcesHideKnownCB.isSelected());
+        prefs.putBoolean(VIEWS_HIDE_KNOWN, viewsHideKnownCB.isSelected());
     }
 
     boolean valid() {
@@ -135,11 +180,14 @@ final class GeneralPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
+    private javax.swing.JCheckBox dataSourcesHideKnownCB;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JRadioButton keepCurrentViewerRB;
     private javax.swing.JRadioButton useBestViewerRB;
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;
+    private javax.swing.JCheckBox viewsHideKnownCB;
     // End of variables declaration//GEN-END:variables
 }

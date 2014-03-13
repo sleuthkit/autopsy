@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -50,7 +52,7 @@ public final class ContentUtils {
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
+    private static boolean displayInLocalTime;
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -104,12 +106,11 @@ public final class ContentUtils {
     public static String getStringTimeISO8601(long epochSeconds, Content c) {
         return getStringTimeISO8601(epochSeconds, getTimeZone(c));
     }
-
+     
     public static TimeZone getTimeZone(Content c) {
-        Preferences generalPanelPrefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
-        boolean useLocalTime = generalPanelPrefs.getBoolean("useLocalTime", true);
+        
         try {
-            if (!useLocalTime) {
+            if (!getDisplayInLocalTime()) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
@@ -356,8 +357,23 @@ public final class ContentUtils {
 
         @Override
         protected Void defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Can't extract a "
-                    + cntnt.getClass().getSimpleName());
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                                                                        "ContentUtils.exception.msg",
+                                                                        cntnt.getClass().getSimpleName()));
         }
+    }
+    /**sets displayInlocalTime value based on button in GeneralPanel.java
+     * 
+     * @param flag 
+     */
+    public static void setDisplayInLocalTime(boolean flag) {
+    displayInLocalTime = flag;
+    }
+    /** get global timezone setting for displaying time values 
+     *  
+     * @return 
+     */
+    public static boolean getDisplayInLocalTime(){
+        return displayInLocalTime;
     }
 }

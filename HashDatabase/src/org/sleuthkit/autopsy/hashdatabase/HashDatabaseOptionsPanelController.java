@@ -25,6 +25,10 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
     categoryName = "#OptionsCategory_Name_HashDatabase",
@@ -33,13 +37,14 @@ position = 3,
 keywords = "#OptionsCategory_Keywords_HashDatabase",
 keywordsCategory = "HashDatabase",
 id = "HashDatabase")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
+// moved messages to Bundle.properties
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
 public final class HashDatabaseOptionsPanelController extends OptionsPanelController {
 
-    private HashDbManagementPanel panel;
+    private HashDbConfigPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-
+     private static final Logger logger = Logger.getLogger(HashDatabaseOptionsPanelController.class.getName());
     @Override
     public void update() {
         getPanel().load();
@@ -54,8 +59,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
 
     @Override
     public void cancel() {
-        // Reset the XML on cancel
-        HashDbXML.getCurrent().reload();
+        getPanel().cancel();
     }
 
     @Override
@@ -88,9 +92,9 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
         pcs.removePropertyChangeListener(l);
     }
 
-    private HashDbManagementPanel getPanel() {
+    private HashDbConfigPanel getPanel() {
         if (panel == null) {
-            panel = new HashDbManagementPanel();
+            panel = new HashDbConfigPanel();
         }
         return panel;
     }
@@ -98,8 +102,28 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
     void changed() {
         if (!changed) {
             changed = true;
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -57,27 +59,26 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
-    private String firstColumnLabel = "Name";
-    @SuppressWarnings("rawtypes")
+    private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
-    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
+    private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
 
     /**
-     * Creates a DataResultViewerTable object that is compatible with node 
+     * Creates a DataResultViewerTable object that is compatible with node
      * multiple selection actions.
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         super(explorerManager);
         initialize();
     }
-    
+
     /**
-     * Creates a DataResultViewerTable object that is NOT compatible with node 
+     * Creates a DataResultViewerTable object that is NOT compatible with node
      * multiple selection actions.
      */
     public DataResultViewerTable() {
-        initialize();        
+        initialize();
     }
 
     private void initialize() {
@@ -91,9 +92,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // don't show the root node
         ov.getOutline().setRootVisible(false);
-        ov.getOutline().setDragEnabled(false);        
+        ov.getOutline().setDragEnabled(false);
     }
-    
+
     /**
      * Expand node
      *
@@ -155,7 +156,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         Node firstChild = parent.getChildren().getNodeAt(0);
 
         if (firstChild == null) {
-            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
             for (PropertySet ps : firstChild.getPropertySets()) {
                 if (ps.getName().equals(Sheet.PROPERTIES)) {
@@ -163,7 +165,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
             }
 
-            throw new IllegalArgumentException("Child Node doesn't have the regular PropertySet.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.childWithoutPropertySet"));
         }
     }
 
@@ -182,7 +185,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         Property[] properties = null;
 
         if (firstChild == null) {
-            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
             Set<Property> allProperties = new LinkedHashSet<Property>();
             while (firstChild != null) {
@@ -218,7 +222,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
         Children children = parent.getChildren();
         int childCount = 0;
-        for (Node child : children.getNodes()) {            
+        for (Node child : children.getNodes()) {
             if (++childCount > rows) {
                 break;
             }
@@ -238,13 +242,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return true;
     }
 
+    /**
+     * Thread note: Make sure to run this in the EDT as it causes GUI
+     * operations.
+     *
+     * @param selectedNode
+     */
     @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             boolean hasChildren = false;
-            
+
             if (selectedNode != null) {
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
@@ -253,7 +263,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             if (oldNode != null) {
                 oldNode.removeNodeListener(dummyNodeListener);
             }
-            
+
             // if there's no selection node, do nothing
             if (hasChildren) {
                 Node root = selectedNode;
@@ -271,11 +281,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             this.setCursor(null);
         }
     }
-    
+
     /**
      * Create Column Headers based on the Content represented by the Nodes in
      * the table.
-     * 
+     *
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
@@ -294,11 +304,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (ov == null) {
             return;
         }
-        
-	propertiesAcc.clear();
+
+        propertiesAcc.clear();
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
+        List<Node.Property> props = new ArrayList<>(propertiesAcc);
         if (props.size() > 0) {
             Node.Property prop = props.remove(0);
             ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
@@ -337,15 +347,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // show the horizontal scroll panel and show all the content & header
 
         int totalColumns = props.size();
-	
-	//int scrollWidth = ttv.getWidth();
-       	int margin = 4;
-       	int startColumn = 1;
-                
-       	// If there is only one column (which was removed from props above)
-       	// Just let the table resize itself.
-       	ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
-                
+
+        //int scrollWidth = ttv.getWidth();
+        int margin = 4;
+        int startColumn = 1;
+
+        // If there is only one column (which was removed from props above)
+        // Just let the table resize itself.
+        ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
+
 
 
         // get first 100 rows values for the table
@@ -378,50 +388,35 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    /**
-     * Create a 2-d array of rows (one per node) and columns (one per property) based on
-     * the passed in parent node. 
-     * 
-     * @param node Parent node
-     * @param maxRows Max rows to create
-     * @return Array of rows and columns
-     */ 
+    // Populate a two-dimensional array with rows of property values for up 
+    // to maxRows children of the node passed in. 
     private static Object[][] getRowValues(Node node, int maxRows) {
-        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];        
+        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];
         int rowCount = 0;
         for (Node child : node.getChildren().getNodes()) {
             if (rowCount >= maxRows) {
                 break;
-            }                
+            }
             PropertySet[] propertySets = child.getPropertySets();
-            /* This lock was added because we saw an exception whereby the 
-             * properties[j] access below was out of bounds when I was quickly
-             * scrolling down items in the tree and the result viewer was 
-             * constantly updating.
-             */
-            synchronized (propertySets) {
-                if (propertySets.length > 0) {
-                    Property[] properties = propertySets[0].getProperties();
-                
-                    rowValues[rowCount] = new Object[properties.length];
-                    for (int j = 0; j < properties.length; ++j) {
-                        try {
-                            rowValues[rowCount][j] = properties[j].getValue();
-                        } 
-                        catch (IllegalAccessException | InvocationTargetException ignore) {
-                            rowValues[rowCount][j] = "n/a";
-                        }
+            if (propertySets.length > 0) {
+                Property[] properties = propertySets[0].getProperties();
+                rowValues[rowCount] = new Object[properties.length];
+                for (int j = 0; j < properties.length; ++j) {
+                    try {
+                        rowValues[rowCount][j] = properties[j].getValue();
+                    } catch (IllegalAccessException | InvocationTargetException ignore) {
+                        rowValues[rowCount][j] = "n/a";
                     }
                 }
-            }                        
+            }
             ++rowCount;
-        }        
+        }
         return rowValues;
     }
 
     @Override
     public String getTitle() {
-        return "Table";
+        return NbBundle.getMessage(this.getClass(), "DataResultViewerTable.title");
     }
 
     @Override
@@ -491,15 +486,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         super.clearComponent();
     }
-    
+
     private class DummyNodeListener implements NodeListener {
-        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+
         private volatile boolean load = true;
-        
+
         public void reset() {
             load = true;
         }
-        
+
         @Override
         public void childrenAdded(final NodeMemberEvent nme) {
             Node[] delta = nme.getDelta();
@@ -517,7 +512,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
             }
         }
-        
+
         private boolean containsReal(Node[] delta) {
             for (Node n : delta) {
                 if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {

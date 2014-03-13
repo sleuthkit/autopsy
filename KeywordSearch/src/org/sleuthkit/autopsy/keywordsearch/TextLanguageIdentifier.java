@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * 
  * 
  */
-public interface TextLanguageIdentifier {
+interface TextLanguageIdentifier {
 
     /**
      * attempts to identify the language of the given String and add it to the

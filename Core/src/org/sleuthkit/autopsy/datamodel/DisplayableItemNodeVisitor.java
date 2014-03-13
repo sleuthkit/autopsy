@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,15 +27,15 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.Tags.TagNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Tags.TagsNodeRoot;
-import org.sleuthkit.autopsy.datamodel.Tags.TagsRootNode;
+import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
 
 /**
- * Visitor pattern for DisplayableItemNodes
+ * Visitor pattern implementation for DisplayableItemNodes
  */
 public interface DisplayableItemNodeVisitor<T> {
 
@@ -85,11 +85,21 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(EmailExtractedFolderNode eefn);
 
-    T visit(TagsRootNode bksrn);
+    T visit(TagsNode node);
+    
+    T visit(InterestingHitsRootNode ihrn);
 
-    T visit(TagsNodeRoot bksrn);
+    T visit(InterestingHitsSetNode ihsn);
+    
+    T visit(TagNameNode node);
 
-    T visit(TagNodeRoot tnr);
+    T visit(ContentTagTypeNode node);    
+
+    T visit(ContentTagNode node);
+        
+    T visit(BlackboardArtifactTagTypeNode node);
+
+    T visit(BlackboardArtifactTagNode node);    
 
     T visit(ViewsNode vn);
 
@@ -233,7 +243,17 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(HashsetHitsSetNode hhsn) {
             return defaultVisit(hhsn);
         }
+        
+         @Override
+        public T visit(InterestingHitsRootNode ihrn) {
+            return defaultVisit(ihrn);
+        }
 
+        @Override
+        public T visit(InterestingHitsSetNode ihsn) {
+            return defaultVisit(ihsn);
+        }
+        
         @Override
         public T visit(EmailExtractedRootNode eern) {
             return defaultVisit(eern);
@@ -265,18 +285,33 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(TagsRootNode bksrn) {
-            return defaultVisit(bksrn);
+        public T visit(TagsNode node) {
+            return defaultVisit(node);
         }
 
         @Override
-        public T visit(TagsNodeRoot bksnr) {
-            return defaultVisit(bksnr);
+        public T visit(TagNameNode node) {
+            return defaultVisit(node);
         }
 
         @Override
-        public T visit(TagNodeRoot tnr) {
-            return defaultVisit(tnr);
+        public T visit(ContentTagTypeNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(ContentTagNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(BlackboardArtifactTagTypeNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(BlackboardArtifactTagNode node) {
+            return defaultVisit(node);
         }
     }
 }

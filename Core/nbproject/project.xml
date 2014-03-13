@@ -191,6 +191,7 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>

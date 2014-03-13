@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -107,7 +108,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         protected AbstractContentNode<? extends Content> defaultVisit(SleuthkitVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given SleuthkitItem");
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                    "AbstractContentChildren.CreateTSKNodeVisitor.exception.noNodeMsg"));
         }
     }
 
@@ -152,13 +154,18 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractNode visit(InterestingHits ih) {
+            return ih.new InterestingHitsRootNode();
+        }
+
+        @Override
         public AbstractNode visit(EmailExtracted ee) {
             return ee.new EmailExtractedRootNode();
         }
 
         @Override
-        public AbstractNode visit(Tags t) {
-            return t.new TagsRootNode();
+        public AbstractNode visit(TagsNodeKey tagsNodeKey) {
+            return new TagsNode();
         }
 
         @Override
@@ -182,7 +189,9 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(),
+                    "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
         }
     }
 }

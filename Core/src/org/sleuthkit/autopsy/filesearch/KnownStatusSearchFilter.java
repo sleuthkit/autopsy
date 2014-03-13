@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
@@ -26,7 +28,8 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  */
 class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearchPanel> {
 
-    private static final String NONE_SELECTED_MESSAGE = "At least one known status must be selected!";
+    private static final String NONE_SELECTED_MESSAGE = NbBundle
+            .getMessage(KnownStatusSearchFilter.class, "KnownStatusSearchFilter.noneSelectedMsg.text");
 
     KnownStatusSearchFilter(KnownStatusSearchPanel panel) {
         super(panel);
@@ -55,7 +58,7 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
 
         String expr = "0";
         if (unknown) {
-            expr += " or " + predicateHelper(FileKnown.UKNOWN);
+            expr += " or " + predicateHelper(FileKnown.UNKNOWN);
         }
         if (known) {
             expr += " or " + predicateHelper(FileKnown.KNOWN);

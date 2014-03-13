@@ -74,6 +74,11 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
 
         knownOptionCheckBox.setSelected(true);
         knownOptionCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.knownOptionCheckBox.text")); // NOI18N
+        knownOptionCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                knownOptionCheckBoxActionPerformed(evt);
+            }
+        });
 
         knownBadOptionCheckBox.setSelected(true);
         knownBadOptionCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.knownBadOptionCheckBox.text")); // NOI18N
@@ -102,6 +107,11 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
                 .addComponent(knownBadOptionCheckBox))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void knownOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownOptionCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_knownOptionCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox knownBadOptionCheckBox;
     private javax.swing.JCheckBox knownCheckBox;

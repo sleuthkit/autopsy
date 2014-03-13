@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -56,6 +57,7 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -70,7 +72,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * Top component which displays something.
  */
@@ -79,7 +81,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private DataResultTopComponent dataResult = new DataResultTopComponent(true, "Directory Listing");
+    private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
+                                                                                                     "DirectoryTreeTopComponent.title.text"));
     private LinkedList<String[]> backList;
     private LinkedList<String[]> forwardList;
     /**
@@ -514,7 +517,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Object newValue = evt.getNewValue();
 
         // change in the case name
-        if (changed.equals(Case.CASE_NAME)) {
+        if (changed.equals(Case.Events.NAME.toString())) {
             // set the main title of the window
             String oldCaseName = oldValue.toString();
             String newCaseName = newValue.toString();
@@ -527,7 +530,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 em.getRootContext().setDisplayName(newCaseName);
             }
         } // changed current case
-        else if (changed.equals(Case.CASE_CURRENT_CASE)) {
+        else if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
             // When a case is closed, the old value of this property is the 
             // closed Case object and the new value is null. When a case is 
             // opened, the old value is null and the new value is the new Case
@@ -551,7 +554,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 resetHistory();
             }
         } // if the image is added to the case
-        else if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
+        else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             componentOpened();
 //            Image img = (Image)newValue;
 //
@@ -586,6 +589,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             respondSelection((Node[]) oldValue, (Node[]) newValue);
         } else if (changed.equals(IngestModuleEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
+            if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
+                return;
+            }
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -651,7 +657,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                        dataResult.setNode(new TableFilterNode(drfn, true));
+                        Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
+                        dataResult.setNode(new TableFilterNode(kffn, true));
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
@@ -688,7 +695,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // update the back and forward list
         updateHistory(em.getSelectedNodes());
     }
-    
+   
     private void updateHistory(Node[] selectedNodes) {
         if (selectedNodes.length == 0) {
             return;
@@ -804,7 +811,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
      */
-    void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+    public void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
         //save current selection
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
@@ -856,38 +863,53 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Set selected node using the previously saved selection path to the
-     * selected node
+     * Set the selected node using a path to a previously selected node.
      *
-     * @param path node path with node names
-     * @param rootNodeName name of the root node to match or null if any
+     * @param previouslySelectedNodePath Path to a previously selected node. 
+     * @param rootNodeName Name of the root node to match, may be null.
      */
-    private void setSelectedNode(final String[] path, final String rootNodeName) {
-        if (path == null) {
+    private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
+        if (previouslySelectedNodePath == null) {
             return;
         }
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-
-                if (path.length > 0 && (rootNodeName == null || path[0].equals(rootNodeName))) {
-                    try {
-                        Node newSelection = NodeOp.findPath(em.getRootContext(), path);
-                        
-                        if (newSelection != null) {
-                            if (rootNodeName != null) {
-                                //called from tree auto refresh context
-                                //remove last from backlist, because auto select will result in duplication
-                                backList.pollLast();
-                            }
-                            em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                if (previouslySelectedNodePath.length > 0 && (rootNodeName == null || previouslySelectedNodePath[0].equals(rootNodeName))) {
+                    Node selectedNode = null;                    
+                    ArrayList<String> selectedNodePath = new ArrayList<>(Arrays.asList(previouslySelectedNodePath));
+                    while (null == selectedNode && !selectedNodePath.isEmpty()) {
+                        try {
+                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[0]));                        
                         }
-                        
-                        // We need to set the selection, which will refresh dataresult and get rid of the oob exception
-                    } catch (NodeNotFoundException ex) {
-                        logger.log(Level.WARNING, "Node not found", ex);
-                    } catch (PropertyVetoException ex) {
-                        logger.log(Level.WARNING, "Property Veto", ex);
+                        catch (NodeNotFoundException ex) {
+                            // The selected node may have been deleted (e.g., a deleted tag), so truncate the path and try again. 
+                            if (selectedNodePath.size() > 1) {
+                                selectedNodePath.remove(selectedNodePath.size() - 1);
+                            }                            
+                            else {
+                                StringBuilder nodePath = new StringBuilder();
+                                for (int i = 0; i < previouslySelectedNodePath.length; ++i) {
+                                    nodePath.append(previouslySelectedNodePath[i]).append("/");
+                                }
+                                logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex);
+                                break; 
+                            }
+                        } 
+                    }
+                    
+                    if (null != selectedNode) {
+                        if (rootNodeName != null) {
+                            //called from tree auto refresh context
+                            //remove last from backlist, because auto select will result in duplication
+                            backList.pollLast();
+                        }
+                        try {
+                            em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});                                                    
+                        }
+                        catch (PropertyVetoException ex) {
+                            logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex);
+                        }
                     }
                 }
             }
@@ -948,6 +970,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex);
             }
+        } else if ( type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT) || 
+                    type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) )   { 
+            Node interestingItemsRootNode = resultsChilds.findChild(type.getLabel());
+            Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+             try {
+                String setName = null;
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                        setName = att.getValueString();
+                    }
+                }
+                treeNode = interestingItemsRootChildren.findChild(setName);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+            }
         } else {
             Node extractedContent = resultsChilds.findChild(ExtractedContentNode.NAME);
             Children extractedChilds = extractedContent.getChildren();
@@ -976,7 +1015,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
-        new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
+        new ViewContextAction(
+                NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
+                new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
 //    private class HistoryManager<T> {
@@ -989,6 +1030,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     void fireViewerComplete() {
-        firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
+        
+        try {
+            firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DirectoryTreeTopComponent.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 }

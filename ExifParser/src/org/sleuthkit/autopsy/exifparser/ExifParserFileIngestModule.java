@@ -33,6 +33,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -57,7 +60,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     private IngestServices services;
-    final public static String MODULE_NAME = "Exif Parser";
+    final public static String MODULE_NAME = NbBundle.getMessage(ExifParserFileIngestModule.class,
+                                                                 "ExifParserFileIngestModule.moduleName.text");
     final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
@@ -197,42 +201,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        return isJpegFileHeader(f);
-
-    }
-
-    /**
-     * Check if is jpeg file based on header
-     *
-     * @param file
-     *
-     * @return true if jpeg file, false otherwise
-     */
-    @SuppressWarnings("unchecked")
-    public static boolean isJpegFileHeader(AbstractFile file) {
-        if (file.getSize() < 100) {
-            return false;
-        }
-
-        byte[] fileHeaderBuffer = new byte[2];
-        int bytesRead;
-        try {
-            bytesRead = file.read(fileHeaderBuffer, 0, 2);
-        } catch (TskCoreException ex) {
-            //ignore if can't read the first few bytes, not a JPEG
-            return false;
-        }
-        if (bytesRead != 2) {
-            return false;
-        }
-        /*
-         * Check for the JPEG header. Since Java bytes are signed, we cast them
-         * to an int first.
-         */
-        if (((int) (fileHeaderBuffer[0] & 0xff) == 0xff) && ((int) (fileHeaderBuffer[1] & 0xff) == 0xd8)) {
-            return true;
-        }
-        return false;
+        return ImageUtils.isJpegFileHeader(f);
     }
 
     @Override
@@ -251,16 +220,16 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public String getName() {
-        return "Exif Image Parser";
+        return NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.getName.text");
     }
 
     @Override
     public String getDescription() {
-        return "Ingests JPEG files and retrieves their EXIF metadata.";
+        return NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.getDesc.text");
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
 

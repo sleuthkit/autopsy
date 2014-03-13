@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Action to open custom implementation of the "About" window from the Help menu.
  */
-public class CustomAboutAction extends AboutAction {
+ class CustomAboutAction extends AboutAction {
 
     @Override
     public void performAction() {
@@ -37,7 +37,7 @@ public class CustomAboutAction extends AboutAction {
         ProductInformationPanel pip = new ProductInformationPanel();
         DialogDescriptor descriptor = new DialogDescriptor(
                 pip,
-                NbBundle.getMessage(AboutAction.class, "About_title"),
+                NbBundle.getMessage(CustomAboutAction.class, "CTL_CustomAboutAction"),
                 true,
                 new Object[0],
                 null,

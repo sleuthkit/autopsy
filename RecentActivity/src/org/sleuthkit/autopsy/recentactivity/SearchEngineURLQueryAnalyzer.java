@@ -33,6 +33,8 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.PipelineContext;
@@ -62,21 +64,25 @@ import org.xml.sax.SAXException;
  * To add search engines, edit SearchEngines.xml under RecentActivity
  *
  */
-public class SearchEngineURLQueryAnalyzer extends Extract {
+class SearchEngineURLQueryAnalyzer extends Extract {
 
     private IngestServices services;
     
-    public static final String MODULE_NAME = "Search Engine URL Query Analyzer";
-    public final static String MODULE_VERSION = "1.0";
+    private static final String MODULE_NAME = NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class,
+                                                                  "SearchEngineURLQueryAnalyzer.moduleName.text");
+    private final static String MODULE_VERSION = "1.0";
     
-    public static final String XMLFILE = "SEUQAMappings.xml";
+    private static final String XMLFILE = "SEUQAMappings.xml";
     private static final String XSDFILE = "SearchEngineSchema.xsd";
 
     
     private static String[] searchEngineNames;
     private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
     private static Document xmlinput;
-    private static final SearchEngineURLQueryAnalyzer.SearchEngine NullEngine = new SearchEngineURLQueryAnalyzer.SearchEngine("NONE", "NONE", new HashMap<String,String>());
+    private static final SearchEngineURLQueryAnalyzer.SearchEngine NullEngine = new SearchEngineURLQueryAnalyzer.SearchEngine(
+            NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class, "SearchEngineURLQueryAnalyzer.engineName.none"),
+            NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class, "SearchEngineURLQueryAnalyzer.domainSubStr.none"),
+            new HashMap<String,String>());
 
     
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -123,7 +129,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
             for(Map.Entry<String,String> kvp : getSplits()){
                 split = split + "[ " + kvp.getKey() + " :: " +  kvp.getValue() + " ]" + ", ";
             }
-            return "Name: " + _engineName + "\n Domain Substring: " + _domainSubstring + "\n count: " + _count + "\n Split Tokens: \n " + split;
+            return NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.toString",
+                                       _engineName, _domainSubstring, _count, split);
         }
                 
     }
@@ -310,7 +317,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
             if (controller.isCancelled()) {
                 logger.info("Operation terminated by user.");
             }
-            services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
+            services.fireModuleDataEvent(new ModuleDataEvent(
+                    NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.parentModuleName.noSpace"),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
             logger.info("Extracted " + totalQueries + " queries from the blackboard");
         }
     }
@@ -333,7 +342,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) {
+    public void init(IngestModuleInit initContext) throws IngestModuleException {
         try{
             services = IngestServices.getDefault();   
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
@@ -395,7 +404,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract {
         for(String name : searchEngineNames){
             total += name + "\n";
         }
-        return "Extracts search queries on the following search engines: \n" + total;
+        return NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.getDesc", total);
     }
 
     @Override

@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 /**
  * main configuration panel for all ingest modules, reusable JPanel component
  */
-public class IngestDialogPanel extends javax.swing.JPanel {
+ class IngestDialogPanel extends javax.swing.JPanel {
 
     private IngestModuleAbstract currentModule;
     private ModulesTableModel tableModel;
@@ -60,13 +60,17 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         this.context = context;
     }
     
-
+    
     public IngestModuleAbstract getCurrentIngestModule() {
         return currentModule;
     }
     
     public List<IngestModuleAbstract> getModulesToStart() {
         return tableModel.getSelectedModules();
+    }
+    
+    public List<IngestModuleAbstract> getDisabledModules() {
+        return tableModel.getUnSelectedModules();
     }
     
     public boolean processUnallocSpaceEnabled() {
@@ -349,6 +353,16 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             }
             return selectedModules;
         }
+        
+        public List<IngestModuleAbstract> getUnSelectedModules() {
+            List<IngestModuleAbstract> unselectedModules = new ArrayList<>();
+            for (Map.Entry<IngestModuleAbstract, Boolean> entry : moduleData) {
+                if (!entry.getValue().booleanValue()) {
+                    unselectedModules.add(entry.getKey());
+                }
+            }
+            return unselectedModules;
+        }        
         
         /**
          * Sets the given modules as selected in the modules table

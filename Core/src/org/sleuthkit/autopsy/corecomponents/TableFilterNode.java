@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 
 /**
  * This class is used to filter the nodes that we want to show on the "TreeTableView".
@@ -46,7 +47,7 @@ public class TableFilterNode extends FilterNode {
     @Override
     public String getDisplayName() {
         if (createChild) {
-            return "Name";
+            return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
         }

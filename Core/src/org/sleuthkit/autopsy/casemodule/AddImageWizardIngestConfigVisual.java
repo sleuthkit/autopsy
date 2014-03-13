@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.openide.util.NbBundle;
+
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
@@ -27,7 +29,7 @@ import javax.swing.JPanel;
  *
  *
  */
-public class AddImageWizardIngestConfigVisual extends javax.swing.JPanel {
+ class AddImageWizardIngestConfigVisual extends javax.swing.JPanel {
 
     //could this be something more specific than JPanel? - jm
     private JPanel ingestPanel = null;
@@ -55,7 +57,7 @@ public class AddImageWizardIngestConfigVisual extends javax.swing.JPanel {
      */
     @Override
     public String getName() {
-        return "Configure Ingest Modules";
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigVisual.getName.text");
     }
 
     /**

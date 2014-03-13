@@ -27,20 +27,21 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract extends IngestModuleDataSource{
+abstract class Extract extends IngestModuleDataSource{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
-    protected final ArrayList<String> errorMessages = new ArrayList<>();
-    protected String moduleName = "";
-    protected boolean dataFound = false;
+    private final ArrayList<String> errorMessages = new ArrayList<>();
+    String moduleName = "";
+    boolean dataFound = false;
     
     //hide public constructor to prevent from instantiation by ingest module loader
     Extract() {
@@ -104,7 +105,7 @@ abstract public class Extract extends IngestModuleDataSource{
             tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex);
-            errorMessages.add(getName() + ": Failed to query database.");
+            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
             return Collections.<HashMap<String,Object>>emptyList();
         }
         return list;

@@ -24,18 +24,24 @@ import java.io.File;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
 
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
-public class LocalFilesPanel extends ContentTypePanel {
+ class LocalFilesPanel extends JPanel {
 
     private PropertyChangeSupport pcs = null;
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = ",";
-
+    private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     /**
      * Creates new form LocalFilesPanel
      */
@@ -57,7 +63,7 @@ public class LocalFilesPanel extends ContentTypePanel {
         
     }
     
-    @Override
+    //@Override
     public String getContentPaths() {
         //TODO consider interface change to return list of paths instead
         
@@ -72,36 +78,37 @@ public class LocalFilesPanel extends ContentTypePanel {
         return b.toString();
     }
 
-    @Override
+    //@Override
     public void setContentPath(String s) {
         //for the local file panel we don't need to restore the last paths used
         //when the wizard restarts
     }
     
-    @Override
-    public ContentType getContentType() {
-        return ContentType.LOCAL;
+    //@Override
+    public String getContentType() {
+        return NbBundle.getMessage(this.getClass(), "LocalFilesPanel.contentType.text");
     }
 
-    @Override
-    public boolean enableNext() {
+    //@Override
+    public boolean validatePanel() {
         return enableNext;
     }
 
-    @Override
+    //@Override
     public void select() {
         reset();
     }
     
-    @Override
+    //@Override
     public void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        
+        //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
-      @Override
+    @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {	
 	super.addPropertyChangeListener(pcl);
 
@@ -122,7 +129,7 @@ public class LocalFilesPanel extends ContentTypePanel {
 
     @Override
     public String toString() {
-        return "Logical Files";
+        return NbBundle.getMessage(this.getClass(), "LocalFilesDSProcessor.toString.text");
     }
 
     /**
@@ -231,7 +238,16 @@ public class LocalFilesPanel extends ContentTypePanel {
         else {
             enableNext = false;
         }
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
+        }
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed

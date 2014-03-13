@@ -28,6 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -35,7 +37,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * 
  * @author jwallace
  */
-public class FileReportText implements FileReportModule {
+ class FileReportText implements FileReportModule {
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
     private String reportPath;
     private Writer out;
@@ -118,12 +120,12 @@ public class FileReportText implements FileReportModule {
 
     @Override
     public String getName() {
-        return "Files - Text";
+        return NbBundle.getMessage(this.getClass(), "FileReportText.getName.text");
     }
 
     @Override
     public String getDescription() {
-        return "A tab delimited text file containing information about files in the case."; 
+        return NbBundle.getMessage(this.getClass(), "FileReportText.getDesc.text");
     }
 
     @Override

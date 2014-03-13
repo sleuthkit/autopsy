@@ -29,6 +29,7 @@ import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 
 /**
  * The "New Case" wizard panel with a component on it. This class represents 
@@ -190,7 +191,10 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         
             //Case.create(createdDirectory, caseName, caseNumber, examiner);
         } catch(Exception ex) {
-            throw new WizardValidationException(this.getComponent(), "Error creating case", null);
+            throw new WizardValidationException(this.getComponent(),
+                                                NbBundle.getMessage(this.getClass(),
+                                                                    "NewCaseWizardPanel2.validate.errCreateCase.msg"),
+                                                null);
         }
     }
 }

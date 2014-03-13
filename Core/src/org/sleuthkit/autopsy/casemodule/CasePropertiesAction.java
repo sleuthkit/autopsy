@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * @author jantonius
  */
-public final class CasePropertiesAction extends CallableSystemAction {
+ final class CasePropertiesAction extends CallableSystemAction {
 
     private static JDialog popUpWindow;
 
@@ -62,7 +62,7 @@ public final class CasePropertiesAction extends CallableSystemAction {
         
         try {
             // create the popUp window for it
-            String title = "Case Properties";
+            String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
             final JFrame frame = new JFrame(title);
             popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
 

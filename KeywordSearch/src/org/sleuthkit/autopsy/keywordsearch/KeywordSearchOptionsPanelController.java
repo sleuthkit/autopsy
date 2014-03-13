@@ -10,20 +10,25 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 @OptionsPanelController.TopLevelRegistration(
     categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
 iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
 position = 2,
 keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
 keywordsCategory = "KeywordSearchOptions")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
+// moved messages to Bundle.properties
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
 public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
 
     private KeywordSearchConfigurationPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-
+    private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
+    
     public void update() {
         getPanel().load();
         changed = false;
@@ -35,8 +40,7 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     }
 
     public void cancel() {
-        // Reload XML on cancel
-        KeywordSearchListsXML.getCurrent().reload();
+        getPanel().cancel();
     }
 
     public boolean isValid() {
@@ -73,8 +77,28 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     void changed() {
         if (!changed) {
             changed = true;
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg1"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg2"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
+        
     }
 }

@@ -19,8 +19,11 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
+import org.openide.util.NbBundle;
+
 import java.io.File;
 import java.util.List;
+import java.util.Arrays;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -28,6 +31,16 @@ import javax.swing.filechooser.FileFilter;
  */
 public class GeneralFilter extends FileFilter{
 
+    
+    // Extensions & Descriptions for commonly used filters
+    public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw", ".bin"});
+    public static final String RAW_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.rawImageDesc.text");
+    
+    public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(new String[]{".e01"});
+    public static final String ENCASE_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class,                                                                       "GeneralFilter.encaseImageDesc.text");
+    
+   
+  
     private List<String> extensions;
     private String desc;
 

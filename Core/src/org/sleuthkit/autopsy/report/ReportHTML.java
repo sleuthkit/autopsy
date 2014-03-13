@@ -28,44 +28,51 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.openide.filesystems.FileUtil;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-public class ReportHTML implements TableReportModule {
+ class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
+    private static final String THUMBS_REL_PATH = "thumbs" + File.separator;
     private static ReportHTML instance;
+    private static final int MAX_THUMBS_PER_PAGE = 1000;
     private Case currentCase;
     private SleuthkitCase skCase;
+    static Integer THUMBNAIL_COLUMNS = 5;
     
     private Map<String, Integer> dataTypes;
     private String path;
+    private String thumbsPath;
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
@@ -91,9 +98,10 @@ public class ReportHTML implements TableReportModule {
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
         
-        dataTypes = new TreeMap<String, Integer>();
+        dataTypes = new TreeMap<>();
         
         path = "";
+        thumbsPath = "";
         currentDataType = "";
         rowCount = 0;
         
@@ -129,10 +137,10 @@ public class ReportHTML implements TableReportModule {
     {
         String iconFilePath;
         String iconFileName;
-        InputStream in = null;
+        InputStream in;
         OutputStream output = null;
         
-        logger.log(Level.INFO, "useDataTypeIcon: dataType = " + dataType);
+        logger.log(Level.INFO, "useDataTypeIcon: dataType = {0}", dataType);
         
         // find the artifact with matching display name
         BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
@@ -270,8 +278,10 @@ public class ReportHTML implements TableReportModule {
         refresh();
         // Setup the path for the HTML report
         this.path = path + "HTML Report" + File.separator;
+        this.thumbsPath = this.path + "thumbs" + File.separator;
         try {
             FileUtil.createFolder(new File(this.path));
+            FileUtil.createFolder(new File(this.thumbsPath));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to make HTML report folder.");
         }
@@ -296,39 +306,6 @@ public class ReportHTML implements TableReportModule {
             }
         }
     }
-
-    /**
-     * Start a new HTML page for the given data type. Update the output stream to this page,
-     * and setup the web page header.
-     * @param title title of the data type
-     */
-    @Override
-    public void startDataType(String title) {        
-        String fTitle = dataTypeToFileName(title);
-        // Make a new out for this page
-        try {
-            //escape out slashes tha that appear in title
-            
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + fTitle + getExtension()), "UTF-8"));
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "File not found: {0}", ex);
-        } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Unrecognized encoding");
-        }
-        
-        // Write the beginnings of a page
-        // Like <html>, header, title, any content divs
-        try {
-            StringBuilder page = new StringBuilder();
-            page.append("<html>\n<head>\n\t<title>").append(title).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
-            page.append("<div id=\"header\">").append(title).append("</div>\n<div id=\"content\">\n");
-            out.write(page.toString());
-            currentDataType = title;
-            rowCount = 0;
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write page head: {0}", ex);
-        }
-    }
     
     /**
      * Start a new HTML page for the given data type. Update the output stream to this page,
@@ -338,7 +315,8 @@ public class ReportHTML implements TableReportModule {
      * @param name Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
-    public void startDataType(String name, String comment) {
+    @Override
+    public void startDataType(String name, String description) {
         String title = dataTypeToFileName(name);
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8"));
@@ -352,9 +330,9 @@ public class ReportHTML implements TableReportModule {
             StringBuilder page = new StringBuilder();
             page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
             page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n");
-            if (!comment.isEmpty()) {
+            if (!description.isEmpty()) {
                 page.append("<p><strong>");
-                page.append(comment);
+                page.append(description);
                 page.append("</string></p>\n");
             }
             out.write(page.toString());
@@ -477,17 +455,17 @@ public class ReportHTML implements TableReportModule {
      * @param columnHeaders column headers
      * @param sourceArtifact source blackboard artifact for the table data 
      */
-    public void startTable(List<String> columnHeaders, ARTIFACT_TYPE artifactType) {
+    public void startContentTagsTable(List<String> columnHeaders) {
         StringBuilder htmlOutput = new StringBuilder();        
         htmlOutput.append("<table>\n<thead>\n\t<tr>\n");
+       
+        // Add the specified columns.
         for(String columnHeader : columnHeaders) {
             htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n");
         }
         
-        // For file tag artifacts, add a column for a hyperlink to a local copy of the tagged file.            
-        if (artifactType.equals(ARTIFACT_TYPE.TSK_TAG_FILE)) {
-            htmlOutput.append("\t\t<th></th>\n");        
-        }
+        // Add a column for a hyperlink to a local copy of the tagged content.
+        htmlOutput.append("\t\t<th></th>\n");        
         
         htmlOutput.append("\t</tr>\n</thead>\n");
         
@@ -527,20 +505,46 @@ public class ReportHTML implements TableReportModule {
         try {
             out.write(builder.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write row to out.");
+            logger.log(Level.SEVERE, "Failed to write row to out.", ex);
         } catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.");
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
-
+    
     /**
-     * Add a row to the current table.
+     * Saves a local copy of a tagged file and adds a row with a hyper link to 
+     * the file. The content of the hyperlink is provided in linkHTMLContent.
      * 
-     * @param row values for each cell in the row
-     * @param sourceArtifact source blackboard artifact for the table data 
+     * @param row Values for each data cell in the row
+     * @param file The file to link to in the report.
+     * @param tagName the name of the tag that the content was flagged by
+     * @param linkHTMLContent the html that will be the body of the link
      */
-    public void addRow(List<String> row, BlackboardArtifact sourceArtifact) {
-        addRowDataForSourceArtifact(row, sourceArtifact);
+    public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
+        Content content = contentTag.getContent();
+        if (content instanceof AbstractFile == false) {
+            addRow(row);
+            return;
+        }
+        
+        AbstractFile file = (AbstractFile) content;
+        // Don't make a local copy of the file if it is a directory or unallocated space.
+        if (file.isDir() ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+            row.add("");
+            return;
+        }
+
+        // save it in a folder based on the tag name
+        String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
+        
+        // Add the hyperlink to the row. A column header for it was created in startTable().
+        StringBuilder localFileLink = new StringBuilder();
+        localFileLink.append("<a href=\"");
+        localFileLink.append(localFilePath);
+        localFileLink.append("\">").append(NbBundle.getMessage(this.getClass(), "ReportHTML.link.viewFile")).append("</a>");
+        row.add(localFileLink.toString());              
         
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n");
@@ -560,91 +564,163 @@ public class ReportHTML implements TableReportModule {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
         }
     }
-        
+    
     /**
-     * Add cells particular to a type of artifact associated with the row. Assumes that the overload of startTable() that takes an artifact type was called.
-     * 
-     * @param row The row.
-     * @param sourceArtifact The artifact associated with the row. 
+     * Add the body of the thumbnails table.
+     * @param images 
      */
-    private void addRowDataForSourceArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
-        int artifactTypeID = sourceArtifact.getArtifactTypeID();
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeID);
-        switch (type) {
-            case TSK_TAG_FILE:
-                addRowDataForFileTagArtifact(row, sourceArtifact);                
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * Saves a local copy of a tagged file and adds a hyper link to the file to the row.
-     * 
-     * @param row The row.
-     * @param sourceArtifact The artifact associated with the row. 
-     */
-    private void addRowDataForFileTagArtifact(List<String> row, BlackboardArtifact sourceArtifact) {
-        try {
-            AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(sourceArtifact.getObjectID());                
-
-            // Don't make a local copy of the file if it is a directory or unallocated space.
-            if (file.isDir() ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-                file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
-                row.add("");
-                return;
+    public void addThumbnailRows(List<Content> images) {
+        List<String> currentRow = new ArrayList<>();
+        int totalCount = 0;
+        int pages = 0;
+        for (Content content : images) {
+            if (currentRow.size() == THUMBNAIL_COLUMNS) {
+                addRow(currentRow);
+                currentRow.clear();
             }
             
-            // Make a folder for the local file with the same name as the tag.
-            StringBuilder localFilePath = new StringBuilder();
-            localFilePath.append(path);
-            HashSet<String> tagNames = Tags.getUniqueTagNamesForArtifact(sourceArtifact);
-            if (!tagNames.isEmpty()) {
-                localFilePath.append(tagNames.iterator().next());
+            if (totalCount == MAX_THUMBS_PER_PAGE) {
+                // manually set the row count so the count of items shown in the 
+                // navigation page reflects the number of thumbnails instead of
+                // the number of rows.
+                rowCount = totalCount;
+                totalCount = 0;
+                pages++;
+                endTable();
+                endDataType();
+                startDataType(NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.title", pages),
+                              NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.msg"));
+                List<String> emptyHeaders = new ArrayList<>();
+                for (int i = 0; i < THUMBNAIL_COLUMNS; i++) {
+                    emptyHeaders.add("");
+                }
+                startTable(emptyHeaders);
             }
-            File localFileFolder = new File(localFilePath.toString());
-            if (!localFileFolder.exists()) { 
-                localFileFolder.mkdirs();
+            
+            if (failsContentCheck(content)) {
+                continue;
+            }
+            
+            AbstractFile file = (AbstractFile) content; 
+
+            // save copies of the orginal image and thumbnail image
+            String thumbnailPath = prepareThumbnail(file);
+            if (thumbnailPath == null) {
+                continue;
+            }
+            String contentPath = saveContent(file, "thumbs_fullsize");
+            String nameInImage;
+            try {
+                nameInImage = file.getUniquePath();
+            } catch (TskCoreException ex) {
+                nameInImage = file.getName();
+            }
+            
+            StringBuilder linkToThumbnail = new StringBuilder();
+            linkToThumbnail.append("<a href=\"");
+            linkToThumbnail.append(contentPath);
+            linkToThumbnail.append("\">");
+            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>");
+            linkToThumbnail.append("</a><br>");
+            linkToThumbnail.append(file.getName()).append("<br>");
+            
+            Services services = currentCase.getServices();
+            TagsManager tagsManager = services.getTagsManager();
+            try {
+                List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
+                if (tags.size() > 0) {
+                    linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags") );
+                }
+                for (int i = 0; i < tags.size(); i++) {
+                    ContentTag tag = tags.get(i);
+                    linkToThumbnail.append(tag.getName().getDisplayName());
+                    if (i != tags.size() - 1) {
+                        linkToThumbnail.append(", ");
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Could not find get tags for file.", ex);
             }
 
-            // Construct a file name for the local file that incorporates the corresponding object id to ensure uniqueness.
-            String fileName = file.getName();
-            String objectIdSuffix = "_" + sourceArtifact.getObjectID();
-            int lastDotIndex = fileName.lastIndexOf(".");
-            if (lastDotIndex != -1 && lastDotIndex != 0) {
-                // The file name has a conventional extension. Insert the object id before the '.' of the extension.
-                fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
+            currentRow.add(linkToThumbnail.toString());
+            
+            totalCount++;
+        }
+        
+        if (currentRow.isEmpty() == false) {
+            int extraCells = THUMBNAIL_COLUMNS - currentRow.size();
+            for (int i = 0; i < extraCells; i++) {
+                // Finish out the row.
+                currentRow.add("");
             }
-            else {
-                // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
-                // Add the object id to the end of the file name.
-                fileName += objectIdSuffix;
-            }                                
-            localFilePath.append(File.separator);
-            localFilePath.append(fileName);
-
-            // If the local file doesn't already exist, create it now. 
-            // The existence check is necessary because it is possible to apply multiple tags with the same name to a file.
-            File localFile = new File(localFilePath.toString());
-            if (!localFile.exists()) {
-                ExtractFscContentVisitor.extract(file, localFile, null, null);
-            }
-
-            // Add the hyperlink to the row. A column header for it was created in startTable().
-            StringBuilder localFileLink = new StringBuilder();
-            localFileLink.append("<a href=\"file:///");
-            localFileLink.append(localFilePath.toString());
-            localFileLink.append("\">View File</a>");
-            row.add(localFileLink.toString());              
-        } 
-        catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get AbstractFile by ID.", ex);
-            row.add("");
-        }                                    
+            addRow(currentRow);
+        }
+        
+        // manually set rowCount to be the total number of images.
+        rowCount = totalCount;
     }
     
+    private boolean failsContentCheck(Content c) {
+        if (c instanceof AbstractFile == false) {
+            return true;
+        }
+        AbstractFile file = (AbstractFile) c;
+        if (file.isDir() ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Save a local copy of the given file in the reports folder.
+     * @param file File to save
+     * @param dirName Custom top-level folder to use to store the files in (tag name, etc.)
+     * @return Path to where file was stored (relative to root of HTML folder)
+     */
+    public String saveContent(AbstractFile file, String dirName) {
+        // clean up the dir name passed in
+        String dirName2 = dirName.replace("/", "_");
+        dirName2 = dirName2.replace("\\", "_");
+        
+        // Make a folder for the local file with the same tagName as the tag.
+        StringBuilder localFilePath = new StringBuilder();  // full path
+        
+        localFilePath.append(path);
+        localFilePath.append(dirName2);
+        File localFileFolder = new File(localFilePath.toString());
+        if (!localFileFolder.exists()) { 
+            localFileFolder.mkdirs();
+        }
+
+        // Construct a file tagName for the local file that incorporates the file id to ensure uniqueness.
+        String fileName = file.getName();
+        String objectIdSuffix = "_" + file.getId();
+        int lastDotIndex = fileName.lastIndexOf(".");
+        if (lastDotIndex != -1 && lastDotIndex != 0) {
+            // The file tagName has a conventional extension. Insert the object id before the '.' of the extension.
+            fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
+        }
+        else {
+            // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
+            // Add the object id to the end of the file tagName.
+            fileName += objectIdSuffix;
+        }                                
+        localFilePath.append(File.separator);
+        localFilePath.append(fileName);
+
+        // If the local file doesn't already exist, create it now. 
+        // The existence check is necessary because it is possible to apply multiple tags with the same tagName to a file.
+        File localFile = new File(localFilePath.toString());
+        if (!localFile.exists()) {
+            ExtractFscContentVisitor.extract(file, localFile, null, null);
+        }
+        
+        // get the relative path
+        return localFilePath.toString().substring(path.length());
+    }
+         
     /**
      * Return a String date for the long date given.
      * @param date date as a long
@@ -665,12 +741,12 @@ public class ReportHTML implements TableReportModule {
     
     @Override
     public String getName() {
-        return "Results - HTML";
+        return NbBundle.getMessage(this.getClass(), "ReportHTML.getName.text");
     }
     
     @Override
     public String getDescription() {
-        return "An HTML formatted report, designed to be viewed in a modern browser.";
+        return NbBundle.getMessage(this.getClass(), "ReportHTML.getDesc.text");
     }
 
     
@@ -704,11 +780,11 @@ public class ReportHTML implements TableReportModule {
                          "table tr:nth-child(even) td {background: #f3f3f3;}";
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find index.css file to write to.");
+            logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex);
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Did not recognize encoding when writing index.css.");
+            logger.log(Level.SEVERE, "Did not recognize encoding when writing index.css.", ex);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for index.css.");
+            logger.log(Level.SEVERE, "Error creating Writer for index.css.", ex);
         } finally {
             try {
                 if(cssOut != null) {
@@ -728,15 +804,17 @@ public class ReportHTML implements TableReportModule {
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.html"), "UTF-8"));
             StringBuilder index = new StringBuilder();
-            index.append("<head>\n<title>Autopsy Report for case ").append(currentCase.getName()).append("</title>\n");
+            index.append("<head>\n<title>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
+                    "</title>\n");
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n");
             index.append("</head>\n");
             index.append("<frameset cols=\"350px,*\">\n");
             index.append("<frame src=\"nav.html\" name=\"nav\">\n");
             index.append("<frame src=\"summary.html\" name=\"content\">\n");
-            index.append("<noframes>Your browser is not compatible with our frame setup.<br />\n");
-            index.append("Please see <a href=\"nav.html\">the navigation page</a> for artifact links,<br />\n");
-            index.append("and <a href=\"summary.html\">the summary page</a> for a case summary.</noframes>\n");
+            index.append("<noframes>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.msg")).append("<br />\n");
+            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.seeNav")).append("<br />\n");
+            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.seeSum")).append("</noframes>\n");
             index.append("</frameset>\n");
             index.append("</html>");
             indexOut.write(index.toString());
@@ -761,10 +839,14 @@ public class ReportHTML implements TableReportModule {
         try {
             navOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "nav.html"), "UTF-8"));
             StringBuilder nav = new StringBuilder();
-            nav.append("<html>\n<head>\n\t<title>Report Navigation</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n");
-            nav.append("<div id=\"content\">\n<h1>Report Navigation</h1>\n");
+            nav.append("<html>\n<head>\n\t<title>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
+               .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n");
+            nav.append("<div id=\"content\">\n<h1>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n");
             nav.append("<ul class=\"nav\">\n");
-            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
+            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">")
+               .append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.summary")).append("</a></li>\n");
             
             for (String dataType : dataTypes.keySet()) {
                 String dataTypeEsc = dataTypeToFileName(dataType);
@@ -849,7 +931,8 @@ public class ReportHTML implements TableReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "summary.html"), "UTF-8"));
             StringBuilder head = new StringBuilder();
-            head.append("<html>\n<head>\n<title>Case Summary</title>\n");
+            head.append("<html>\n<head>\n<title>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n");
             head.append("<style type=\"text/css\">\n");
             head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n");
             head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n");
@@ -890,8 +973,11 @@ public class ReportHTML implements TableReportModule {
             final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
             
             summary.append("<div id=\"wrapper\">\n");
-            summary.append("<h1>").append(reportTitle).append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
-            summary.append("<p class=\"subheadding\">HTML Report Generated on ").append(datetime).append("</p>\n");
+            summary.append("<h1>").append(reportTitle)
+                   .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
+                   .append("</h1>\n");
+            summary.append("<p class=\"subheadding\">").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.reportGenOn.text", datetime)).append("</p>\n");
             summary.append("<div class=\"title\">\n");
             if (agencyLogoSet) {
                 summary.append("<div class=\"left\">\n");
@@ -901,15 +987,21 @@ public class ReportHTML implements TableReportModule {
             final String align = agencyLogoSet?"right":"left";
             summary.append("<div class=\"").append(align).append("\">\n");
             summary.append("<table>\n");
-            summary.append("<tr><td>Case:</td><td>").append(caseName).append("</td></tr>\n");
-            summary.append("<tr><td>Case Number:</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
-            summary.append("<tr><td>Examiner:</td><td>").append(!examiner.isEmpty() ? examiner : "<i>No examiner</i>").append("</td></tr>\n");
-            summary.append("<tr><td>Number of Images:</td><td>").append(imagecount).append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName"))
+                   .append("</td><td>").append(caseName).append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum"))
+                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>")
+                   .append(!examiner.isEmpty() ? examiner : NbBundle
+                           .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+                   .append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages"))
+                   .append("</td><td>").append(imagecount).append("</td></tr>\n");
             summary.append("</table>\n");
             summary.append("</div>\n");
             summary.append("<div class=\"clear\"></div>\n");
             summary.append("</div>\n");
-            summary.append("<h2>Image Information:</h2>\n");
+            summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.imageInfoHeading"));
             summary.append("<div class=\"info\">\n");
             try {
                 Image[] images = new Image[imagecount];
@@ -919,9 +1011,13 @@ public class ReportHTML implements TableReportModule {
                 for(Image img : images) {
                     summary.append("<p>").append(img.getName()).append("</p>\n");
                     summary.append("<table>\n");
-                    summary.append("<tr><td>Timezone:</td><td>").append(img.getTimeZone()).append("</td></tr>\n");
+                    summary.append("<tr><td>").append(
+                            NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
+                           .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n");
                     for(String imgPath : img.getPaths()) {
-                        summary.append("<tr><td>Path:</td><td>").append(imgPath).append("</td></tr>\n");
+                        summary.append("<tr><td>").append(
+                                NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
+                               .append("</td><td>").append(imgPath).append("</td></tr>\n");
                     }
                     summary.append("</table>\n");
                 }
@@ -957,4 +1053,22 @@ public class ReportHTML implements TableReportModule {
             }
         }
     }
+
+    private String prepareThumbnail(AbstractFile file) {
+        File thumbFile = ImageUtils.getIconFile(file, ImageUtils.ICON_SIZE_MEDIUM);
+        if (thumbFile.exists() == false) {
+            return null;
+        }
+        try {
+            File to = new File(thumbsPath);
+            FileObject from = FileUtil.toFileObject(thumbFile);
+            FileObject dest = FileUtil.toFileObject(to);
+            FileUtil.copyFile(from, dest, thumbFile.getName(), "");
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex);
+        }
+        
+        return THUMBS_REL_PATH + thumbFile.getName();
+    }
+
 }

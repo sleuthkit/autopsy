@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
@@ -50,7 +51,10 @@ import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Cancellable;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -73,7 +77,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private boolean gstInited;
     private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
     private static final long FRAME_CAPTURE_TIMEOUT_MILLIS = 1000;
-    private static final String MEDIA_PLAYER_ERROR_STRING = "The media player cannot process this file.";
+    private static final String MEDIA_PLAYER_ERROR_STRING = NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.cannotProcFile.err");
     //playback
     private long durationMillis = 0;
     private VideoProgressWorker videoProgressWorker;
@@ -163,15 +167,15 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         } catch (GstException e) {
             gstInited = false;
             logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", e);
-            MessageNotifyUtil.Notify.error("Error initializing gstreamer for audio/video viewing and frame extraction capabilities. "
-                    + " Video and audio viewing will be disabled. ",
+            MessageNotifyUtil.Notify.error(
+                    NbBundle.getMessage(this.getClass(), "GstVideoPanel.initGst.gstException.msg"),
                     e.getMessage());
             return false;
         } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
             gstInited = false;
             logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and extraction capabilities", e);
-            MessageNotifyUtil.Notify.error("Error initializing gstreamer for audio/video viewing frame extraction capabilities. "
-                    + " Video and audio viewing will be disabled. ",
+            MessageNotifyUtil.Notify.error(
+                    NbBundle.getMessage(this.getClass(), "GstVideoPanel.initGst.otherException.msg"),
                     e.getMessage());
             return false;
         }
@@ -186,7 +190,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         currentFile = file;
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
-            infoLabel.setText("Playback of deleted videos is not supported, use an external player.");
+            infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
             videoPanel.removeAll();
             pauseButton.setEnabled(false);
             progressSlider.setEnabled(false);
@@ -315,7 +319,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         
         // throw exception if this file is known to be problematic
         if (badVideoFiles.contains(file.getName())) {
-            throw new Exception("Cannot capture frames from this file (" + file.getName() + ").");
+            throw new Exception(
+                    NbBundle.getMessage(this.getClass(), "GstVideoPanel.exception.problemFile.msg", file.getName()));
         }
 
         // set up a PlayBin2 object
@@ -329,13 +334,13 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         if (ret == StateChangeReturn.FAILURE) {
             // add this file to the set of known bad ones
             badVideoFiles.add(file.getName());
-            throw new Exception("Problem with video file; problem when attempting to play while obtaining duration.");
+            throw new Exception(NbBundle.getMessage(this.getClass(), "GstVideoPanel.exception.problemPlay.msg"));
         }
         ret = playbin.pause();
         if (ret == StateChangeReturn.FAILURE) {
             // add this file to the set of known bad ones
             badVideoFiles.add(file.getName());
-            throw new Exception("Problem with video file; problem when attempting to pause while obtaining duration.");
+            throw new Exception(NbBundle.getMessage(this.getClass(), "GstVideoPanel.exception.problemPause.msg"));
         }
         playbin.getState();
 
@@ -361,7 +366,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             if (ret == StateChangeReturn.FAILURE) {
                 // add this file to the set of known bad ones
                 badVideoFiles.add(file.getName());
-                throw new Exception("Problem with video file; problem when attempting to pause while capturing a frame.");
+                throw new Exception(
+                        NbBundle.getMessage(this.getClass(), "GstVideoPanel.exception.problemPauseCaptFrame.msg"));
             }
             playbin.getState();
 
@@ -374,7 +380,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             if (ret == StateChangeReturn.FAILURE) {
                 // add this file to the set of known bad ones
                 badVideoFiles.add(file.getName());
-                throw new Exception("Problem with video file; problem when attempting to play while capturing a frame.");
+                throw new Exception(
+                        NbBundle.getMessage(this.getClass(), "GstVideoPanel.exception.problemPlayCaptFrame.msg"));
             }
 
             // wait for FrameCaptureRGBListener to finish
@@ -391,7 +398,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             if (ret == StateChangeReturn.FAILURE) {
                 // add this file to the set of known bad ones
                 badVideoFiles.add(file.getName());
-                throw new Exception("Problem with video file; problem when attempting to stop while capturing a frame.");
+                throw new Exception(
+                        NbBundle.getMessage(this.getClass(), "GstVideoPanel.exception.problemStopCaptFrame.msg"));
             }
             
             if (image == null) {
@@ -659,6 +667,18 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
             return null;
         }
+        
+        
+        @Override
+        protected void done() {
+            // see if any exceptions were thrown
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage());
+                infoLabel.setText("Error updating video progress: " + ex.getMessage());
+            }
+        }
     } //end class progress worker
 
     /* Thread that extracts and plays a file */
@@ -690,7 +710,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                     return ExtractMedia.this.cancel(true);
                 }
             });
-            progressLabel.setText("Buffering...  ");
+            progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
             progress.start();
             progress.switchToDeterminate(100);
             try {
@@ -723,7 +743,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
         void playMedia() {
             if (jFile == null || !jFile.exists()) {
-                progressLabel.setText("Error buffering file");
+                progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progressLabel.bufferingErr"));
                 return;
             }
             ClockTime dur = null;

@@ -48,10 +48,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.ModuleInfo;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
-import org.openide.util.LookupEvent;
-import org.openide.util.LookupListener;
+import org.openide.util.*;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.scanners.SubTypesScanner;
@@ -65,7 +62,7 @@ import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * Class responsible for discovery and loading ingest modules specified in
  * pipeline XML file. Maintains a singleton instance. Requires restart of
@@ -90,7 +87,7 @@ import org.w3c.dom.NodeList;
  * NOTE: this will be part of future IngestPipelineManager with IngestManager
  * code refactored
  */
-public final class IngestModuleLoader {
+ final class IngestModuleLoader {
 
     private static final String PIPELINE_CONFIG_XML = "pipeline_config.xml";
     private static final String XSDFILE = "PipelineConfigSchema.xsd";
@@ -605,7 +602,17 @@ public final class IngestModuleLoader {
 
             if (modulesChanged) {
                 save();
-                pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
+               
+                try {
+                    pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "IngestModuleLoader listener threw exception", e);
+                    MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestModuleLoader.moduleErr"),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "IngestModuleLoader.moduleErr.errListenUpdates.msg"),
+                                                  MessageNotifyUtil.MessageType.ERROR);
+                }
             }
 
             /*
@@ -626,7 +633,8 @@ public final class IngestModuleLoader {
      * @param newOrder new order to set
      */
     void setModuleOrder(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException {
-        throw new IngestModuleLoaderException("Not yet implemented");
+        throw new IngestModuleLoaderException(
+                NbBundle.getMessage(this.getClass(), "IngestModuleLoader.exception.notImplemented.msg"));
     }
 
     /**
@@ -658,7 +666,9 @@ public final class IngestModuleLoader {
             }
         }
         if (pipeline == null) {
-            throw new IngestModuleLoaderException("Could not find expected pipeline of type: " + pipelineType.toString() + ", cannot add autodiscovered module: " + moduleLocation);
+            throw new IngestModuleLoaderException(
+                    NbBundle.getMessage(this.getClass(), "IngestModuleLoader.exception.cantFindPipeline.msg",
+                                        pipelineType.toString(), moduleLocation));
         } else {
             pipeline.modules.add(modRaw);
             logger.log(Level.INFO, "Added a new module " + moduleClass.getName() + " to pipeline " + pipelineType.toString());
@@ -699,8 +709,9 @@ public final class IngestModuleLoader {
             Document doc = docBuilder.newDocument();
 
 
-            Comment comment = doc.createComment("Saved by: " + getClass().getName()
-                    + " on: " + dateFormatter.format(System.currentTimeMillis()));
+            Comment comment = doc.createComment(
+                    NbBundle.getMessage(this.getClass(), "IngestModuleLoader.save.comment.text", getClass().getName(),
+                                        dateFormatter.format(System.currentTimeMillis())));
             doc.appendChild(comment);
             Element rootEl = doc.createElement(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_ROOT);
             doc.appendChild(rootEl);
@@ -878,18 +889,23 @@ public final class IngestModuleLoader {
     private void loadRawPipeline() throws IngestModuleLoaderException {
         final Document doc = XMLUtil.loadDoc(IngestModuleLoader.class, absFilePath, XSDFILE);
         if (doc == null) {
-            throw new IngestModuleLoaderException("Could not load pipeline config XML: " + this.absFilePath);
+            throw new IngestModuleLoaderException(
+                    NbBundle.getMessage(this.getClass(), "IngestModuleLoader.loadRawPipeline.exception.cantLoadXML.msg",
+                                        this.absFilePath));
         }
         Element root = doc.getDocumentElement();
         if (root == null) {
-            String msg = "Error loading pipeline configuration: invalid file format.";
+            String msg = NbBundle
+                    .getMessage(this.getClass(), "IngestModuleLoader.loadRawPipeline.exception.invalidFileFormat.msg");
             logger.log(Level.SEVERE, msg);
             throw new IngestModuleLoaderException(msg);
         }
         NodeList pipelineNodes = root.getElementsByTagName(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_EL);
         int numPipelines = pipelineNodes.getLength();
         if (numPipelines == 0) {
-            throw new IngestModuleLoaderException("No pipelines found in the pipeline configuration: " + absFilePath);
+            throw new IngestModuleLoaderException(NbBundle.getMessage(this.getClass(),
+                                                                      "IngestModuleLoader.loadRawPipeline.exception.noPipelinesInConf.msg",
+                                                                      absFilePath));
         }
         for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
             //process pipelines
@@ -1019,7 +1035,8 @@ public final class IngestModuleLoader {
                     return types[i];
                 }
             }
-            throw new IllegalArgumentException("No PIPELINE_TYPE for string: " + s);
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestModuleLoader.class, "IngestModuleLoader.exception.noPipelineTypeForStr.msg", s));
         }
         private static final String XML_PIPELINE_ROOT = "PIPELINE_CONFIG";
         private static final String XML_PIPELINE_EL = "PIPELINE";

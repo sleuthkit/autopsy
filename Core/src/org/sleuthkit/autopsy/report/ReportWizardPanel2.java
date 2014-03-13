@@ -24,18 +24,19 @@ import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 
-public class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private ReportVisualPanel2 component;
     private JButton finishButton;
     private JButton nextButton;
     private WizardDescriptor wiz;
     
     ReportWizardPanel2() {
-        finishButton = new JButton("Finish");
+        finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.finishButton.text"));
         
-        nextButton = new JButton("Next >");
+        nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.nextButton.text"));
         nextButton.setEnabled(true);
         
         nextButton.addActionListener(new ActionListener() {

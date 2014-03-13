@@ -24,6 +24,8 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -33,11 +35,12 @@ import javax.swing.JFrame;
 /**
  * File search dialog
  */
-public class FileSearchDialog extends javax.swing.JDialog {
+ class FileSearchDialog extends javax.swing.JDialog {
 
     /** Creates new form FileSearchDialog */
     public FileSearchDialog() {
-        super(new JFrame("File Search by Attributes"), "File Search by Attributes", true);
+        super(new JFrame(NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.title")),
+              NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.msg"), true);
         initComponents();
 
         setResizable(false);

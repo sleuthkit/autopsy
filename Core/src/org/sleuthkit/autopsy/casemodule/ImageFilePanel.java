@@ -21,42 +21,74 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
+
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
-public class ImageFilePanel extends ContentTypePanel implements DocumentListener {
-    private static ImageFilePanel instance = null;
+public class ImageFilePanel extends JPanel implements DocumentListener {
+    
+    private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
+    private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
+    
+    // Externally supplied name is used to store settings 
+    private String contextName;
 
     /**
      * Creates new form ImageFilePanel
+     * @param context a string context name used to read/store last used settings
+     * @param fileChooserFilters a list of filters to be used with the FileChooser
      */
-    public ImageFilePanel() {
+    private ImageFilePanel(String context, List<FileFilter> fileChooserFilters) {
         initComponents();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.rawFilter);
-        fc.addChoosableFileFilter(AddImageWizardChooseDataSourceVisual.encaseFilter);
-        fc.setFileFilter(AddImageWizardChooseDataSourceVisual.allFilter);
+        
+        boolean firstFilter = true;
+        for (FileFilter filter: fileChooserFilters ) {
+            if (firstFilter) {  // set the first on the list as the default selection
+                fc.setFileFilter(filter);
+                firstFilter = false;
+            } 
+            else {
+                fc.addChoosableFileFilter(filter);
+            }
+        }
+        
+        this.contextName = context;
+        pcs = new PropertyChangeSupport(this);
+        
+        createTimeZoneList();
     }
     
     /**
-     * Returns the default instance of a ImageFilePanel.
+     * Creates and returns an instance of a ImageFilePanel.
      */
-    public static synchronized ImageFilePanel getDefault() {
-        if (instance == null) {
-            instance = new ImageFilePanel();
-	    instance.postInit();
-        }
-        return instance;
+    public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
+        
+       ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters );
+       
+       instance.postInit();
+        
+       return instance;
     }
 
     //post-constructor initialization to properly initialize listener support
@@ -79,6 +111,10 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
         pathLabel = new javax.swing.JLabel();
         browseButton = new javax.swing.JButton();
         pathTextField = new javax.swing.JTextField();
+        timeZoneLabel = new javax.swing.JLabel();
+        timeZoneComboBox = new javax.swing.JComboBox<String>();
+        noFatOrphansCheckbox = new javax.swing.JCheckBox();
+        descLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -94,6 +130,15 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
 
         pathTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathTextField.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.timeZoneLabel.text")); // NOI18N
+
+        timeZoneComboBox.setMaximumRowCount(30);
+
+        org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.text")); // NOI18N
+        noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.descLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -104,8 +149,17 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
                 .addComponent(browseButton)
                 .addGap(2, 2, 2))
             .addGroup(layout.createSequentialGroup()
-                .addComponent(pathLabel)
-                .addGap(0, 284, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(timeZoneLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(pathLabel)
+                    .addComponent(noFatOrphansCheckbox)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(descLabel)))
+                .addGap(0, 20, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -114,7 +168,16 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseButton)
-                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(timeZoneLabel)
+                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(noFatOrphansCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descLabel)
+                .addContainerGap(33, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -131,20 +194,34 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
             String path = fc.getSelectedFile().getPath();
             pathTextField.setText(path);
         }
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.FOCUS_NEXT.toString(), false, true);
+        
+      
+            
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
+        }
     }//GEN-LAST:event_browseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.JLabel descLabel;
+    private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
+    private javax.swing.JComboBox<String> timeZoneComboBox;
+    private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
         
     /**
      * Get the path of the user selected image.
      * @return the image path
      */
-    @Override
     public String getContentPaths() {
         return pathTextField.getText();
     }
@@ -152,33 +229,37 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
     /**
      * Set the path of the image file.
      */
-    @Override
     public void setContentPath(String s) {
         pathTextField.setText(s);
     }
 
-    @Override
-    public ContentType getContentType() {
-        return ContentType.IMAGE;
+    public String getTimeZone() {
+        String tz = timeZoneComboBox.getSelectedItem().toString();
+        return tz.substring(tz.indexOf(")") + 2).trim();
+        
     }
+    
+    public boolean getNoFatOrphans() {
+        return noFatOrphansCheckbox.isSelected();
+    }
+     
+    
 
-    @Override
     public void reset() {
-        //nothing to reset
+        //reset the UI elements to default 
+        pathTextField.setText(null);  
     }
     
-    
-
     /**
      * Should we enable the next button of the wizard?
      * @return true if a proper image has been selected, false otherwise
      */
-    @Override
-    public boolean enableNext() {
+    public boolean validatePanel() {
         String path = getContentPaths();
         if (path == null || path.isEmpty()) {
             return false;
         }
+        
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
         boolean isPartition = Case.isPartition(path);
@@ -186,6 +267,57 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
         return (isExist || isPhysicalDrive || isPartition);
     }
 
+
+    public void storeSettings() {
+        String imagePathName = getContentPaths();
+        if (null != imagePathName ) {
+            String imagePath = imagePathName.substring(0, imagePathName.lastIndexOf(File.separator) + 1);
+            ModuleSettings.setConfigSetting(contextName, PROP_LASTIMAGE_PATH, imagePath);
+        }
+    }
+    
+    public void readSettings() {
+        String lastImagePath = ModuleSettings.getConfigSetting(contextName, PROP_LASTIMAGE_PATH);
+        if (null != lastImagePath) {
+            if (!lastImagePath.isEmpty())
+                 pathTextField.setText(lastImagePath);  
+        }  
+    }
+    /**
+     * Creates the drop down list for the time zones and then makes the local
+     * machine time zone to be selected.
+     */
+     public void createTimeZoneList() {
+        // load and add all timezone
+        String[] ids = SimpleTimeZone.getAvailableIDs();
+        for (String id : ids) {
+            TimeZone zone = TimeZone.getTimeZone(id);
+            int offset = zone.getRawOffset() / 1000;
+            int hour = offset / 3600;
+            int minutes = (offset % 3600) / 60;
+            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+
+            /*
+             * DateFormat dfm = new SimpleDateFormat("z");
+             * dfm.setTimeZone(zone); boolean hasDaylight =
+             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
+             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
+             * = hour * -1; String result = first + Integer.toString(mid);
+             * if(hasDaylight){ result = result + second; }
+             * timeZoneComboBox.addItem(item + " (" + result + ")");
+             */
+            timeZoneComboBox.addItem(item);
+        }
+        // get the current timezone
+        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
+        int thisOffset = thisTimeZone.getRawOffset() / 1000;
+        int thisHour = thisOffset / 3600;
+        int thisMinutes = (thisOffset % 3600) / 60;
+        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
+
+        // set the selected timezone
+        timeZoneComboBox.setSelectedItem(formatted);
+    }
     /**
      * Update functions are called by the pathTextField which has this set
      * as it's DocumentEventListener. Each update function fires a property change
@@ -194,34 +326,52 @@ public class ImageFilePanel extends ContentTypePanel implements DocumentListener
      */
     @Override
     public void insertUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     @Override
-    public void removeUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+    public void removeUpdate(DocumentEvent e) { 
+        try {
+             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        
+        try {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        }
+        catch (Exception ee) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
+        }
     }
     
     /**
      * Set the focus to the pathTextField.
      */
-    @Override
     public void select() {
         pathTextField.requestFocusInWindow();
     }
     
-    /**
-     * @return the string form of this panel
-     */
-    @Override
-    public String toString() {
-        return "Image File";
-    }
     
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {

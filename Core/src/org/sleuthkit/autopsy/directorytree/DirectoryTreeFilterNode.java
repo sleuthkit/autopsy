@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,7 +47,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class DirectoryTreeFilterNode extends FilterNode {
 
-    private static final Action collapseAll = new CollapseAction("Collapse All");
+    private static final Action collapseAll = new CollapseAction(
+            NbBundle.getMessage(DirectoryTreeFilterNode.class, "DirectoryTreeFilterNode.action.collapseAll.text"));
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
 
     /**
@@ -90,7 +92,7 @@ class DirectoryTreeFilterNode extends FilterNode {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         final Content content = this.getLookup().lookup(Content.class);
         if (content != null) {
@@ -101,22 +103,24 @@ class DirectoryTreeFilterNode extends FilterNode {
             if (dir != null) {
                 actions.add(ExtractAction.getInstance());
             }
-            
+
             // file search action
             final Image img = this.getLookup().lookup(Image.class);
             if (img != null) {
-                actions.add(new FileSearchAction("Open File Search by Attributes"));
+                actions.add(new FileSearchAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
             }
-            
+
             //ingest action
-             actions.add(new AbstractAction("Run Ingest Modules") {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        final IngestDialog ingestDialog = new IngestDialog();
-                        ingestDialog.setContent(Collections.<Content>singletonList(content));
-                        ingestDialog.display();
-                    }
-                });
+            actions.add(new AbstractAction(
+                    NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final IngestDialog ingestDialog = new IngestDialog();
+                    ingestDialog.setContent(Collections.<Content>singletonList(content));
+                    ingestDialog.display();
+                }
+            });
         }
 
         //check if delete actions should be added
@@ -131,7 +135,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     }
 
     private static List<Action> getDeleteActions(DisplayableItemNode original) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
         //actions.addAll(original.accept(getDeleteActionVisitor));
         return actions;
     }

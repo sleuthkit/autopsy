@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
-public class KeywordSearchUtil {
+class KeywordSearchUtil {
 
     public enum DIALOG_MESSAGE_TYPE {
 

@@ -31,6 +31,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -38,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Action to open the New Case wizard.
  */
-public final class NewCaseWizardAction extends CallableSystemAction {
+ final class NewCaseWizardAction extends CallableSystemAction {
 
     private WizardDescriptor.Panel<WizardDescriptor>[] panels;
     
@@ -52,8 +53,12 @@ public final class NewCaseWizardAction extends CallableSystemAction {
         // there's a case open
         if (Case.existsCurrentCase()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
-            String closeCurrentCase = "Do you want to save and close this case and proceed with the new case creation?";
-            NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase, "Warning: Closing the Current Case", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            String closeCurrentCase = NbBundle
+                    .getMessage(this.getClass(), "NewCaseWizardAction.closeCurCase.confMsg.msg");
+            NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                                                                   NbBundle.getMessage(this.getClass(),
+                                                                                       "NewCaseWizardAction.closeCurCase.confMsg.title"),
+                                                                   NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             d.setValue(NotifyDescriptor.NO_OPTION);
 
             Object res = DialogDisplayer.getDefault().notify(d);
@@ -77,7 +82,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
         WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
-        wizardDescriptor.setTitle("New Case Information");
+        wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
         Dialog dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         dialog.setVisible(true);
         dialog.toFront();
@@ -149,7 +154,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return "New Case Wizard";
+        return NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.getName.text");
     }
 
     @Override

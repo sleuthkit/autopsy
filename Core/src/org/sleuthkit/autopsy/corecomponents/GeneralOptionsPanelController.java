@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,19 +24,22 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
-@OptionsPanelController.TopLevelRegistration(
-    categoryName = "#OptionsCategory_Name_General",
-iconBase = "org/sleuthkit/autopsy/corecomponents/display-options.png",
-position = 1,
-keywords = "#OptionsCategory_Keywords_General",
-keywordsCategory = "General")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_General=Display", "OptionsCategory_Keywords_General=display"})
+@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_General",
+        iconBase = "org/sleuthkit/autopsy/corecomponents/display-options.png",
+        position = 1,
+        keywords = "#OptionsCategory_Keywords_General",
+        keywordsCategory = "General")
 public final class GeneralOptionsPanelController extends OptionsPanelController {
 
     private GeneralPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
+    private static final Logger logger = Logger.getLogger(GeneralOptionsPanelController.class.getName());
 
     @Override
     public void update() {
@@ -52,7 +55,6 @@ public final class GeneralOptionsPanelController extends OptionsPanelController 
 
     @Override
     public void cancel() {
-        // need not do anything special, if no changes have been persisted yet
     }
 
     @Override
@@ -67,7 +69,7 @@ public final class GeneralOptionsPanelController extends OptionsPanelController 
 
     @Override
     public HelpCtx getHelpCtx() {
-        return null; // new HelpCtx("...ID") if you have a help set
+        return null;
     }
 
     @Override
@@ -95,8 +97,26 @@ public final class GeneralOptionsPanelController extends OptionsPanelController 
     void changed() {
         if (!changed) {
             changed = true;
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+
+            try {
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "GeneralOptionsPanelController listener threw exception", e);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+
+        try {
+            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "GeneralOptionsPanelController listener threw exception", e);
+            MessageNotifyUtil.Notify.show(
+                    NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 }

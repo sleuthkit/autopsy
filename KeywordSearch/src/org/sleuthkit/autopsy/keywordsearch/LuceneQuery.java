@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskException;
  * Performs a normal string (i.e. non-regexp) query to SOLR/Lucene.
  * By default, matches in all fields. 
  */
-public class LuceneQuery implements KeywordSearchQuery {
+class LuceneQuery implements KeywordSearchQuery {
 
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
     private String keywordString; //original unescaped query
@@ -98,6 +98,13 @@ public class LuceneQuery implements KeywordSearchQuery {
         this.field = field;
     }
 
+    @Override
+    public void setSubstringQuery() {
+        // Note that this is not a full substring search. Normally substring
+        // searches will be done with TermComponentQuery objects instead.
+        keywordStringEscaped = keywordStringEscaped + "*";
+    }    
+    
     @Override
     public void escape() {
         keywordStringEscaped = KeywordSearchUtil.escapeLuceneQuery(keywordString);

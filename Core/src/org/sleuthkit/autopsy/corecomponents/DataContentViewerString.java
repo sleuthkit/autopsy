@@ -24,6 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -286,8 +288,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             pageNumber = maxPage + 1;
         }
         if (pageNumber > maxPage || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + maxPage,
-                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataContentViewerString.goToPageTextField.msgDlg",
+                                                              maxPage),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataContentViewerString.goToPageTextField.err"),
+                                          JOptionPane.WARNING_MESSAGE);
             return;
         }
         currentOffset = (pageNumber - 1) * pageLength;
@@ -322,14 +329,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
-    @Deprecated
-    public void setDataView(Content dataSource, long offset, boolean reset) {
-        if (reset) {
-            resetComponent();
-            return;
-        }
-        setDataView(dataSource, offset);
-    }
     
     /**
      * Sets the DataView (The tabbed panel)
@@ -354,8 +353,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             try {
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
-                text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
-                        + " could not be read)";
+                text = NbBundle.getMessage(this.getClass(),
+                                           "DataContentViewerString.setDataView.errorText", currentOffset,
+                                           currentOffset + pageLength);
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex);
             }
         }
@@ -367,12 +367,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
             text = res.getText();
             if (text.trim().isEmpty()) {
-                text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
-                        + " contains no text)";
+                text = NbBundle.getMessage(this.getClass(),
+                                           "DataContentViewerString.setDataView.errorNoText", currentOffset,
+                                           currentOffset + pageLength);
             }
         } else {
-            text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
-                    + " could not be read)";
+            text = NbBundle.getMessage(this.getClass(), "DataContentViewerString.setDataView.errorText", currentOffset,
+                                       currentOffset + pageLength);
         }
 
         // disable or enable the next button
@@ -398,6 +399,30 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         outputViewPane.moveCaretPosition(0);
 
         this.setCursor(null);
+    }
+    
+    private void setDataView(StringContent dataSource) {
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            this.dataSource = null;
+
+            // set the data on the bottom and show it
+            String text = dataSource.getString();
+
+            nextPageButton.setEnabled(false);
+
+            prevPageButton.setEnabled(false);
+            currentPage = 1;
+
+            int totalPage = 1;
+            totalPageLabel.setText(Integer.toString(totalPage));
+            currentPageLabel.setText(Integer.toString(currentPage));
+            outputViewPane.setText(text); // set the output view
+            setComponentsVisibility(true); // shows the components that not needed
+            outputViewPane.moveCaretPosition(0);
+        } finally {
+            this.setCursor(null);
+        }
     }
 
     /**
@@ -443,12 +468,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     @Override
     public String getTitle() {
-        return "Strings";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays ASCII and Unicode strings extracted from the file.";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.toolTip");
     }
 
     @Override
@@ -484,12 +509,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
-        if (node != null && isSupported) {
-            return 1;
-        } else {
-            return 0;
-        }
+    public int isPreferred(Node node) {
+        return 1;
     }
 
     @Override
@@ -497,29 +518,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         return this;
     }
 
-    private void setDataView(StringContent dataSource) {
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            this.dataSource = null;
-
-            // set the data on the bottom and show it
-            String text = dataSource.getString();
-
-            nextPageButton.setEnabled(false);
-
-            prevPageButton.setEnabled(false);
-            currentPage = 1;
-
-            int totalPage = 1;
-            totalPageLabel.setText(Integer.toString(totalPage));
-            currentPageLabel.setText(Integer.toString(currentPage));
-            outputViewPane.setText(text); // set the output view
-            setComponentsVisibility(true); // shows the components that not needed
-            outputViewPane.moveCaretPosition(0);
-        } finally {
-            this.setCursor(null);
-        }
-    }
 
     /* Show the right click menu only if evt is the correct mouse event */
     private void maybeShowPopup(java.awt.event.MouseEvent evt) {

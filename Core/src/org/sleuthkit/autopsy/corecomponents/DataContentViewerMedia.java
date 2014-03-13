@@ -24,12 +24,14 @@ import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -133,7 +135,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
-            } else if (imagePanelInited && Utilities.isJpegFileHeader(file)) {
+            } else if (imagePanelInited && ImageUtils.isJpegFileHeader(file)) {
 
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
@@ -164,12 +166,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public String getTitle() {
-        return "Media";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerMedia.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays supported multimedia files (images, videos, audio)";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerMedia.toolTip");
     }
 
     @Override
@@ -208,7 +210,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             if (containsExt(name, imageExtensions)) {
                 return true;
             }
-            else if (Utilities.isJpegFileHeader(file)) {
+            else if (ImageUtils.isJpegFileHeader(file)) {
                 return true;
             }
             //for gstreamer formats, check if initialized first, then
@@ -226,25 +228,22 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     @Override
-    public int isPreferred(Node node, boolean isSupported) {
-        if (isSupported) {
-            //special case, check if deleted video, then do not make it preferred
-            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (file == null) {
-                return 0;
-            }
-            String name = file.getName().toLowerCase();
-            boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-
-            if (containsExt(name, videoExtensions) && deleted) {
-                return 0;
-            } 
-            else {
-                return 7;
-            }
-        } else {
+    public int isPreferred(Node node) {
+        //special case, check if deleted video, then do not make it preferred
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
             return 0;
         }
+        String name = file.getName().toLowerCase();
+        boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+
+        if (containsExt(name, videoExtensions) && deleted) {
+            return 0;
+        } 
+        else {
+            return 7;
+        }
+        
     }
 
     private static boolean containsExt(String name, String[] exts) {

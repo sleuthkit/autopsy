@@ -34,9 +34,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
+ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
     private ReportWizardPanel1 wizPanel;
     private List<ReportModule> modules = new ArrayList<>();
@@ -76,6 +77,16 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
         Collections.sort(modules, new Comparator<ReportModule>() {
             @Override
             public int compare(ReportModule rm1, ReportModule rm2) {
+                // our theory is that the report table modules are more common, so they go on top
+                boolean rm1isTable = (rm1 instanceof TableReportModule);
+                boolean rm2isTable = (rm2 instanceof TableReportModule);
+                if (rm1isTable && !rm2isTable) {
+                    return -1;
+                }
+                if (!rm1isTable && rm2isTable) {
+                    return 1;
+                }
+                
                 return rm1.getName().compareTo(rm2.getName());
             }
         });
@@ -89,7 +100,7 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
 
     @Override
     public String getName() {
-        return "Select and Configure Report Modules";
+        return NbBundle.getMessage(this.getClass(), "ReportVisualPanel1.getName.text");
     }
     
     public ReportModule getSelectedModule() {
@@ -207,10 +218,10 @@ public final class ReportVisualPanel1 extends JPanel implements ListSelectionLis
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(modulesScrollPane))
+                        .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents

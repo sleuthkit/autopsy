@@ -25,8 +25,11 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -36,6 +39,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -59,7 +63,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * responsible for assembling nodes and columns in the right way
  * and performing lazy queries as needed
  */
-public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
+class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
     //common properties (superset of all Node properties) to be displayed as columns
     //these are merged with FsContentPropertyType defined properties
@@ -147,7 +151,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isLiteral()));
                 ResultCollapsedChildFactory childFactory = new ResultCollapsedChildFactory(thing);
                 childFactory.createKeysForFlatNodes(toPopulate);
             }            
@@ -172,7 +176,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isLiteral()));
                 toPopulate.add(thing);
             }
         }
@@ -253,7 +257,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 listName = list.getName();
             }
 
-            final boolean literal_query = tcq.isEscaped();
+            final boolean literal_query = tcq.isLiteral();
 
             int resID = 0;
             for(ContentHit chit : tcqRes.get(tcq.getQueryString())) {
@@ -354,7 +358,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false, hits);
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isLiteral(), false, hits);
             return new KeywordSearchFilterNode(highlights, kvNode, queryStr, previewChunk);
         }
     }
@@ -445,7 +449,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
-                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped(), hits);
+                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isLiteral(), hits);
                 return new KeywordSearchFilterNode(highlights, kvNode, query, previewChunk);
             }
         }
@@ -534,7 +538,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             try {
                 final String queryStr = query.getQueryString();
                 final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
-                progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
+                progress = ProgressHandleFactory.createHandle(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
 
                     @Override
                     public boolean cancel() {
@@ -577,6 +582,16 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
 
             return null;
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                // test if any exceptions were thrown
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error querying ", ex);
+            }
         }
 
         private static synchronized void registerWriter(ResultWriter writer) {

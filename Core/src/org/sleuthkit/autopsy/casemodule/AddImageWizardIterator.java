@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.NbBundle;
 
 /**
  * The iterator class for the "Add Image" wizard panel. This class is used to
@@ -47,11 +48,16 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
      */
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
         if (panels == null) {
-            AddImageWizardAddingProgressPanel wizPanel = new AddImageWizardAddingProgressPanel();
             panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
-            panels.add(new AddImageWizardChooseDataSourcePanel());
-            panels.add(new AddImageWizardIngestConfigPanel(action, wizPanel));
-            panels.add(wizPanel);
+            
+            AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
+            
+            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
+            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
+            
+            panels.add(dsPanel);
+            panels.add(ingestConfigPanel);
+            panels.add(progressPanel);
 
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
@@ -107,7 +113,8 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
      */
     @Override
     public String name() {
-        return "Step " + Integer.toString(index + 1) + " of " + getPanels().size();
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardIterator.stepXofN", Integer.toString(index + 1),
+                                   getPanels().size());
     }
 
     /**

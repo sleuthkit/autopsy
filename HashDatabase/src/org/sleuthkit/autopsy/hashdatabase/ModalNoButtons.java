@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011 - 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JOptionPane;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.TskException;
+
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 
 /**
  * This class exists as a stop-gap measure to force users to have an indexed database.
@@ -42,7 +42,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     List<HashDb> unindexed;
     HashDb toIndex;
-    HashDbManagementPanel hdbmp;
+    HashDbConfigPanel hdbmp;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -53,8 +53,8 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed the list of unindexed databases to index.
      */
-    ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
-        super(parent, "Indexing databases", true);
+    ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
+        super(parent, NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.indexingDbsTitle"), true);
         this.unindexed = unindexed;
         this.toIndex = null;
         this.hdbmp = hdbmp;
@@ -68,8 +68,8 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed The unindexed database to index.
      */
-     ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
-        super(parent, "Indexing database", true);
+     ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
+        super(parent, NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.indexingDbTitle"), true);
         this.unindexed = null;
         this.toIndex = unindexed;
         this.hdbmp = hdbmp;
@@ -165,15 +165,15 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param evt mouse click event
      */
     private void CANCEL_BUTTONMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_CANCEL_BUTTONMouseClicked
-        // TODO add your handling code here:
-        String message = "You are about to exit out of indexing your hash databases. \n"
-                + "The generated index will be left unusable. If you choose to continue,\n "
-                + "please delete the corresponding -md5.idx file in the hash folder.\n"
-                + "                                                Exit indexing?";
+        String message = NbBundle.getMessage(this.getClass(), "ModalNoButtons.exitHashDbIndexingMsg");
 
-        int res = JOptionPane.showConfirmDialog(this, message, "Unfinished Indexing", JOptionPane.YES_NO_OPTION);
+        int res = JOptionPane.showConfirmDialog(this,
+                                                message,
+                                                NbBundle.getMessage(this.getClass(),
+                                                                    "ModalNoButtons.dlgTitle.unfinishedIndexing"),
+                                                JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
-            List<HashDb> remove = new ArrayList<HashDb>();
+            List<HashDb> remove = new ArrayList<>();
             if(this.toIndex == null){
                 remove = this.unindexed;
             }
@@ -203,17 +203,14 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      */
     private void indexThis() {
         this.INDEXING_PROGBAR.setIndeterminate(true);
-        currentDb = this.toIndex.getName();
+        currentDb = this.toIndex.getHashSetName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
         this.length = 1;
-        this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
+        this.CURRENTLYON_LABEL.setText(
+                NbBundle.getMessage(this.getClass(), "ModalNoButtons.indexThis.currentlyIndexing1Db"));
         if (!this.toIndex.isIndexing()) {
             this.toIndex.addPropertyChangeListener(this);
-            try {
-                this.toIndex.createIndex();
-            } catch (TskException se) {
-                Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", se);
-            }
+            HashDbManager.getInstance().indexHashDatabase(toIndex);
         }
     }
     
@@ -224,16 +221,13 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         length = this.unindexed.size();
         this.INDEXING_PROGBAR.setIndeterminate(true);
         for (HashDb db : this.unindexed) {
-            currentDb = db.getName();
+            currentDb = db.getHashSetName();
             this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
-            this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + length);
+            this.CURRENTLYON_LABEL.setText(
+                    NbBundle.getMessage(this.getClass(), "ModalNoButtons.indexThese.currentlyIndexing1OfNDbs", length));
             if (!db.isIndexing()) {
                 db.addPropertyChangeListener(this);
-                try {
-                    db.createIndex();
-                } catch (TskException e) {
-                    Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
-                }
+                HashDbManager.getInstance().indexHashDatabase(db);
             }
         }
     }
@@ -250,7 +244,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * Displays the current count of indexing when one is completed, or kills this dialog if all indexing is complete.
      */
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.name())) {
+        if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.name())) {
             if (currentcount >= length) {
                 this.INDEXING_PROGBAR.setValue(100);
                 this.setModal(false);
@@ -258,9 +252,10 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 this.dispose();
             } else {
                 currentcount++;
-                this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);
-                
+                this.CURRENTLYON_LABEL.setText(
+                        NbBundle.getMessage(this.getClass(), "ModalNoButtons.propChg.currentlyIndexingXofN",
+                                            currentcount, length));
             }
         }
-    }
+    }    
 }

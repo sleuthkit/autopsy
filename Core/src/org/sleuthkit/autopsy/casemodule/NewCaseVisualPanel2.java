@@ -24,11 +24,13 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.openide.util.NbBundle;
+
 /**
  *
  * @author dfickling
  */
-public class NewCaseVisualPanel2 extends javax.swing.JPanel {
+ class NewCaseVisualPanel2 extends javax.swing.JPanel {
 
     /** Creates new form NewCaseVisualPanel2 */
     public NewCaseVisualPanel2() {
@@ -43,7 +45,7 @@ public class NewCaseVisualPanel2 extends javax.swing.JPanel {
      */
     @Override
     public String getName() {
-        return "Additional Information";
+        return NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel2.getName.text");
     }
 
     /** This method is called from within the constructor to

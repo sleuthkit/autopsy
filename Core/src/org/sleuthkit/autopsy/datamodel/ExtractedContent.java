@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Parent of the "extracted content" artifacts to be displayed in the tree.  Other
  * artifacts are displayed under other more specific parents. 
  */
-public class ExtractedContent implements AutopsyVisitableItem{
+ class ExtractedContent implements AutopsyVisitableItem{
 
     SleuthkitCase skCase;
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -27,6 +29,8 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -50,6 +54,49 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
+    private DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+    
+    public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
+        return dspProgressMonitorImpl;
+    }
+            
+    private class DSPProgressMonitorImpl implements DataSourceProcessorProgressMonitor {
+        @Override
+        public void setIndeterminate(final boolean indeterminate) {
+              // update the progress bar asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().getProgressBar().setIndeterminate(indeterminate);
+                    }
+                });
+        }
+        
+        @Override
+        public void setProgress(final int progress)  {
+              // update the progress bar asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().getProgressBar().setValue(progress);
+                    }
+                });      
+        }
+        
+        @Override
+        public void setProgressText(final String text) {
+            // update the progress UI asynchronously
+              EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                         getComponent().setProgressMsgText(text);
+                    }
+                });      
+        }
+        
+        
+        
+    }
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
@@ -90,7 +137,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     public boolean isValid() {
         // set the focus to the next button of the wizard dialog if it's enabled
         if (imgAdded) {
-            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton("Next >");
+            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressPanel.isValid.focusNext"));
         }
 
         return imgAdded;
@@ -101,7 +149,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
      */
     void setStateStarted() {
         component.getProgressBar().setIndeterminate(true);
-        component.setProgressBarTextAndColor("*This process may take some time for large data sources.", 0, Color.black);
+        component.setProgressBarTextAndColor(
+                NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressPanel.stateStarted.progressBarText"), 0, Color.black);
     }
 
     /**

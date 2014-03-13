@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -31,7 +33,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Wrapper over InputStream that implements ContentStream to feed to Solr.
  */
-public class AbstractFileStringContentStream implements ContentStream {
+ class AbstractFileStringContentStream implements ContentStream {
     //input
 
     private AbstractFile content;
@@ -69,12 +71,13 @@ public class AbstractFileStringContentStream implements ContentStream {
     @Override
     public Long getSize() {
         //return convertedLength;
-        throw new UnsupportedOperationException("Cannot tell how many chars in converted string, until entire string is converted");
+        throw new UnsupportedOperationException(
+                NbBundle.getMessage(this.getClass(), "AbstractFileStringContentStream.getSize.exception.msg"));
     }
 
     @Override
     public String getSourceInfo() {
-        return "File:" + content.getId();
+        return NbBundle.getMessage(this.getClass(), "AbstractFileStringContentStream.getSrcInfo.text", content.getId());
     }
 
     @Override

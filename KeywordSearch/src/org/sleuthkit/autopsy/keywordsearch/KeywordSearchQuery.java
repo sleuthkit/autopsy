@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * engines or methods of using the same engine.   One of these
  * is created for each query. 
  */
-public interface KeywordSearchQuery {
+interface KeywordSearchQuery {
 
     /**
      * validate the query pre execution
@@ -61,6 +61,11 @@ public interface KeywordSearchQuery {
      */
     public void setField(String field);
     
+    /**
+     * Modify the query string to be searched as a substring instead of a whole word
+     * @param isSubstring 
+     */
+    public void setSubstringQuery();
     
     /**
      * escape the query string and use the escaped string in the query

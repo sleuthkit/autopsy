@@ -24,6 +24,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -35,7 +37,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Searches for files by md5 hash, based off the hash given in this panel.
  */
-public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
+ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
     private static final Logger logger = Logger.getLogger(HashDbSearchPanel.class.getName());
     private static HashDbSearchPanel instance;
     
@@ -56,10 +58,10 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         boolean running = IngestManager.getDefault().isIngestRunning();
         if(running) {
             titleLabel.setForeground(Color.red);
-            titleLabel.setText("Ingest is ongoing; this service will be unavailable until it finishes.");
+            titleLabel.setText(NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.titleText.ingestOngoing"));
         } else {
             titleLabel.setForeground(Color.black);
-            titleLabel.setText("Search for files with the following MD5 hash(es):");
+            titleLabel.setText(NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.titleLabel.text"));
         }
         hashField.setEditable(!running);
         searchButton.setEnabled(!running);
@@ -151,7 +153,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
 
             },
             new String [] {
-                "MD5 Hashes"
+                    NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.hashTable.columnModel.title0")
             }
         ) {
             Class[] types = new Class [] {
@@ -294,12 +296,15 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
            if(HashDbSearcher.countFilesMd5Hashed() > 0) {
                return doSearch();
             } else {
-                JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash.",
-                        "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                        "HashDbSearchPanel.noFilesHaveMD5HashMsg"),
+                                              NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.dlgMsg.title"),
+                                              JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         } else {
-            errorField.setText("Error: No hashes have been added.");
+            errorField.setText(NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.errorText.noHashesAddedMsg"));
             errorField.setVisible(true);
             return false;
         }
@@ -331,7 +336,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 for(int i=0; i<model.getRowCount(); i++) {
                     if(model.getValueAt(i, 0).equals(hashField.getText())) {
                         hashField.setText("");
-                        errorField.setText("Error: Hash has already been added.");
+                        errorField.setText(
+                                NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.errorText.hashAlreadyAddedMsg"));
                         errorField.setVisible(true);
                 errorField.setVisible(true);
                         return;
@@ -340,7 +346,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 model.addRow(new String[] {hash});
                 hashField.setText(""); // wipe the field
             } else {
-                errorField.setText("Error: That is not a valid MD5 hash.");
+                errorField.setText(NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.errorText.invalidMD5HashMsg"));
                 errorField.setVisible(true);
             }
         }

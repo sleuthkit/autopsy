@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Represents result of keyword search query containing the Content it hit
  * and chunk information, if the result hit is a content chunk
  */
-public class ContentHit {
+class ContentHit {
 
     private AbstractFile content;
     private int chunkID = 0;
@@ -98,6 +98,11 @@ public class ContentHit {
         return hash;
     }
 
+    /**
+     * Identify the list of files with the first chunk that has a hit
+     * @param hits
+     * @return 
+     */
     static Map<AbstractFile, Integer> flattenResults(List<ContentHit> hits) {
         Map<AbstractFile, Integer> ret = new LinkedHashMap<AbstractFile, Integer>();
         for (ContentHit h : hits) {

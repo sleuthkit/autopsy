@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -46,8 +47,10 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private static final String REPORT_FOOTER_PROP = "ReportFooter";
     //default settings
     private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png";
-    private static final String DEFAULT_REPORT_TITLE = "Autopsy Forensic Report";
-    private static final String DEFAULT_REPORT_FOOTER = "Powered by Autopsy Open Source Digital Forensics Platform - www.sleuthkit.org";
+    private static final String DEFAULT_REPORT_TITLE = NbBundle
+            .getMessage(ReportBranding.class, "ReportBranding.defaultReportTitle.text");
+    private static final String DEFAULT_REPORT_FOOTER = NbBundle
+            .getMessage(ReportBranding.class, "ReportBranding.defaultReportFooter.text");
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
