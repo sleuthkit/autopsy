@@ -295,7 +295,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         if (selectedNode == null) {
             return false;
         }
-        
+ 
         Children ch = selectedNode.getChildren();
         for (Node n : ch.getNodes()) {
             if (ThumbnailViewChildren.isSupported(n)) {
