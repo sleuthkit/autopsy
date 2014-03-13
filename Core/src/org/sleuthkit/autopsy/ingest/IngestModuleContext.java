@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Acts as a facade for the parts of the ingest framework that make up the
  * processing context of an ingest module.
  */
-public final class IngestModuleProcessingContext {
+public final class IngestModuleContext {
 
     private final IngestJob ingestJob;
     private final IngestModuleFactory moduleFactory;
@@ -41,7 +41,7 @@ public final class IngestModuleProcessingContext {
     private final Case autopsyCase;
     private final SleuthkitCase sleuthkitCase;
 
-    IngestModuleProcessingContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
+    IngestModuleContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
         this.ingestJob = ingestJob;
         this.moduleFactory = moduleFactory;
         ingestManager = IngestManager.getDefault();
@@ -82,7 +82,7 @@ public final class IngestModuleProcessingContext {
 
     public void submitFilesForIngest(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            scheduler.getFileScheduler().scheduleIngestOfDerivedFile(ingestJob.getId(), file);
+            ingestManager.scheduleFile(ingestJob.getId(), file);
         }
     }
 

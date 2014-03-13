@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
  * A factory for creating email parser file ingest modules and the user
@@ -61,7 +61,7 @@ public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
         return new ThunderbirdMboxFileIngestModule();
     }
 }

@@ -18,17 +18,24 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.JPanel;
-
 /**
- * Abstract base class for ingest module per ingest job options panels.
+ * Encapsulates an exception thrown by an ingest module during an operation such
+ * as startup or shut down with an exception object for the error that occurred.
  */
-public abstract class IngestModuleIngestJobSettingsPanel extends JPanel {
+class IngestModuleError {
+    private final String moduleDisplayName;
+    private final Exception error;
 
-    /**
-     * Gets the ingest options for an ingest module.
-     *
-     * @return The ingest options.
-     */
-    public abstract IngestModuleIngestJobSettings getIngestJobOptions();
+    IngestModuleError(String moduleDisplayName, Exception error) {
+        this.moduleDisplayName = moduleDisplayName;
+        this.error = error;
+    }
+
+    String getModuleDisplayName() {
+        return this.moduleDisplayName;
+    }
+
+    Exception getModuleError() {
+        return this.error;
+    }
 }

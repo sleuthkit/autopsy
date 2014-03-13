@@ -24,15 +24,15 @@ package org.sleuthkit.autopsy.ingest;
  */
 public abstract class IngestModuleAdapter implements IngestModule {
 
-    private IngestModuleProcessingContext context;
+    private IngestModuleContext context;
 
     @Override
-    public void startUp(IngestModuleProcessingContext context) {
+    public void startUp(IngestModuleContext context) {
         this.context = context;
     }
 
     @Override
-    public IngestModuleProcessingContext getContext() {
+    public IngestModuleContext getContext() {
         return context;
     }
         
@@ -40,7 +40,7 @@ public abstract class IngestModuleAdapter implements IngestModule {
     public void shutDown(boolean ingestJobCancelled) {
     }
     
-    protected void setContext(IngestModuleProcessingContext context) {
+    protected void setContext(IngestModuleContext context) {
         this.context = context;
     }        
 }

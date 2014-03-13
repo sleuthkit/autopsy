@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -59,14 +60,16 @@ class IngestJob {
         return this.processUnallocatedSpace;
     }
 
-    synchronized void startUpIngestPipelines() throws Exception {
+    synchronized List<IngestModuleError> startUpIngestPipelines() throws Exception {
         // Create at least one instance of each pipeline type now to make 
         // reasonably sure the ingest modules can be started.
-        this.initialDataSourceIngestPipeline.startUp();
-        this.initialFileIngestPipeline.startUp();
+        List<IngestModuleError> errors = new ArrayList<>();
+        errors.addAll(this.initialDataSourceIngestPipeline.startUp());
+        errors.addAll(this.initialFileIngestPipeline.startUp());
+        return errors;
     }
 
-    synchronized FileIngestPipeline getFileIngestPipeline(long threadId) {
+    synchronized FileIngestPipeline getFileIngestPipelineForThread(long threadId) {
         FileIngestPipeline pipeline;
         if (null != this.initialFileIngestPipeline) {
             pipeline = this.initialFileIngestPipeline;
@@ -81,7 +84,12 @@ class IngestJob {
         return pipeline;
     }
 
-    synchronized DataSourceIngestPipeline getDataSourceIngestPipeline(long threadId) {
+    synchronized void releaseIngestPipelinesForThread(long threadId) {
+        this.dataSourceIngestPipelines.remove(threadId);
+        this.fileIngestPipelines.remove(threadId);
+    }
+    
+    synchronized DataSourceIngestPipeline getDataSourceIngestPipelineForThread(long threadId) {
         DataSourceIngestPipeline pipeline;
         if (null != this.initialDataSourceIngestPipeline) {
             pipeline = this.initialDataSourceIngestPipeline;
@@ -96,7 +104,7 @@ class IngestJob {
         return pipeline;
     }
 
-    synchronized void shutDownIngestPipelines(boolean ingestJobCancelled) { // RJCTODO: Do away with this flag, put cancelled in job?
+    synchronized void shutDownIngestPipelines(boolean ingestJobCancelled) { // RJCTODO: Do away with this flag, put cancelled in job? Myabe this does not belong here...
         for (DataSourceIngestPipeline pipeline : dataSourceIngestPipelines.values()) {
             pipeline.shutDown(ingestJobCancelled);
         }
@@ -105,7 +113,8 @@ class IngestJob {
         }
     }
 
-    synchronized void markAsCancelled() {
+    // RJCTODO: Call this where appropriate
+    synchronized void cancel() {
         this.cancelled = true;
     }
 

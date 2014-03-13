@@ -19,17 +19,25 @@
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * This is a temporary shim interface for use until the IngestJobContext class
- * is fully implemented
+ * Implementation of the IngestModuleOptions interface for use by ingest modules
+ * that do not have per ingest job options.
  */
-public interface IngestModuleTempApiShim {
+public final class NoIngestModuleSettings implements IngestModuleSettings {
+
+    private final String options = "None";
 
     /**
-     * Gets the display name of a module. The name returned should be the same
-     * name that is returned by the IngestFactoru.getModuleDisplayName() of the
-     * module ingest factory that created the module.
+     * Gets the string used as an ingest options placeholder for serialization
+     * purposes.
      *
-     * @return The display name
+     * @return The string "None"
      */
-    String getName();
+    String getOptions() {
+        return options;
+    }
+
+    @Override
+    public boolean areValid() {
+        return true;
+    }
 }

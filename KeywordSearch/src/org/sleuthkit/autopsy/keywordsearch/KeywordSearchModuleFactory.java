@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -62,7 +62,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestJobOptions) {
+    public IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestJobOptions) {
         KeywordSearchIngestSimplePanel ingestOptionsPanel = new KeywordSearchIngestSimplePanel();  
         ingestOptionsPanel.load();
         return ingestOptionsPanel; 
@@ -86,7 +86,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
     
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestJobOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestJobOptions) {
         return new KeywordSearchIngestModule();
     }
 }

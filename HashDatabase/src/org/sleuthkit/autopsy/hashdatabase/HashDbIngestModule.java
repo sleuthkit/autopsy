@@ -62,7 +62,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     }
         
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) {
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
 

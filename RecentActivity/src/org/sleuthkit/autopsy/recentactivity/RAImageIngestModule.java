@@ -135,7 +135,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     }
 
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) {
         extracters = new ArrayList<>();
         browserExtracters = new ArrayList<>();
         services = IngestServices.getDefault();

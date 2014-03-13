@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
  * An factory that creates file ingest modules that do hash database lookups.
@@ -56,7 +56,7 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
         return new ExifParserFileIngestModule();
     }
 }

@@ -117,7 +117,7 @@ public interface IngestModuleFactory {
      *
      * @return The ingest options.
      */
-    IngestModuleIngestJobSettings getDefaultIngestJobOptions();
+    IngestModuleSettings getDefaultIngestJobOptions();
 
     /**
      * Queries the factory to determine if it provides user interface panels to
@@ -152,7 +152,7 @@ public interface IngestModuleFactory {
      * @param ingestOptions Per ingest job options to initialize the panel.
      * @return A user interface panel.
      */
-    IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions);
+    IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestOptions);
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -182,7 +182,7 @@ public interface IngestModuleFactory {
      * @param ingestOptions The ingest options for the module instance.
      * @return A data source ingest module instance.
      */
-    DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions);
+    DataSourceIngestModule createDataSourceIngestModule(IngestModuleSettings ingestOptions);
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -212,5 +212,5 @@ public interface IngestModuleFactory {
      * @param ingestOptions The ingest options for the module instance.
      * @return A file ingest module instance.
      */
-    FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions);
+    FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions);
 }

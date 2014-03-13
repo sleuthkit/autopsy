@@ -55,12 +55,12 @@ public interface IngestModule {
      * @param ingestJobId Identifier for the ingest job.
      * @param ingestOptions Module options for the ingest job.
      */
-    void startUp(IngestModuleProcessingContext context);
+    void startUp(IngestModuleContext context);
 
     /**
      * RJCTODO
      */
-    IngestModuleProcessingContext getContext();
+    IngestModuleContext getContext();
     
     // RJCTODO: Update
     /**

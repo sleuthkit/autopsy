@@ -29,7 +29,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * make it easier to write modules. Use the getDefault() method to get the
  * singleton instance.
  */
-public class IngestServices {
+public final class IngestServices {
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
 
     private IngestManager manager;
     private Logger logger = Logger.getLogger(IngestServices.class.getName());

@@ -23,8 +23,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -57,7 +57,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobSettings getDefaultIngestJobOptions() {
+    public IngestModuleSettings getDefaultIngestJobOptions() {
         return new FileExtMismatchDetectorOptions();
     }
 
@@ -67,7 +67,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions) {
+    public IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestOptions) {
         FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions) ingestOptions);
         return ingestOptionsPanel;
     }
@@ -90,7 +90,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
         return new FileExtMismatchIngestModule();
     }
 }

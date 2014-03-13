@@ -66,7 +66,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     }
         
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext context) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) {
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() {0}", this.toString());
         filesProcessed = 0;

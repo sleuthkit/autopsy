@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.Content;
 
@@ -27,11 +28,11 @@ import org.sleuthkit.datamodel.Content;
  */
 public class DataSourceIngestModuleStatusHelper {
 
-    private final DataSourceIngestWorker worker;
+    private final SwingWorker worker;
     private final ProgressHandle progress;
     private final Content dataSource;
 
-    DataSourceIngestModuleStatusHelper(DataSourceIngestWorker worker, ProgressHandle progress, Content dataSource) {
+    DataSourceIngestModuleStatusHelper(SwingWorker worker, ProgressHandle progress, Content dataSource) {
         this.worker = worker;
         this.progress = progress;
         this.dataSource = dataSource;

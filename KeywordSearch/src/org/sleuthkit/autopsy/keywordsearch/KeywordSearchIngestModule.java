@@ -54,7 +54,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -298,7 +298,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      *
      */
     @Override
-    public void startUp(IngestModuleProcessingContext context) {
+    public void startUp(IngestModuleContext context) {
         setContext(context);
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();

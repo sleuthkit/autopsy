@@ -34,6 +34,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
 
+// RJCTODO: Rename to RunIngestModulesDialog after internationalization
 /**
  * Dialog box that allows ingest modules to be run on an image. 
  * Used outside of the wizards.

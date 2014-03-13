@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
-import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleContext;
 
 // RJCTODO: Possibly use getContext().getModuleDisplayName() more
 
@@ -92,7 +92,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     }
 
     @Override
-    public void startUp(IngestModuleProcessingContext context) {
+    public void startUp(IngestModuleContext context) {
         setContext(context);
         unpackDir = getContext().getOutputDirectoryRelativePath();
         unpackDirPath = getContext().getOutputDirectoryAbsolutePath();

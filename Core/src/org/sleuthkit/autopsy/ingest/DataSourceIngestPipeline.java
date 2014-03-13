@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -30,7 +31,7 @@ import org.sleuthkit.datamodel.Content;
  * modules constructed from ingest module templates. The pipeline is specific to
  * a single ingest job.
  */
-public class DataSourceIngestPipeline {
+class DataSourceIngestPipeline {
 
     private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
     private final IngestJob ingestJob;
@@ -42,50 +43,59 @@ public class DataSourceIngestPipeline {
         this.moduleTemplates = moduleTemplates;
     }
 
-    void startUp() throws Exception {
+    List<IngestModuleError> startUp() throws Exception {
+        List<IngestModuleError> errors = new ArrayList<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             IngestModuleFactory factory = template.getIngestModuleFactory();
             if (factory.isDataSourceIngestModuleFactory()) {
-                IngestModuleIngestJobSettings ingestOptions = template.getIngestOptions();
+                IngestModuleSettings ingestOptions = template.getIngestOptions();
                 DataSourceIngestModule module = factory.createDataSourceIngestModule(ingestOptions);
-                IngestModuleProcessingContext context = new IngestModuleProcessingContext(this.ingestJob, factory);
-                module.startUp(context);
-                this.modules.add(module); // Only add modules that do not throw when started up
-                IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
+                IngestModuleContext context = new IngestModuleContext(this.ingestJob, factory);
+                try {
+                    module.startUp(context);
+                    this.modules.add(module);
+                    IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
+                } catch (Exception ex) {
+                    errors.add(new IngestModuleError(module.getContext().getModuleDisplayName(), ex));
+                }
             }
         }
+        return errors;
     }
 
-    void ingestDataSource(DataSourceIngestWorker worker, ProgressHandle progress) {
+    List<IngestModuleError> ingestDataSource(SwingWorker worker, ProgressHandle progress) {
+        List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = this.ingestJob.getDataSource();
         logger.log(Level.INFO, "Ingesting data source {0}", dataSource.getName());
         for (DataSourceIngestModule module : this.modules) {
             try {
                 progress.start();
-                progress.switchToIndeterminate();                
+                progress.switchToIndeterminate();
                 module.process(dataSource, new DataSourceIngestModuleStatusHelper(worker, progress, dataSource));
                 progress.finish();
-                // RJCTODO: Cancel check
             } catch (Exception ex) {
-                // RJCTODO: Can log, create ingest message here, then keep going
+                errors.add(new IngestModuleError(module.getContext().getModuleDisplayName(), ex));
             }
-            IngestModuleProcessingContext context = module.getContext();
+            IngestModuleContext context = module.getContext();
             if (context.isIngestJobCancelled()) {
                 break;
             }
         }
+        return errors;
     }
-        
-    void shutDown(boolean ingestJobCancelled) {
+
+    List<IngestModuleError> shutDown(boolean ingestJobCancelled) {
+        List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModule module : this.modules) {
             try {
                 module.shutDown(ingestJobCancelled);
             } catch (Exception ex) {
-                // RJCTODO: Can log, create ingest message here, then keep going
+                errors.add(new IngestModuleError(module.getContext().getModuleDisplayName(), ex));
             } finally {
-                IngestModuleProcessingContext context = module.getContext();
+                IngestModuleContext context = module.getContext();
                 IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.COMPLETED.toString(), context.getModuleDisplayName());
             }
         }
+        return errors;
     }
 }

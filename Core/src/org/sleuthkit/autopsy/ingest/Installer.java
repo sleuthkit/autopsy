@@ -23,6 +23,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 
+// RJCTODO: Does this really need to be public
 /**
  * Initializes ingest manager when the module is loaded
  */

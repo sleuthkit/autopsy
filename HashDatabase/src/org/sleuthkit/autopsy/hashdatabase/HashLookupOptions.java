@@ -20,13 +20,13 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
  * Ingest options for the hash lookup file ingest module.
  */
 // Note that this class is not yet used as intended.
-public class HashLookupOptions implements IngestModuleIngestJobSettings {
+public class HashLookupOptions implements IngestModuleSettings {
 
     private boolean shouldCalculateHashes = true;
     private ArrayList<HashDbManager.HashDb> knownFileHashSets;

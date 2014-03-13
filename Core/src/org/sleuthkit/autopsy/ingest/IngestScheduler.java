@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -51,21 +50,21 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 
 /**
- * Schedules data source (images, file-sets, etc) and files with their associated modules for ingest, and
- * manage queues of the scheduled tasks.
+ * Schedules data source (images, file-sets, etc) and files with their
+ * associated modules for ingest, and manage queues of the scheduled tasks.
  *
  * Currently a singleton object only (as there is one pipeline at a time)
  *
- * Contains internal schedulers for content objects into data source and and file ingest
- * pipelines.
+ * Contains internal schedulers for content objects into data source and and
+ * file ingest pipelines.
  *
  */
-class IngestScheduler {
+final class IngestScheduler {
     private static IngestScheduler instance;
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
     private final DataSourceScheduler dataSourceScheduler = new DataSourceScheduler();
     private final FileScheduler fileScheduler = new FileScheduler();
-
+    
     private IngestScheduler() {
     }
 
@@ -102,22 +101,34 @@ class IngestScheduler {
      *
      */
     static class FileScheduler implements Iterator<FileScheduler.FileTask> {
-        // RJCTODO: Restore old collections
+         //root folders enqueued
+        private TreeSet<FileTask> rootDirectoryTasks;
+        
+        //stack of current dirs to be processed recursively
+        private List<FileTask> directoryTasks;
+        
+        //list of files being processed in the currently processed directory
+        private LinkedList<FileTask> fileTasks; //need to add to start and end quickly
+        
+        //estimated total files to be enqueued for currently scheduled content objects        
+        private int filesEnqueuedEst = 0;
+        private int filesDequeued = 0;
         private final static int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-        private final ConcurrentHashMap<Long, IngestJob> dataSourceTasks = new ConcurrentHashMap<>(); // RJCTODO: Why weren't these concurrent before? Synchronized methods?
-        private final ConcurrentSkipListSet<FileTask> rootDirectoryTasks = new ConcurrentSkipListSet<>(new RootTaskComparator());
-        private final List<FileTask> directoryTasks = new ArrayList<>();
-//        private final ConcurrentLinkedQueue<FileTask> directoryTasks = new ConcurrentLinkedQueue<>();
-        private final LinkedList<FileTask> fileTasks = new LinkedList<>();
-//        private final ConcurrentLinkedQueue<FileTask> fileTasks = new ConcurrentLinkedQueue<>();
-        private int filesEnqueuedEst = 0; //estimated total files to be enqueued for currently scheduled content objects
-        private int filesDequeued = 0;
 
         private FileScheduler() {
+            rootDirectoryTasks = new TreeSet<>(new RootTaskComparator());
+            directoryTasks = new ArrayList<>();
+            fileTasks = new LinkedList<>();
+            resetCounters();            
         }
+        
+        private void resetCounters() {
+            filesEnqueuedEst = 0;
+            filesDequeued = 0;
+        }        
         
         @Override
         public synchronized String toString() {
@@ -138,8 +149,9 @@ class IngestScheduler {
         }
 
         synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
+            // RJCTODO: This should go to the ingest manager as the job manager?
             // Save the data source task to manage its pipelines.
-            dataSourceTasks.put(dataSourceTask.getId(), dataSourceTask);
+            //dataSourceTasks.put(dataSourceTask.getId(), dataSourceTask);
  
             Content dataSource = dataSourceTask.getDataSource();
             Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirVisitor());
@@ -200,21 +212,16 @@ class IngestScheduler {
          * @param originalContext original content schedule context that was used
          * to schedule the parent origin content, with the modules, settings, etc.
          */
-        synchronized void scheduleIngestOfDerivedFile(long dataSourceTaskId, AbstractFile file) {
-            IngestJob dataSourceTask = dataSourceTasks.get(dataSourceTaskId);
-            if (null == dataSourceTask) {
-                // RJCTODO: Handle severe error
-            }
-            
-            FileTask fileTask = new FileTask(file, dataSourceTask);
+        synchronized void scheduleIngestOfDerivedFile(IngestJob ingestJob, AbstractFile file) {
+            FileTask fileTask = new FileTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
-//                fileTasks.addFirst(fileTask); RJCTODO: Add first not supported by current concurrent collection
+                fileTasks.addFirst(fileTask);
                 fileTasks.add(fileTask);
                 ++filesEnqueuedEst;
-                // RJCTODO: Update counters in data source task if not doing scanning
             }            
         }        
         
+        // RJCTODO: Used? If not anymore, why?
         float getPercentageDone() {
             if (filesEnqueuedEst == 0) {
                 return 0;
@@ -222,6 +229,7 @@ class IngestScheduler {
             return ((100.f) * filesDequeued) / filesEnqueuedEst;
         }
 
+        // RJCTODO: Used? If not anymore, why?
         /**
          * query num files enqueued total num of files to be enqueued.
          *
@@ -244,6 +252,7 @@ class IngestScheduler {
             return totalFiles;
         }
 
+                // RJCTODO: Used? If not anymore, why?
         /**
          * get total est. number of files to be enqueued for current ingest
          * input sources in queues
@@ -254,6 +263,7 @@ class IngestScheduler {
             return filesEnqueuedEst;
         }
 
+        // RJCTODO: Used? If not anymore, why?        
         /**
          * Get number of files dequeued so far. This is reset after the same
          * content is enqueued that is already in a queue
@@ -328,7 +338,7 @@ class IngestScheduler {
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
                             AbstractFile childFile = (AbstractFile) c;
-                            FileTask childTask = new FileTask(childFile, parentTask.getIngestJob());
+                            FileTask childTask = new FileTask(childFile, parentTask.getJob());
 
                             if (childFile.hasChildren()) {
                                 this.directoryTasks.add(childTask);
@@ -363,13 +373,13 @@ class IngestScheduler {
             final Set<Content> contentSet = new HashSet<>();
 
             for (FileTask task : rootDirectoryTasks) {
-                contentSet.add(task.getIngestJob().getDataSource());
+                contentSet.add(task.getJob().getDataSource());
             }
             for (FileTask task : directoryTasks) {
-                contentSet.add(task.getIngestJob().getDataSource());
+                contentSet.add(task.getJob().getDataSource());
             }
             for (FileTask task : fileTasks) {
-                contentSet.add(task.getIngestJob().getDataSource());
+                contentSet.add(task.getJob().getDataSource());
             }
 
             return new ArrayList<>(contentSet);
@@ -392,7 +402,7 @@ class IngestScheduler {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.getIngestJob().getProcessUnallocatedSpace() == false
+            if (processTask.getJob().getProcessUnallocatedSpace() == false
                     && aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
                     )) {
                 return false;
@@ -459,7 +469,7 @@ class IngestScheduler {
                 this.ingetsJob = dataSourceTask;
             }
             
-            public IngestJob getIngestJob() {
+            public IngestJob getJob() {
                 return ingetsJob;
             }
             
@@ -499,8 +509,8 @@ class IngestScheduler {
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
-                IngestJob thisTask = this.getIngestJob();
-                IngestJob otherTask = other.getIngestJob();
+                IngestJob thisTask = this.getJob();
+                IngestJob otherTask = other.getJob();
 
                 if (thisTask != otherTask
                         && (thisTask == null || !thisTask.equals(otherTask))) {

@@ -31,7 +31,7 @@ public interface DataSourceIngestModule extends IngestModule {
      * @param dataSource The data source to process.
      * @param statusHelper A status helper to be used to report progress and
      * detect ingest job cancellation.
-     * @return A result code indicating success or failure.
+     * @return A result code indicating success or failure of the processing.
      */
     ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper);
 }

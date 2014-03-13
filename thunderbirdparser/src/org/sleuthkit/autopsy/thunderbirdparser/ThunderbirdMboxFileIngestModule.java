@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -257,7 +257,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
     }
     
     @Override
-    public void startUp(IngestModuleProcessingContext context) {
+    public void startUp(IngestModuleContext context) {
         setContext(context);
         services = IngestServices.getDefault();
         fileManager = Case.getCurrentCase().getServices().getFileManager();

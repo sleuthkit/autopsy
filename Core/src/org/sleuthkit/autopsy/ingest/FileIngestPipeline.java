@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.Content;
  * constructed from ingest module templates. The pipeline is specific to a
  * single ingest job.
  */
-public class FileIngestPipeline {
+class FileIngestPipeline {
 
     private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private final IngestJob ingestJob;
@@ -43,48 +43,58 @@ public class FileIngestPipeline {
         this.moduleTemplates = moduleTemplates;
     }
 
-    void startUp() throws Exception {
+    List<IngestModuleError> startUp() {
+        List<IngestModuleError> errors = new ArrayList<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             IngestModuleFactory factory = template.getIngestModuleFactory();
             if (factory.isFileIngestModuleFactory()) {
-                IngestModuleIngestJobSettings ingestOptions = template.getIngestOptions();
+                IngestModuleSettings ingestOptions = template.getIngestOptions();
                 FileIngestModule module = factory.createFileIngestModule(ingestOptions);
-                IngestModuleProcessingContext context = new IngestModuleProcessingContext(this.ingestJob, factory);
-                module.startUp(context);
-                this.modules.add(module);
-                IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
+                IngestModuleContext context = new IngestModuleContext(this.ingestJob, factory);
+                try {
+                    module.startUp(context);
+                    this.modules.add(module);
+                    IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
+                } catch (Exception ex) {
+                    errors.add(new IngestModuleError(module.getContext().getModuleDisplayName(), ex));
+                }
             }
         }
+        return errors;
     }
 
-    void ingestFile(AbstractFile file) {
+    List<IngestModuleError> ingestFile(AbstractFile file) {
+        List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = this.ingestJob.getDataSource();
         logger.log(Level.INFO, String.format("Ingesting {0} from {1}", file.getName(), dataSource.getName()));
         for (FileIngestModule module : this.modules) {
             try {
                 module.process(file);
             } catch (Exception ex) {
-                // RJCTODO: Can log, create ingest message here, then keep going
+                errors.add(new IngestModuleError(module.getContext().getModuleDisplayName(), ex));
             }
-            IngestModuleProcessingContext context = module.getContext();
+            IngestModuleContext context = module.getContext();
             if (context.isIngestJobCancelled()) {
                 break;
             }
         }
         file.close();
         IngestManager.fireFileDone(file.getId());
+        return errors;
     }
 
-    void shutDown(boolean ingestJobCancelled) {
+    List<IngestModuleError> shutDown(boolean ingestJobCancelled) {
+        List<IngestModuleError> errors = new ArrayList<>();
         for (FileIngestModule module : this.modules) {
             try {
                 module.shutDown(ingestJobCancelled);
             } catch (Exception ex) {
-                // RJCTODO: Can log, create ingest message here, then keep going
+                errors.add(new IngestModuleError(module.getContext().getModuleDisplayName(), ex));
             } finally {
-                IngestModuleProcessingContext context = module.getContext();
+                IngestModuleContext context = module.getContext();
                 IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), context.getModuleDisplayName());
             }
         }
+        return errors;
     }
 }

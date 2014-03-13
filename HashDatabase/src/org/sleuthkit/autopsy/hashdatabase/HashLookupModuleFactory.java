@@ -24,8 +24,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -54,7 +54,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobSettings getDefaultIngestJobOptions() {
+    public IngestModuleSettings getDefaultIngestJobOptions() {
         return new HashLookupOptions();
     }
 
@@ -64,7 +64,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobOptionsPanel(IngestModuleIngestJobSettings ingestOptions) {
+    public IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestOptions) {
         HashDbSimpleConfigPanel ingestOptionsPanel = new HashDbSimpleConfigPanel();
         ingestOptionsPanel.load();
         return ingestOptionsPanel;
@@ -88,7 +88,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
         return new HashDbIngestModule();
     }
 }

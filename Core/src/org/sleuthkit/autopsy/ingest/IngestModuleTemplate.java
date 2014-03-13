@@ -22,13 +22,13 @@ package org.sleuthkit.autopsy.ingest;
  * Combines an ingest module factory with ingest options and an enabled flag to
  * create a template for creating fully configured ingest modules.
  */
-class IngestModuleTemplate {
+final class IngestModuleTemplate {
 
     private final IngestModuleFactory moduleFactory;
-    private IngestModuleIngestJobSettings ingestOptions = null;
+    private IngestModuleSettings ingestOptions = null;
     boolean enabled = true;
 
-    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings ingestOptions) {
+    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleSettings ingestOptions) {
         this.moduleFactory = moduleFactory;
         this.ingestOptions = ingestOptions;
     }
@@ -37,11 +37,11 @@ class IngestModuleTemplate {
         return moduleFactory;
     }
 
-    IngestModuleIngestJobSettings getIngestOptions() {
+    IngestModuleSettings getIngestOptions() {
         return ingestOptions;
     }
 
-    void setIngestOptions(IngestModuleIngestJobSettings ingestOptions) {
+    void setIngestOptions(IngestModuleSettings ingestOptions) {
         this.ingestOptions = ingestOptions;
     }
 

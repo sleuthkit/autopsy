@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleProcessingContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleTempApiShim;
 
 /**
@@ -64,7 +64,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     }
     
     @Override
-    public void startUp(IngestModuleProcessingContext context) {
+    public void startUp(IngestModuleContext context) {
         setContext(context);
         verified = false;
         skipped = false;

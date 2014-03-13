@@ -18,19 +18,12 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
@@ -38,10 +31,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -60,13 +49,12 @@ public class IngestManager {
     private FileIngestWorker fileIngestWorker;
     private DataSourceIngestWorker dataSourceIngestWorker;
     private SwingWorker<Object, Void> queueWorker;
-    private final List<IngestModuleTempApiShim> abstractFileModules = new ArrayList<>();
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
-//    private IngestModuleLoader moduleLoader = null;
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
     public final static String MODULE_PROPERTIES = "ingest";
+    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
 
     /**
      * Possible events about ingest modules Event listeners can get the event
@@ -168,6 +156,10 @@ public class IngestManager {
      */
     public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
+    }
+    
+    public static synchronized void removePropertyChangeListener(final PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
     }
 
     static synchronized void fireModuleEvent(String eventType, String moduleName) {
@@ -278,8 +270,13 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFile(long dataSourceTaskId, AbstractFile file) {
-        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(dataSourceTaskId, file);
+    void scheduleFile(long ingestJobId, AbstractFile file) {
+        IngestJob job = this.ingestJobs.get(ingestJobId);
+        if (job == null) {
+            // RJCTODO: Handle severe error
+        }
+
+        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(job, file);
     }
 
     /**
@@ -314,26 +311,17 @@ public class IngestManager {
         }
     }
 
-    /**
-     * Open a dialog box to report an initialization error to the user.
-     *
-     * @param moduleName The name of the module that failed to initialize.
-     * @param errorMessage The message gotten from the exception that was
-     * thrown.
-     */
-    // RJCTODO: Do not have an implementation of this early load concept yet
-    // Perhaps the thing to do is to create and destroy a pipeline every time
-    // a task is created...that would lead to spurious events, though. Could
-    // build the first instances of the pieplines per thread?
-//    private void displayInitError(String moduleName, String errorMessage) {
-//        MessageNotifyUtil.Message.error(
-//                "Failed to load " + moduleName + " ingest module.\n\n"
-//                + "No ingest modules will be run. Please disable the module "
-//                + "or fix the error and restart ingest by right clicking on "
-//                + "the data source and selecting Run Ingest Modules.\n\n"
-//                + "Error: " + errorMessage);
-//    }
+    synchronized void reportThreadDone(long threadId) {
+        for (IngestJob job : ingestJobs.values()) { // RJCTODO: Does anyone access these tasks by id?
+            job.releaseIngestPipelinesForThread(threadId);
+        }
+    }
+
     synchronized void stopAll() {
+        for (IngestJob job : ingestJobs.values()) {
+            job.cancel();
+        }
+        
         if (queueWorker != null) {
             queueWorker.cancel(true);
             queueWorker = null;
@@ -395,7 +383,6 @@ public class IngestManager {
         private final List<Content> dataSources;
         private final List<IngestModuleTemplate> moduleTemplates;
         private final boolean processUnallocatedSpace;
-        private final Logger logger = Logger.getLogger(EnqueueWorker.class.getName());
         private ProgressHandle progress;
 
         EnqueueWorker(List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
@@ -423,12 +410,31 @@ public class IngestManager {
             for (Content dataSource : dataSources) {
                 final String inputName = dataSource.getName();
                 IngestJob ingestJob = new IngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
+                
+                List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
+                if (!errors.isEmpty()) {
+                    // RJCTODO: Log all errors. Provide a list of all of the modules
+                    // that failed.
+                    MessageNotifyUtil.Message.error(
+                            "Failed to load " + errors.get(0).getModuleDisplayName() + " ingest module.\n\n"
+                            + "No ingest modules will be run. Please disable the module "
+                            + "or fix the error and restart ingest by right clicking on "
+                            + "the data source and selecting Run Ingest Modules.\n\n"
+                            + "Error: " + errors.get(0).getModuleError().getMessage());
+                    return null;
+                }
+                
+                // Save the ingest job for later cleanup of pipelines.
+                ingestJobs.put(ingestJob.getId(), ingestJob);
+                
+                // Queue the data source ingest tasks for the ingest job.
                 logger.log(Level.INFO, "Queueing data source tasks: {0}", ingestJob);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
                 scheduler.getDataSourceScheduler().schedule(ingestJob);
                 progress.progress("DataSource Ingest" + " " + inputName, ++processed);
 
-                logger.log(Level.INFO, "Queing file ingest task: {0}", ingestJob);
+                // Queue the file ingest tasks for the ingest job.
+                logger.log(Level.INFO, "Queuing file ingest tasks: {0}", ingestJob);
                 progress.progress("File Ingest" + " " + inputName, processed);
                 scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
                 progress.progress("File Ingest" + " " + inputName, ++processed);
@@ -457,8 +463,158 @@ public class IngestManager {
         }
 
         private void handleInterruption(Exception ex) {
+            // RJCTODO: This seems broken, should empty only for current job?
             scheduler.getFileScheduler().empty();
             scheduler.getDataSourceScheduler().empty();
         }
     }
+    
+    /**
+     * Performs data source ingest tasks for one or more ingest jobs on a worker thread.
+     */
+    class DataSourceIngestWorker extends SwingWorker<Object, Void> {
+
+        private final long id;
+        private ProgressHandle progress;
+
+        DataSourceIngestWorker(long threadId) {
+            this.id = threadId;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            logger.log(Level.INFO, String.format("Data source ingest thread {0} starting", this.id));
+
+            // Set up a progress bar with cancel capability. This is one of two ways 
+            // that the worker can be canceled. The other place is via a call to
+            // IngestManager.stopAll().
+            final String displayName = "Data source";
+            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    if (progress != null) {
+                        progress.setDisplayName(displayName + " (Cancelling...)");
+                    }
+                    return DataSourceIngestWorker.this.cancel(true);
+                }
+            });
+            progress.start();
+            progress.switchToIndeterminate();
+
+            IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
+            while (scheduler.hasNext()) {
+                if (isCancelled()) {
+                    logger.log(Level.INFO, "Terminating file ingest thread {0} due to ingest cancellation", this.id);
+                    return null;
+                }
+
+                IngestJob ingestJob = scheduler.next();
+                DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
+                pipeline.ingestDataSource(this, this.progress);            
+            }
+
+            // RJCTODO: Report done, normal scenario
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                super.get();
+                // RJCTODO: Pass thread id and this.isCancelled() back to manager to shut down thread's pipeline in all jobs
+            } catch (CancellationException | InterruptedException e) {
+                // RJCTODO: Decide what to do here
+            // RJCTODO: Report done
+    //            logger.log(Level.INFO, "Fatal error during file ingest.");
+            } catch (Exception ex) {
+            // RJCTODO: Report done
+                logger.log(Level.SEVERE, "Fatal error during file ingest.", ex);
+            } finally {
+                progress.finish();
+            }
+        }
+    }
+        
+    /**
+     * Performs file ingest tasks for one or more ingest jobs on a worker thread.
+     */
+    class FileIngestWorker extends SwingWorker<Object, Void> {
+
+        private final long id;
+        private ProgressHandle progress;
+
+        FileIngestWorker(long threadId) {
+            this.id = threadId;
+        }
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            logger.log(Level.INFO, String.format("File ingest thread {0} starting", this.id));
+
+            // Set up a progress bar with cancel capability. This is one of two ways 
+            // that the worker can be canceled. The other place is via a call to
+            // IngestManager.stopAll().
+            final String displayName = "File Ingest";
+            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    logger.log(Level.INFO, "File ingest thread {0} cancelled", FileIngestWorker.this.id);
+                    if (progress != null) {
+                        progress.setDisplayName(displayName + " (Cancelling...)");
+                    }
+                    return FileIngestWorker.this.cancel(true);
+                }
+            });
+            progress.start();
+            progress.switchToIndeterminate();
+            IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
+            int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+            progress.switchToDeterminate(totalEnqueuedFiles);
+
+            int processedFiles = 0;
+            while (fileScheduler.hasNext()) {            
+                if (isCancelled()) {
+                    IngestManager.getDefault().reportThreadDone(this.id);
+                    logger.log(Level.INFO, "File ingest thread {0} cancelled", this.id);
+                    return null;
+                }
+
+                IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
+                AbstractFile file = task.getFile();
+                progress.progress(file.getName(), processedFiles);
+                FileIngestPipeline pipeline = task.getJob().getFileIngestPipelineForThread(this.id);
+                pipeline.ingestFile(file);
+
+                // Update the progress bar.
+                int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+                if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
+                    totalEnqueuedFiles = newTotalEnqueuedFiles + 1;
+                    progress.switchToIndeterminate();
+                    progress.switchToDeterminate(totalEnqueuedFiles);
+                }
+                if (processedFiles < totalEnqueuedFiles) {
+                    // RCTODO: What is this comment saying? 
+                    //fix for now to handle the same datasource Content enqueued twice
+                    ++processedFiles;
+                }
+            }
+            IngestManager.getDefault().reportThreadDone(this.id);        
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                super.get();
+            } catch (CancellationException | InterruptedException e) {
+                IngestManager.getDefault().reportThreadDone(this.id);
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Fatal error during file ingest.", ex);
+                IngestManager.getDefault().reportThreadDone(this.id);
+            } finally {
+                progress.finish();
+            }
+        }
+    }    
 }
