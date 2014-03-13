@@ -209,7 +209,7 @@ import org.sleuthkit.datamodel.TskData;
      * @param artifactTypeSelections the enabled/disabled state of the artifact types to be included in the report
      * @param tagSelections the enabled/disabled state of the tag names to be included in the report
      */
-    public void generateBlackboardArtifactsReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    public void generateTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
             TableReportsWorker worker = new TableReportsWorker(artifactTypeSelections, tagNameSelections);
             worker.execute();
@@ -256,6 +256,10 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        "Error generating report",
+                        "Error generating report: " + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }
@@ -354,6 +358,10 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        "Error generating report",
+                        "Error generating report: " + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }
@@ -400,6 +408,7 @@ import org.sleuthkit.datamodel.TskData;
                 ReportProgressPanel progress = tableProgress.get(module);
                 if (progress.getStatus() != ReportStatus.CANCELED) {
                     module.startReport(reportPath);
+                    System.out.println("Called startReport");
                     progress.start();
                     progress.setIndeterminate(false);
                     progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
@@ -612,6 +621,10 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        "Error generating report",
+                        "Error generating report: " + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }
