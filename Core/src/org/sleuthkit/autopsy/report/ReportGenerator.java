@@ -408,7 +408,6 @@ import org.sleuthkit.datamodel.TskData;
                 ReportProgressPanel progress = tableProgress.get(module);
                 if (progress.getStatus() != ReportStatus.CANCELED) {
                     module.startReport(reportPath);
-                    System.out.println("Called startReport");
                     progress.start();
                     progress.setIndeterminate(false);
                     progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
