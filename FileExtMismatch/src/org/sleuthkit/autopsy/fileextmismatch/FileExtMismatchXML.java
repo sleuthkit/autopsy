@@ -120,7 +120,7 @@ class FileExtMismatchXML {
                         Element extEl = (Element)extNList.item(extIndex);
                         extStrings.add(extEl.getTextContent());
                     }
-                    String[] sarray = (String[])extStrings.toArray(new String[0]);
+                    String[] sarray = extStrings.toArray(new String[0]);
                     sigTypeToExtMap.put(mimetype, sarray);
                 } else {
                     sigTypeToExtMap.put(mimetype, null); //ok to have an empty type (the ingest module will not use it)

@@ -149,7 +149,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
         sortByLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByLabel.text")); // NOI18N
 
-        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Time", "Priority" }));
+        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Time", "Priority" }));
         sortByComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByComboBox.toolTipText")); // NOI18N
         sortByComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -177,11 +177,11 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                 .addGap(101, 101, 101)
                 .addComponent(totalMessagesNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(totalMessagesNameVal, javax.swing.GroupLayout.DEFAULT_SIZE, 9, Short.MAX_VALUE)
+                .addComponent(totalMessagesNameVal, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
                 .addGap(22, 22, 22)
                 .addComponent(totalUniqueMessagesNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(totalUniqueMessagesNameVal, javax.swing.GroupLayout.DEFAULT_SIZE, 8, Short.MAX_VALUE)
+                .addComponent(totalUniqueMessagesNameVal, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
                 .addGap(22, 22, 22))
         );
         controlPanelLayout.setVerticalGroup(
@@ -224,7 +224,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private javax.swing.JPanel controlPanel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable messageTable;
-    private javax.swing.JComboBox sortByComboBox;
+    private javax.swing.JComboBox<String> sortByComboBox;
     private javax.swing.JLabel sortByLabel;
     private javax.swing.JLabel totalMessagesNameLabel;
     private javax.swing.JLabel totalMessagesNameVal;

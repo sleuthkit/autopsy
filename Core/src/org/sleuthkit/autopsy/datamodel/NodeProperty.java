@@ -25,19 +25,19 @@ import org.openide.nodes.PropertySupport;
  * This class is used to represent the properties for each node.
  *
  */
-public class NodeProperty extends PropertySupport.ReadOnly {
+public class NodeProperty<T> extends PropertySupport.ReadOnly<T> {
 
-    private Object value;
+    private T value;
     
-    @SuppressWarnings({"unchecked"})
-   public  NodeProperty(String name, String displayName, String desc, Object value) {
-        super(name, value.getClass(), displayName, desc);
+    @SuppressWarnings("unchecked")
+    public NodeProperty(String name, String displayName, String desc, T value) {
+        super(name, (Class<T>) value.getClass(), displayName, desc);
         setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button
         this.value = value;
     }
 
     @Override
-    public Object getValue() throws IllegalAccessException, InvocationTargetException {
+    public T getValue() throws IllegalAccessException, InvocationTargetException {
         return this.value;
     }
 }

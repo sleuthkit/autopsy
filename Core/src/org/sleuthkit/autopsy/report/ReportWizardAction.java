@@ -64,15 +64,17 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
      * When the wizard is finished, create a ReportGenerator with the wizard information,
      * and start all necessary reports.
      */
+    @SuppressWarnings("unchecked")
     public static void doReportWizard() {
         WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
+            @SuppressWarnings("unchecked")
             ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"), 
                     (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"),
                     (Map<FileReportModule, Boolean>)wiz.getProperty("fileModuleStates"));
-            generator.generateBlackboardArtifactsReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates"));
+            generator.generateTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates"));
             generator.generateFileListReports((Map<FileReportDataTypes, Boolean>)wiz.getProperty("fileReportOptions"));
             generator.generateGeneralReports();
             generator.displayProgressPanels();

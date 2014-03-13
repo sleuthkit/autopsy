@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,19 +73,18 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             s.put(ss);
         }
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
-                                getName()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
+                getName()));
 
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+            ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        // @@@ add more properties here...
 
         return s;
     }
@@ -99,7 +98,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

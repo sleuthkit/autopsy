@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ public class DataSourcesNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -58,10 +58,10 @@ public class DataSourcesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.desc"),
-                                NAME));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.desc"),
+                NAME));
         return s;
     }
 }
