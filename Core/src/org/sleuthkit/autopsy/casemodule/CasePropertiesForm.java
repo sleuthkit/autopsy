@@ -27,9 +27,10 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -365,7 +366,12 @@ class CasePropertiesForm extends javax.swing.JPanel{
 
             // check if the case name is empty
             if(newCaseName.trim().equals("")){
-                JOptionPane.showMessageDialog(caller, "The caseName cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(caller,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "CasePropertiesForm.updateCaseName.msgDlg.empty.msg"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "CasePropertiesForm.updateCaseName.msgDlg.empty.title"),
+                                              JOptionPane.ERROR_MESSAGE);
             }
             else{
                 // check if case Name contain one of this following symbol:
@@ -373,13 +379,22 @@ class CasePropertiesForm extends javax.swing.JPanel{
                 if(newCaseName.contains("\\") || newCaseName.contains("/") || newCaseName.contains(":") ||
                    newCaseName.contains("*") || newCaseName.contains("?") || newCaseName.contains("\"") ||
                    newCaseName.contains("<") || newCaseName.contains(">") || newCaseName.contains("|")){
-                    String errorMsg = "The Case Name cannot contain any of this following symbol: \\ / : * ? \" < > |";
-                    JOptionPane.showMessageDialog(caller, errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
+                    String errorMsg = NbBundle
+                            .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.msg");
+                    JOptionPane.showMessageDialog(caller, errorMsg,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.title"),
+                                                  JOptionPane.ERROR_MESSAGE);
                 }
                 else{
                     // ask for the confirmation first
-                    String confMsg = "Are you sure want to update the case name from \"" + oldCaseName + "\" to \"" + newCaseName + "\"?";
-                    NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg, "Create directory", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                    String confMsg = NbBundle
+                            .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.confMsg.msg", oldCaseName,
+                                        newCaseName);
+                    NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg,
+                                                                           NbBundle.getMessage(this.getClass(),
+                                                                                               "CasePropertiesForm.updateCaseName.confMsg.title"),
+                                                                           NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
                     d.setValue(NotifyDescriptor.NO_OPTION);
 
                     Object res = DialogDisplayer.getDefault().notify(d);

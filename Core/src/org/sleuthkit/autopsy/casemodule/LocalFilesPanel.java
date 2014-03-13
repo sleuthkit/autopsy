@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
@@ -84,7 +86,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     
     //@Override
     public String getContentType() {
-        return "LOCAL";
+        return NbBundle.getMessage(this.getClass(), "LocalFilesPanel.contentType.text");
     }
 
     //@Override
@@ -127,7 +129,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public String toString() {
-        return "Logical Files";
+        return NbBundle.getMessage(this.getClass(), "LocalFilesDSProcessor.toString.text");
     }
 
     /**
@@ -242,7 +244,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to LocalFilesPanel updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }//GEN-LAST:event_selectButtonActionPerformed
 

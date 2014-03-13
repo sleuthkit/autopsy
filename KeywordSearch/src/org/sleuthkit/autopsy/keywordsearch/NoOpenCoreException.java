@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
+
 /**
  *
  * Exception thrown when no core is open
@@ -25,7 +27,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 public class NoOpenCoreException extends Exception {
 
     NoOpenCoreException() {
-        super("No currently open Solr core.");
+        super(NbBundle.getMessage(NoOpenCoreException.class, "NoOpenCoreException.err.noOpenSorlCore.msg"));
     }
 
     

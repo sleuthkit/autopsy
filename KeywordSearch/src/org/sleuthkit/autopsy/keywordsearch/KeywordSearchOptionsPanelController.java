@@ -10,6 +10,7 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -82,7 +83,10 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg1"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
             try {
@@ -90,7 +94,10 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg2"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         
     }

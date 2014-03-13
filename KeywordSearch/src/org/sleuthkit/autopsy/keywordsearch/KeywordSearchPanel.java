@@ -34,12 +34,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import org.apache.solr.client.solrj.SolrServerException;
+
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -384,7 +386,8 @@ class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
     @Override
     public List<Keyword> getQueryList() {
-        throw new UnsupportedOperationException("No list for single-keyword search");
+        throw new UnsupportedOperationException(
+                NbBundle.getMessage(this.getClass(), "KeywordSearchPanel.getQueryList.exception.msg"));
     }
 
     private class KeywordPropertyChangeListener implements PropertyChangeListener {

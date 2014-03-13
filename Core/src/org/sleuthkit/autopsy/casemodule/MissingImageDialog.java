@@ -31,6 +31,8 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import  org.sleuthkit.autopsy.casemodule.GeneralFilter;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -54,7 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
     }
-    static final String allDesc = "All Supported Types";
+    static final String allDesc = NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.allDesc.text");
     static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     
     private JFileChooser fc = new JFileChooser();
@@ -100,7 +102,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     }
     
     private void display() {
-        this.setTitle("Search for Missing Image");
+        this.setTitle(NbBundle.getMessage(this.getClass(), "MissingImageDialog.display.title"));
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         // set the popUp window / JFrame
         int w = this.getSize().width;
@@ -316,9 +318,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 //     
     void cancel() {
         int ret = JOptionPane.showConfirmDialog(null,
-                "No image file has been selected, are you sure you\n" + 
-                "would like to exit without finding the image.",
-                "Missing Image", JOptionPane.YES_NO_OPTION);
+                                                NbBundle.getMessage(this.getClass(),
+                                                                    "MissingImageDialog.confDlg.noFileSel.msg"),
+                                                NbBundle.getMessage(this.getClass(),
+                                                                    "MissingImageDialog.confDlg.noFileSel.title"),
+                                                JOptionPane.YES_NO_OPTION);
         if (ret == JOptionPane.YES_OPTION) {
             this.dispose();
         }

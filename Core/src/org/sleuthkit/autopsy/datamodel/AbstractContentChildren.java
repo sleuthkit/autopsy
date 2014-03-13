@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -106,7 +106,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         protected AbstractContentNode defaultVisit(SleuthkitVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given SleuthkitItem");
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                                                                        "AbstractContentChildren.CreateTSKNodeVisitor.exception.noNodeMsg"));
         }
     }
 
@@ -186,7 +187,9 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(),
+                                        "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
         }
     }
 }
