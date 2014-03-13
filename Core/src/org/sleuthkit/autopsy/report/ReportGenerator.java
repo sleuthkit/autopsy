@@ -209,7 +209,7 @@ import org.sleuthkit.datamodel.TskData;
      * @param artifactTypeSelections the enabled/disabled state of the artifact types to be included in the report
      * @param tagSelections the enabled/disabled state of the tag names to be included in the report
      */
-    public void generateBlackboardArtifactsReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    public void generateTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
             TableReportsWorker worker = new TableReportsWorker(artifactTypeSelections, tagNameSelections);
             worker.execute();
@@ -256,6 +256,10 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }
@@ -354,6 +358,10 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }
@@ -612,6 +620,10 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
         }

@@ -178,6 +178,10 @@ class TskDbDiff(object):
 
                 # Print attributes
                 if(looptry == True):
+                    if (len(attributes) == 0):
+                       database_log.write(' <artifact/>\n')
+                       row = artifact_cursor.fetchone()
+                       continue
                     src = attributes[0][0]
                     for attr in attributes:
                         attr_value_index = 3 + attr["value_type"]
