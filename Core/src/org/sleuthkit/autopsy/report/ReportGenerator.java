@@ -257,8 +257,8 @@ import org.sleuthkit.datamodel.TskData;
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 MessageNotifyUtil.Notify.show(
-                        "Error generating report",
-                        "Error generating report: " + ex.getLocalizedMessage(),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
@@ -359,8 +359,8 @@ import org.sleuthkit.datamodel.TskData;
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 MessageNotifyUtil.Notify.show(
-                        "Error generating report",
-                        "Error generating report: " + ex.getLocalizedMessage(),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
@@ -622,8 +622,8 @@ import org.sleuthkit.datamodel.TskData;
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 MessageNotifyUtil.Notify.show(
-                        "Error generating report",
-                        "Error generating report: " + ex.getLocalizedMessage(),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
