@@ -10,6 +10,7 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -20,7 +21,8 @@ iconBase = "org/sleuthkit/autopsy/fileextmismatch/options-icon.png",
 position = 4,
 keywords = "#OptionsCategory_FileExtMismatch",
 keywordsCategory = "KeywordSearchOptions")
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileExtMismatchOptions=File Ext Mismatch", "OptionsCategory_FileExtMismatch=File Ext Mismatch"})
+// migrated to Bundle
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileExtMismatchOptions=File Ext Mismatch", "OptionsCategory_FileExtMismatch=File Ext Mismatch"})
 public final class FileExtMismatchOptionsPanelController extends OptionsPanelController {
 
     private FileExtMismatchConfigPanel panel;
@@ -91,7 +93,10 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to FileExtMismatchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
         
@@ -100,7 +105,10 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
             }
             catch (Exception e) {
                 logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to FileExtMismatchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
     }
 }

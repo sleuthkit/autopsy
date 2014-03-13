@@ -28,6 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -118,12 +120,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 
     @Override
     public String getName() {
-        return "Files - Text";
+        return NbBundle.getMessage(this.getClass(), "FileReportText.getName.text");
     }
 
     @Override
     public String getDescription() {
-        return "A tab delimited text file containing information about individual files in the case."; 
+        return NbBundle.getMessage(this.getClass(), "FileReportText.getDesc.text");
     }
 
     @Override

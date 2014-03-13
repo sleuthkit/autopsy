@@ -23,6 +23,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerHex;
@@ -95,9 +96,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      */
     @Override
     public JMenuItem getPopupPresenter() {
-        JMenu item = new JMenu("View");
-        item.add(new ChangeViewAction("Hex", 1, node));
-        item.add(new ChangeViewAction("String", 2, node));
+        JMenu item = new JMenu(NbBundle.getMessage(this.getClass(), "ChangeViewAction.menuItem.view"));
+        item.add(new ChangeViewAction(NbBundle.getMessage(this.getClass(), "ChangeViewAction.menuItem.view.hex"), 1, node));
+        item.add(new ChangeViewAction(NbBundle.getMessage(this.getClass(), "ChangeViewAction.menuItem.view.string"), 2, node));
         return item;
     }
 }

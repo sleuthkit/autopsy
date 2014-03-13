@@ -28,6 +28,8 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -198,7 +200,13 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             // Open the recent cases
             try {
                 if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-                    JOptionPane.showMessageDialog(null, "Error: Case " + caseName + " doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
+                                                                      caseName),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "OpenRecentCasePanel.openCase.msgDlg.err"),
+                                                  JOptionPane.ERROR_MESSAGE);
                     RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
 
                      //if case is not opened, open the start window
@@ -258,10 +266,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
             switch (column) {
                 case 0:
-                    colName = "Case Name";
+                    colName = NbBundle.getMessage(this.getClass(), "OpenRecentCasePanel.colName.caseName");
                     break;
                 case 1:
-                    colName = "Path";
+                    colName = NbBundle.getMessage(this.getClass(), "OpenRecentCasePanel.colName.path");
                     break;
                 default:
                     ;

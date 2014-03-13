@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.menuactions;
 
 import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 
@@ -42,7 +43,7 @@ class DataExplorerMenu extends CallableSystemAction implements Presenter.Menu {
 
     @Override
     public String getName() {
-        return "DataExplorer Tools";
+        return NbBundle.getMessage(this.getClass(), "DataExplorerMenu.getName.text");
     }
 
     @Override

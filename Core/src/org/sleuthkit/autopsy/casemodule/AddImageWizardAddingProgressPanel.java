@@ -29,6 +29,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 
 /**
@@ -136,7 +137,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     public boolean isValid() {
         // set the focus to the next button of the wizard dialog if it's enabled
         if (imgAdded) {
-            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton("Next >");
+            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressPanel.isValid.focusNext"));
         }
 
         return imgAdded;
@@ -147,7 +149,8 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
      */
     void setStateStarted() {
         component.getProgressBar().setIndeterminate(true);
-        component.setProgressBarTextAndColor("*This process may take some time for large data sources.", 0, Color.black);
+        component.setProgressBarTextAndColor(
+                NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressPanel.stateStarted.progressBarText"), 0, Color.black);
     }
 
     /**

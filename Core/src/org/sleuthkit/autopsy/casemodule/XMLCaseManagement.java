@@ -30,6 +30,7 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.*;
@@ -458,7 +459,8 @@ import org.xml.sax.SAXException;
             docBuilder = docFactory.newDocumentBuilder();
         } catch (ParserConfigurationException ex) {
             clear();
-            throw new CaseActionException("Error setting up Case XML file, ", ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.create.exception.msg"), ex);
         }
 
         doc = docBuilder.newDocument();
@@ -531,7 +533,8 @@ import org.xml.sax.SAXException;
     @Override
     public void writeFile() throws CaseActionException {
         if (doc == null || caseName.equals("")) {
-            throw new CaseActionException("No set case to write management file for.");
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.noCase.msg"));
         }
 
         // Prepare the DOM document for writing
@@ -549,7 +552,8 @@ import org.xml.sax.SAXException;
             xformer = tfactory.newTransformer();
         } catch (TransformerConfigurationException ex) {
             logger.log(Level.SEVERE, "Could not setup tranformer and write case file");
-            throw new CaseActionException("Error writing to case file", ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
 
         //Setup indenting to "pretty print"
@@ -560,7 +564,8 @@ import org.xml.sax.SAXException;
             xformer.transform(source, result);
         } catch (TransformerException ex) {
             logger.log(Level.SEVERE, "Could not run tranformer and write case file");
-            throw new CaseActionException("Error writing to case file", ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
 
         // preparing the output file
@@ -597,11 +602,17 @@ import org.xml.sax.SAXException;
             db = dbf.newDocumentBuilder();
             doc = db.parse(file);
         } catch (ParserConfigurationException ex) {
-            throw new CaseActionException("Error reading case XML file: " + conFilePath, ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
+                                        conFilePath), ex);
         } catch (SAXException ex) {
-            throw new CaseActionException("Error reading case XML file: " + conFilePath, ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
+                                        conFilePath), ex);
         } catch (IOException ex) {
-            throw new CaseActionException("Error reading case XML file: " + conFilePath, ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
+                                        conFilePath), ex);
         }
 
 
@@ -619,7 +630,13 @@ import org.xml.sax.SAXException;
         if (!rootName.equals(TOP_ROOT_NAME)) {
             // throw an error ...
             clear();
-            JOptionPane.showMessageDialog(caller, "Error: This is not an Autopsy config file (\"" + file.getName() + "\").\n \nDetail: \nCannot open a non-Autopsy config file (at " + className + ").", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(caller,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "XMLCaseManagement.open.msgDlg.notAutCase.msg",
+                                                              file.getName(), className),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "XMLCaseManagement.open.msgDlg.notAutCase.title"),
+                                          JOptionPane.ERROR_MESSAGE);
         } else {
             /* Autopsy Created Version */
             String createdVersion = getCreatedVersion(); // get the created version

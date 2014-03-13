@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -146,7 +147,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         // Add an artifacts count row. The actual count will be filled in later.
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Number of artifacts:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.numAartifacts.text"));
         ++rowIndex;
 
         // Add a comment row, if a comment was supplied.
@@ -277,12 +278,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public String getName() {
-        return "Results - Excel";
+        return NbBundle.getMessage(this.getClass(), "ReportExcel.getName.text");
     }
 
     @Override
     public String getDescription() {
-        return "A report about results and tagged items in Excel (XLS) format.";
+        return NbBundle.getMessage(this.getClass(), "ReportExcel.getDesc.text");
     }
 
     @Override
@@ -292,7 +293,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public String getFilePath() {
-        return "Excel.xlsx";
+        return NbBundle.getMessage(this.getClass(), "ReportExcel.getFilePath.text");
     }
     
     /**
@@ -306,12 +307,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     }
     
     private void writeSummaryWorksheet() {
-        sheet = wb.createSheet("Summary");
+        sheet = wb.createSheet(NbBundle.getMessage(this.getClass(), "ReportExcel.sheetName.text"));
         rowIndex = 0;
         
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Summary");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.summary"));
         ++rowIndex;
 
         sheet.createRow(rowIndex);
@@ -321,25 +322,25 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Case Name:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.caseName"));
         row.createCell(1).setCellValue(currentCase.getName());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Case Number:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.caseNum"));
         row.createCell(1).setCellValue(currentCase.getNumber());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Examiner:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.examiner"));
         row.createCell(1).setCellValue(currentCase.getExaminer());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue("Number of Images:");
+        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.numImages"));
         row.createCell(1).setCellValue(currentCase.getImageIDs().length);
         ++rowIndex;
         
