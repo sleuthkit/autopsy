@@ -61,12 +61,11 @@ public class ImageUtils {
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
-    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/home_tree.png").getImage();
+    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
     private static List<String> SUPP_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes())); //final
     private static List<String> SUPP_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes())); // final
-    private static List<String> VIDEO_SUPP_EXTENSIONS = new ArrayList<>(); //final
-    private static List<String> VIDEO_SUPP_MIME_TYPES = new ArrayList<>(); // final
-    
+    private static List<String> SUPP_VIDEO_EXTENSIONS = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", "mpeg","asf", "divx","rm","moov","wmv","vob","dat","m1v","m2v","m4v","mkv","mpe","yop","vqa","xmv","mve","wtv","webm","vivo","vc1","seq","thp","san","mjpg","smk","vmd","sol","cpk","sdp","sbg","rtsp","rpl","rl2","r3d","mlp","mjpeg","hevc","h265","265","h264","h263","h261","drc","avs","pva","pmp","ogg","nut","nuv","nsv","mxf","mtv","mvi","mxg","lxf","lvf","ivf","mve","cin","hnm","gxf","fli","flc","flx","ffm","wve","uv2","dxa","dv","cdxl","cdg","bfi","jv","bik","vid","vb","son","avs","paf","mm","flm","tmv","4xm");
+    private static List<String> SUPP_VIDEO_MIME_TYPES = Arrays.asList("video/avi","video/msvideo", "video/x-msvideo", "video/mp4", "video/x-ms-wmv", "mpeg","asf");
     private static boolean temp_add =false;
     /**
      * Get the default Icon, which is the icon for a file.
@@ -83,34 +82,9 @@ public class ImageUtils {
      * @return 
      */
     public static boolean thumbnailSupported(Content content) {
-         if (temp_add == false) {
-        SUPP_EXTENSIONS.add("avi");
-        SUPP_EXTENSIONS.add("mp4");
-        SUPP_EXTENSIONS.add("wmv");
-        SUPP_MIME_TYPES.add("video/avi"); 
-        SUPP_MIME_TYPES.add("video/msvideo"); 
-        SUPP_MIME_TYPES.add("video/x-msvideo"); 
-        SUPP_MIME_TYPES.add("video/mp4");
-        SUPP_MIME_TYPES.add("video/x-ms-wmv");
-        SUPP_MIME_TYPES.add("video/x-msvideo");
-        SUPP_MIME_TYPES.add("video/x-msvideo");
-        
-        VIDEO_SUPP_EXTENSIONS.add("avi");
-        VIDEO_SUPP_EXTENSIONS.add("mp4");
-        VIDEO_SUPP_EXTENSIONS.add("wmv");
-        VIDEO_SUPP_MIME_TYPES.add("video/avi"); 
-        VIDEO_SUPP_MIME_TYPES.add("video/msvideo"); 
-        VIDEO_SUPP_MIME_TYPES.add("video/x-msvideo"); 
-        VIDEO_SUPP_MIME_TYPES.add("video/mp4");
-        VIDEO_SUPP_MIME_TYPES.add("video/x-ms-wmv");
-        VIDEO_SUPP_MIME_TYPES.add("video/x-msvideo");
-        VIDEO_SUPP_MIME_TYPES.add("video/x-msvideo");
-        temp_add=true;
-         }
         if (content instanceof AbstractFile == false) {
             return false;
         }
-        
         AbstractFile f = (AbstractFile) content;
         if (f.getSize() == 0) {
             return false;
@@ -120,7 +94,7 @@ public class ImageUtils {
         try {
             ArrayList <BlackboardAttribute> attributes = f.getGenInfoAttributes(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
             for (BlackboardAttribute attribute : attributes) { 
-                if (SUPP_MIME_TYPES.contains(attribute.getValueString())) {
+                if (SUPP_MIME_TYPES.contains(attribute.getValueString())||SUPP_VIDEO_MIME_TYPES.contains(attribute.getValueString())) {
                     return true;
                 }
             }
@@ -134,7 +108,7 @@ public class ImageUtils {
         // if we have an extension, check it
         if (extension.equals("") == false) {
             // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-            if (SUPP_EXTENSIONS.contains(extension)) {
+            if (SUPP_EXTENSIONS.contains(extension) || SUPP_VIDEO_EXTENSIONS.contains(extension)) {
                 return true;
             }
         }
@@ -154,8 +128,8 @@ public class ImageUtils {
     public static Image getIcon(Content content, int iconSize) {
         Image icon=null;
        
-        // If a thumbnail file is already saved locally
         File file = getFile(content.getId());
+        // If a thumbnail file is already saved locally
         if (file.exists()) {
             try {
                 BufferedImage bicon = ImageIO.read(file);
@@ -173,16 +147,17 @@ public class ImageUtils {
         } else { // Make a new icon
             AbstractFile f = (AbstractFile) content;
             final String extension = f.getNameExtension();
-        
-                if (VIDEO_SUPP_EXTENSIONS.contains(extension)) 
-                {                  
+
+               if (SUPP_VIDEO_EXTENSIONS.contains(extension)) //video
+                {              
                     icon = generateVideoIcon(content, iconSize);                   
                 }
-                else if (SUPP_EXTENSIONS.contains(extension))
+                else if (SUPP_EXTENSIONS.contains(extension))//image
                 {
                     icon = generateAndSaveIcon(content, iconSize);
                 }
         }
+        
         if (icon==null) return DEFAULT_ICON;
         return icon;
     }
@@ -248,34 +223,30 @@ public class ImageUtils {
     }
      private static Image generateVideoIcon(Content content, int iconSize) { 
         Image icon = null;
-        
+       
+        //load opencv libraries
        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
        try {
           if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")){
               System.loadLibrary("opencv_ffmpeg248_64");
           }else{
              System.loadLibrary("opencv_ffmpeg248");
-             
           }
        }catch (UnsatisfiedLinkError e) {
            Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "OpenCV Native code library failed to load", e);       
            return DEFAULT_ICON;
        }
-        File file = getFile(content.getId());
         AbstractFile f = (AbstractFile) content;
         final String extension = f.getNameExtension();
-        String ext = FilenameUtils.getExtension(file.getName()).toLowerCase();
         String fileName = content.getId()+"."+extension;
         java.io.File jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), fileName);
-        Image image; //final image to be returned
        
          try {
-         //createFile(); // create entire file in TEMP
-         copyFileUsingStream(content,jFile); //create small file in TEMP
+         copyFileUsingStream(content,jFile); //create small file in TEMP directory from the content object
         }catch(Exception ex) {
             return DEFAULT_ICON;
         }  
-               fileName = jFile.toString(); //store filepath as String
+        fileName = jFile.toString(); //store filepath as String
         VideoCapture videoFile= new VideoCapture(); // will contain the video     
         
         if(!videoFile.open(fileName))return DEFAULT_ICON;
@@ -285,14 +256,13 @@ public class ImageUtils {
         double milliseconds= 1000*(totalFrames/fps); //total milliseconds
         if (milliseconds <= 0) return DEFAULT_ICON;
         
-        
         Mat mat = new Mat();
         double timestamp = (milliseconds<500)? milliseconds:500; //default time to check for is 500ms, unless the files is extremely small
         
         if(!videoFile.set(0,timestamp))return DEFAULT_ICON;
         if(! videoFile.read(mat)) return DEFAULT_ICON; //if the image for some reason is bad, return default icon
         
-                byte[] data = new byte[mat.rows()*mat.cols()*(int)(mat.elemSize())];
+        byte[] data = new byte[mat.rows()*mat.cols()*(int)(mat.elemSize())];
         mat.get(0, 0, data);
         
         if (mat.channels() == 3) 
@@ -307,13 +277,12 @@ public class ImageUtils {
         BufferedImage B_image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
         B_image.getRaster().setDataElements(0, 0, mat.cols(), mat.rows(), data);
         
-       // image = SwingFXUtils.toFXImage(B_image, null); //convert bufferedImage to Image
+        //image = SwingFXUtils.toFXImage(B_image, null); //convert bufferedImage to Image
         videoFile.release(); // close the file
-      //  if (image==null) return DEFAULT_ICON;
+        //if (image==null) return DEFAULT_ICON;
         B_image = ScalrWrapper.resizeFast(B_image, iconSize);
         if (B_image==null) return DEFAULT_ICON;
         else return B_image;
-         
     }
     
     private static Image generateAndSaveIcon(Content content, int iconSize) { 
@@ -322,20 +291,11 @@ public class ImageUtils {
             icon = generateIcon(content, iconSize);
             if (icon == null) {
                 return DEFAULT_ICON;
-//            } else {
-//                File f = getFile(content.getId());
-//                if (f.exists()) {
-//                    f.delete();
-//                }
-//                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId()));
             }
         }
             catch (Exception ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
-            }
-//        } catch (IOException ex) {
-//            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
-//        }  
+            }  
         if (icon==null) return DEFAULT_ICON;
         return icon;        
     }
