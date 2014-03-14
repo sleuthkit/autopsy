@@ -60,6 +60,14 @@ class IngestJob {
         return this.processUnallocatedSpace;
     }
 
+    synchronized void cancel() {
+        this.cancelled = true;
+    }
+
+    synchronized boolean isCancelled() { // RJCTODO: It seems like this is only used in the pipelines, where it no longer belongs, I think...
+        return this.cancelled;
+    }
+
     synchronized List<IngestModuleError> startUpIngestPipelines() throws Exception {
         // Create at least one instance of each pipeline type now to make 
         // reasonably sure the ingest modules can be started.
@@ -84,11 +92,6 @@ class IngestJob {
         return pipeline;
     }
 
-    synchronized void releaseIngestPipelinesForThread(long threadId) {
-        this.dataSourceIngestPipelines.remove(threadId);
-        this.fileIngestPipelines.remove(threadId);
-    }
-    
     synchronized DataSourceIngestPipeline getDataSourceIngestPipelineForThread(long threadId) {
         DataSourceIngestPipeline pipeline;
         if (null != this.initialDataSourceIngestPipeline) {
@@ -104,54 +107,25 @@ class IngestJob {
         return pipeline;
     }
 
-    synchronized void shutDownIngestPipelines(boolean ingestJobCancelled) { // RJCTODO: Do away with this flag, put cancelled in job? Myabe this does not belong here...
-        for (DataSourceIngestPipeline pipeline : dataSourceIngestPipelines.values()) {
-            pipeline.shutDown(ingestJobCancelled);
+    synchronized List<IngestModuleError> releaseIngestPipelinesForThread(long threadId) {
+        List<IngestModuleError> errors = new ArrayList<>();
+
+        DataSourceIngestPipeline dataSourceIngestPipeline = dataSourceIngestPipelines.get(threadId);
+        if (dataSourceIngestPipeline != null) {
+            errors.addAll(dataSourceIngestPipeline.shutDown(this.cancelled));
         }
-        for (FileIngestPipeline pipeline : fileIngestPipelines.values()) {
-            pipeline.shutDown(ingestJobCancelled);
+        this.dataSourceIngestPipelines.remove(threadId);
+
+        FileIngestPipeline fileIngestPipeline = fileIngestPipelines.get(threadId);
+        if (fileIngestPipeline != null) {
+            errors.addAll(fileIngestPipeline.shutDown(this.cancelled));
         }
+        this.fileIngestPipelines.remove(threadId);
+
+        return errors;
     }
 
-    // RJCTODO: Call this where appropriate
-    synchronized void cancel() {
-        this.cancelled = true;
-    }
-
-    synchronized boolean isCancelled() {
-        return this.cancelled;
-    }
-
-    @Override
-    public String toString() {
-        return "ScheduledTask{ id=" + this.id + ", dataSource=" + this.dataSource + '}';
-    }
-
-    // RJCTODO: This is not sufficient! Perhaps this is also not needed?
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-
-        final IngestJob other = (IngestJob) obj;
-        if (this.dataSource != other.dataSource && (this.dataSource == null || !this.dataSource.equals(other.dataSource))) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 61 * hash + (int) (this.id ^ (this.id >>> 32));
-        hash = 61 * hash + Objects.hashCode(this.dataSource);
-        hash = 61 * hash + (this.processUnallocatedSpace ? 1 : 0);
-        return hash;
+    synchronized boolean arePipelinesShutDown() {
+        return (dataSourceIngestPipelines.isEmpty() && fileIngestPipelines.isEmpty());
     }
 }

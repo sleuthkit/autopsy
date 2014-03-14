@@ -131,7 +131,7 @@ public final class IngestServices {
      */
     public void scheduleFile(long dataSourceTaskId, AbstractFile file) {
         logger.log(Level.INFO, "Scheduling file: {0}", file.getName());
-        manager.scheduleFile(dataSourceTaskId, file);
+        manager.scheduleFileTask(dataSourceTaskId, file);
     }
 
     /**

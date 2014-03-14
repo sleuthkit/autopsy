@@ -182,7 +182,7 @@ public class IngestConfigurator {
         }
 
         if (!moduleTemplates.isEmpty() && null != contentToIngest) {
-            IngestManager.getDefault().scheduleDataSource(contentToIngest, moduleTemplates, ingestConfigPanel.getProcessUnallocSpace());
+            IngestManager.getDefault().scheduleDataSourceTasks(contentToIngest, moduleTemplates, ingestConfigPanel.getProcessUnallocSpace());
         }
     }
 

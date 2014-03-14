@@ -82,7 +82,7 @@ public final class IngestModuleContext {
 
     public void submitFilesForIngest(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            ingestManager.scheduleFile(ingestJob.getId(), file);
+            ingestManager.scheduleFileTask(ingestJob.getId(), file);
         }
     }
 

@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
+// RJCTODO: Fix comment
 /**
  * IngestManager sets up and manages ingest modules runs them in a background
  * thread notifies modules when work is complete or should be interrupted
@@ -45,17 +46,20 @@ import org.sleuthkit.datamodel.Content;
 public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
+    private static final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
+    private static IngestManager instance;
     private final IngestScheduler scheduler;
-    private FileIngestWorker fileIngestWorker;
-    private DataSourceIngestWorker dataSourceIngestWorker;
-    private SwingWorker<Object, Void> queueWorker;
-    private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
+    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
+    private TaskSchedulingWorker taskSchedulingWorker;
+    private FileTaskWorker fileTaskWorker;
+    private DataSourceTaskWorker dataSourceTaskWorker;
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
     public final static String MODULE_PROPERTIES = "ingest";
-    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
+    private volatile IngestUI ingestMessageBox;
 
+    // RJCTODO: Redo eventing for 3.1
     /**
      * Possible events about ingest modules Event listeners can get the event
      * name by using String returned by toString() method on the specific event.
@@ -104,31 +108,9 @@ public class IngestManager {
          */
         FILE_DONE,
     };
-    //ui
-    //Initialized by Installer in AWT thread once the Window System is ready
-    private volatile IngestUI ui;
-    //singleton
-    private static volatile IngestManager instance;
 
     private IngestManager() {
         this.scheduler = IngestScheduler.getInstance();
-    }
-
-    synchronized long getNextDataSourceTaskId() {
-        return ++this.nextDataSourceTaskId;
-    }
-
-    synchronized long getNextThreadId() {
-        return ++this.nextThreadId;
-    }
-
-    /**
-     * called by Installer in AWT thread once the Window System is ready
-     */
-    void initUI() {
-        if (this.ui == null) {
-            this.ui = IngestMessageTopComponent.findInstance();
-        }
     }
 
     /**
@@ -136,28 +118,40 @@ public class IngestManager {
      *
      * @returns Instance of class.
      */
-    public static IngestManager getDefault() {
+    synchronized public static IngestManager getDefault() {
         if (instance == null) {
-            synchronized (IngestManager.class) {
-                if (instance == null) {
-                    logger.log(Level.INFO, "creating manager instance");
-                    instance = new IngestManager();
-                }
-            }
+            instance = new IngestManager();
         }
         return instance;
     }
 
     /**
+     * called by Installer in AWT thread once the Window System is ready
+     */
+    void initIngestMessageInbox() {
+        if (this.ingestMessageBox == null) {
+            this.ingestMessageBox = IngestMessageTopComponent.findInstance();
+        }
+    }
+    
+    synchronized private long getNextDataSourceTaskId() {
+        return ++this.nextDataSourceTaskId;
+    }
+
+    synchronized private long getNextThreadId() {
+        return ++this.nextThreadId;
+    }
+    
+    /**
      * Add property change listener to listen to ingest events as defined in
      * IngestModuleEvent.
      *
-     * @param l PropertyChangeListener to register
+     * @param listener PropertyChangeListener to register
      */
-    public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
+    public static synchronized void addPropertyChangeListener(final PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
     }
-    
+
     public static synchronized void removePropertyChangeListener(final PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(listener);
     }
@@ -223,18 +217,16 @@ public class IngestManager {
      * @param inputs input data sources to enqueue and scheduleDataSource the
      * ingest modules on
      */
-    void scheduleDataSource(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
-        logger.log(Level.INFO, "Will enqueue {0} data sources for {1} modules.", new Object[]{dataSources.size(), moduleTemplates.size()});
-
-        if (!isIngestRunning() && ui != null) {
-            ui.clearMessages();
+    void scheduleDataSourceTasks(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        if (!isIngestRunning() && ingestMessageBox != null) {
+            ingestMessageBox.clearMessages();
         }
 
-        queueWorker = new EnqueueWorker(dataSources, moduleTemplates, processUnallocatedSpace);
-        queueWorker.execute();
+        taskSchedulingWorker = new TaskSchedulingWorker(dataSources, moduleTemplates, processUnallocatedSpace);
+        taskSchedulingWorker.execute();
 
-        if (ui != null) {
-            ui.restoreMessages();
+        if (ingestMessageBox != null) {
+            ingestMessageBox.restoreMessages();
         }
     }
 
@@ -252,11 +244,10 @@ public class IngestManager {
      * @param input input data source Content objects to scheduleDataSource the
      * ingest modules on
      */
-    void scheduleDataSource(final Content dataSource, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+    void scheduleDataSourceTask(final Content dataSource, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
         List<Content> dataSources = new ArrayList<>();
         dataSources.add(dataSource);
-        logger.log(Level.INFO, "Will enqueue input: {0}", dataSource.getName());
-        scheduleDataSource(dataSources, moduleTemplates, processUnallocatedSpace);
+        scheduleDataSourceTasks(dataSources, moduleTemplates, processUnallocatedSpace);
     }
 
     /**
@@ -270,13 +261,13 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFile(long ingestJobId, AbstractFile file) {
-        IngestJob job = this.ingestJobs.get(ingestJobId);
+    void scheduleFileTask(long ingestJobId, AbstractFile file) {
+        IngestJob job = this.ingestJobs.get(ingestJobId); // RJCTODO: Consider renaming
         if (job == null) {
             // RJCTODO: Handle severe error
         }
 
-        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(job, file);
+        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(job, file); // RJCTODO: Consider renaming
     }
 
     /**
@@ -297,23 +288,27 @@ public class IngestManager {
         }
 
         if (scheduler.getDataSourceScheduler().hasNext()) {
-            if (dataSourceIngestWorker == null || dataSourceIngestWorker.isDone()) {
-                dataSourceIngestWorker = new DataSourceIngestWorker(getNextThreadId()); // RJCTODO: May not need method call
-                dataSourceIngestWorker.execute();
+            if (dataSourceTaskWorker == null || dataSourceTaskWorker.isDone()) {
+                dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId()); // RJCTODO: May not need method call
+                dataSourceTaskWorker.execute();
             }
         }
 
         if (scheduler.getFileScheduler().hasNext()) {
-            if (fileIngestWorker == null || fileIngestWorker.isDone()) {
-                fileIngestWorker = new FileIngestWorker(getNextThreadId()); // RJCTODO: May not need method call
-                fileIngestWorker.execute();
+            if (fileTaskWorker == null || fileTaskWorker.isDone()) {
+                fileTaskWorker = new FileTaskWorker(getNextThreadId()); // RJCTODO: May not need method call
+                fileTaskWorker.execute();
             }
         }
     }
 
     synchronized void reportThreadDone(long threadId) {
-        for (IngestJob job : ingestJobs.values()) { // RJCTODO: Does anyone access these tasks by id?
+        for (IngestJob job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
+            // RJCTODO: Add logging of errors or send ingest messages 
+            if (job.arePipelinesShutDown()) {
+                ingestJobs.remove(job.getId());                
+            }
         }
     }
 
@@ -321,21 +316,21 @@ public class IngestManager {
         for (IngestJob job : ingestJobs.values()) {
             job.cancel();
         }
-        
-        if (queueWorker != null) {
-            queueWorker.cancel(true);
-            queueWorker = null;
+
+        if (taskSchedulingWorker != null) {
+            taskSchedulingWorker.cancel(true);
+            taskSchedulingWorker = null;
         }
 
         scheduler.getFileScheduler().empty();
         scheduler.getDataSourceScheduler().empty();
 
-        if (dataSourceIngestWorker != null) {
-            dataSourceIngestWorker.cancel(true);
+        if (dataSourceTaskWorker != null) {
+            dataSourceTaskWorker.cancel(true);
         }
 
-        if (fileIngestWorker != null) {
-            fileIngestWorker.cancel(true);
+        if (fileTaskWorker != null) {
+            fileTaskWorker.cancel(true);
         }
     }
 
@@ -345,9 +340,9 @@ public class IngestManager {
      * @return true if any module is running, false otherwise
      */
     public synchronized boolean isIngestRunning() {
-        return ((queueWorker != null && !queueWorker.isDone())
-                || (fileIngestWorker != null && !fileIngestWorker.isDone())
-                || (fileIngestWorker != null && !fileIngestWorker.isDone()));
+        return ((taskSchedulingWorker != null && !taskSchedulingWorker.isDone())
+                || (fileTaskWorker != null && !fileTaskWorker.isDone())
+                || (fileTaskWorker != null && !fileTaskWorker.isDone()));
     }
 
     /**
@@ -358,8 +353,8 @@ public class IngestManager {
      * filter them out (slower)
      */
     void postIngestMessage(IngestMessage message) {
-        if (ui != null) {
-            ui.displayMessage(message);
+        if (ingestMessageBox != null) {
+            ingestMessageBox.displayMessage(message);
         }
     }
 
@@ -378,14 +373,14 @@ public class IngestManager {
         }
     }
 
-    private class EnqueueWorker extends SwingWorker<Object, Void> {
+    private class TaskSchedulingWorker extends SwingWorker<Object, Void> {
 
         private final List<Content> dataSources;
         private final List<IngestModuleTemplate> moduleTemplates;
         private final boolean processUnallocatedSpace;
         private ProgressHandle progress;
 
-        EnqueueWorker(List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        TaskSchedulingWorker(List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
             this.dataSources = dataSources;
             this.moduleTemplates = moduleTemplates;
             this.processUnallocatedSpace = processUnallocatedSpace;
@@ -401,7 +396,7 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return EnqueueWorker.this.cancel(true);
+                    return TaskSchedulingWorker.this.cancel(true);
                 }
             });
 
@@ -410,7 +405,7 @@ public class IngestManager {
             for (Content dataSource : dataSources) {
                 final String inputName = dataSource.getName();
                 IngestJob ingestJob = new IngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
-                
+
                 List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                 if (!errors.isEmpty()) {
                     // RJCTODO: Log all errors. Provide a list of all of the modules
@@ -423,10 +418,10 @@ public class IngestManager {
                             + "Error: " + errors.get(0).getModuleError().getMessage());
                     return null;
                 }
-                
+
                 // Save the ingest job for later cleanup of pipelines.
                 ingestJobs.put(ingestJob.getId(), ingestJob);
-                
+
                 // Queue the data source ingest tasks for the ingest job.
                 logger.log(Level.INFO, "Queueing data source tasks: {0}", ingestJob);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
@@ -468,34 +463,36 @@ public class IngestManager {
             scheduler.getDataSourceScheduler().empty();
         }
     }
-    
+
     /**
-     * Performs data source ingest tasks for one or more ingest jobs on a worker thread.
+     * Performs data source ingest tasks for one or more ingest jobs on a worker
+     * thread.
      */
-    class DataSourceIngestWorker extends SwingWorker<Object, Void> {
+    class DataSourceTaskWorker extends SwingWorker<Object, Void> {
 
         private final long id;
         private ProgressHandle progress;
 
-        DataSourceIngestWorker(long threadId) {
+        DataSourceTaskWorker(long threadId) {
             this.id = threadId;
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            logger.log(Level.INFO, String.format("Data source ingest thread {0} starting", this.id));
+            logger.log(Level.INFO, String.format("Data source ingest thread {0} started", this.id));
 
-            // Set up a progress bar with cancel capability. This is one of two ways 
-            // that the worker can be canceled. The other place is via a call to
-            // IngestManager.stopAll().
-            final String displayName = "Data source";
+            // Set up a progress bar with cancel capability. This is one of two 
+            // ways that the worker can be canceled. The other way is via a call
+            // to IngestManager.stopAll().
+            final String displayName = "Data Source";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
+                    logger.log(Level.INFO, "Data source ingest thread {0} cancelled", DataSourceTaskWorker.this.id);
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return DataSourceIngestWorker.this.cancel(true);
+                    return DataSourceTaskWorker.this.cancel(true);
                 }
             });
             progress.start();
@@ -504,17 +501,17 @@ public class IngestManager {
             IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
             while (scheduler.hasNext()) {
                 if (isCancelled()) {
-                    logger.log(Level.INFO, "Terminating file ingest thread {0} due to ingest cancellation", this.id);
+                    logger.log(Level.INFO, "Data source ingest thread {0} cancelled", this.id);
                     return null;
                 }
 
                 IngestJob ingestJob = scheduler.next();
                 DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
-                pipeline.ingestDataSource(this, this.progress);            
+                pipeline.ingestDataSource(this, this.progress);
             }
 
-            // RJCTODO: Report done, normal scenario
-
+            logger.log(Level.INFO, "Data source ingest thread {0} completed", this.id);
+            IngestManager.getDefault().reportThreadDone(this.id);
             return null;
         }
 
@@ -522,48 +519,48 @@ public class IngestManager {
         protected void done() {
             try {
                 super.get();
-                // RJCTODO: Pass thread id and this.isCancelled() back to manager to shut down thread's pipeline in all jobs
             } catch (CancellationException | InterruptedException e) {
-                // RJCTODO: Decide what to do here
-            // RJCTODO: Report done
-    //            logger.log(Level.INFO, "Fatal error during file ingest.");
+                logger.log(Level.INFO, "Data source ingest thread {0} cancelled", this.id);
+                IngestManager.getDefault().reportThreadDone(this.id);
             } catch (Exception ex) {
-            // RJCTODO: Report done
-                logger.log(Level.SEVERE, "Fatal error during file ingest.", ex);
+                String message = String.format("Data source ingest thread {0} experienced a fatal error", this.id);
+                logger.log(Level.SEVERE, message, ex);
+                IngestManager.getDefault().reportThreadDone(this.id);
             } finally {
                 progress.finish();
             }
         }
     }
-        
+
     /**
-     * Performs file ingest tasks for one or more ingest jobs on a worker thread.
+     * Performs file ingest tasks for one or more ingest jobs on a worker
+     * thread.
      */
-    class FileIngestWorker extends SwingWorker<Object, Void> {
+    class FileTaskWorker extends SwingWorker<Object, Void> {
 
         private final long id;
         private ProgressHandle progress;
 
-        FileIngestWorker(long threadId) {
+        FileTaskWorker(long threadId) {
             this.id = threadId;
         }
 
         @Override
         protected Object doInBackground() throws Exception {
-            logger.log(Level.INFO, String.format("File ingest thread {0} starting", this.id));
+            logger.log(Level.INFO, String.format("File ingest thread {0} started", this.id));
 
             // Set up a progress bar with cancel capability. This is one of two ways 
-            // that the worker can be canceled. The other place is via a call to
+            // that the worker can be canceled. The other way is via a call to
             // IngestManager.stopAll().
             final String displayName = "File Ingest";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    logger.log(Level.INFO, "File ingest thread {0} cancelled", FileIngestWorker.this.id);
+                    logger.log(Level.INFO, "File ingest thread {0} cancelled", FileTaskWorker.this.id);
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return FileIngestWorker.this.cancel(true);
+                    return FileTaskWorker.this.cancel(true);
                 }
             });
             progress.start();
@@ -573,7 +570,7 @@ public class IngestManager {
             progress.switchToDeterminate(totalEnqueuedFiles);
 
             int processedFiles = 0;
-            while (fileScheduler.hasNext()) {            
+            while (fileScheduler.hasNext()) {
                 if (isCancelled()) {
                     IngestManager.getDefault().reportThreadDone(this.id);
                     logger.log(Level.INFO, "File ingest thread {0} cancelled", this.id);
@@ -594,12 +591,12 @@ public class IngestManager {
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
                 if (processedFiles < totalEnqueuedFiles) {
-                    // RCTODO: What is this comment saying? 
-                    //fix for now to handle the same datasource Content enqueued twice
                     ++processedFiles;
                 }
             }
-            IngestManager.getDefault().reportThreadDone(this.id);        
+
+            logger.log(Level.INFO, "File ingest thread {0} completed", this.id);
+            IngestManager.getDefault().reportThreadDone(this.id);
             return null;
         }
 
@@ -608,13 +605,15 @@ public class IngestManager {
             try {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
+                logger.log(Level.INFO, "File ingest thread {0} cancelled", this.id);
                 IngestManager.getDefault().reportThreadDone(this.id);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Fatal error during file ingest.", ex);
+                String message = String.format("File ingest thread {0} experienced a fatal error", this.id);
+                logger.log(Level.SEVERE, message, ex);
                 IngestManager.getDefault().reportThreadDone(this.id);
             } finally {
                 progress.finish();
             }
         }
-    }    
+    }
 }
