@@ -60,7 +60,7 @@
     <Component class="javax.swing.JButton" name="listsButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="ListBundleName" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -69,10 +69,10 @@
         <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="enabled" type="boolean" value="false"/>
         <Property name="rolloverIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon-rollover.png"/>
         </Property>
         <Property name="rolloverSelectedIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-pressed.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon-pressed.png"/>
         </Property>
       </Properties>
       <Events>

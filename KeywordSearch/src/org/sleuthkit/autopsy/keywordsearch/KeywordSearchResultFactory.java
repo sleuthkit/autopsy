@@ -260,23 +260,40 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final boolean literal_query = tcq.isLiteral();
 
             int resID = 0;
-            for(ContentHit chit : tcqRes.get(tcq.getQueryString())) {
-                AbstractFile f = chit.getContent();
+            
+            final Map<AbstractFile, Integer> hitContents = ContentHit.flattenResults(tcqRes);
+            for (final AbstractFile f : hitContents.keySet()) {
+                final int previewChunk = hitContents.get(f);                
+
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<>();
 
-                if (chit.hasSnippet()) {
-                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, chit.getSnippet());
+                //to generate the preview snippet
+                //just pick any term that hit that file (since we are compressing result view)
+                String hit = null;
+                //find the first hit for this file 
+                for (String hitKey : tcqRes.keySet()) {
+                    List<ContentHit> chits = tcqRes.get(hitKey);
+                    for (ContentHit chit : chits) {
+                        if (chit.getContent().equals(f)) {
+                            hit = hitKey;
+                            if (chit.hasSnippet() && (KeywordSearchUtil.escapeLuceneQuery(hit) != null)) {
+                                setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, chit.getSnippet());
+                            }                                     
+                            break;
+                        }
+                    }
+                    if (hit != null) {
+                        break;
+                    }
                 }
-
                 if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
                     AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
                 }
-
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
-                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, chit.getChunkId(), tcqRes));
+                tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));                    
             }
-            
+
             // Add all the nodes to toPopulate at once. Minimizes node creation
             // EDT threads, which can slow and/or hang the UI on large queries.
             toPopulate.addAll(tempList);
