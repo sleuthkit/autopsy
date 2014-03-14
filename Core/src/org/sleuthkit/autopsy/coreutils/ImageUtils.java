@@ -174,16 +174,11 @@ public class ImageUtils {
             AbstractFile f = (AbstractFile) content;
             final String extension = f.getNameExtension();
         
-               // if we have an extension, check it
-                if (extension.equals("") == false) 
-                {
-                    // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-                    if (VIDEO_SUPP_EXTENSIONS.contains(extension)) 
-                    {
-                        icon = generateVideoIcon(content, iconSize);
-                    }
+                if (VIDEO_SUPP_EXTENSIONS.contains(extension)) 
+                {                  
+                    icon = generateVideoIcon(content, iconSize);                   
                 }
-                else 
+                else if (SUPP_EXTENSIONS.contains(extension))
                 {
                     icon = generateAndSaveIcon(content, iconSize);
                 }
@@ -260,7 +255,6 @@ public class ImageUtils {
               System.loadLibrary("opencv_ffmpeg248_64");
           }else{
              System.loadLibrary("opencv_ffmpeg248");
-             System.loadLibrary("opencv_java248");
              
           }
        }catch (UnsatisfiedLinkError e) {
@@ -268,8 +262,10 @@ public class ImageUtils {
            return DEFAULT_ICON;
        }
         File file = getFile(content.getId());
+        AbstractFile f = (AbstractFile) content;
+        final String extension = f.getNameExtension();
         String ext = FilenameUtils.getExtension(file.getName()).toLowerCase();
-        String fileName = content.getId() + (ext.isEmpty() ? "" : "." + ext);
+        String fileName = content.getId()+"."+extension;
         java.io.File jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), fileName);
         Image image; //final image to be returned
        
@@ -314,6 +310,7 @@ public class ImageUtils {
        // image = SwingFXUtils.toFXImage(B_image, null); //convert bufferedImage to Image
         videoFile.release(); // close the file
       //  if (image==null) return DEFAULT_ICON;
+        B_image = ScalrWrapper.resizeFast(B_image, iconSize);
         if (B_image==null) return DEFAULT_ICON;
         else return B_image;
          
@@ -325,16 +322,20 @@ public class ImageUtils {
             icon = generateIcon(content, iconSize);
             if (icon == null) {
                 return DEFAULT_ICON;
-            } else {
-                File f = getFile(content.getId());
-                if (f.exists()) {
-                    f.delete();
-                }
-                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId()));
-            }         
-        } catch (IOException ex) {
+//            } else {
+//                File f = getFile(content.getId());
+//                if (f.exists()) {
+//                    f.delete();
+//                }
+//                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId()));
+            }
+        }
+            catch (Exception ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
-        }  
+            }
+//        } catch (IOException ex) {
+//            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
+//        }  
         if (icon==null) return DEFAULT_ICON;
         return icon;        
     }
