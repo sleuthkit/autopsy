@@ -48,6 +48,7 @@ final class IngestModuleLoader {
         // RJCTODO: Since we were going to overwrite pipeline config every time and we are going to move the code modules
         // into this package, we can simply handle the module ordering here, possibly just directly instantiating the core 
         // modules.
+        // RJCTODO: Make sure that sample modules are excluded
         Logger logger = Logger.getLogger(IngestModuleLoader.class.getName());
         Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
         for (IngestModuleFactory factory : factories) {
