@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JProgressBar;
 import org.openide.WizardDescriptor;
+import org.openide.util.NbBundle;
 
 /**
  * visual component to display progress bar and status updates while adding an
@@ -30,7 +31,8 @@ import org.openide.WizardDescriptor;
  */
  class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
-    private static final String ADDING_DATA_SOURCE_COMPLETE = "Adding Data Source - Complete";
+    private static final String ADDING_DATA_SOURCE_COMPLETE = NbBundle
+            .getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.addingDsComplete.text");
     private String errorLog = "";
     private boolean hasCriticalErrors = false;
 
@@ -42,7 +44,7 @@ import org.openide.WizardDescriptor;
      */
     @Override
     public String getName() {
-        return "Add Data Source";
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressVisual.getName.text");
     }
 
     /**
@@ -115,10 +117,12 @@ import org.openide.WizardDescriptor;
         //progressBar.setValue(100); //always invoked when process completed
         if (hasCriticalErrors) {
             statusLabel.setForeground(Color.RED);
-            statusLabel.setText("*Failed to add data source (critical errors encountered). Click below to view the log.");
+            statusLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressVisual.showErrors.critText"));
         } else {
             statusLabel.setForeground(Color.BLACK);
-            statusLabel.setText("*Data Source added (non-critical errors encountered). Click below to view the log.");
+            statusLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressVisual.showErrors.nonCritText"));
         }
 
         errorLog += errors + "\n";

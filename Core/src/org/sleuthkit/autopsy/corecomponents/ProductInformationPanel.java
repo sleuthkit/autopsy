@@ -109,7 +109,8 @@ public class ProductInformationPanel extends JPanel implements HyperlinkListener
         jScrollPane2.setViewportView(description);
 
         verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
-        verboseLoggingButton.setText("Activate verbose logging");
+        verboseLoggingButton.setText(
+                NbBundle.getMessage(this.getClass(), "ProductInformationPanel.actVerboseLogging.text"));
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 activateVerboseLogging(evt);
@@ -196,7 +197,8 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
 
     private void disableVerboseLoggingButton() {
         this.verboseLoggingButton.setEnabled(false);
-        this.verboseLoggingButton.setText("Verbose logging enabled");
+        this.verboseLoggingButton.setText(
+                NbBundle.getMessage(this.getClass(), "ProductInformationPanel.verbLoggingEnabled.text"));
     }
 
     private void closeDialog() {
@@ -225,17 +227,30 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
 
     private static String getOperatingSystemValue() {
         return NbBundle.getMessage(ProductInformationPanel.class, "Format_OperatingSystem_Value",
-                System.getProperty("os.name", "unknown"),
-                System.getProperty("os.version", "unknown"),
-                System.getProperty("os.arch", "unknown"));
+                                   System.getProperty("os.name",
+                                                      NbBundle.getMessage(ProductInformationPanel.class,
+                                                                          "ProductInformationPanel.propertyUnknown.text")),
+                                   System.getProperty("os.version",
+                                                      NbBundle.getMessage(ProductInformationPanel.class,
+                                                                          "ProductInformationPanel.propertyUnknown.text")),
+                                   System.getProperty("os.arch",
+                                                      NbBundle.getMessage(ProductInformationPanel.class,
+                                                                          "ProductInformationPanel.propertyUnknown.text")));
     }
 
     private static String getJavaValue() {
-        return System.getProperty("java.version", "unknown");
+        return System.getProperty("java.version",
+                                  NbBundle.getMessage(ProductInformationPanel.class,
+                                                      "ProductInformationPanel.propertyUnknown.text"));
     }
 
     private static String getVMValue() {
-        return System.getProperty("java.vm.name", "unknown") + " " + System.getProperty("java.vm.version", "");
+        return NbBundle.getMessage(ProductInformationPanel.class,
+                                   "ProductInformationPanel.getVMValue.text",
+                                   System.getProperty("java.vm.name",
+                                                      NbBundle.getMessage(ProductInformationPanel.class,
+                                                                          "ProductInformationPanel.propertyUnknown.text")),
+                                   System.getProperty("java.vm.version", ""));
     }
 
     private static String getSystemLocaleValue() {
@@ -248,7 +263,8 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     }
 
     private static String getEncodingValue() {
-        return System.getProperty("file.encoding", "unknown");
+        return System.getProperty("file.encoding",
+                                  NbBundle.getMessage(ProductInformationPanel.class, "ProductInformationPanel.propertyUnknown.text"));
     }
     
     public void setCopyright(String text) {

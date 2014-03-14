@@ -81,7 +81,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private DataResultTopComponent dataResult = new DataResultTopComponent(true, "Directory Listing");
+    private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
+                                                                                                     "DirectoryTreeTopComponent.title.text"));
     private LinkedList<String[]> backList;
     private LinkedList<String[]> forwardList;
     /**
@@ -1014,7 +1015,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
-        new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
+        new ViewContextAction(
+                NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
+                new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
 //    private class HistoryManager<T> {
@@ -1033,7 +1036,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to DirectoryTreeTopComponent updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DirectoryTreeTopComponent.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 }

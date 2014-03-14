@@ -127,7 +127,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         hashSetNameTextField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        searchDuringIngestCheckbox = new javax.swing.JCheckBox();
         sendIngestMessagesCheckbox = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
         databasePathTextField = new javax.swing.JTextField();
@@ -172,17 +171,13 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.jLabel2.text")); // NOI18N
 
-        searchDuringIngestCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(searchDuringIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.searchDuringIngestCheckbox.text")); // NOI18N
-        searchDuringIngestCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.searchDuringIngestCheckbox.toolTipText")); // NOI18N
-        searchDuringIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchDuringIngestCheckboxActionPerformed(evt);
-            }
-        });
-
         sendIngestMessagesCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(sendIngestMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.sendIngestMessagesCheckbox.text")); // NOI18N
+        sendIngestMessagesCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sendIngestMessagesCheckboxActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.jLabel3.text")); // NOI18N
 
@@ -203,39 +198,31 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(sendIngestMessagesCheckbox)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(okButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton))
+                    .addComponent(jLabel2)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(20, 20, 20)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addComponent(sendIngestMessagesCheckbox))
-                            .addComponent(searchDuringIngestCheckbox))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(knownRadioButton)
+                            .addComponent(knownBadRadioButton)))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(okButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cancelButton))
-                            .addComponent(jLabel2)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(20, 20, 20)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(knownRadioButton)
-                                    .addComponent(knownBadRadioButton)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(databasePathTextField))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel3)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(hashSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(saveAsButton)))
-                        .addContainerGap())))
+                                .addComponent(databasePathTextField))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(hashSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(saveAsButton)))
+                .addContainerGap())
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, okButton});
@@ -259,10 +246,8 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(searchDuringIngestCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sendIngestMessagesCheckbox)
-                .addGap(3, 3, 3)
+                .addGap(26, 26, 26)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
                     .addComponent(okButton))
@@ -273,13 +258,11 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
-        searchDuringIngestCheckbox.setSelected(true);
         sendIngestMessagesCheckbox.setSelected(false);
         sendIngestMessagesCheckbox.setEnabled(false);
     }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
-        searchDuringIngestCheckbox.setSelected(true);
         sendIngestMessagesCheckbox.setSelected(true);
         sendIngestMessagesCheckbox.setEnabled(true);
     }//GEN-LAST:event_knownBadRadioButtonActionPerformed
@@ -308,13 +291,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex);
         }        
     }//GEN-LAST:event_saveAsButtonActionPerformed
-
-    private void searchDuringIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchDuringIngestCheckboxActionPerformed
-        sendIngestMessagesCheckbox.setEnabled(searchDuringIngestCheckbox.isSelected());
-        if (!searchDuringIngestCheckbox.isSelected()) {
-            sendIngestMessagesCheckbox.setSelected(false);
-        }
-    }//GEN-LAST:event_searchDuringIngestCheckboxActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
@@ -352,7 +328,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
         try
         {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), searchDuringIngestCheckbox.isSelected(), sendIngestMessagesCheckbox.isSelected(), type);       
+            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);       
         } 
         catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
@@ -387,6 +363,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
+    private void sendIngestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendIngestMessagesCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_sendIngestMessagesCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
@@ -399,7 +379,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JButton okButton;
     private javax.swing.JButton saveAsButton;
-    private javax.swing.JCheckBox searchDuringIngestCheckbox;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
     // End of variables declaration//GEN-END:variables
 }

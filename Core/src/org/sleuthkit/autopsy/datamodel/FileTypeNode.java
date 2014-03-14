@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -33,12 +34,12 @@ public class FileTypeNode extends DisplayableItemNode {
 
     FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         super(Children.create(new FileTypeChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
-        
+
         this.filter = filter;
         this.skCase = skCase;
-        
+
         super.setName(filter.getName());
-        
+
         //get count of children without preloading all children nodes
         final long count = new FileTypeChildren(filter, skCase).calculateItems();
         //final long count = getChildren().getNodesCount(true);
@@ -61,18 +62,18 @@ public class FileTypeNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Filter Type",
-                "Filter Type",
-                "no description",
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.name"),
+                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.displayName"),
+                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.desc"),
                 filter.getDisplayName()));
         String extensions = "";
         for (String ext : filter.getFilter()) {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
-        ss.put(new NodeProperty("File Extensions",
-                "File Extensions",
-                "no description",
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.name"),
+                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.displayName"),
+                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.desc"),
                 extensions));
 
         return s;

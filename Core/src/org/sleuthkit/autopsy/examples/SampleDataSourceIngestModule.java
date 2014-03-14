@@ -32,7 +32,6 @@ package org.sleuthkit.autopsy.examples;
 
 import java.util.List;
 import org.apache.log4j.Logger;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -50,8 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Sample DataSource-level ingest module that doesn't do much at all. 
  * Just exists to show basic idea of these modules
  */
- class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleDataSource {
-
+ public class SampleDataSourceIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleDataSource {
     /* Data Source modules operate on a disk or set of logical files. They
      * are passed in teh data source refernce and query it for things they want.
      */
@@ -84,23 +82,19 @@ import org.sleuthkit.datamodel.TskCoreException;
         } catch (TskCoreException ex) {
             Logger log = Logger.getLogger(SampleDataSourceIngestModule.class);
             log.fatal("Error retrieving files from database:  " + ex.getLocalizedMessage());
-            return;
         }    
     }
 
     @Override
     public void init(IngestModuleInit initContext) throws IngestModuleException {
-        // do nothing
     }
 
     @Override
     public void complete() {
-        // do nothing
     }
 
     @Override
     public void stop() {
-        // do nothing
     }
 
     @Override

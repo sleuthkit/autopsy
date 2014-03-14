@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -55,28 +57,28 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 // service provider when DataResultViewers can be made compatible with node 
 // multiple selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
- public class DataResultViewerTable extends AbstractDataResultViewer {
+public class DataResultViewerTable extends AbstractDataResultViewer {
 
-    private String firstColumnLabel = "Name";
+    private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
     private Set<Property> propertiesAcc = new LinkedHashSet<>();
-    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
+    private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
 
     /**
-     * Creates a DataResultViewerTable object that is compatible with node 
+     * Creates a DataResultViewerTable object that is compatible with node
      * multiple selection actions.
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         super(explorerManager);
         initialize();
     }
-    
+
     /**
-     * Creates a DataResultViewerTable object that is NOT compatible with node 
+     * Creates a DataResultViewerTable object that is NOT compatible with node
      * multiple selection actions.
      */
     public DataResultViewerTable() {
-        initialize();        
+        initialize();
     }
 
     private void initialize() {
@@ -90,9 +92,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
         // don't show the root node
         ov.getOutline().setRootVisible(false);
-        ov.getOutline().setDragEnabled(false);        
+        ov.getOutline().setDragEnabled(false);
     }
-    
+
     /**
      * Expand node
      *
@@ -154,7 +156,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         Node firstChild = parent.getChildren().getNodeAt(0);
 
         if (firstChild == null) {
-            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
             for (PropertySet ps : firstChild.getPropertySets()) {
                 if (ps.getName().equals(Sheet.PROPERTIES)) {
@@ -162,7 +165,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
                 }
             }
 
-            throw new IllegalArgumentException("Child Node doesn't have the regular PropertySet.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.childWithoutPropertySet"));
         }
     }
 
@@ -174,13 +178,15 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
      * @param parent Node with at least one child to get properties from
      * @return Properties,
      */
+    @SuppressWarnings("rawtypes")
     private Node.Property[] getAllChildPropertyHeaders(Node parent) {
         Node firstChild = parent.getChildren().getNodeAt(0);
 
         Property[] properties = null;
 
         if (firstChild == null) {
-            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
             Set<Property> allProperties = new LinkedHashSet<Property>();
             while (firstChild != null) {
@@ -216,7 +222,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
         Children children = parent.getChildren();
         int childCount = 0;
-        for (Node child : children.getNodes()) {            
+        for (Node child : children.getNodes()) {
             if (++childCount > rows) {
                 break;
             }
@@ -237,8 +243,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
     }
 
     /**
-     * Thread note: Make sure to run this in the EDT as it causes GUI operations.
-     * @param selectedNode 
+     * Thread note: Make sure to run this in the EDT as it causes GUI
+     * operations.
+     *
+     * @param selectedNode
      */
     @Override
     public void setNode(Node selectedNode) {
@@ -246,7 +254,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             boolean hasChildren = false;
-            
+
             if (selectedNode != null) {
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
@@ -255,7 +263,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
             if (oldNode != null) {
                 oldNode.removeNodeListener(dummyNodeListener);
             }
-            
+
             // if there's no selection node, do nothing
             if (hasChildren) {
                 Node root = selectedNode;
@@ -273,11 +281,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
             this.setCursor(null);
         }
     }
-    
+
     /**
      * Create Column Headers based on the Content represented by the Nodes in
      * the table.
-     * 
+     *
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
@@ -296,11 +304,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         if (ov == null) {
             return;
         }
-        
-	propertiesAcc.clear();
+
+        propertiesAcc.clear();
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
+        List<Node.Property> props = new ArrayList<>(propertiesAcc);
         if (props.size() > 0) {
             Node.Property prop = props.remove(0);
             ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
@@ -339,15 +347,15 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
         // show the horizontal scroll panel and show all the content & header
 
         int totalColumns = props.size();
-	
-	//int scrollWidth = ttv.getWidth();
-       	int margin = 4;
-       	int startColumn = 1;
-                
-       	// If there is only one column (which was removed from props above)
-       	// Just let the table resize itself.
-       	ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
-                
+
+        //int scrollWidth = ttv.getWidth();
+        int margin = 4;
+        int startColumn = 1;
+
+        // If there is only one column (which was removed from props above)
+        // Just let the table resize itself.
+        ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
+
 
 
         // get first 100 rows values for the table
@@ -383,34 +391,32 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
     // Populate a two-dimensional array with rows of property values for up 
     // to maxRows children of the node passed in. 
     private static Object[][] getRowValues(Node node, int maxRows) {
-        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];        
+        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];
         int rowCount = 0;
         for (Node child : node.getChildren().getNodes()) {
             if (rowCount >= maxRows) {
                 break;
-            }                
+            }
             PropertySet[] propertySets = child.getPropertySets();
-            if (propertySets.length > 0)
-            {
+            if (propertySets.length > 0) {
                 Property[] properties = propertySets[0].getProperties();
                 rowValues[rowCount] = new Object[properties.length];
                 for (int j = 0; j < properties.length; ++j) {
                     try {
                         rowValues[rowCount][j] = properties[j].getValue();
-                    } 
-                    catch (IllegalAccessException | InvocationTargetException ignore) {
+                    } catch (IllegalAccessException | InvocationTargetException ignore) {
                         rowValues[rowCount][j] = "n/a";
                     }
                 }
-            }                        
+            }
             ++rowCount;
-        }        
+        }
         return rowValues;
     }
 
     @Override
     public String getTitle() {
-        return "Table";
+        return NbBundle.getMessage(this.getClass(), "DataResultViewerTable.title");
     }
 
     @Override
@@ -429,6 +435,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
      * @param table the object table
      * @return max the maximum width of the column
      */
+    @SuppressWarnings("rawtypes")
     private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, List<Node.Property> header, Object[][] table) {
         // set the tree (the node / names column) width
         String headerName = header.get(index - 1).getDisplayName();
@@ -479,15 +486,15 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
         super.clearComponent();
     }
-    
+
     private class DummyNodeListener implements NodeListener {
-        private static final String DUMMY_NODE_DISPLAY_NAME = "Please Wait...";
+
         private volatile boolean load = true;
-        
+
         public void reset() {
             load = true;
         }
-        
+
         @Override
         public void childrenAdded(final NodeMemberEvent nme) {
             Node[] delta = nme.getDelta();
@@ -505,7 +512,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
                 }
             }
         }
-        
+
         private boolean containsReal(Node[] delta) {
             for (Node n : delta) {
                 if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {

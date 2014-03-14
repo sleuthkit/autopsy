@@ -38,6 +38,8 @@ import javax.swing.JList;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
 import javax.swing.border.EmptyBorder;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -46,7 +48,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  */
 class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
-    private static final String NONE_SELECTED_MESSAGE = "At least one date type must be selected!";
+    private static final String NONE_SELECTED_MESSAGE = NbBundle.getMessage(DateSearchFilter.class, "DateSearchFilter.noneSelectedMsg.text");
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
     private static final String SEPARATOR = "SEPARATOR";
 
@@ -202,7 +204,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     /**
      * Inner class to put the separator inside the combo box.
      */
-    static class ComboBoxRenderer extends JLabel implements ListCellRenderer {
+    static class ComboBoxRenderer extends JLabel implements ListCellRenderer<String> {
 
         JSeparator separator;
 
@@ -213,8 +215,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         }
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            String str = (value == null) ? "" : value.toString();
+        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+            String str = (value == null) ? "" : value;
             if (SEPARATOR.equals(str)) {
                 return separator;
             }

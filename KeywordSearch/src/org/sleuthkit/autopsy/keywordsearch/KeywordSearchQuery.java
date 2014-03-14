@@ -61,6 +61,11 @@ interface KeywordSearchQuery {
      */
     public void setField(String field);
     
+    /**
+     * Modify the query string to be searched as a substring instead of a whole word
+     * @param isSubstring 
+     */
+    public void setSubstringQuery();
     
     /**
      * escape the query string and use the escaped string in the query

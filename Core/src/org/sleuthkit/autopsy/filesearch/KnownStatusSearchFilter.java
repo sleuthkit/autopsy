@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
@@ -26,7 +28,8 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  */
 class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearchPanel> {
 
-    private static final String NONE_SELECTED_MESSAGE = "At least one known status must be selected!";
+    private static final String NONE_SELECTED_MESSAGE = NbBundle
+            .getMessage(KnownStatusSearchFilter.class, "KnownStatusSearchFilter.noneSelectedMsg.text");
 
     KnownStatusSearchFilter(KnownStatusSearchPanel panel) {
         super(panel);

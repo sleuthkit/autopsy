@@ -134,7 +134,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             @Override
             public int nextPage() {
                 if (!hasNextPage()) {
-                    throw new IllegalStateException("No next page.");
+                    throw new IllegalStateException(
+                            NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextPage.exception.msg"));
                 }
                 ++currentPage;
                 return currentPage;
@@ -143,7 +144,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             @Override
             public int previousPage() {
                 if (!hasPreviousPage()) {
-                    throw new IllegalStateException("No previous page.");
+                    throw new IllegalStateException(
+                            NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousPage.exception.msg"));
                 }
                 --currentPage;
                 return currentPage;
@@ -151,27 +153,32 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             @Override
             public boolean hasNextItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasNextItem.exception.msg"));
             }
 
             @Override
             public boolean hasPreviousItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasPreviousItem.exception.msg"));
             }
 
             @Override
             public int nextItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextItem.exception.msg"));
             }
 
             @Override
             public int previousItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousItem.exception.msg"));
             }
 
             @Override
             public int currentItem() {
-                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                throw new UnsupportedOperationException(
+                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.currentItem.exception.msg"));
             }
 
             @Override

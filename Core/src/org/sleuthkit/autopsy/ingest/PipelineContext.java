@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import org.openide.util.NbBundle;
+
 import java.util.Objects;
 
 /**
@@ -45,7 +47,7 @@ public class PipelineContext <T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "pipelineContext{" + "task=" + task + '}';
+        return NbBundle.getMessage(this.getClass(), "PipelineContext.toString.text", task);
     }
 
     @Override
@@ -63,6 +65,7 @@ public class PipelineContext <T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
+        @SuppressWarnings("unchecked")
         final PipelineContext<T> other = (PipelineContext<T>) obj;
 
         if (!Objects.equals(this.task, other.task)) {
