@@ -321,11 +321,15 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     }
 
     @Override
-    public boolean isLuceneQuerySelected() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.isLuceneQuerySel.exception.msg"));
+    public boolean isRegExQuerySelected() {
+        return true;
     }
 
+    @Override
+    public boolean isWholewordQuerySelected() {
+        return false;
+    }    
+    
     @Override
     public String getQueryText() {
         throw new UnsupportedOperationException(

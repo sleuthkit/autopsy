@@ -99,6 +99,13 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
+    public void setSubstringQuery() {
+        // Note that this is not a full substring search. Normally substring
+        // searches will be done with TermComponentQuery objects instead.
+        keywordStringEscaped = keywordStringEscaped + "*";
+    }    
+    
+    @Override
     public void escape() {
         keywordStringEscaped = KeywordSearchUtil.escapeLuceneQuery(keywordString);
         isEscaped = true;
