@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
@@ -26,38 +25,36 @@ import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-// RJCTODO: Comment
+/**
+ * Looks up loaded ingest module factories using NetBean global lookup.
+ */
 final class IngestModuleLoader {
+
+    private static final Logger logger = Logger.getLogger(IngestModuleLoader.class.getName());
     private static IngestModuleLoader instance;
-    private ArrayList<IngestModuleFactory> moduleFactories = new ArrayList<>();
+    private final List<IngestModuleFactory> moduleFactories = new ArrayList<>();
 
     private IngestModuleLoader() {
+        lookUpIngestModuleFactories();
     }
 
-    synchronized static IngestModuleLoader getDefault() {
+    synchronized static IngestModuleLoader getInstance() {
         if (instance == null) {
-            Logger.getLogger(IngestModuleLoader.class.getName()).log(Level.INFO, "Creating ingest module loader instance");
             instance = new IngestModuleLoader();
-            instance.init();
         }
         return instance;
     }
 
-    private void init() {    
-        // RJCTODO: Add code to listen to changes in the collections, possibly restore listener code...
-        // RJCTODO: Since we were going to overwrite pipeline config every time and we are going to move the code modules
-        // into this package, we can simply handle the module ordering here, possibly just directly instantiating the core 
-        // modules.
-        // RJCTODO: Make sure that sample modules are excluded
-        Logger logger = Logger.getLogger(IngestModuleLoader.class.getName());
-        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
-        for (IngestModuleFactory factory : factories) {
-            logger.log(Level.INFO, "Loaded ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});            
-            moduleFactories.add(factory);
-        }        
+    List<IngestModuleFactory> getIngestModuleFactories() {
+        return new ArrayList<>(moduleFactories);
     }
 
-    List<IngestModuleFactory> getIngestModuleFactories() {
-        return moduleFactories;
-    }    
+    private void lookUpIngestModuleFactories() {
+        // RJCTODO: Possibly add code to listen to changes in the collection and restore listener code...
+        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
+        for (IngestModuleFactory factory : factories) {
+            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
+            moduleFactories.add(factory);
+        }
+    }
 }

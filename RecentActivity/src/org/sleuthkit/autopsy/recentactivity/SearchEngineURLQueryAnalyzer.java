@@ -60,7 +60,6 @@ import org.xml.sax.SAXException;
  */
 class SearchEngineURLQueryAnalyzer extends Extract {
 
-    private static final Logger logger = Logger.getLogger(SearchEngineURLQueryAnalyzer.class.getName());
     private static final String XMLFILE = "SEUQAMappings.xml";
     private static final String XSDFILE = "SearchEngineSchema.xsd";
     private static String[] searchEngineNames;
@@ -123,7 +122,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
 
             String EngineName = nnm.getNamedItem("engine").getNodeValue();
             String EnginedomainSubstring = nnm.getNamedItem("domainSubstring").getNodeValue();
-            Map<String, String> splits = new HashMap<String, String>();
+            Map<String, String> splits = new HashMap<>();
 
             NodeList listSplits = xmlinput.getElementsByTagName("splitToken");
             for (int k = 0; k < listSplits.getLength(); k++) {
@@ -307,23 +306,21 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         this.getURLs(dataSource, controller);
         logger.info("Search Engine stats: \n" + getTotals());
     }
 
-    // RJCTODO: Move to ctor or something
-//    @Override
-//    public void init(IngestModuleInit initContext) {
-//        try {
-//            services = IngestServices.getDefault();
-//            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
-//            init2();
-//        } catch (IOException e) {
-//            logger.log(Level.SEVERE, "Unable to find " + XMLFILE, e);
-//        }
-//    }
-//
+    @Override
+    void init() throws Exception {
+        try {
+            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
+            init2();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to find " + XMLFILE, e);
+        }
+    }
+
     private void init2() {
         try {
             String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
@@ -346,5 +343,15 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         } catch (SAXException sxe) {
             logger.log(Level.SEVERE, "Unable to parse XML file", sxe);
         }
+    }
+
+    @Override
+    public void complete() {
+        logger.info("Search Engine URL Query Analyzer has completed.");
+    }
+
+    @Override
+    public void stop() {
+        logger.info("Attempted to stop Search Engine URL Query Analyzer, but operation is not supported; skipping...");
     }
 }

@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.*;
  */
 class ExtractIE extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private IngestServices services;
+    private IngestServices services = IngestServices.getDefault();
     private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;    
@@ -79,7 +79,7 @@ class ExtractIE extends Extract {
     }
 
     @Override
-    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         dataFound = false;
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
@@ -93,7 +93,7 @@ class ExtractIE extends Extract {
      */
     private void getBookmark(Content dataSource, DataSourceIngestModuleStatusHelper controller) {       
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> favoritesFiles = null;
+        List<AbstractFile> favoritesFiles;
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
         } catch (TskCoreException ex) {
@@ -125,7 +125,7 @@ class ExtractIE extends Extract {
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
 
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), "RecentActivity", name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), "RecentActivity", datetime));
@@ -172,7 +172,7 @@ class ExtractIE extends Extract {
      */
     private void getCookie(Content dataSource, DataSourceIngestModuleStatusHelper controller) { 
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
@@ -213,7 +213,7 @@ class ExtractIE extends Extract {
             datetime = Long.valueOf(tempDate);
             String domain = Util.extractDomain(url);
 
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
@@ -462,19 +462,11 @@ class ExtractIE extends Extract {
         fileScanner.close();        
     }
 
-//    @Override
-//    public void init() {
-//        services = IngestServices.getDefault();
-//    }
-
     @Override
     public void stop() {
         if (execPasco != null) {
             execPasco.stop();
             execPasco = null;
-        }
-        
-        //call regular cleanup from complete() method
-        complete();
+        }        
     }
 }

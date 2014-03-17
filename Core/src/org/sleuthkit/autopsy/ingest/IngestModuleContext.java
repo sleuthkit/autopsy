@@ -34,14 +34,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public final class IngestModuleContext {
 
-    private final IngestJob ingestJob;
+    private final DataSourceIngestTask ingestJob;
     private final IngestModuleFactory moduleFactory;
     private final IngestManager ingestManager;
     private final IngestScheduler scheduler;
     private final Case autopsyCase;
     private final SleuthkitCase sleuthkitCase;
 
-    IngestModuleContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
+    IngestModuleContext(DataSourceIngestTask ingestJob, IngestModuleFactory moduleFactory) {
         this.ingestJob = ingestJob;
         this.moduleFactory = moduleFactory;
         ingestManager = IngestManager.getDefault();
@@ -53,8 +53,8 @@ public final class IngestModuleContext {
     public boolean isIngestJobCancelled() {
         return this.ingestJob.isCancelled();
     }
-
-    /**
+    
+   /**
      * RJCTODO
      *
      * @return
@@ -85,8 +85,8 @@ public final class IngestModuleContext {
             ingestManager.scheduleFileTask(ingestJob.getId(), file);
         }
     }
-
-    public void postIngestMessage(long ID, IngestMessage.MessageType messageType, String subject, String detailsHtml) {
+    
+  public void postIngestMessage(long ID, IngestMessage.MessageType messageType, String subject, String detailsHtml) {
         IngestMessage message = IngestMessage.createMessage(ID, messageType, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
         ingestManager.postIngestMessage(message);
     }
@@ -125,18 +125,12 @@ public final class IngestModuleContext {
     public void logInfo(Class moduleClass, String message, Throwable ex) {
         Logger.getLogger(moduleClass.getName()).log(Level.INFO, message, ex);
     }
-
+    
     public void logWarning(Class moduleClass, String message, Throwable ex) {
         Logger.getLogger(moduleClass.getName()).log(Level.WARNING, message, ex);
     }
 
     public void logError(Class moduleClass, String message, Throwable ex) {
         Logger.getLogger(moduleClass.getName()).log(Level.SEVERE, message, ex);
-    }
-
-    // RJCTODO: Leave public or create blackboard attribute factory methods, 
-    // perhaps as many as eleven. End goal is for this to be package    
-    public String getModuleDisplayName() {
-        return this.moduleFactory.getModuleDisplayName();
-    }
+    }    
 }

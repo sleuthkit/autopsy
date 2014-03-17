@@ -365,7 +365,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
 
         private void init() {
-            List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getDefault().getIngestModuleFactories();                       
+            List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getInstance().getIngestModuleFactories();                       
             for (IngestModuleFactory factory : moduleFactories) {
                 groupings.put(factory.getModuleDisplayName(), new HashMap<String, List<IngestMessageGroup>>());
             }

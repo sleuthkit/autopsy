@@ -101,12 +101,6 @@ class ExtractRegistry extends Extract {
             RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl";
         }
     }
-
-//    @Override
-//    public String getVersion() {
-//        return MODULE_VERSION;
-//    }
-
     
     /**
      * Search for the registry hives on the system.
@@ -532,7 +526,7 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         analyzeRegistryFiles(dataSource, controller);
     }
 

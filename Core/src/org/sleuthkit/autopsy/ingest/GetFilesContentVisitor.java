@@ -33,9 +33,10 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- * Abstract visitor for getting all the files from content
- * TODO should be moved to utility module (needs resolve cyclic deps)
+ * Abstract visitor for getting all the files from content.
  */
+ // TODO Could be moved to utility package, is there another version of this
+// somewhere?
  abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
     private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());

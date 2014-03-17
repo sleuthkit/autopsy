@@ -298,8 +298,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      *
      */
     @Override
-    public void startUp(IngestModuleContext context) {
-        setContext(context);
+    public void startUp(IngestModuleContext context) throws Exception {
+        super.startUp(context);
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;

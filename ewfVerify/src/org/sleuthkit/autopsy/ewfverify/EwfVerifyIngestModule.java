@@ -35,21 +35,21 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleContext;
-import org.sleuthkit.autopsy.ingest.IngestModuleTempApiShim;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness 
  * Format (EWF) E01 image file by generating a hash of the file and comparing it 
  * to the value stored in the image.
  */
-public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule, IngestModuleTempApiShim {
+public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getDefault();
+    private IngestModuleContext context;
     private Image img;
     private String imgName;
     private MessageDigest messageDigest;
-    private static int messageId = 0;
+    private static int messageId = 0; // RJCTODO: Copy-paste synchronized implementation, put in sample also
     private boolean verified = false;
     private boolean skipped = false;
     private String calculatedHash = "";
@@ -59,13 +59,8 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     }
         
     @Override
-    public String getDisplayName() {
-        return EwfVerifierModuleFactory.getModuleName();
-    }
-    
-    @Override
-    public void startUp(IngestModuleContext context) {
-        setContext(context);
+    public void startUp(IngestModuleContext context) throws Exception {
+        this.context = context;
         verified = false;
         skipped = false;
         img = null;
@@ -93,8 +88,8 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         } catch (TskCoreException ex) {
             img = null;
             String message = "Failed to get image from Content";
-            getContext().logError(EwfVerifyIngestModule.class, message, ex);
-            getContext().postIngestMessage(++messageId, MessageType.ERROR, message);
+            context.logError(EwfVerifyIngestModule.class, message, ex);
+            context.postIngestMessage(++messageId, MessageType.ERROR, message);
             return ResultCode.ERROR;
         }
         
@@ -102,7 +97,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
             logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, getDisplayName(), 
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), 
                     "Skipping non-ewf image " + imgName));
             skipped = true;
             return ResultCode.OK;
@@ -114,19 +109,19 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                 logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash});
          }           
          else {
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, getDisplayName(), 
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(), 
                     "Image " + imgName + " does not have stored hash."));
             return ResultCode.ERROR;
         }
 
         logger.log(Level.INFO, "Starting ewf verification of {0}", img.getName());
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, getDisplayName(), 
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), 
                 "Starting " + imgName));
         
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, getDisplayName(), 
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(), 
                     "Error getting size of " + imgName + ". Image will not be processed."));
         }
         
@@ -152,7 +147,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
                 String msg = "Error reading " + imgName + " at chunk " + i;
-                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, getDisplayName(), msg));
+                services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return  ResultCode.ERROR;
             }
@@ -169,14 +164,14 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        logger.log(Level.INFO, "complete() {0}", getDisplayName());
+        logger.log(Level.INFO, "complete() {0}", EwfVerifierModuleFactory.getModuleName());
         if (skipped == false) {
             String msg = verified ? " verified" : " not verified";
             String extra = "<p>EWF Verification Results for " + imgName + "</p>";
             extra += "<li>Result:" + msg + "</li>";
             extra += "<li>Calculated hash: " + calculatedHash + "</li>";
             extra += "<li>Stored hash: " + storedHash + "</li>";
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, getDisplayName(), imgName +  msg, extra));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), imgName +  msg, extra));
             logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
         }
     }

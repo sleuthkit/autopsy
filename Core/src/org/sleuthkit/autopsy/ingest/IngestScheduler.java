@@ -148,7 +148,7 @@ final class IngestScheduler {
             return sb.toString();
         }
 
-        synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
+        synchronized void scheduleIngestOfFiles(DataSourceIngestTask dataSourceTask) {
             // RJCTODO: This should go to the ingest manager as the job manager?
             // Save the data source task to manage its pipelines.
             //dataSourceTasks.put(dataSourceTask.getId(), dataSourceTask);
@@ -212,7 +212,7 @@ final class IngestScheduler {
          * @param originalContext original content schedule context that was used
          * to schedule the parent origin content, with the modules, settings, etc.
          */
-        synchronized void scheduleIngestOfDerivedFile(IngestJob ingestJob, AbstractFile file) {
+        synchronized void scheduleIngestOfDerivedFile(DataSourceIngestTask ingestJob, AbstractFile file) {
             FileTask fileTask = new FileTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
                 fileTasks.addFirst(fileTask);
@@ -338,7 +338,7 @@ final class IngestScheduler {
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
                             AbstractFile childFile = (AbstractFile) c;
-                            FileTask childTask = new FileTask(childFile, parentTask.getJob());
+                            FileTask childTask = new FileTask(childFile, parentTask.getParent());
 
                             if (childFile.hasChildren()) {
                                 this.directoryTasks.add(childTask);
@@ -373,13 +373,13 @@ final class IngestScheduler {
             final Set<Content> contentSet = new HashSet<>();
 
             for (FileTask task : rootDirectoryTasks) {
-                contentSet.add(task.getJob().getDataSource());
+                contentSet.add(task.getParent().getDataSource());
             }
             for (FileTask task : directoryTasks) {
-                contentSet.add(task.getJob().getDataSource());
+                contentSet.add(task.getParent().getDataSource());
             }
             for (FileTask task : fileTasks) {
-                contentSet.add(task.getJob().getDataSource());
+                contentSet.add(task.getParent().getDataSource());
             }
 
             return new ArrayList<>(contentSet);
@@ -402,7 +402,7 @@ final class IngestScheduler {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.getJob().getProcessUnallocatedSpace() == false
+            if (processTask.getParent().shouldProcessUnallocatedSpace() == false
                     && aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
                     )) {
                 return false;
@@ -462,15 +462,15 @@ final class IngestScheduler {
          */
         static class FileTask {
             private final AbstractFile file;
-            private final IngestJob ingetsJob;
+            private final DataSourceIngestTask task;
 
-            public FileTask(AbstractFile file, IngestJob dataSourceTask) {
+            public FileTask(AbstractFile file, DataSourceIngestTask task) {
                 this.file = file;
-                this.ingetsJob = dataSourceTask;
+                this.task = task;
             }
             
-            public IngestJob getJob() {
-                return ingetsJob;
+            public DataSourceIngestTask getParent() { // RJCTODO: Provide wrappers to get rid of train-style calls
+                return task;
             }
             
             public AbstractFile getFile() {
@@ -509,8 +509,8 @@ final class IngestScheduler {
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
-                IngestJob thisTask = this.getJob();
-                IngestJob otherTask = other.getJob();
+                DataSourceIngestTask thisTask = this.getParent();
+                DataSourceIngestTask otherTask = other.getParent();
 
                 if (thisTask != otherTask
                         && (thisTask == null || !thisTask.equals(otherTask))) {
@@ -766,15 +766,15 @@ final class IngestScheduler {
     /**
      * DataSourceScheduler ingest scheduler
      */
-    static class DataSourceScheduler implements Iterator<IngestJob> {
+    static class DataSourceScheduler implements Iterator<DataSourceIngestTask> {
 
-        private LinkedList<IngestJob> tasks;
+        private LinkedList<DataSourceIngestTask> tasks;
 
         DataSourceScheduler() {
             tasks = new LinkedList<>();
         }
 
-        synchronized void schedule(IngestJob task) {
+        synchronized void schedule(DataSourceIngestTask task) {
             try {
                 if (task.getDataSource().getParent() != null) {
                     //only accepting parent-less content objects (Image, parentless VirtualDirectory)
@@ -790,12 +790,12 @@ final class IngestScheduler {
         }
 
         @Override
-        public synchronized IngestJob next() throws IllegalStateException {
+        public synchronized DataSourceIngestTask next() throws IllegalStateException {
             if (!hasNext()) {
                 throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
             }
 
-            final IngestJob ret = tasks.pollFirst();
+            final DataSourceIngestTask ret = tasks.pollFirst();
             return ret;
         }
 
@@ -806,7 +806,7 @@ final class IngestScheduler {
          */
         synchronized List<org.sleuthkit.datamodel.Content> getContents() {
             List<org.sleuthkit.datamodel.Content> contents = new ArrayList<org.sleuthkit.datamodel.Content>();
-            for (IngestJob task : tasks) {
+            for (DataSourceIngestTask task : tasks) {
                 contents.add(task.getDataSource());
             }
             return contents;
@@ -834,7 +834,7 @@ final class IngestScheduler {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("DataSourceQueue, size: ").append(getCount());
-            for (IngestJob task : tasks) {
+            for (DataSourceIngestTask task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();

@@ -23,8 +23,8 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Used by data source ingest modules to report progress and check for ingest
- * job cancellation.
+ * Used by data source ingest modules to report progress and check for data
+ * source ingest task cancellation.
  */
 public class DataSourceIngestModuleStatusHelper {
 
@@ -40,12 +40,12 @@ public class DataSourceIngestModuleStatusHelper {
 
     /**
      * Checks for ingest job cancellation. This should be polled by the module
-     * in its process() method. If the ingest job is canceled, the module should
-     * return from its process() method as quickly as possible.
+     * in its process() method. If the ingest task is canceled, the module
+     * should return from its process() method as quickly as possible.
      *
      * @return True if the task has been canceled, false otherwise
      */
-    public boolean isCanceled() {
+    public boolean isCancelled() {
         return worker.isCancelled();
     }
 
@@ -67,7 +67,7 @@ public class DataSourceIngestModuleStatusHelper {
      * Switches the progress bar to indeterminate mode. This should be called if
      * the total work units to process the data source is unknown.
      */
-    public void switchToInDeterminate() {
+    public void switchToIndeterminate() {
         if (progress != null) {
             progress.switchToIndeterminate();
         }

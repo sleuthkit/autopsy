@@ -47,7 +47,6 @@ import org.sleuthkit.datamodel.*;
 class RecentDocumentsByLnk extends Extract  {
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
     private IngestServices services;    
-    final private static String MODULE_VERSION = "1.0";
 
     /**
      * Find the documents that Windows stores about recent documents and make artifacts.
@@ -57,11 +56,11 @@ class RecentDocumentsByLnk extends Extract  {
     private void getRecentDocuments(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> recentFiles = null;
+        List<AbstractFile> recentFiles;
         try {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error searching for .lnk files.");
+            logger.log(Level.WARNING, "Error searching for .lnk files.", ex);
             this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
             return;
         }
@@ -106,7 +105,7 @@ class RecentDocumentsByLnk extends Extract  {
     }
     
     @Override
-    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         dataFound = false;
         this.getRecentDocuments(dataSource, controller);
     }

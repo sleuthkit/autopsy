@@ -50,7 +50,7 @@ public class IngestManager {
     private static IngestManager instance;
     private final IngestScheduler scheduler;
     private final IngestMonitor ingestMonitor = new IngestMonitor();
-    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
+    private final HashMap<Long, DataSourceIngestTask> ingestJobs = new HashMap<>();
     private TaskSchedulingWorker taskSchedulingWorker;
     private FileTaskWorker fileTaskWorker;
     private DataSourceTaskWorker dataSourceTaskWorker;
@@ -261,8 +261,8 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFileTask(long ingestJobId, AbstractFile file) {
-        IngestJob job = this.ingestJobs.get(ingestJobId); // RJCTODO: Consider renaming
+    void scheduleFileTask(long ingestJobId, AbstractFile file) { // RJCTODO: With the module context, this can be passed the task itself
+        DataSourceIngestTask job = this.ingestJobs.get(ingestJobId); // RJCTODO: Consider renaming
         if (job == null) {
             // RJCTODO: Handle severe error
         }
@@ -303,35 +303,45 @@ public class IngestManager {
     }
 
     synchronized void reportThreadDone(long threadId) {
-        for (IngestJob job : ingestJobs.values()) {
+        for (DataSourceIngestTask job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
             // RJCTODO: Add logging of errors or send ingest messages 
-            if (job.arePipelinesShutDown()) {
+            if (job.areIngestPipelinesShutDown()) {
                 ingestJobs.remove(job.getId());                
             }
         }
     }
 
     synchronized void stopAll() {
-        for (IngestJob job : ingestJobs.values()) {
-            job.cancel();
-        }
-
+        // First get the task scheduling worker to stop. 
         if (taskSchedulingWorker != null) {
             taskSchedulingWorker.cancel(true);
+            while (!taskSchedulingWorker.isDone()) {
+                // Wait.
+                // RJCTODO: Add sleep?
+            }
             taskSchedulingWorker = null;
         }
 
-        scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();
+        // Now mark all of the ingest jobs as cancelled. This way the ingest 
+        // modules will know they are being shut down due to cancellation when
+        // the ingest worker threads release their pipelines.
+        for (DataSourceIngestTask job : ingestJobs.values()) {
+            job.cancel();
+        }
 
+        // Cancel the worker threads.
         if (dataSourceTaskWorker != null) {
             dataSourceTaskWorker.cancel(true);
         }
-
         if (fileTaskWorker != null) {
             fileTaskWorker.cancel(true);
         }
+
+        // Jettision the remaining tasks. This will dispose of any tasks that
+        // the scheduling worker queued up before it was cancelled.
+        scheduler.getFileScheduler().empty();
+        scheduler.getDataSourceScheduler().empty();                        
     }
 
     /**
@@ -378,6 +388,7 @@ public class IngestManager {
         private final List<Content> dataSources;
         private final List<IngestModuleTemplate> moduleTemplates;
         private final boolean processUnallocatedSpace;
+        private final List<Long> scheduledJobIds = new ArrayList<>();
         private ProgressHandle progress;
 
         TaskSchedulingWorker(List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
@@ -388,6 +399,8 @@ public class IngestManager {
 
         @Override
         protected Object doInBackground() throws Exception {
+            // Set up a progress bar that can be used to cancel all of the 
+            // ingest jobs currently being performed.
             final String displayName = "Queueing ingest tasks";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
@@ -396,20 +409,25 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return TaskSchedulingWorker.this.cancel(true);
+                    IngestManager.getDefault().stopAll();
+                    return true;
                 }
             });
 
             progress.start(2 * dataSources.size());
             int processed = 0;
             for (Content dataSource : dataSources) {
+                if (isCancelled()) {
+                    logger.log(Level.INFO, "Task scheduling thread cancelled");
+                    return null;
+                }
+                
                 final String inputName = dataSource.getName();
-                IngestJob ingestJob = new IngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
+                DataSourceIngestTask ingestJob = new DataSourceIngestTask(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
 
                 List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                 if (!errors.isEmpty()) {
-                    // RJCTODO: Log all errors. Provide a list of all of the modules
-                    // that failed.
+                    // RJCTODO: Log all errors, not just the first one. Provide a list of all of the modules that failed.
                     MessageNotifyUtil.Message.error(
                             "Failed to load " + errors.get(0).getModuleDisplayName() + " ingest module.\n\n"
                             + "No ingest modules will be run. Please disable the module "
@@ -423,13 +441,11 @@ public class IngestManager {
                 ingestJobs.put(ingestJob.getId(), ingestJob);
 
                 // Queue the data source ingest tasks for the ingest job.
-                logger.log(Level.INFO, "Queueing data source tasks: {0}", ingestJob);
                 progress.progress("DataSource Ingest" + " " + inputName, processed);
                 scheduler.getDataSourceScheduler().schedule(ingestJob);
                 progress.progress("DataSource Ingest" + " " + inputName, ++processed);
 
                 // Queue the file ingest tasks for the ingest job.
-                logger.log(Level.INFO, "Queuing file ingest tasks: {0}", ingestJob);
                 progress.progress("File Ingest" + " " + inputName, processed);
                 scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
                 progress.progress("File Ingest" + " " + inputName, ++processed);
@@ -443,24 +459,16 @@ public class IngestManager {
             try {
                 super.get();
             } catch (CancellationException | InterruptedException ex) {
-                handleInterruption(ex);
+                // IngestManager.stopAll() will dispose of all tasks. 
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Error while enqueing files. ", ex);
-                handleInterruption(ex);
+                logger.log(Level.SEVERE, "Error while scheduling ingest jobs", ex);
+                // RJCTODO: On EDT, report error, cannot dump all tasks since multiple data source tasks can be submitted. Would get partial results either way.
             } finally {
-                if (this.isCancelled()) {
-                    handleInterruption(new Exception());
-                } else {
+                if (!isCancelled()) {
                     startAll();
                 }
                 progress.finish();
             }
-        }
-
-        private void handleInterruption(Exception ex) {
-            // RJCTODO: This seems broken, should empty only for current job?
-            scheduler.getFileScheduler().empty();
-            scheduler.getDataSourceScheduler().empty();
         }
     }
 
@@ -481,10 +489,9 @@ public class IngestManager {
         protected Void doInBackground() throws Exception {
             logger.log(Level.INFO, String.format("Data source ingest thread {0} started", this.id));
 
-            // Set up a progress bar with cancel capability. This is one of two 
-            // ways that the worker can be canceled. The other way is via a call
-            // to IngestManager.stopAll().
-            final String displayName = "Data Source";
+            // Set up a progress bar that can be used to cancel all of the 
+            // ingest jobs currently being performed. 
+            final String displayName = "Data source ingest"; // RJCTODO: Need reset
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
@@ -492,7 +499,8 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return DataSourceTaskWorker.this.cancel(true);
+                    IngestManager.getDefault().stopAll();
+                    return true;
                 }
             });
             progress.start();
@@ -505,9 +513,9 @@ public class IngestManager {
                     return null;
                 }
 
-                IngestJob ingestJob = scheduler.next();
-                DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
-                pipeline.ingestDataSource(this, this.progress);
+                DataSourceIngestTask ingestJob = scheduler.next();
+                DataSourceIngestTask.DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
+                pipeline.process(this, this.progress);
             }
 
             logger.log(Level.INFO, "Data source ingest thread {0} completed", this.id);
@@ -549,10 +557,9 @@ public class IngestManager {
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, String.format("File ingest thread {0} started", this.id));
 
-            // Set up a progress bar with cancel capability. This is one of two ways 
-            // that the worker can be canceled. The other way is via a call to
-            // IngestManager.stopAll().
-            final String displayName = "File Ingest";
+            // Set up a progress bar that can be used to cancel all of the 
+            // ingest jobs currently being performed. 
+            final String displayName = "File ingest";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
@@ -560,7 +567,8 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    return FileTaskWorker.this.cancel(true);
+                    IngestManager.getDefault().stopAll();
+                    return true;
                 }
             });
             progress.start();
@@ -580,8 +588,8 @@ public class IngestManager {
                 IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
                 AbstractFile file = task.getFile();
                 progress.progress(file.getName(), processedFiles);
-                FileIngestPipeline pipeline = task.getJob().getFileIngestPipelineForThread(this.id);
-                pipeline.ingestFile(file);
+                DataSourceIngestTask.FileIngestPipeline pipeline = task.getParent().getFileIngestPipelineForThread(this.id);
+                pipeline.process(file);
 
                 // Update the progress bar.
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();

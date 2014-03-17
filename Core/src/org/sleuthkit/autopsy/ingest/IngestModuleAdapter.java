@@ -24,23 +24,11 @@ package org.sleuthkit.autopsy.ingest;
  */
 public abstract class IngestModuleAdapter implements IngestModule {
 
-    private IngestModuleContext context;
-
     @Override
-    public void startUp(IngestModuleContext context) {
-        this.context = context;
+    public void startUp(IngestModuleContext context) throws Exception {
     }
 
-    @Override
-    public IngestModuleContext getContext() {
-        return context;
-    }
-        
     @Override
     public void shutDown(boolean ingestJobCancelled) {
     }
-    
-    protected void setContext(IngestModuleContext context) {
-        this.context = context;
-    }        
 }

@@ -36,8 +36,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * Monitor health of the system and stop ingest if necessary
  */
-final class IngestMonitor {
+public final class IngestMonitor {
 
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1; // RJCTODO: This is ugly
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;

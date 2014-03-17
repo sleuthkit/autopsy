@@ -43,18 +43,22 @@ import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 public final class RAImageIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
-    private IngestServices services;
     private static int messageId = 0;
+    private final List<Extract> extracters = new ArrayList<>();
+    private final List<Extract> browserExtracters = new ArrayList<>();
+    private IngestServices services;
     private StringBuilder subCompleted = new StringBuilder();
-    private ArrayList<Extract> extracters;
-    private List<Extract> browserExtracters;
 
     RAImageIngestModule() {
     }
 
+    synchronized int getNextMessageId() {
+        return ++messageId;
+    }
+    
     @Override
     public ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
+        services.postMessage(IngestMessage.createMessage(getNextMessageId(), MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
 
         controller.switchToDeterminate(extracters.size());
         controller.progress(0);
@@ -68,7 +72,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             }
 
             try {
-                extracter.extractRecentActivity(dataSource, controller);
+                extracter.process(dataSource, controller);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex);
                 subCompleted.append(extracter.getName()).append(" failed - see log for details <br>");
@@ -99,7 +103,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             errorMessage.append("<p>No errors encountered.</p>");
             errorMsgSubject = "No errors reported";
         }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, RecentActivityExtracterModuleFactory.getModuleName(), "Finished " + dataSource.getName() + " - " + errorMsgSubject, errorMessage.toString());
+        final IngestMessage msg = IngestMessage.createMessage(getNextMessageId(), msgLevel, RecentActivityExtracterModuleFactory.getModuleName(), "Finished " + dataSource.getName() + " - " + errorMsgSubject, errorMessage.toString());
         services.postMessage(msg);
 
         StringBuilder historyMsg = new StringBuilder();
@@ -110,7 +114,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             historyMsg.append("</li>");
         }
         historyMsg.append("</ul>");
-        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), dataSource.getName() + " - Browser Results", historyMsg.toString());
+        final IngestMessage inboxMsg = IngestMessage.createMessage(getNextMessageId(), MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), dataSource.getName() + " - Browser Results", historyMsg.toString());
         services.postMessage(inboxMsg);
 
         return ResultCode.OK;
@@ -135,39 +139,36 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     }
 
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) {
-        extracters = new ArrayList<>();
-        browserExtracters = new ArrayList<>();
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) Exception {
+        super.startUp(context);
         services = IngestServices.getDefault();
 
-        final Extract registry = new ExtractRegistry();
-        final Extract iexplore = new ExtractIE();
-        final Extract recentDocuments = new RecentDocumentsByLnk();
-        final Extract chrome = new Chrome();
-        final Extract firefox = new Firefox();
-        final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+        Extract registry = new ExtractRegistry();
+        Extract iexplore = new ExtractIE();
+        Extract recentDocuments = new RecentDocumentsByLnk();
+        Extract chrome = new Chrome();
+        Extract firefox = new Firefox();
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
 
         extracters.add(chrome);
         extracters.add(firefox);
         extracters.add(iexplore);
         extracters.add(recentDocuments);
-        // this needs to run after the web browser modules
-        extracters.add(SEUQA);
-
-        // this runs last because it is slowest
-        extracters.add(registry);
+        extracters.add(SEUQA); // this needs to run after the web browser modules
+        extracters.add(registry); // this runs last because it is slowest // RJCTODO: Why?
 
         browserExtracters.add(chrome);
         browserExtracters.add(firefox);
         browserExtracters.add(iexplore);
-
-        for (Extract extracter : extracters) {
+        
+       for (Extract extracter : extracters) {
             try {
-//                extracter.init(); // RJCTODO
+                extracter.init();
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception during init() of " + extracter.getName(), ex);
+                throw new IngestModuleException(ex.getMessage());
             }
-        }
+        }        
     }
 
     private void stop() {

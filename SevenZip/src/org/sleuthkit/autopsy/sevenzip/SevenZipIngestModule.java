@@ -58,8 +58,6 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
 import org.sleuthkit.autopsy.ingest.IngestModuleContext;
 
-// RJCTODO: Possibly use getContext().getModuleDisplayName() more
-
 /**
  * 7Zip ingest module Extracts supported archives, adds extracted DerivedFiles,
  * reschedules extracted DerivedFiles for ingest.
@@ -92,8 +90,8 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     }
 
     @Override
-    public void startUp(IngestModuleContext context) {
-        setContext(context);
+    public void startUp(IngestModuleContext context) throws IngestModuleException{
+        super.startUp(context);
         unpackDir = getContext().getOutputDirectoryRelativePath();
         unpackDirPath = getContext().getOutputDirectoryAbsolutePath();
         fileManager = getContext().getCase().getServices().getFileManager();

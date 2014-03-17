@@ -54,26 +54,26 @@ import org.sleuthkit.datamodel.TskData;
  */
 class Chrome extends Extract {
 
-    private static final Logger logger = Logger.getLogger(Chrome.class.getName());
     private static final String historyQuery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
     private static final String cookieQuery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
     private static final String downloadQuery = "select full_path, url, start_time, received_bytes from downloads";
     private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id";
     private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
 
     Chrome() {
         moduleName = "Chrome";
     }
 
     @Override
-    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
         dataFound = false;
-        this.getHistory(dataSource, controller);
-        this.getBookmark(dataSource, controller);
-        this.getCookie(dataSource, controller);
-        this.getLogin(dataSource, controller);
-        this.getDownload(dataSource, controller);
+        this.getHistory(dataSource, statusHelper);
+        this.getBookmark(dataSource, statusHelper);
+        this.getCookie(dataSource, statusHelper);
+        this.getLogin(dataSource, statusHelper);
+        this.getDownload(dataSource, statusHelper);
     }
 
     /**

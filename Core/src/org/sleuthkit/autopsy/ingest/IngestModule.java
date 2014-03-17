@@ -23,76 +23,14 @@ package org.sleuthkit.autopsy.ingest;
  */
 public interface IngestModule {
 
-    public enum ResultCode { // RJCTODO: Do we really want to have this
-
+    public enum ResultCode {
         OK,
         ERROR,
-        @Deprecated
-        NOT_SET 
     };
-
-    // RJCTODO: Update
-    /**
-     * Invoked to allow an ingest module to set up internal data structures and
-     * acquire any private resources it will need during an ingest job. There
-     * will usually be more than one instance of a module working on an ingest
-     * job, but it is guaranteed that there will be no more than one instance of
-     * the module per thread. If these instances must share resources, the
-     * modules are responsible for synchronizing access to the shared resources
-     * and doing reference counting as required to release the resources
-     * correctly.
-     * <p>
-     * A module that uses the scheduling service to schedule additional
-     * processing needs to supply the ingest job ID passed to this method to the
-     * scheduler. For example, a module that extracts files from an archive file
-     * should schedule ingest of those files using the ingest job ID to ensure
-     * that the files will be processed as part of the same ingest job.
-     * <p>
-     * An ingest module that does not require initialization should extend the
-     * IngestModuleAdapter class to get a default implementation of this method
-     * that saves the ingest job id.
-     *
-     * @param ingestJobId Identifier for the ingest job.
-     * @param ingestOptions Module options for the ingest job.
-     */
-    void startUp(IngestModuleContext context);
-
-    /**
-     * RJCTODO
-     */
-    IngestModuleContext getContext();
     
-    // RJCTODO: Update
-    /**
-     * Invoked when an ingest job is completed, before the module instance is
-     * discarded. The module should respond by doing things like releasing
-     * private resources, submitting final results, and posting a final ingest
-     * message.
-     * <p>
-     * An ingest module that does not need to do anything when the ingest job
-     * completes should extend the IngestModuleAdapter class to get a default
-     * implementation of this method that does nothing.
-     */
-    /**
-     * Invoked when an ingest job is canceled or otherwise terminated early,
-     * before the module instance is discarded. The module should respond by
-     * doing things like releasing private resources, discarding partial
-     * results, and posting a stopped ingest message.
-     * <p>
-     * An ingest module that does not need to do anything when the ingest job is
-     * canceled should extend the IngestModuleAdapter class to get a default
-     * implementation of this method that does nothing.
-     */
-    /**
-     * Invoked after complete() or stop() is called to determine if the module
-     * has finished responding to the termination request. The module instance
-     * will be discarded when this method returns true.
-     * <p>
-     * An ingest module that does not need to do anything when the ingest job is
-     * completed or canceled should extend the IngestModuleAdapter class to get
-     * a default implementation of this method that returns true.
-     *
-     * @return True if the module is finished, false otherwise.
-     */
+    // RJCTODO: Write header comment, make sure to mention "one module instance per thread"
+    void startUp(IngestModuleContext context) throws Exception;
+
+    // RJCTODO: Write header comment, make sure to mention "one module instance per thread"
     void shutDown(boolean ingestJobWasCancelled);
 }

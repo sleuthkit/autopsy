@@ -58,7 +58,8 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
             
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) throws Exception {
+        super.startUp(context);
         services = IngestServices.getDefault();           
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();

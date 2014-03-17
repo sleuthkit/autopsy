@@ -19,8 +19,6 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.Serializable;
-import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -48,7 +46,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(KeywordSearchIngestModule.class, "HashDbInKeywordSearchIngestModulegestModule.moduleDescription");        
+        return NbBundle.getMessage(KeywordSearchIngestModule.class, "KeywordSearchIngestModule.moduleDescription");        
     }
     
     @Override

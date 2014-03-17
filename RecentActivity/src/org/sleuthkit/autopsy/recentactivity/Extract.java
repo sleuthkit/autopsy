@@ -35,19 +35,26 @@ import org.sleuthkit.datamodel.*;
 
 abstract class Extract {
 
-    private static final Logger logger = Logger.getLogger(Extract.class.getName());
-    protected Case currentCase = Case.getCurrentCase(); // RJCTODO: Fix this
-    protected SleuthkitCase tskCase = currentCase.getSleuthkitCase(); // RJCTODO: Fix this
+    protected Case currentCase = Case.getCurrentCase();
+    protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+    public final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
-    String moduleName = ""; // RJCTODO: Fix this
-    boolean dataFound = false; // RJCTODO: Fix this
+    String moduleName = "";
+    boolean dataFound = false;
 
     Extract() {
-        dataFound = false;
     }
 
-    // RJCTODO: Consider renaming
-    abstract void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller);
+    void init() throws Exception {
+    }
+
+    abstract void process(Content dataSource, DataSourceIngestModuleStatusHelper controller);
+
+    void complete() {
+    }
+
+    void stop() {
+    }
     
     /**
      * Returns a List of string error messages from the inheriting class
@@ -82,7 +89,7 @@ abstract class Extract {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error while trying to add an artifact: {0}", ex); // RJCTODO: Add extracter name
+            logger.log(Level.SEVERE, "Error while trying to add an artifact: {0}", ex);
         }
     }
 
@@ -138,26 +145,15 @@ abstract class Extract {
         return list;
     }
 
-    void complete() {    
-    }
-    
-    void stop() {
-    }
-    
     /**
      * Returns the name of the inheriting class
      *
      * @return Gets the moduleName set in the moduleName data member
      */
-    protected String getName() { // RJCTODO: Fix this
+    protected String getName() {
         return moduleName;
     }
 
-    // RJCTODO: Wire this in.
-    protected void setDataFound(boolean foundData) {
-        dataFound = foundData;
-    }
-    
     public boolean foundData() {
         return dataFound;
     }

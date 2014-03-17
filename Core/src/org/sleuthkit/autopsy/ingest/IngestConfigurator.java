@@ -52,7 +52,7 @@ public class IngestConfigurator {
         // Get the ingest module factories discovered by the ingest module 
         // loader.
         // RJCTODO: Put in name uniqueness test/solution in loader!
-        List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getDefault().getIngestModuleFactories();
+        List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getInstance().getIngestModuleFactories();
         HashSet<String> loadedModuleNames = new HashSet<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
@@ -208,7 +208,8 @@ public class IngestConfigurator {
         csvList.append(list.get(list.size() - 1));
         return csvList.toString();
     }
-
+    
+    // RJCTODO: May need additional mappings
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
         // Get the ingest modules setting from the user's config file. 
         // If there is no such setting yet, create the default setting.
@@ -227,8 +228,7 @@ public class IngestConfigurator {
                         moduleNames.add("Email Parser");
                         break;
                     case "File Extension Mismatch Detection":
-                    case "Extension Mismatch Detector":
-                        moduleNames.add("File Extension Mismatch Detector");
+                        moduleNames.add("Extension Mismatch Detector");
                         break;
                     default:
                         moduleNames.add(name);

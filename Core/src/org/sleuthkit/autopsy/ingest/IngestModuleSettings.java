@@ -27,6 +27,7 @@ import java.io.Serializable;
  */
 public interface IngestModuleSettings extends Serializable {
 
+    // RJCTODO: Keep this as a shell if that works, otherwise go with Serializable
     /**
      * Determines whether the per ingest job options are valid.
      *

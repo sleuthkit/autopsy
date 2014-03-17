@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -30,10 +34,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * singleton instance.
  */
 public final class IngestServices {
-    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1; // RJCTODO: Move this back to the monitor or ingest manager? It is used here...
 
+    private static final Logger logger = Logger.getLogger(IngestServices.class.getName());
     private IngestManager manager;
-    private Logger logger = Logger.getLogger(IngestServices.class.getName());
     private static IngestServices instance;
 
     private IngestServices() {
@@ -41,9 +45,9 @@ public final class IngestServices {
     }
 
     /**
-     * Get handle to singletone module services
+     * Get the ingest services.
      *
-     * @return the services handle
+     * @return The ingest services singleton.
      */
     public static synchronized IngestServices getDefault() {
         if (instance == null) {
@@ -53,34 +57,38 @@ public final class IngestServices {
     }
 
     /**
-     * Get access to the current Case handle. Note: When storing the Case
-     * database handle as a member variable in a module, this method needs to be
-     * called within the module's init() method and the member variable needs to
-     * be updated at each init(), to ensure the correct Case handle is being
-     * used if the Case is changed.
+     * Get the current Autopsy case. 
      *
-     * @return current Case
+     * @return The current case.
      */
     public Case getCurrentCase() {
         return Case.getCurrentCase();
     }
 
     /**
-     * Get access to the current Case database handle. Like storing the Case
-     * handle, call this method and update member variables for each call to the
-     * module's init() method to ensure it is correct.
+     * Get the current SleuthKit case. The SleuthKit case is the case database.
      *
-     * @return current Case database
+     * @return The current case database.
      */
     public SleuthkitCase getCurrentSleuthkitCaseDb() {
         return Case.getCurrentCase().getSleuthkitCase();
     }
 
+   /**
+     * Get a logger that incorporates the display name of an ingest module in 
+     * messages written to the Autopsy log files.
+     * 
+     * @param moduleClassName The display name of the ingest module.
+     * @return The custom logger for the ingest module. 
+     */
+    public Logger getLogger(String moduleDisplayName) {
+        return Logger.getLogger(moduleDisplayName);
+    }
+        
     /**
-     * Post ingest message to the inbox. This should be done for analysis
-     * messages.
+     * Post message to the ingest messages in box.
      *
-     * @param message ingest message to be posted by ingest module
+     * @param message An ingest message
      */
     public void postMessage(final IngestMessage message) {
         manager.postIngestMessage(message);
@@ -120,7 +128,7 @@ public final class IngestServices {
         IngestManager.fireModuleContentEvent(moduleContentEvent);
     }
 
-    // RJCTODO:
+    // RJCTODO: This can stay in the context since it is context (pipeline) specific
     /**
      * Schedule a new file for ingest with the same settings as the file being
      * analyzed. This is used, for example, when opening an archive file. File
@@ -142,21 +150,5 @@ public final class IngestServices {
      */
     public long getFreeDiskSpace() {
         return manager.getFreeDiskSpace();
-    }
-
-    // RJCTODO
-    /**
-     * Facility for a file ingest module to check a return value from a
-     * previously run file ingest module that executed for the same file. The
-     * module return value can be used as a guideline to skip processing the
-     * file
-     *
-     * @param moduleName registered module name of the module to check the
-     * return value of
-     * @return the return value of the previously executed module for the
-     * currently processed file in the file ingest pipeline
-     */
-//    public IngestModule.ResultCode getAbstractFileModuleResult(String moduleName) {
-//        return manager.getAbstractFileModuleResult(moduleName);
-//    }
-}
+    }    
+ }

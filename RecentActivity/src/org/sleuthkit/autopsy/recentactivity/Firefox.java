@@ -50,7 +50,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class Firefox extends Extract {
 
-    private static final Logger logger = Logger.getLogger(Firefox.class.getName());
     private static final String historyQuery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String cookieQuery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
     private static final String cookieQueryV3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies";
@@ -63,7 +62,7 @@ class Firefox extends Extract {
     }
 
     @Override
-    public void extractRecentActivity(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         dataFound = false;
         this.getHistory(dataSource, controller);
         this.getBookmark(dataSource, controller);

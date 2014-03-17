@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleTempApiShim;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
-public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule, IngestModuleTempApiShim {
+public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private IngestServices services;
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
@@ -66,7 +65,8 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     }
         
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) throws Exception {
+        super.startUp(context);
         services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() {0}", this.toString());
         filesProcessed = 0;
