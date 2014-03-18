@@ -113,8 +113,6 @@ public class ThunderbirdMboxFileIngestModule extends IngestModuleAbstractFile {
             return processMBox(abstractFile, ingestContext);
         }
         
-        int extIndex = abstractFile.getName().lastIndexOf(".");
-        String ext = (extIndex == -1 ? "" : abstractFile.getName().substring(extIndex));
         if (PstParser.isPstFile(abstractFile)) {
             return processPst(ingestContext, abstractFile);
         }

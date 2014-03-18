@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

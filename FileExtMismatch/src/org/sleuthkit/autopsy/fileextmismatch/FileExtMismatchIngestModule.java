@@ -60,7 +60,6 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static long processTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
-    private static boolean skipKnown = false;
     private static boolean skipNoExt = true;
     private static boolean skipTextPlain = false;  
      
@@ -109,7 +108,7 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
             return ProcessResult.OK;
         }
 
-        if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if (abstractFile.getKnown() == FileKnown.KNOWN) {
             return ProcessResult.OK;
         }
         
@@ -266,10 +265,6 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     public boolean hasBackgroundJobsRunning() {
         // we're single threaded...
         return false;
-    }
-    
-    public static void setSkipKnown(boolean flag) {
-        skipKnown = flag;
     }
 
     public static void setSkipNoExt(boolean flag) {
