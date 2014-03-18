@@ -262,6 +262,8 @@ import org.sleuthkit.datamodel.TskData;
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
         
     }
@@ -364,6 +366,8 @@ import org.sleuthkit.datamodel.TskData;
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
     }
     
@@ -626,6 +630,8 @@ import org.sleuthkit.datamodel.TskData;
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
         
         /**

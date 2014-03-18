@@ -1196,6 +1196,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAbstractFile {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "Error performing keyword search", e.getMessage()));
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
 
         /**

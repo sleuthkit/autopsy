@@ -320,6 +320,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.title"),
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.msg", ex.getMessage()));
             } 
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }        
     }
 
