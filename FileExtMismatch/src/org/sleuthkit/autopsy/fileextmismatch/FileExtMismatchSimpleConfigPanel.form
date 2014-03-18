@@ -58,6 +58,9 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="skipTextPlainActionPerformed"/>
       </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="skipTextPlain.setSelected(true);"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>
