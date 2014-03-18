@@ -53,8 +53,9 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services;
     private final String hashDBModuleName = "Hash Lookup";
-    private int messageId = 0;
+    private int messageId = 0; // RJCTODO: Not thread safe
     private FileManager fileManager;
+    private IngestModuleContext context;
 
     ThunderbirdMboxFileIngestModule() {
     }
@@ -71,16 +72,6 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         if(abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ResultCode.OK;
         }
-
-        // RJCTODO: We may be able to jettision this now
-        //file has read error, stop processing it
-        // @@@ I don't really like this
-        // we don't know if Hash was run or if it had lookup errors 
-//        IngestModuleAbstractFile.ResultCode hashDBResult =
-//                services.getAbstractFileModuleResult(hashDBModuleName);
-//        if (hashDBResult == IngestModuleAbstractFile.ResultCode.ERROR) {
-//            return ResultCode.ERROR;  
-//        }
 
         if (abstractFile.isVirtual()) {
             return ResultCode.OK;
@@ -257,8 +248,8 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
     }
     
     @Override
-    public void startUp(IngestModuleContext context) {
-        setContext(context);
+    public void startUp(IngestModuleContext context) throws Exception {
+        this.context = context;
         services = IngestServices.getDefault();
         fileManager = Case.getCurrentCase().getServices().getFileManager();
     }
@@ -284,7 +275,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
                 services.fireModuleContentEvent(new ModuleContentEvent(derived));
             }
         }
-        getContext().submitFilesForIngest(derivedFiles);
+        context.submitFilesForIngest(derivedFiles);
         services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
     }
     

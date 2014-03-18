@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
  * A factory for creating email parser file ingest modules and the user
  * interface panels used to configure the settings for instances of the modules.
  */
-@ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service=IngestModuleFactory.class)
 public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {

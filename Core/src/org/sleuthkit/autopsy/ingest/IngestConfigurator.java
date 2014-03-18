@@ -174,15 +174,16 @@ public class IngestConfigurator {
     // IngestConfigurator class.
     public void start() {
         // Filter out the disabled module tremplates.
+        List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
         List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            if (!moduleTemplate.isEnabled()) {
-                moduleTemplates.remove(moduleTemplate);
+            if (moduleTemplate.isEnabled()) {
+                enabledModuleTemplates.add(moduleTemplate);
             }
         }
 
-        if (!moduleTemplates.isEmpty() && null != contentToIngest) {
-            IngestManager.getDefault().scheduleDataSourceTasks(contentToIngest, moduleTemplates, ingestConfigPanel.getProcessUnallocSpace());
+        if ((!enabledModuleTemplates.isEmpty()) && (contentToIngest != null)) {
+            IngestManager.getDefault().scheduleDataSourceTasks(contentToIngest, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
         }
     }
 
@@ -209,7 +210,7 @@ public class IngestConfigurator {
         return csvList.toString();
     }
     
-    // RJCTODO: May need additional mappings
+    // RJCTODO: May need additional mappings - EWF Verify to EWF Verifier
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
         // Get the ingest modules setting from the user's config file. 
         // If there is no such setting yet, create the default setting.

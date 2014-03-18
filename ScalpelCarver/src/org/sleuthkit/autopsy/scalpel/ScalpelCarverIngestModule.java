@@ -26,13 +26,9 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleContext;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.scalpel.jni.ScalpelOutputParser.CarvedFileMeta;
@@ -52,7 +48,6 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Scalpel carving ingest module
  */
-
 class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileIngestModule {
     
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
@@ -188,16 +183,13 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         }
         
         // reschedule carved files
-        
-        for (LayoutFile carvedFile : carvedFiles) {
-            is.scheduleFile(carvedFile, pipelineContext);
-        }
+        context.submitFilesForIngest(new ArrayList<AbstractFile>(carvedFiles));
         
         return ResultCode.OK;
     }
         
     @Override
-    public void startUp(IngestModuleContext context) throws IngestModuleException {        
+    public void startUp(IngestModuleContext context) throws Exception {        
         this.context = context;
         
         // make sure this is Windows

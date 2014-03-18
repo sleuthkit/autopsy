@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleContext;
 
 /**
  * Recent activity image ingest module
@@ -139,8 +140,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     }
 
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) Exception {
-        super.startUp(context);
+    public void startUp(IngestModuleContext context) throws Exception {
         services = IngestServices.getDefault();
 
         Extract registry = new ExtractRegistry();
@@ -162,12 +162,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
         browserExtracters.add(iexplore);
         
        for (Extract extracter : extracters) {
-            try {
-                extracter.init();
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception during init() of " + extracter.getName(), ex);
-                throw new IngestModuleException(ex.getMessage());
-            }
+            extracter.init();
         }        
     }
 

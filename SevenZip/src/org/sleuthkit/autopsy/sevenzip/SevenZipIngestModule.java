@@ -85,16 +85,17 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     private static final int readHeaderSize = 4;
     private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
     private static final int ZIP_SIGNATURE_BE = 0x504B0304;
+    private IngestModuleContext context;
 
     SevenZipIngestModule() {
     }
 
     @Override
-    public void startUp(IngestModuleContext context) throws IngestModuleException{
-        super.startUp(context);
-        unpackDir = getContext().getOutputDirectoryRelativePath();
-        unpackDirPath = getContext().getOutputDirectoryAbsolutePath();
-        fileManager = getContext().getCase().getServices().getFileManager();
+    public void startUp(IngestModuleContext context) throws Exception{
+        this.context = context;
+        unpackDir = context.getOutputDirectoryRelativePath();
+        unpackDirPath = context.getOutputDirectoryAbsolutePath();
+        fileManager = context.getCase().getServices().getFileManager();
 
         File unpackDirPathFile = new File(unpackDirPath);
         if (!unpackDirPathFile.exists()) {
@@ -104,7 +105,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e);
                 String msg = "Error initializing archive extractor";
                 String details = "Error initializing output dir: " + unpackDirPath + ": " + e.getMessage();
-                getContext().postErrorIngestMessage(++messageID, msg, details);
+                context.postErrorIngestMessage(++messageID, msg, details);
                 throw e;
             }
         }
@@ -117,7 +118,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e);
             String msg = "Error initializing archive extractor";
             String details = "Could not initialize 7-ZIP library: " + e.getMessage();
-            getContext().postErrorIngestMessage(++messageID, msg, details);
+            context.postErrorIngestMessage(++messageID, msg, details);
             throw new RuntimeException(e);
         }
 
@@ -159,7 +160,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(abstractFile, unpackedFiles);
-            getContext().submitFilesForIngest(unpackedFiles);
+            context.submitFilesForIngest(unpackedFiles);
         }
 
         return ResultCode.OK;
@@ -226,7 +227,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                         + ", item: " + itemName;
                 String details = "The archive item compression ratio is " + cRatio
                         + ", skipping processing of this archive item. ";
-                getContext().postWarningIngestMessage(++messageID, msg, details);
+                context.postWarningIngestMessage(++messageID, msg, details);
                 return true;
             } else {
                 return false;
@@ -257,7 +258,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             String msg = "Possible ZIP bomb detected: " + archiveFile.getName();
             String details = "The archive is " + parentAr.getDepth()
                     + " levels deep, skipping processing of this archive and its contents ";
-            getContext().postWarningIngestMessage(++messageID, msg, details);
+            context.postWarningIngestMessage(++messageID, msg, details);
             return unpackedFiles;
         }
 
@@ -377,7 +378,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = "Not enough disk space to unpack archive item: " + archiveFile.getName() + ", " + fileName;
                         String details = "The archive item is too large to unpack, skipping unpacking this item. ";
-                        getContext().postErrorIngestMessage(++messageID, msg, details);
+                        context.postErrorIngestMessage(++messageID, msg, details);
                         logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: {0}, {1}", new Object[]{archiveFile.getName(), fileName});
                         continue; //skip this file
                     } else {
@@ -472,7 +473,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             String details = "Error unpacking ("
                     + (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC) ? "allocated" : "deleted") + ") " + fullName
                     + ". " + ex.getMessage();
-            getContext().postErrorIngestMessage(++messageID, msg, details);
+            context.postErrorIngestMessage(++messageID, msg, details);
         } finally {
             if (inArchive != null) {
                 try {
@@ -499,15 +500,15 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), getContext().getModuleDisplayName(), encryptionType));
-                getContext().fireDataEvent(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
+                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), ArchiveFileExtractorModuleFactory.getModuleName(), encryptionType));
+                context.fireDataEvent(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
             }
 
             String msg = "Encrypted files in archive detected. ";
             String details = "Some files in archive: " + archiveFile.getName() + " are encrypted. Archive extractor was unable to extract all files from this archive.";
-            getContext().postWarningIngestMessage(++messageID, msg, details);
+            context.postWarningIngestMessage(++messageID, msg, details);
         }
 
         return unpackedFiles;
@@ -715,7 +716,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             try {
                 DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size,
                         node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                        isFile, parent, "", getContext().getModuleDisplayName(), "", "");
+                        isFile, parent, "", ArchiveFileExtractorModuleFactory.getModuleName(), "", "");
                 node.setFile(df);
 
 

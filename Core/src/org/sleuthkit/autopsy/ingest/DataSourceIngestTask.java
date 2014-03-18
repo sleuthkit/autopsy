@@ -172,7 +172,7 @@ final class DataSourceIngestTask {
                     IngestModuleContext context = new IngestModuleContext(task, factory);
                     try {
                         module.startUp(context);
-                        modulesByClass.put(module.getClass().getCanonicalName(), module);
+                        modulesByClass.put(module.getClassName(), module);
                         IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
                     } catch (Exception ex) {
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));
@@ -299,7 +299,7 @@ final class DataSourceIngestTask {
                     IngestModuleContext context = new IngestModuleContext(task, factory);
                     try {
                         module.startUp(context);
-                        modulesByClass.put(module.getClass().getCanonicalName(), module);
+                        modulesByClass.put(module.getClassName(), module);
                         IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
                     } catch (Exception ex) {
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));

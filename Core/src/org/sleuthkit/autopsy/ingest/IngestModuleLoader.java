@@ -26,7 +26,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Looks up loaded ingest module factories using NetBean global lookup.
+ * Looks up loaded ingest module factories using the NetBean global lookup.
  */
 final class IngestModuleLoader {
 
@@ -35,7 +35,13 @@ final class IngestModuleLoader {
     private final List<IngestModuleFactory> moduleFactories = new ArrayList<>();
 
     private IngestModuleLoader() {
-        lookUpIngestModuleFactories();
+        // RJCTODO: Possibly add code to listen to changes in the collection and restore listener code...
+        // RJCTODO: Need a name uniqueness test/solution?
+        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
+        for (IngestModuleFactory factory : factories) {
+            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
+            moduleFactories.add(factory);
+        }
     }
 
     synchronized static IngestModuleLoader getInstance() {
@@ -47,14 +53,5 @@ final class IngestModuleLoader {
 
     List<IngestModuleFactory> getIngestModuleFactories() {
         return new ArrayList<>(moduleFactories);
-    }
-
-    private void lookUpIngestModuleFactories() {
-        // RJCTODO: Possibly add code to listen to changes in the collection and restore listener code...
-        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
-        for (IngestModuleFactory factory : factories) {
-            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
-            moduleFactories.add(factory);
-        }
     }
 }

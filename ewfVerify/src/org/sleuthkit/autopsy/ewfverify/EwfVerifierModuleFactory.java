@@ -37,7 +37,7 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return "EWF Verify"; // RJCTODO: Is this what we want here?
+        return "EWF Verify"; // RJCTODO: Is this what we want here? Also, this class is not in pipeline config
     }
 
     @Override

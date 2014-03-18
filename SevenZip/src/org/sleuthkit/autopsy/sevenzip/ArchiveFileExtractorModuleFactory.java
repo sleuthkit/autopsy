@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
  * A factory for creating archive extractor file ingest modules and the user
  * interface panels used to configure the settings for instances of the modules.
  */
-@ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service=IngestModuleFactory.class)
 public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
