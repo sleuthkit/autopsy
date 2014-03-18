@@ -676,7 +676,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage());
-                infoLabel.setText("Error updating video progress: " + ex.getMessage());
+                infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.infoLabel.updateErr",
+                                                      ex.getMessage()));
             }
         }
     } //end class progress worker
@@ -704,7 +705,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         @Override
         protected Object doInBackground() throws Exception {
             success = false;
-            progress = ProgressHandleFactory.createHandle("Buffering " + sFile.getName(), new Cancellable() {
+            progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sFile.getName()),
+                    new Cancellable() {
                 @Override
                 public boolean cancel() {
                     return ExtractMedia.this.cancel(true);

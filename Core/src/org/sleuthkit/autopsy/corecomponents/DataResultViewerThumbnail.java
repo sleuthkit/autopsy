@@ -171,7 +171,10 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
         });
 
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
+                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.comboBox.smallThumbnails"),
+                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.comboBox.mediumThumbnails"),
+                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.comboBox.largeThumbnails") }));
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
@@ -438,7 +441,9 @@ import org.sleuthkit.datamodel.TskCoreException;
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
                     NotifyDescriptor d =
-                        new NotifyDescriptor.Message("Error making thumbnails: " + ex.getMessage(), 
+                        new NotifyDescriptor.Message(
+                                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
+                                                    ex.getMessage()),
                             NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                     logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage());
