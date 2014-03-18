@@ -34,21 +34,21 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
 
-// RJCTODO: Rename to RunIngestModulesDialog after internationalization
+// RJCTODO: Rename to RunIngestModulesDialog after internationalization.
 /**
- * Dialog box that allows ingest modules to be run on an image. 
+ * Dialog box that allows ingest modules to be run on a data source. 
  * Used outside of the wizards.
  */
-public class IngestDialog extends JDialog {
+public final class IngestDialog extends JDialog {
     
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private IngestConfigurator ingestConfigurator;
+    private IngestJobLauncher ingestConfigurator;
     
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestConfigurator = new IngestConfigurator(IngestDialog.class.getCanonicalName());
-        List<String> messages = ingestConfigurator.getMissingIngestModuleErrorMessages();
+        ingestConfigurator = new IngestJobLauncher(IngestDialog.class.getCanonicalName());
+        List<String> messages = ingestConfigurator.getMissingIngestModuleMessages();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -77,15 +77,15 @@ public class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
-        add(ingestConfigurator.getIngestConfigPanel(), BorderLayout.PAGE_START);
+        add(ingestConfigurator.getIngestJobConfigPanel(), BorderLayout.PAGE_START);
         JButton startButton = new JButton("Start");
         JButton closeButton = new JButton("Close");
         startButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestConfigurator.save();
-                ingestConfigurator.start();
+                ingestConfigurator.saveIngestJobConfig();
+                ingestConfigurator.startIngestJobs();
                 close();
             }
         });
@@ -93,7 +93,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestConfigurator.save();
+                ingestConfigurator.saveIngestJobConfig();
                 close();
             }
         });
@@ -101,7 +101,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                ingestConfigurator.save();
+                ingestConfigurator.saveIngestJobConfig();
                 close();
             }
         });
@@ -118,8 +118,8 @@ public class IngestDialog extends JDialog {
         setVisible(true);
     }
    
-    public void setContent(List<Content> inputContent) {
-        ingestConfigurator.setContent(inputContent);
+    public void setDataSources(List<Content> inputContent) {
+        ingestConfigurator.setDataSourcesToIngest(inputContent);
     }    
     
     /**

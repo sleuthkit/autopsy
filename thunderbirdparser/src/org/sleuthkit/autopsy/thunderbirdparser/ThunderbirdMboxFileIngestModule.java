@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleContext;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -52,10 +52,9 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services;
-    private final String hashDBModuleName = "Hash Lookup";
     private int messageId = 0; // RJCTODO: Not thread safe
     private FileManager fileManager;
-    private IngestModuleContext context;
+    private IngestJobContext context;
 
     ThunderbirdMboxFileIngestModule() {
     }
@@ -248,7 +247,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
     }
     
     @Override
-    public void startUp(IngestModuleContext context) throws Exception {
+    public void startUp(IngestJobContext context) throws Exception {
         this.context = context;
         services = IngestServices.getDefault();
         fileManager = Case.getCurrentCase().getServices().getFileManager();

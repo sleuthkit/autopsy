@@ -61,9 +61,4 @@ public class FileExtMismatchDetectorOptions implements IngestModuleSettings {
     boolean getSkipFilesWithTextPlainMimeType() {
         return skipFilesWithTextPlainMimeType;
     }
-
-    @Override
-    public boolean areValid() {
-        return true;
-    }
 }

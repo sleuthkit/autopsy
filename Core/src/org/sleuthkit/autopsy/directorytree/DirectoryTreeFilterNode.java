@@ -113,7 +113,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();
-                        ingestDialog.setContent(Collections.<Content>singletonList(content));
+                        ingestDialog.setDataSources(Collections.<Content>singletonList(content));
                         ingestDialog.display();
                     }
                 });

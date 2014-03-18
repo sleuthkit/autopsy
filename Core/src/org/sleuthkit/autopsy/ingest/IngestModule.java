@@ -29,7 +29,7 @@ public interface IngestModule {
     };
     
     // RJCTODO: Write header comment, make sure to mention "one module instance per thread"
-    void startUp(IngestModuleContext context) throws Exception;
+    void startUp(IngestJobContext context) throws Exception;
 
     // RJCTODO: Write header comment, make sure to mention "one module instance per thread"
     void shutDown(boolean ingestJobWasCancelled);

@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 // Note that this class is not yet used as intended.
 public class HashLookupOptions implements IngestModuleSettings {
 
+    // RJCTODO: These should not be handle objects, but names or files
     private boolean shouldCalculateHashes = true;
     private ArrayList<HashDbManager.HashDb> knownFileHashSets;
     private ArrayList<HashDbManager.HashDb> knownBadFileHashSets;
@@ -42,12 +43,6 @@ public class HashLookupOptions implements IngestModuleSettings {
         this.shouldCalculateHashes = shouldCalculateHashes;
         this.knownFileHashSets = new ArrayList<>(knownFileHashSets);
         this.knownBadFileHashSets = new ArrayList<>(knownBadFileHashSets);
-    }
-
-    @Override
-    public boolean areValid() {
-        // RJCTODO: Verify that hash sets are present in hash db manager
-        return true;
     }
 
     boolean shouldCalculateHashes() {

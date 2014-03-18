@@ -81,7 +81,7 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory provides resource configuration panels.
      */
-    boolean providesResourcesConfigPanels();
+    boolean providesGlobalSettingsPanel();
 
     /**
      * Gets a user interface panel that can be used to configure resources for
@@ -104,7 +104,7 @@ public interface IngestModuleFactory {
      * the panel.
      * @return A user interface panel for configuring ingest module resources.
      */
-    IngestModuleGlobalSetttingsPanel getResourcesConfigPanel();
+    IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel();
 
     /**
      * Gets the default per ingest job options for instances of the family of
@@ -117,7 +117,7 @@ public interface IngestModuleFactory {
      *
      * @return The ingest options.
      */
-    IngestModuleSettings getDefaultIngestJobOptions();
+    IngestModuleSettings getDefaultModuleSettings();
 
     /**
      * Queries the factory to determine if it provides user interface panels to
@@ -130,7 +130,7 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory provides ingest job options panels.
      */
-    boolean providesIngestJobOptionsPanels();
+    boolean providesModuleSettingsPanel();
 
     /**
      * Gets a user interface panel that can be used to set per ingest job
@@ -152,7 +152,7 @@ public interface IngestModuleFactory {
      * @param ingestOptions Per ingest job options to initialize the panel.
      * @return A user interface panel.
      */
-    IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestOptions);
+    IngestModuleJobSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions);
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest

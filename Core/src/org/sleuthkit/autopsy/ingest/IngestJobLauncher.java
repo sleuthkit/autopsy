@@ -25,33 +25,22 @@ import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.Content;
 
-/**
- * RJCTODO: Improve comment Controller to allow a user to set context-sensitive
- * ingest module options, enable/disable ingest modules, and set general ingest
- * options. Provides an ingest module model class and instances of a UI
- * component to its clients (Model-View-Controller design pattern).
- */
-public class IngestConfigurator {
+public final class IngestJobLauncher {
 
     private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules";
     private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules";
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space";
-    private final String context;
-    private List<String> missingIngestModuleErrorMessages = new ArrayList<>();
-    private IngestConfigurationPanel ingestConfigPanel = null;
-    private List<Content> contentToIngest = null; // RJCTODO: Remove if start() method removed
+    private final String launcherContext;
+    private final List<String> missingIngestModuleErrorMessages = new ArrayList<>();
+    private final List<Content> dataSourcesToIngest = new ArrayList<>();
+    private IngestJobConfigurationPanel ingestConfigPanel;
 
-    /**
-     * RJCTODO
-     *
-     * @param context
-     */
-    public IngestConfigurator(String context) {
-        this.context = context;
+    public IngestJobLauncher(String launcherContext) {
+        this.launcherContext = launcherContext;
 
         // Get the ingest module factories discovered by the ingest module 
         // loader.
-        // RJCTODO: Put in name uniqueness test/solution in loader!
+        // RJCTODO: Put in module name uniqueness test/notification either here or in the loader
         List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getInstance().getIngestModuleFactories();
         HashSet<String> loadedModuleNames = new HashSet<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
@@ -67,10 +56,11 @@ public class IngestConfigurator {
         HashSet<String> knownModuleNames = new HashSet<>();
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
+            // RJCTODO: Make sure there is a story in JIRA for this.
             // NOTE: In the future, this code will be modified to get the 
             // resources configuration and ingest job options for each module 
             // for the current context; for now just get the defaults.
-            IngestModuleSettings ingestOptions = moduleFactory.getDefaultIngestJobOptions();
+            IngestModuleSettings ingestOptions = moduleFactory.getDefaultModuleSettings();
             IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, ingestOptions);
             String moduleName = moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
             if (enabledModuleNames.contains(moduleName)) {
@@ -94,48 +84,32 @@ public class IngestConfigurator {
             if (!knownModuleNames.contains(moduleName)) {
                 missingIngestModuleErrorMessages.add(moduleName + " was previously enabled, but could not be found");
                 enabledModuleNames.remove(moduleName);
-                disabledModuleNames.add(moduleName); // RJCTODO: Is this the right behavior?                
+                disabledModuleNames.add(moduleName);               
             }
         }
-        ModuleSettings.setConfigSetting(context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(context, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
+        ModuleSettings.setConfigSetting(launcherContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
 
         // Get the process unallocated space flag setting. If the setting does
         // not exist yet, default it to false.
-        if (ModuleSettings.settingExists(context, PARSE_UNALLOC_SPACE_KEY) == false) {
-            ModuleSettings.setConfigSetting(context, PARSE_UNALLOC_SPACE_KEY, "false");
+        if (ModuleSettings.settingExists(launcherContext, PARSE_UNALLOC_SPACE_KEY) == false) {
+            ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, "false");
         }
-        boolean processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(context, PARSE_UNALLOC_SPACE_KEY));
+        boolean processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY));
 
         // Make the configuration panel for the current context (view).
-        ingestConfigPanel = new IngestConfigurationPanel(moduleTemplates, processUnallocatedSpace);
+        ingestConfigPanel = new IngestJobConfigurationPanel(moduleTemplates, processUnallocatedSpace);
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
-    public List<String> getMissingIngestModuleErrorMessages() {
+    public List<String> getMissingIngestModuleMessages() {
         return missingIngestModuleErrorMessages;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
-    public JPanel getIngestConfigPanel() {
+    public JPanel getIngestJobConfigPanel() {
         return ingestConfigPanel;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @throws
-     * org.sleuthkit.autopsy.ingest.IngestConfigurator.IngestConfigurationException
-     */
-    public void save() {
+    public void saveIngestJobConfig() {
         List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
 
         // Save the enabled/disabled ingest module settings for the current context.
@@ -149,31 +123,24 @@ public class IngestConfigurator {
                 disabledModuleNames.add(moduleName);
             }
         }
-        ModuleSettings.setConfigSetting(context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(context, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
+        ModuleSettings.setConfigSetting(launcherContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
 
         // Save the process unallocated space setting for the current context.
         String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
-        ModuleSettings.setConfigSetting(context, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
+        ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
 
         // NOTE: In the future, this code will be modified to persist the ingest 
-        // options for each ingest module for the current context.        
+        // options for each ingest module for the current launch context.        
     }
 
-    // RJCTODO: If time permits, make it so that this class is not responsible
-    // starting and running the ingest - probably need to do this anyway, at 
-    // least if the IngestConfigurator interface goes away and this becomes the
-    // IngestConfigurator class.
-    public void setContent(List<Content> inputContent) {
-        this.contentToIngest = inputContent;
+    public void setDataSourcesToIngest(List<Content> dataSourcesToIngest) {
+        this.dataSourcesToIngest.clear();
+        this.dataSourcesToIngest.addAll(dataSourcesToIngest);
     }
 
-    // RJCTODO: If time permits, make it so that this class is not responsible
-    // starting and running the ingest - probably need to do this anyway, at 
-    // least if the IngestConfigurator interface goes away and this becomes the
-    // IngestConfigurator class.
-    public void start() {
-        // Filter out the disabled module tremplates.
+    public void startIngestJobs() {
+        // Filter out the disabled ingest module templates.
         List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
         List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
@@ -182,17 +149,9 @@ public class IngestConfigurator {
             }
         }
 
-        if ((!enabledModuleTemplates.isEmpty()) && (contentToIngest != null)) {
-            IngestManager.getDefault().scheduleDataSourceTasks(contentToIngest, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
+        if ((!enabledModuleTemplates.isEmpty()) && (dataSourcesToIngest != null)) {
+            IngestManager.getDefault().scheduleDataSourceTasks(dataSourcesToIngest, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
         }
-    }
-
-    // RJCTODO: If time permits, make it so that this class is not responsible
-    // starting and running the ingest - probably need to do this anyway, at 
-    // least if the IngestConfigurator interface goes away and this becomes the
-    // IngestConfigurator class.
-    public boolean isIngestRunning() {
-        return IngestManager.getDefault().isIngestRunning();
     }
 
     private static String makeCommaSeparatedList(HashSet<String> input) {
@@ -210,15 +169,14 @@ public class IngestConfigurator {
         return csvList.toString();
     }
     
-    // RJCTODO: May need additional mappings - EWF Verify to EWF Verifier
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
         // Get the ingest modules setting from the user's config file. 
         // If there is no such setting yet, create the default setting.
-        if (ModuleSettings.settingExists(context, key) == false) {
-            ModuleSettings.setConfigSetting(context, key, defaultSetting);
+        if (ModuleSettings.settingExists(launcherContext, key) == false) {
+            ModuleSettings.setConfigSetting(launcherContext, key, defaultSetting);
         }
         HashSet<String> moduleNames = new HashSet<>();
-        String modulesSetting = ModuleSettings.getConfigSetting(context, key);
+        String modulesSetting = ModuleSettings.getConfigSetting(launcherContext, key);
         if (!modulesSetting.isEmpty()) {
             String[] settingNames = modulesSetting.split(", ");
             for (String name : settingNames) {
@@ -230,6 +188,9 @@ public class IngestConfigurator {
                         break;
                     case "File Extension Mismatch Detection":
                         moduleNames.add("Extension Mismatch Detector");
+                        break;
+                    case "EWF Verify":
+                        moduleNames.add("EWF Verifier");
                         break;
                     default:
                         moduleNames.add(name);

@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
-import org.sleuthkit.autopsy.ingest.IngestModuleContext;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 
 /**
  * 7Zip ingest module Extracts supported archives, adds extracted DerivedFiles,
@@ -85,13 +85,13 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     private static final int readHeaderSize = 4;
     private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
     private static final int ZIP_SIGNATURE_BE = 0x504B0304;
-    private IngestModuleContext context;
+    private IngestJobContext context;
 
     SevenZipIngestModule() {
     }
 
     @Override
-    public void startUp(IngestModuleContext context) throws Exception{
+    public void startUp(IngestJobContext context) throws Exception{
         this.context = context;
         unpackDir = context.getOutputDirectoryRelativePath();
         unpackDirPath = context.getOutputDirectoryAbsolutePath();

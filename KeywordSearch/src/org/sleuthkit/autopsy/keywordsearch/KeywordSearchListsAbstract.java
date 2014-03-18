@@ -37,9 +37,9 @@ import java.util.logging.Level;
  */
 abstract class KeywordSearchListsAbstract {
 
-    protected String filePath; // RJCTODO: Doubt this needs to be protected
-    Map<String, KeywordList> theLists; //the keyword data // RJCTODO: This shuld be used to accumulate the lists read in
-    static KeywordSearchListsXML currentInstance = null; // RJCTODO: This is inappropriate for a reader
+    protected String filePath;
+    Map<String, KeywordList> theLists; //the keyword data 
+    static KeywordSearchListsXML currentInstance = null; 
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml"; // RJCTODO: This will go to the manager
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME; // RJCTODO: This will go to the manager
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());

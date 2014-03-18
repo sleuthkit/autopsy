@@ -18,14 +18,10 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -34,7 +30,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * singleton instance.
  */
 public final class IngestServices {
-    public static final int DISK_FREE_SPACE_UNKNOWN = -1; // RJCTODO: Move this back to the monitor or ingest manager? It is used here...
 
     private static final Logger logger = Logger.getLogger(IngestServices.class.getName());
     private IngestManager manager;
@@ -151,4 +146,6 @@ public final class IngestServices {
     public long getFreeDiskSpace() {
         return manager.getFreeDiskSpace();
     }    
+    
+    // RJCTODO: Add properties methods back into IngestServices
  }

@@ -41,9 +41,4 @@ public class FileTypeIdentifierIngestJobOptions implements IngestModuleSettings 
     boolean shouldSkipKnownFiles() {
         return skipKnownFiles;
     }
-
-    @Override
-    public boolean areValid() {
-        return true;
-    }
 }

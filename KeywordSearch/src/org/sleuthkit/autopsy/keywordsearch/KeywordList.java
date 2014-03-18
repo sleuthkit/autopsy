@@ -21,9 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.Date;
 import java.util.List;
 
-/**
- * RJCTODO
- */
 public class KeywordList {
 
     private String name;

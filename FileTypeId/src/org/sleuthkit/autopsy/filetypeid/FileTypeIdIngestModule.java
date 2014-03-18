@@ -105,4 +105,14 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
         detailsSb.append("</table>");
         IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(), "File Type Id Results", detailsSb.toString()));
     }
+    
+   /**
+     * Validate if a given mime type is in the detector's registry.
+     * @param mimeType Full string of mime type, e.g. "text/html"
+     * @return true if detectable
+     */
+    public static boolean isMimeTypeDetectable(String mimeType) {
+        FileTypeDetectionInterface detector = new TikaFileTypeDetector();         
+        return detector.isMimeTypeDetectable(mimeType);
+    }        
 }

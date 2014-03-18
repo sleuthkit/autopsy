@@ -35,6 +35,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 // RJCTODO: Fix comment
+// RJCTODO: It woulod be really nice to move such a powerful class behind a
+// facade. This is a good argument for IngestServices as the facade.
 /**
  * IngestManager sets up and manages ingest modules runs them in a background
  * thread notifies modules when work is complete or should be interrupted
@@ -50,7 +52,7 @@ public class IngestManager {
     private static IngestManager instance;
     private final IngestScheduler scheduler;
     private final IngestMonitor ingestMonitor = new IngestMonitor();
-    private final HashMap<Long, DataSourceIngestTask> ingestJobs = new HashMap<>();
+    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
     private TaskSchedulingWorker taskSchedulingWorker;
     private FileTaskWorker fileTaskWorker;
     private DataSourceTaskWorker dataSourceTaskWorker;
@@ -261,13 +263,13 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFileTask(long ingestJobId, AbstractFile file) { // RJCTODO: With the module context, this can be passed the task itself
-        DataSourceIngestTask job = this.ingestJobs.get(ingestJobId); // RJCTODO: Consider renaming
+    void scheduleFileTask(long ingestJobId, AbstractFile file) { // RJCTODO: Consider renaming method
+        IngestJob job = this.ingestJobs.get(ingestJobId);
         if (job == null) {
             // RJCTODO: Handle severe error
         }
 
-        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(job, file); // RJCTODO: Consider renaming
+        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(job, file);
     }
 
     /**
@@ -282,30 +284,28 @@ public class IngestManager {
      * worker
      */
     private synchronized void startAll() {
-        // RJCTODO: What does this do?
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
         }
 
         if (scheduler.getDataSourceScheduler().hasNext()) {
             if (dataSourceTaskWorker == null || dataSourceTaskWorker.isDone()) {
-                dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId()); // RJCTODO: May not need method call
+                dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId());
                 dataSourceTaskWorker.execute();
             }
         }
 
         if (scheduler.getFileScheduler().hasNext()) {
             if (fileTaskWorker == null || fileTaskWorker.isDone()) {
-                fileTaskWorker = new FileTaskWorker(getNextThreadId()); // RJCTODO: May not need method call
+                fileTaskWorker = new FileTaskWorker(getNextThreadId());
                 fileTaskWorker.execute();
             }
         }
     }
 
     synchronized void reportThreadDone(long threadId) {
-        for (DataSourceIngestTask job : ingestJobs.values()) {
+        for (IngestJob job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
-            // RJCTODO: Add logging of errors or send ingest messages 
             if (job.areIngestPipelinesShutDown()) {
                 ingestJobs.remove(job.getId());                
             }
@@ -326,7 +326,7 @@ public class IngestManager {
         // Now mark all of the ingest jobs as cancelled. This way the ingest 
         // modules will know they are being shut down due to cancellation when
         // the ingest worker threads release their pipelines.
-        for (DataSourceIngestTask job : ingestJobs.values()) {
+        for (IngestJob job : ingestJobs.values()) {
             job.cancel();
         }
 
@@ -423,7 +423,7 @@ public class IngestManager {
                 }
                 
                 final String inputName = dataSource.getName();
-                DataSourceIngestTask ingestJob = new DataSourceIngestTask(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
+                IngestJob ingestJob = new IngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
 
                 List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                 if (!errors.isEmpty()) {
@@ -513,8 +513,8 @@ public class IngestManager {
                     return null;
                 }
 
-                DataSourceIngestTask ingestJob = scheduler.next();
-                DataSourceIngestTask.DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
+                IngestJob ingestJob = scheduler.next();
+                IngestJob.DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
                 pipeline.process(this, this.progress);
             }
 
@@ -588,7 +588,7 @@ public class IngestManager {
                 IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
                 AbstractFile file = task.getFile();
                 progress.progress(file.getName(), processedFiles);
-                DataSourceIngestTask.FileIngestPipeline pipeline = task.getParent().getFileIngestPipelineForThread(this.id);
+                IngestJob.FileIngestPipeline pipeline = task.getParent().getFileIngestPipelineForThread(this.id);
                 pipeline.process(file);
 
                 // Update the progress bar.
@@ -610,6 +610,7 @@ public class IngestManager {
 
         @Override
         protected void done() {
+            // RJCTODO: Why was GC done here in the old code?
             try {
                 super.get();
             } catch (CancellationException | InterruptedException e) {

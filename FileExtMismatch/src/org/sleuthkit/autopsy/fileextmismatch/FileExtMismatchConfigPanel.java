@@ -24,16 +24,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
-//import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-//import org.sleuthkit.autopsy.coreutils.Logger;
-//import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule; RJCTODO
+import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule;
 
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced configuration options
@@ -404,12 +401,11 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             return;            
         }
 
-        // RJCTODO
-//        if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
-//            mimeErrLabel.setForeground(Color.red);
-//            mimeErrLabel.setText("MIME type is not detectable by this module.");
-//            return;                        
-//        }
+        if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
+            mimeErrLabel.setForeground(Color.red);
+            mimeErrLabel.setText("MIME type is not detectable by this module.");
+            return;                        
+        }
         
         editableMap.put(newMime, new String[0]);
 
@@ -505,29 +501,27 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
     
     @Override
     public void load() {
-        // RJCTODO
         // Load the XML into a buffer that the user can modify. They can choose
         // to save it back to the file after making changes.
-//        editableMap = FileExtMismatchXML.getDefault().load();
+        editableMap = FileExtMismatchXML.getDefault().load();
         updateMimeList();
         updateExtList();
     }
 
     @Override
     public void store() {
-        // RJCTODO
-//        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
-//            mimeErrLabel.setText(" ");
-//            mimeRemoveErrLabel.setText(" ");
-//            extRemoveErrLabel.setText(" ");
-//            extErrorLabel.setText(" ");
-//            
-//            saveMsgLabel.setText("Saved.");
-//            saveButton.setEnabled(false);
-//        } else {
-//            //error
-//            JOptionPane.showMessageDialog(this, "Writing XML configuration file failed.", "Save Error", JOptionPane.ERROR_MESSAGE);
-//        }
+        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
+            mimeErrLabel.setText(" ");
+            mimeRemoveErrLabel.setText(" ");
+            extRemoveErrLabel.setText(" ");
+            extErrorLabel.setText(" ");
+            
+            saveMsgLabel.setText("Saved.");
+            saveButton.setEnabled(false);
+        } else {
+            //error
+            JOptionPane.showMessageDialog(this, "Writing XML configuration file failed.", "Save Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void setIsModified() {

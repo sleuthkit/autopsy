@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 public final class IngestMonitor {
 
-    public static final int DISK_FREE_SPACE_UNKNOWN = -1; // RJCTODO: This is ugly
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
@@ -102,7 +102,7 @@ public final class IngestMonitor {
             return monitor.getFreeSpace();
         } catch (SecurityException e) {
             logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e);
-            return IngestServices.DISK_FREE_SPACE_UNKNOWN;
+            return DISK_FREE_SPACE_UNKNOWN;
         }
     }
 
@@ -183,7 +183,7 @@ public final class IngestMonitor {
                 //check if network drive, some network filesystems always return 0
                 final String monitoredPath = root.getAbsolutePath();
                 if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
-                    return IngestServices.DISK_FREE_SPACE_UNKNOWN;
+                    return DISK_FREE_SPACE_UNKNOWN;
 
                 }
             }
@@ -206,7 +206,7 @@ public final class IngestMonitor {
                 return true; //OK
             }
 
-            if (freeSpace == IngestServices.DISK_FREE_SPACE_UNKNOWN) {
+            if (freeSpace == DISK_FREE_SPACE_UNKNOWN) {
                 return true;
             } else {
                 //logger.log(Level.INFO, "Checking free disk apce: " + freeSpace + " need: " + Long.toString(MIN_FREE_DISK_SPACE));

@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleContext;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.scalpel.jni.ScalpelOutputParser.CarvedFileMeta;
@@ -57,7 +57,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
     private String configFilePath;
     private boolean initialized = false;
     private ScalpelCarver carver;
-    private IngestModuleContext context; 
+    private IngestJobContext context; 
 
     ScalpelCarverIngestModule() {
     }
@@ -189,7 +189,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
     }
         
     @Override
-    public void startUp(IngestModuleContext context) throws Exception {        
+    public void startUp(IngestJobContext context) throws Exception {        
         this.context = context;
         
         // make sure this is Windows

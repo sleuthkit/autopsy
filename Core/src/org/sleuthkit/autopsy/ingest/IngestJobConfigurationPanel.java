@@ -38,13 +38,13 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
  * User interface component to allow a user to set ingest module options and
  * enable/disable the modules.
  */
-class IngestConfigurationPanel extends javax.swing.JPanel {
+class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
     private List<IngestModuleModel> modules = new ArrayList<>();
     private boolean processUnallocatedSpace = false;
     private IngestModuleModel selectedModule = null;
 
-    IngestConfigurationPanel(List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+    IngestJobConfigurationPanel(List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
             modules.add(new IngestModuleModel(moduleTemplate));
         }
@@ -157,7 +157,7 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         jPanel1.setPreferredSize(new java.awt.Dimension(338, 257));
 
-        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestConfigurationPanel.class, "IngestConfigurationPanel.advancedButton.text")); // NOI18N
+        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.advancedButton.text")); // NOI18N
         advancedButton.setEnabled(false);
         advancedButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -195,8 +195,8 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
 
         processUnallocPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
 
-        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestConfigurationPanel.class, "IngestConfigurationPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestConfigurationPanel.class, "IngestConfigurationPanel.processUnallocCheckbox.toolTipText")); // NOI18N
+        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.processUnallocCheckbox.text")); // NOI18N
+        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.processUnallocCheckbox.toolTipText")); // NOI18N
         processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 processUnallocCheckboxActionPerformed(evt);
@@ -295,18 +295,18 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
 
         private final IngestModuleTemplate moduleTemplate;
         private IngestModuleGlobalSetttingsPanel resourcesConfigPanel = null;
-        private IngestModuleSettingsPanel ingestJobOptionsPanel = null;
+        private IngestModuleJobSettingsPanel ingestJobOptionsPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
 
             IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-            if (moduleFactory.providesIngestJobOptionsPanels()) {
-                ingestJobOptionsPanel = moduleFactory.getIngestJobOptionsPanel(moduleTemplate.getIngestOptions());
+            if (moduleFactory.providesModuleSettingsPanel()) {
+                ingestJobOptionsPanel = moduleFactory.getModuleSettingsPanel(moduleTemplate.getIngestOptions());
             }
 
-            if (moduleFactory.providesResourcesConfigPanels()) {
-                resourcesConfigPanel = moduleFactory.getResourcesConfigPanel();
+            if (moduleFactory.providesGlobalSettingsPanel()) {
+                resourcesConfigPanel = moduleFactory.getGlobalSettingsPanel();
             }
         }
 
@@ -331,15 +331,15 @@ class IngestConfigurationPanel extends javax.swing.JPanel {
         }
 
         boolean hasIngestOptionsPanel() {
-            return moduleTemplate.getIngestModuleFactory().providesIngestJobOptionsPanels();
+            return moduleTemplate.getIngestModuleFactory().providesModuleSettingsPanel();
         }
 
-        IngestModuleSettingsPanel getIngestOptionsPanel() {
+        IngestModuleJobSettingsPanel getIngestOptionsPanel() {
             return ingestJobOptionsPanel;
         }
 
         boolean hasResourcesConfigPanel() {
-            return moduleTemplate.getIngestModuleFactory().providesResourcesConfigPanels();
+            return moduleTemplate.getIngestModuleFactory().providesGlobalSettingsPanel();
         }
 
         IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {

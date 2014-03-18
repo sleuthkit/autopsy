@@ -58,7 +58,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
             
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestModuleContext context) throws Exception {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws Exception {
         super.startUp(context);
         services = IngestServices.getDefault();           
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
@@ -168,15 +168,17 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
         services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(), "File Extension Mismatch Results", detailsSb.toString()));
     }
 
-    // RJCTODO: Ingest options!
+    // RJCTODO: Ingest setting
     public void setSkipKnown(boolean flag) {
         skipKnown = flag;
     }
 
+    // RJCTODO: Ingest setting
     public void setSkipNoExt(boolean flag) {
         skipNoExt = flag;
     }        
     
+    // RJCTODO: Ingest setting
     public void setSkipTextPlain(boolean flag) {
         skipTextPlain = flag;
     }

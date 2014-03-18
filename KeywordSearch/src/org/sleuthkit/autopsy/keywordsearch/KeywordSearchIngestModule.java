@@ -54,7 +54,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleContext;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -117,8 +117,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
-    private final String hashDBModuleName = NbBundle
-            .getMessage(this.getClass(), "KeywordSearchIngestModule.hashDbModuleName"); //NOTE this needs to match the HashDB module getName()
     private SleuthkitCase caseHandle = null;
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
@@ -161,15 +159,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             return ResultCode.OK;
         }
 
-        // RJCTODO: Resolve this
-        //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-//        if (services.getAbstractFileModuleResult(hashDBModuleName) == ResultCode.ERROR) {
-//            indexer.indexFile(abstractFile, false);
-//            //notify depending module that keyword search (would) encountered error for this file
-//            ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_IO);
-//            return ResultCode.ERROR;
-//        } 
-//        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
         if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
@@ -298,7 +287,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      *
      */
     @Override
-    public void startUp(IngestModuleContext context) throws Exception {
+    public void startUp(IngestJobContext context) throws Exception {
         super.startUp(context);
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();

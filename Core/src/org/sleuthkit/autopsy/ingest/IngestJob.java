@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.Content;
  * Encapsulates a data source and the ingest module pipelines to be used to
  * ingest the data source.
  */
-final class DataSourceIngestTask {
+final class IngestJob {
 
     private final long id;
     private final Content dataSource;
@@ -45,7 +45,7 @@ final class DataSourceIngestTask {
     private DataSourceIngestPipeline initialDataSourceIngestPipeline = null;
     private boolean cancelled;
 
-    DataSourceIngestTask(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
+    IngestJob(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
         this.id = id;
         this.dataSource = dataSource;
         this.ingestModuleTemplates = ingestModuleTemplates;
@@ -92,7 +92,7 @@ final class DataSourceIngestTask {
             dataSourceIngestPipelines.put(threadId, pipeline);
         } else if (!dataSourceIngestPipelines.containsKey(threadId)) {
             pipeline = new DataSourceIngestPipeline(this, ingestModuleTemplates);
-            pipeline.startUp(); // RJCTODO: If time permits, return possible errors with pipeline or some such thing
+            pipeline.startUp(); // RJCTODO: Get errors and log
             dataSourceIngestPipelines.put(threadId, pipeline);
         } else {
             pipeline = dataSourceIngestPipelines.get(threadId);
@@ -146,11 +146,11 @@ final class DataSourceIngestTask {
     static final class DataSourceIngestPipeline {
 
         private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
-        private final DataSourceIngestTask task;
+        private final IngestJob task;
         private final List<IngestModuleTemplate> moduleTemplates;
         private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
-        private DataSourceIngestPipeline(DataSourceIngestTask task, List<IngestModuleTemplate> moduleTemplates) {
+        private DataSourceIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
             this.task = task;
             this.moduleTemplates = moduleTemplates;
         }
@@ -169,7 +169,7 @@ final class DataSourceIngestTask {
                 if (factory.isDataSourceIngestModuleFactory()) {
                     IngestModuleSettings ingestOptions = template.getIngestOptions();
                     DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(factory.createDataSourceIngestModule(ingestOptions), factory.getModuleDisplayName());
-                    IngestModuleContext context = new IngestModuleContext(task, factory);
+                    IngestJobContext context = new IngestJobContext(task, factory);
                     try {
                         module.startUp(context);
                         modulesByClass.put(module.getClassName(), module);
@@ -250,7 +250,7 @@ final class DataSourceIngestTask {
             }
 
             @Override
-            public void startUp(IngestModuleContext context) throws Exception {
+            public void startUp(IngestJobContext context) throws Exception {
                module.startUp(context);
             }
 
@@ -273,11 +273,11 @@ final class DataSourceIngestTask {
     static final class FileIngestPipeline {
 
         private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
-        private final DataSourceIngestTask task;
+        private final IngestJob task;
         private final List<IngestModuleTemplate> moduleTemplates;
         private List<FileIngestModuleDecorator> modules = new ArrayList<>();
 
-        private FileIngestPipeline(DataSourceIngestTask task, List<IngestModuleTemplate> moduleTemplates) {
+        private FileIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
             this.task = task;
             this.moduleTemplates = moduleTemplates;
         }
@@ -296,7 +296,7 @@ final class DataSourceIngestTask {
                 if (factory.isFileIngestModuleFactory()) {
                     IngestModuleSettings ingestOptions = template.getIngestOptions();
                     FileIngestModuleDecorator module = new FileIngestModuleDecorator(factory.createFileIngestModule(ingestOptions), factory.getModuleDisplayName());
-                    IngestModuleContext context = new IngestModuleContext(task, factory);
+                    IngestJobContext context = new IngestJobContext(task, factory);
                     try {
                         module.startUp(context);
                         modulesByClass.put(module.getClassName(), module);
@@ -376,7 +376,7 @@ final class DataSourceIngestTask {
             }
 
             @Override
-            public void startUp(IngestModuleContext context) throws Exception {
+            public void startUp(IngestJobContext context) throws Exception {
                module.startUp(context);
             }
 

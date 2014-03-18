@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.ingest;
  * Encapsulates an exception thrown by an ingest module during an operation such
  * as startup or shut down with an exception object for the error that occurred.
  */
-class IngestModuleError {
+final class IngestModuleError {
     private final String moduleDisplayName;
     private final Exception error;
 

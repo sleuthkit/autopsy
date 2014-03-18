@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.fileextmismatch;
 
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
 
 /**
  * UI component used to set ingest job options for file extension mismatch
  * detector ingest modules.
  */
-class FileExtMismatchSimpleConfigPanel extends IngestModuleSettingsPanel {
+class FileExtMismatchSimpleConfigPanel extends IngestModuleJobSettingsPanel {
 
     private FileExtMismatchDetectorOptions ingestJobOptions;
 

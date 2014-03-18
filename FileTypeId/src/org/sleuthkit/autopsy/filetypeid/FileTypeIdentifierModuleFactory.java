@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
 
 /**
  * An factory that creates file ingest modules that determine the types of
@@ -56,17 +56,17 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
     }
 
     @Override
-    public IngestModuleSettings getDefaultIngestJobOptions() {
+    public IngestModuleSettings getDefaultModuleSettings() {
         return new FileTypeIdentifierIngestJobOptions();
     }
 
     @Override
-    public boolean providesIngestJobOptionsPanels() {
+    public boolean providesModuleSettingsPanel() {
         return true;
     }
 
     @Override
-    public IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestJobOptions) {
+    public IngestModuleJobSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestJobOptions) {
         return new FileTypeIdSimpleConfigPanel((FileTypeIdentifierIngestJobOptions) ingestJobOptions);
     }
 

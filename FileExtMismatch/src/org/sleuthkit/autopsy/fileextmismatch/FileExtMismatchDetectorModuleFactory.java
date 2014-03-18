@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -57,28 +57,28 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleSettings getDefaultIngestJobOptions() {
+    public IngestModuleSettings getDefaultModuleSettings() {
         return new FileExtMismatchDetectorOptions();
     }
 
     @Override
-    public boolean providesIngestJobOptionsPanels() {
+    public boolean providesModuleSettingsPanel() {
         return true;
     }
 
     @Override
-    public IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestOptions) {
+    public IngestModuleJobSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
         FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions) ingestOptions);
         return ingestOptionsPanel;
     }
 
     @Override
-    public boolean providesResourcesConfigPanels() {
+    public boolean providesGlobalSettingsPanel() {
         return true;
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
+    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
         FileExtMismatchConfigPanel globalOptionsPanel = new FileExtMismatchConfigPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;

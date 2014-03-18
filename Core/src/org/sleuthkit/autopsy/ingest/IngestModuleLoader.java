@@ -35,13 +35,6 @@ final class IngestModuleLoader {
     private final List<IngestModuleFactory> moduleFactories = new ArrayList<>();
 
     private IngestModuleLoader() {
-        // RJCTODO: Possibly add code to listen to changes in the collection and restore listener code...
-        // RJCTODO: Need a name uniqueness test/solution?
-        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
-        for (IngestModuleFactory factory : factories) {
-            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
-            moduleFactories.add(factory);
-        }
     }
 
     synchronized static IngestModuleLoader getInstance() {
@@ -51,7 +44,14 @@ final class IngestModuleLoader {
         return instance;
     }
 
-    List<IngestModuleFactory> getIngestModuleFactories() {
+    synchronized List<IngestModuleFactory> getIngestModuleFactories() {
+        moduleFactories.clear();
+        // RJCTODO: Need a name uniqueness test/solution?
+        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
+        for (IngestModuleFactory factory : factories) {
+            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
+            moduleFactories.add(factory);
+        }
         return new ArrayList<>(moduleFactories);
     }
 }

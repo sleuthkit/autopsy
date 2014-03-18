@@ -34,27 +34,27 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     public abstract String getModuleVersionNumber();
 
     @Override
-    public boolean providesResourcesConfigPanels() {
+    public boolean providesGlobalSettingsPanel() {
         return false;
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
+    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public IngestModuleSettings getDefaultIngestJobOptions() {
+    public IngestModuleSettings getDefaultModuleSettings() {
         return new NoIngestModuleSettings();
     }
 
     @Override
-    public boolean providesIngestJobOptionsPanels() {
+    public boolean providesModuleSettingsPanel() {
         return false;
     }
 
     @Override
-    public IngestModuleSettingsPanel getIngestJobOptionsPanel(IngestModuleSettings ingestOptions) {
+    public IngestModuleJobSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 

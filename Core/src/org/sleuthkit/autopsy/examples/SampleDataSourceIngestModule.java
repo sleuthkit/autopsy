@@ -44,13 +44,14 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-// RJCTODO: Remove inheritance from IngestModuleAdapter and provide better documentation.
 /**
  * Sample data source ingest module that doesn't do much. Note that the
  * IngestModuleAdapter abstract class could have been used as a base class to 
  * obtain default implementations of many of the DataSourceIngestModule methods.
  */
-// RJCTODO: Add service provider annotatin (commend out)
+// RJCTODO: Add service provider annotation (commend out)
+// RJCTODO: Remove inheritance from IngestModuleAdapter and provide better documentation,
+// and more extensive demonstration of how to use various ingest services.
 class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(SampleDataSourceIngestModule.class);
@@ -80,18 +81,4 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
         
         return IngestModule.ResultCode.OK;
     }
-//    @Override
-//    public String getName() {
-//        return "SampleDataSourceIngestModule";    
-//    }
-//
-//    @Override
-//    public String getVersion() {
-//        return "1.0";
-//    }
-//
-//    @Override
-//    public String getDescription() {
-//        return "Doesn't do much";
-//    }
 }

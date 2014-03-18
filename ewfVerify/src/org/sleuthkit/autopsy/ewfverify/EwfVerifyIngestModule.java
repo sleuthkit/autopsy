@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleContext;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness 
@@ -45,11 +45,11 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getDefault();
-    private IngestModuleContext context;
+    private IngestJobContext context;
     private Image img;
     private String imgName;
     private MessageDigest messageDigest;
-    private static int messageId = 0; // RJCTODO: Copy-paste synchronized implementation, put in sample also
+    private static int messageId = 0; // RJCTODO: Not thread safe
     private boolean verified = false;
     private boolean skipped = false;
     private String calculatedHash = "";
@@ -59,7 +59,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     }
         
     @Override
-    public void startUp(IngestModuleContext context) throws Exception {
+    public void startUp(IngestJobContext context) throws Exception {
         this.context = context;
         verified = false;
         skipped = false;
@@ -140,7 +140,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         // Read in byte size chunks and update the hash value with the data.
         for (int i = 0; i < totalChunks; i++) {
             if (statusHelper.isCancelled()) {
-                return  ResultCode.OK; // RJCTODO: Use unknown?
+                return  ResultCode.OK;
             }
             data = new byte[ (int) chunkSize ];
             try {

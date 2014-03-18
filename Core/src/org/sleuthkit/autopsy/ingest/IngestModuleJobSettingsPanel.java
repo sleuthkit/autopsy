@@ -23,7 +23,7 @@ import javax.swing.JPanel;
 /**
  * Abstract base class for ingest module per ingest job options panels.
  */
-public abstract class IngestModuleSettingsPanel extends JPanel {
+public abstract class IngestModuleJobSettingsPanel extends JPanel {
 
     /**
      * Gets the ingest options for an ingest module.

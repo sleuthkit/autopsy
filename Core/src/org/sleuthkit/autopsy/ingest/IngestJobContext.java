@@ -32,16 +32,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Acts as a facade for the parts of the ingest framework that make up the
  * processing context of an ingest module.
  */
-public final class IngestModuleContext {
+public final class IngestJobContext {
 
-    private final DataSourceIngestTask ingestJob;
+    private final IngestJob ingestJob;
     private final IngestModuleFactory moduleFactory;
     private final IngestManager ingestManager;
     private final IngestScheduler scheduler;
     private final Case autopsyCase;
     private final SleuthkitCase sleuthkitCase;
 
-    IngestModuleContext(DataSourceIngestTask ingestJob, IngestModuleFactory moduleFactory) {
+    IngestJobContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
         this.ingestJob = ingestJob;
         this.moduleFactory = moduleFactory;
         ingestManager = IngestManager.getDefault();
@@ -54,20 +54,10 @@ public final class IngestModuleContext {
         return this.ingestJob.isCancelled();
     }
     
-   /**
-     * RJCTODO
-     *
-     * @return
-     */
     public Case getCase() {
         return autopsyCase;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     public SleuthkitCase getSleuthkitCase() {
         return sleuthkitCase;
     }

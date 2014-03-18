@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.ingest;
  */
 public final class NoIngestModuleSettings implements IngestModuleSettings {
 
-    private final String options = "None";
+    private final String setting = "None";
 
     /**
      * Gets the string used as an ingest options placeholder for serialization
@@ -32,12 +32,7 @@ public final class NoIngestModuleSettings implements IngestModuleSettings {
      *
      * @return The string "None"
      */
-    String getOptions() {
-        return options;
-    }
-
-    @Override
-    public boolean areValid() {
-        return true;
+    String getSetting() {
+        return setting;
     }
 }

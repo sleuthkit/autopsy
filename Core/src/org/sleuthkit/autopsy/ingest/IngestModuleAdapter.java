@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.ingest;
 public abstract class IngestModuleAdapter implements IngestModule {
 
     @Override
-    public void startUp(IngestModuleContext context) throws Exception {
+    public void startUp(IngestJobContext context) throws Exception {
     }
 
     @Override

@@ -35,54 +35,55 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Abstract visitor for getting all the files from content.
  */
- // TODO Could be moved to utility package, is there another version of this
-// somewhere?
- abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
+// RJCTODO: Could this be moved to utility package, is there another version of this
+// somewhere? An old comment said something about circular dependencies. Note: will use
+// this for per ingest job progress bars.
+abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
-    private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
+   private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
 
-    @Override
-    public Collection<AbstractFile> visit(VirtualDirectory ld) {
-        return getAllFromChildren(ld);
-    }
-    
-    @Override
-    public Collection<AbstractFile> visit(Directory drctr) {
-        return getAllFromChildren(drctr);
-    }
+   @Override
+   public Collection<AbstractFile> visit(VirtualDirectory ld) {
+       return getAllFromChildren(ld);
+   }
 
-    @Override
-    public Collection<AbstractFile> visit(Image image) {
-        return getAllFromChildren(image);
-    }
+   @Override
+   public Collection<AbstractFile> visit(Directory drctr) {
+       return getAllFromChildren(drctr);
+   }
 
-    @Override
-    public Collection<AbstractFile> visit(Volume volume) {
-        return getAllFromChildren(volume);
-    }
+   @Override
+   public Collection<AbstractFile> visit(Image image) {
+       return getAllFromChildren(image);
+   }
 
-    @Override
-    public Collection<AbstractFile> visit(VolumeSystem vs) {
-        return getAllFromChildren(vs);
-    }
+   @Override
+   public Collection<AbstractFile> visit(Volume volume) {
+       return getAllFromChildren(volume);
+   }
 
-    /**
-     * Aggregate all the matches from visiting the children Content objects of the
-     * one passed
-     * @param parent
-     * @return 
-     */
-    protected Collection<AbstractFile> getAllFromChildren(Content parent) {
-        Collection<AbstractFile> all = new ArrayList<>();
+   @Override
+   public Collection<AbstractFile> visit(VolumeSystem vs) {
+       return getAllFromChildren(vs);
+   }
 
-        try {
-            for (Content child : parent.getChildren()) {
-                all.addAll(child.accept(this));
-            }
-        } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error getting Content children", ex);
-        }
+   /**
+    * Aggregate all the matches from visiting the children Content objects of the
+    * one passed
+    * @param parent
+    * @return 
+    */
+   protected Collection<AbstractFile> getAllFromChildren(Content parent) {
+       Collection<AbstractFile> all = new ArrayList<>();
 
-        return all;
-    }
+       try {
+           for (Content child : parent.getChildren()) {
+               all.addAll(child.accept(this));
+           }
+       } catch (TskException ex) {
+           logger.log(Level.SEVERE, "Error getting Content children", ex);
+       }
+
+       return all;
+   }
 }
