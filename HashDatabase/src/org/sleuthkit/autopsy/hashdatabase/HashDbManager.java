@@ -1013,6 +1013,8 @@ public class HashDbManager implements PropertyChangeListener {
                         "Error creating index: " + ex.getMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
 
             try {
                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);

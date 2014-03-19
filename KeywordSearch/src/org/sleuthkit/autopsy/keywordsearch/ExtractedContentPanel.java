@@ -711,6 +711,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text" );
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
             
             
             if (markup != null) {
