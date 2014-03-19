@@ -153,20 +153,20 @@ class FileExtMismatchXML {
             Element rootEl = doc.createElement(ROOT_EL);
             doc.appendChild(rootEl);
             
-            ArrayList<String> appTypeList = new ArrayList<>(sigTypeToExtMap.keySet());
-            Collections.sort(appTypeList);
+            ArrayList<String> mimeTypeList = new ArrayList<>(sigTypeToExtMap.keySet());
+            Collections.sort(mimeTypeList);
             
-            for (String appType : appTypeList) {
+            for (String mimeType : mimeTypeList) {
                 Element sigEl = doc.createElement(SIG_EL);
-                sigEl.setAttribute(SIG_MIMETYPE_ATTR, appType);
+                sigEl.setAttribute(SIG_MIMETYPE_ATTR, mimeType.toLowerCase());
                 
-                String[] extArray = sigTypeToExtMap.get(appType);
+                String[] extArray = sigTypeToExtMap.get(mimeType);
                 if (extArray != null) {
                     ArrayList<String> extList = new ArrayList<>(Arrays.asList(extArray));
                     Collections.sort(extList);
                     for (String ext : extList) {
                         Element extEl = doc.createElement(EXT_EL);
-                        extEl.setTextContent(ext);
+                        extEl.setTextContent(ext.toLowerCase());
                         sigEl.appendChild(extEl);
                     }
                 }
