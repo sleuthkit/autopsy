@@ -52,6 +52,8 @@ import org.sleuthkit.datamodel.TskException;
     private static long matchTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
+    // NOTE: This value needs to be in sync with the default GUI value
+    // given the current design of only updating this when the user changes the default.
     private static boolean skipKnown = true;
     private static long MIN_FILE_SIZE = 512;
     
@@ -190,7 +192,7 @@ import org.sleuthkit.datamodel.TskException;
         return false;
     }
     
-    public static void setSkipKnown(boolean flag) {
+    protected static void setSkipKnown(boolean flag) {
         skipKnown = flag;
     }
     

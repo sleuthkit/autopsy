@@ -112,7 +112,7 @@ public class EwfVerifyIngestModule extends IngestModuleDataSource {
             return;
         }
 
-        logger.log(Level.INFO, "Starting ewf verification of " + img.getName());
+        logger.log(Level.INFO, "Starting hash verification of " + img.getName());
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this,
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "EwfVerifyIngestModule.process.startingImg",

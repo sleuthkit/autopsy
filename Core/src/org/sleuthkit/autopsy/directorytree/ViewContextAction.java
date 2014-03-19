@@ -176,6 +176,10 @@ public class ViewContextAction extends AbstractAction {
                 logger.log(Level.WARNING, "Failed to get nodes in selection worker.", ex);
                 return;
             } 
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) {
+                return;
+            }
             
             // It is possible the user selected a different Node to be displayed
             // in the DataResultViewer while the child Nodes were being generated.
