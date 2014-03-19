@@ -1014,6 +1014,8 @@ public class HashDbManager implements PropertyChangeListener {
                         NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.msg", ex.getMessage()),
                         MessageNotifyUtil.MessageType.ERROR);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
 
             try {
                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);

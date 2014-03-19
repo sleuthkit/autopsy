@@ -106,7 +106,7 @@ import org.sleuthkit.datamodel.TskException;
                         }
                         // this sleep here prevents the UI from locking up 
                         // due to too frequent updates to the progressMonitor above
-                        Thread.sleep(2 * 1000);
+                        Thread.sleep(500);
                     }
                 } catch (InterruptedException ie) {
                     // nothing to do, thread was interrupted externally  
