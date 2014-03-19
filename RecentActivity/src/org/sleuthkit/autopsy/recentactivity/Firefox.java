@@ -91,7 +91,7 @@ class Firefox extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles(dataSource, "%places.sqlite%", "Firefox");
+            historyFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errFetchingFiles");
             logger.log(Level.WARNING, msg);

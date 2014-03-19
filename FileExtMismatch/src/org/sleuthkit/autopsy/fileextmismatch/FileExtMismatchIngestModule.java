@@ -60,8 +60,10 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
     private static long processTime = 0;
     private static int messageId = 0;
     private static long numFiles = 0;
+    // note: because of current design, these values must be in sync with default GUI values
+    // they only get updated when the user changes from the default UI values
     private static boolean skipNoExt = true;
-    private static boolean skipTextPlain = false;  
+    private static boolean skipTextPlain = true;  
      
     private FileExtMismatchSimpleConfigPanel simpleConfigPanel;
     private FileExtMismatchConfigPanel advancedConfigPanel;
@@ -267,10 +269,10 @@ public class FileExtMismatchIngestModule extends org.sleuthkit.autopsy.ingest.In
         return false;
     }
 
-    public static void setSkipNoExt(boolean flag) {
+    protected static void setSkipNoExt(boolean flag) {
         skipNoExt = flag;
     }               
-    public static void setSkipTextPlain(boolean flag) {
+    protected static void setSkipTextPlain(boolean flag) {
         skipTextPlain = flag;
     }
 }
