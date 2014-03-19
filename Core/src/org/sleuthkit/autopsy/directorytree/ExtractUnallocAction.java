@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -37,6 +38,8 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -95,7 +98,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
     public void actionPerformed(ActionEvent e) {
         if (LstUnallocs != null && LstUnallocs.size() > 0) {
             if (lockedImages.contains(currentImage)) {
-                MessageNotifyUtil.Message.info("Unallocated Space is already being extracted on this Image. Please select a different Image.");
+                MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.notifyMsg.unallocAlreadyBeingExtr.msg"));
                 //JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
                 return;
             }
@@ -111,7 +114,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 public void approveSelection() {
                     File f = getSelectedFile();
                     if (!f.exists() && getDialogType() == SAVE_DIALOG || !f.canWrite()) {
-                        JOptionPane.showMessageDialog(this, "Folder does not exist. Please choose a valid folder before continuing");
+                        JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
+                                                                                "ExtractUnallocAction.msgDlg.folderDoesntExist.msg"));
                         return;
                     }
                      super.approveSelection();
@@ -119,7 +123,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
             };
             
             fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export"));
-            fc.setDialogTitle("Select directory to save to");
+            fc.setDialogTitle(
+                    NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
             fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fc.setAcceptAllFileFilterUsed(false);
             int returnValue = fc.showSaveDialog((Component) e.getSource());
@@ -130,7 +135,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
                     if (u.llf != null && u.llf.size() > 0 && !lockedVols.contains(u.getFileName())) {
                         //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat                    
                         if (u.FileInstance.exists()) {
-                            int res = JOptionPane.showConfirmDialog(new Frame(), "The Unalloc File for this volume, " + u.getFileName() + " already exists, do you want to replace it?");
+                            int res = JOptionPane.showConfirmDialog(new Frame(), NbBundle.getMessage(this.getClass(),
+                                                                                                     "ExtractUnallocAction.confDlg.unallocFileAlreadyExist.msg",
+                                                                                                     u.getFileName()));
                             if (res == JOptionPane.YES_OPTION) {
                                 u.FileInstance.delete();
                             } else {
@@ -222,13 +229,15 @@ import org.sleuthkit.datamodel.VolumeSystem;
         @Override
         protected Integer doInBackground() {
             try {
-                progress = ProgressHandleFactory.createHandle("Extracting Unallocated Space", new Cancellable() {
+                progress = ProgressHandleFactory.createHandle(
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.progress.extractUnalloc.title"), new Cancellable() {
                     @Override
                     public boolean cancel() {
                         logger.log(Level.INFO, "Canceling extraction of unallocated space");
                         canceled = true;
                         if (progress != null) {
-                            progress.setDisplayName("Extracting Unallocated Space" + " (Cancelling...)");
+                            progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                                                                        "ExtractUnallocAction.progress.displayName.cancelling.text"));
                         }
                         return true;
                     }
@@ -254,7 +263,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
                         while(offsetPerFile != f.getSize() && !canceled){
                             if (++kbs % 128 == 0) {
                                 mbs++;                                
-                                progress.progress("processing " + mbs + " of " + totalSizeinMegs + " MBs", mbs-1);
+                                progress.progress(NbBundle.getMessage(this.getClass(),
+                                                                      "ExtractUnallocAction.processing.counter.msg",
+                                                                      mbs, totalSizeinMegs), mbs-1);
                             }
                             bytesRead = f.read(buf, offsetPerFile, MAX_BYTES);  
                             offsetPerFile+= bytesRead;
@@ -294,9 +305,21 @@ import org.sleuthkit.datamodel.VolumeSystem;
             for (UnallocStruct u : lus) {
                 lockedVols.remove(u.getFileName());
             }
-            if (!canceled && !lus.isEmpty()) {
-                MessageNotifyUtil.Notify.info("Completed extraction of unallocated space.", "Files were extracted to " + lus.get(0).getFile().getParent());
-            }
+            
+            try {
+                get();
+                if (!canceled && !lus.isEmpty()) {
+                    MessageNotifyUtil.Notify.info(NbBundle.getMessage(this.getClass(),
+                                                                      "ExtractUnallocAction.done.notifyMsg.completedExtract.title"),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "ExtractUnallocAction.done.notifyMsg.completedExtract.msg",
+                                                                      lus.get(0).getFile().getParent()));
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.title"),
+                        NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.msg", ex.getMessage()));
+            } 
         }        
     }
 

@@ -25,6 +25,8 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
 import org.sleuthkit.autopsy.coreutils.JLNK;
@@ -46,7 +48,7 @@ import org.sleuthkit.datamodel.*;
  */
 class RecentDocumentsByLnk extends Extract  {
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services;    
+    private IngestServices services = IngestServices.getDefault();    
 
     /**
      * Find the documents that Windows stores about recent documents and make artifacts.
@@ -60,8 +62,10 @@ class RecentDocumentsByLnk extends Extract  {
         try {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error searching for .lnk files.", ex);
-            this.addErrorMessage(this.getName() + ": Error getting lnk Files.");
+            logger.log(Level.WARNING, "Error searching for .lnk files.");
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errGetLnkFiles",
+                                        this.getName()));
             return;
         }
 
@@ -89,19 +93,32 @@ class RecentDocumentsByLnk extends Extract  {
                         || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
                     logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
-                    this.addErrorMessage(this.getName() + ": Error parsing Recent File " + recentFile.getName());
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errParsingFile",
+                                                this.getName(), recentFile.getName()));
                 }
                 continue;
             }
            
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             String path = lnk.getBestPath();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(dataSource, path)));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", recentFile.getCrtime()));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+                                                     NbBundle.getMessage(this.getClass(),
+                                                                         "RecentDocumentsByLnk.parentModuleName.noSpace"),
+                                                     path));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
+                                                     NbBundle.getMessage(this.getClass(),
+                                                                         "RecentDocumentsByLnk.parentModuleName.noSpace"),
+                                                     Util.findID(dataSource, path)));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                                                     NbBundle.getMessage(this.getClass(),
+                                                                         "RecentDocumentsByLnk.parentModuleName.noSpace"),
+                                                     recentFile.getCrtime()));
             this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
         }
-        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+        services.fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
     }
     
     @Override
@@ -109,29 +126,4 @@ class RecentDocumentsByLnk extends Extract  {
         dataFound = false;
         this.getRecentDocuments(dataSource, controller);
     }
-   
-//    @Override
-//    public void init(IngestModuleInit initContext) {
-//        services = IngestServices.getDefault();
-//    }
-//
-//    @Override
-//    public void complete() {
-//    }
-//
-//    @Override
-//    public void stop() {
-//        //call regular cleanup from complete() method
-//        complete();
-//    }
-//
-//    @Override
-//    public String getDescription() {
-//        return "Extracts recent documents in windows.";
-//    }
-//
-//    @Override
-//    public boolean hasBackgroundJobsRunning() {
-//        return false;
-//    }
 }

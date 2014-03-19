@@ -42,6 +42,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -542,7 +543,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         StringBuilder localFileLink = new StringBuilder();
         localFileLink.append("<a href=\"");
         localFileLink.append(localFilePath);
-        localFileLink.append("\">View File</a>");
+        localFileLink.append("\">").append(NbBundle.getMessage(this.getClass(), "ReportHTML.link.viewFile")).append("</a>");
         row.add(localFileLink.toString());              
         
         StringBuilder builder = new StringBuilder();
@@ -587,7 +588,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 pages++;
                 endTable();
                 endDataType();
-                startDataType("Tagged Images - " + pages, "Tagged Results and Contents that contain images.");
+                startDataType(NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.title", pages),
+                              NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.msg"));
                 List<String> emptyHeaders = new ArrayList<>();
                 for (int i = 0; i < THUMBNAIL_COLUMNS; i++) {
                     emptyHeaders.add("");
@@ -627,7 +629,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             try {
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
                 if (tags.size() > 0) {
-                    linkToThumbnail.append("Tags: " );
+                    linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags") );
                 }
                 for (int i = 0; i < tags.size(); i++) {
                     ContentTag tag = tags.get(i);
@@ -739,12 +741,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     
     @Override
     public String getName() {
-        return "Results - HTML";
+        return NbBundle.getMessage(this.getClass(), "ReportHTML.getName.text");
     }
     
     @Override
     public String getDescription() {
-        return "A report about results and tagged items in HTML format.";
+        return NbBundle.getMessage(this.getClass(), "ReportHTML.getDesc.text");
     }
 
     
@@ -802,15 +804,17 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.html"), "UTF-8"));
             StringBuilder index = new StringBuilder();
-            index.append("<head>\n<title>Autopsy Report for case ").append(currentCase.getName()).append("</title>\n");
+            index.append("<head>\n<title>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
+                    "</title>\n");
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n");
             index.append("</head>\n");
             index.append("<frameset cols=\"350px,*\">\n");
             index.append("<frame src=\"nav.html\" name=\"nav\">\n");
             index.append("<frame src=\"summary.html\" name=\"content\">\n");
-            index.append("<noframes>Your browser is not compatible with our frame setup.<br />\n");
-            index.append("Please see <a href=\"nav.html\">the navigation page</a> for artifact links,<br />\n");
-            index.append("and <a href=\"summary.html\">the summary page</a> for a case summary.</noframes>\n");
+            index.append("<noframes>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.msg")).append("<br />\n");
+            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.seeNav")).append("<br />\n");
+            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.seeSum")).append("</noframes>\n");
             index.append("</frameset>\n");
             index.append("</html>");
             indexOut.write(index.toString());
@@ -835,10 +839,14 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         try {
             navOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "nav.html"), "UTF-8"));
             StringBuilder nav = new StringBuilder();
-            nav.append("<html>\n<head>\n\t<title>Report Navigation</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n");
-            nav.append("<div id=\"content\">\n<h1>Report Navigation</h1>\n");
+            nav.append("<html>\n<head>\n\t<title>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
+               .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n");
+            nav.append("<div id=\"content\">\n<h1>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n");
             nav.append("<ul class=\"nav\">\n");
-            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">Case Summary</a></li>\n");
+            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">")
+               .append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.summary")).append("</a></li>\n");
             
             for (String dataType : dataTypes.keySet()) {
                 String dataTypeEsc = dataTypeToFileName(dataType);
@@ -923,7 +931,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "summary.html"), "UTF-8"));
             StringBuilder head = new StringBuilder();
-            head.append("<html>\n<head>\n<title>Case Summary</title>\n");
+            head.append("<html>\n<head>\n<title>").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n");
             head.append("<style type=\"text/css\">\n");
             head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n");
             head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n");
@@ -964,8 +973,11 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
             
             summary.append("<div id=\"wrapper\">\n");
-            summary.append("<h1>").append(reportTitle).append(running ? "<span>Warning, this report was run before ingest services completed!</span>" : "").append("</h1>\n");
-            summary.append("<p class=\"subheadding\">HTML Report Generated on ").append(datetime).append("</p>\n");
+            summary.append("<h1>").append(reportTitle)
+                   .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
+                   .append("</h1>\n");
+            summary.append("<p class=\"subheadding\">").append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.reportGenOn.text", datetime)).append("</p>\n");
             summary.append("<div class=\"title\">\n");
             if (agencyLogoSet) {
                 summary.append("<div class=\"left\">\n");
@@ -975,15 +987,21 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             final String align = agencyLogoSet?"right":"left";
             summary.append("<div class=\"").append(align).append("\">\n");
             summary.append("<table>\n");
-            summary.append("<tr><td>Case:</td><td>").append(caseName).append("</td></tr>\n");
-            summary.append("<tr><td>Case Number:</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
-            summary.append("<tr><td>Examiner:</td><td>").append(!examiner.isEmpty() ? examiner : "<i>No examiner</i>").append("</td></tr>\n");
-            summary.append("<tr><td>Number of Images:</td><td>").append(imagecount).append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName"))
+                   .append("</td><td>").append(caseName).append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum"))
+                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>")
+                   .append(!examiner.isEmpty() ? examiner : NbBundle
+                           .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+                   .append("</td></tr>\n");
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages"))
+                   .append("</td><td>").append(imagecount).append("</td></tr>\n");
             summary.append("</table>\n");
             summary.append("</div>\n");
             summary.append("<div class=\"clear\"></div>\n");
             summary.append("</div>\n");
-            summary.append("<h2>Image Information:</h2>\n");
+            summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.imageInfoHeading"));
             summary.append("<div class=\"info\">\n");
             try {
                 Image[] images = new Image[imagecount];
@@ -993,9 +1011,13 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 for(Image img : images) {
                     summary.append("<p>").append(img.getName()).append("</p>\n");
                     summary.append("<table>\n");
-                    summary.append("<tr><td>Timezone:</td><td>").append(img.getTimeZone()).append("</td></tr>\n");
+                    summary.append("<tr><td>").append(
+                            NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
+                           .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n");
                     for(String imgPath : img.getPaths()) {
-                        summary.append("<tr><td>Path:</td><td>").append(imgPath).append("</td></tr>\n");
+                        summary.append("<tr><td>").append(
+                                NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
+                               .append("</td><td>").append(imgPath).append("</td></tr>\n");
                     }
                     summary.append("</table>\n");
                 }

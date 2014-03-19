@@ -81,7 +81,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private DataResultTopComponent dataResult = new DataResultTopComponent(true, "Directory Listing");
+    private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
+                                                                                                     "DirectoryTreeTopComponent.title.text"));
     private LinkedList<String[]> backList;
     private LinkedList<String[]> forwardList;
     /**
@@ -516,7 +517,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Object newValue = evt.getNewValue();
 
         // change in the case name
-        if (changed.equals(Case.CASE_NAME)) {
+        if (changed.equals(Case.Events.NAME.toString())) {
             // set the main title of the window
             String oldCaseName = oldValue.toString();
             String newCaseName = newValue.toString();
@@ -529,7 +530,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 em.getRootContext().setDisplayName(newCaseName);
             }
         } // changed current case
-        else if (changed.equals(Case.CASE_CURRENT_CASE)) {
+        else if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
             // When a case is closed, the old value of this property is the 
             // closed Case object and the new value is null. When a case is 
             // opened, the old value is null and the new value is the new Case
@@ -553,7 +554,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 resetHistory();
             }
         } // if the image is added to the case
-        else if (changed.equals(Case.CASE_ADD_DATA_SOURCE)) {
+        else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             componentOpened();
 //            Image img = (Image)newValue;
 //
@@ -1014,7 +1015,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
-        new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
+        new ViewContextAction(
+                NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
+                new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
 //    private class HistoryManager<T> {
@@ -1033,7 +1036,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to DirectoryTreeTopComponent updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DirectoryTreeTopComponent.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 }

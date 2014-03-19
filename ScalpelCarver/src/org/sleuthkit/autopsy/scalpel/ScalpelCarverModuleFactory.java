@@ -23,8 +23,8 @@ package org.sleuthkit.autopsy.scalpel;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.openide.util.NbBundle;
 
 /**
  * An factory that creates file ingest modules that use Scalpel to carve
@@ -40,12 +40,12 @@ public class ScalpelCarverModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return "Scalpel Carver";
+        return NbBundle.getMessage(ScalpelCarverIngestModule.class, "ScalpelCarverIngestModule.moduleName");
     }
 
     @Override
     public String getModuleDescription() {
-        return "Carves files from unallocated space at ingest time.\nCarved files are reanalyzed and displayed in the directory tree.";
+        return NbBundle.getMessage(ScalpelCarverIngestModule.class, "ScalpelCarverIngestModule.moduleDesc.text");
     }
 
     @Override

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filetypeid;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -33,21 +34,20 @@ import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter {
 
-    public final static String MODULE_NAME = "File Type Identification";
-    public final static String MODULE_DESCRIPTION = "Matches file types based on binary signatures.";
-
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
 
     static String getModuleName() {
-        return MODULE_NAME;
+        return NbBundle.getMessage(FileTypeIdIngestModule.class,
+                "FileTypeIdIngestModule.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
-        return MODULE_DESCRIPTION;
+        return NbBundle.getMessage(FileTypeIdIngestModule.class,
+                "FileTypeIdIngestModule.moduleDesc.text");
     }
 
     @Override

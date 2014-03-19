@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -58,7 +59,8 @@ public class IngestManager {
     private DataSourceTaskWorker dataSourceTaskWorker;
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
-    public final static String MODULE_PROPERTIES = "ingest";
+    public final static String MODULE_PROPERTIES = NbBundle.getMessage(IngestManager.class,
+                                                                       "IngestManager.moduleProperties.text");
     private volatile IngestUI ingestMessageBox;
 
     // RJCTODO: Redo eventing for 3.1
@@ -163,7 +165,9 @@ public class IngestManager {
             pcs.firePropertyChange(eventType, moduleName, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -177,7 +181,9 @@ public class IngestManager {
             pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -192,7 +198,9 @@ public class IngestManager {
             pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -207,7 +215,9 @@ public class IngestManager {
             pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -491,13 +501,16 @@ public class IngestManager {
 
             // Set up a progress bar that can be used to cancel all of the 
             // ingest jobs currently being performed. 
-            final String displayName = "Data source ingest"; // RJCTODO: Need reset
+            final String displayName = NbBundle
+                    .getMessage(this.getClass(), "IngestManager.IngestAbstractFileProcessor.displayName");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Data source ingest thread {0} cancelled", DataSourceTaskWorker.this.id);
                     if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                        progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                                                                    "IngestManager.IngestAbstractFileProcessor.process.cancelling",
+                                                                    displayName));
                     }
                     IngestManager.getDefault().stopAll();
                     return true;
@@ -559,13 +572,16 @@ public class IngestManager {
 
             // Set up a progress bar that can be used to cancel all of the 
             // ingest jobs currently being performed. 
-            final String displayName = "File ingest";
+            final String displayName = NbBundle
+                    .getMessage(this.getClass(), "IngestManager.EnqueueWorker.displayName.text");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "File ingest thread {0} cancelled", FileTaskWorker.this.id);
                     if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                        progress.setDisplayName(
+                                NbBundle.getMessage(this.getClass(), "IngestManager.EnqueueWorker.process.cancelling",
+                                                    displayName));
                     }
                     IngestManager.getDefault().stopAll();
                     return true;

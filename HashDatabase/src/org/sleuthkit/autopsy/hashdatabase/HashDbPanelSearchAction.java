@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,11 +47,10 @@ class HashDbPanelSearchAction extends CallableSystemAction {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
                     setEnabled(evt.getNewValue() != null);
                 }
-            }
-            
+            }            
         });
     }
     

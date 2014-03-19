@@ -24,13 +24,18 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
 import org.openide.nodes.AbstractNode;
@@ -40,6 +45,7 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -115,7 +121,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         filePathLabel = new javax.swing.JLabel();
         goToPageLabel = new javax.swing.JLabel();
         goToPageField = new javax.swing.JTextField();
-        thumbnailSizeComboBox = new javax.swing.JComboBox();
+        thumbnailSizeComboBox = new javax.swing.JComboBox<>();
 
         thumbnailScrollPanel.setPreferredSize(new java.awt.Dimension(582, 348));
 
@@ -165,8 +171,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
         });
 
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
-        thumbnailSizeComboBox.setSelectedIndex(1);
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
@@ -177,7 +182,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -283,7 +288,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JScrollPane thumbnailScrollPanel;
-    private javax.swing.JComboBox thumbnailSizeComboBox;
+    private javax.swing.JComboBox<String> thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -327,7 +332,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     
     @Override
     public String getTitle() {
-        return "Thumbnail";
+        return NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.title");
     }
 
     @Override
@@ -380,8 +385,13 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
         
         if (newPage > totalPages || newPage < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + totalPages,
-                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataResultViewerThumbnail.goToPageTextField.msgDlg",
+                                                              totalPages),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataResultViewerThumbnail.goToPageTextField.err"),
+                                          JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -407,7 +417,8 @@ import org.sleuthkit.datamodel.TskCoreException;
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
                 goToPageField.setEnabled(false);
-                progress = ProgressHandleFactory.createHandle("Generating Thumbnails...");
+                progress = ProgressHandleFactory.createHandle(
+                        NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
                 Node root = em.getRootContext();
@@ -421,7 +432,17 @@ import org.sleuthkit.datamodel.TskCoreException;
             protected void done() {
                 progress.finish();
                 setCursor(null);
-                updateControls();        
+                updateControls();  
+                // see if any exceptions were thrown
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    NotifyDescriptor d =
+                        new NotifyDescriptor.Message("Error making thumbnails: " + ex.getMessage(), 
+                            NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(d);
+                    logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage());
+                }
             }
         }.execute();
 
@@ -435,7 +456,9 @@ import org.sleuthkit.datamodel.TskCoreException;
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
         } else {
-            pageNumLabel.setText(Integer.toString(curPage) + " of " + Integer.toString(totalPages));
+            pageNumLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
+                                        Integer.toString(curPage), Integer.toString(totalPages)));
             final int imagesFrom = (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = curPageImages + (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);

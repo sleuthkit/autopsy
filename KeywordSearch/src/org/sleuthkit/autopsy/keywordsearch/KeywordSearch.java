@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
@@ -46,8 +47,7 @@ public class KeywordSearch {
     static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     public enum QueryType {
-
-        WORD, REGEX
+        LITERAL, REGEX
     };
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT";
     private static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
@@ -107,7 +107,10 @@ public class KeywordSearch {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "KeywordSearch listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearch updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.moduleErr"),
+                                          NbBundle.getMessage(KeywordSearch.class,
+                                                              "KeywordSearch.fireNumIdxFileChg.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -126,7 +129,7 @@ public class KeywordSearch {
             Object newValue = evt.getNewValue();
 
             final Logger logger = Logger.getLogger(CaseChangeListener.class.getName());
-            if (changed.equals(Case.CASE_CURRENT_CASE)) {
+            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 if (newValue != null) {
                     // new case is open
                     try {

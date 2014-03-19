@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -97,7 +98,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     };
     
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private long ingestJobId;
     private IngestServices services;
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
@@ -288,7 +288,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      */
     @Override
     public void startUp(IngestJobContext context) throws Exception {
-        super.startUp(context);
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
@@ -306,8 +305,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
-                return;
-
+                throw new Exception(msg);
             }
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
@@ -315,7 +313,16 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
             String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
             services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
-            return;
+            throw new Exception(msg);
+        }
+        try {
+            // make an actual query to verify that server is responding
+            // we had cases where getStatus was OK, but the connection resulted in a 404
+            server.queryNumIndexedDocuments();
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            throw new Exception(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
+                                        ex.getMessage()));
         }
 
         //initialize extractors
@@ -352,7 +359,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         curDataSourceIds = new HashSet<>();
 
         indexer = new Indexer();
-
+        
         final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
         logger.log(Level.INFO, "Using commit interval (ms): {0}", updateIntervalMs);
         logger.log(Level.INFO, "Using searcher interval (ms): {0}", updateIntervalMs);
@@ -992,6 +999,18 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             }
 
             return null;
+        }
+        
+        @Override
+        protected void done() {
+            // call get to see if there were any errors
+            try {
+                get();
+            }
+            catch (InterruptedException | ExecutionException e) {
+                logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
+            }
         }
 
         /**

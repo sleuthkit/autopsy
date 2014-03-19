@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -114,7 +115,10 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
-            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(), "Out of disk space. Can't copy " + abstractFile.getName() + " to parse.");
+            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
+                                                                 NbBundle.getMessage(this.getClass(),
+                                                                                     "ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace",
+                                                                                     abstractFile.getName()));
             services.postMessage(msg);
             return ResultCode.OK;
         }
@@ -137,14 +141,18 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
             try {
                 BlackboardArtifact generalInfo = abstractFile.getGenInfoArtifact();
                 generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
-                        EmailParserModuleFactory.getModuleName(), "File-level Encryption"));
+                        EmailParserModuleFactory.getModuleName(),
+                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
             } catch (TskCoreException ex) {
                 logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName());
             }
         } else {
             // parsing error: log message
-            postErrorMessage("Error while processing " + abstractFile.getName(),
-                    "Only files from Outlook 2003 and later are supported.");
+            postErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
+                                        abstractFile.getName()),
+                    NbBundle.getMessage(this.getClass(),
+                                        "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
             logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName());
             return ResultCode.ERROR;
         }
@@ -155,7 +163,9 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         
         String errors = parser.getErrors();
         if (errors.isEmpty() == false) {
-            postErrorMessage("Error while processing " + abstractFile.getName(), errors);
+            postErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg2",
+                                        abstractFile.getName()), errors);
         }
 
         return ResultCode.OK;
@@ -188,8 +198,11 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
-            postErrorMessage("Error while processing " + abstractFile.getName(),
-                    "Out of disk space. Can't copy file to parse.");
+            postErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg",
+                                        abstractFile.getName()),
+                    NbBundle.getMessage(this.getClass(),
+                                        "ThunderbirdMboxFileIngestModule.processMBox.errProfFile.details"));
             return ResultCode.OK;
         }
         
@@ -211,7 +224,9 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         
         String errors = parser.getErrors();
         if (errors.isEmpty() == false) {
-            postErrorMessage("Error while processing " + abstractFile.getName(), errors);
+            postErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
+                                        abstractFile.getName()), errors);
         }
         
         return ResultCode.OK;
@@ -301,8 +316,11 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
                         EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getVersion(), "");
                 files.add(df);
             } catch (TskCoreException ex) {
-                postErrorMessage("Error processing " + abstractFile.getName(), 
-                        "Failed to add attachment named " + filename + " to the case.");
+                postErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.handleAttch.errMsg",
+                                            abstractFile.getName()),
+                        NbBundle.getMessage(this.getClass(),
+                                            "ThunderbirdMboxFileIngestModule.handleAttch.errMsg.details", filename));
                 logger.log(Level.INFO, "", ex);
             }
         }
@@ -353,7 +371,8 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         if (rtf.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID(), EmailParserModuleFactory.getModuleName(), rtf));
         }
-        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), EmailParserModuleFactory.getModuleName(), ((id < 0L) ? "Not available" : String.valueOf(id))));
+        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), EmailParserModuleFactory.getModuleName(), ((id < 0L) ? NbBundle
+                .getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.notAvail") : String.valueOf(id))));
         if (subject.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), EmailParserModuleFactory.getModuleName(), subject));
         }

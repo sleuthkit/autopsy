@@ -26,6 +26,8 @@ import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -56,7 +58,11 @@ class RecentItems implements ActionListener {
         // check if the file exists
         if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){
             // throw an error here
-            JOptionPane.showMessageDialog(caller, "Error: Case " + caseName + " doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(caller,
+                                          NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text",
+                                                              caseName),
+                                          NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.err"),
+                                          JOptionPane.ERROR_MESSAGE);
             RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
             
             //if case is not opened, open the start window

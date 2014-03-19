@@ -101,7 +101,6 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
             return IngestModule.ResultCode.OK;
         }
 
-
         /* Do a non-sensical calculation of the number of 0x00 bytes
          * in the first 1024-bytes of the file.  This is for demo
          * purposes only.

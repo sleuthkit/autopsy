@@ -24,6 +24,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.openide.util.NbBundle;
+
 
 /**
  * An factory that creates file ingest modules that do hash database lookups.
@@ -37,12 +39,13 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return "Exif Image Parser";
+        return NbBundle.getMessage(ExifParserFileIngestModule.class, // RJCTODO: Change bundles?
+                "ExifParserFileIngestModule.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
-        return "Ingests JPEG files and retrieves their EXIF metadata.";
+        return NbBundle.getMessage(ExifParserFileIngestModule.class, "ExifParserFileIngestModule.getDesc.text");
     }
 
     @Override

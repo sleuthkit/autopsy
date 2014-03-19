@@ -16,10 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import org.openide.util.NbBundle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,33 +27,35 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
 /**
- * Do the context menu action for adding a new filename extension to 
- * the mismatch list for the MIME type of the selected node.
+ * Do the context menu action for adding a new filename extension to the
+ * mismatch list for the MIME type of the selected node.
  */
-class AddFileExtensionAction extends AbstractAction { 
+class AddFileExtensionAction extends AbstractAction {
+
     private String extStr;
     private String mimeTypeStr;
-    
-    public AddFileExtensionAction(String menuItemStr, String extStr, String mimeTypeStr) {        
+
+    public AddFileExtensionAction(String menuItemStr, String extStr, String mimeTypeStr) {
         super(menuItemStr);
         this.mimeTypeStr = mimeTypeStr;
         this.extStr = extStr;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent event) {
-//        HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
-//        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));        
-//        editedExtensions.add(extStr);
-//        
-//        // Old array will be replaced by new array for this key
-//        editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0])); 
-//        
-//        if (!FileExtMismatchXML.getDefault().save(editableMap)) {            
-//            //error
-//            JOptionPane.showMessageDialog(null, "Writing XML configuration file failed.", "Add Mismatch Extension Error", JOptionPane.ERROR_MESSAGE);
-//        } // else //in the future we might want to update the statusbar to give feedback to the user
-//        
-    }      
-    
+        HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
+        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
+        editedExtensions.add(extStr);
+
+        // Old array will be replaced by new array for this key
+        editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0]));
+
+        if (!FileExtMismatchXML.getDefault().save(editableMap)) {
+            //error
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
+                    JOptionPane.ERROR_MESSAGE);
+        } // else //in the future we might want to update the statusbar to give feedback to the user        
+    }
 }

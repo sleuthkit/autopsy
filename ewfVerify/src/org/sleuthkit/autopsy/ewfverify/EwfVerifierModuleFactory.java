@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ewfverify;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -31,18 +32,20 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
 
+    static String getModuleName() {
+        return NbBundle.getMessage(EwfVerifyIngestModule.class,
+                "EwfVerifyIngestModule.moduleName.text");
+    }
+    
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
 
-    static String getModuleName() {
-        return "EWF Verifier";
-    }
-
     @Override
     public String getModuleDescription() {
-        return "Validates the integrity of E01 files.";
+        return NbBundle.getMessage(EwfVerifyIngestModule.class,
+                "EwfVerifyIngestModule.moduleDesc.text");
     }
 
     @Override

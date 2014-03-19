@@ -36,11 +36,26 @@ class TikaFileTypeDetector implements FileTypeDetectionInterface {
             final int maxBytesInitial = 100; //how many bytes to read on first pass
             byte buffer[] = new byte[maxBytesInitial];
 
+            boolean found = false;
             try {
-                String mimetype = tikaInst.detect(buffer);
-
-                // Remove tika's name out of the general types like msoffice and ooxml
-                ret.type = mimetype.replace("tika-", "");
+                // the xml detection in Tika tries to parse the entire file and throws exceptions
+                // for files that are not complete
+                try {
+                    String tagHeader = new String(buffer, 0, 5);
+                    if (tagHeader.equals("<?xml")) {
+                        ret.type = "text/xml";
+                        found = true;
+                    }
+                }
+                catch (IndexOutOfBoundsException e) {
+                    // do nothing
+                }
+                
+                if (found == false) {
+                    String mimetype = tikaInst.detect(buffer);
+                    // Remove tika's name out of the general types like msoffice and ooxml
+                    ret.type = mimetype.replace("tika-", "");
+                }
             } catch (Exception ex) {
                 //do nothing
             }

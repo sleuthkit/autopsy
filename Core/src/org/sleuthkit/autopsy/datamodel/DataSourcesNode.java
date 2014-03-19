@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
-import org.openide.nodes.AbstractNode;
+
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.Content;
 
@@ -29,7 +30,7 @@ import org.sleuthkit.datamodel.Content;
  */
 public class DataSourcesNode extends DisplayableItemNode {
 
-    public static final String NAME = "Data Sources";
+    public static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
 
     public DataSourcesNode(List<Content> images) {
         super(new RootContentChildren(images), Lookups.singleton(NAME));
@@ -42,7 +43,7 @@ public class DataSourcesNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -57,9 +58,9 @@ public class DataSourcesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "DataSourcesNode.createSheet.name.desc"),
                 NAME));
         return s;
     }

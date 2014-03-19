@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2014 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.beans.PropertyChangeListener;
@@ -25,23 +24,24 @@ import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
-    categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
-iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
-position = 2,
-keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
-keywordsCategory = "KeywordSearchOptions")
+        categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
+        iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
+        position = 2,
+        keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
+        keywordsCategory = "KeywordSearchOptions")
 public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
 
     private KeywordSearchConfigurationPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
-    
+
     @Override
     public void update() {
         getPanel().load();
@@ -99,21 +99,25 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     void changed() {
         if (!changed) {
             changed = true;
-            
+
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg1"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
-            try {
-                pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchOptionsPanelController updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
-            }   
+        try {
+            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+            MessageNotifyUtil.Notify.show(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg2"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 }

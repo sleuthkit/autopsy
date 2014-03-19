@@ -19,6 +19,8 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Component;
 import java.io.File;
 import javax.swing.JFileChooser;
@@ -52,7 +54,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
      */
     @Override
     public String getName() {
-        return "Case Info";
+        return NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.getName.text");
     }
 
     /**
@@ -179,7 +181,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
         //fc.setSelectedFile(new File("C:\\Program Files\\"));
         //disableTextField(fc); // disable all the text field on the file chooser
 
-        int returnValue = fc.showDialog((Component)evt.getSource(), "Select");
+        int returnValue = fc.showDialog((Component)evt.getSource(), NbBundle.getMessage(this.getClass(),
+                                                                                        "NewCaseVisualPanel1.caseDirBrowse.selectButton.text"));
         if(returnValue == JFileChooser.APPROVE_OPTION){
             String path = fc.getSelectedFile().getPath();
             caseParentDirTextField.setText(path); // put the path to the textfield

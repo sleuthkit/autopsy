@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -31,12 +33,24 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
     // root node filters
     public enum RootFilter implements AutopsyVisitableItem,SearchFilterInterface {
-        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", FileTypeExtensions.getImageExtensions()),
-        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos", FileTypeExtensions.getVideoExtensions()),
-        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", FileTypeExtensions.getAudioExtensions()),
-        TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", "Archives", FileTypeExtensions.getArchiveExtensions()),
-        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")),
-        TSK_EXECUTABLE_FILTER(3, "TSK_EXECUTABLE_FILTER", "Executable", Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com"));
+        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER",
+                         NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskImgFilter.text"),
+                         FileTypeExtensions.getImageExtensions()),
+        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER",
+                         NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskVideoFilter.text"),
+                         FileTypeExtensions.getVideoExtensions()),
+        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER",
+                         NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskAudioFilter.text"),
+                         FileTypeExtensions.getAudioExtensions()),
+        TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER",
+                           NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
+                           FileTypeExtensions.getArchiveExtensions()),
+        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER",
+                            NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
+                            Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")),
+        TSK_EXECUTABLE_FILTER(3, "TSK_EXECUTABLE_FILTER",
+                              NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskExecFilter.text"),
+                              Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com"));
 
         private int id;
         private String name;
@@ -78,12 +92,21 @@ import org.sleuthkit.datamodel.SleuthkitCase;
     
     // document sub-node filters
     public enum DocumentFilter implements AutopsyVisitableItem,SearchFilterInterface {
-        AUT_DOC_HTML(0, "AUT_DOC_HTML", "HTML", Arrays.asList(".htm", ".html")),
-        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", "Office", Arrays.asList(".doc", ".docx", 
-                ".odt", ".xls", ".xlsx", ".ppt", ".pptx")),
-        AUT_DOC_PDF(2, "AUT_DOC_PDF", "PDF", Arrays.asList(".pdf")),
-        AUT_DOC_TXT(3, "AUT_DOC_TXT", "Plain Text", Arrays.asList(".txt")),
-        AUT_DOC_RTF(4, "AUT_DOC_RTF", "Rich Text", Arrays.asList(".rtf"));
+        AUT_DOC_HTML(0, "AUT_DOC_HTML",
+                     NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
+                     Arrays.asList(".htm", ".html")),
+        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE",
+                       NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"),
+                       Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")),
+        AUT_DOC_PDF(2, "AUT_DOC_PDF",
+                    NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autoDocPdfFilter.text"),
+                    Arrays.asList(".pdf")),
+        AUT_DOC_TXT(3, "AUT_DOC_TXT",
+                    NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocTxtFilter.text"),
+                    Arrays.asList(".txt")),
+        AUT_DOC_RTF(4, "AUT_DOC_RTF",
+                    NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocRtfFilter.text"),
+                    Arrays.asList(".rtf"));
 
         private int id;
         private String name;

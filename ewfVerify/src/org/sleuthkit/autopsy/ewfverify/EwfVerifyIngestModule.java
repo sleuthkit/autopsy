@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.openide.util.NbBundle;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness 
@@ -42,6 +43,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
  * to the value stored in the image.
  */
 public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
+
     private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getDefault();
@@ -87,18 +89,22 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             img = dataSource.getImage();
         } catch (TskCoreException ex) {
             img = null;
-            String message = "Failed to get image from Content";
-            context.logError(EwfVerifyIngestModule.class, message, ex);
-            context.postIngestMessage(++messageId, MessageType.ERROR, message);
+            logger.log(Level.SEVERE, "Failed to get image from Content.", ex);
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.errProcImg",
+                                                                                 imgName)));
             return ResultCode.ERROR;
         }
         
         // Skip images that are not E01
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
-            logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), 
-                    "Skipping non-ewf image " + imgName));
+            logger.log(Level.INFO, "Skipping non-ewf image " + imgName);
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.skipNonEwf",
+                                                                                 imgName)));
             skipped = true;
             return ResultCode.OK;
         }
@@ -109,20 +115,26 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                 logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash});
          }           
          else {
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(), 
-                    "Image " + imgName + " does not have stored hash."));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.noStoredHash",
+                                                                                 imgName)));
             return ResultCode.ERROR;
         }
 
-        logger.log(Level.INFO, "Starting ewf verification of {0}", img.getName());
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), 
-                "Starting " + imgName));
+        logger.log(Level.INFO, "Starting ewf verification of " + img.getName());
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(),
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "EwfVerifyIngestModule.process.startingImg",
+                                                                             imgName)));
         
         long size = img.getSize();
         if (size == 0) {
-            logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName);
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(), 
-                    "Error getting size of " + imgName + ". Image will not be processed."));
+            logger.log(Level.WARNING, "Size of image " + imgName + " was 0 when queried.");
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "EwfVerifyIngestModule.process.errGetSizeOfImg",
+                                                                                 imgName)));
         }
         
         // Libewf uses a sector size of 64 times the sector size, which is the
@@ -146,7 +158,8 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             try {
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
-                String msg = "Error reading " + imgName + " at chunk " + i;
+                String msg = NbBundle.getMessage(this.getClass(),
+                                                 "EwfVerifyIngestModule.process.errReadImgAtChunk", imgName, i);
                 services.postMessage(IngestMessage.createMessage(++messageId, MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return  ResultCode.ERROR;

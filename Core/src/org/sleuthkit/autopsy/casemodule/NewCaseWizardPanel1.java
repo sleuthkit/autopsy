@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -205,13 +207,15 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         // check if case Name contain one of this following symbol:
         //  \ / : * ? " < > |
         if (!Case.isValidName(caseName)) {
-            String errorMsg = "The Case Name cannot contain any of the following symbols: \\ / : * ? \" < > |";
+            String errorMsg = NbBundle
+                    .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.invalidSymbols");
             validationError(errorMsg);
         } else {
             // check if the directory exist
             if (new File(caseDirPath).exists()) {
                 // throw a warning to enter new data or delete the existing directory
-                String errorMsg = "Case directory '" + caseDirPath + "' already exists.";
+                String errorMsg = NbBundle
+                        .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.dirExists", caseDirPath);
                 validationError(errorMsg);
             } else {
                 // check if the "base" directory path is absolute
@@ -220,8 +224,13 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                     // when the base directory doesn't exist
                     if (!baseDir.exists()) {
                         // get confirmation to create directory
-                        String confMsg = "The base directory \'" + caseParentDir + "\' doesn't exist. \n \n Do you want to create that directory?";
-                        NotifyDescriptor d2 = new NotifyDescriptor.Confirmation(confMsg, "Create directory", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                        String confMsg = NbBundle
+                                .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.confMsg.createDir.msg",
+                                            caseParentDir);
+                        NotifyDescriptor d2 = new NotifyDescriptor.Confirmation(confMsg,
+                                                                                NbBundle.getMessage(this.getClass(),
+                                                                                                    "NewCaseWizardPanel1.validate.confMsg.createDir.title"),
+                                                                                NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
                         d2.setValue(NotifyDescriptor.NO_OPTION);
 
                         Object res2 = DialogDisplayer.getDefault().notify(d2);
@@ -230,27 +239,33 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                             try {
                                 createDirectory(caseDirPath);
                             } catch (Exception ex) {
-                                String errorMsg = "Error: Couldn't create case parent directory " + caseParentDir;
+                                String errorMsg = NbBundle.getMessage(this.getClass(),
+                                                                      "NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg",
+                                                                      caseParentDir);
                                 logger.log(Level.WARNING, errorMsg, ex);
                                 validationError(errorMsg);
                             }
                         }
                         if (res2 != null && res2 == DialogDescriptor.NO_OPTION) {
                             // if user say no
-                            validationError("Prevented from creating base directory " + caseDirPath );
+                            validationError(NbBundle.getMessage(this.getClass(),
+                                                                "NewCaseWizardPanel1.validate.errMsg.prevCreateBaseDir.msg",
+                                                                caseDirPath) );
                         }
                     } else {
                         try {
                             createDirectory(caseDirPath);
                         } catch (Exception ex) {
-                            String errorMsg = "Error: Couldn't create directory.";
+                            String errorMsg = NbBundle
+                                    .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.cantCreateDir");
                             logger.log(Level.WARNING, errorMsg, ex);
                             validationError(errorMsg);
                         }
                     }
                 } else {
                     // throw a notification
-                    String errorMsg = "ERROR: The Base Directory that you entered is not valid.\nPlease enter a valid Base Directory.";
+                    String errorMsg = NbBundle
+                            .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.invalidBaseDir.msg");
                     validationError(errorMsg);
                 }
             }
@@ -282,7 +297,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                 Case.deleteCaseDirectory(new File(caseDirPath));
             }
 
-            String errorMsg = "ERROR: Could not create the case directory. \nPlease enter a valid Case Name and Directory.";
+            String errorMsg = NbBundle.getMessage(this.getClass(),
+                                                  "NewCaseWizardPanel1.createDir.errMsg.cantCreateDir.msg");
             
             validationError(errorMsg);
             

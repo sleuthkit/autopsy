@@ -30,6 +30,8 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
+
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -38,7 +40,8 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameAndCommentDialog extends JDialog {
-    private static final String NO_TAG_NAMES_MESSAGE = "No Tags";
+    private static final String NO_TAG_NAMES_MESSAGE = NbBundle.getMessage(GetTagNameAndCommentDialog.class,
+                                                                           "GetTagNameAndCommentDialog.noTags");
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagNameAndComment tagNameAndComment = null;
 
@@ -66,11 +69,13 @@ public class GetTagNameAndCommentDialog extends JDialog {
     }
     
     private GetTagNameAndCommentDialog() {
-        super((JFrame)WindowManager.getDefault().getMainWindow(), "Create Tag", true);   
+        super((JFrame)WindowManager.getDefault().getMainWindow(),
+              NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
+              true);
         initComponents();
 
         // Set up the dialog to close when Esc is pressed.
-        String cancelName = "cancel";
+        String cancelName = NbBundle.getMessage(this.getClass(), "GetTagNameAndCommentDialog.cancelName");
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
@@ -240,7 +245,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     private javax.swing.JTextField commentText;
     private javax.swing.JButton newTagButton;
     private javax.swing.JButton okButton;
-    private javax.swing.JComboBox tagCombo;
+    private javax.swing.JComboBox<String> tagCombo;
     private javax.swing.JLabel tagLabel;
     // End of variables declaration//GEN-END:variables
 }

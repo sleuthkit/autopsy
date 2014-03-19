@@ -32,6 +32,8 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 // RJCTODO: Rename to RunIngestModulesDialog after internationalization.
@@ -41,7 +43,7 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestDialog extends JDialog {
     
-    private static final String TITLE = "Ingest Modules";
+    private static final String TITLE = NbBundle.getMessage(IngestDialog.class, "IngestDialog.title.text");
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private IngestJobLauncher ingestConfigurator;
     
@@ -78,8 +80,8 @@ public final class IngestDialog extends JDialog {
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
         add(ingestConfigurator.getIngestJobConfigPanel(), BorderLayout.PAGE_START);
-        JButton startButton = new JButton("Start");
-        JButton closeButton = new JButton("Close");
+        JButton startButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.startButton.title"));
+        JButton closeButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.closeButton.title"));
         startButton.addActionListener(new ActionListener() {
 
             @Override

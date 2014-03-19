@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
@@ -48,8 +49,11 @@ public class Installer extends ModuleInstall {
          * If libtsk_jni tries to load them, they will not be found by
          * Windows because they are in special NetBeans folders. So, we
          * manually load them from within Autopsy so that they are found 
-         * via the NetBeans loading setup. 
-         * On other platforms, we assume the dependncies are all installed
+         * via the NetBeans loading setup.  These are copied by the build
+         * script when making the ZIP file.  In a development environment
+         * they will need to be loaded from standard places in your system.
+         * 
+         * On non-Windows platforms, we assume the dependncies are all installed
          * and loadable (i.e. a 'make install' was done). 
          */
         if (PlatformUtil.isWindowsOS()) {
@@ -110,9 +114,8 @@ public class Installer extends ModuleInstall {
             javaFxInit = true;
         } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
             //in case javafx not present
-            final String msg = "Error initializing JavaFX.  ";
-            final String details = " Some features will not be available. "
-                    + " Check that you have the right JRE installed (Oracle JRE > 1.7.10). ";
+            final String msg = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.msg");
+            final String details = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.details");
             logger.log(Level.SEVERE, msg
 		       + details, e);
 

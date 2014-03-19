@@ -22,15 +22,17 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
-import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
 abstract class Extract {
@@ -114,8 +116,8 @@ abstract class Extract {
             tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex);
-            errorMessages.add(getName() + ": Failed to query database.");
-            return Collections.<HashMap<String, Object>>emptyList();
+            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
+            return Collections.<HashMap<String,Object>>emptyList();
         }
         return list;
     }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.fileextmismatch;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -28,14 +29,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
- * An factory that creates file ingest modules that detect mismatches between 
+ * An factory that creates file ingest modules that detect mismatches between
  * the types of files and their extensions.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAdapter {
-
-    public static final String MODULE_NAME = "Extension Mismatch Detector";
-    public static final String MODULE_DESCRIPTION = "Flags files that have a non-standard extension based on their file type.";
 
     @Override
     public String getModuleDisplayName() {
@@ -43,12 +41,14 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     static String getModuleName() {
-        return MODULE_NAME;
+        return NbBundle.getMessage(FileExtMismatchIngestModule.class,
+                "FileExtMismatchIngestModule.moduleName");
     }
 
     @Override
     public String getModuleDescription() {
-        return MODULE_DESCRIPTION;
+        return NbBundle.getMessage(FileExtMismatchIngestModule.class,
+                "FileExtMismatchIngestModule.moduleDesc.text");
     }
 
     @Override

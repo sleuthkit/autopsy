@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.filetypeid;
 
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -99,11 +101,21 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         StringBuilder detailsSb = new StringBuilder();
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+
         detailsSb.append("<tr><td>").append(FileTypeIdentifierModuleFactory.getModuleName()).append("</td></tr>");
-        detailsSb.append("<tr><td>Total Processing Time</td><td>").append(matchTime).append("</td></tr>\n");
-        detailsSb.append("<tr><td>Total Files Processed</td><td>").append(numFiles).append("</td></tr>\n");
+
+        detailsSb.append("<tr><td>")
+                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
+                 .append("</td><td>").append(matchTime).append("</td></tr>\n");
+        detailsSb.append("<tr><td>")
+                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
+                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(), "File Type Id Results", detailsSb.toString()));
+
+        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(),
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "FileTypeIdIngestModule.complete.srvMsg.text"),
+                                                         detailsSb.toString()));
     }
     
    /**

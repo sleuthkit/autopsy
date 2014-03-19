@@ -25,9 +25,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -58,7 +60,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
             
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws Exception {
+    public void startUp(IngestJobContext context) throws Exception {
         super.startUp(context);
         services = IngestServices.getDefault();           
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
@@ -161,11 +163,18 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
         detailsSb.append("<tr><td>" + FileExtMismatchDetectorModuleFactory.getModuleName() + "</td></tr>");
 
-        detailsSb.append("<tr><td>Total Processing Time</td><td>").append(processTime).append("</td></tr>\n");
-        detailsSb.append("<tr><td>Total Files Processed</td><td>").append(numFiles).append("</td></tr>\n");
+        detailsSb.append("<tr><td>").append(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
+                 .append("</td><td>").append(processTime).append("</td></tr>\n");
+        detailsSb.append("<tr><td>").append(
+                NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
+                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
 
-        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(), "File Extension Mismatch Results", detailsSb.toString()));
+        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "FileExtMismatchIngestModule.complete.svcMsg.text"),
+                                                         detailsSb.toString()));
     }
 
     // RJCTODO: Ingest setting

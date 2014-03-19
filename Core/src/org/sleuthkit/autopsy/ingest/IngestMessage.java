@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -100,18 +101,19 @@ public class IngestMessage {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(Long.toString(ID)).append(": ");
-        sb.append("type: ").append(messageType.name());
+        sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.type.text", messageType.name()));
         if (source != null) //can be null for manager messages
         {
-            sb.append(" source: ").append(source);
+            sb.append(source);
         }
-        sb.append(" date: ").append(dateFormat.format(datePosted));
-        sb.append(" subject: ").append(subject);
+        sb.append(
+                NbBundle.getMessage(this.getClass(), "IngestMessage.toString.date.text", dateFormat.format(datePosted)));
+        sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.subject.text", subject));
         if (detailsHtml != null) {
-            sb.append(" details: ").append(detailsHtml);
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.details.text", detailsHtml));
         }
         if (data != null) {
-            sb.append(" data: ").append(data.toString()).append(' ');
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.data.text", data.toString()));
         }
         return sb.toString();
     }
@@ -175,7 +177,8 @@ public class IngestMessage {
      */
     public static IngestMessage createMessage(long ID, MessageType messageType, String source, String subject, String detailsHtml) {
         if (messageType == null || source == null || subject == null) {
-            throw new IllegalArgumentException("message type, source and subject cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.typeSrcSubjNotNull.msg"));
         }
         return new IngestMessage(ID, messageType, source, subject, detailsHtml, null);
     }
@@ -203,7 +206,8 @@ public class IngestMessage {
      */
     public static IngestMessage createErrorMessage(long ID, String source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
-            throw new IllegalArgumentException("source and subject cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjNotNull.msg"));
         }
         return new IngestMessage(ID, MessageType.ERROR, source, subject, detailsHtml, null);
     }
@@ -218,7 +222,8 @@ public class IngestMessage {
      */
     public static IngestMessage createWarningMessage(long ID, String source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
-            throw new IllegalArgumentException("source and subject cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjNotNull.msg"));
         }
         return new IngestMessage(ID, MessageType.WARNING, source, subject, detailsHtml, null);
     }
@@ -235,7 +240,8 @@ public class IngestMessage {
      */
     public static IngestMessage createDataMessage(long ID, String source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
         if (source == null || subject == null || detailsHtml == null || data == null) {
-            throw new IllegalArgumentException("source, subject, details and data cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjDetailsDataNotNull.msg"));
         }
 
         IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml, uniqueKey);

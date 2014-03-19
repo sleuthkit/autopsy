@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Timer;
 import org.openide.util.Exceptions;
@@ -123,7 +125,7 @@ public final class IngestMonitor {
                     String changed = evt.getPropertyName();
                     Object newValue = evt.getNewValue();
 
-                    if (changed.equals(Case.CASE_CURRENT_CASE)) {
+                    if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                         if (newValue != null) {
                             setMonitorDir();
                         }
@@ -164,9 +166,9 @@ public final class IngestMonitor {
                 MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postIngestMessage(IngestMessage.createManagerErrorMessage("Ingest stopped - low disk space on " + diskPath,
-                        "Stopping ingest due to low disk space on disk " + diskPath
-                        + ". \nEnsure the Case drive has at least 1GB free space and restart ingest."));
+                IngestServices.getDefault().postMessage(IngestMessage.createManagerErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
+                        NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
             }
         }
 

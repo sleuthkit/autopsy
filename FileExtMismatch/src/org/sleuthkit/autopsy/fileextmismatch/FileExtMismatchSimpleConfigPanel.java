@@ -66,6 +66,7 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleJobSettingsPanel {
         });
 
         skipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipTextPlain.text")); // NOI18N
+        skipTextPlain.setSelected(true);
         skipTextPlain.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipTextPlainActionPerformed(evt);

@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.actions;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -50,7 +52,11 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
                 
     @Override
     protected String getActionDisplayName() {
-        return Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size() > 1 ? "Tag Results" : "Tag Result";
+        String singularTagResult = NbBundle.getMessage(this.getClass(),
+                                                       "AddBlackboardArtifactTagAction.singularTagResult");
+        String pluralTagResult = NbBundle.getMessage(this.getClass(),
+                                                     "AddBlackboardArtifactTagAction.pluralTagResult");
+        return Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size() > 1 ? pluralTagResult : singularTagResult;
     }
 
     @Override
@@ -62,7 +68,13 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
             }
             catch (TskCoreException ex) {                        
                 Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
-                JOptionPane.showMessageDialog(null, "Unable to tag " + artifact.getDisplayName() + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "AddBlackboardArtifactTagAction.unableToTag.msg",
+                                                                  artifact.getDisplayName()),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "AddBlackboardArtifactTagAction.taggingErr"),
+                                              JOptionPane.ERROR_MESSAGE);
             }                    
         }                                     
     }        

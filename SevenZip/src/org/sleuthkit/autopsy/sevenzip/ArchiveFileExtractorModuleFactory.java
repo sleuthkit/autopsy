@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.sevenzip;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -29,11 +30,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
  * A factory for creating archive extractor file ingest modules and the user
  * interface panels used to configure the settings for instances of the modules.
  */
-@ServiceProvider(service=IngestModuleFactory.class)
+@ServiceProvider(service = IngestModuleFactory.class)
 public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return "Archive Extractor";
+        return NbBundle.getMessage(SevenZipIngestModule.class, "SevenZipIngestModule.moduleName");
     }
 
     @Override
@@ -43,7 +44,8 @@ public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public String getModuleDescription() {
-        return "Extracts archive files (zip, rar, arj, 7z, gzip, bzip2, tar), reschedules them to current ingest and populates directory tree with new files.";
+        return NbBundle.getMessage(SevenZipIngestModule.class,
+                "SevenZipIngestModule.moduleDesc.text");
     }
 
     @Override

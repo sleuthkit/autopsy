@@ -26,6 +26,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -43,6 +45,7 @@ import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 import javax.swing.text.html.StyleSheet;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 
@@ -70,14 +73,17 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             public ViewFactory getViewFactory() {
 
                 return new HTMLFactory() {
+                    @Override
                     public View create(Element e) {
                         View v = super.create(e);
                         if (v instanceof InlineView) {
                             return new InlineView(e) {
+                                @Override
                                 public int getBreakWeight(int axis, float pos, float len) {
                                     return GoodBreakWeight;
                                 }
 
+                                @Override
                                 public View breakView(int axis, int p0, float pos, float len) {
                                     if (axis == View.X_AXIS) {
                                         checkPainter();
@@ -92,6 +98,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                             };
                         } else if (v instanceof ParagraphView) {
                             return new ParagraphView(e) {
+                                @Override
                                 protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
                                     if (r == null) {
                                         r = new SizeRequirements();
@@ -166,7 +173,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             public boolean getScrollableTracksViewportWidth() {
                 return (getSize().width < 400);
             }};
-            sourceComboBox = new javax.swing.JComboBox();
+            sourceComboBox = new javax.swing.JComboBox<>();
             hitLabel = new javax.swing.JLabel();
             hitCountLabel = new javax.swing.JLabel();
             hitOfLabel = new javax.swing.JLabel();
@@ -199,7 +206,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             extractedTextPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(extractedTextPane);
 
-            sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+            sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<MarkupSource>());
 
             hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
             hitLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.toolTipText")); // NOI18N
@@ -303,7 +310,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     .addComponent(pagePreviousButton)
                     .addGap(0, 0, 0)
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             );
@@ -329,7 +336,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                         .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(pagePreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGap(0, 0, 0)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE))
             );
         }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -352,7 +359,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JComboBox sourceComboBox;
+    private javax.swing.JComboBox<MarkupSource> sourceComboBox;
     // End of variables declaration//GEN-END:variables
 
     void refreshCurrentMarkup() {
@@ -371,7 +378,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         setPanelText(null, false);
 
         for (MarkupSource ms : sources) {
-            sourceComboBox.<String>addItem(ms);
+            sourceComboBox.addItem(ms);
         }
 
         if (!sources.isEmpty()) {
@@ -386,9 +393,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @return currently available sources on the panel
      */
     public List<MarkupSource> getSources() {
-        ArrayList<MarkupSource> sources = new ArrayList<MarkupSource>();
+        ArrayList<MarkupSource> sources = new ArrayList<>();
         for (int i = 0; i < sourceComboBox.getItemCount(); ++i) {
-            sources.add((MarkupSource) sourceComboBox.getItemAt(i));
+            sources.add(sourceComboBox.getItemAt(i));
         }
         return sources;
     }
@@ -682,8 +689,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle("Loading text");
-            progress.setDisplayName("Loading text");
+            progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
+            progress.setDisplayName(
+                    NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));
             progress.start();
             progress.switchToIndeterminate();
 
@@ -695,6 +704,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         protected void done() {
             //super.done();
             progress.finish();
+            
+            // see if there are any errors
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error getting marked up text" );
+            }
+            
+            
             if (markup != null) {
                 setPanelText(markup, true);
             } else {
@@ -703,8 +721,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             updateControls(source);
 
             scrollToCurrentHit(source);
-
-
         }
     }
 }
