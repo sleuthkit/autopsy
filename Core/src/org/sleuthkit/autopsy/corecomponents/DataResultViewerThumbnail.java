@@ -447,6 +447,8 @@ import org.sleuthkit.datamodel.TskCoreException;
                             NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                     logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage());
+                } // catch and ignore if we were cancelled
+                catch (java.util.concurrent.CancellationException ex) {
                 }
             }
         }.execute();

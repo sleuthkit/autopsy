@@ -679,6 +679,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.infoLabel.updateErr",
                                                       ex.getMessage()));
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
     } //end class progress worker
 
