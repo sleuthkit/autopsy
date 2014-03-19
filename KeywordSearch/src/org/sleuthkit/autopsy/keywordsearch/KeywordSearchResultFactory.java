@@ -609,6 +609,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error querying ", ex);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
 
         private static synchronized void registerWriter(ResultWriter writer) {

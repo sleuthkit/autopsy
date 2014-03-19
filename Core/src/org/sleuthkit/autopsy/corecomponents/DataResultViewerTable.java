@@ -391,10 +391,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // Populate a two-dimensional array with rows of property values for up 
     // to maxRows children of the node passed in. 
     private static Object[][] getRowValues(Node node, int maxRows) {
-        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];
+        int numRows = Math.min(maxRows, node.getChildren().getNodesCount());
+        Object[][] rowValues = new Object[numRows][];
         int rowCount = 0;
         for (Node child : node.getChildren().getNodes()) {
             if (rowCount >= maxRows) {
+                break;
+            }
+            // BC: I got this once, I think it was because the table
+            // refreshed while we were in this method 
+            // could be better synchronized.  Or it was from 
+            // the lazy nodes updating...  Didn't have time 
+            // to fully debug it. 
+            if (rowCount > numRows) {
                 break;
             }
             PropertySet[] propertySets = child.getPropertySets();
