@@ -57,7 +57,7 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
     private static final Logger logger = Logger.getLogger(SampleDataSourceIngestModule.class);
 
     @Override
-    public ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
         Case case1 = Case.getCurrentCase();
         SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
@@ -76,9 +76,9 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
 
         } catch (TskCoreException ex) {
             logger.fatal("Error retrieving files from database:  " + ex.getLocalizedMessage());
-            return IngestModule.ResultCode.OK;
+            return IngestModule.ProcessResult.OK;
         }
         
-        return IngestModule.ResultCode.OK;
+        return IngestModule.ProcessResult.OK;
     }
 }

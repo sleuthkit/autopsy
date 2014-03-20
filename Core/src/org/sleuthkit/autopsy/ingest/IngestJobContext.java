@@ -18,109 +18,28 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.File;
-import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Acts as a facade for the parts of the ingest framework that make up the
- * processing context of an ingest module.
+ * Provides an instance of an ingest module with services specific to the ingest
+ * job and the ingest pipeline of which the module is a part.
  */
 public final class IngestJobContext {
 
     private final IngestJob ingestJob;
-    private final IngestModuleFactory moduleFactory;
-    private final IngestManager ingestManager;
-    private final IngestScheduler scheduler;
-    private final Case autopsyCase;
-    private final SleuthkitCase sleuthkitCase;
 
     IngestJobContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
         this.ingestJob = ingestJob;
-        this.moduleFactory = moduleFactory;
-        ingestManager = IngestManager.getDefault();
-        scheduler = IngestScheduler.getInstance();
-        autopsyCase = Case.getCurrentCase();
-        sleuthkitCase = this.autopsyCase.getSleuthkitCase();
     }
 
     public boolean isIngestJobCancelled() {
         return this.ingestJob.isCancelled();
     }
-    
-    public Case getCase() {
-        return autopsyCase;
-    }
 
-    public SleuthkitCase getSleuthkitCase() {
-        return sleuthkitCase;
-    }
-
-    public String getOutputDirectoryAbsolutePath() {
-        return autopsyCase.getCaseDirectory() + File.separator + Case.getModulesOutputDirRelPath() + File.separator + moduleFactory.getModuleDisplayName();
-    }
-
-    public String getOutputDirectoryRelativePath() {
-        return "ModuleOutput" + File.separator + moduleFactory.getModuleDisplayName();
-    }
-
-    public void submitFilesForIngest(List<AbstractFile> files) {
+    public void addFilesToPipeline(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            ingestManager.scheduleFileTask(ingestJob.getId(), file);
+            IngestManager.getDefault().scheduleFile(ingestJob.getId(), file); // RJCTODO: Should this API be just AbstractFile?
         }
     }
-    
-  public void postIngestMessage(long ID, IngestMessage.MessageType messageType, String subject, String detailsHtml) {
-        IngestMessage message = IngestMessage.createMessage(ID, messageType, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
-        ingestManager.postIngestMessage(message);
-    }
-
-    public void postIngestMessage(long ID, IngestMessage.MessageType messageType, String subject) {
-        IngestMessage message = IngestMessage.createMessage(ID, messageType, moduleFactory.getModuleDisplayName(), subject);
-        ingestManager.postIngestMessage(message);
-    }
-
-    public void postErrorIngestMessage(long ID, String subject, String detailsHtml) {
-        IngestMessage message = IngestMessage.createErrorMessage(ID, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
-        ingestManager.postIngestMessage(message);
-    }
-
-    public void postWarningIngestMessage(long ID, String subject, String detailsHtml) {
-        IngestMessage message = IngestMessage.createWarningMessage(ID, moduleFactory.getModuleDisplayName(), subject, detailsHtml);
-        ingestManager.postIngestMessage(message);
-    }
-
-    public void postDataMessage(long ID, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
-        IngestMessage message = IngestMessage.createDataMessage(ID, moduleFactory.getModuleDisplayName(), subject, detailsHtml, uniqueKey, data);
-        ingestManager.postIngestMessage(message);
-    }
-
-    public void fireDataEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
-        ModuleDataEvent event = new ModuleDataEvent(moduleFactory.getModuleDisplayName(), artifactType);
-        IngestManager.fireModuleDataEvent(event);
-    }
-
-    public void fireDataEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
-        ModuleDataEvent event = new ModuleDataEvent(moduleFactory.getModuleDisplayName(), artifactType, artifactIDs);
-        IngestManager.fireModuleDataEvent(event);
-    }
-
-    // RJCTODO: Make story to convert existing core modules to use logging methods, address sloppy use of level...
-    public void logInfo(Class moduleClass, String message, Throwable ex) {
-        Logger.getLogger(moduleClass.getName()).log(Level.INFO, message, ex);
-    }
-    
-    public void logWarning(Class moduleClass, String message, Throwable ex) {
-        Logger.getLogger(moduleClass.getName()).log(Level.WARNING, message, ex);
-    }
-
-    public void logError(Class moduleClass, String message, Throwable ex) {
-        Logger.getLogger(moduleClass.getName()).log(Level.SEVERE, message, ex);
-    }    
 }

@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 // Note: This is a first step towards a keyword lists manager; it consists of
 // the portion of the keyword list management code that resided in the keyword 
 // search file ingest module.
+// RJCTODO: How to keyword lists get initialized
 final class KeywordListsManager {
 
     private static KeywordListsManager instance = null;
@@ -47,6 +48,7 @@ final class KeywordListsManager {
     }
 
     private KeywordListsManager() {
+        addKeywordListsForFileIngest(null);
     }
 
     /**
@@ -56,7 +58,7 @@ final class KeywordListsManager {
      *
      * @param listNames The names of disabled lists to temporarily enable
      */
-    void addKeywordListsForFileIngest(List<String> listNames) {
+    synchronized void addKeywordListsForFileIngest(List<String> listNames) {
         keywords.clear();
         keywordListNames.clear();
 
@@ -64,7 +66,7 @@ final class KeywordListsManager {
         KeywordSearchListsXML globalKeywordSearchOptions = KeywordSearchListsXML.getCurrent();
         for (KeywordList list : globalKeywordSearchOptions.getListsL()) {
             String listName = list.getName();
-            if ((list.getUseForIngest() == true) || (null != listNames && listNames.contains(listName))) {
+            if ((list.getUseForIngest() == true) || (listNames != null && listNames.contains(listName))) {
                 keywordListNames.add(listName);
                 logMessage.append(listName).append(" ");
             }
@@ -84,7 +86,7 @@ final class KeywordListsManager {
      *
      * @return The names of the enabled keyword lists
      */
-    List<String> getNamesOfKeywordListsForFileIngest() {
+    synchronized List<String> getNamesOfKeywordListsForFileIngest() {
         return new ArrayList<>(keywordListNames);
     }
 
@@ -94,7 +96,7 @@ final class KeywordListsManager {
      *
      * @return True if there are no keywords specified, false otherwise
      */
-    boolean hasNoKeywordsForSearch() {
+    synchronized boolean hasNoKeywordsForSearch() {
         return (keywords.isEmpty());
     }
 }

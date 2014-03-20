@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
+import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 
 /**
@@ -45,7 +45,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     private static final long MIN_FILE_SIZE = 512;
     private final FileTypeIdentifierIngestJobOptions ingestJobOptions;
     private long matchTime = 0;
-    private int messageId = 0;
+    private int messageId = 0; // RJCTODO: If this is not made a thread safe static, duplicate message ids will be used 
     private long numFiles = 0;
     // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
     // If desired in the future to be more knowledgable about weird files or rare formats, we could 
@@ -57,20 +57,20 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     }
 
     @Override
-    public ResultCode process(AbstractFile abstractFile) {
+    public ProcessResult process(AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
 
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         if (ingestJobOptions.shouldSkipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         if (abstractFile.getSize() < MIN_FILE_SIZE) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         try {
@@ -87,13 +87,13 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
 
                 // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
             }
-            return ResultCode.OK;
+            return ProcessResult.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex);
-            return ResultCode.ERROR;
+            return ProcessResult.ERROR;
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error matching file signature", e);
-            return ResultCode.ERROR;
+            return ProcessResult.ERROR;
         }
     }
 
@@ -105,26 +105,27 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
         detailsSb.append("<tr><td>").append(FileTypeIdentifierModuleFactory.getModuleName()).append("</td></tr>");
 
         detailsSb.append("<tr><td>")
-                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
-                 .append("</td><td>").append(matchTime).append("</td></tr>\n");
+                .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
+                .append("</td><td>").append(matchTime).append("</td></tr>\n");
         detailsSb.append("<tr><td>")
-                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
-                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
+                .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
+                .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
 
         IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "FileTypeIdIngestModule.complete.srvMsg.text"),
-                                                         detailsSb.toString()));
+                NbBundle.getMessage(this.getClass(),
+                "FileTypeIdIngestModule.complete.srvMsg.text"),
+                detailsSb.toString()));
     }
-    
-   /**
+
+    /**
      * Validate if a given mime type is in the detector's registry.
+     *
      * @param mimeType Full string of mime type, e.g. "text/html"
      * @return true if detectable
      */
     public static boolean isMimeTypeDetectable(String mimeType) {
-        FileTypeDetectionInterface detector = new TikaFileTypeDetector();         
+        FileTypeDetectionInterface detector = new TikaFileTypeDetector();
         return detector.isMimeTypeDetectable(mimeType);
-    }        
+    }
 }

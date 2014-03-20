@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.fileextmismatch;
 
 import java.awt.Color;
@@ -34,11 +33,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filetypeid.FileTypeIdIngestModule;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 /**
- * Container panel for File Extension Mismatch Ingest Module advanced configuration options
+ * Container panel for File Extension Mismatch Ingest Module advanced
+ * configuration options
  */
-final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel {
+final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
+
     private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
@@ -46,33 +48,32 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
     private MimeTableModel mimeTableModel;
     private ExtTableModel extTableModel;
     private final String EXT_HEADER_LABEL = NbBundle.getMessage(FileExtMismatchConfigPanel.class,
-                                                                "AddFileExtensionAction.extHeaderLbl.text");
+            "AddFileExtensionAction.extHeaderLbl.text");
     private String selectedMime = "";
     private String selectedExt = "";
     ListSelectionModel lsm = null;
-    
+
     public FileExtMismatchConfigPanel() {
         mimeTableModel = new MimeTableModel();
         extTableModel = new ExtTableModel();
-        
+
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
         setName(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.name.text"));
-               
+
         // Handle selections on the left table
         lsm = mimeTable.getSelectionModel();
-        lsm.addListSelectionListener(new ListSelectionListener() {        
-
+        lsm.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
                     listSelectionModel.setSelectionInterval(index, index);
-                    
+
                     selectedMime = mimeList.get(index);
                     String labelStr = EXT_HEADER_LABEL + selectedMime + ":";
                     if (labelStr.length() > 80) {
@@ -80,7 +81,7 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
                     }
                     extHeaderLabel.setText(labelStr);
                     updateExtList();
-             
+
                     extTableModel.resync();
                     //initButtons();
                 } else {
@@ -88,32 +89,31 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
                     currentExtensions = null;
                     extTableModel.resync();
                 }
-                
+
                 clearErrLabels();
-            }        
+            }
         });
-        
+
         // Handle selections on the right table
         ListSelectionModel extLsm = extTable.getSelectionModel();
-        extLsm.addListSelectionListener(new ListSelectionListener() {        
-
+        extLsm.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
                     listSelectionModel.setSelectionInterval(index, index);
-                    
+
                     selectedExt = currentExtensions.get(index);
                 } else {
                     selectedExt = "";
                 }
-                
+
                 extRemoveErrLabel.setText(" ");
-                
-            }        
-        });        
-        
+
+            }
+        });
+
     }
 
     private void clearErrLabels() {
@@ -121,9 +121,9 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         mimeRemoveErrLabel.setText(" ");
         extRemoveErrLabel.setText(" ");
         extErrorLabel.setText(" ");
-        saveMsgLabel.setText(" ");    
-    }            
-    
+        saveMsgLabel.setText(" ");
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -348,41 +348,41 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
     private void addExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addExtButtonActionPerformed
         String newExt = userExtTextField.getText();
         if (newExt.isEmpty()) {
-            extErrorLabel.setForeground(Color.red);            
+            extErrorLabel.setForeground(Color.red);
             extErrorLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.empty"));
             return;
         }
-        
+
         if (selectedMime.isEmpty()) {
-            extErrorLabel.setForeground(Color.red);  
+            extErrorLabel.setForeground(Color.red);
             extErrorLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.noMimeType"));
             return;
         }
-        
+
         if (currentExtensions.contains(newExt)) {
             extErrorLabel.setForeground(Color.red);
             extErrorLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.extExists"));
-            return;            
-        }                
-        
-        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));        
+            return;
+        }
+
+        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));
         editedExtensions.add(newExt);
-        
+
         // Old array will be replaced by new array for this key
-        editableMap.put(selectedMime, editedExtensions.toArray(new String[0])); 
+        editableMap.put(selectedMime, editedExtensions.toArray(new String[0]));
 
         // Refresh table
-        updateExtList();       
+        updateExtList();
         extTableModel.resync();
-        
+
         // user feedback for successful add
         extErrorLabel.setForeground(Color.blue);
         extErrorLabel.setText(
                 NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.extAdded",
-                                    newExt));
+                newExt));
         extRemoveErrLabel.setText(" ");
         userExtTextField.setText("");
         setIsModified();
@@ -399,26 +399,26 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.empty"));
             return;
         }
-        if (newMime.equals( "application/octet-stream")){
+        if (newMime.equals("application/octet-stream")) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
-                                                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotSupported"));
-            return;   
+                    "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotSupported"));
+            return;
         }
         if (mimeList.contains(newMime)) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.mimeTypeExists"));
-            return;            
+            return;
         }
 
         if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
-                                                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));
-            return;                        
+                    "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));
+            return;
         }
-        
+
         editableMap.put(newMime, new String[0]);
 
         // Refresh table
@@ -449,15 +449,15 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             mimeRemoveErrLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeTypeButton.noneSelected"));
             return;
-        }        
-        
-        editableMap.remove(selectedMime);    
+        }
+
+        editableMap.remove(selectedMime);
         String deadMime = selectedMime;
-        
+
         // Refresh table
         updateMimeList();
-        mimeTableModel.resync();                
-                
+        mimeTableModel.resync();
+
         // user feedback for successful add
         mimeRemoveErrLabel.setForeground(Color.blue);
         mimeRemoveErrLabel.setText(
@@ -471,26 +471,26 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             extRemoveErrLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeExtButton.noneSelected"));
             return;
-        }        
-             
+        }
+
         if (selectedMime.isEmpty()) {
-            extErrorLabel.setForeground(Color.red);  
+            extErrorLabel.setForeground(Color.red);
             extErrorLabel.setText(NbBundle.getMessage(this.getClass(),
-                                                      "FileExtMismatchConfigPanel.removeExtButton.noMimeTypeSelected"));
+                    "FileExtMismatchConfigPanel.removeExtButton.noMimeTypeSelected"));
             return;
-        }        
-        
-        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));        
+        }
+
+        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));
         editedExtensions.remove(selectedExt);
         String deadExt = selectedExt;
-        
+
         // Old array will be replaced by new array for this key
-        editableMap.put(selectedMime, editedExtensions.toArray(new String[0]));         
-        
+        editableMap.put(selectedMime, editedExtensions.toArray(new String[0]));
+
         // Refresh tables        
         updateExtList();
-        extTableModel.resync();             
-        
+        extTableModel.resync();
+
         // user feedback for successful add
         extRemoveErrLabel.setForeground(Color.blue);
         extRemoveErrLabel.setText(
@@ -504,7 +504,7 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             Collections.sort(mimeList);
         }
     }
-    
+
     private void updateExtList() {
         String[] temp = editableMap.get(selectedMime);
         if (temp != null) {
@@ -516,68 +516,72 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             currentExtensions = null;
         }
     }
-    
+
+    @Override
+    public void saveSettings() {
+        if (FileExtMismatchXML.getDefault().save(editableMap)) {
+            mimeErrLabel.setText(" ");
+            mimeRemoveErrLabel.setText(" ");
+            extRemoveErrLabel.setText(" ");
+            extErrorLabel.setText(" ");
+
+            saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
+            saveButton.setEnabled(false);
+        } else {
+            //error
+            JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchConfigPanel.store.msgDlg.msg"),
+                    NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     @Override
     public void load() {
         // Load the XML into a buffer that the user can modify. They can choose
         // to save it back to the file after making changes.
         editableMap = FileExtMismatchXML.getDefault().load();
         updateMimeList();
-        updateExtList();
+        updateExtList();        
     }
 
     @Override
     public void store() {
-        if (FileExtMismatchXML.getDefault().save(editableMap)) {            
-            mimeErrLabel.setText(" ");
-            mimeRemoveErrLabel.setText(" ");
-            extRemoveErrLabel.setText(" ");
-            extErrorLabel.setText(" ");
-            
-            saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
-            saveButton.setEnabled(false);
-        } else {
-            //error
-            JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "FileExtMismatchConfigPanel.store.msgDlg.msg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "FileExtMismatchConfigPanel.save.msgDlg.title"),
-                                          JOptionPane.ERROR_MESSAGE);
-        }
+        saveSettings();
     }
 
     private void setIsModified() {
         saveButton.setEnabled(true);
         saveMsgLabel.setText(" ");
     }
-    
+
     public void cancel() {
         clearErrLabels();
         load(); // The next time this panel is opened, we want it to be fresh
     }
-    
+
     public void ok() {
         // if data is unsaved
         if (saveButton.isEnabled()) {
-           int choice = JOptionPane.showConfirmDialog(this,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "FileExtMismatchConfigPanel.ok.confDlg.msg"),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "FileExtMismatchConfigPanel.confDlg.title"),
-                                                      JOptionPane.YES_NO_OPTION);
-           if (choice == JOptionPane.YES_OPTION) {
-               store();
-           }
+            int choice = JOptionPane.showConfirmDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchConfigPanel.ok.confDlg.msg"),
+                    NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchConfigPanel.confDlg.title"),
+                    JOptionPane.YES_NO_OPTION);
+            if (choice == JOptionPane.YES_OPTION) {
+                store();
+            }
         }
-        clearErrLabels();   
+        clearErrLabels();
         load(); // The next time this panel is opened, we want it to be fresh
     }
-    
+
     boolean valid() {
         return true;
     }
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addExtButton;
     private javax.swing.JButton addTypeButton;
@@ -665,7 +669,7 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
             fireTableDataChanged();
         }
     }
-    
+
     private class ExtTableModel extends AbstractTableModel {
 
         @Override
@@ -696,7 +700,7 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
-            
+
             if ((currentExtensions == null) || (currentExtensions.size() == 0) || (rowIndex > currentExtensions.size())) {
                 return "";
             }
@@ -729,6 +733,5 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         void resync() {
             fireTableDataChanged();
         }
-    }    
-
+    }
 }

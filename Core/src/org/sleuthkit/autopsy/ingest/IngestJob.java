@@ -92,7 +92,7 @@ final class IngestJob {
             dataSourceIngestPipelines.put(threadId, pipeline);
         } else if (!dataSourceIngestPipelines.containsKey(threadId)) {
             pipeline = new DataSourceIngestPipeline(this, ingestModuleTemplates);
-            pipeline.startUp(); // RJCTODO: Get errors and log
+            pipeline.startUp();
             dataSourceIngestPipelines.put(threadId, pipeline);
         } else {
             pipeline = dataSourceIngestPipelines.get(threadId);
@@ -138,7 +138,6 @@ final class IngestJob {
         return (dataSourceIngestPipelines.isEmpty() && fileIngestPipelines.isEmpty());
     }
 
-    // RJCTODO: Write story in JIRA for removing code dunplication
     /**
      * A data source ingest pipeline composed of a sequence of data source ingest
      * modules constructed from ingest module templates.
@@ -250,12 +249,12 @@ final class IngestJob {
             }
 
             @Override
-            public void startUp(IngestJobContext context) throws Exception {
+            public void startUp(IngestJobContext context) throws IngestModuleException {
                module.startUp(context);
             }
 
             @Override
-            public IngestModule.ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+            public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
                 return module.process(dataSource, statusHelper);
             }
 
@@ -376,12 +375,12 @@ final class IngestJob {
             }
 
             @Override
-            public void startUp(IngestJobContext context) throws Exception {
+            public void startUp(IngestJobContext context) throws IngestModuleException {
                module.startUp(context);
             }
 
             @Override
-            public IngestModule.ResultCode process(AbstractFile file) {
+            public IngestModule.ProcessResult process(AbstractFile file) {
                 return module.process(file);
             }
 

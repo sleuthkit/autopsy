@@ -60,7 +60,7 @@ public class IngestManager {
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
     public final static String MODULE_PROPERTIES = NbBundle.getMessage(IngestManager.class,
-                                                                       "IngestManager.moduleProperties.text");
+            "IngestManager.moduleProperties.text");
     private volatile IngestUI ingestMessageBox;
 
     // RJCTODO: Redo eventing for 3.1
@@ -137,7 +137,7 @@ public class IngestManager {
             this.ingestMessageBox = IngestMessageTopComponent.findInstance();
         }
     }
-    
+
     synchronized private long getNextDataSourceTaskId() {
         return ++this.nextDataSourceTaskId;
     }
@@ -145,7 +145,7 @@ public class IngestManager {
     synchronized private long getNextThreadId() {
         return ++this.nextThreadId;
     }
-    
+
     /**
      * Add property change listener to listen to ingest events as defined in
      * IngestModuleEvent.
@@ -166,8 +166,8 @@ public class IngestManager {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -182,8 +182,8 @@ public class IngestManager {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -199,8 +199,8 @@ public class IngestManager {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -216,8 +216,8 @@ public class IngestManager {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -273,7 +273,7 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFileTask(long ingestJobId, AbstractFile file) { // RJCTODO: Consider renaming method
+    void scheduleFile(long ingestJobId, AbstractFile file) {
         IngestJob job = this.ingestJobs.get(ingestJobId);
         if (job == null) {
             // RJCTODO: Handle severe error
@@ -317,7 +317,7 @@ public class IngestManager {
         for (IngestJob job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
             if (job.areIngestPipelinesShutDown()) {
-                ingestJobs.remove(job.getId());                
+                ingestJobs.remove(job.getId());
             }
         }
     }
@@ -351,7 +351,7 @@ public class IngestManager {
         // Jettision the remaining tasks. This will dispose of any tasks that
         // the scheduling worker queued up before it was cancelled.
         scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();                        
+        scheduler.getDataSourceScheduler().empty();
     }
 
     /**
@@ -431,7 +431,7 @@ public class IngestManager {
                     logger.log(Level.INFO, "Task scheduling thread cancelled");
                     return null;
                 }
-                
+
                 final String inputName = dataSource.getName();
                 IngestJob ingestJob = new IngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
 
@@ -497,20 +497,19 @@ public class IngestManager {
 
         @Override
         protected Void doInBackground() throws Exception {
-            logger.log(Level.INFO, String.format("Data source ingest thread {0} started", this.id));
+            logger.log(Level.INFO, "Data source ingest thread (id={0}) started", this.id);
 
             // Set up a progress bar that can be used to cancel all of the 
             // ingest jobs currently being performed. 
-            final String displayName = NbBundle
-                    .getMessage(this.getClass(), "IngestManager.IngestAbstractFileProcessor.displayName");
+            final String displayName = NbBundle.getMessage(this.getClass(), "IngestManager.DataSourceTaskWorker.displayName");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Data source ingest thread {0} cancelled", DataSourceTaskWorker.this.id);
                     if (progress != null) {
                         progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                                                    "IngestManager.IngestAbstractFileProcessor.process.cancelling",
-                                                                    displayName));
+                                "IngestManager.DataSourceTaskWorker.process.cancelling",
+                                displayName));
                     }
                     IngestManager.getDefault().stopAll();
                     return true;
@@ -522,7 +521,7 @@ public class IngestManager {
             IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
             while (scheduler.hasNext()) {
                 if (isCancelled()) {
-                    logger.log(Level.INFO, "Data source ingest thread {0} cancelled", this.id);
+                    logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
 
@@ -531,7 +530,7 @@ public class IngestManager {
                 pipeline.process(this, this.progress);
             }
 
-            logger.log(Level.INFO, "Data source ingest thread {0} completed", this.id);
+            logger.log(Level.INFO, "Data source ingest thread (id={0}) completed", this.id);
             IngestManager.getDefault().reportThreadDone(this.id);
             return null;
         }
@@ -541,10 +540,10 @@ public class IngestManager {
             try {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
-                logger.log(Level.INFO, "Data source ingest thread {0} cancelled", this.id);
+                logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
                 IngestManager.getDefault().reportThreadDone(this.id);
             } catch (Exception ex) {
-                String message = String.format("Data source ingest thread {0} experienced a fatal error", this.id);
+                String message = String.format("Data source ingest thread (id=%d) experienced a fatal error", this.id);
                 logger.log(Level.SEVERE, message, ex);
                 IngestManager.getDefault().reportThreadDone(this.id);
             } finally {
@@ -568,7 +567,7 @@ public class IngestManager {
 
         @Override
         protected Object doInBackground() throws Exception {
-            logger.log(Level.INFO, String.format("File ingest thread {0} started", this.id));
+            logger.log(Level.INFO, "File ingest thread (id={0}) started", this.id);
 
             // Set up a progress bar that can be used to cancel all of the 
             // ingest jobs currently being performed. 
@@ -577,11 +576,11 @@ public class IngestManager {
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    logger.log(Level.INFO, "File ingest thread {0} cancelled", FileTaskWorker.this.id);
+                    logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", FileTaskWorker.this.id);
                     if (progress != null) {
                         progress.setDisplayName(
-                                NbBundle.getMessage(this.getClass(), "IngestManager.EnqueueWorker.process.cancelling",
-                                                    displayName));
+                                NbBundle.getMessage(this.getClass(), "IngestManager.FileTaskWorker.process.cancelling",
+                                displayName));
                     }
                     IngestManager.getDefault().stopAll();
                     return true;
@@ -597,7 +596,7 @@ public class IngestManager {
             while (fileScheduler.hasNext()) {
                 if (isCancelled()) {
                     IngestManager.getDefault().reportThreadDone(this.id);
-                    logger.log(Level.INFO, "File ingest thread {0} cancelled", this.id);
+                    logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
 
@@ -619,7 +618,7 @@ public class IngestManager {
                 }
             }
 
-            logger.log(Level.INFO, "File ingest thread {0} completed", this.id);
+            logger.log(Level.INFO, "File ingest thread (id={0}) completed", this.id);
             IngestManager.getDefault().reportThreadDone(this.id);
             return null;
         }
@@ -630,7 +629,7 @@ public class IngestManager {
             try {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
-                logger.log(Level.INFO, "File ingest thread {0} cancelled", this.id);
+                logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
                 IngestManager.getDefault().reportThreadDone(this.id);
             } catch (Exception ex) {
                 String message = String.format("File ingest thread {0} experienced a fatal error", this.id);

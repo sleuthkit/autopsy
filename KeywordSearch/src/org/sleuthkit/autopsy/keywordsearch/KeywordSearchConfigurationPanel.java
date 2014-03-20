@@ -19,13 +19,14 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
  * Global options panel for keyword searching.
  */
 // RJCTODO: Why is this a public class?
-public final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel {
+public final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
@@ -84,10 +85,15 @@ public final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSet
     }
 
     @Override
-    public void store() {
+    public void saveSettings() {
         listsPanel.store();
         languagesPanel.store();
-        generalPanel.store();
+        generalPanel.store();        
+    }
+
+    @Override
+    public void store() {
+        saveSettings();
     }
 
     public void cancel() {

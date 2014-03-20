@@ -36,7 +36,6 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
-// RJCTODO: Rename to RunIngestModulesDialog after internationalization.
 /**
  * Dialog box that allows ingest modules to be run on a data source. 
  * Used outside of the wizards.
@@ -50,7 +49,7 @@ public final class IngestDialog extends JDialog {
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
         ingestConfigurator = new IngestJobLauncher(IngestDialog.class.getCanonicalName());
-        List<String> messages = ingestConfigurator.getMissingIngestModuleMessages();
+        List<String> messages = ingestConfigurator.getContextSettingsWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {

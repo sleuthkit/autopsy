@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
@@ -26,25 +27,24 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
- * A factory that creates data source ingest modules that extract recent activity artifacts.
+ * A factory that creates data source ingest modules that extract recent
+ * activity artifacts from data sources.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class RecentActivityExtracterModuleFactory extends IngestModuleFactoryAdapter {    
-    public final static String MODULE_NAME = "Recent Activity";
-    public final static String MODULE_DESCRIPTION = "Extracts recent user activity, such as Web browsing, recently used documents and installed programs.";
+public class RecentActivityExtracterModuleFactory extends IngestModuleFactoryAdapter {
+
+    static String getModuleName() {
+        return NbBundle.getMessage(RAImageIngestModule.class, "RAImageIngestModule.getName");
+    }
 
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
 
-    static String getModuleName() {
-        return MODULE_NAME;
-    }
-
     @Override
     public String getModuleDescription() {
-        return MODULE_DESCRIPTION;
+        return NbBundle.getMessage(RAImageIngestModule.class, "RAImageIngestModule.getDesc");
     }
 
     @Override
@@ -62,4 +62,3 @@ public class RecentActivityExtracterModuleFactory extends IngestModuleFactoryAda
         return new RAImageIngestModule();
     }
 }
-

@@ -27,7 +27,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
- * An factory that creates file ingest modules that do hash database lookups.
+ * An factory that creates data source ingest modules that verify the integrity
+ * of Expert Witness Format (EWF) files (.e01).
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
@@ -36,7 +37,7 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
         return NbBundle.getMessage(EwfVerifyIngestModule.class,
                 "EwfVerifyIngestModule.moduleName.text");
     }
-    
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();

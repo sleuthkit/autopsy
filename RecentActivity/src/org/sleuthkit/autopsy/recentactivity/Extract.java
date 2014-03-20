@@ -33,6 +33,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
 
 abstract class Extract {
@@ -47,7 +48,7 @@ abstract class Extract {
     Extract() {
     }
 
-    void init() throws Exception {
+    void init() throws IngestModuleException {
     }
 
     abstract void process(Content dataSource, DataSourceIngestModuleStatusHelper controller);

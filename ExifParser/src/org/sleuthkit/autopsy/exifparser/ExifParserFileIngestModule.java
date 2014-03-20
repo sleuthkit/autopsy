@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.exifparser;
 
 import com.drew.imaging.ImageMetadataReader;
@@ -56,33 +55,24 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  */
 public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
-    private IngestServices services;
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
+    private final IngestServices services = IngestServices.getDefault();
     private int filesProcessed = 0;
     private boolean filesToFire = false;
 
     ExifParserFileIngestModule() {
     }
-        
-    @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws Exception {
-        services = IngestServices.getDefault();
-        logger.log(Level.INFO, "init() {0}", this.toString());
-        filesProcessed = 0;
-        filesToFire = false;
-    }
-    
-    @Override
-    public ResultCode process(AbstractFile content) {
 
+    @Override
+    public ProcessResult process(AbstractFile content) {
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         // skip known
         if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
@@ -91,16 +81,16 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
             services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
             filesToFire = false;
         }
-        
+
         //skip unsupported
         if (!parsableFormat(content)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         return processFile(content);
     }
 
-    ResultCode processFile(AbstractFile f) {
+    ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
 
@@ -130,7 +120,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), latitude));
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
                 }
-                
+
                 Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
                 if (altitude != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
@@ -144,7 +134,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
                 if (model != null && !model.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), ExifParserModuleFactory.getModuleName(), model));
                 }
-                
+
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null && !make.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
@@ -157,22 +147,18 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
                 bba.addAttributes(attributes);
                 filesToFire = true;
             }
-            
-            return ResultCode.OK;
-        } 
-        catch (TskCoreException ex) {
+
+            return ProcessResult.OK;
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage());
-            return ResultCode.ERROR;
-        } 
-        catch (ImageProcessingException ex) {
+            return ProcessResult.ERROR;
+        } catch (ImageProcessingException ex) {
             logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()});
-            return ResultCode.ERROR;
-        } 
-        catch (IOException ex) {
+            return ProcessResult.ERROR;
+        } catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex);
-            return ResultCode.ERROR;
-        } 
-        finally {
+            return ProcessResult.ERROR;
+        } finally {
             try {
                 if (in != null) {
                     in.close();
@@ -182,7 +168,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to close InputStream.", ex);
-                return ResultCode.ERROR;
+                return ProcessResult.ERROR;
             }
         }
     }
@@ -201,7 +187,6 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        logger.log(Level.INFO, "completed exif parsing {0}", this.toString());
         if (filesToFire) {
             //send the final new data event
             services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));

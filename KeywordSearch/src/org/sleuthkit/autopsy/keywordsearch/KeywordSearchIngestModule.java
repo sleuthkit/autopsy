@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
@@ -76,11 +75,13 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
  *
- * Registered as a module in layer.xml RJCTODO: Track this down, does not seem to be true
+ * Registered as a module in layer.xml RJCTODO: Track this down, does not seem
+ * to be true
  */
 public final class KeywordSearchIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     enum UpdateFrequency {
+
         FAST(20),
         AVG(10),
         SLOW(5),
@@ -96,9 +97,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             return time;
         }
     };
-    
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private IngestServices services;
+    private IngestServices services = IngestServices.getDefault();
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
@@ -114,7 +114,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private Set<Long> curDataSourceIds;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
-    private volatile int messageID = 0;
+    private volatile int messageID = 0; // RJCTODO: Despite volatile, this is not thread safe, uses increment (not atomic)
     private boolean processedFiles;
     private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
     private SleuthkitCase caseHandle = null;
@@ -122,11 +122,12 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private static AbstractFileStringExtract stringExtractor;
     private boolean initialized = false;
     private Tika tikaFormatDetector;
-    
+
     private enum IngestStatus {
-        TEXT_INGESTED,   /// Text was extracted by knowing file type and text_ingested
+
+        TEXT_INGESTED, /// Text was extracted by knowing file type and text_ingested
         STRINGS_INGESTED, ///< Strings were extracted from file 
-        METADATA_INGESTED,   ///< No content, so we just text_ingested metadata
+        METADATA_INGESTED, ///< No content, so we just text_ingested metadata
         SKIPPED_ERROR_INDEXING, ///< File was skipped because index engine had problems
         SKIPPED_ERROR_TEXTEXTRACT, ///< File was skipped because of text extraction issues
         SKIPPED_ERROR_IO    ///< File was skipped because of IO issues reading it
@@ -135,15 +136,106 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
     KeywordSearchIngestModule() {
     }
-        
+
+    /**
+     * Initializes the module for new ingest run Sets up threads, timers,
+     * retrieves settings, keyword lists to run on
+     *
+     */
     @Override
-    public ResultCode process(AbstractFile abstractFile) {
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        logger.log(Level.INFO, "init()");
+        initialized = false;
+
+        caseHandle = Case.getCurrentCase().getSleuthkitCase();
+
+        tikaFormatDetector = new Tika();
+
+        ingester = Server.getIngester();
+
+        final Server server = KeywordSearch.getServer();
+        try {
+            if (!server.isRunning()) {
+                String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+                logger.log(Level.SEVERE, msg);
+                String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
+                throw new IngestModuleException(msg);
+            }
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+            //this means Solr is not properly initialized
+            String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+            String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+            services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
+            throw new IngestModuleException(msg);
+        }
+        try {
+            // make an actual query to verify that server is responding
+            // we had cases where getStatus was OK, but the connection resulted in a 404
+            server.queryNumIndexedDocuments();
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            throw new IngestModuleException(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
+                    ex.getMessage()));
+        }
+
+        //initialize extractors
+        stringExtractor = new AbstractFileStringExtract(this);
+        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
+        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
+
+        //log the scripts used for debugging
+        final StringBuilder sbScripts = new StringBuilder();
+        for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
+            sbScripts.append(s.name()).append(" ");
+        }
+        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString());
+
+        textExtractors = new ArrayList<>();
+        //order matters, more specific extractors first
+        textExtractors.add(new AbstractFileHtmlExtract(this));
+        textExtractors.add(new AbstractFileTikaTextExtract(this));
+
+        ingestStatus = new HashMap<>();
+
+        if (KeywordListsManager.getInstance().hasNoKeywordsForSearch()) {
+          services.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+             
+        }
+        
+        processedFiles = false;
+        finalSearcherDone = false;
+        searcherDone = true; //make sure to start the initial currentSearcher
+        //keeps track of all results per run not to repeat reporting the same hits
+        currentResults = new HashMap<>();
+
+        curDataSourceIds = new HashSet<>();
+
+        indexer = new Indexer();
+
+        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
+        logger.log(Level.INFO, "Using commit interval (ms): {0}", updateIntervalMs);
+        logger.log(Level.INFO, "Using searcher interval (ms): {0}", updateIntervalMs);
+
+        commitTimer = new Timer(updateIntervalMs, new CommitTimerAction());
+        searchTimer = new Timer(updateIntervalMs, new SearchTimerAction());
+
+        initialized = true;
+
+        commitTimer.start();
+        searchTimer.start();
+    }
+
+    @Override
+    public ProcessResult process(AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());
             ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
         try {
             //add data source id of the file to the set, keeping track of images being ingested
@@ -153,19 +245,19 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
         }
-        
+
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             //skip indexing of virtual dirs (no content, no real name) - will index children files
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
-        processedFiles = true;        
+        processedFiles = true;
 
         //check if it's time to commit after previous processing
         checkRunCommitSearch();
@@ -173,7 +265,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
 
-        return ResultCode.OK;
+        return ProcessResult.OK;
     }
 
     /**
@@ -190,7 +282,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             stop();
             return;
         }
-        
+
         commitTimer.stop();
 
         //NOTE, we let the 1 before last searcher complete fully, and enqueue the last one
@@ -209,7 +301,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         postIndexSummary();
 
         //run one last search as there are probably some new files committed
-        List<String> keywordLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();        
+        List<String> keywordLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
         if (!keywordLists.isEmpty() && processedFiles == true) {
             finalSearcher = new Searcher(keywordLists, true); //final searcher run
             finalSearcher.execute();
@@ -282,98 +374,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     }
 
     /**
-     * Initializes the module for new ingest run Sets up threads, timers,
-     * retrieves settings, keyword lists to run on
-     *
-     */
-    @Override
-    public void startUp(IngestJobContext context) throws Exception {
-        logger.log(Level.INFO, "init()");
-        services = IngestServices.getDefault();
-        initialized = false;
-
-        caseHandle = Case.getCurrentCase().getSleuthkitCase();
-
-        tikaFormatDetector = new Tika();
-
-        ingester = Server.getIngester();
-
-        final Server server = KeywordSearch.getServer();
-        try {
-            if (!server.isRunning()) {
-                String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                logger.log(Level.SEVERE, msg);
-                String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
-                throw new Exception(msg);
-            }
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
-            //this means Solr is not properly initialized
-            String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-            String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
-            throw new Exception(msg);
-        }
-        try {
-            // make an actual query to verify that server is responding
-            // we had cases where getStatus was OK, but the connection resulted in a 404
-            server.queryNumIndexedDocuments();
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            throw new Exception(
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
-                                        ex.getMessage()));
-        }
-
-        //initialize extractors
-        stringExtractor = new AbstractFileStringExtract(this);
-        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
-        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-
-        //log the scripts used for debugging
-        final StringBuilder sbScripts = new StringBuilder();
-        for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
-            sbScripts.append(s.name()).append(" ");
-        }
-        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString());
-
-        textExtractors = new ArrayList<>();
-        //order matters, more specific extractors first
-        textExtractors.add(new AbstractFileHtmlExtract(this));
-        textExtractors.add(new AbstractFileTikaTextExtract(this));
-
-        ingestStatus = new HashMap<>();
-
-        // RJCTODO: Fetch lists for job and check?
-//        if (keywords.isEmpty() || keywordLists.isEmpty()) {
-//            services.postMessage(IngestMessage.createWarningMessage(++messageID, this, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-//                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-//        }
-
-        processedFiles = false;
-        finalSearcherDone = false;
-        searcherDone = true; //make sure to start the initial currentSearcher
-        //keeps track of all results per run not to repeat reporting the same hits
-        currentResults = new HashMap<>();
-
-        curDataSourceIds = new HashSet<>();
-
-        indexer = new Indexer();
-        
-        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
-        logger.log(Level.INFO, "Using commit interval (ms): {0}", updateIntervalMs);
-        logger.log(Level.INFO, "Using searcher interval (ms): {0}", updateIntervalMs);
-
-        commitTimer = new Timer(updateIntervalMs, new CommitTimerAction());
-        searchTimer = new Timer(updateIntervalMs, new SearchTimerAction());
-
-        initialized = true;
-
-        commitTimer.start();
-        searchTimer.start();
-    }
-          
-    /**
      * Commits index and notifies listeners of index update
      */
     private void commit() {
@@ -435,8 +435,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         if (error_index > 0) {
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
-        }
-        else if (error_io + error_text > 0) {
+        } else if (error_io + error_text > 0) {
             MessageNotifyUtil.Notify.warn(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg"));
         }
@@ -597,14 +596,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
          * Adds the file to the index. Detects file type, calls extractors, etc.
          *
          * @param aFile File to analyze
-         * @param indexContent False if only metadata should be text_ingested. True if
-         * content and metadata should be index.
+         * @param indexContent False if only metadata should be text_ingested.
+         * True if content and metadata should be index.
          */
         private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
-            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType(); 
-            
+            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
+
             // unallocated and unused blocks can only have strings extracted from them. 
             if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
                 extractStringsAndIndex(aFile);
@@ -616,8 +615,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } 
-                catch (IngesterException ex) {
+                } catch (IngesterException ex) {
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
                 }
@@ -630,11 +628,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             try {
                 is = new ReadContentInputStream(aFile);
                 detectedFormat = tikaFormatDetector.detect(is, aFile.getName());
-            } 
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile, e);
-            } 
-            finally {
+            } finally {
                 if (is != null) {
                     try {
                         is.close();
@@ -644,9 +640,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     }
                 }
             }
-            
+
             // @@@ Add file type signature to blackboard here
-            
+
             //logger.log(Level.INFO, "Detected format: " + aFile.getName() + " " + detectedFormat);
 
             // we skip archive formats that are opened by the archive module. 
@@ -655,8 +651,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } 
-                catch (IngesterException ex) {
+                } catch (IngesterException ex) {
                     ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
                 }
@@ -732,15 +727,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 logger.log(Level.INFO, "Pending start of new searcher");
             }
 
-            final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName") +
-                    (finalRun ? (" - "+ NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
-            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" ("+
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") +")"), null, new Cancellable() {
+            final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
+                    + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
+            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" ("
+                    + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") + ")"), null, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
                     if (progressGroup != null) {
-                        progressGroup.setDisplayName(displayName + " ("+ NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.cancelMsg") +"...)");
+                        progressGroup.setDisplayName(displayName + " (" + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.cancelMsg") + "...)");
                     }
                     return Searcher.this.cancel(true);
                 }
@@ -800,10 +795,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     boolean isRegex = !keywordQuery.isLiteral();
                     if (isRegex) {
                         del = new TermComponentQuery(keywordQuery);
-                    } 
-                    else {
+                    } else {
                         del = new LuceneQuery(keywordQuery);
-                        del.escape();    
+                        del.escape();
                     }
 
                     //limit search to currently ingested data sources
@@ -858,7 +852,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                                 logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery());
                                 return null;
                             }
-                            
+
                             // update progress display
                             String hitDisplayStr = hitTerm.getQuery();
                             if (hitDisplayStr.length() > 50) {
@@ -870,7 +864,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                             // this returns the unique files in the set with the first chunk that has a hit
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(newResults.get(hitTerm));
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
-                                
+
                                 // get the snippet for the first hit in the file
                                 String snippet;
                                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
@@ -963,7 +957,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                                         }
                                     }
                                     detailsSb.append("</table>");
-                                
+
                                     services.postMessage(IngestMessage.createDataMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
                             } //for each file hit
@@ -1000,14 +994,13 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
             return null;
         }
-        
+
         @Override
         protected void done() {
             // call get to see if there were any errors
             try {
                 get();
-            }
-            catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
             }

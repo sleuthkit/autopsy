@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -35,14 +35,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAdapter {
 
-    @Override
-    public String getModuleDisplayName() {
-        return getModuleName();
-    }
-
     static String getModuleName() {
         return NbBundle.getMessage(FileExtMismatchIngestModule.class,
                 "FileExtMismatchIngestModule.moduleName");
+    }
+    
+    @Override
+    public String getModuleDisplayName() {
+        return getModuleName();
     }
 
     @Override
@@ -67,7 +67,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleJobSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
+    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
         FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions) ingestOptions);
         return ingestOptionsPanel;
     }
@@ -91,6 +91,6 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
-        return new FileExtMismatchIngestModule();
+        return new FileExtMismatchIngestModule(); // RJCTODO: Update to pass in options
     }
 }

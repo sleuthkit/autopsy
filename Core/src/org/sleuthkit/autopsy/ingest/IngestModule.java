@@ -23,13 +23,24 @@ package org.sleuthkit.autopsy.ingest;
  */
 public interface IngestModule {
 
-    public enum ResultCode {
+    public enum ProcessResult {
         OK,
-        ERROR,
+        ERROR
     };
     
+    public class IngestModuleException extends Exception {
+        public IngestModuleException(String message) {
+            super(message);
+        }
+    }
+    
     // RJCTODO: Write header comment, make sure to mention "one module instance per thread"
-    void startUp(IngestJobContext context) throws Exception;
+    /**
+     * Invoked by the ingest frame
+     * @param context
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException 
+     */
+    void startUp(IngestJobContext context) throws IngestModuleException;
 
     // RJCTODO: Write header comment, make sure to mention "one module instance per thread"
     void shutDown(boolean ingestJobWasCancelled);

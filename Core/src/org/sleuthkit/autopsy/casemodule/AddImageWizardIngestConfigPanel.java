@@ -74,7 +74,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.dataSourcePanel = dsPanel;
         
         ingestConfig = new IngestJobLauncher(AddImageWizardIngestConfigPanel.class.getCanonicalName());
-        List<String> messages = ingestConfig.getMissingIngestModuleMessages();
+        List<String> messages = ingestConfig.getContextSettingsWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {

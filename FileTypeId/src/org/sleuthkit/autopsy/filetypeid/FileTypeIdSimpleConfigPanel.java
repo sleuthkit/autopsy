@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.filetypeid;
 
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 
 /**
  * UI component used to set ingest job options for file type identifier ingest
  * modules.
  */
-class FileTypeIdSimpleConfigPanel extends IngestModuleJobSettingsPanel {
+class FileTypeIdSimpleConfigPanel extends IngestModuleSettingsPanel {
 
     private final FileTypeIdentifierIngestJobOptions ingestJobOptions;
 
@@ -40,7 +40,7 @@ class FileTypeIdSimpleConfigPanel extends IngestModuleJobSettingsPanel {
     }
 
     @Override
-    public IngestModuleSettings getIngestJobOptions() {
+    public IngestModuleSettings getSettings() {
         return ingestJobOptions;
     }
 

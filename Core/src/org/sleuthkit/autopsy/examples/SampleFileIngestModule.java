@@ -89,16 +89,16 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     }
 
     @Override
-    public IngestModule.ResultCode process(AbstractFile abstractFile) {
+    public IngestModule.ProcessResult process(AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
-            return IngestModule.ResultCode.OK;
+            return IngestModule.ProcessResult.OK;
         }
 
         // skip NSRL / known files
         if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
-            return IngestModule.ResultCode.OK;
+            return IngestModule.ProcessResult.OK;
         }
 
         /* Do a non-sensical calculation of the number of 0x00 bytes
@@ -117,7 +117,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
 
             if (attrId != -1) {
                 // Make an attribute using the ID for the private type that we previously created.
-                BlackboardAttribute attr = new BlackboardAttribute(attrId, "SampleFileIngestModule", count); // RJCTODO: Set up with name as exmaple
+                BlackboardAttribute attr = new BlackboardAttribute(attrId, "SampleFileIngestModule", count); // RJCTODO: Set up with module name as example
 
                 /* add it to the general info artifact.  In real modules, you would likely have
                  * more complex data types and be making more specific artifacts.
@@ -126,10 +126,10 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
                 art.addAttribute(attr);
             }
 
-            return IngestModule.ResultCode.OK;
+            return IngestModule.ProcessResult.OK;
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            return IngestModule.ResultCode.ERROR;
+            return IngestModule.ProcessResult.ERROR;
         }
     }
 

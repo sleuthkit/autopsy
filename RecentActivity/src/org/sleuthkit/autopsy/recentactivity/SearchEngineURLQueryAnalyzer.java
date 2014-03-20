@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -315,16 +316,18 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     @Override
     public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         this.getURLs(dataSource, controller);
-        logger.info("Search Engine stats: \n" + getTotals());
+        logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals());
     }
 
     @Override
-    void init() throws Exception {
+    void init() throws IngestModuleException {
         try {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
             init2();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to find " + XMLFILE, e);
+            String message = "Unable to find " + XMLFILE;
+            logger.log(Level.SEVERE, message, e);
+            throw new IngestModuleException(message);
         }
     }
 

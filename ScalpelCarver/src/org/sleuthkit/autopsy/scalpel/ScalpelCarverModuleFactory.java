@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.scalpel;
 
-// TODO: Uncomment the following line to allow the ingest framework to use this module
+// TODO: Uncomment the following line to allow the ingest framework to use this 
+// module. The dependency has already been added to the project.
 //import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;

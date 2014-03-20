@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.ingest.IngestModule.ResultCode;
+import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 
@@ -48,7 +48,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     private static int messageId = 0;
     private final List<Extract> extracters = new ArrayList<>();
     private final List<Extract> browserExtracters = new ArrayList<>();
-    private IngestServices services;
+    private IngestServices services = IngestServices.getDefault();
     private StringBuilder subCompleted = new StringBuilder();
 
     RAImageIngestModule() {
@@ -57,9 +57,34 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     synchronized int getNextMessageId() {
         return ++messageId;
     }
+
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        Extract registry = new ExtractRegistry();
+        Extract iexplore = new ExtractIE();
+        Extract recentDocuments = new RecentDocumentsByLnk();
+        Extract chrome = new Chrome();
+        Extract firefox = new Firefox();
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+
+        extracters.add(chrome);
+        extracters.add(firefox);
+        extracters.add(iexplore);
+        extracters.add(recentDocuments);
+        extracters.add(SEUQA); // this needs to run after the web browser modules
+        extracters.add(registry); // this runs last because it is slowest
+
+        browserExtracters.add(chrome);
+        browserExtracters.add(firefox);
+        browserExtracters.add(iexplore);
+        
+       for (Extract extracter : extracters) {
+            extracter.init();
+        }        
+    }
     
     @Override
-    public ResultCode process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         services.postMessage(IngestMessage.createMessage(getNextMessageId(), MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
 
         controller.switchToDeterminate(extracters.size());
@@ -134,7 +159,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
                                                                    historyMsg.toString());
         services.postMessage(inboxMsg);
 
-        return ResultCode.OK;
+        return ProcessResult.OK;
     }
 
     @Override
@@ -154,33 +179,6 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
                                                         extracter.getName()));
             }
         }
-    }
-
-    @Override
-    public void startUp(IngestJobContext context) throws Exception {
-        services = IngestServices.getDefault();
-
-        Extract registry = new ExtractRegistry();
-        Extract iexplore = new ExtractIE();
-        Extract recentDocuments = new RecentDocumentsByLnk();
-        Extract chrome = new Chrome();
-        Extract firefox = new Firefox();
-        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-
-        extracters.add(chrome);
-        extracters.add(firefox);
-        extracters.add(iexplore);
-        extracters.add(recentDocuments);
-        extracters.add(SEUQA); // this needs to run after the web browser modules
-        extracters.add(registry); // this runs last because it is slowest
-
-        browserExtracters.add(chrome);
-        browserExtracters.add(firefox);
-        browserExtracters.add(iexplore);
-        
-       for (Extract extracter : extracters) {
-            extracter.init();
-        }        
     }
 
     private void stop() {

@@ -49,7 +49,7 @@ public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return "This module detects and parses mbox and pst/ost files and populates email artifacts in the blackboard.";
+        return NbBundle.getMessage(ThunderbirdMboxFileIngestModule.class, "ThunderbirdMboxFileIngestModule.getDesc.text");
     }
 
     @Override

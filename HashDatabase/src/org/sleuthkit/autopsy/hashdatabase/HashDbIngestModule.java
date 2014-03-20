@@ -63,7 +63,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     }
         
     @Override
-    public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws Exception {
+    public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         super.startUp(context);
         services = IngestServices.getDefault();
         skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -110,15 +110,15 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     }
     
     @Override
-    public ResultCode process(AbstractFile file) {
+    public ProcessResult process(AbstractFile file) {
         // Skip unallocated space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
         
         // bail out if we have no hashes set
         if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (calcHashesIsSet == false)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         // calc hash value
@@ -139,13 +139,13 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.calcHashValueErr",
                                                           name)));
-                return ResultCode.ERROR;
+                return ProcessResult.ERROR;
             }
         }
 
         // look up in known bad first
         boolean foundBad = false;
-        ResultCode ret = ResultCode.OK;
+        ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
@@ -165,7 +165,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                                               NbBundle.getMessage(this.getClass(),
                                                                   "HashDbIngestModule.settingKnownBadStateErr",
                                                                   name)));
-                        ret = ResultCode.ERROR;
+                        ret = ProcessResult.ERROR;
                     }                    
                     String hashSetName = db.getHashSetName();
                     
@@ -196,7 +196,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.lookingUpKnownBadHashValueErr",
                                                           name)));
-                ret = ResultCode.ERROR;
+                ret = ProcessResult.ERROR;
             }
         }
 
@@ -213,7 +213,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                             break;
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex);
-                            ret = ResultCode.ERROR;
+                            ret = ProcessResult.ERROR;
                         }
                     }
                     lookuptime += (System.currentTimeMillis() - lookupstart);
@@ -227,7 +227,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                                           NbBundle.getMessage(this.getClass(),
                                                               "HashDbIngestModule.lookingUpKnownHashValueErr",
                                                               name)));
-                    ret = ResultCode.ERROR;
+                    ret = ProcessResult.ERROR;
                 }
             }
         }

@@ -47,42 +47,40 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class FileExtMismatchIngestModule extends IngestModuleAdapter implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());   
-    private static long processTime = 0;
-    private static int messageId = 0;
-    private static long numFiles = 0;
+    private static long processTime = 0; // RJCTODO: This is not thread safe
+    private static int messageId = 0; // RJCTODO: This is not thread safe
+    private static long numFiles = 0; // RJCTODO: This is not thread safe
+    private final IngestServices services = IngestServices.getDefault();
     private boolean skipKnown = false;
     private boolean skipNoExt = true;
     private boolean skipTextPlain = false;       
-    private IngestServices services;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     
     FileExtMismatchIngestModule() {
     }
             
     @Override
-    public void startUp(IngestJobContext context) throws Exception {
-        super.startUp(context);
-        services = IngestServices.getDefault();           
+    public void startUp(IngestJobContext context) throws IngestModuleException {
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
     }
     
     @Override
-    public ResultCode process(AbstractFile abstractFile) {
+    public ProcessResult process(AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
             (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {            
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
         
         // deleted files often have content that was not theirs and therefor causes mismatch
         if ((abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) ||
                 (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
 
         if (skipKnown && (abstractFile.getKnown() == FileKnown.KNOWN)) {
-            return ResultCode.OK;
+            return ProcessResult.OK;
         }
         
         try 
@@ -100,10 +98,10 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
                 services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));                
             }
-            return ResultCode.OK;
+            return ProcessResult.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex);
-            return ResultCode.ERROR;
+            return ProcessResult.ERROR;
         }
     }
     
@@ -161,7 +159,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
         //details
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");
 
-        detailsSb.append("<tr><td>" + FileExtMismatchDetectorModuleFactory.getModuleName() + "</td></tr>");
+        detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>");
 
         detailsSb.append("<tr><td>").append(
                 NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
@@ -177,17 +175,17 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
                                                          detailsSb.toString()));
     }
 
-    // RJCTODO: Ingest setting
+    // RJCTODO: Ingest job setting
     public void setSkipKnown(boolean flag) {
         skipKnown = flag;
     }
 
-    // RJCTODO: Ingest setting
+    // RJCTODO: Ingest job setting
     public void setSkipNoExt(boolean flag) {
         skipNoExt = flag;
     }        
     
-    // RJCTODO: Ingest setting
+    // RJCTODO: Ingest job setting
     public void setSkipTextPlain(boolean flag) {
         skipTextPlain = flag;
     }

@@ -35,9 +35,6 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Abstract visitor for getting all the files from content.
  */
-// RJCTODO: Could this be moved to utility package, is there another version of this
-// somewhere? An old comment said something about circular dependencies. Note: will use
-// this for per ingest job progress bars.
 abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
    private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());

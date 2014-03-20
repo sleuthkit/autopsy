@@ -33,12 +33,12 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 
 /**
  * Instances of this class provide a simplified UI for managing the hash sets configuration.
  */
-public class HashDbSimpleConfigPanel extends IngestModuleJobSettingsPanel { 
+public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel { 
     
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
@@ -76,7 +76,7 @@ public class HashDbSimpleConfigPanel extends IngestModuleJobSettingsPanel {
     }
     
     @Override
-    public IngestModuleSettings getIngestJobOptions() {
+    public IngestModuleSettings getSettings() {
         HashDbManager hashDbManager = HashDbManager.getInstance();
         List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
         List<HashDbManager.HashDb> knownBadFileHashSets = hashDbManager.getKnownBadFileHashSets();

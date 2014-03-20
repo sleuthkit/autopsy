@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.ingest;
 import javax.swing.JPanel;
 
 /**
- * Abstract base class for ingest module per ingest job options panels.
+ * Abstract base class for ingest module job settings panels.
  */
-public abstract class IngestModuleJobSettingsPanel extends JPanel {
+public abstract class IngestModuleSettingsPanel extends JPanel {
 
     /**
-     * Gets the ingest options for an ingest module.
+     * Gets the ingest job settings for an ingest module.
      *
-     * @return The ingest options.
+     * @return The ingest settings.
      */
-    public abstract IngestModuleSettings getIngestJobOptions();
+    public abstract IngestModuleSettings getSettings();
 }
