@@ -61,7 +61,7 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
     }
 
     @Override
-    public boolean providesModuleSettingsPanel() {
+    public boolean hasModuleSettingsPanel() {
         return true;
     }
 

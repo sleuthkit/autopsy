@@ -57,9 +57,9 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
-            if (module.hasIngestOptionsPanel()) {
-                IngestModuleSettings options = module.getIngestOptionsPanel().getSettings();
-                moduleTemplate.setIngestOptions(options);
+            if (module.hasModuleSettingsPanel()) {
+                IngestModuleSettings settings = module.getModuleSettingsPanel().getSettings();
+                moduleTemplate.setIngestOptions(settings);
             }
             moduleTemplates.add(moduleTemplate);
         }
@@ -101,12 +101,12 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
                     int index = listSelectionModel.getMinSelectionIndex();
                     selectedModule = modules.get(index);
                     simplePanel.removeAll();
-                    if (null != selectedModule.getIngestOptionsPanel()) {
-                        simplePanel.add(selectedModule.getIngestOptionsPanel());
+                    if (null != selectedModule.getModuleSettingsPanel()) {
+                        simplePanel.add(selectedModule.getModuleSettingsPanel());
                     }
                     simplePanel.revalidate();
                     simplePanel.repaint();
-                    advancedButton.setEnabled(null != selectedModule.getResourcesConfigPanel());
+                    advancedButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
                 }
             }
         });
@@ -253,7 +253,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         dialog.addApplyButtonListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (selectedModule.hasResourcesConfigPanel()) {
+                if (selectedModule.hasGlobalSettingsPanel()) {
                     selectedModule.saveResourcesConfig();
                 }
                 dialog.close();
@@ -267,7 +267,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
-        dialog.display(selectedModule.getResourcesConfigPanel());
+        dialog.display(selectedModule.getGlobalSettingsPanel());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
@@ -294,19 +294,19 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
     static private class IngestModuleModel {
 
         private final IngestModuleTemplate moduleTemplate;
-        private IngestModuleGlobalSetttingsPanel resourcesConfigPanel = null;
-        private IngestModuleSettingsPanel ingestJobOptionsPanel = null;
+        private IngestModuleGlobalSetttingsPanel globalSettingsPanel = null;
+        private IngestModuleSettingsPanel moduleSettingsPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
 
             IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-            if (moduleFactory.providesModuleSettingsPanel()) {
-                ingestJobOptionsPanel = moduleFactory.getModuleSettingsPanel(moduleTemplate.getIngestOptions());
+            if (moduleFactory.hasModuleSettingsPanel()) {
+                moduleSettingsPanel = moduleFactory.getModuleSettingsPanel(moduleTemplate.getIngestOptions());
             }
 
-            if (moduleFactory.providesGlobalSettingsPanel()) {
-                resourcesConfigPanel = moduleFactory.getGlobalSettingsPanel();
+            if (moduleFactory.hasGlobalSettingsPanel()) {
+                globalSettingsPanel = moduleFactory.getGlobalSettingsPanel();
             }
         }
 
@@ -330,24 +330,24 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             return moduleTemplate.isEnabled();
         }
 
-        boolean hasIngestOptionsPanel() {
-            return moduleTemplate.getIngestModuleFactory().providesModuleSettingsPanel();
+        boolean hasModuleSettingsPanel() {
+            return moduleTemplate.getIngestModuleFactory().hasModuleSettingsPanel();
         }
 
-        IngestModuleSettingsPanel getIngestOptionsPanel() {
-            return ingestJobOptionsPanel;
+        IngestModuleSettingsPanel getModuleSettingsPanel() {
+            return moduleSettingsPanel;
         }
 
-        boolean hasResourcesConfigPanel() {
-            return moduleTemplate.getIngestModuleFactory().providesGlobalSettingsPanel();
+        boolean hasGlobalSettingsPanel() {
+            return moduleTemplate.getIngestModuleFactory().hasGlobalSettingsPanel();
         }
 
-        IngestModuleGlobalSetttingsPanel getResourcesConfigPanel() {
-            return resourcesConfigPanel;
+        IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+            return globalSettingsPanel;
         }
 
         void saveResourcesConfig() {
-            resourcesConfigPanel.saveSettings();
+            globalSettingsPanel.saveSettings();
         }
     }
 

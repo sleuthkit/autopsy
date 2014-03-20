@@ -62,7 +62,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public boolean providesModuleSettingsPanel() {
+    public boolean hasModuleSettingsPanel() {
         return true;
     }
 
@@ -73,7 +73,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public boolean providesGlobalSettingsPanel() {
+    public boolean hasGlobalSettingsPanel() {
         return true;
     }
 

@@ -81,7 +81,7 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory provides resource configuration panels.
      */
-    boolean providesGlobalSettingsPanel();
+    boolean hasGlobalSettingsPanel();
 
     /**
      * Gets a user interface panel that can be used to configure resources for
@@ -130,7 +130,7 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory provides ingest job options panels.
      */
-    boolean providesModuleSettingsPanel();
+    boolean hasModuleSettingsPanel();
 
     /**
      * Gets a user interface panel that can be used to set per ingest job

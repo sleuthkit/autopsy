@@ -34,7 +34,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     public abstract String getModuleVersionNumber();
 
     @Override
-    public boolean providesGlobalSettingsPanel() {
+    public boolean hasGlobalSettingsPanel() {
         return false;
     }
 
@@ -49,7 +49,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public boolean providesModuleSettingsPanel() {
+    public boolean hasModuleSettingsPanel() {
         return false;
     }
 

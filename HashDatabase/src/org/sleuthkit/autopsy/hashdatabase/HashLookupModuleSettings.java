@@ -26,20 +26,20 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
  * Ingest options for the hash lookup file ingest module.
  */
 // Note that this class is not yet used as intended.
-public class HashLookupOptions implements IngestModuleSettings {
+class HashLookupModuleSettings implements IngestModuleSettings {
 
     // RJCTODO: These should not be handle objects, but names or files
     private boolean shouldCalculateHashes = true;
     private ArrayList<HashDbManager.HashDb> knownFileHashSets;
     private ArrayList<HashDbManager.HashDb> knownBadFileHashSets;
 
-    HashLookupOptions() {
+    HashLookupModuleSettings() {
         shouldCalculateHashes = true;
         knownFileHashSets = new ArrayList<>();
         knownBadFileHashSets = new ArrayList<>();
     }
 
-    HashLookupOptions(boolean shouldCalculateHashes, List<HashDbManager.HashDb> knownFileHashSets, List<HashDbManager.HashDb> knownBadFileHashSets) {
+    HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDbManager.HashDb> knownFileHashSets, List<HashDbManager.HashDb> knownBadFileHashSets) {
         this.shouldCalculateHashes = shouldCalculateHashes;
         this.knownFileHashSets = new ArrayList<>(knownFileHashSets);
         this.knownBadFileHashSets = new ArrayList<>(knownBadFileHashSets);

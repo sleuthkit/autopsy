@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.List;
@@ -26,7 +25,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -36,20 +34,21 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
 
 /**
- * Instances of this class provide a simplified UI for managing the hash sets configuration.
+ * Instances of this class provide a simplified UI for managing the hash sets
+ * configuration.
  */
-public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel { 
-    
+public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel {
+
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
 
-    public HashDbSimpleConfigPanel() {
+    public HashLookupModuleSettingsPanel() {
         knownTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN);
         knownBadTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN_BAD);
         initComponents();
         customizeComponents();
     }
-        
+
     private void customizeComponents() {
         customizeHashDbsTable(jScrollPane1, knownHashTable, knownTableModel);
         customizeHashDbsTable(jScrollPane2, knownBadHashTable, knownBadTableModel);
@@ -58,7 +57,7 @@ public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel {
     }
 
     private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDatabasesTableModel tableModel) {
-        table.setModel(tableModel);        
+        table.setModel(tableModel);
         table.setTableHeader(null);
         table.setRowSelectionAllowed(false);
 
@@ -72,44 +71,44 @@ public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel {
             } else {
                 column.setPreferredWidth(((int) (width1 * 0.92)));
             }
-        }        
+        }
     }
-    
+
     @Override
     public IngestModuleSettings getSettings() {
         HashDbManager hashDbManager = HashDbManager.getInstance();
         List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
         List<HashDbManager.HashDb> knownBadFileHashSets = hashDbManager.getKnownBadFileHashSets();
-        return new HashLookupOptions(alwaysCalcHashesCheckbox.isSelected(), knownFileHashSets, knownBadFileHashSets);
+        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(), knownFileHashSets, knownBadFileHashSets);
     }
 
-    public void load() {        
+    public void load() {
         knownTableModel.load();
         knownBadTableModel.load();
     }
 
     public void store() {
-        HashDbManager.getInstance().save();        
+        HashDbManager.getInstance().save();
     }
-            
-    private class HashDatabasesTableModel extends AbstractTableModel {        
-        private final HashDbManager.HashDb.KnownFilesType hashDatabasesType;  
+
+    private class HashDatabasesTableModel extends AbstractTableModel {
+
+        private final HashDbManager.HashDb.KnownFilesType hashDatabasesType;
         private List<HashDb> hashDatabases;
-        
+
         HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType hashDatabasesType) {
             this.hashDatabasesType = hashDatabasesType;
             getHashDatabases();
         }
-            
+
         private void getHashDatabases() {
             if (HashDbManager.HashDb.KnownFilesType.KNOWN == hashDatabasesType) {
                 hashDatabases = HashDbManager.getInstance().getKnownFileHashSets();
-            }
-            else {
+            } else {
                 hashDatabases = HashDbManager.getInstance().getKnownBadFileHashSets();
-            }            
-        }    
-        
+            }
+        }
+
         private void load() {
             getHashDatabases();
             fireTableDataChanged();
@@ -134,7 +133,7 @@ public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel {
                 return db.getHashSetName();
             }
         }
-        
+
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return !IngestManager.getDefault().isIngestRunning() && columnIndex == 0;
@@ -142,36 +141,34 @@ public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if(columnIndex == 0) {
+            if (columnIndex == 0) {
                 HashDb db = hashDatabases.get(rowIndex);
                 boolean dbHasIndex = false;
                 try {
                     dbHasIndex = db.hasIndex();
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting info for " + db.getHashSetName() + " hash database", ex);
                 }
-                catch (TskCoreException ex) {
-                    Logger.getLogger(HashDbSimpleConfigPanel.class.getName()).log(Level.SEVERE, "Error getting info for " + db.getHashSetName() + " hash database", ex);            
-                }
-                if(((Boolean) getValueAt(rowIndex, columnIndex)) || dbHasIndex) {
+                if (((Boolean) getValueAt(rowIndex, columnIndex)) || dbHasIndex) {
                     db.setSearchDuringIngest((Boolean) aValue);
-                } 
-                else {
-                    JOptionPane.showMessageDialog(HashDbSimpleConfigPanel.this,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "HashDbSimpleConfigPanel.dlgMsg.mustIndexDbBeforeUse"));
+                } else {
+                    JOptionPane.showMessageDialog(HashLookupModuleSettingsPanel.this,
+                            NbBundle.getMessage(this.getClass(),
+                            "HashDbSimpleConfigPanel.dlgMsg.mustIndexDbBeforeUse"));
                 }
             }
         }
-        
+
         @Override
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
     }
-        
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -192,11 +189,11 @@ public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel {
         knownHashTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(knownHashTable);
 
-        knownBadHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.knownBadHashDbsLabel.text")); // NOI18N
+        knownBadHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownBadHashDbsLabel.text")); // NOI18N
 
-        knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.knownHashDbsLabel.text")); // NOI18N
+        knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownHashDbsLabel.text")); // NOI18N
 
-        alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashDbSimpleConfigPanel.class, "HashDbSimpleConfigPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
+        alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
         alwaysCalcHashesCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 alwaysCalcHashesCheckboxActionPerformed(evt);
@@ -256,7 +253,6 @@ public class HashDbSimpleConfigPanel extends IngestModuleSettingsPanel {
     private void alwaysCalcHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCalcHashesCheckboxActionPerformed
         HashDbManager.getInstance().setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
     }//GEN-LAST:event_alwaysCalcHashesCheckboxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
     private javax.swing.JScrollPane jScrollPane1;

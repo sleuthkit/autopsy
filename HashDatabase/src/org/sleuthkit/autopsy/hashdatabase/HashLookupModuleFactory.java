@@ -55,29 +55,29 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleSettings getDefaultModuleSettings() {
-        return new HashLookupOptions();
+        return new HashLookupModuleSettings();
     }
 
     @Override
-    public boolean providesModuleSettingsPanel() {
+    public boolean hasModuleSettingsPanel() {
         return true;
     }
 
     @Override
     public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
-        HashDbSimpleConfigPanel ingestOptionsPanel = new HashDbSimpleConfigPanel();
+        HashLookupModuleSettingsPanel ingestOptionsPanel = new HashLookupModuleSettingsPanel();
         ingestOptionsPanel.load();
         return ingestOptionsPanel;
     }
 
     @Override
-    public boolean providesGlobalSettingsPanel() {
+    public boolean hasGlobalSettingsPanel() {
         return true;
     }
 
     @Override
     public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
-        HashDbConfigPanel resourcesConfigPanel = new HashDbConfigPanel();
+        HashLookupSettingsPanel resourcesConfigPanel = new HashLookupSettingsPanel();
         resourcesConfigPanel.load();
         return resourcesConfigPanel;
     }
