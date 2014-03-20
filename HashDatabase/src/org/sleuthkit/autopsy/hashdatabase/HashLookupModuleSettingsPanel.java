@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -37,12 +40,13 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
  * Instances of this class provide a simplified UI for managing the hash sets
  * configuration.
  */
-public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel {
+public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel implements PropertyChangeListener  {
 
+    private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private HashDatabasesTableModel knownTableModel;
     private HashDatabasesTableModel knownBadTableModel;
 
-    public HashLookupModuleSettingsPanel() {
+    HashLookupModuleSettingsPanel() {
         knownTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN);
         knownBadTableModel = new HashDatabasesTableModel(HashDbManager.HashDb.KnownFilesType.KNOWN_BAD);
         initComponents();
@@ -52,8 +56,9 @@ public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel {
     private void customizeComponents() {
         customizeHashDbsTable(jScrollPane1, knownHashTable, knownTableModel);
         customizeHashDbsTable(jScrollPane2, knownBadHashTable, knownBadTableModel);
-        alwaysCalcHashesCheckbox.setSelected(HashDbManager.getInstance().getAlwaysCalculateHashes());
+        alwaysCalcHashesCheckbox.setSelected(hashDbManager.getAlwaysCalculateHashes());
         load();
+        hashDbManager.addPropertyChangeListener(this);
     }
 
     private void customizeHashDbsTable(JScrollPane scrollPane, JTable table, HashDatabasesTableModel tableModel) {
@@ -75,20 +80,38 @@ public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel {
     }
 
     @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        if (event.getPropertyName().equals(HashDbManager.SetEvt.DB_ADDED.name()) ||
+            event.getPropertyName().equals(HashDbManager.SetEvt.DB_DELETED.name())) {
+            load();
+        }
+    }
+    
+    @Override
     public IngestModuleSettings getSettings() {
-        HashDbManager hashDbManager = HashDbManager.getInstance();
+        List<String> enabledHashSets = new ArrayList<>();
         List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
+        for (HashDb db : knownFileHashSets) {
+            if (db.getSearchDuringIngest()) {
+                enabledHashSets.add(db.getHashSetName());
+            }
+        }
         List<HashDbManager.HashDb> knownBadFileHashSets = hashDbManager.getKnownBadFileHashSets();
-        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(), knownFileHashSets, knownBadFileHashSets);
+        for (HashDb db : knownBadFileHashSets) {
+            if (db.getSearchDuringIngest()) {
+                enabledHashSets.add(db.getHashSetName());
+            }
+        }
+        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(), enabledHashSets);
     }
 
-    public void load() {
+    void load() {
         knownTableModel.load();
         knownBadTableModel.load();
     }
 
-    public void store() {
-        HashDbManager.getInstance().save();
+    void store() {
+        hashDbManager.save();
     }
 
     private class HashDatabasesTableModel extends AbstractTableModel {
@@ -103,9 +126,9 @@ public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel {
 
         private void getHashDatabases() {
             if (HashDbManager.HashDb.KnownFilesType.KNOWN == hashDatabasesType) {
-                hashDatabases = HashDbManager.getInstance().getKnownFileHashSets();
+                hashDatabases = hashDbManager.getKnownFileHashSets();
             } else {
-                hashDatabases = HashDbManager.getInstance().getKnownBadFileHashSets();
+                hashDatabases = hashDbManager.getKnownBadFileHashSets();
             }
         }
 
@@ -251,7 +274,7 @@ public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void alwaysCalcHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCalcHashesCheckboxActionPerformed
-        HashDbManager.getInstance().setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
+        hashDbManager.setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
     }//GEN-LAST:event_alwaysCalcHashesCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;

@@ -2,8 +2,8 @@
  * Autopsy Forensic Browser
  *
  * Copyright 2014 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
+ * Contact: carrier <at> sleuthkit <dot> org *
+
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,54 +18,30 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
- * Ingest options for the hash lookup file ingest module.
+ * Settings for a hash lookup file ingest module instance.
  */
-// Note that this class is not yet used as intended.
 class HashLookupModuleSettings implements IngestModuleSettings {
 
-    // RJCTODO: These should not be handle objects, but names or files
+    private final HashSet<String> enabledHashSets = new HashSet<>();
     private boolean shouldCalculateHashes = true;
-    private ArrayList<HashDbManager.HashDb> knownFileHashSets;
-    private ArrayList<HashDbManager.HashDb> knownBadFileHashSets;
 
-    HashLookupModuleSettings() {
-        shouldCalculateHashes = true;
-        knownFileHashSets = new ArrayList<>();
-        knownBadFileHashSets = new ArrayList<>();
-    }
-
-    HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDbManager.HashDb> knownFileHashSets, List<HashDbManager.HashDb> knownBadFileHashSets) {
+    HashLookupModuleSettings(boolean shouldCalculateHashes, List<String> enabledHashSetNames) {
         this.shouldCalculateHashes = shouldCalculateHashes;
-        this.knownFileHashSets = new ArrayList<>(knownFileHashSets);
-        this.knownBadFileHashSets = new ArrayList<>(knownBadFileHashSets);
+        for (String hashSet : enabledHashSetNames) {
+            enabledHashSets.add(hashSet);
+        }
     }
 
     boolean shouldCalculateHashes() {
         return shouldCalculateHashes;
     }
-
-    void setShouldCalculateHashes(boolean shouldCalculateHashes) {
-        this.shouldCalculateHashes = shouldCalculateHashes;
-    }
-
-    List<HashDbManager.HashDb> getKnownFileHashSets() {
-        return new ArrayList<>(knownFileHashSets);
-    }
-
-    void setKnownFileHashSets(List<HashDbManager.HashDb> hashSets) {
-        knownFileHashSets = new ArrayList<>(hashSets);
-    }
-
-    List<HashDbManager.HashDb> getKnownBadFileHashSets() {
-        return new ArrayList<>(knownBadFileHashSets);
-    }
-
-    void setKnownBadFileHashSets(List<HashDbManager.HashDb> hashSets) {
-        knownBadFileHashSets = new ArrayList<>(hashSets);
+    
+    boolean isHashSetEnabled(String hashSetName) {
+        return enabledHashSets.contains(hashSetName);
     }
 }

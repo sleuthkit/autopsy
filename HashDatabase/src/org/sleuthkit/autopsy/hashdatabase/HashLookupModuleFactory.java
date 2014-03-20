@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -33,6 +35,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
+
+    private HashLookupModuleSettingsPanel moduleSettingsPanel = null;
 
     @Override
     public String getModuleDisplayName() {
@@ -55,7 +59,21 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleSettings getDefaultModuleSettings() {
-        return new HashLookupModuleSettings();
+        HashDbManager hashDbManager = HashDbManager.getInstance();
+        List<String> enabledHashSets = new ArrayList<>();
+        List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
+        for (HashDbManager.HashDb db : knownFileHashSets) {
+            if (db.getSearchDuringIngest()) {
+                enabledHashSets.add(db.getHashSetName());
+            }
+        }
+        List<HashDbManager.HashDb> knownBadFileHashSets = hashDbManager.getKnownBadFileHashSets();
+        for (HashDbManager.HashDb db : knownBadFileHashSets) {
+            if (db.getSearchDuringIngest()) {
+                enabledHashSets.add(db.getHashSetName());
+            }
+        }
+        return new HashLookupModuleSettings(hashDbManager.getAlwaysCalculateHashes(), enabledHashSets);
     }
 
     @Override
@@ -65,9 +83,11 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
-        HashLookupModuleSettingsPanel ingestOptionsPanel = new HashLookupModuleSettingsPanel();
-        ingestOptionsPanel.load();
-        return ingestOptionsPanel;
+        if (moduleSettingsPanel == null) {
+            moduleSettingsPanel = new HashLookupModuleSettingsPanel();
+        }
+        moduleSettingsPanel.load();
+        return moduleSettingsPanel;
     }
 
     @Override
@@ -77,9 +97,9 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
-        HashLookupSettingsPanel resourcesConfigPanel = new HashLookupSettingsPanel();
-        resourcesConfigPanel.load();
-        return resourcesConfigPanel;
+        HashLookupSettingsPanel globalSettingsPanel = new HashLookupSettingsPanel();
+        globalSettingsPanel.load();
+        return globalSettingsPanel;
     }
 
     @Override
@@ -88,7 +108,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
-        return new HashDbIngestModule();
+    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) { // RJCTODO: Add exception for invalid settings
+        return new HashDbIngestModule((HashLookupModuleSettings) settings);
     }
 }

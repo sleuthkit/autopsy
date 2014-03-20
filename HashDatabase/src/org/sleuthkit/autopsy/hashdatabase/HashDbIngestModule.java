@@ -48,39 +48,25 @@ import org.sleuthkit.datamodel.HashInfo;
 public class HashDbIngestModule extends IngestModuleAdapter implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
-    private IngestServices services;
-    private SleuthkitCase skCase;
-    private static int messageId = 0;
-    private int knownBadCount = 0;
-    private boolean calcHashesIsSet;
+    private static int messageId = 0; // RJCTODO: This is not thread safe
+    static long calctime = 0; // RJCTODO: This is not thread safe
+    static long lookuptime = 0; // RJCTODO: This is not thread safe
+    private final IngestServices services = IngestServices.getDefault();
+    private final Hash hasher = new Hash();
+    private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+    private final HashDbManager hashDbManager = HashDbManager.getInstance();
+    private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
-    static long calctime = 0;
-    static long lookuptime = 0;
-    private final Hash hasher = new Hash();
-
-    HashDbIngestModule() {
+    private int knownBadCount = 0;
+    
+    HashDbIngestModule(HashLookupModuleSettings settings) {
+        this.settings = settings;
     }
         
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
-        super.startUp(context);
-        services = IngestServices.getDefault();
-        skCase = Case.getCurrentCase().getSleuthkitCase();
-
-        HashDbManager hashDbManager = HashDbManager.getInstance();
-        getHashSetsUsableForIngest(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
-        getHashSetsUsableForIngest(hashDbManager.getKnownFileHashSets(), knownHashSets);        
-        calcHashesIsSet = hashDbManager.getAlwaysCalculateHashes();
-
-        if (knownHashSets.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageId,
-                                HashLookupModuleFactory.getModuleName(),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
-        }
+        getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         if (knownBadHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(++messageId,
                                 HashLookupModuleFactory.getModuleName(),
@@ -89,17 +75,27 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                                 NbBundle.getMessage(this.getClass(),
                                                     "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
         }        
+
+        getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
+        if (knownHashSets.isEmpty()) {
+            services.postMessage(IngestMessage.createWarningMessage(++messageId,
+                                HashLookupModuleFactory.getModuleName(),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
+                                NbBundle.getMessage(this.getClass(),
+                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+        }
     }
     
-    private void getHashSetsUsableForIngest(List<HashDb> hashDbs, List<HashDb> hashDbsForIngest) {
-        assert hashDbs != null;
-        assert hashDbsForIngest != null;
-        hashDbsForIngest.clear();
-        for (HashDb db : hashDbs) {
-            if (db.getSearchDuringIngest()) {
+    private void getEnabledHashSets(List<HashDb> hashSets, List<HashDb> enabledHashSets) {
+        assert hashSets != null;
+        assert enabledHashSets != null;
+        enabledHashSets.clear();
+        for (HashDb db : hashSets) {
+            if (settings.isHashSetEnabled(db.getHashSetName())) {
                 try {
                     if (db.hasIndex()) {
-                        hashDbsForIngest.add(db);
+                        enabledHashSets.add(db);
                     }
                 }
                 catch (TskCoreException ex) {
@@ -117,7 +113,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         }
         
         // bail out if we have no hashes set
-        if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (calcHashesIsSet == false)) {
+        if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (!settings.shouldCalculateHashes())) {
             return ProcessResult.OK;
         }
 
