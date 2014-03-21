@@ -37,7 +37,7 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.ptql.ProcessFinder;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.sleuthkit.autopsy.casemodule.LocalDisk;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -48,9 +48,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class PlatformUtil {
 
     private static String javaPath = null;
-    public static final String OS_NAME_UNKNOWN = "unknown";
-    public static final String OS_VERSION_UNKNOWN = "unknown";
-    public static final String OS_ARCH_UNKNOWN = "unknown";
+    public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
+    public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
+    public static final String OS_ARCH_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.archUnknown");
     private static volatile long pid = -1;
     private static volatile Sigar sigar = null;
     private static volatile MemoryMXBean memoryManager = null;
@@ -118,7 +118,10 @@ public class PlatformUtil {
         File jrePath = new File(getInstallPath() + File.separator + "jre");
 
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
-            System.out.println("Embedded jre directory found in: " + jrePath.getAbsolutePath());
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class,
+                                        "PlatformUtil.jrePath.jreDir.msg",
+                                        jrePath.getAbsolutePath()));
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
         } else {
             //else use system installed java in PATH env variable
@@ -126,7 +129,7 @@ public class PlatformUtil {
 
         }
 
-        System.out.println("Using java binary path: " + javaPath);
+        System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.usingJavaPath.msg", javaPath));
 
 
         return javaPath;
@@ -205,7 +208,7 @@ public class PlatformUtil {
      * @throws IOException exception thrown if extract the file failed for IO
      * reasons
      */
-    public static boolean extractResourceToUserConfigDir(final Class resourceClass, final String resourceFile) throws IOException {
+    public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFile) throws IOException {
         final File userDir = new File(getUserConfigDirectory());
 
         final File resourceFileF = new File(userDir + File.separator + resourceFile);
@@ -427,10 +430,10 @@ public class PlatformUtil {
             if (sigar != null) {
                 pid = sigar.getPid();
             } else {
-                System.out.println("Can't get PID, sigar not initialized");
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.sigarNotInit.msg"));
             }
         } catch (Exception e) {
-            System.out.println("Can't get PID," + e.toString());
+            System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.gen.msg", e.toString()));
         }
         return pid;
 
@@ -457,10 +460,11 @@ public class PlatformUtil {
                 ProcessFinder finder = new ProcessFinder(sigar);
                 jpid = finder.findSingleProcess(sigarQuery);
             } else {
-                System.out.println("Can't get PID of a java process, sigar not initialized");
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.sigarNotInit.msg"));
             }
         } catch (Exception e) {
-            System.out.println("Can't get PID for query: " + sigarQuery + ", " + e.toString());
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.gen.msg", sigarQuery, e.toString()));
         }
         return jpid;
 
@@ -487,10 +491,11 @@ public class PlatformUtil {
                 ProcessFinder finder = new ProcessFinder(sigar);
                 jpids = finder.find(sigarQuery);
             } else {
-                System.out.println("Can't get PIDs of a java process, sigar not initialized");
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.sigarNotInit"));
             }
         } catch (Exception e) {
-            System.out.println("Can't get PIDs for query: " + sigarQuery + ", " + e.toString());
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.gen.msg", sigarQuery, e.toString()));
         }
         return jpids;
 
@@ -509,10 +514,11 @@ public class PlatformUtil {
             if (sigar != null) {
                 sigar.kill(pid, 9);
             } else {
-                System.out.println("Can't kill process by pid, sigar not initialized.");
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.sigarNotInit.msg"));
             }
         } catch (Exception e) {
-            System.out.println("Can't kill process: " + pid + ", " + e.toString());
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.gen.msg", pid, e.toString()));
         }
 
     }
@@ -532,12 +538,12 @@ public class PlatformUtil {
             }
 
             if (sigar == null || pid == -1) {
-                System.out.println("Can't get virt mem used, sigar not initialized. ");
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.sigarNotInit.msg"));
                 return -1;
             }
             virtMem = sigar.getProcMem(pid).getSize();
         } catch (Exception e) {
-            System.out.println("Can't get virt mem used, " + e.toString());
+            System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.gen.msg", e.toString()));
         }
 
         return virtMem;
@@ -557,9 +563,9 @@ public class PlatformUtil {
         final MemoryUsage heap = memoryManager.getHeapMemoryUsage();
         final MemoryUsage nonHeap = memoryManager.getNonHeapMemoryUsage();
 
-        return "JVM heap usage: " + heap.toString() + ", JVM non-heap usage: " + nonHeap.toString();
-
-
+        return NbBundle.getMessage(PlatformUtil.class,
+                                   "PlatformUtil.getJvmMemInfo.usageText",
+                                   heap.toString(), nonHeap.toString());
     }
 
     /**
@@ -572,9 +578,9 @@ public class PlatformUtil {
         final long maxMemory = runTime.maxMemory();
         final long totalMemory = runTime.totalMemory();
         final long freeMemory = runTime.freeMemory();
-        return "Physical memory usage (max, total, free): "
-                + Long.toString(maxMemory) + ", " + Long.toString(totalMemory)
-                + ", " + Long.toString(freeMemory);
+        return NbBundle.getMessage(PlatformUtil.class,
+                                   "PlatformUtil.getPhysicalMemInfo.usageText",
+                                   Long.toString(maxMemory), Long.toString(totalMemory), Long.toString(freeMemory));
     }
 
     /**
@@ -583,10 +589,14 @@ public class PlatformUtil {
      * @return formatted string with all memory usage info
      */
     public static String getAllMemUsageInfo() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(PlatformUtil.getPhysicalMemInfo()).append("\n");
-        sb.append(PlatformUtil.getJvmMemInfo()).append("\n");
-        sb.append("Process Virtual Memory: ").append(PlatformUtil.getProcessVirtualMemoryUsed());
-        return sb.toString();
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(PlatformUtil.getPhysicalMemInfo()).append("\n");
+//        sb.append(PlatformUtil.getJvmMemInfo()).append("\n");
+//        sb.append("Process Virtual Memory: ").append(PlatformUtil.getProcessVirtualMemoryUsed());
+//        return sb.toString();
+        return NbBundle.getMessage(PlatformUtil.class,
+                                   "PlatformUtil.getAllMemUsageInfo.usageText",
+                                   PlatformUtil.getPhysicalMemInfo(), PlatformUtil.getJvmMemInfo(),
+                                   PlatformUtil.getProcessVirtualMemoryUsed());
     }
 }

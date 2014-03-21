@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Calendar;
 import java.util.Locale;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
@@ -40,7 +40,6 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
     RecentFilesFilterNode(SleuthkitCase skCase, RecentFilesFilter filter, Calendar lastDay) {
         super(Children.create(new RecentFilesFilterChildren(filter, skCase, lastDay), true), Lookups.singleton(filter.getDisplayName()));
         super.setName(filter.getName());
-        //super.setDisplayName(filter.getDisplayName());
         this.skCase = skCase;
         this.filter = filter;
         Calendar prevDay = (Calendar) lastDay.clone();
@@ -50,10 +49,9 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
                 + prevDay.get(Calendar.YEAR);
         this.setShortDescription(tooltip);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
-        
+
         //get count of children without preloading all children nodes
         final long count = new RecentFilesFilterChildren(filter, skCase, lastDay).calculateItems();
-        //final long count = getChildren().getNodesCount(true);
         super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
     }
 
@@ -71,9 +69,10 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Filter Type",
-                "Filter Type",
-                "no description",
+        ss.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.name"),
+                NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.displayName"),
+                NbBundle.getMessage(this.getClass(), "RecentFilesFilterNode.createSheet.filterType.desc"),
                 filter.getDisplayName()));
 
         return s;

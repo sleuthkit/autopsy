@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.nio.charset.Charset;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
@@ -59,7 +61,8 @@ class AbstractFileChunk {
             //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);
         } catch (Exception ingEx) {
             success = false;
-            throw new IngesterException("Problem ingesting file string chunk: " + parent.getSourceFile().getId() + ", chunk: " + chunkID, ingEx);
+            throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
+                                                            parent.getSourceFile().getId(), chunkID), ingEx);
         }
         return success;
     }

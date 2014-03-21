@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -58,7 +60,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     private IngestServices services;
-    final public static String MODULE_NAME = "Exif Parser";
+    final public static String MODULE_NAME = NbBundle.getMessage(ExifParserFileIngestModule.class,
+                                                                 "ExifParserFileIngestModule.moduleName.text");
     final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
@@ -217,12 +220,12 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
 
     @Override
     public String getName() {
-        return "Exif Image Parser";
+        return NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.getName.text");
     }
 
     @Override
     public String getDescription() {
-        return "Ingests JPEG files and retrieves their EXIF metadata.";
+        return NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.getDesc.text");
     }
 
     @Override

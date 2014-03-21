@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -72,7 +73,7 @@ class DataSourceTask<T extends IngestModuleAbstract> {
 
     @Override
     public String toString() {
-        return "ScheduledTask{" + "input=" + input + ", modules=" + modules + '}';
+        return NbBundle.getMessage(this.getClass(), "DataSourceTask.toString.text", input, modules);
     }
 
     /**
@@ -91,6 +92,7 @@ class DataSourceTask<T extends IngestModuleAbstract> {
         if (getClass() != obj.getClass()) {
             return false;
         }
+        @SuppressWarnings("unchecked")
         final DataSourceTask<T> other = (DataSourceTask<T>) obj;
         if (this.input != other.input && (this.input == null || !this.input.equals(other.input))) {
             return false;

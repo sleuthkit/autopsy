@@ -180,7 +180,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return isLeafDirectory(dn);
         }
 
-        private Boolean visitDeep(AbstractAbstractFileNode node) {
+        private Boolean visitDeep(AbstractAbstractFileNode<? extends AbstractFile> node) {
             //is a leaf if has no children, or children are files not dirs
             boolean hasChildren = node.hasContentChildren();
             if (!hasChildren) {

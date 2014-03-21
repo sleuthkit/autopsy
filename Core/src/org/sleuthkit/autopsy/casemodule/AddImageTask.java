@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -97,12 +99,14 @@ import org.sleuthkit.datamodel.TskException;
                         String currDir = process.currentDirectory();
                         if (currDir != null) {
                             if (!currDir.isEmpty() ) {
-                                progressMonitor.setProgressText("Adding: " + currDir);
+                                progressMonitor.setProgressText(
+                                        NbBundle.getMessage(this.getClass(), "AddImageTask.run.progress.adding",
+                                                            currDir));
                             }
                         }
                         // this sleep here prevents the UI from locking up 
                         // due to too frequent updates to the progressMonitor above
-                        Thread.sleep(2 * 1000);
+                        Thread.sleep(500);
                     }
                 } catch (InterruptedException ie) {
                     // nothing to do, thread was interrupted externally  
@@ -298,7 +302,7 @@ import org.sleuthkit.datamodel.TskException;
                 logger.log(Level.INFO, "interrupt() add image process");
                 addImageProcess.stop();  //it might take time to truly stop processing and writing to db
             } catch (TskCoreException ex) {
-                throw new Exception("Error stopping add-image process.", ex);
+                throw new Exception(NbBundle.getMessage(this.getClass(), "AddImageTask.interrupt.exception.msg"), ex);
             }
         }
 

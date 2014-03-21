@@ -68,7 +68,7 @@ public class XMLUtil {
      * For example usages, please see KeywordSearchListsXML, HashDbXML, or IngestModuleLoader.
      * 
      */
-    public static boolean xmlIsValid(DOMSource xmlfile, Class clazz, String schemaFile) {
+    public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
       try{
         PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile);
         File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
@@ -103,7 +103,7 @@ public class XMLUtil {
      * For example usages, please see KeywordSearchListsXML, HashDbXML, or IngestModuleLoader.
      * 
      */
-    public static boolean xmlIsValid(Document doc, Class clazz, String type){
+    public static <T> boolean xmlIsValid(Document doc, Class<T> clazz, String type){
            DOMSource dms = new DOMSource(doc);
            return xmlIsValid(dms, clazz, type);
     }
@@ -118,7 +118,7 @@ public class XMLUtil {
      * @param xsdPath the full path to the file to validate against
      * 
      */
-    public static Document loadDoc(Class clazz, String xmlPath, String xsdPath) {
+    public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
         DocumentBuilderFactory builderFactory =
                 DocumentBuilderFactory.newInstance();
         Document ret = null;
@@ -154,7 +154,7 @@ public class XMLUtil {
      * @param doc the document to save
      * 
      */
-    public static  boolean saveDoc(Class clazz, String xmlPath, String encoding, final Document doc) {
+    public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
         xf.setAttribute("indent-number", new Integer(1));
         boolean success = false;

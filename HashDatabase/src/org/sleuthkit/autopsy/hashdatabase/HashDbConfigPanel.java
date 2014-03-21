@@ -118,8 +118,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         indexButton.setEnabled(false);            
 
         // Update ingest options.
-        searchDuringIngestCheckbox.setSelected(false);
-        searchDuringIngestCheckbox.setEnabled(false);
         sendIngestMessagesCheckBox.setSelected(false);
         sendIngestMessagesCheckBox.setEnabled(false);
         optionsLabel.setEnabled(false);
@@ -209,8 +207,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         }
 
         // Update ingest option components.        
-        searchDuringIngestCheckbox.setSelected(db.getSearchDuringIngest());
-        searchDuringIngestCheckbox.setEnabled(!ingestIsRunning);
         sendIngestMessagesCheckBox.setSelected(db.getSendIngestMessages());
         sendIngestMessagesCheckBox.setEnabled(!ingestIsRunning && db.getSearchDuringIngest() && db.getKnownFilesType().equals(KnownFilesType.KNOWN_BAD));
         optionsLabel.setEnabled(!ingestIsRunning);
@@ -466,7 +462,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         hashDbIndexStatusLabel = new javax.swing.JLabel();
         indexLabel = new javax.swing.JLabel();
         indexButton = new javax.swing.JButton();
-        searchDuringIngestCheckbox = new javax.swing.JCheckBox();
         sendIngestMessagesCheckBox = new javax.swing.JCheckBox();
         informationLabel = new javax.swing.JLabel();
         optionsLabel = new javax.swing.JLabel();
@@ -556,13 +551,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchDuringIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.searchDuringIngestCheckbox.text")); // NOI18N
-        searchDuringIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchDuringIngestCheckboxActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(sendIngestMessagesCheckBox, org.openide.util.NbBundle.getMessage(HashDbConfigPanel.class, "HashDbConfigPanel.sendIngestMessagesCheckBox.text")); // NOI18N
         sendIngestMessagesCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -598,44 +586,44 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(informationLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(informationSeparator))
-                            .addComponent(ingestWarningLabel)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(locationLabel)
-                                            .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(typeLabel)
-                                            .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(indexPathLabelLabel))
+                                        .addComponent(informationLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(informationSeparator))
+                                    .addComponent(ingestWarningLabel)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                         .addGap(10, 10, 10)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
-                                            .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(locationLabel)
+                                                    .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(typeLabel)
+                                                    .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(indexPathLabelLabel))
+                                                .addGap(10, 10, 10)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+                                                    .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                    .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                                             .addGroup(layout.createSequentialGroup()
                                                 .addComponent(nameLabel)
                                                 .addGap(53, 53, 53)
-                                                .addComponent(hashDbNameLabel))
-                                            .addComponent(searchDuringIngestCheckbox)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addGap(21, 21, 21)
-                                                .addComponent(sendIngestMessagesCheckBox)))
-                                        .addGap(0, 0, Short.MAX_VALUE))))
+                                                .addComponent(hashDbNameLabel)
+                                                .addGap(0, 0, Short.MAX_VALUE))))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(optionsLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))))
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(optionsLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGap(23, 23, 23)
+                                .addComponent(sendIngestMessagesCheckBox)
+                                .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(hashDatabasesLabel)
@@ -688,8 +676,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
                             .addComponent(optionsLabel)
                             .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
-                        .addComponent(searchDuringIngestCheckbox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(sendIngestMessagesCheckBox)
                         .addGap(18, 18, 18)
                         .addComponent(ingestWarningLabel)
@@ -760,17 +746,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
         }                
     }//GEN-LAST:event_hashSetTableKeyPressed
 
-    private void searchDuringIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchDuringIngestCheckboxActionPerformed
-        HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
-        if (hashDb != null) {
-            hashDb.setSearchDuringIngest(searchDuringIngestCheckbox.isSelected());
-            if (!searchDuringIngestCheckbox.isSelected()) {
-                sendIngestMessagesCheckBox.setSelected(false);
-            }
-            hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());            
-        }
-    }//GEN-LAST:event_searchDuringIngestCheckboxActionPerformed
-
     private void sendIngestMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendIngestMessagesCheckBoxActionPerformed
         HashDb hashDb = ((HashSetTable)hashSetTable).getSelection();
         if (hashDb != null) {
@@ -820,7 +795,6 @@ public final class HashDbConfigPanel extends javax.swing.JPanel implements Optio
     private javax.swing.JLabel nameLabel;
     private javax.swing.JLabel optionsLabel;
     private javax.swing.JSeparator optionsSeparator;
-    private javax.swing.JCheckBox searchDuringIngestCheckbox;
     private javax.swing.JCheckBox sendIngestMessagesCheckBox;
     private javax.swing.JLabel typeLabel;
     // End of variables declaration//GEN-END:variables

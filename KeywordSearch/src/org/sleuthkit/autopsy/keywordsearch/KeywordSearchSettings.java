@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -25,115 +23,134 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
-
 //This file contains constants and settings for KeywordSearch
 class KeywordSearchSettings {
-    public static final String MODULE_NAME = "KeywordSearch";
-    static final String PROPERTIES_OPTIONS = MODULE_NAME+"_Options";
-    static final String PROPERTIES_NSRL = MODULE_NAME+"_NSRL";
-    static final String PROPERTIES_SCRIPTS = MODULE_NAME+"_Scripts";
+
+    public static final String MODULE_NAME = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.moduleName.text");
+    static final String PROPERTIES_OPTIONS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.properties_options.text", MODULE_NAME);
+    static final String PROPERTIES_NSRL = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesNSRL.text", MODULE_NAME);
+    static final String PROPERTIES_SCRIPTS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesScripts.text", MODULE_NAME);
+    static final String SHOW_SNIPPETS = "showSnippets";
+    static final boolean DEFAULT_SHOW_SNIPPETS = true;
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
     private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;
-    private static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<StringExtract.StringExtractUnicodeTable.SCRIPT>();
-    private static Map<String,String> stringExtractOptions = new HashMap<String,String>();
-    
+    private static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<>();
+    private static Map<String, String> stringExtractOptions = new HashMap<>();
 
-           
     /**
-     * Gets the update Frequency from  KeywordSearch_Options.properties
+     * Gets the update Frequency from KeywordSearch_Options.properties
+     *
      * @return KeywordSearchIngestModule's update frequency
-     */ 
-    static UpdateFrequency getUpdateFrequency(){
-        if(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null){
+     */
+    static UpdateFrequency getUpdateFrequency() {
+        if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null) {
             return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency"));
         }
         //if it failed, return the default/last known value
         logger.log(Level.WARNING, "Could not read property for UpdateFrequency, returning backup value.");
         return UpdateFrequency.DEFAULT;
     }
-    
-    
+
     /**
      * Sets the update frequency and writes to KeywordSearch_Options.properties
+     *
      * @param freq Sets KeywordSearchIngestModule to this value.
      */
-    static void setUpdateFrequency(UpdateFrequency freq){
+    static void setUpdateFrequency(UpdateFrequency freq) {
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency", freq.name());
         UpdateFreq = freq;
     }
-    
+
     /**
-     * Sets whether or not to skip adding known good files to the search during index.
-     * @param skip 
+     * Sets whether or not to skip adding known good files to the search during
+     * index.
+     *
+     * @param skip
      */
     static void setSkipKnown(boolean skip) {
         ModuleSettings.setConfigSetting(PROPERTIES_NSRL, "SkipKnown", Boolean.toString(skip));
         skipKnown = skip;
     }
-    
-   /**
-     * Gets the setting for whether or not this ingest is skipping adding known good files to the index.
+
+    /**
+     * Gets the setting for whether or not this ingest is skipping adding known
+     * good files to the index.
+     *
      * @return skip setting
      */
     static boolean getSkipKnown() {
-       if(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null){
+        if (ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null) {
             return Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown"));
         }
-       //if it fails, return the default/last known value
-       logger.log(Level.WARNING, "Could not read property for SkipKnown, returning backup value.");
-       return skipKnown;
+        //if it fails, return the default/last known value
+        logger.log(Level.WARNING, "Could not read property for SkipKnown, returning backup value.");
+        return skipKnown;
     }
-   
 
-    
     /**
      * Sets what scripts to extract during ingest
+     *
      * @param scripts List of scripts to extract
      */
     static void setStringExtractScripts(List<StringExtract.StringExtractUnicodeTable.SCRIPT> scripts) {
         stringExtractScripts.clear();
         stringExtractScripts.addAll(scripts);
-        
+
         //Disabling scripts that weren't selected
-        for(String s : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).keySet()){
-            if (! scripts.contains(StringExtract.StringExtractUnicodeTable.SCRIPT.valueOf(s))){
+        for (String s : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).keySet()) {
+            if (!scripts.contains(StringExtract.StringExtractUnicodeTable.SCRIPT.valueOf(s))) {
                 ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s, "false");
             }
         }
         //Writing and enabling selected scripts
-        for(StringExtract.StringExtractUnicodeTable.SCRIPT s : stringExtractScripts){
+        for (StringExtract.StringExtractUnicodeTable.SCRIPT s : stringExtractScripts) {
             ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s.name(), "true");
         }
 
     }
-    
-   /**
+
+    /**
      * Set / override string extract option
+     *
      * @param key option name to set
      * @param val option value to set
      */
-     static void setStringExtractOption(String key, String val) {
+    static void setStringExtractOption(String key, String val) {
         stringExtractOptions.put(key, val);
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, key, val);
     }
-     
-     /**
+
+    static void setShowSnippets(boolean showSnippets) {
+        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS, (showSnippets ? "true" : "false"));
+    }
+
+    static boolean getShowSnippets() {
+        if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, SHOW_SNIPPETS)) {
+            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS).equals("true");
+        } else {
+            return DEFAULT_SHOW_SNIPPETS;
+        }
+    }
+
+    /**
      * gets the currently set scripts to use
      *
      * @return the list of currently used script
      */
-   static  List<SCRIPT> getStringExtractScripts(){
-        if(ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS) != null && !ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).isEmpty()){
-            List<SCRIPT> scripts = new ArrayList<SCRIPT>();
-            for(Map.Entry<String,String> kvp : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).entrySet()){
-                if(kvp.getValue().equals("true")){
+    static List<SCRIPT> getStringExtractScripts() {
+        if (ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS) != null && !ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).isEmpty()) {
+            List<SCRIPT> scripts = new ArrayList<>();
+            for (Map.Entry<String, String> kvp : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).entrySet()) {
+                if (kvp.getValue().equals("true")) {
                     scripts.add(SCRIPT.valueOf(kvp.getKey()));
                 }
             }
@@ -141,74 +158,71 @@ class KeywordSearchSettings {
         }
         //if it failed, try to return the built-in list maintained by the singleton.
         logger.log(Level.WARNING, "Could not read properties for extracting scripts, returning backup values.");
-        return new ArrayList<SCRIPT>(stringExtractScripts);
+        return new ArrayList<>(stringExtractScripts);
     }
-    
- 
-    
+
     /**
      * get string extract option for the key
+     *
      * @param key option name
      * @return option string value, or empty string if the option is not set
      */
     static String getStringExtractOption(String key) {
-        if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key) != null){
+        if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key) != null) {
             return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key);
-        }
-        else {
-            logger.log(Level.WARNING, "Could not read property for key "+ key + ", returning backup value.");
+        } else {
+            logger.log(Level.WARNING, "Could not read property for key {0}, returning backup value.", key);
             return stringExtractOptions.get(key);
         }
     }
-    
+
     /**
      * get the map of string extract options.
+     *
      * @return Map<String,String> of extract options.
      */
-    static Map<String,String> getStringExtractOptions(){
-        Map<String,String> settings = ModuleSettings.getConfigSettings(PROPERTIES_OPTIONS);
-        if(settings == null){
-            Map<String,String> settingsv2 = new HashMap<String,String>();
-            logger.log(Level.WARNING, "Could not read properties for " + PROPERTIES_OPTIONS + ".properties, returning backup values");
+    static Map<String, String> getStringExtractOptions() {
+        Map<String, String> settings = ModuleSettings.getConfigSettings(PROPERTIES_OPTIONS);
+        if (settings == null) {
+            Map<String, String> settingsv2 = new HashMap<>();
+            logger.log(Level.WARNING, "Could not read properties for {0}.properties, returning backup values", PROPERTIES_OPTIONS);
             settingsv2.putAll(stringExtractOptions);
             return settingsv2;
-        }
-        else {
+        } else {
             return settings;
         }
     }
+
     /**
-     * Sets the default values of the KeywordSearch properties files if none already exist.
+     * Sets the default values of the KeywordSearch properties files if none
+     * already exist.
      */
-    static void setDefaults(){
+    static void setDefaults() {
         logger.log(Level.INFO, "Detecting default settings.");
-             //setting default NSRL
-     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")){
-         logger.log(Level.INFO, "No configuration for NSRL found, generating default...");
-          KeywordSearchSettings.setSkipKnown(true);
-       }
-     //setting default Update Frequency
-     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")){
-         logger.log(Level.INFO, "No configuration for Update Frequency found, generating default...");
-         KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
-      }
-     //setting default Extract UTF8
-     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString())){
-         logger.log(Level.INFO, "No configuration for UTF8 found, generating default...");
-         KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
-         }
+        //setting default NSRL
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) {
+            logger.log(Level.INFO, "No configuration for NSRL found, generating default...");
+            KeywordSearchSettings.setSkipKnown(true);
+        }
+        //setting default Update Frequency
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) {
+            logger.log(Level.INFO, "No configuration for Update Frequency found, generating default...");
+            KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
+        }
+        //setting default Extract UTF8
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString())) {
+            logger.log(Level.INFO, "No configuration for UTF8 found, generating default...");
+            KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+        }
         //setting default Extract UTF16
-     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString())){
-         logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults...");
-         KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
-       }
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString())) {
+            logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults...");
+            KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+        }
         //setting default Latin-1 Script
-     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())){
-         logger.log(Level.INFO, "No configuration for Scripts found, generating defaults...");
-         ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
+            logger.log(Level.INFO, "No configuration for Scripts found, generating defaults...");
+            ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
         }
     }
-    
-       
-    
 }

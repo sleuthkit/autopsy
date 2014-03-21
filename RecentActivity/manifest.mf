@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 OpenIDE-Module: org.sleuthkit.autopsy.recentactivity/5
-OpenIDE-Module-Implementation-Version: 9
+OpenIDE-Module-Implementation-Version: 10
 OpenIDE-Module-Layer: org/sleuthkit/autopsy/recentactivity/layer.xml
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/recentactivity/Bundle.properties
 OpenIDE-Module-Requires: 

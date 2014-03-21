@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.Lookup;
 import org.openide.windows.Mode;
@@ -37,6 +39,10 @@ import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 public class CoreComponentControl {
 
     private static final Logger logger = Logger.getLogger(CoreComponentControl.class.getName());
+    private static final String DIRECTORY_TREE = NbBundle.getMessage(CoreComponentControl.class,
+                                                                     "CoreComponentControl.CTL_DirectoryTreeTopComponent");
+    private static final String FAVORITES = NbBundle.getMessage(CoreComponentControl.class,
+                                                                "CoreComponentControl.CTL_FavoritesTopComponent");
 
     /**
      * Opens all TopComponent windows that are needed ({@link DataExplorer}, {@link DataResult}, and
@@ -83,6 +89,7 @@ public class CoreComponentControl {
         Set<? extends Mode> modes = wm.getModes();
         Iterator<? extends Mode> iter = wm.getModes().iterator();
 
+
         TopComponent directoryTree = null;
         TopComponent favorites = null;
         String tcName = "";
@@ -94,16 +101,13 @@ public class CoreComponentControl {
                     logger.log(Level.INFO, "tcName was null");
                     tcName = "";
                 }
-                switch (tcName) {
-                    case "Directory Tree":
-                        directoryTree = tc;
-                        break;
-                    case "Favorites":
-                        favorites = tc;
-                        break;
-                    default:
-                        tc.close();
-                        break;
+                // switch requires constant strings, so converted to if/else.
+                if (DIRECTORY_TREE.equals(tcName)) {
+                    directoryTree = tc;
+                } else if (FAVORITES.equals(tcName)) {
+                    favorites = tc;
+                } else {
+                    tc.close();
                 }
             }
         }

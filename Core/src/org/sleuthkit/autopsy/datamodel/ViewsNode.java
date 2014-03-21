@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -30,15 +31,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class ViewsNode extends DisplayableItemNode {
 
-    public static final String NAME = "Views";
+    public static final String NAME = NbBundle.getMessage(ViewsNode.class, "ViewsNode.name.text");
 
     public ViewsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(
-                new FileTypeExtensionFilters(sleuthkitCase), 
-                new RecentFiles(sleuthkitCase), 
+                new FileTypeExtensionFilters(sleuthkitCase),
+                new RecentFiles(sleuthkitCase),
                 new DeletedContent(sleuthkitCase),
-                new FileSize(sleuthkitCase)
-                )), 
+                new FileSize(sleuthkitCase))),
                 Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
@@ -49,7 +49,7 @@ public class ViewsNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -64,9 +64,9 @@ public class ViewsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "ViewsNode.createSheet.name.desc"),
                 NAME));
         return s;
     }
