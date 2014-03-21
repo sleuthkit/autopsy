@@ -59,7 +59,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
             if (module.hasModuleSettingsPanel()) {
                 IngestModuleSettings settings = module.getModuleSettingsPanel().getSettings();
-                moduleTemplate.setIngestOptions(settings);
+                moduleTemplate.setModuleSettings(settings);
             }
             moduleTemplates.add(moduleTemplate);
         }
@@ -299,14 +299,11 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
-
-            IngestModuleFactory moduleFactory = moduleTemplate.getIngestModuleFactory();
-            if (moduleFactory.hasModuleSettingsPanel()) {
-                moduleSettingsPanel = moduleFactory.getModuleSettingsPanel(moduleTemplate.getIngestOptions());
+            if (moduleTemplate.hasModuleSettingsPanel()) {
+                moduleSettingsPanel = moduleTemplate.getModuleSettingsPanel();
             }
-
-            if (moduleFactory.hasGlobalSettingsPanel()) {
-                globalSettingsPanel = moduleFactory.getGlobalSettingsPanel();
+            if (moduleTemplate.hasGlobalSettingsPanel()) {
+                globalSettingsPanel = moduleTemplate.getGlobalSettingsPanel();
             }
         }
 
@@ -315,11 +312,11 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         }
 
         String getName() {
-            return moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
+            return moduleTemplate.getModuleName();
         }
 
         String getDescription() {
-            return moduleTemplate.getIngestModuleFactory().getModuleDescription();
+            return moduleTemplate.getModuleDescription();
         }
 
         void setEnabled(boolean enabled) {
@@ -331,7 +328,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         }
 
         boolean hasModuleSettingsPanel() {
-            return moduleTemplate.getIngestModuleFactory().hasModuleSettingsPanel();
+            return moduleTemplate.hasModuleSettingsPanel();
         }
 
         IngestModuleSettingsPanel getModuleSettingsPanel() {
@@ -339,7 +336,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         }
 
         boolean hasGlobalSettingsPanel() {
-            return moduleTemplate.getIngestModuleFactory().hasGlobalSettingsPanel();
+            return moduleTemplate.hasGlobalSettingsPanel();
         }
 
         IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {

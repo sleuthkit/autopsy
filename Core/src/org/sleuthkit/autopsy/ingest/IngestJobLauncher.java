@@ -87,11 +87,10 @@ public final class IngestJobLauncher {
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             // RJCTODO: Make sure there is a story in JIRA for this.
             // NOTE: In the future, this code will be modified to get the 
-            // resources configuration and ingest job options for each module 
-            // for the current context; for now just get the defaults.
-            IngestModuleSettings ingestOptions = moduleFactory.getDefaultModuleSettings();
-            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, ingestOptions);
-            String moduleName = moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
+            // module settings for the current context, if available, from 
+            // storage; for now always use the defaults.
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultModuleSettings());
+            String moduleName = moduleTemplate.getModuleName();
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);
             } else if (disabledModuleNames.contains(moduleName)) {
@@ -137,7 +136,7 @@ public final class IngestJobLauncher {
         HashSet<String> enabledModuleNames = new HashSet<>();
         HashSet<String> disabledModuleNames = new HashSet<>();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            String moduleName = moduleTemplate.getIngestModuleFactory().getModuleDisplayName();
+            String moduleName = moduleTemplate.getModuleName();
             if (moduleTemplate.isEnabled()) {
                 enabledModuleNames.add(moduleName);
             } else {

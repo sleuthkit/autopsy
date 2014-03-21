@@ -82,11 +82,11 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
+    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
         if (moduleSettingsPanel == null) {
             moduleSettingsPanel = new HashLookupModuleSettingsPanel();
         }
-        moduleSettingsPanel.load();
+        moduleSettingsPanel.load(); // RJCTODO: Use settings, will be default from file, so ok...
         return moduleSettingsPanel;
     }
 
@@ -108,7 +108,11 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) { // RJCTODO: Add exception for invalid settings
+    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
+        assert settings instanceof HashLookupModuleSettings;
+        if (!(settings instanceof HashLookupModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof HashLookupModuleSettings");
+        }
         return new HashDbIngestModule((HashLookupModuleSettings) settings);
     }
 }

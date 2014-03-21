@@ -164,15 +164,13 @@ final class IngestJob {
             // ingest pipelines configuration.
             Map<String, DataSourceIngestModuleDecorator> modulesByClass = new HashMap<>();
             for (IngestModuleTemplate template : moduleTemplates) {
-                IngestModuleFactory factory = template.getIngestModuleFactory();
-                if (factory.isDataSourceIngestModuleFactory()) {
-                    IngestModuleSettings ingestOptions = template.getIngestOptions();
-                    DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(factory.createDataSourceIngestModule(ingestOptions), factory.getModuleDisplayName());
-                    IngestJobContext context = new IngestJobContext(task, factory);
+                if (template.isDataSourceIngestModuleTemplate()) {
+                    DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
+                    IngestJobContext context = new IngestJobContext(task);
                     try {
                         module.startUp(context);
                         modulesByClass.put(module.getClassName(), module);
-                        IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
+                        IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), module.getDisplayName());
                     } catch (Exception ex) {
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     }
@@ -291,15 +289,13 @@ final class IngestJob {
             // ingest pipelines configuration.
             Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
             for (IngestModuleTemplate template : moduleTemplates) {
-                IngestModuleFactory factory = template.getIngestModuleFactory();
-                if (factory.isFileIngestModuleFactory()) {
-                    IngestModuleSettings ingestOptions = template.getIngestOptions();
-                    FileIngestModuleDecorator module = new FileIngestModuleDecorator(factory.createFileIngestModule(ingestOptions), factory.getModuleDisplayName());
-                    IngestJobContext context = new IngestJobContext(task, factory);
+                if (template.isFileIngestModuleTemplate()) {
+                    FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
+                    IngestJobContext context = new IngestJobContext(task);
                     try {
                         module.startUp(context);
                         modulesByClass.put(module.getClassName(), module);
-                        IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), factory.getModuleDisplayName());
+                        IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), template.getModuleName());
                     } catch (Exception ex) {
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     }

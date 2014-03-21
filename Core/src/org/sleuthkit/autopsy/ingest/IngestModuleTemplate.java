@@ -19,30 +19,66 @@
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * Combines an ingest module factory with ingest options and an enabled flag to
- * create a template for creating fully configured ingest modules.
+ * Combines an ingest module factory with ingest module settings and an enabled
+ * flag to create a template for creating fully configured ingest modules.
  */
 final class IngestModuleTemplate {
 
     private final IngestModuleFactory moduleFactory;
-    private IngestModuleSettings ingestOptions = null;
-    boolean enabled = true;
+    private IngestModuleSettings settings = null;
+    private boolean enabled = true;
 
-    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleSettings ingestOptions) {
+    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleSettings settings) {
         this.moduleFactory = moduleFactory;
-        this.ingestOptions = ingestOptions;
+        this.settings = settings;
     }
 
-    IngestModuleFactory getIngestModuleFactory() {
-        return moduleFactory;
+    String getModuleName() {
+        return moduleFactory.getModuleDisplayName();
     }
 
-    IngestModuleSettings getIngestOptions() {
-        return ingestOptions;
+    String getModuleDescription() {
+        return moduleFactory.getModuleDescription();
     }
 
-    void setIngestOptions(IngestModuleSettings ingestOptions) {
-        this.ingestOptions = ingestOptions;
+    IngestModuleSettings getModuleSettings() {
+        return settings;
+    }
+
+    void setModuleSettings(IngestModuleSettings settings) {
+        this.settings = settings;
+    }
+        
+    boolean hasModuleSettingsPanel() {
+        return moduleFactory.hasModuleSettingsPanel();
+    }
+
+    IngestModuleSettingsPanel getModuleSettingsPanel() {
+        return moduleFactory.getModuleSettingsPanel(settings);
+    }
+
+    boolean hasGlobalSettingsPanel() {
+        return moduleFactory.hasGlobalSettingsPanel();
+    }
+
+    IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+        return moduleFactory.getGlobalSettingsPanel();
+    }
+
+    boolean isDataSourceIngestModuleTemplate() {
+        return moduleFactory.isDataSourceIngestModuleFactory();
+    }
+
+    DataSourceIngestModule createDataSourceIngestModule() {
+        return moduleFactory.createDataSourceIngestModule(settings);
+    }
+
+    boolean isFileIngestModuleTemplate() {
+        return moduleFactory.isFileIngestModuleFactory();
+    }
+
+    FileIngestModule createFileIngestModule() {
+        return moduleFactory.createFileIngestModule(settings);
     }
 
     void setEnabled(boolean enabled) {

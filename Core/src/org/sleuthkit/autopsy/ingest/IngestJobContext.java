@@ -29,7 +29,7 @@ public final class IngestJobContext {
 
     private final IngestJob ingestJob;
 
-    IngestJobContext(IngestJob ingestJob, IngestModuleFactory moduleFactory) {
+    IngestJobContext(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
     }
 
