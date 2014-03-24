@@ -32,6 +32,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -77,7 +79,8 @@ public class IngestManager {
     //module loader
     private IngestModuleLoader moduleLoader = null;
     //property file name id for the module
-    public final static String MODULE_PROPERTIES = "ingest";
+    public final static String MODULE_PROPERTIES = NbBundle.getMessage(IngestManager.class,
+                                                                       "IngestManager.moduleProperties.text");
     private volatile int messageID = 0;
 
     /**
@@ -212,7 +215,9 @@ public class IngestManager {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
     
@@ -227,7 +232,9 @@ public class IngestManager {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -242,7 +249,9 @@ public class IngestManager {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -256,7 +265,9 @@ public class IngestManager {
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to Ingest Manager updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -332,7 +343,7 @@ public class IngestManager {
      * @param pipelineContext ingest context used to ingest parent of the file
      * to be scheduled
      */
-    void scheduleFile(AbstractFile file, PipelineContext pipelineContext) {
+    void scheduleFile(AbstractFile file, PipelineContext<IngestModuleAbstractFile> pipelineContext) {
         scheduler.getFileScheduler().schedule(file, pipelineContext);
     }
 
@@ -495,11 +506,8 @@ public class IngestManager {
      */
     private void displayInitError(String moduleName, String errorMessage) {
         MessageNotifyUtil.Message.error(
-                "Failed to load " + moduleName + " ingest module.\n\n"
-                + "No ingest modules will be run. Please disable the module "
-                + "or fix the error and restart ingest by right clicking on "
-                + "the data source and selecting Run Ingest Modules.\n\n"
-                + "Error: " + errorMessage);
+                NbBundle.getMessage(this.getClass(), "IngestManager.displayInitError.failedToLoad.msg", moduleName,
+                                    errorMessage));
     }
 
     /**
@@ -856,9 +864,9 @@ public class IngestManager {
         String getFileModuleStats() {
             StringBuilder sb = new StringBuilder();
             for (final String moduleName : fileModuleTimers.keySet()) {
-                sb.append(moduleName).append(" took: ")
-                        .append(fileModuleTimers.get(moduleName) / 1000)
-                        .append(" secs. to process()").append('\n');
+                sb.append(NbBundle.getMessage(this.getClass(),
+                                              "IngestManager.getFileModStats.moduleInfo.text",
+                                              moduleName, fileModuleTimers.get(moduleName) / 1000));
             }
             return sb.toString();
         }
@@ -868,15 +876,18 @@ public class IngestManager {
             final String EOL = System.getProperty("line.separator");
             StringBuilder sb = new StringBuilder();
             if (startTime != null) {
-                sb.append("Start time: ").append(dateFormatter.format(startTime)).append(EOL);
+                sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.startTime.text",
+                                              dateFormatter.format(startTime), EOL));
             }
             if (endTime != null) {
-                sb.append("End time: ").append(dateFormatter.format(endTime)).append(EOL);
+                sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.endTime.text",
+                                              dateFormatter.format(endTime), EOL));
             }
-            sb.append("Total ingest time: ").append(getTotalTimeString()).append(EOL);
-            sb.append("Total errors: ").append(errorsTotal).append(EOL);
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.totalIngestTime.text",
+                                          getTotalTimeString(), EOL));
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.totalErrs.text", errorsTotal, EOL));
             if (errorsTotal > 0) {
-                sb.append("Errors per module:");
+                sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.errsPerMod.text"));
                 for (String moduleName : errors.keySet()) {
                     sb.append("\t").append(moduleName).append(": ").append(errors.get(moduleName)).append(EOL);
                 }
@@ -887,9 +898,18 @@ public class IngestManager {
         public String toHtmlString() {
             StringBuilder sb = new StringBuilder();
             sb.append("<html><body>");
-            sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
-            sb.append("Total errors: ").append(errorsTotal).append("<br />");
-            sb.append("<table><tr><th>Module</th><th>Time</th><th>Errors</th></tr>\n");
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.ingestTime.text",
+                                          getTotalTimeString()))
+              .append("<br />");
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.totalErrs.text", errorsTotal))
+              .append("<br />");
+            sb.append("<table><tr><th>")
+              .append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.module.text"))
+              .append("</th><th>")
+              .append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.time.text"))
+              .append("</th><th>")
+              .append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.errors.text"))
+              .append("</th></tr>\n");
             
             for (final String moduleName : fileModuleTimers.keySet()) {
                 sb.append("<tr><td>").append(moduleName).append("</td><td>");
@@ -993,13 +1013,16 @@ public class IngestManager {
                 IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), s.getName());
             }
 
-            final String displayName = "File Ingest";
+            final String displayName = NbBundle
+                    .getMessage(this.getClass(), "IngestManager.IngestAbstractFileProcessor.displayName");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Filed ingest cancelled by user.");
                     if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                        progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                                                                    "IngestManager.IngestAbstractFileProcessor.process.cancelling",
+                                                                    displayName));
                     }
                     return IngestAbstractFileProcessor.this.cancel(true);
                 }
@@ -1169,13 +1192,16 @@ public class IngestManager {
         @Override
         protected Object doInBackground() throws Exception {
 
-            final String displayName = "Queueing Ingest";
+            final String displayName = NbBundle
+                    .getMessage(this.getClass(), "IngestManager.EnqueueWorker.displayName.text");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Queueing ingest cancelled by user.");
                     if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                        progress.setDisplayName(
+                                NbBundle.getMessage(this.getClass(), "IngestManager.EnqueueWorker.process.cancelling",
+                                                    displayName));
                     }
                     return EnqueueWorker.this.cancel(true);
                 }
@@ -1274,10 +1300,12 @@ public class IngestManager {
                 
                 
                 logger.log(Level.INFO, "Queing data source ingest task: " + dataSourceTask);
-                progress.progress("DataSource Ingest" + " " + inputName, processed);
+                progress.progress(NbBundle.getMessage(this.getClass(), "IngestManager.datatSourceIngest.progress.text",
+                                                      inputName), processed);
                 final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
                 dataSourceScheduler.schedule(dataSourceTask);
-                progress.progress("DataSource Ingest" + " " + inputName, ++processed);
+                progress.progress(NbBundle.getMessage(this.getClass(), "IngestManager.datatSourceIngest.progress.text",
+                                                      inputName), ++processed);
 
                 
                 /* Schedule the file-level ingest modules for the children of the data source */
@@ -1285,10 +1313,12 @@ public class IngestManager {
                         new DataSourceTask(input, fileMods, getProcessUnallocSpace());
                 
                 logger.log(Level.INFO, "Queing file ingest task: " + fTask);
-                progress.progress("File Ingest" + " " + inputName, processed);
+                progress.progress(
+                        NbBundle.getMessage(this.getClass(), "IngestManager.fileIngest.progress.text", inputName), processed);
                 final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
                 fileScheduler.schedule(fTask);
-                progress.progress("File Ingest" + " " + inputName, ++processed);
+                progress.progress(
+                        NbBundle.getMessage(this.getClass(), "IngestManager.fileIngest.progress.text", inputName), ++processed);
 
             } //for data sources
         }

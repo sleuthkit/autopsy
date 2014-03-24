@@ -23,6 +23,7 @@ import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import org.openide.awt.DynamicMenuContent;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 
 /**
@@ -66,14 +67,15 @@ import org.openide.util.actions.SystemAction;
         // if it has recent case, create clear menu
         if(hasRecentCase){
             comps[length] = new JSeparator();
-            JMenuItem clearMenu = new JMenuItem("Clear Recent Cases");
+            JMenuItem clearMenu = new JMenuItem(
+                    NbBundle.getMessage(this.getClass(), "UpdateRecentCases.menuItem.clearRecentCases.text"));
             clearMenu.addActionListener(SystemAction.get(RecentCases.class));
             comps[length+1] = clearMenu;
         }
         // otherwise, just create a disabled empty menu
         else{
             comps = new JComponent[1];
-            JMenuItem emptyMenu = new JMenuItem("-Empty-");
+            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(this.getClass(), "UpdateRecentCases.menuItem.empty"));
             emptyMenu.addActionListener(new RecentItems("", ""));
             comps[0] = emptyMenu;
             comps[0].setEnabled(false);

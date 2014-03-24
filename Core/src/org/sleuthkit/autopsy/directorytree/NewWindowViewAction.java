@@ -76,6 +76,8 @@ public class NewWindowViewAction extends AbstractAction{
             @Override
             public void run() {
                 dctc.setNode(contentNode);
+                dctc.toFront();
+                dctc.requestActive();
             }
         });
     }

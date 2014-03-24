@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,8 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -43,16 +45,14 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
- final class ReportVisualPanel2 extends JPanel {
+final class ReportVisualPanel2 extends JPanel {
+
     private ReportWizardPanel2 wizPanel;
-    
     private Map<String, Boolean> tagStates = new LinkedHashMap<>();
     private List<String> tags = new ArrayList<>();
-    
     ArtifactSelectionDialog dialog = new ArtifactSelectionDialog(new JFrame(), true);
     private Map<ARTIFACT_TYPE, Boolean> artifactStates = new EnumMap<>(ARTIFACT_TYPE.class);
     private List<ARTIFACT_TYPE> artifacts = new ArrayList<>();
-    
     private TagsListModel tagsModel;
     private TagsListRenderer tagsRenderer;
 
@@ -69,58 +69,57 @@ import org.sleuthkit.datamodel.TskCoreException;
         allResultsRadioButton.setSelected(true);
         this.wizPanel = wizPanel;
     }
-    
+
     // Initialize the list of Tags
     private void initTags() {
         List<TagName> tagNamesInUse;
         try {
             tagNamesInUse = Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse();
-        }
-        catch (TskCoreException ex) {
-            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+        } catch (TskCoreException ex) {
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
             return;
-        }                                    
-                        
-        for(TagName tagName : tagNamesInUse) {
+        }
+
+        for (TagName tagName : tagNamesInUse) {
             tagStates.put(tagName.getDisplayName(), Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());
-        
+
         tagsModel = new TagsListModel();
         tagsRenderer = new TagsListRenderer();
         tagsList.setModel(tagsModel);
         tagsList.setCellRenderer(tagsRenderer);
         tagsList.setVisibleRowCount(-1);
-        
+
         // Add the ability to enable and disable Tag checkboxes to the list
         tagsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
-                String value = (String) tagsModel.getElementAt(index);
+                String value = tagsModel.getElementAt(index);
                 tagStates.put(value, !tagStates.get(value));
                 list.repaint();
                 updateFinishButton();
             }
-        });        
+        });
     }
-    
+
     // Initialize the list of Artifacts
     private void initArtifactTypes() {
-        
+
         try {
-            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList();
+            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
-            
+
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
-            
+
             artifacts.removeAll(doNotReport);
-            
+
             artifactStates = new EnumMap<>(ARTIFACT_TYPE.class);
-            for (ARTIFACT_TYPE type : artifacts) { 
+            for (ARTIFACT_TYPE type : artifacts) {
                 artifactStates.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
@@ -130,43 +129,43 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     @Override
     public String getName() {
-        return "Configure Artifact Reports";
+        return NbBundle.getMessage(this.getClass(), "ReportVisualPanel2.getName.text");
     }
-    
+
     /**
      * @return the enabled/disabled state of all Artifacts
      */
     Map<ARTIFACT_TYPE, Boolean> getArtifactStates() {
         return artifactStates;
     }
-    
+
     /**
      * @return the enabled/disabled state of all Tags
      */
     Map<String, Boolean> getTagStates() {
         return tagStates;
     }
-    
+
     private boolean areTagsSelected() {
         boolean result = false;
-        for (Entry<String, Boolean> entry: tagStates.entrySet()) {
+        for (Entry<String, Boolean> entry : tagStates.entrySet()) {
             if (entry.getValue()) {
                 result = true;
             }
         }
         return result;
     }
-    
+
     private boolean areArtifactsSelected() {
         boolean result = false;
-        for (Entry<ARTIFACT_TYPE, Boolean> entry: artifactStates.entrySet()) {
+        for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactStates.entrySet()) {
             if (entry.getValue()) {
                 result = true;
             }
         }
         return result;
     }
-    
+
     private void updateFinishButton() {
         if (taggedResultsRadioButton.isSelected()) {
             wizPanel.setFinish(areTagsSelected());
@@ -174,14 +173,14 @@ import org.sleuthkit.datamodel.TskCoreException;
             wizPanel.setFinish(areArtifactsSelected());
         }
     }
-    
+
     /**
      * @return true if the Tags radio button is selected, false otherwise
      */
     boolean isTaggedResultsRadioButtonSelected() {
         return taggedResultsRadioButton.isSelected();
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -197,7 +196,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         selectAllButton = new javax.swing.JButton();
         deselectAllButton = new javax.swing.JButton();
         tagsScrollPane = new javax.swing.JScrollPane();
-        tagsList = new javax.swing.JList();
+        tagsList = new javax.swing.JList<>();
         advancedButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(650, 250));
@@ -314,7 +313,6 @@ import org.sleuthkit.datamodel.TskCoreException;
         artifactStates = dialog.display();
         wizPanel.setFinish(areArtifactsSelected());
     }//GEN-LAST:event_advancedButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
     private javax.swing.JRadioButton allResultsRadioButton;
@@ -323,11 +321,11 @@ import org.sleuthkit.datamodel.TskCoreException;
     private javax.swing.ButtonGroup optionsButtonGroup;
     private javax.swing.JButton selectAllButton;
     private javax.swing.JRadioButton taggedResultsRadioButton;
-    private javax.swing.JList tagsList;
+    private javax.swing.JList<String> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
     // End of variables declaration//GEN-END:variables
-    
-    private class TagsListModel implements ListModel {
+
+    private class TagsListModel implements ListModel<String> {
 
         @Override
         public int getSize() {
@@ -335,7 +333,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public String getElementAt(int index) {
             return tags.get(index);
         }
 
@@ -347,12 +345,12 @@ import org.sleuthkit.datamodel.TskCoreException;
         public void removeListDataListener(ListDataListener l) {
         }
     }
-    
+
     // Render the Tags as JCheckboxes
-    private class TagsListRenderer extends JCheckBox implements ListCellRenderer {
+    private class TagsListRenderer extends JCheckBox implements ListCellRenderer<String> {
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(tagStates.get(value.toString()));
@@ -363,6 +361,6 @@ import org.sleuthkit.datamodel.TskCoreException;
                 return this;
             }
             return new JLabel();
-        }        
+        }
     }
 }

@@ -33,6 +33,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -160,7 +162,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                     return;
                 } catch (OutOfMemoryError ex) {
                     logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex);
-                    MessageNotifyUtil.Notify.warn("Could not load image file (too large): " + file.getName(), ex.getMessage());
+                    MessageNotifyUtil.Notify.warn(
+                            NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
+                            ex.getMessage());
                     return;
                 } finally {
                     try {

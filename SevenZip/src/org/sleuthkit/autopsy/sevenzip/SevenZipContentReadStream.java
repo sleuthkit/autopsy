@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.IInStream;
 import net.sf.sevenzipjbinding.SevenZipException;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -57,7 +58,9 @@ public class SevenZipContentReadStream implements IInStream {
                 newPosition = wrapped.seek(offset);
                 break;
             default:
-                throw new IllegalArgumentException("Invalid seek origin: " + origin);
+                throw new IllegalArgumentException(
+                        NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.seek.exception.invalidOrigin",
+                                            origin));
         }
         
         return newPosition;
@@ -82,7 +85,7 @@ public class SevenZipContentReadStream implements IInStream {
             return readBytes;
             
         } catch (IOException ex) {
-            String msg = "Error reading content stream.";
+            String msg = NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.read.exception.errReadStream");
             logger.log(Level.SEVERE, msg, ex);
             throw new SevenZipException(msg, ex);
         }

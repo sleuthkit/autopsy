@@ -194,6 +194,7 @@
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
+                <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.core</package>
                 <package>org.sleuthkit.autopsy.corecomponentinterfaces</package>
                 <package>org.sleuthkit.autopsy.corecomponents</package>
@@ -207,12 +208,12 @@
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

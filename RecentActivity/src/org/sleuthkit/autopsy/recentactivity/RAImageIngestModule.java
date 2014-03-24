@@ -26,6 +26,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -61,7 +63,10 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
 
     @Override
     public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + dataSource.getName()));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this,
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "RAImageIngestModule.process.started",
+                                                                             dataSource.getName())));
         
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
@@ -78,8 +83,10 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
                 module.process(pipelineContext, dataSource, controller);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
-                subCompleted.append(module.getName()).append(" failed - see log for details <br>");
-                errors.add(module.getName() + " had errors -- see log");
+                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
+                                                        module.getName()));
+                errors.add(
+                        NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", module.getName()));
             }
             controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
@@ -91,33 +98,46 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
         MessageType msgLevel = MessageType.INFO;
         if (errors.isEmpty() == false) {
             msgLevel = MessageType.ERROR;
-            errorMessage.append("<p>Errors encountered during analysis: <ul>\n");
+            errorMessage.append(
+                    NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.errsEncountered"));
             for (String msg : errors) {
                 errorMessage.append("<li>").append(msg).append("</li>\n");
             }
             errorMessage.append("</ul>\n");
 
             if (errors.size() == 1) {
-                errorMsgSubject = "1 error found";
+                errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.oneErr");
             } else {
-                errorMsgSubject = errors.size() + " errors found";
+                errorMsgSubject = NbBundle.getMessage(this.getClass(),
+                                                      "RAImageIngestModule.process.errMsgSub.nErrs", errors.size());
             }
         } else {
-            errorMessage.append("<p>No errors encountered.</p>");
-            errorMsgSubject = "No errors reported";
+            errorMessage.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.noErrs"));
+            errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.noErrs");
         }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this, "Finished " + dataSource.getName()+ " - " + errorMsgSubject, errorMessage.toString());
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this,
+                                                              NbBundle.getMessage(this.getClass(),
+                                                                                  "RAImageIngestModule.process.ingestMsg.finished",
+                                                                                  dataSource.getName(), errorMsgSubject),
+                                                              errorMessage.toString());
         services.postMessage(msg);
         
         StringBuilder historyMsg = new StringBuilder();
-        historyMsg.append("<p>Browser Data on ").append(dataSource.getName()).append(":<ul>\n");
+        historyMsg.append(
+                NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
         for (Extract module : browserModules) {
             historyMsg.append("<li>").append(module.getName());
-            historyMsg.append(": ").append((module.foundData()) ? " Found." : " Not Found.");
+            historyMsg.append(": ").append((module.foundData()) ? NbBundle
+                    .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
+                    .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.notFnd"));
             historyMsg.append("</li>");
         }
         historyMsg.append("</ul>");
-        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, dataSource.getName() + " - Browser Results", historyMsg.toString());
+        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, this,
+                                                                   NbBundle.getMessage(this.getClass(),
+                                                                                       "RAImageIngestModule.process.ingestMsg.results",
+                                                                                       dataSource.getName()),
+                                                                   historyMsg.toString());
         services.postMessage(inboxMsg);
     }
 
@@ -132,7 +152,8 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
                 module.complete();
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred when completing " + module.getName(), ex);
-                subCompleted.append(module.getName()).append(" failed to complete - see log for details <br>");
+                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
+                                                        module.getName()));
             }
         }
 
@@ -141,18 +162,18 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
 
     @Override
     public String getName() {
-        return "Recent Activity";
+        return NbBundle.getMessage(this.getClass(), "RAImageIngestModule.getName");
     }
 
     @Override
     public String getDescription() {
-        return "Extracts recent user activity, such as Web browsing, recently used documents and installed programs.";
+        return NbBundle.getMessage(this.getClass(), "RAImageIngestModule.getDesc");
     }
 
     @Override
     public void init(IngestModuleInit initContext) throws IngestModuleException {
         modules = new ArrayList<>();
-        browserModules = new ArrayList();
+        browserModules = new ArrayList<>();
         logger.log(Level.INFO, "init() {0}", this.toString());
         services = IngestServices.getDefault();
 

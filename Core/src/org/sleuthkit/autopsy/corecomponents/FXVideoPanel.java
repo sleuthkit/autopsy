@@ -62,6 +62,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -139,7 +140,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         currentFile = file;
         final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
         if (deleted) {
-            mediaPane.setInfoLabelText("Playback of deleted videos is not supported, use an external player.");
+            mediaPane.setInfoLabelText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.mediaPane.infoLabel"));
             removeAll();
             return;
         }
@@ -242,13 +243,15 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         @Override
         protected Object doInBackground() throws Exception {
             success = false;
-            progress = ProgressHandleFactory.createHandle("Buffering " + sFile.getName(), new Cancellable() {
+            progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingFile", sFile.getName()),
+                                                          new Cancellable() {
                 @Override
                 public boolean cancel() {
                     return ExtractMedia.this.cancel(true);
                 }
             });
-            mediaPane.setProgressLabelText("Buffering...  ");
+            mediaPane.setProgressLabelText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.progressLabel.buffering"));
             progress.start();
             progress.switchToDeterminate(100);
             try {
@@ -394,7 +397,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 mediaView.setMediaPlayer(mediaPlayer);
             } catch (MediaException ex) {
                 this.setProgressLabelText("");
-                this.setInfoLabelText("Unsupported Format.");
+                this.setInfoLabelText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.media.unsupportedFormat"));
             }
         }
         

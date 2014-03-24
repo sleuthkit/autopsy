@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -162,9 +162,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         MD5HASH {
             @Override
             public String toString() {
-                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.md5HashColLbl");
+
+                 return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.md5HashColLbl");
+            }    
+        },
+        ObjectID {
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.objectId");
+
             }
-        }
+        }, 
     }
     
     
@@ -181,7 +189,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + content);
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content);
         }
         
         map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
@@ -203,15 +211,19 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(AbstractFilePropertyType.HASHSETS.toString(), getHashSetHitsForFile(content));
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
+        map.put(AbstractFilePropertyType.ObjectID.toString(), content.getId());
     }
 
 
     static String getContentDisplayName(AbstractFile file) {
         String name = file.getName();
-        if (name.equals("..")) {
-            name = DirectoryNode.DOTDOTDIR;
-        } else if (name.equals(".")) {
-            name = DirectoryNode.DOTDIR;
+        switch (name) {
+            case "..":
+                name = DirectoryNode.DOTDOTDIR;
+                break;
+            case ".":
+                name = DirectoryNode.DOTDIR;
+                break;
         }
         return name;
     }

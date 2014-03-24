@@ -2,9 +2,30 @@
 ---------------- VERSION 3.0.9  --------------
 Bug Fixes:
 - Regular expression keyword search works on file names.
+- Fixed thunderbird parser for subject and dates
+- Fixed errors in hex viewer 
 
 Improvements:
 - Enhanced reporting on keyword search module errors
+- Updated SQLite to 3.8.0
+- More lazy loading to help performance with big folders and sets of files 
+- Times can be displayed in local time or GMT
+- New "EnCase-style" report that lists files and metadata in tab delimited file
+- Changed report wizard to make one report at a time
+- report improvements (only regnerate if data exists)
+- more error messages if recent activity module fails
+- more error checking in recent activity module and don't bail as quickly
+- Cleanup of recent activity module
+- better handle if ingest module throws exception during init()
+- do not run ingest if any module faile to init()
+- Added FILE_DONE event to ingest manager
+- Added search engine parsers for linkedin, twitter, and facebook
+- HTML text is better formatted
+- Report generation performance
+- HTML parser is skipped for files > 50MB. 
+- Removed xdock definitions -> some claim this helps with memory problems
+
+
 
 
 ---------------- VERSION 3.0.8  --------------

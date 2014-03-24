@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
@@ -65,17 +64,17 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
             s.put(ss);
         }
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty(NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.name"),
-                                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
-                                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
-                                getName()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
+                getName()));
 
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+            ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
         // @@@ add more properties here...
 

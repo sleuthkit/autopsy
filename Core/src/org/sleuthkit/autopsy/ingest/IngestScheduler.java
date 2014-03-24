@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,8 +31,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -134,15 +135,18 @@ class IngestScheduler {
         @Override
         public synchronized String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("\nRootDirs(sorted), size: ").append(rootProcessTasks.size());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.rootDirs.text",
+                                          rootProcessTasks.size()));
             for (FileTask task : rootProcessTasks) {
                 sb.append(task.toString()).append(" ");
             }
-            sb.append("\nCurDirs(stack), size: ").append(curDirProcessTasks.size());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.curDirs.text",
+                                          curDirProcessTasks.size()));
             for (FileTask task : curDirProcessTasks) {
                 sb.append(task.toString()).append(" ");
             }
-            sb.append("\nCurFiles, size: ").append(curFileProcessTasks.size());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.curFiles.text",
+                                          curFileProcessTasks.size()));
             for (FileTask task : curFileProcessTasks) {
                 sb.append(task.toString()).append(" ");
             }
@@ -224,13 +228,13 @@ class IngestScheduler {
             @Override
             public String toString() {
                 try {
-                    return "ProcessTask{" + "file=" + file.getId() + ": "
-                            + file.getUniquePath() + "}"; // + ", dataSourceTask=" + dataSourceTask + '}';
+                    return NbBundle.getMessage(this.getClass(), "IngestScheduler.fileTask.toString.long", file.getId(),
+                                               file.getUniquePath()); // + ", dataSourceTask=" + dataSourceTask + '}';
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex);
                 }
-                return "ProcessTask{" + "file=" + file.getId() + ": "
-                        + file.getName() + '}';
+                return NbBundle.getMessage(this.getClass(), "IngestScheduler.fileTask.toString.short", file.getId(),
+                                           file.getName());
             }
 
             /**
@@ -365,8 +369,8 @@ class IngestScheduler {
          * @param originalContext original content schedule context that was used
          * to schedule the parent origin content, with the modules, settings, etc.
          */
-        synchronized void schedule(AbstractFile file, PipelineContext originalContext) {
-            DataSourceTask originalTask = originalContext.getDataSourceTask();
+        synchronized void schedule(AbstractFile file, PipelineContext<IngestModuleAbstractFile> originalContext) {
+            DataSourceTask<IngestModuleAbstractFile> originalTask = originalContext.getDataSourceTask();
 
             //skip if task contains no modules
             if (originalTask.getModules().isEmpty()) {
@@ -389,7 +393,6 @@ class IngestScheduler {
          * @param context context to schedule, with scheduled task containing content to process and modules
          */
         synchronized void schedule(DataSourceTask<IngestModuleAbstractFile> task) {
-
             //skip if task contains no modules
             if (task.getModules().isEmpty()) {
                 return;
@@ -432,7 +435,8 @@ class IngestScheduler {
         @Override
         public synchronized FileTask next() {
             if (!hasNext()) {
-                throw new IllegalStateException("No next ProcessTask, check hasNext() first!");
+                throw new IllegalStateException(
+                        NbBundle.getMessage(this.getClass(), "IngestScheduler.FileTask.next.exception.msg"));
             }
 
             //dequeue the last in the list
@@ -502,7 +506,8 @@ class IngestScheduler {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Not supported.");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "IngestScheduler.remove.exception.notSupported.msg"));
         }
 
         /**
@@ -933,7 +938,8 @@ class IngestScheduler {
         @Override
         public synchronized DataSourceTask<IngestModuleDataSource> next() throws IllegalStateException {
             if (!hasNext()) {
-                throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
+                throw new IllegalStateException(
+                        NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.exception.next.msg"));
             }
 
             final DataSourceTask<IngestModuleDataSource> ret = tasks.pollFirst();
@@ -960,7 +966,8 @@ class IngestScheduler {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Removing of scheduled data source ingest tasks is not supported. ");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.exception.remove.msg"));
         }
 
         synchronized void empty() {
@@ -974,7 +981,8 @@ class IngestScheduler {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("DataSourceQueue, size: ").append(getCount());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.toString.size",
+                                          getCount()));
             for (DataSourceTask<IngestModuleDataSource> task : tasks) {
                 sb.append(task.toString()).append(" ");
             }

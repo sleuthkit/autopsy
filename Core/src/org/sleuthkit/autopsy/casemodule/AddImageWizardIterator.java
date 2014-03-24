@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.NbBundle;
 
 /**
  * The iterator class for the "Add Image" wizard panel. This class is used to
@@ -112,7 +113,8 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
      */
     @Override
     public String name() {
-        return "Step " + Integer.toString(index + 1) + " of " + getPanels().size();
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardIterator.stepXofN", Integer.toString(index + 1),
+                                   getPanels().size());
     }
 
     /**
