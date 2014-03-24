@@ -27,8 +27,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
- * A factory for creating email parser file ingest modules and the user
- * interface panels used to configure the settings for instances of the modules.
+ * A factory for creating email parser file ingest module instances.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
@@ -38,10 +37,10 @@ public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
                 "ThunderbirdMboxFileIngestModule.moduleName");
     }
 
-    static String getVersion() {
-        return Version.getVersion();
+    static String getModuleVersion() {
+        return Version.getVersion();        
     }
-
+    
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
@@ -49,12 +48,13 @@ public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(ThunderbirdMboxFileIngestModule.class, "ThunderbirdMboxFileIngestModule.getDesc.text");
+        return NbBundle.getMessage(ThunderbirdMboxFileIngestModule.class,
+                "ThunderbirdMboxFileIngestModule.getDesc.text");
     }
 
     @Override
     public String getModuleVersionNumber() {
-        return getVersion();
+        return getModuleVersion();
     }
 
     @Override
@@ -63,7 +63,7 @@ public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
         return new ThunderbirdMboxFileIngestModule();
     }
 }

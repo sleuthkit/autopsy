@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         keywordsCategory = "KeywordSearchOptions")
 public final class FileExtMismatchOptionsPanelController extends OptionsPanelController {
 
-    private FileExtMismatchConfigPanel panel;
+    private FileExtMismatchSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     private static final Logger logger = Logger.getLogger(FileExtMismatchOptionsPanelController.class.getName());
@@ -76,9 +76,9 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
         pcs.removePropertyChangeListener(l);
     }
 
-    private FileExtMismatchConfigPanel getPanel() {
+    private FileExtMismatchSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new FileExtMismatchConfigPanel();
+            panel = new FileExtMismatchSettingsPanel();
         }
         return panel;
     }

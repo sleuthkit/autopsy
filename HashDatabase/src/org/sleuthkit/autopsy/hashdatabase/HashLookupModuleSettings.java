@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 /**
  * Settings for a hash lookup file ingest module instance.
  */
-class HashLookupModuleSettings implements IngestModuleSettings {
+final class HashLookupModuleSettings implements IngestModuleSettings {
 
     private final HashSet<String> enabledHashSets = new HashSet<>();
     private boolean shouldCalculateHashes = true;

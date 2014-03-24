@@ -39,7 +39,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
         return NbBundle.getMessage(FileExtMismatchIngestModule.class,
                 "FileExtMismatchIngestModule.moduleName");
     }
-    
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
@@ -58,7 +58,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
 
     @Override
     public IngestModuleSettings getDefaultModuleSettings() {
-        return new FileExtMismatchDetectorOptions();
+        return new FileExtMismatchDetectorModuleSettings();
     }
 
     @Override
@@ -67,9 +67,13 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
-        FileExtMismatchSimpleConfigPanel ingestOptionsPanel = new FileExtMismatchSimpleConfigPanel((FileExtMismatchDetectorOptions) ingestOptions);
-        return ingestOptionsPanel;
+    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
+        assert settings instanceof FileExtMismatchDetectorModuleSettings;
+        if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
+        }
+        FileExtMismatchModuleSettingsPanel settingsPanel = new FileExtMismatchModuleSettingsPanel((FileExtMismatchDetectorModuleSettings) settings);
+        return settingsPanel;
     }
 
     @Override
@@ -79,7 +83,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
 
     @Override
     public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
-        FileExtMismatchConfigPanel globalOptionsPanel = new FileExtMismatchConfigPanel();
+        FileExtMismatchSettingsPanel globalOptionsPanel = new FileExtMismatchSettingsPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
     }
@@ -90,7 +94,11 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
-        return new FileExtMismatchIngestModule(); // RJCTODO: Update to pass in options
+    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
+        assert settings instanceof FileExtMismatchDetectorModuleSettings;
+        if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
+        }
+        return new FileExtMismatchIngestModule((FileExtMismatchDetectorModuleSettings) settings);
     }
 }

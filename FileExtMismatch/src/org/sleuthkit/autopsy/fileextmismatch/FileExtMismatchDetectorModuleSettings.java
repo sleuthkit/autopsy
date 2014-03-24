@@ -23,16 +23,16 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 /**
  * Ingest options for the file extension mismatch detector ingest module.
  */
-public class FileExtMismatchDetectorOptions implements IngestModuleSettings {
+final class FileExtMismatchDetectorModuleSettings implements IngestModuleSettings {
 
     private boolean skipKnownFiles = false;
     private boolean skipFilesWithNoExtension = true;
     private boolean skipFilesWithTextPlainMimeType = false;
 
-    FileExtMismatchDetectorOptions() {
+    FileExtMismatchDetectorModuleSettings() {
     }
 
-    FileExtMismatchDetectorOptions(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
+    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
         this.skipKnownFiles = skipKnownFiles;
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
         this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
@@ -42,7 +42,7 @@ public class FileExtMismatchDetectorOptions implements IngestModuleSettings {
         skipKnownFiles = enabled;
     }
 
-    boolean getSkipKnownFiles() {
+    boolean skipKnownFiles() {
         return skipKnownFiles;
     }
 
@@ -50,7 +50,7 @@ public class FileExtMismatchDetectorOptions implements IngestModuleSettings {
         skipFilesWithNoExtension = enabled;
     }
 
-    boolean getSkipFilesWithNoExtension() {
+    boolean skipFilesWithNoExtension() {
         return skipFilesWithNoExtension;
     }
 
@@ -58,7 +58,7 @@ public class FileExtMismatchDetectorOptions implements IngestModuleSettings {
         skipFilesWithTextPlainMimeType = enabled;
     }
 
-    boolean getSkipFilesWithTextPlainMimeType() {
+    boolean skipFilesWithTextPlainMimeType() {
         return skipFilesWithTextPlainMimeType;
     }
 }

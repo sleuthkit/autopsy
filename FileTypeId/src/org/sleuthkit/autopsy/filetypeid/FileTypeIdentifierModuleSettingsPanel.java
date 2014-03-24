@@ -25,23 +25,23 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
  * UI component used to set ingest job options for file type identifier ingest
  * modules.
  */
-class FileTypeIdSimpleConfigPanel extends IngestModuleSettingsPanel {
+final class FileTypeIdentifierModuleSettingsPanel extends IngestModuleSettingsPanel {
 
-    private final FileTypeIdentifierIngestJobOptions ingestJobOptions;
+    private final FileTypeIdentifierModuleSettings settings;
 
-    public FileTypeIdSimpleConfigPanel(FileTypeIdentifierIngestJobOptions ingestJobOptions) {
-        this.ingestJobOptions = ingestJobOptions;
+    public FileTypeIdentifierModuleSettingsPanel(FileTypeIdentifierModuleSettings settings) {
+        this.settings = settings;
         initComponents();
         customizeComponents();
     }
 
     private void customizeComponents() {
-        skipKnownCheckBox.setSelected(ingestJobOptions.shouldSkipKnownFiles());
+        skipKnownCheckBox.setSelected(settings.skipKnownFiles());
     }
 
     @Override
     public IngestModuleSettings getSettings() {
-        return ingestJobOptions;
+        return settings;
     }
 
     /**
@@ -83,7 +83,7 @@ class FileTypeIdSimpleConfigPanel extends IngestModuleSettingsPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void skipKnownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipKnownCheckBoxActionPerformed
-        ingestJobOptions.setSkipKnownFiles(skipKnownCheckBox.isSelected());
+        settings.setSkipKnownFiles(skipKnownCheckBox.isSelected());
     }//GEN-LAST:event_skipKnownCheckBoxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox skipKnownCheckBox;

@@ -39,21 +39,21 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
  * Container panel for File Extension Mismatch Ingest Module advanced
  * configuration options
  */
-final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
+final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
 
-    private static Logger logger = Logger.getLogger(FileExtMismatchConfigPanel.class.getName());
+    private static Logger logger = Logger.getLogger(FileExtMismatchSettingsPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
     private ArrayList<String> currentExtensions = null;
     private MimeTableModel mimeTableModel;
     private ExtTableModel extTableModel;
-    private final String EXT_HEADER_LABEL = NbBundle.getMessage(FileExtMismatchConfigPanel.class,
+    private final String EXT_HEADER_LABEL = NbBundle.getMessage(FileExtMismatchSettingsPanel.class,
             "AddFileExtensionAction.extHeaderLbl.text");
     private String selectedMime = "";
     private String selectedExt = "";
     ListSelectionModel lsm = null;
 
-    public FileExtMismatchConfigPanel() {
+    public FileExtMismatchSettingsPanel() {
         mimeTableModel = new MimeTableModel();
         extTableModel = new ExtTableModel();
 
@@ -155,7 +155,7 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         saveMsgLabel = new javax.swing.JLabel();
 
         saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/fileextmismatch/save16.png"))); // NOI18N
-        saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.saveButton.text")); // NOI18N
+        saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.saveButton.text")); // NOI18N
         saveButton.setEnabled(false);
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -165,26 +165,26 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
 
         jSplitPane1.setDividerLocation(430);
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.jLabel1.text")); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.jLabel1.text")); // NOI18N
 
         mimeTable.setModel(mimeTableModel);
         jScrollPane2.setViewportView(mimeTable);
 
-        userTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.userTypeTextField.text")); // NOI18N
+        userTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.userTypeTextField.text")); // NOI18N
         userTypeTextField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 userTypeTextFieldFocusGained(evt);
             }
         });
 
-        addTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.addTypeButton.text")); // NOI18N
+        addTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.addTypeButton.text")); // NOI18N
         addTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addTypeButtonActionPerformed(evt);
             }
         });
 
-        removeTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.removeTypeButton.text")); // NOI18N
+        removeTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeTypeButton.text")); // NOI18N
         removeTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeTypeButtonActionPerformed(evt);
@@ -192,9 +192,9 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         });
 
         mimeErrLabel.setForeground(new java.awt.Color(255, 0, 0));
-        mimeErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.mimeErrLabel.text")); // NOI18N
+        mimeErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.mimeErrLabel.text")); // NOI18N
 
-        mimeRemoveErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.mimeRemoveErrLabel.text")); // NOI18N
+        mimeRemoveErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.mimeRemoveErrLabel.text")); // NOI18N
 
         javax.swing.GroupLayout mimePanelLayout = new javax.swing.GroupLayout(mimePanel);
         mimePanel.setLayout(mimePanelLayout);
@@ -239,14 +239,14 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
 
         jSplitPane1.setLeftComponent(mimePanel);
 
-        userExtTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.userExtTextField.text")); // NOI18N
+        userExtTextField.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.userExtTextField.text")); // NOI18N
         userExtTextField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 userExtTextFieldFocusGained(evt);
             }
         });
 
-        addExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.addExtButton.text")); // NOI18N
+        addExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.addExtButton.text")); // NOI18N
         addExtButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addExtButtonActionPerformed(evt);
@@ -256,19 +256,19 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         extTable.setModel(extTableModel);
         jScrollPane3.setViewportView(extTable);
 
-        removeExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.removeExtButton.text")); // NOI18N
+        removeExtButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeExtButton.text")); // NOI18N
         removeExtButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeExtButtonActionPerformed(evt);
             }
         });
 
-        extHeaderLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.extHeaderLabel.text")); // NOI18N
+        extHeaderLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.extHeaderLabel.text")); // NOI18N
 
         extErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        extErrorLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.extErrorLabel.text")); // NOI18N
+        extErrorLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.extErrorLabel.text")); // NOI18N
 
-        extRemoveErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.extRemoveErrLabel.text")); // NOI18N
+        extRemoveErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.extRemoveErrLabel.text")); // NOI18N
 
         javax.swing.GroupLayout extensionPanelLayout = new javax.swing.GroupLayout(extensionPanel);
         extensionPanel.setLayout(extensionPanelLayout);
@@ -314,7 +314,7 @@ final class FileExtMismatchConfigPanel extends IngestModuleGlobalSetttingsPanel 
         jSplitPane1.setRightComponent(extensionPanel);
 
         saveMsgLabel.setForeground(new java.awt.Color(0, 0, 255));
-        saveMsgLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchConfigPanel.class, "FileExtMismatchConfigPanel.saveMsgLabel.text")); // NOI18N
+        saveMsgLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.saveMsgLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

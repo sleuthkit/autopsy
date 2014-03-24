@@ -25,24 +25,25 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
  * UI component used to set ingest job options for file extension mismatch
  * detector ingest modules.
  */
-class FileExtMismatchSimpleConfigPanel extends IngestModuleSettingsPanel {
+final class FileExtMismatchModuleSettingsPanel extends IngestModuleSettingsPanel {
 
-    private FileExtMismatchDetectorOptions ingestJobOptions;
+    private final FileExtMismatchDetectorModuleSettings settings;
 
-    FileExtMismatchSimpleConfigPanel(FileExtMismatchDetectorOptions ingestOptions) {
-        this.ingestJobOptions = ingestOptions;
+    FileExtMismatchModuleSettingsPanel(FileExtMismatchDetectorModuleSettings settings) {
+        this.settings = settings;
         initComponents();
-        customizeComponents(ingestOptions);
+        customizeComponents();
     }
 
-    private void customizeComponents(FileExtMismatchDetectorOptions ingestOptions) {
-        skipNoExtCheckBox.setSelected(ingestOptions.getSkipFilesWithNoExtension());
-        skipTextPlain.setSelected(ingestOptions.getSkipFilesWithTextPlainMimeType());
+    private void customizeComponents() {
+        skipNoExtCheckBox.setSelected(settings.skipFilesWithNoExtension());
+        skipTextPlain.setSelected(settings.skipFilesWithTextPlainMimeType());
+        skipKnownFilesCheckbox.setSelected(settings.skipKnownFiles());
     }
 
     @Override
     public IngestModuleSettings getSettings() {
-        return ingestJobOptions;
+        return settings;
     }
 
     /**
@@ -56,20 +57,28 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleSettingsPanel {
 
         skipNoExtCheckBox = new javax.swing.JCheckBox();
         skipTextPlain = new javax.swing.JCheckBox();
+        skipKnownFilesCheckbox = new javax.swing.JCheckBox();
 
         skipNoExtCheckBox.setSelected(true);
-        skipNoExtCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipNoExtCheckBox.text")); // NOI18N
+        skipNoExtCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.skipNoExtCheckBox.text")); // NOI18N
         skipNoExtCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipNoExtCheckBoxActionPerformed(evt);
             }
         });
 
-        skipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSimpleConfigPanel.class, "FileExtMismatchSimpleConfigPanel.skipTextPlain.text")); // NOI18N
+        skipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.skipTextPlain.text")); // NOI18N
         skipTextPlain.setSelected(true);
         skipTextPlain.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipTextPlainActionPerformed(evt);
+            }
+        });
+
+        skipKnownFilesCheckbox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.skipKnownFilesCheckbox.text")); // NOI18N
+        skipKnownFilesCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                skipKnownFilesCheckboxActionPerformed(evt);
             }
         });
 
@@ -81,7 +90,8 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleSettingsPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(skipTextPlain)
-                    .addComponent(skipNoExtCheckBox))
+                    .addComponent(skipNoExtCheckBox)
+                    .addComponent(skipKnownFilesCheckbox))
                 .addGap(0, 138, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -90,18 +100,26 @@ class FileExtMismatchSimpleConfigPanel extends IngestModuleSettingsPanel {
                 .addComponent(skipNoExtCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(skipTextPlain)
-                .addContainerGap(51, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(skipKnownFilesCheckbox)
+                .addContainerGap(28, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void skipNoExtCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNoExtCheckBoxActionPerformed
-        ingestJobOptions.setSkipFilesWithNoExtension(skipNoExtCheckBox.isSelected());
+        settings.setSkipFilesWithNoExtension(skipNoExtCheckBox.isSelected());
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
     private void skipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipTextPlainActionPerformed
-        ingestJobOptions.setSkipFilesWithTextPlainMimeType(skipTextPlain.isSelected());
+        settings.setSkipFilesWithTextPlainMimeType(skipTextPlain.isSelected());
     }//GEN-LAST:event_skipTextPlainActionPerformed
+
+    private void skipKnownFilesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipKnownFilesCheckboxActionPerformed
+        settings.setSkipKnownFiles(skipKnownFilesCheckbox.isSelected());
+    }//GEN-LAST:event_skipKnownFilesCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox skipKnownFilesCheckbox;
     private javax.swing.JCheckBox skipNoExtCheckBox;
     private javax.swing.JCheckBox skipTextPlain;
     // End of variables declaration//GEN-END:variables

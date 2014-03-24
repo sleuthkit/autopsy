@@ -45,7 +45,8 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(ExifParserFileIngestModule.class, "ExifParserFileIngestModule.getDesc.text");
+        return NbBundle.getMessage(ExifParserFileIngestModule.class,
+                "ExifParserFileIngestModule.getDesc.text");
     }
 
     @Override

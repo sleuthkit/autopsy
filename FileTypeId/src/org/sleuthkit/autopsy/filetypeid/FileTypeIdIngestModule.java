@@ -43,7 +43,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static final long MIN_FILE_SIZE = 512;
-    private final FileTypeIdentifierIngestJobOptions ingestJobOptions;
+    private final FileTypeIdentifierModuleSettings settings;
     private long matchTime = 0;
     private int messageId = 0; // RJCTODO: If this is not made a thread safe static, duplicate message ids will be used 
     private long numFiles = 0;
@@ -52,8 +52,8 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     // actually have a list of detectors which are called in order until a match is found.
     private FileTypeDetectionInterface detector = new TikaFileTypeDetector();
 
-    FileTypeIdIngestModule(FileTypeIdentifierIngestJobOptions ingestJobOptions) {
-        this.ingestJobOptions = ingestJobOptions;
+    FileTypeIdIngestModule(FileTypeIdentifierModuleSettings settings) {
+        this.settings = settings;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
             return ProcessResult.OK;
         }
 
-        if (ingestJobOptions.shouldSkipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if (settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
@@ -101,9 +101,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         StringBuilder detailsSb = new StringBuilder();
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-
         detailsSb.append("<tr><td>").append(FileTypeIdentifierModuleFactory.getModuleName()).append("</td></tr>");
-
         detailsSb.append("<tr><td>")
                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
                 .append("</td><td>").append(matchTime).append("</td></tr>\n");
@@ -111,7 +109,6 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-
         IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "FileTypeIdIngestModule.complete.srvMsg.text"),

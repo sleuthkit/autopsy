@@ -57,7 +57,7 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
 
     @Override
     public IngestModuleSettings getDefaultModuleSettings() {
-        return new FileTypeIdentifierIngestJobOptions();
+        return new FileTypeIdentifierModuleSettings();
     }
 
     @Override
@@ -66,8 +66,12 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestJobOptions) {
-        return new FileTypeIdSimpleConfigPanel((FileTypeIdentifierIngestJobOptions) ingestJobOptions);
+    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
+        assert settings instanceof FileTypeIdentifierModuleSettings;
+        if (!(settings instanceof FileTypeIdentifierModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdentifierModuleSettings");
+        }        
+        return new FileTypeIdentifierModuleSettingsPanel((FileTypeIdentifierModuleSettings) settings);
     }
 
     @Override
@@ -76,7 +80,11 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestJobOptions) {
-        return new FileTypeIdIngestModule((FileTypeIdentifierIngestJobOptions) ingestJobOptions);
+    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
+        assert settings instanceof FileTypeIdentifierModuleSettings;
+        if (!(settings instanceof FileTypeIdentifierModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdentifierModuleSettings");
+        }        
+        return new FileTypeIdIngestModule((FileTypeIdentifierModuleSettings) settings);
     }
 }

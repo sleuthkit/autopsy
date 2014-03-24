@@ -21,6 +21,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="skipTextPlain" min="-2" max="-2" attributes="0"/>
                   <Component id="skipNoExtCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="skipKnownFilesCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="0" pref="138" max="32767" attributes="0"/>
           </Group>
@@ -32,7 +33,9 @@
               <Component id="skipNoExtCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="skipTextPlain" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="51" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="skipKnownFilesCheckbox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="28" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -42,7 +45,7 @@
       <Properties>
         <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchSimpleConfigPanel.skipNoExtCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchModuleSettingsPanel.skipNoExtCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -52,7 +55,7 @@
     <Component class="javax.swing.JCheckBox" name="skipTextPlain">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchSimpleConfigPanel.skipTextPlain.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchModuleSettingsPanel.skipTextPlain.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -61,6 +64,16 @@
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="skipTextPlain.setSelected(true);"/>
       </AuxValues>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="skipKnownFilesCheckbox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/fileextmismatch/Bundle.properties" key="FileExtMismatchModuleSettingsPanel.skipKnownFilesCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="skipKnownFilesCheckboxActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

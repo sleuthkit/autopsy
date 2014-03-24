@@ -317,7 +317,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
             try {
                 DerivedFile df = fileManager.addDerivedFile(filename, relPath,
                         size, cTime, crTime, aTime, mTime, true, abstractFile, "",
-                        EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getVersion(), "");
+                        EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "");
                 files.add(df);
             } catch (TskCoreException ex) {
                 postErrorMessage(
@@ -397,7 +397,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
     }
 
     void postErrorMessage(String subj, String details) {
-        IngestMessage ingestMessage = IngestMessage.createErrorMessage(messageId++, EmailParserModuleFactory.getVersion(), subj, details);
+        IngestMessage ingestMessage = IngestMessage.createErrorMessage(messageId++, EmailParserModuleFactory.getModuleVersion(), subj, details);
         services.postMessage(ingestMessage);
     }
 

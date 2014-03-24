@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 
 /**
  * An factory that creates data source ingest modules that verify the integrity
- * of Expert Witness Format (EWF) files (.e01).
+ * of Expert Witness Format (EWF), i.e., .e01 files .
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
