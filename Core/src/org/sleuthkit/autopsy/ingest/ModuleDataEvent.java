@@ -38,7 +38,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * 
  * By design, only a single type of artifacts can be contained in a single data event. 
  */
-// RJCTODO: Rename
 public class ModuleDataEvent extends ChangeEvent {
 
     private String moduleName;

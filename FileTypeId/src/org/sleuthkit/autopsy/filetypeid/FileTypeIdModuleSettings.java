@@ -23,14 +23,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
 /**
  * Ingest job options for the file type identifier ingest module instances.
  */
-public class FileTypeIdentifierModuleSettings implements IngestModuleSettings {
+public class FileTypeIdModuleSettings implements IngestModuleSettings {
 
     private boolean skipKnownFiles = true;
 
-    FileTypeIdentifierModuleSettings() {
+    FileTypeIdModuleSettings() {
     }
 
-    FileTypeIdentifierModuleSettings(boolean skipKnownFiles) {
+    FileTypeIdModuleSettings(boolean skipKnownFiles) {
         this.skipKnownFiles = skipKnownFiles;
     }
 

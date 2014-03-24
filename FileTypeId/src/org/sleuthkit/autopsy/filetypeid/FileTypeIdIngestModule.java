@@ -43,7 +43,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static final long MIN_FILE_SIZE = 512;
-    private final FileTypeIdentifierModuleSettings settings;
+    private final FileTypeIdModuleSettings settings;
     private long matchTime = 0;
     private int messageId = 0; // RJCTODO: If this is not made a thread safe static, duplicate message ids will be used 
     private long numFiles = 0;
@@ -52,7 +52,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     // actually have a list of detectors which are called in order until a match is found.
     private FileTypeDetectionInterface detector = new TikaFileTypeDetector();
 
-    FileTypeIdIngestModule(FileTypeIdentifierModuleSettings settings) {
+    FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
     }
 
@@ -82,7 +82,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
             if (!fileId.type.isEmpty()) {
                 // add artifact
                 BlackboardArtifact bart = abstractFile.getGenInfoArtifact();
-                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdentifierModuleFactory.getModuleName(), fileId.type);
+                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileId.type);
                 bart.addAttribute(batt);
 
                 // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
@@ -101,7 +101,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         StringBuilder detailsSb = new StringBuilder();
         detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-        detailsSb.append("<tr><td>").append(FileTypeIdentifierModuleFactory.getModuleName()).append("</td></tr>");
+        detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>");
         detailsSb.append("<tr><td>")
                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
                 .append("</td><td>").append(matchTime).append("</td></tr>\n");
@@ -109,7 +109,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdentifierModuleFactory.getModuleName(),
+        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "FileTypeIdIngestModule.complete.srvMsg.text"),
                 detailsSb.toString()));

@@ -86,7 +86,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
         if (moduleSettingsPanel == null) {
             moduleSettingsPanel = new HashLookupModuleSettingsPanel();
         }
-        moduleSettingsPanel.load(); // RJCTODO: Fix this
+        moduleSettingsPanel.load(); // RJCTODO: Fix this, use passed in settings
         return moduleSettingsPanel;
     }
 

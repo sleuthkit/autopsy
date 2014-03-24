@@ -78,7 +78,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         if (!carver.isInitialized()) {
             String message = "Error initializing scalpel carver.";
             logger.log(Level.SEVERE, message);
-            throw new IngestModuleException(message); // RJCTODO: Needs additional internationalization
+            throw new IngestModuleException(message);
         }
 
         // make sure module output directory exists; create it if it doesn't

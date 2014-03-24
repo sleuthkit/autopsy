@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import org.sleuthkit.datamodel.Content;
 
-// RJCTODO: This is not needed, KISS
 /**
  * UI support for ingest
  */

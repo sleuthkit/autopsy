@@ -46,7 +46,7 @@ final class IngestModuleLoader {
 
     synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         moduleFactories.clear();
-        // RJCTODO: Need a name uniqueness test/solution?
+        // RJCTODO: Need a name uniqueness test/solution, here or in the launcher.
         Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
         for (IngestModuleFactory factory : factories) {
             logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.ingest;
 import javax.swing.event.ChangeEvent;
 import org.sleuthkit.datamodel.Content;
 
-// RJCTODO: Rename
 /**
  * Event data that are fired off by ingest modules when they changed or added new content.
  */

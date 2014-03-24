@@ -200,7 +200,7 @@ public final class IngestJobLauncher {
         if (!modulesSetting.isEmpty()) {
             String[] settingNames = modulesSetting.split(", ");
             for (String name : settingNames) {
-                // Map some old core module names to the current core module names. // RJCTODO: Do we have the right names?
+                // Map some old core module names to the current core module names.
                 switch (name) {
                     case "Thunderbird Parser":
                     case "MBox Parser":
@@ -210,7 +210,7 @@ public final class IngestJobLauncher {
                         moduleNames.add("Extension Mismatch Detector");
                         break;
                     case "EWF Verify":
-                        moduleNames.add("EWF Verifier");
+                        moduleNames.add("E01 Verifier");
                         break;
                     default:
                         moduleNames.add(name);

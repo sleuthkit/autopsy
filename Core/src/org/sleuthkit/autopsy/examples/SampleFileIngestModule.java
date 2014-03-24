@@ -54,9 +54,10 @@ import org.sleuthkit.datamodel.TskData;
  * org.sleuthkit.autopsy.examples package. Either change the package or the
  * loading code to make this module actually run.
  */
-// RJCTODO: Add service provider annotation (commend out)
-// RJCTODO: Remove inheritance from IngestModuleAdapter and provide better documentation,
-// and more extensive demonstration of how to use various ingest services.
+// RJCTODO: Add factory with service provider annotation (commend out)
+// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation
+// and provide better documentation, and more extensive demonstration of how to 
+// use various ingest services.
 class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private int attrId = -1;
@@ -117,7 +118,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
 
             if (attrId != -1) {
                 // Make an attribute using the ID for the private type that we previously created.
-                BlackboardAttribute attr = new BlackboardAttribute(attrId, "SampleFileIngestModule", count); // RJCTODO: Set up with module name as example
+                BlackboardAttribute attr = new BlackboardAttribute(attrId, "SampleFileIngestModule", count); // RJCTODO: Set up factory with static module name function as example
 
                 /* add it to the general info artifact.  In real modules, you would likely have
                  * more complex data types and be making more specific artifacts.

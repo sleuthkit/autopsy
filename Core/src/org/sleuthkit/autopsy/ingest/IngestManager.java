@@ -35,9 +35,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
-// RJCTODO: Fix comment
-// RJCTODO: It woulod be really nice to move such a powerful class behind a
-// facade. This is a good argument for IngestServices as the facade.
 /**
  * IngestManager sets up and manages ingest modules runs them in a background
  * thread notifies modules when work is complete or should be interrupted
@@ -63,7 +60,6 @@ public class IngestManager {
             "IngestManager.moduleProperties.text");
     private volatile IngestUI ingestMessageBox;
 
-    // RJCTODO: Redo eventing for 3.1
     /**
      * Possible events about ingest modules Event listeners can get the event
      * name by using String returned by toString() method on the specific event.
@@ -276,10 +272,13 @@ public class IngestManager {
     void scheduleFile(long ingestJobId, AbstractFile file) {
         IngestJob job = this.ingestJobs.get(ingestJobId);
         if (job == null) {
-            // RJCTODO: Handle severe error
+            logger.log(Level.SEVERE, "Unable to map ingest job id (id = {0}) to an ingest job, failed to schedule file (id = {1})", new Object[]{ingestJobId, file.getId()});
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                    "Unable to associate " + file.getName() + " with ingest job, file will not be processed by ingest nodules",
+                    MessageNotifyUtil.MessageType.ERROR);
         }
 
-        scheduler.getFileScheduler().scheduleIngestOfDerivedFile(job, file);
+        scheduler.getFileScheduler().scheduleFile(job, file);
     }
 
     /**
@@ -328,7 +327,6 @@ public class IngestManager {
             taskSchedulingWorker.cancel(true);
             while (!taskSchedulingWorker.isDone()) {
                 // Wait.
-                // RJCTODO: Add sleep?
             }
             taskSchedulingWorker = null;
         }
@@ -437,9 +435,18 @@ public class IngestManager {
 
                 List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                 if (!errors.isEmpty()) {
-                    // RJCTODO: Log all errors, not just the first one. Provide a list of all of the modules that failed.
+                    StringBuilder failedModules = new StringBuilder();
+                    for (int i = 0; i < errors.size(); ++i) {
+                        IngestModuleError error = errors.get(i);
+                        String moduleName = error.getModuleDisplayName();
+                        logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError());
+                        failedModules.append(moduleName);
+                        if ((errors.size() > 1) && (i != (errors.size() - 1))) {
+                            failedModules.append(",");
+                        }
+                    }
                     MessageNotifyUtil.Message.error(
-                            "Failed to load " + errors.get(0).getModuleDisplayName() + " ingest module.\n\n"
+                            "Failed to start the following ingest modules: " + failedModules.toString() + " .\n\n"
                             + "No ingest modules will be run. Please disable the module "
                             + "or fix the error and restart ingest by right clicking on "
                             + "the data source and selecting Run Ingest Modules.\n\n"
@@ -472,7 +479,7 @@ public class IngestManager {
                 // IngestManager.stopAll() will dispose of all tasks. 
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Error while scheduling ingest jobs", ex);
-                // RJCTODO: On EDT, report error, cannot dump all tasks since multiple data source tasks can be submitted. Would get partial results either way.
+                MessageNotifyUtil.Message.error("An error occurred while starting ingest. Results may only be partial");
             } finally {
                 if (!isCancelled()) {
                     startAll();
@@ -603,7 +610,7 @@ public class IngestManager {
                 IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
                 AbstractFile file = task.getFile();
                 progress.progress(file.getName(), processedFiles);
-                IngestJob.FileIngestPipeline pipeline = task.getParent().getFileIngestPipelineForThread(this.id);
+                IngestJob.FileIngestPipeline pipeline = task.getJob().getFileIngestPipelineForThread(this.id);
                 pipeline.process(file);
 
                 // Update the progress bar.
@@ -625,7 +632,6 @@ public class IngestManager {
 
         @Override
         protected void done() {
-            // RJCTODO: Why was GC done here in the old code?
             try {
                 super.get();
             } catch (CancellationException | InterruptedException e) {

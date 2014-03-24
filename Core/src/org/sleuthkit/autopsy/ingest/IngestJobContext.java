@@ -39,7 +39,7 @@ public final class IngestJobContext {
 
     public void addFilesToPipeline(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            IngestManager.getDefault().scheduleFile(ingestJob.getId(), file); // RJCTODO: Should this API be just AbstractFile?
+            IngestManager.getDefault().scheduleFile(ingestJob.getId(), file);
         }
     }
 }

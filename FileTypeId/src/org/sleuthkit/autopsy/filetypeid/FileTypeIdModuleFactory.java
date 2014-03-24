@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
  * files.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter {
+public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDisplayName() {
@@ -57,7 +57,7 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
 
     @Override
     public IngestModuleSettings getDefaultModuleSettings() {
-        return new FileTypeIdentifierModuleSettings();
+        return new FileTypeIdModuleSettings();
     }
 
     @Override
@@ -67,11 +67,11 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
 
     @Override
     public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
-        assert settings instanceof FileTypeIdentifierModuleSettings;
-        if (!(settings instanceof FileTypeIdentifierModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdentifierModuleSettings");
+        assert settings instanceof FileTypeIdModuleSettings;
+        if (!(settings instanceof FileTypeIdModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
         }        
-        return new FileTypeIdentifierModuleSettingsPanel((FileTypeIdentifierModuleSettings) settings);
+        return new FileTypeIdModuleSettingsPanel((FileTypeIdModuleSettings) settings);
     }
 
     @Override
@@ -81,10 +81,10 @@ public class FileTypeIdentifierModuleFactory extends IngestModuleFactoryAdapter 
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
-        assert settings instanceof FileTypeIdentifierModuleSettings;
-        if (!(settings instanceof FileTypeIdentifierModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdentifierModuleSettings");
+        assert settings instanceof FileTypeIdModuleSettings;
+        if (!(settings instanceof FileTypeIdModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
         }        
-        return new FileTypeIdIngestModule((FileTypeIdentifierModuleSettings) settings);
+        return new FileTypeIdIngestModule((FileTypeIdModuleSettings) settings);
     }
 }

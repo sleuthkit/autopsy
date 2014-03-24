@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -123,20 +125,6 @@ public final class IngestServices {
         IngestManager.fireModuleContentEvent(moduleContentEvent);
     }
 
-    // RJCTODO: This can stay in the context since it is context (pipeline) specific
-    /**
-     * Schedule a new file for ingest with the same settings as the file being
-     * analyzed. This is used, for example, when opening an archive file. File
-     * needs to have already been added to the database.
-     *
-     * @param file file to be scheduled
-     * @param pipelineContext the ingest context for the file ingest pipeline
-     */
-    public void scheduleFile(long dataSourceTaskId, AbstractFile file) {
-        logger.log(Level.INFO, "Scheduling file: {0}", file.getName());
-        manager.scheduleFile(dataSourceTaskId, file);
-    }
-
     /**
      * Get free disk space of a drive where ingest data are written to That
      * drive is being monitored by IngestMonitor thread when ingest is running.
@@ -147,5 +135,42 @@ public final class IngestServices {
         return manager.getFreeDiskSpace();
     }    
     
-    // RJCTODO: Add properties methods back into IngestServices
- }
+   /**
+     * Gets a specific name/value configuration setting for a module
+     * @param moduleName moduleName identifier unique to that module
+     * @param settingName setting name to retrieve
+     * @return setting value for the module / setting name, or null if not found
+     */
+    public String getConfigSetting(String moduleName, String settingName) {
+        return ModuleSettings.getConfigSetting(moduleName, settingName);
+    }
+    
+    /**
+     * Sets a specific name/value configuration setting for a module
+     * @param moduleName moduleName identifier unique to that module
+     * @param settingName setting name to set
+     * @param settingVal setting value to set
+     */
+    public void setConfigSetting(String moduleName, String settingName, String settingVal) {
+        ModuleSettings.setConfigSetting(moduleName, settingName, settingVal);
+    }
+    
+    /**
+     * Gets all name/value configuration settings for a module
+     * @param moduleName moduleName identifier unique to that module
+     * @return settings for the module / setting name
+     */
+    public Map<String,String> getConfigSettings(String moduleName) {
+        return ModuleSettings.getConfigSettings(moduleName);
+    }
+    
+   /**
+    * Sets all  name/value configuration setting for a module.  Names not in the list will have settings preserved. 
+     * @param moduleName moduleName identifier unique to that module
+     * @param settings settings to set and replace old settings, keeping settings not specified in the map.
+     * 
+     */
+    public void setConfigSettings(String moduleName, Map<String,String>settings) {
+        ModuleSettings.setConfigSettings(moduleName, settings);
+    }
+}

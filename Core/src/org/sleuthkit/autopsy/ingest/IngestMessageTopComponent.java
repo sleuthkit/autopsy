@@ -210,7 +210,7 @@ import org.sleuthkit.datamodel.Content;
 
     private void registerListeners() {
         //handle case change
-        Case.addPropertyChangeListener(new PropertyChangeListener() { // RJCTODO: Why is this here?
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {

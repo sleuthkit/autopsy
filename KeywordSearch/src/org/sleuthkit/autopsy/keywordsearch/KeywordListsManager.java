@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 // Note: This is a first step towards a keyword lists manager; it consists of
 // the portion of the keyword list management code that resided in the keyword 
 // search file ingest module.
-// RJCTODO: How to keyword lists get initialized
 final class KeywordListsManager {
 
     private static KeywordListsManager instance = null;

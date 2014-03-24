@@ -162,11 +162,11 @@ final class IngestScheduler {
                     try {
                         children = root.getChildren();
                         if (children.isEmpty()) {
-                            //add the root itself, could be unalloc file, child of volume or image // RJCTODO: Get explanation, improve comment
+                            //add the root itself, could be unalloc file, child of volume or image
                             firstLevelFiles.add(root);
                         } 
                         else {
-                            //root for fs root dir, schedule children dirs/files // RJCTODO: Get explanation, improve comment
+                            //root for fs root dir, schedule children dirs/files
                             for (Content child : children) {
                                 if (child instanceof AbstractFile) {
                                     firstLevelFiles.add((AbstractFile) child);
@@ -206,7 +206,7 @@ final class IngestScheduler {
          * @param originalContext original content schedule context that was used
          * to schedule the parent origin content, with the modules, settings, etc.
          */
-        synchronized void scheduleIngestOfDerivedFile(IngestJob ingestJob, AbstractFile file) {
+        synchronized void scheduleFile(IngestJob ingestJob, AbstractFile file) {
             FileTask fileTask = new FileTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
                 fileTasks.addFirst(fileTask);
@@ -328,7 +328,7 @@ final class IngestScheduler {
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
                             AbstractFile childFile = (AbstractFile) c;
-                            FileTask childTask = new FileTask(childFile, parentTask.getParent());
+                            FileTask childTask = new FileTask(childFile, parentTask.getJob());
 
                             if (childFile.hasChildren()) {
                                 this.directoryTasks.add(childTask);
@@ -363,13 +363,13 @@ final class IngestScheduler {
             final Set<Content> contentSet = new HashSet<>();
 
             for (FileTask task : rootDirectoryTasks) {
-                contentSet.add(task.getParent().getDataSource());
+                contentSet.add(task.getJob().getDataSource());
             }
             for (FileTask task : directoryTasks) {
-                contentSet.add(task.getParent().getDataSource());
+                contentSet.add(task.getJob().getDataSource());
             }
             for (FileTask task : fileTasks) {
-                contentSet.add(task.getParent().getDataSource());
+                contentSet.add(task.getJob().getDataSource());
             }
 
             return new ArrayList<>(contentSet);
@@ -392,7 +392,7 @@ final class IngestScheduler {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.getParent().shouldProcessUnallocatedSpace() == false
+            if (processTask.getJob().shouldProcessUnallocatedSpace() == false
                     && aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
                     )) {
                 return false;
@@ -459,7 +459,7 @@ final class IngestScheduler {
                 this.task = task;
             }
             
-            public IngestJob getParent() { // RJCTODO: Provide wrappers to get rid of train-style calls
+            public IngestJob getJob() {
                 return task;
             }
             
@@ -499,8 +499,8 @@ final class IngestScheduler {
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
-                IngestJob thisTask = this.getParent();
-                IngestJob otherTask = other.getParent();
+                IngestJob thisTask = this.getJob();
+                IngestJob otherTask = other.getJob();
 
                 if (thisTask != otherTask
                         && (thisTask == null || !thisTask.equals(otherTask))) {

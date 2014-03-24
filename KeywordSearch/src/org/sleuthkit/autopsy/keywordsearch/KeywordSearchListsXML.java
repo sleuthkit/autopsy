@@ -102,7 +102,7 @@ class KeywordSearchListsXML extends KeywordSearchListsAbstract {
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
                 
                 // only write the 'useForIngest' and 'ingestMessages' attributes
-                // if we're not exporting the list // RJCTODO: What? These should be ingest options...
+                // if we're not exporting the list.
                 if (!isExport) {
                     listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
                     listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);

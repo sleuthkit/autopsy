@@ -74,9 +74,6 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * ingest update interval) Runs a periodic keyword / regular expression search
  * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
- *
- * Registered as a module in layer.xml RJCTODO: Track this down, does not seem
- * to be true
  */
 public final class KeywordSearchIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
