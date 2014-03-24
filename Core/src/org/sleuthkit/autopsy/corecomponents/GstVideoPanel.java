@@ -678,6 +678,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage());
                 infoLabel.setText("Error updating video progress: " + ex.getMessage());
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
     } //end class progress worker
 

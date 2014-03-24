@@ -1001,6 +1001,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
 
         /**

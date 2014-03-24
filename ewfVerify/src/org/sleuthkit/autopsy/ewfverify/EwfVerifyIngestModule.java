@@ -117,7 +117,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             return ProcessResult.ERROR;
         }
 
-        logger.log(Level.INFO, "Starting ewf verification of {0}", img.getName());
+        logger.log(Level.INFO, "Starting hash verification of {0}", img.getName());
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, EwfVerifierModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "EwfVerifyIngestModule.process.startingImg",

@@ -210,6 +210,7 @@ public final class IngestJobLauncher {
                         moduleNames.add("Extension Mismatch Detector");
                         break;
                     case "EWF Verify":
+                    case "E01 Verify":
                         moduleNames.add("E01 Verifier");
                         break;
                     default:
