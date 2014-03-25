@@ -26,6 +26,8 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
 /**
@@ -55,7 +57,7 @@ import org.openide.windows.WindowManager;
 
         //progressBar.setIndeterminate(true);
 
-        setName("Make Timeline (Beta)");
+        setName(NbBundle.getMessage(this.getClass(), "TimelineProgressDialog.setName.text"));
 
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
