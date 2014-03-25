@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -587,7 +587,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
-        } else if (changed.equals(IngestModuleEvent.DATA.toString())) {
+        } else if (changed.equals(IngestEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
             if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
                 return;
@@ -598,7 +598,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     refreshTree(event.getArtifactType());
                 }
             });
-        } else if (changed.equals(IngestModuleEvent.COMPLETED.toString())) {
+        } else if (changed.equals(IngestEvent.COMPLETED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -606,7 +606,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     refreshTree();
                 }
             });
-        } else if (changed.equals(IngestModuleEvent.CONTENT_CHANGED.toString())) {
+        } else if (changed.equals(IngestEvent.CONTENT_CHANGED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
