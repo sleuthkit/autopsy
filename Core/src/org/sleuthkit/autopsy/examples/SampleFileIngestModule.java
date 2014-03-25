@@ -32,9 +32,10 @@ package org.sleuthkit.autopsy.examples;
 import org.apache.log4j.Logger;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -53,26 +54,15 @@ import org.sleuthkit.datamodel.TskData;
  * org.sleuthkit.autopsy.examples package. Either change the package or the
  * loading code to make this module actually run.
  */
-public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
+// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation of interface
+// provide better documentation, and provide more extensive demonstration of how to 
+// use various ingest services.
+class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private int attrId = -1;
-    private static SampleFileIngestModule defaultInstance = null;
-
-    // Private to ensure Singleton status
-    private SampleFileIngestModule() {
-    }
-
-    // File-level ingest modules are currently singleton -- this is required
-    public static synchronized SampleFileIngestModule getDefault() {
-        //defaultInstance is a private static class variable
-        if (defaultInstance == null) {
-            defaultInstance = new SampleFileIngestModule();
-        }
-        return defaultInstance;
-    }
 
     @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
+    public void startUp(IngestJobContext initContext) {
         /* For this demo, we are going to make a private attribute to post our
          * results to the blackbaord with. There are many standard blackboard artifact
          * and attribute types and you should first consider using one of those before
@@ -99,18 +89,17 @@ public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
     }
 
     @Override
-    public ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile abstractFile) {
+    public IngestModule.ProcessResult process(AbstractFile abstractFile) {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
-            return ProcessResult.OK;
+            return IngestModule.ProcessResult.OK;
         }
 
         // skip NSRL / known files
         if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
-            return ProcessResult.OK;
+            return IngestModule.ProcessResult.OK;
         }
-
 
         /* Do a non-sensical calculation of the number of 0x00 bytes
          * in the first 1024-bytes of the file.  This is for demo
@@ -128,7 +117,7 @@ public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
 
             if (attrId != -1) {
                 // Make an attribute using the ID for the private type that we previously created.
-                BlackboardAttribute attr = new BlackboardAttribute(attrId, getName(), count);
+                BlackboardAttribute attr = new BlackboardAttribute(attrId, "SampleFileIngestModule", count); // RJCTODO: Set up factory with static module name function as example
 
                 /* add it to the general info artifact.  In real modules, you would likely have
                  * more complex data types and be making more specific artifacts.
@@ -137,38 +126,12 @@ public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
                 art.addAttribute(attr);
             }
 
-            return ProcessResult.OK;
+            return IngestModule.ProcessResult.OK;
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            return ProcessResult.ERROR;
+            return IngestModule.ProcessResult.ERROR;
         }
     }
 
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public String getVersion() {
-        return "1.0";
-    }
-
-    @Override
-    public String getName() {
-        return "SampleFileIngestModule";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Doesn't do much";
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
-    }
+    // RJCTODO: Add a module factory with service provider annotation (commented out)
 }

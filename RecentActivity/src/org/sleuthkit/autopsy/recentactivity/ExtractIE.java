@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -22,7 +22,6 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-//IO imports
 import java.io.BufferedReader;
 
 import org.openide.util.NbBundle;
@@ -34,8 +33,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
-
-//Util Imports
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,12 +41,9 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
 import java.util.Scanner;
-
-// TSK Imports
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -58,26 +52,21 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
 import org.sleuthkit.datamodel.*;
 
+/**
+ * Extracts activity from Internet Explorer browser, as well as recent documents in windows.
+ */
 class ExtractIE extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private IngestServices services;
-    
-    //paths set in init()
+    private IngestServices services = IngestServices.getDefault();
     private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
-    private String JAVA_PATH;
-    
-    final private static String MODULE_VERSION = "1.0";
+    private String JAVA_PATH;    
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-    
     private  ExecUtil execPasco;
 
-    //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
         moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "IE") + File.separator + "results";
@@ -85,13 +74,7 @@ class ExtractIE extends Extract {
     }
 
     @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-
-    @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         dataFound = false;
         this.getBookmark(dataSource, controller);
         this.getCookie(dataSource, controller);
@@ -103,9 +86,9 @@ class ExtractIE extends Extract {
      * @param dataSource
      * @param controller 
      */
-    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {       
+    private void getBookmark(Content dataSource, DataSourceIngestModuleStatusHelper controller) {       
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> favoritesFiles = null;
+        List<AbstractFile> favoritesFiles;
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
         } catch (TskCoreException ex) {
@@ -200,9 +183,9 @@ class ExtractIE extends Extract {
      * @param dataSource
      * @param controller 
      */
-    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) { 
+    private void getCookie(Content dataSource, DataSourceIngestModuleStatusHelper controller) { 
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
@@ -277,7 +260,7 @@ class ExtractIE extends Extract {
      * @param dataSource
      * @param controller 
      */
-    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getHistory(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         logger.log(Level.INFO, "Pasco results path: " + moduleTempResultsDir);
         boolean foundHistory = false;
 
@@ -536,32 +519,10 @@ class ExtractIE extends Extract {
     }
 
     @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
     public void stop() {
         if (execPasco != null) {
             execPasco.stop();
             execPasco = null;
-        }
-        
-        //call regular cleanup from complete() method
-        complete();
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "ExtractIE.getDesc.text");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
+        }        
     }
 }

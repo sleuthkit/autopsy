@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -22,7 +22,6 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-// imports
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -33,7 +32,7 @@ import java.util.Collection;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.coreutils.JLnkParserException;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -41,9 +40,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.*;
 
 /**
@@ -52,18 +48,17 @@ import org.sleuthkit.datamodel.*;
  */
 class RecentDocumentsByLnk extends Extract  {
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services;    
-    final private static String MODULE_VERSION = "1.0";
+    private IngestServices services = IngestServices.getDefault();    
 
     /**
      * Find the documents that Windows stores about recent documents and make artifacts.
      * @param dataSource
      * @param controller 
      */
-    private void getRecentDocuments(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getRecentDocuments(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> recentFiles = null;
+        List<AbstractFile> recentFiles;
         try {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
@@ -125,40 +120,10 @@ class RecentDocumentsByLnk extends Extract  {
                 NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.parentModuleName"),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
     }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
     
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         dataFound = false;
         this.getRecentDocuments(dataSource, controller);
-    }
-   
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-        //call regular cleanup from complete() method
-        complete();
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getDesc.text");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

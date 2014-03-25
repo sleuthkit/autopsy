@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -89,7 +89,7 @@ class ExtractUSB {
      * @throws IOException 
      */
     private void loadDeviceMap() throws FileNotFoundException, IOException {
-        devices = new HashMap<String, USBInfo>();
+        devices = new HashMap<>();
         PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile);
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
             String line = dat.nextLine();
@@ -152,6 +152,7 @@ class ExtractUSB {
             return product;
         }
 
+        @Override
         public String toString() {
             return vendor + product;
         }

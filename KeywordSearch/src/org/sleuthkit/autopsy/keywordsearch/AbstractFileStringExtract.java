@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,8 +60,8 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     //STRING_CHUNK_BUF[1] = (byte) 0xBB;
     //STRING_CHUNK_BUF[2] = (byte) 0xBF;
     //}
-    public AbstractFileStringExtract() {
-        this.module = KeywordSearchIngestModule.getDefault();
+    public AbstractFileStringExtract(KeywordSearchIngestModule module) {
+        this.module = module;
         this.ingester = Server.getIngester();
         this.extractScripts.add(DEFAULT_SCRIPT);
     }

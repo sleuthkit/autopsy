@@ -963,7 +963,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             
             StringBuilder summary = new StringBuilder();
             boolean running = false;
-            if (IngestManager.getDefault().isIngestRunning() || IngestManager.getDefault().areModulesRunning()) {
+            if (IngestManager.getDefault().isIngestRunning() || IngestManager.getDefault().isIngestRunning()) {
                 running = true;
             }
             
