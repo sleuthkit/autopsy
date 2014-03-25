@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,9 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Provides a mechanism for creating and persisting a context-sensitive ingest
- * pipeline configuration and launching ingest jobs to process one or more data
- * sources.
+ * Provides a mechanism for creating and persisting an ingest job configuration
+ * for a particular context and for launching ingest jobs that process one or
+ * more data sources using the ingest job configuration.
  */
 public final class IngestJobLauncher {
 
@@ -36,13 +36,13 @@ public final class IngestJobLauncher {
     private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules";
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space";
     private final String launcherContext;
-    private final List<String> contextSettingsWarnings = new ArrayList<>();
-    private final List<Content> dataSourcesToIngest = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
     private IngestJobConfigurationPanel ingestConfigPanel;
 
     /**
-     * Constructs an ingest job launcher that loads and updates the ingest job
-     * and ingest pipeline for a particular context.
+     * Constructs an ingest job launcher that creates and persists an ingest job
+     * configuration for a particular context and launches ingest jobs that
+     * process one or more data sources using the ingest job configuration.
      *
      * @param launcherContext The context identifier.
      */
@@ -51,8 +51,7 @@ public final class IngestJobLauncher {
 
         // Get the ingest module factories discovered by the ingest module 
         // loader.
-        // RJCTODO: Put in module name uniqueness test/notification either here or in the loader
-        List<IngestModuleFactory> moduleFactories = IngestModuleLoader.getInstance().getIngestModuleFactories();
+        List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getInstance().getIngestModuleFactories();
         HashSet<String> loadedModuleNames = new HashSet<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
@@ -79,13 +78,12 @@ public final class IngestJobLauncher {
         for (String moduleName : missingModuleNames) {
             enabledModuleNames.remove(moduleName);
             disabledModuleNames.remove(moduleName);
-            contextSettingsWarnings.add(String.format("Previously loaded %s module could not be found", moduleName));
+            warnings.add(String.format("Previously loaded %s module could not be found", moduleName));
         }
 
         // Create ingest module templates.
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
-            // RJCTODO: Make sure there is a story in JIRA for this.
             // NOTE: In the future, this code will be modified to get the 
             // module settings for the current context, if available, from 
             // storage; for now always use the defaults.
@@ -121,74 +119,6 @@ public final class IngestJobLauncher {
         ingestConfigPanel = new IngestJobConfigurationPanel(moduleTemplates, processUnallocatedSpace);
     }
 
-    public List<String> getContextSettingsWarnings() {
-        return contextSettingsWarnings;
-    }
-
-    public JPanel getIngestJobConfigPanel() {
-        return ingestConfigPanel;
-    }
-
-    public void saveIngestJobConfig() {
-        List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
-
-        // Save the enabled/disabled ingest module settings for the current context.
-        HashSet<String> enabledModuleNames = new HashSet<>();
-        HashSet<String> disabledModuleNames = new HashSet<>();
-        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            String moduleName = moduleTemplate.getModuleName();
-            if (moduleTemplate.isEnabled()) {
-                enabledModuleNames.add(moduleName);
-            } else {
-                disabledModuleNames.add(moduleName);
-            }
-        }
-        ModuleSettings.setConfigSetting(launcherContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
-
-        // Save the process unallocated space setting for the current context.
-        String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
-        ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
-
-        // NOTE: In the future, this code will be modified to persist the ingest 
-        // options for each ingest module for the current launch context.        
-    }
-
-    public void setDataSourcesToIngest(List<Content> dataSourcesToIngest) { // RJCTODO: This should really be handled by passing the data sources to startIngestJobs()
-        this.dataSourcesToIngest.clear();
-        this.dataSourcesToIngest.addAll(dataSourcesToIngest);
-    }
-
-    public void startIngestJobs() {
-        // Filter out the disabled ingest module templates.
-        List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
-        List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
-        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            if (moduleTemplate.isEnabled()) {
-                enabledModuleTemplates.add(moduleTemplate);
-            }
-        }
-
-        if ((!enabledModuleTemplates.isEmpty()) && (dataSourcesToIngest != null)) {
-            IngestManager.getDefault().scheduleDataSourceTasks(dataSourcesToIngest, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
-        }
-    }
-
-    private static String makeCommaSeparatedList(HashSet<String> input) {
-        if (input == null || input.isEmpty()) {
-            return "";
-        }
-
-        ArrayList<String> list = new ArrayList<>();
-        list.addAll(input);
-        StringBuilder csvList = new StringBuilder();
-        for (int i = 0; i < list.size() - 1; ++i) {
-            csvList.append(list.get(i)).append(", ");
-        }
-        csvList.append(list.get(list.size() - 1));
-        return csvList.toString();
-    }
-
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
         // Get the ingest modules setting from the user's config file. 
         // If there is no such setting yet, create the default setting.
@@ -219,5 +149,90 @@ public final class IngestJobLauncher {
             }
         }
         return moduleNames;
+    }
+        
+    /**
+     * Gets any warnings generated when the persisted ingest job configuration
+     * for the specified context is retrieved and loaded.
+     *
+     * @return A collection of warning messages.
+     */
+    public List<String> getIngestJobConfigWarnings() {
+        return warnings;
+    }
+
+    /**
+     * Gets the user interface panel the launcher uses to obtain the user's
+     * ingest job configuration for the specified context.
+     *
+     * @return A JPanel with components that can be used to create an ingest job
+     * configuration.
+     */
+    public JPanel getIngestJobConfigPanel() {
+        return ingestConfigPanel;
+    }
+
+    /**
+     * Persists the ingest job configuration for the specified context.
+     */
+    public void saveIngestJobConfig() {
+        List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
+
+        // Save the enabled/disabled ingest module settings for the current context.
+        HashSet<String> enabledModuleNames = new HashSet<>();
+        HashSet<String> disabledModuleNames = new HashSet<>();
+        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            String moduleName = moduleTemplate.getModuleName();
+            if (moduleTemplate.isEnabled()) {
+                enabledModuleNames.add(moduleName);
+            } else {
+                disabledModuleNames.add(moduleName);
+            }
+        }
+        ModuleSettings.setConfigSetting(launcherContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
+
+        // Save the process unallocated space setting for the current context.
+        String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
+        ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
+
+        // NOTE: In the future, this code will be modified to persist the ingest 
+        // options for each ingest module for the current launch context.        
+    }
+
+    private static String makeCommaSeparatedList(HashSet<String> input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+
+        ArrayList<String> list = new ArrayList<>();
+        list.addAll(input);
+        StringBuilder csvList = new StringBuilder();
+        for (int i = 0; i < list.size() - 1; ++i) {
+            csvList.append(list.get(i)).append(", ");
+        }
+        csvList.append(list.get(list.size() - 1));
+        return csvList.toString();
+    }
+        
+    /**
+     * Launches ingest jobs for one or more data sources using the ingest job
+     * configuration for the selected context.
+     *
+     * @param dataSources The data sources to ingest.
+     */
+    public void startIngestJobs(List<Content> dataSources) {
+        // Filter out the disabled ingest module templates.
+        List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
+        List<IngestModuleTemplate> moduleTemplates = ingestConfigPanel.getIngestModuleTemplates();
+        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            if (moduleTemplate.isEnabled()) {
+                enabledModuleTemplates.add(moduleTemplate);
+            }
+        }
+
+        if ((!enabledModuleTemplates.isEmpty()) && (dataSources != null) && (!dataSources.isEmpty())) {
+            IngestManager.getDefault().scheduleDataSourceTasks(dataSources, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
+        }
     }
 }

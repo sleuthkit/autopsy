@@ -47,7 +47,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -171,13 +171,13 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestModuleEvent.COMPLETED.toString() )
+                if (changed.equals(IngestEvent.COMPLETED.toString() )
                         && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
-                } else if (changed.equals(IngestModuleEvent.STARTED.toString() )
+                } else if (changed.equals(IngestEvent.STARTED.toString() )
                         && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(0);
-                } else if (changed.equals(IngestModuleEvent.STOPPED.toString() )
+                } else if (changed.equals(IngestEvent.STOPPED.toString() )
                         && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
                 }

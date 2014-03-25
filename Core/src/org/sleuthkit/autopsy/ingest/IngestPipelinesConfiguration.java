@@ -57,7 +57,7 @@ final class IngestPipelinesConfiguration {
 
     synchronized static IngestPipelinesConfiguration getInstance() {
         if (instance == null) {
-            Logger.getLogger(IngestModuleLoader.class.getName()).log(Level.INFO, "Creating ingest module loader instance");
+            Logger.getLogger(IngestPipelinesConfiguration.class.getName()).log(Level.INFO, "Creating ingest module loader instance");
             instance = new IngestPipelinesConfiguration();
         }
         return instance;
@@ -73,14 +73,14 @@ final class IngestPipelinesConfiguration {
 
     private void readPipelinesConfigurationFile() {
         try {
-            PlatformUtil.extractResourceToUserConfigDir(IngestModuleLoader.class, PIPELINES_CONFIG_FILE);
+            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error copying default pipeline configuration to user dir", ex);
             return;
         }
         
         String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINES_CONFIG_FILE;
-        Document doc = XMLUtil.loadDoc(IngestModuleLoader.class, configFilePath, PIPELINES_CONFIG_FILE_XSD);
+        Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath, PIPELINES_CONFIG_FILE_XSD);
         if (doc == null) {
             return;
         }

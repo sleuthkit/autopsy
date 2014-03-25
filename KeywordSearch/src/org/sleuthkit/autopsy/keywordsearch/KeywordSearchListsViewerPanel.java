@@ -41,7 +41,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
 
 /**
  * Viewer panel widget for keyword lists that is used in the ingest config and options area.
@@ -125,13 +125,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestModuleEvent.COMPLETED.toString())
+                if (changed.equals(IngestEvent.COMPLETED.toString())
                         && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(false);
-                } else if (changed.equals(IngestModuleEvent.STARTED.toString())
+                } else if (changed.equals(IngestEvent.STARTED.toString())
                         && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(true);
-                } else if (changed.equals(IngestModuleEvent.STOPPED.toString())
+                } else if (changed.equals(IngestEvent.STOPPED.toString())
                         && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(false);
                 }

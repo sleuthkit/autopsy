@@ -112,7 +112,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-        ScalpelCarver.init(); // RJCTODO: Is this SclapelCarver class thread-safe?
+        ScalpelCarver.init(); // RJCTODO: Is this ScalpelCarver class thread-safe?
 
         if (!initialized) {
             return ProcessResult.OK;

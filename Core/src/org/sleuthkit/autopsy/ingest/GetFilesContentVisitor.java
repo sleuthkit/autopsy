@@ -37,50 +37,51 @@ import org.sleuthkit.datamodel.VolumeSystem;
  */
 abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
-   private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
+    private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
 
-   @Override
-   public Collection<AbstractFile> visit(VirtualDirectory ld) {
-       return getAllFromChildren(ld);
-   }
+    @Override
+    public Collection<AbstractFile> visit(VirtualDirectory ld) {
+        return getAllFromChildren(ld);
+    }
 
-   @Override
-   public Collection<AbstractFile> visit(Directory drctr) {
-       return getAllFromChildren(drctr);
-   }
+    @Override
+    public Collection<AbstractFile> visit(Directory drctr) {
+        return getAllFromChildren(drctr);
+    }
 
-   @Override
-   public Collection<AbstractFile> visit(Image image) {
-       return getAllFromChildren(image);
-   }
+    @Override
+    public Collection<AbstractFile> visit(Image image) {
+        return getAllFromChildren(image);
+    }
 
-   @Override
-   public Collection<AbstractFile> visit(Volume volume) {
-       return getAllFromChildren(volume);
-   }
+    @Override
+    public Collection<AbstractFile> visit(Volume volume) {
+        return getAllFromChildren(volume);
+    }
 
-   @Override
-   public Collection<AbstractFile> visit(VolumeSystem vs) {
-       return getAllFromChildren(vs);
-   }
+    @Override
+    public Collection<AbstractFile> visit(VolumeSystem vs) {
+        return getAllFromChildren(vs);
+    }
 
-   /**
-    * Aggregate all the matches from visiting the children Content objects of the
-    * one passed
-    * @param parent
-    * @return 
-    */
-   protected Collection<AbstractFile> getAllFromChildren(Content parent) {
-       Collection<AbstractFile> all = new ArrayList<>();
+    /**
+     * Aggregate all the matches from visiting the children Content objects of
+     * a parent Content object.
+     *
+     * @param parent A content object.
+     * @return The child files of the content.
+     */
+    protected Collection<AbstractFile> getAllFromChildren(Content parent) {
+        Collection<AbstractFile> all = new ArrayList<>();
 
-       try {
-           for (Content child : parent.getChildren()) {
-               all.addAll(child.accept(this));
-           }
-       } catch (TskException ex) {
-           logger.log(Level.SEVERE, "Error getting Content children", ex);
-       }
+        try {
+            for (Content child : parent.getChildren()) {
+                all.addAll(child.accept(this));
+            }
+        } catch (TskException ex) {
+            logger.log(Level.SEVERE, "Error getting Content children", ex);
+        }
 
-       return all;
-   }
+        return all;
+    }
 }

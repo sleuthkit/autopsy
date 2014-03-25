@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
@@ -28,29 +29,33 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Looks up loaded ingest module factories using the NetBean global lookup.
  */
-final class IngestModuleLoader {
+final class IngestModuleFactoryLoader {
 
-    private static final Logger logger = Logger.getLogger(IngestModuleLoader.class.getName());
-    private static IngestModuleLoader instance;
-    private final List<IngestModuleFactory> moduleFactories = new ArrayList<>();
+    private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
+    private static IngestModuleFactoryLoader instance;
 
-    private IngestModuleLoader() {
+    private IngestModuleFactoryLoader() {
     }
 
-    synchronized static IngestModuleLoader getInstance() {
+    synchronized static IngestModuleFactoryLoader getInstance() {
         if (instance == null) {
-            instance = new IngestModuleLoader();
+            instance = new IngestModuleFactoryLoader();
         }
         return instance;
     }
 
     synchronized List<IngestModuleFactory> getIngestModuleFactories() {
-        moduleFactories.clear();
-        // RJCTODO: Need a name uniqueness test/solution, here or in the launcher.
+        List<IngestModuleFactory> moduleFactories = new ArrayList<>();
+        HashSet<String> moduleDisplayNames = new HashSet<>();
         Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
         for (IngestModuleFactory factory : factories) {
             logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
-            moduleFactories.add(factory);
+            if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
+                moduleFactories.add(factory);
+                moduleDisplayNames.add(factory.getModuleDisplayName());
+            } else {
+                logger.log(Level.SEVERE, "Found duplicate ingest module display name, discarding ingest module factory (name = {0}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
+            }
         }
         return new ArrayList<>(moduleFactories);
     }

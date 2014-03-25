@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -170,7 +171,7 @@ final class IngestJob {
                     try {
                         module.startUp(context);
                         modulesByClass.put(module.getClassName(), module);
-                        IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), module.getDisplayName());
+                        IngestManager.fireModuleEvent(IngestManager.IngestEvent.STARTED.toString(), module.getDisplayName());
                     } catch (Exception ex) {
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     }
@@ -200,10 +201,9 @@ final class IngestJob {
             logger.log(Level.INFO, "Processing data source {0}", dataSource.getName());
             for (DataSourceIngestModuleDecorator module : this.modules) {
                 try {
-                    progress.start();
-                    progress.switchToIndeterminate();
+                    String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.DataSourceIngestPipeline.displayName.text", module.getDisplayName(), dataSource.getName());
+                    progress.setDisplayName(displayName);
                     module.process(dataSource, new DataSourceIngestModuleStatusHelper(worker, progress, dataSource));
-                    progress.finish();
                 } catch (Exception ex) {
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 }
@@ -222,7 +222,7 @@ final class IngestJob {
                 } catch (Exception ex) {
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 } finally {
-                    IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.COMPLETED.toString(), module.getDisplayName());
+                    IngestManager.fireModuleEvent(IngestManager.IngestEvent.COMPLETED.toString(), module.getDisplayName());
                 }
             }
             return errors;
@@ -295,7 +295,7 @@ final class IngestJob {
                     try {
                         module.startUp(context);
                         modulesByClass.put(module.getClassName(), module);
-                        IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.STARTED.toString(), template.getModuleName());
+                        IngestManager.fireModuleEvent(IngestManager.IngestEvent.STARTED.toString(), template.getModuleName());
                     } catch (Exception ex) {
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     }
@@ -346,7 +346,7 @@ final class IngestJob {
                 } catch (Exception ex) {
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 } finally {
-                    IngestManager.fireModuleEvent(IngestManager.IngestModuleEvent.COMPLETED.toString(), module.getDisplayName());
+                    IngestManager.fireModuleEvent(IngestManager.IngestEvent.COMPLETED.toString(), module.getDisplayName());
                 }
             }
             return errors;

@@ -47,12 +47,12 @@ import org.sleuthkit.datamodel.TskException;
 public class FileExtMismatchIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
-    private static long processTime = 0; // RJCTODO: This is not thread safe
     private static int messageId = 0; // RJCTODO: This is not thread safe
-    private static long numFiles = 0; // RJCTODO: This is not thread safe
     private final IngestServices services = IngestServices.getDefault();
     private final FileExtMismatchDetectorModuleSettings settings;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
+    private long processTime = 0;
+    private long numFiles = 0;
 
     FileExtMismatchIngestModule(FileExtMismatchDetectorModuleSettings settings) {
         this.settings = settings;

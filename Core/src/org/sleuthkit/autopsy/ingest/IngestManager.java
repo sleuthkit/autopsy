@@ -36,12 +36,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * IngestManager sets up and manages ingest modules runs them in a background
- * thread notifies modules when work is complete or should be interrupted
- * processes messages from modules via messenger proxy and posts them to GUI.
- *
- * This runs as a singleton and you can access it using the getDefault() method.
- *
+ * Manages the execution of ingest jobs.
  */
 public class IngestManager {
 
@@ -56,16 +51,14 @@ public class IngestManager {
     private DataSourceTaskWorker dataSourceTaskWorker;
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
-    public final static String MODULE_PROPERTIES = NbBundle.getMessage(IngestManager.class,
-            "IngestManager.moduleProperties.text");
     private volatile IngestUI ingestMessageBox;
 
     /**
-     * Possible events about ingest modules Event listeners can get the event
-     * name by using String returned by toString() method on the specific event.
+     * Ingest events.
      */
-    public enum IngestModuleEvent {
+    public enum IngestEvent {
 
+        // RJCTODO: Update comments
         /**
          * Event sent when an ingest module has been started. Second argument of
          * the property change is a string form of the module name and the third
@@ -174,7 +167,7 @@ public class IngestManager {
      */
     static synchronized void fireFileDone(long objId) {
         try {
-            pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
+            pcs.firePropertyChange(IngestEvent.FILE_DONE.toString(), objId, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
@@ -191,7 +184,7 @@ public class IngestManager {
      */
     static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         try {
-            pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
+            pcs.firePropertyChange(IngestEvent.DATA.toString(), moduleDataEvent, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
@@ -208,7 +201,7 @@ public class IngestManager {
      */
     static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         try {
-            pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
+            pcs.firePropertyChange(IngestEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
@@ -396,7 +389,6 @@ public class IngestManager {
         private final List<Content> dataSources;
         private final List<IngestModuleTemplate> moduleTemplates;
         private final boolean processUnallocatedSpace;
-        private final List<Long> scheduledJobIds = new ArrayList<>();
         private ProgressHandle progress;
 
         TaskSchedulingWorker(List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
@@ -508,15 +500,14 @@ public class IngestManager {
 
             // Set up a progress bar that can be used to cancel all of the 
             // ingest jobs currently being performed. 
-            final String displayName = NbBundle.getMessage(this.getClass(), "IngestManager.DataSourceTaskWorker.displayName");
-            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+            progress = ProgressHandleFactory.createHandle("Data source ingest", new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    logger.log(Level.INFO, "Data source ingest thread {0} cancelled", DataSourceTaskWorker.this.id);
+                    logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", DataSourceTaskWorker.this.id);
                     if (progress != null) {
                         progress.setDisplayName(NbBundle.getMessage(this.getClass(),
                                 "IngestManager.DataSourceTaskWorker.process.cancelling",
-                                displayName));
+                                "Data source ingest"));
                     }
                     IngestManager.getDefault().stopAll();
                     return true;

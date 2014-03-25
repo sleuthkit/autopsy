@@ -225,7 +225,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSetttingsPa
     }
 
     private boolean isFileIngestStatusChangeEvent(PropertyChangeEvent evt) {
-        return evt.getPropertyName().equals(IngestManager.IngestModuleEvent.STARTED.toString()) || evt.getPropertyName().equals(IngestManager.IngestModuleEvent.COMPLETED.toString()) || evt.getPropertyName().equals(IngestManager.IngestModuleEvent.STOPPED.toString());
+        return evt.getPropertyName().equals(IngestManager.IngestEvent.STARTED.toString()) || evt.getPropertyName().equals(IngestManager.IngestEvent.COMPLETED.toString()) || evt.getPropertyName().equals(IngestManager.IngestEvent.STOPPED.toString());
     }
 
     @Override

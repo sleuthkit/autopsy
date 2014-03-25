@@ -56,8 +56,9 @@ final class FileTypeIdModuleSettingsPanel extends IngestModuleSettingsPanel {
         skipKnownCheckBox = new javax.swing.JCheckBox();
 
         skipKnownCheckBox.setSelected(true);
-        skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdSimpleConfigPanel.skipKnownCheckBox.text")); // NOI18N
-        skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdSimpleConfigPanel.skipKnownCheckBox.toolTipText")); // NOI18N
+        skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.text")); // NOI18N
+        skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.toolTipText")); // NOI18N
+        skipKnownCheckBox.setLabel(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.text")); // NOI18N
         skipKnownCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipKnownCheckBoxActionPerformed(evt);
@@ -71,14 +72,14 @@ final class FileTypeIdModuleSettingsPanel extends IngestModuleSettingsPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(10, 10, 10)
                 .addComponent(skipKnownCheckBox)
-                .addContainerGap(138, Short.MAX_VALUE))
+                .addContainerGap(608, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(11, 11, 11)
                 .addComponent(skipKnownCheckBox)
-                .addContainerGap(45, Short.MAX_VALUE))
+                .addContainerGap(47, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

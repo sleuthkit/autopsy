@@ -33,10 +33,31 @@ public final class IngestJobContext {
         this.ingestJob = ingestJob;
     }
 
-    public boolean isIngestJobCancelled() {
+    /**
+     * Gets the identifier of the ingest job associated with this context.
+     *
+     * @return The ingest job identifier.
+     */
+    public long getJobId() {
+        return this.ingestJob.getId();
+    }
+
+    /**
+     * Determines whether the ingest job associated with the current context has
+     * been canceled.
+     *
+     * @return True if the job has been canceled, false otherwise.
+     */
+    public boolean isJobCancelled() {
         return this.ingestJob.isCancelled();
     }
 
+    /**
+     * Adds one or more files to the files to be passed through the file ingest
+     * pipeline of the ingest job associated with the current context.
+     *
+     * @param files The files to be processed by the file ingest pipeline.
+     */
     public void addFilesToPipeline(List<AbstractFile> files) {
         for (AbstractFile file : files) {
             IngestManager.getDefault().scheduleFile(ingestJob.getId(), file);

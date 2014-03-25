@@ -21,19 +21,16 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Interface that must be implemented by all data source ingest modules. Data
- * source ingest modules work at the granularity of data sources, while file
- * ingest modules work at the granularity of individual files from a data
- * source.
+ * Interface that must be implemented by all data source ingest modules.
  */
 public interface DataSourceIngestModule extends IngestModule {
 
     /**
-     * Process a data source.
+     * Processes a data source.
      *
      * @param dataSource The data source to process.
      * @param statusHelper A status helper to be used to report progress and
-     * detect cancellation.
+     * detect ingest job cancellation.
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper);

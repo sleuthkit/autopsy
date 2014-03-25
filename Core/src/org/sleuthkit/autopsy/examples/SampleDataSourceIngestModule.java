@@ -49,9 +49,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * IngestModuleAdapter abstract class could have been used as a base class to 
  * obtain default implementations of many of the DataSourceIngestModule methods.
  */
-// RJCTODO: Add factory with service provider annotation (commend out)
-// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation
-// and provide better documentation, and more extensive demonstration of how to 
+// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation of interface
+// provide better documentation, and provide more extensive demonstration of how to 
 // use various ingest services.
 class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
 

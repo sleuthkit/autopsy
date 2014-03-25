@@ -21,17 +21,15 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Interface that must be implemented by all file ingest modules. File ingest
- * modules work at the granularity of individual files from a data source, while
- * data source ingest modules work at the granularity of data sources.
+ * Interface that must be implemented by all file ingest modules. 
  */
 public interface FileIngestModule extends IngestModule {
 
     /**
-     * Process a file.
+     * Processes a file.
      *
-     * @param file The file
-     * @return A result code indicating success or failure.
+     * @param file The file.
+     * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(AbstractFile file);
 }

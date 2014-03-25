@@ -74,7 +74,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.dataSourcePanel = dsPanel;
         
         ingestConfig = new IngestJobLauncher(AddImageWizardIngestConfigPanel.class.getCanonicalName());
-        List<String> messages = ingestConfig.getContextSettingsWarnings();
+        List<String> messages = ingestConfig.getIngestJobConfigWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -201,8 +201,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            ingestConfig.setDataSourcesToIngest(newContents);
-            ingestConfig.startIngestJobs();
+            ingestConfig.startIngestJobs(newContents);
             progressPanel.setStateFinished();
 
         }

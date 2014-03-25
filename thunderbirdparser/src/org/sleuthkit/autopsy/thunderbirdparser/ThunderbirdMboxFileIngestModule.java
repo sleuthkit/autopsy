@@ -287,7 +287,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         }
 
         if (derivedFiles.isEmpty() == false) {
-            for (AbstractFile derived : derivedFiles) { // RJCTODO: May want to add bulk method
+            for (AbstractFile derived : derivedFiles) {
                 services.fireModuleContentEvent(new ModuleContentEvent(derived));
             }
         }

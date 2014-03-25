@@ -173,7 +173,7 @@ abstract class KeywordSearchListsAbstract {
     }
 
     // RJCTODO: Need a manager of getting lists
-    // RJCTODO: There is onient, KeywordSearchEditListPanel, fetching unlocked lists
+    // RJCTODO: There is one client, KeywordSearchEditListPanel, fetching unlocked lists
     public List<KeywordList> getListsL(boolean locked) {
         List<KeywordList> ret = new ArrayList<>();
         for (KeywordList list : theLists.values()) {
@@ -184,7 +184,7 @@ abstract class KeywordSearchListsAbstract {
         return ret;
     }
 
-    // RJCTODO: one perhaps weird use by KeywordSearchListsManagementPanel, for manager, since global list affected
+    // RJCTODO: Used by KeywordSearchListsManagementPanel; for manager, since global list affected
     /**
      * Get list names of all loaded keyword list names
      *
@@ -194,7 +194,7 @@ abstract class KeywordSearchListsAbstract {
         return new ArrayList<>(theLists.keySet());
     }
 
-    // RJCTODO: one perhaps weird use by KeywordSearchListsManagementPanel, for manager, since global list affected
+    // RJCTODO: Used by KeywordSearchListsManagementPanel; for manager, since global list affected
     /**
      * Get list names of all locked or unlocked loaded keyword list names
      *
@@ -212,24 +212,6 @@ abstract class KeywordSearchListsAbstract {
 
         return lists;
     }
-
-    // RJCTODO: Not used
-    /**
-     * return first list that contains the keyword
-     *
-     * @param keyword
-     * @return found list or null
-     */
-//    public KeywordList getListWithKeyword(Keyword keyword) {
-//        KeywordList found = null;
-//        for (KeywordList list : theLists.values()) {
-//            if (list.hasKeyword(keyword)) {
-//                found = list;
-//                break;
-//            }
-//        }
-//        return found;
-//    }
 
     /**
      * return first list that contains the keyword

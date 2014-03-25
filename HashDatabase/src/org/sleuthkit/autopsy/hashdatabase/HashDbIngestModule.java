@@ -48,8 +48,6 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private static int messageId = 0; // RJCTODO: This is not thread safe
-    static long calctime = 0; // RJCTODO: This is not thread safe
-    static long lookuptime = 0; // RJCTODO: This is not thread safe
     private final IngestServices services = IngestServices.getDefault();
     private final Hash hasher = new Hash();
     private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -58,6 +56,8 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
     private int knownBadCount = 0;
+    private long calctime = 0;
+    private long lookuptime = 0;
     
     HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;

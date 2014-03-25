@@ -54,9 +54,8 @@ import org.sleuthkit.datamodel.TskData;
  * org.sleuthkit.autopsy.examples package. Either change the package or the
  * loading code to make this module actually run.
  */
-// RJCTODO: Add factory with service provider annotation (commend out)
-// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation
-// and provide better documentation, and more extensive demonstration of how to 
+// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation of interface
+// provide better documentation, and provide more extensive demonstration of how to 
 // use various ingest services.
 class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
@@ -134,5 +133,5 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
         }
     }
 
-    // RJCTODO: Add a module factory
+    // RJCTODO: Add a module factory with service provider annotation (commented out)
 }

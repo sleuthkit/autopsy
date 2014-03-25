@@ -25,8 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 /**
  * Global options panel for keyword searching.
  */
-// RJCTODO: Why is this a public class?
-public final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
+final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
@@ -74,13 +73,13 @@ public final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSet
 
     @Override
     public void load() {
-        // This calls actually clears the component. RJCTODO: Krazy!
+        // This calls actually clears the component.
         listsPanel.load();
 
         languagesPanel.load();
         generalPanel.load();
 
-        // Reload the XML to avoid 'ghost' vars RJCTODO: What does this mean?
+        // Reload the XML to avoid 'ghost' vars
         KeywordSearchListsXML.getCurrent().reload();
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -32,24 +33,24 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Dialog box that allows ingest modules to be run on a data source. 
- * Used outside of the wizards.
+ * Dialog box that allows ingest modules to be run on a data source. Used
+ * outside of the wizards.
  */
 public final class IngestDialog extends JDialog {
-    
+
     private static final String TITLE = NbBundle.getMessage(IngestDialog.class, "IngestDialog.title.text");
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private IngestJobLauncher ingestConfigurator;
-    
+    private List<Content> dataSources = new ArrayList<>();
+    private IngestJobLauncher ingestJobLauncher;
+
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestConfigurator = new IngestJobLauncher(IngestDialog.class.getCanonicalName());
-        List<String> messages = ingestConfigurator.getContextSettingsWarnings();
+        ingestJobLauncher = new IngestJobLauncher(IngestDialog.class.getCanonicalName());
+        List<String> messages = ingestJobLauncher.getIngestJobConfigWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -58,8 +59,8 @@ public final class IngestDialog extends JDialog {
             JOptionPane.showMessageDialog(null, warning.toString());
         }
     }
-    
-    public IngestDialog(){
+
+    public IngestDialog() {
         this(new JFrame(TITLE), TITLE, true);
     }
 
@@ -78,51 +79,49 @@ public final class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
-        add(ingestConfigurator.getIngestJobConfigPanel(), BorderLayout.PAGE_START);
+        add(ingestJobLauncher.getIngestJobConfigPanel(), BorderLayout.PAGE_START);
         JButton startButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.startButton.title"));
         JButton closeButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.closeButton.title"));
         startButton.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestConfigurator.saveIngestJobConfig();
-                ingestConfigurator.startIngestJobs();
+                ingestJobLauncher.saveIngestJobConfig();
+                ingestJobLauncher.startIngestJobs(dataSources);
                 close();
             }
         });
         closeButton.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestConfigurator.saveIngestJobConfig();
+                ingestJobLauncher.saveIngestJobConfig();
                 close();
             }
         });
         this.addWindowListener(new WindowAdapter() {
-
             @Override
             public void windowClosing(WindowEvent e) {
-                ingestConfigurator.saveIngestJobConfig();
+                ingestJobLauncher.saveIngestJobConfig();
                 close();
             }
         });
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10,10), new Dimension(10,10), new Dimension(10,10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
         buttonPanel.add(startButton);
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10,10), new Dimension(10,10), new Dimension(10,10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
         buttonPanel.add(closeButton);
         add(buttonPanel, BorderLayout.LINE_START);
-        
+
         pack();
         setResizable(false);
         setVisible(true);
     }
-   
+
     public void setDataSources(List<Content> inputContent) {
-        ingestConfigurator.setDataSourcesToIngest(inputContent);
-    }    
-    
+        dataSources.clear();
+        dataSources.addAll(inputContent);
+    }
+
     /**
      * Closes the Ingest dialog
      */
