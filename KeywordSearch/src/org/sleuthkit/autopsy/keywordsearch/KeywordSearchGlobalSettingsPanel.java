@@ -25,13 +25,13 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 /**
  * Global options panel for keyword searching.
  */
-final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
+final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
     private KeywordSearchConfigurationPanel2 generalPanel;
 
-    public KeywordSearchConfigurationPanel() {
+    public KeywordSearchGlobalSettingsPanel() {
         initComponents();
         customizeComponents();
     }
@@ -63,11 +63,11 @@ final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsP
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 675, Short.MAX_VALUE)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
