@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
- * Container panel for keyword search advanced configuration options
+ * Global options panel for keyword searching.
  */
-public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
+final class KeywordSearchConfigurationPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
 
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
@@ -35,7 +35,7 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
         setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
         listsPanel = new KeywordSearchConfigurationPanel1();
@@ -71,38 +71,37 @@ public final class KeywordSearchConfigurationPanel extends javax.swing.JPanel im
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Load each of the tabs and reload the XML.
-     */
     @Override
     public void load() {
-        // Deselect all table rows
+        // This calls actually clears the component.
         listsPanel.load();
+
         languagesPanel.load();
         generalPanel.load();
+
         // Reload the XML to avoid 'ghost' vars
         KeywordSearchListsXML.getCurrent().reload();
     }
 
-    /**
-     * Store each panel's settings.
-     */
     @Override
-    public void store() {
+    public void saveSettings() {
         listsPanel.store();
         languagesPanel.store();
-        generalPanel.store();
+        generalPanel.store();        
+    }
+
+    @Override
+    public void store() {
+        saveSettings();
     }
 
     public void cancel() {
-        KeywordSearchListsXML.getCurrent().reload();        
+        KeywordSearchListsXML.getCurrent().reload();
     }
-    
+
     boolean valid() {
-        // TODO check whether form is consistent and complete
         return true;
     }
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
