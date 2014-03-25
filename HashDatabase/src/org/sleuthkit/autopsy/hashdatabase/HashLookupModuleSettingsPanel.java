@@ -33,14 +33,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * Instances of this class provide a simplified UI for managing the hash sets
  * configuration.
  */
-public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel implements PropertyChangeListener  {
+public class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener  {
 
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private HashDatabasesTableModel knownTableModel;
@@ -88,7 +88,7 @@ public class HashLookupModuleSettingsPanel extends IngestModuleSettingsPanel imp
     }
     
     @Override
-    public IngestModuleSettings getSettings() {
+    public IngestModuleIngestJobSettings getSettings() {
         List<String> enabledHashSets = new ArrayList<>();
         List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
         for (HashDb db : knownFileHashSets) {

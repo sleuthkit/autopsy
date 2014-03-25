@@ -21,9 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import java.io.Serializable;
 
 /**
- * Interface for per ingest job options for ingest modules. Options are
- * serializable to support persistence of options between invocations of the
- * application.
+ * Interface for per ingest job settings for ingest modules. The settings are
+ * serializable to support persistence of settings for different contexts and
+ * between invocations of the application.
  */
-public interface IngestModuleSettings extends Serializable {
+public interface IngestModuleIngestJobSettings extends Serializable {
 }

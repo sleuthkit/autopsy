@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.filetypeid;
 
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * Ingest job options for the file type identifier ingest module instances.
  */
-public class FileTypeIdModuleSettings implements IngestModuleSettings {
+public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
     private boolean skipKnownFiles = true;
 

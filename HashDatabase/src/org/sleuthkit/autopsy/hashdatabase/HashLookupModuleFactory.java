@@ -26,8 +26,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -58,7 +58,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
         HashDbManager hashDbManager = HashDbManager.getInstance();
         List<String> enabledHashSets = new ArrayList<>();
         List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
@@ -82,7 +82,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
+    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
         if (moduleSettingsPanel == null) {
             moduleSettingsPanel = new HashLookupModuleSettingsPanel();
         }
@@ -108,7 +108,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof HashLookupModuleSettings;
         if (!(settings instanceof HashLookupModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof HashLookupModuleSettings");

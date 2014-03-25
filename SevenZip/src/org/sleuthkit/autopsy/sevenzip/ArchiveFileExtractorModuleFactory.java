@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * A factory for creating archive extractor file ingest modules and the user
@@ -59,7 +59,7 @@ public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapte
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new SevenZipIngestModule();
     }
 }
