@@ -114,13 +114,13 @@ class DirectoryTreeFilterNode extends FilterNode {
             //ingest action
             actions.add(new AbstractAction(
                     NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final IngestDialog ingestDialog = new IngestDialog();
-                    ingestDialog.setContent(Collections.<Content>singletonList(content));
-                    ingestDialog.display();
-                }
-            });
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        final IngestDialog ingestDialog = new IngestDialog();
+                        ingestDialog.setDataSources(Collections.<Content>singletonList(content));
+                        ingestDialog.display();
+                    }
+                });
         }
 
         //check if delete actions should be added
@@ -141,7 +141,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     }
 
     private static List<Action> getDetailActions(Content c) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         actions.addAll(ExplorerNodeActionVisitor.getActions(c));
 
