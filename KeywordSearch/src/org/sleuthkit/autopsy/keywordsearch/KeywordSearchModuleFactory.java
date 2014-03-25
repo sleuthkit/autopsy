@@ -61,7 +61,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     
     @Override
     public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings ingestJobOptions) {
-        KeywordSearchIngestSimplePanel ingestOptionsPanel = new KeywordSearchIngestSimplePanel();  
+        KeywordSearchJobSettingsPanel ingestOptionsPanel = new KeywordSearchJobSettingsPanel();  
         ingestOptionsPanel.load();
         return ingestOptionsPanel; 
     }
@@ -73,7 +73,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     
     @Override
     public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
-        KeywordSearchConfigurationPanel globalOptionsPanel = new KeywordSearchConfigurationPanel();
+        KeywordSearchGlobalSettingsPanel globalOptionsPanel = new KeywordSearchGlobalSettingsPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
     }    

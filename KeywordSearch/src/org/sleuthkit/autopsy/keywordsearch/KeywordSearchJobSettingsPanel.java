@@ -34,14 +34,13 @@ import org.sleuthkit.autopsy.ingest.NoIngestModuleSettings;
 /**
  * Ingest job options panel for the keyword search file ingest module.
  */
-public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobSettingsPanel {
+public class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
     
-    private final static Logger logger = Logger.getLogger(KeywordSearchIngestSimplePanel.class.getName());
-    public static final String PROP_OPTIONS = "Keyword Search_Options";
+    private final static Logger logger = Logger.getLogger(KeywordSearchJobSettingsPanel.class.getName());
     private KeywordTableModel tableModel;
     private List<KeywordList> lists;
 
-    KeywordSearchIngestSimplePanel() {
+    KeywordSearchJobSettingsPanel() {
         tableModel = new KeywordTableModel();
         lists = new ArrayList<>();
         reloadLists();
@@ -123,17 +122,17 @@ public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobSetting
         listsTable.setShowVerticalLines(false);
         listsScrollPane.setViewportView(listsTable);
 
-        titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.titleLabel.text")); // NOI18N
+        titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.titleLabel.text")); // NOI18N
 
-        languagesLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesLabel.text")); // NOI18N
-        languagesLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesLabel.toolTipText")); // NOI18N
+        languagesLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text")); // NOI18N
+        languagesLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.toolTipText")); // NOI18N
 
-        languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesValLabel.text")); // NOI18N
-        languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesValLabel.toolTipText")); // NOI18N
+        languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.text")); // NOI18N
+        languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.toolTipText")); // NOI18N
 
-        encodingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.encodingsLabel.text")); // NOI18N
+        encodingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.encodingsLabel.text")); // NOI18N
 
-        keywordSearchEncodings.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.keywordSearchEncodings.text")); // NOI18N
+        keywordSearchEncodings.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.keywordSearchEncodings.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -165,7 +164,7 @@ public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobSetting
                 .addGap(7, 7, 7)
                 .addComponent(titleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 135, Short.MAX_VALUE)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(languagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -228,7 +227,7 @@ public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobSetting
 
         @Override
         public int getRowCount() {
-            return KeywordSearchIngestSimplePanel.this.lists.size();
+            return KeywordSearchJobSettingsPanel.this.lists.size();
         }
 
         @Override
@@ -238,7 +237,7 @@ public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobSetting
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            KeywordList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
+            KeywordList list = KeywordSearchJobSettingsPanel.this.lists.get(rowIndex);
             if(columnIndex == 0) {
                 return list.getUseForIngest();
             } else {
@@ -254,7 +253,7 @@ public class KeywordSearchIngestSimplePanel extends IngestModuleIngestJobSetting
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             
-            KeywordList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
+            KeywordList list = KeywordSearchJobSettingsPanel.this.lists.get(rowIndex);
             if(columnIndex == 0){
                 KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
                 loader.addList(list.getName(), list.getKeywords(), (Boolean) aValue, false);
