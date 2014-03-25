@@ -69,8 +69,9 @@
   <ext>tgz</ext>
  </signature>
  <signature mimetype="application/x-msoffice">
-  <ext>automaticDestinations-ms</ext>
-  <ext>customDestinations-ms</ext>
+  <ext>automaticdestinations-ms</ext>
+  <ext>bag</ext>
+  <ext>customdestinations-ms</ext>
   <ext>db</ext>
   <ext>db.keep</ext>
   <ext>doc</ext>
@@ -79,6 +80,7 @@
   <ext>dot</ext>
   <ext>dotm</ext>
   <ext>dotx</ext>
+  <ext>dpb</ext>
   <ext>feed-ms</ext>
   <ext>gra</ext>
   <ext>msi</ext>
@@ -139,6 +141,7 @@
   <ext>ppsm</ext>
   <ext>pptm</ext>
   <ext>pptx</ext>
+  <ext>vs</ext>
   <ext>wmz</ext>
   <ext>xlam</ext>
   <ext>xlsb</ext>
@@ -251,6 +254,7 @@
  <signature mimetype="text/plain">
   <ext>acro</ext>
   <ext>adm</ext>
+  <ext>admx</ext>
   <ext>aff</ext>
   <ext>arff</ext>
   <ext>ashx</ext>
@@ -263,6 +267,7 @@
   <ext>c</ext>
   <ext>catalog</ext>
   <ext>cc</ext>
+  <ext>cdxml</ext>
   <ext>cfg</ext>
   <ext>chs</ext>
   <ext>cht</ext>
@@ -308,6 +313,7 @@
   <ext>iem</ext>
   <ext>inc</ext>
   <ext>inf</ext>
+  <ext>inf_loc</ext>
   <ext>ini</ext>
   <ext>ins</ext>
   <ext>iqy</ext>
@@ -356,7 +362,11 @@
   <ext>properties</ext>
   <ext>prx</ext>
   <ext>ps</ext>
+  <ext>ps1</ext>
+  <ext>ps1xml</ext>
+  <ext>psd1</ext>
   <ext>psm</ext>
+  <ext>psm1</ext>
   <ext>psp</ext>
   <ext>py</ext>
   <ext>pyw</ext>
@@ -397,10 +407,12 @@
   <ext>winprf_backup</ext>
   <ext>wpl</ext>
   <ext>wsdl</ext>
+  <ext>xaml</ext>
   <ext>xdc</ext>
   <ext>xdr</ext>
   <ext>xhtml</ext>
   <ext>xml</ext>
+  <ext>xrm-ms</ext>
   <ext>xsd</ext>
   <ext>xsl</ext>
   <ext>xsml</ext>
@@ -421,6 +433,7 @@
   <ext>mpv</ext>
  </signature>
  <signature mimetype="video/quicktime">
+  <ext>m4a</ext>
   <ext>mov</ext>
   <ext>mp4</ext>
   <ext>qt</ext>

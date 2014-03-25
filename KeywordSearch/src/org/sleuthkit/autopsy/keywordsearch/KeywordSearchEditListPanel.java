@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
@@ -49,7 +47,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -59,7 +57,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
-    private KeywordSearchListsAbstract.KeywordSearchList currentKeywordList;
+    private KeywordList currentKeywordList;
 
     
     private boolean ingestRunning;
@@ -161,7 +159,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
 
 
-        if (IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
+        if (IngestManager.getDefault().isIngestRunning()) {
             initIngest(0);
         } else {
             initIngest(1);
@@ -173,14 +171,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestModuleEvent.COMPLETED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                if (changed.equals(IngestEvent.COMPLETED.toString() )
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
-                } else if (changed.equals(IngestModuleEvent.STARTED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                } else if (changed.equals(IngestEvent.STARTED.toString() )
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(0);
-                } else if (changed.equals(IngestModuleEvent.STOPPED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                } else if (changed.equals(IngestEvent.STOPPED.toString() )
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
                 }
             }
@@ -221,9 +219,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         boolean noKeywords = !listSet ? true : currentKeywordList.getKeywords().isEmpty();
 
         // Certain buttons will be disabled if ingest is ongoing on this list
-        List<String> ingestLists = new ArrayList<String>();
+        List<String> ingestLists = new ArrayList<>();
         if (ingestOngoing) {
-            ingestLists = KeywordSearchIngestModule.getDefault().getKeywordLists();
+            ingestLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
         }
         boolean inIngest = !listSet ? false : ingestLists.contains(currentKeywordList.getName());
 
@@ -575,7 +573,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
             KeywordSearchListsXML reader = KeywordSearchListsXML.getCurrent();
 
-            List<KeywordSearchListsAbstract.KeywordSearchList> toWrite = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
+            List<KeywordList> toWrite = new ArrayList<KeywordList>();
             toWrite.add(reader.getList(currentKeywordList.getName()));
             final KeywordSearchListsXML exporter = new KeywordSearchListsXML(fileAbs);
             boolean written = exporter.saveLists(toWrite);
@@ -659,11 +657,11 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
         // Implemented by parent panel
     }
     
-    KeywordSearchListsAbstract.KeywordSearchList getCurrentKeywordList() {
+    KeywordList getCurrentKeywordList() {
         return currentKeywordList;
     }
     
-    void setCurrentKeywordList(KeywordSearchListsAbstract.KeywordSearchList list) {
+    void setCurrentKeywordList(KeywordList list) {
         currentKeywordList = list;
     }
     
