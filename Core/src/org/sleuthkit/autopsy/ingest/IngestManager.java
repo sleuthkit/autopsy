@@ -570,7 +570,7 @@ public class IngestManager {
             // Set up a progress bar that can be used to cancel all of the 
             // ingest jobs currently being performed. 
             final String displayName = NbBundle
-                    .getMessage(this.getClass(), "IngestManager.EnqueueWorker.displayName.text");
+                    .getMessage(this.getClass(), "IngestManager.FileTaskWorker.displayName");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
