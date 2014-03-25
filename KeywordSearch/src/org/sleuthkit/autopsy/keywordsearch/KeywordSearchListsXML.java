@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,7 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
  * or to any file provided in constructor
  */
-public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
+class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
     private static final String ROOT_EL = "keyword_lists";
     private static final String LIST_EL = "keyword_list";
@@ -56,8 +56,6 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
     private static final String XSDFILE = "KeywordsSchema.xsd";
     private static final Logger logger = Logger.getLogger(KeywordSearchListsXML.class.getName());
     private DateFormat dateFormatter;
-
-    
 
     /**
      * Constructor to obtain handle on other that the current keyword list
@@ -91,7 +89,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 if (theLists.get(listName).isLocked() == true) {
                     continue;
                 }
-                KeywordSearchList list = theLists.get(listName);
+                KeywordList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
                 String useForIngest = list.getUseForIngest().toString();
@@ -104,7 +102,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
                 
                 // only write the 'useForIngest' and 'ingestMessages' attributes
-                // if we're not exporting the list
+                // if we're not exporting the list.
                 if (!isExport) {
                     listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
                     listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
@@ -177,7 +175,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 Date modDate = dateFormatter.parse(modified);
 
                 List<Keyword> words = new ArrayList<Keyword>();
-                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
+                KeywordList list = new KeywordList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
 
                 //parse all words
                 NodeList wordsNList = listEl.getElementsByTagName(KEYWORD_EL);

@@ -61,8 +61,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             //"application/xml-dtd",
             );
 
-    AbstractFileHtmlExtract() {
-        this.module = KeywordSearchIngestModule.getDefault();
+    AbstractFileHtmlExtract(KeywordSearchIngestModule module) {
+        this.module = module;
         ingester = Server.getIngester();
     }
 
