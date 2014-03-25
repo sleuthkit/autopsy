@@ -30,14 +30,14 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 /**
  * Panel containing all other Keyword search Options panels.
  */
-class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
+class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
-    private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel1.class.getName());
+    private static final Logger logger = Logger.getLogger(KeywordSearchGlobalListSettingsPanel.class.getName());
     private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
     
-    KeywordSearchConfigurationPanel1() {        
+    KeywordSearchGlobalListSettingsPanel() {        
         initComponents();
         customizeComponents();
         setName(KEYWORD_CONFIG_NAME);
@@ -195,5 +195,5 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JPanel rightPanel;
     // End of variables declaration//GEN-END:variables
-    
+
 }
