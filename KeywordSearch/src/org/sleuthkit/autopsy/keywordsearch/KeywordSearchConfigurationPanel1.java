@@ -70,7 +70,8 @@ class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements Opt
            
             @Override
             public void actionPerformed(ActionEvent e) {
-                final String FEATURE_NAME = "Save Keyword List";
+                final String FEATURE_NAME = NbBundle
+                        .getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.saveKeywordList.title");
                 KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
                 KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 

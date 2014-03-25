@@ -536,7 +536,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
-        final String FEATURE_NAME = "Keyword List Export";
+        final String FEATURE_NAME = NbBundle
+                .getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.featureName");
 
         JFileChooser chooser = new JFileChooser();
         final String EXTENSION = "xml";
