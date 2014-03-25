@@ -58,7 +58,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
             if (module.hasModuleSettingsPanel()) {
-                IngestModuleSettings settings = module.getModuleSettingsPanel().getSettings();
+                IngestModuleIngestJobSettings settings = module.getModuleSettingsPanel().getSettings();
                 moduleTemplate.setModuleSettings(settings);
             }
             moduleTemplates.add(moduleTemplate);
@@ -295,7 +295,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
         private final IngestModuleTemplate moduleTemplate;
         private IngestModuleGlobalSetttingsPanel globalSettingsPanel = null;
-        private IngestModuleSettingsPanel moduleSettingsPanel = null;
+        private IngestModuleIngestJobSettingsPanel moduleSettingsPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
             this.moduleTemplate = moduleTemplate;
@@ -331,7 +331,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             return moduleTemplate.hasModuleSettingsPanel();
         }
 
-        IngestModuleSettingsPanel getModuleSettingsPanel() {
+        IngestModuleIngestJobSettingsPanel getModuleSettingsPanel() {
             return moduleSettingsPanel;
         }
 

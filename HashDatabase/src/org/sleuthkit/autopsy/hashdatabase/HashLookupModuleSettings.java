@@ -20,12 +20,12 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.HashSet;
 import java.util.List;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * Settings for a hash lookup file ingest module instance.
  */
-final class HashLookupModuleSettings implements IngestModuleSettings {
+final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
     private final HashSet<String> enabledHashSets = new HashSet<>();
     private boolean shouldCalculateHashes = true;

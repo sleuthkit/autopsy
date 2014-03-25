@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * An factory that creates data source ingest modules that verify the integrity
@@ -60,7 +60,7 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleSettings ingestOptions) {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new EwfVerifyIngestModule();
     }
 }

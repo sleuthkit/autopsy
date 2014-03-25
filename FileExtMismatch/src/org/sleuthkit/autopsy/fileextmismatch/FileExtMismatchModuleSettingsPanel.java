@@ -18,14 +18,14 @@
  */
 package org.sleuthkit.autopsy.fileextmismatch;
 
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * UI component used to set ingest job options for file extension mismatch
  * detector ingest modules.
  */
-final class FileExtMismatchModuleSettingsPanel extends IngestModuleSettingsPanel {
+final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     private final FileExtMismatchDetectorModuleSettings settings;
 
@@ -42,7 +42,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleSettingsPanel
     }
 
     @Override
-    public IngestModuleSettings getSettings() {
+    public IngestModuleIngestJobSettings getSettings() {
         return settings;
     }
 

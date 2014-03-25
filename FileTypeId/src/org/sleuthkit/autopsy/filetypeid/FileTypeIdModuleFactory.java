@@ -24,8 +24,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * An factory that creates file ingest modules that determine the types of
@@ -56,7 +56,7 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
         return new FileTypeIdModuleSettings();
     }
 
@@ -66,7 +66,7 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
+    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
@@ -80,7 +80,7 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
