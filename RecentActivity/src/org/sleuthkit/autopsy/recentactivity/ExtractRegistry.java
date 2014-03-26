@@ -171,7 +171,7 @@ class ExtractRegistry extends Extract {
                 continue;
             }
             
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
            
@@ -187,7 +187,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
             
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
             

@@ -282,7 +282,7 @@ public class FileManager implements Closeable {
                     //for now reusing ingest events, in future this will be replaced by datamodel / observer sending out events
                     // @@@ Is this the right place for this? A directory tree refresh will be triggered, so this may be creating a race condition
                     // since the transaction is not yet committed.   
-                    IngestServices.getDefault().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
+                    IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
                 }
             }
 

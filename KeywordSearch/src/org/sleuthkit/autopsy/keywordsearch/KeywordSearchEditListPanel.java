@@ -124,7 +124,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
 
-        if (IngestManager.getDefault().isIngestRunning()) {
+        if (IngestManager.getInstance().isIngestRunning()) {
             initIngest(0);
         } else {
             initIngest(1);

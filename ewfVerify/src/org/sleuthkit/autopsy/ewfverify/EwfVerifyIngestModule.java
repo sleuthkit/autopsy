@@ -45,7 +45,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
     private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
-    private static final IngestServices services = IngestServices.getDefault();
+    private static final IngestServices services = IngestServices.getInstance();
     private Image img;
     private String imgName;
     private MessageDigest messageDigest;
@@ -146,7 +146,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
         // Read in byte size chunks and update the hash value with the data.
         for (int i = 0; i < totalChunks; i++) {
-            if (statusHelper.isCancelled()) {
+            if (statusHelper.isIngestJobCancelled()) {
                 return ProcessResult.OK;
             }
             data = new byte[(int) chunkSize];

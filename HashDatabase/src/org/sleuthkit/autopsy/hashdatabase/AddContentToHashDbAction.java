@@ -82,7 +82,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             super(SINGLE_SELECTION_NAME);
                         
             // Disable the menu if file ingest is in progress.
-            if (IngestManager.getDefault().isIngestRunning()) {
+            if (IngestManager.getInstance().isIngestRunning()) {
                 setEnabled(false);
                 return;
             }

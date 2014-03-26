@@ -45,7 +45,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
 
     @Override
     public IngestModuleIngestJobSettings getDefaultModuleSettings() {
-        return new NoIngestModuleSettings();
+        return new NoIngestModuleIngestJobSettings();
     }
 
     @Override

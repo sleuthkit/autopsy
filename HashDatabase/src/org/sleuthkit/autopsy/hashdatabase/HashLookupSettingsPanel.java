@@ -105,7 +105,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSetttingsPa
     }
 
     private void updateComponentsForNoSelection() {
-        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
 
         // Update descriptive labels.
         hashDbNameLabel.setText(NO_SELECTION_TEXT);
@@ -135,7 +135,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSetttingsPa
     }
 
     private void updateComponentsForSelection(HashDb db) {
-        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
 
         // Update descriptive labels.        
         hashDbNameLabel.setText(db.getHashSetName());

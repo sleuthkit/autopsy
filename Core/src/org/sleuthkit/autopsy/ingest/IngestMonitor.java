@@ -151,7 +151,7 @@ public final class IngestMonitor {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            final IngestManager manager = IngestManager.getDefault();
+            final IngestManager manager = IngestManager.getInstance();
 
             //runs checks only if ingest is running
             if (manager.isIngestRunning() == false) {
@@ -166,7 +166,7 @@ public final class IngestMonitor {
                 MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                IngestServices.getDefault().postMessage(IngestMessage.createManagerErrorMessage(
+                IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
             }

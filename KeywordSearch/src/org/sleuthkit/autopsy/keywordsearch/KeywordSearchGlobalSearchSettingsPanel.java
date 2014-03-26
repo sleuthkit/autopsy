@@ -44,7 +44,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     private void activateWidgets() {
         skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
         showSnippetsCB.setSelected(KeywordSearchSettings.getShowSnippets());
-        boolean enable = !IngestManager.getDefault().isIngestRunning();
+        boolean enable = !IngestManager.getInstance().isIngestRunning();
         skipNSRLCheckBox.setEnabled(enable);
         setTimeSettingEnabled(enable);
 

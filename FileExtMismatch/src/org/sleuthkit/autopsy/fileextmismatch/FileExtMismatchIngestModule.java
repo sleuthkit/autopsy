@@ -48,7 +48,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private static int messageId = 0; // RJCTODO: This is not thread safe
-    private final IngestServices services = IngestServices.getDefault();
+    private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     private long processTime = 0;

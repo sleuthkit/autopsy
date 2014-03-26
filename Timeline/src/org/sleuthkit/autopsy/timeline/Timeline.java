@@ -1164,7 +1164,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 logger.log(Level.INFO, "Error creating timeline, there are no data sources. ");
             } else {
 
-                if (IngestManager.getDefault().isIngestRunning()) {
+                if (IngestManager.getInstance().isIngestRunning()) {
                     int answer = JOptionPane.showConfirmDialog(new JFrame(),
                                                                NbBundle.getMessage(this.getClass(),
                                                                                    "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),

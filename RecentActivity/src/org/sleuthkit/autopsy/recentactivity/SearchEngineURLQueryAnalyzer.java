@@ -255,7 +255,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
                 getAttributes:
                 for (BlackboardAttribute attribute : listAttributes) {
-                    if (controller.isCancelled()) {
+                    if (controller.isIngestJobCancelled()) {
                         break getAll;       //User cancled the process.
                     }
                     if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
@@ -292,10 +292,10 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         } catch (TskException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for search engine queries", e);
         } finally {
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 logger.info("Operation terminated by user.");
             }
-            IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
                     NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.parentModuleName.noSpace"),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
             logger.info("Extracted " + totalQueries + " queries from the blackboard");
