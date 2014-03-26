@@ -290,7 +290,7 @@ final class IngestJob {
             Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
             for (IngestModuleTemplate template : moduleTemplates) {
                 if (template.isFileIngestModuleTemplate()) {
-                    FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
+                    FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName()); // RJCTODO: Move into try block for bpth impls
                     IngestJobContext context = new IngestJobContext(task);
                     try {
                         module.startUp(context);

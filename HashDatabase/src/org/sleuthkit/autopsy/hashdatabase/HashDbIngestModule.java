@@ -87,8 +87,6 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     }
     
     private void getEnabledHashSets(List<HashDb> hashSets, List<HashDb> enabledHashSets) {
-        assert hashSets != null;
-        assert enabledHashSets != null;
         enabledHashSets.clear();
         for (HashDb db : hashSets) {
             if (settings.isHashSetEnabled(db.getHashSetName())) {

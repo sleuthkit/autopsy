@@ -152,7 +152,7 @@ public interface IngestModuleFactory {
      * @param ingestOptions Per ingest job options to initialize the panel.
      * @return A user interface panel.
      */
-    IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings);
+    IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings); // RJCTODO: Can these be made into generics?
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest

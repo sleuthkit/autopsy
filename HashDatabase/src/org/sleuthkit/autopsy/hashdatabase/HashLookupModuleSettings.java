@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
@@ -27,21 +28,29 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
-    private final HashSet<String> enabledHashSets = new HashSet<>();
+    private final HashSet<String> namesOfEnabledKnownHashSets = new HashSet<>();
+    private final HashSet<String> namesOfEnabledKnownBadHashSets = new HashSet<>();
     private boolean shouldCalculateHashes = true;
 
-    HashLookupModuleSettings(boolean shouldCalculateHashes, List<String> enabledHashSetNames) {
+    HashLookupModuleSettings(boolean shouldCalculateHashes, List<String> namesOfEnabledKnownHashSets, List<String> namesOfEnabledKnownBadHashSets) {
         this.shouldCalculateHashes = shouldCalculateHashes;
-        for (String hashSet : enabledHashSetNames) {
-            enabledHashSets.add(hashSet);
-        }
+        this.namesOfEnabledKnownHashSets.addAll(namesOfEnabledKnownHashSets);
+        this.namesOfEnabledKnownBadHashSets.addAll(namesOfEnabledKnownBadHashSets);
     }
 
     boolean shouldCalculateHashes() {
         return shouldCalculateHashes;
     }
-    
+
     boolean isHashSetEnabled(String hashSetName) {
-        return enabledHashSets.contains(hashSetName);
+        return (namesOfEnabledKnownHashSets.contains(hashSetName) || namesOfEnabledKnownBadHashSets.contains(hashSetName));
+    }
+
+    List<String> getNamesOfEnabledKnownHashSets() {
+        return new ArrayList<>(namesOfEnabledKnownHashSets);
+    }
+
+    List<String> getNamesOfEnabledKnownBadHashSets() {
+        return new ArrayList<>(namesOfEnabledKnownBadHashSets);
     }
 }

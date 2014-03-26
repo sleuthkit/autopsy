@@ -59,21 +59,19 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettings getDefaultModuleSettings() {
+        // All available hash sets are enabled by default.
         HashDbManager hashDbManager = HashDbManager.getInstance();
-        List<String> enabledHashSets = new ArrayList<>();
-        List<HashDbManager.HashDb> knownFileHashSets = hashDbManager.getKnownFileHashSets();
-        for (HashDbManager.HashDb db : knownFileHashSets) {
-            if (db.getSearchDuringIngest()) {
-                enabledHashSets.add(db.getHashSetName());
-            }
+        List<String> knownHashSetNames = getHashSetNames(hashDbManager.getKnownFileHashSets());
+        List<String> knownBadHashSetNames = getHashSetNames(hashDbManager.getKnownBadFileHashSets());
+        return new HashLookupModuleSettings(hashDbManager.getAlwaysCalculateHashes(), knownHashSetNames, knownBadHashSetNames);
+    }
+
+    private List<String> getHashSetNames(List<HashDbManager.HashDb> hashDbs) {
+        List<String> hashSetNames = new ArrayList<>();
+        for (HashDbManager.HashDb db : hashDbs) {
+            hashSetNames.add(db.getHashSetName());
         }
-        List<HashDbManager.HashDb> knownBadFileHashSets = hashDbManager.getKnownBadFileHashSets();
-        for (HashDbManager.HashDb db : knownBadFileHashSets) {
-            if (db.getSearchDuringIngest()) {
-                enabledHashSets.add(db.getHashSetName());
-            }
-        }
-        return new HashLookupModuleSettings(hashDbManager.getAlwaysCalculateHashes(), enabledHashSets);
+        return hashSetNames;
     }
 
     @Override
@@ -83,10 +81,14 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
-        if (moduleSettingsPanel == null) {
-            moduleSettingsPanel = new HashLookupModuleSettingsPanel();
+        if (!(settings instanceof HashLookupModuleSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be instanceof HashLookupModuleSettings");
         }
-        moduleSettingsPanel.load(); // RJCTODO: Fix this, use passed in settings
+        if (moduleSettingsPanel == null) {
+            moduleSettingsPanel = new HashLookupModuleSettingsPanel((HashLookupModuleSettings) settings);
+        } else {
+            moduleSettingsPanel.reset((HashLookupModuleSettings) settings);
+        }
         return moduleSettingsPanel;
     }
 
@@ -109,7 +111,6 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        assert settings instanceof HashLookupModuleSettings;
         if (!(settings instanceof HashLookupModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof HashLookupModuleSettings");
         }

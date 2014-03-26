@@ -94,7 +94,7 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public enum SetEvt {
 
-        DB_ADDED, DB_DELETED
+        DB_ADDED, DB_DELETED, DB_INDEXED
     };
 
     /**
@@ -1019,6 +1019,7 @@ public class HashDbManager implements PropertyChangeListener {
 
             try {
                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
+                hashDb.propertyChangeSupport.firePropertyChange(HashDbManager.SetEvt.DB_INDEXED.toString(), null, hashDb.getHashSetName());
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
                 MessageNotifyUtil.Notify.show(
