@@ -27,9 +27,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
  */
 final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
 
-    private KeywordSearchConfigurationPanel1 listsPanel;
-    private KeywordSearchConfigurationPanel3 languagesPanel;
-    private KeywordSearchConfigurationPanel2 generalPanel;
+    private KeywordSearchGlobalListSettingsPanel listsPanel;
+    private KeywordSearchGlobalLanguageSettingsPanel languagesPanel;
+    private KeywordSearchGlobalSearchSettingsPanel generalPanel;
 
     public KeywordSearchGlobalSettingsPanel() {
         initComponents();
@@ -38,9 +38,9 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSetttings
 
     private void customizeComponents() {
         setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
-        listsPanel = new KeywordSearchConfigurationPanel1();
-        languagesPanel = new KeywordSearchConfigurationPanel3();
-        generalPanel = new KeywordSearchConfigurationPanel2();
+        listsPanel = new KeywordSearchGlobalListSettingsPanel();
+        languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
+        generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
                 listsPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listLabToolTip"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtTitle"), null,
