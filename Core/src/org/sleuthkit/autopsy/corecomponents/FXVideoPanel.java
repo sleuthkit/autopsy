@@ -473,7 +473,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                             logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString());
                             // If the MediaPlayer is in an unexpected state, stop playback.
                             mediaPlayer.stop();
-                            setInfoLabelText("Playback error.");
+                            setInfoLabelText(NbBundle.getMessage(this.getClass(),
+                                                                 "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
                             break;
                     }
                 }
