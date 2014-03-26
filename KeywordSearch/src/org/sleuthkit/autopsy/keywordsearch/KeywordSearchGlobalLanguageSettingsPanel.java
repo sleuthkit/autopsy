@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JCheckBox;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
@@ -34,38 +33,24 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * Advanced configuration panel handling languages config.
+ * Child panel of the global settings panel (Languages tab).
  */
-class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements OptionsPanel {
+class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private static KeywordSearchConfigurationPanel3 instance = null;
-    private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel3.class.getName());
-    private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<String, StringExtract.StringExtractUnicodeTable.SCRIPT>();
+    private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
 
-    /**
-     * Creates new form KeywordSearchConfigurationPanel3
-     */
-    public KeywordSearchConfigurationPanel3() {
+    KeywordSearchGlobalLanguageSettingsPanel() {
         initComponents();
         customizeComponents();
     }
 
-    public static KeywordSearchConfigurationPanel3 getDefault() {
-        if (instance == null) {
-            instance = new KeywordSearchConfigurationPanel3();
-        }
-        return instance;
-    }
-
     private void customizeComponents() {
-
-
         updateLanguagesAction = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                toUpdate = new ArrayList<SCRIPT>();
+                toUpdate = new ArrayList<>();
                 final int components = checkPanel.getComponentCount();
                 for (int i = 0; i < components; ++i) {
                     JCheckBox ch = (JCheckBox) checkPanel.getComponent(i);
@@ -79,7 +64,6 @@ class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements Opt
 
         initScriptsCheckBoxes();
         reloadScriptsCheckBoxes();
-
     }
 
     private void activateScriptsCheckboxes(boolean activate) {
@@ -111,8 +95,7 @@ class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements Opt
         }
     }
 
-    private void reloadScriptsCheckBoxes() {
-       
+    private void reloadScriptsCheckBoxes() {       
         boolean utf16 = 
                 Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
        
@@ -132,12 +115,10 @@ class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements Opt
             
             ch.setSelected(serviceScripts.contains(script));
         }
-        
     }
 
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
-        
         
          boolean utf16 = 
                 Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
@@ -172,7 +153,7 @@ class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements Opt
         enableUTF16Checkbox = new javax.swing.JCheckBox();
         ingestSettingsLabel = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.languagesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.languagesLabel.text")); // NOI18N
 
         langPanel.setPreferredSize(new java.awt.Dimension(430, 361));
 
@@ -191,21 +172,21 @@ class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements Opt
 
         langPanel.setViewportView(checkPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(enableUTF8Checkbox, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.enableUTF8Checkbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(enableUTF8Checkbox, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.enableUTF8Checkbox.text")); // NOI18N
         enableUTF8Checkbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 enableUTF8CheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(enableUTF16Checkbox, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.enableUTF16Checkbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(enableUTF16Checkbox, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.enableUTF16Checkbox.text")); // NOI18N
         enableUTF16Checkbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 enableUTF16CheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.ingestSettingsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -277,11 +258,12 @@ class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements Opt
            KeywordSearchSettings.setStringExtractScripts(toUpdate);
         }
         
+        // This is a stop-gap way of notifying the job settings panel of potential changes.
+        KeywordSearchListsXML.getCurrent().fireLanguagesEvent(KeywordSearchListsAbstract.LanguagesEvent.LANGUAGES_CHANGED);
     }
 
     @Override
     public void load() {
         activateWidgets();
-  
     }
 }

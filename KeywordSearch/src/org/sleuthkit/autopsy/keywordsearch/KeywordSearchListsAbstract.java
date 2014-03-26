@@ -27,7 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
@@ -39,12 +38,9 @@ abstract class KeywordSearchListsAbstract {
 
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data 
-    static KeywordSearchListsXML currentInstance = null; 
-    private static final String CUR_LISTS_FILE_NAME = "keywords.xml"; // RJCTODO: This will go to the manager
-    private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME; // RJCTODO: This will go to the manager
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
-    PropertyChangeSupport changeSupport; // RJCTODO: This will go to the manager, if needed, no listeners right now
-    protected List<String> lockedLists; // RJCTODO: This will go to the manager, if needed
+    PropertyChangeSupport changeSupport; 
+    protected List<String> lockedLists;
 
     KeywordSearchListsAbstract(String filePath) {
         this.filePath = filePath;
@@ -53,8 +49,6 @@ abstract class KeywordSearchListsAbstract {
         changeSupport = new PropertyChangeSupport(this);
     }
 
-    // RJCTODO: There are no listeners
-    // RJCTODO: For manager
     /**
      * Property change event support In events: For all of these enums, the old
      * value should be null, and the new value should be the keyword list name
@@ -65,23 +59,26 @@ abstract class KeywordSearchListsAbstract {
         LIST_ADDED, LIST_DELETED, LIST_UPDATED
     };
 
-    // RJCTODO: For manager
-    /**
-     * get instance for managing the current keyword list of the application
-     */
-    static KeywordSearchListsXML getCurrent() {
-        if (currentInstance == null) {
-            currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);
-            currentInstance.reload();
-        }
-        return currentInstance;
+    enum LanguagesEvent {
+        LANGUAGES_CHANGED, ENCODINGS_CHANGED
     }
-
-    // RJCTODO: For manager
-    // RJCTODO: There are no listeners
-//    public void addPropertyChangeListener(PropertyChangeListener listener) {
-//        changeSupport.addPropertyChangeListener(listener);
-//    }
+    
+    void fireLanguagesEvent(LanguagesEvent event) {
+        try {
+            changeSupport.firePropertyChange(event.toString(), null, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+        }        
+    }
+    
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(listener);
+    }
+    
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.removePropertyChangeListener(listener);
+    }
+    
     private void prepopulateLists() {
         if (!theLists.isEmpty()) {
             return;
@@ -126,8 +123,6 @@ abstract class KeywordSearchListsAbstract {
         addList(name, urls, false, false, true);
     }
 
-    // RJCTODO: Manager, reader mixed
-    // RJCTODO: This is only called by config type stuff to affect the global list
     /**
      * load the file or create new
      */
@@ -163,7 +158,6 @@ abstract class KeywordSearchListsAbstract {
         }
     }
 
-    // RJCTODO: Need a manager and reader version of getting lists
     public List<KeywordList> getListsL() {
         List<KeywordList> ret = new ArrayList<>();
         for (KeywordList list : theLists.values()) {
@@ -172,8 +166,6 @@ abstract class KeywordSearchListsAbstract {
         return ret;
     }
 
-    // RJCTODO: Need a manager of getting lists
-    // RJCTODO: There is one client, KeywordSearchEditListPanel, fetching unlocked lists
     public List<KeywordList> getListsL(boolean locked) {
         List<KeywordList> ret = new ArrayList<>();
         for (KeywordList list : theLists.values()) {
@@ -184,7 +176,6 @@ abstract class KeywordSearchListsAbstract {
         return ret;
     }
 
-    // RJCTODO: Used by KeywordSearchListsManagementPanel; for manager, since global list affected
     /**
      * Get list names of all loaded keyword list names
      *
@@ -194,7 +185,6 @@ abstract class KeywordSearchListsAbstract {
         return new ArrayList<>(theLists.keySet());
     }
 
-    // RJCTODO: Used by KeywordSearchListsManagementPanel; for manager, since global list affected
     /**
      * Get list names of all locked or unlocked loaded keyword list names
      *
@@ -292,10 +282,6 @@ abstract class KeywordSearchListsAbstract {
 
         if (curList == null) {
             theLists.put(name, new KeywordList(name, now, now, useForIngest, ingestMessages, newList, locked));
-//            if (!locked) {
-//                save();
-//            }
-
             try {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
             } catch (Exception e) {
@@ -304,9 +290,6 @@ abstract class KeywordSearchListsAbstract {
             }
         } else {
             theLists.put(name, new KeywordList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
-//            if (!locked) {
-//                save();
-//            }
             replaced = true;
 
             try {
@@ -342,10 +325,8 @@ abstract class KeywordSearchListsAbstract {
      * @return
      */
     boolean saveLists(List<KeywordList> lists) {
-        int oldSize = this.getNumberLists();
-
-        List<KeywordList> overwritten = new ArrayList<KeywordList>();
-        List<KeywordList> newLists = new ArrayList<KeywordList>();
+        List<KeywordList> overwritten = new ArrayList<>();
+        List<KeywordList> newLists = new ArrayList<>();
         for (KeywordList list : lists) {
             if (this.listExists(list.getName())) {
                 overwritten.add(list);
@@ -418,9 +399,8 @@ abstract class KeywordSearchListsAbstract {
         return true;
     }
 
-    // RJCTODO: For manager
     /**
-     * delete list if exists and save new list // RJCTODO: What new list? Nothing is saved (liar!)
+     * delete list if exists and save new list 
      *
      * @param name of list to delete
      * @return true if deleted
@@ -432,13 +412,13 @@ abstract class KeywordSearchListsAbstract {
         }
 
         try {
-            changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name); // RJCTODO: Always fired (liar!)
+            changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
             MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
         }
         
-        return true; // RJCTODO: LOL, reports that it always succeeds (liar!)
+        return true;
     }
 
     /**
