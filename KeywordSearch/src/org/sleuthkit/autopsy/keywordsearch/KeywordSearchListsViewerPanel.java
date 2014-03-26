@@ -114,7 +114,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         });
 
-        if (IngestManager.getDefault().isIngestRunning()) {
+        if (IngestManager.getInstance().isIngestRunning()) {
             initIngest(true);
         } else {
             initIngest(false);

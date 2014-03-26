@@ -232,7 +232,7 @@ public final class IngestJobLauncher {
         }
 
         if ((!enabledModuleTemplates.isEmpty()) && (dataSources != null) && (!dataSources.isEmpty())) {
-            IngestManager.getDefault().scheduleDataSourceTasks(dataSources, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
+            IngestManager.getInstance().scheduleDataSourceTasks(dataSources, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
         }
     }
 }

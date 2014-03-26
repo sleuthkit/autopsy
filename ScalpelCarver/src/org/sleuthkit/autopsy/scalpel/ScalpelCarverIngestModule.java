@@ -201,7 +201,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         }
 
         // get the IngestServices object
-        IngestServices is = IngestServices.getDefault();
+        IngestServices is = IngestServices.getInstance();
 
         // get the parent directory of the carved files
         Content carvedFileDir = null;
@@ -221,7 +221,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         }
 
         // reschedule carved files
-        context.addFilesToPipeline(new ArrayList<AbstractFile>(carvedFiles));
+        context.addFiles(new ArrayList<AbstractFile>(carvedFiles));
 
         return ProcessResult.OK;
     }

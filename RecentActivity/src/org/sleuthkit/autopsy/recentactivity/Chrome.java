@@ -126,7 +126,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -158,7 +158,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
@@ -204,7 +204,7 @@ class Chrome extends Extract {
             
             logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{moduleName, temps});
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -300,7 +300,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
     }
 
     /**
@@ -344,7 +344,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -378,7 +378,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
     /**
@@ -420,7 +420,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -467,7 +467,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
 
@@ -511,7 +511,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -552,7 +552,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     private boolean isChromePreVersion30(String temps) {

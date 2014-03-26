@@ -50,7 +50,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
         ArrayList<Action> actions = new ArrayList<>();
 
         // Ignore if file ingest is in progress.
-        if (!IngestManager.getDefault().isIngestRunning()) {
+        if (!IngestManager.getInstance().isIngestRunning()) {
             
             final Collection<? extends BlackboardArtifact> selectedArts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
 

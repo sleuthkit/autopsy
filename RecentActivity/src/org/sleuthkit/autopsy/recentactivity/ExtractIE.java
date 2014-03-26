@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.*;
  */
 class ExtractIE extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private IngestServices services = IngestServices.getDefault();
+    private IngestServices services = IngestServices.getInstance();
     private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;    
@@ -110,7 +110,7 @@ class ExtractIE extends Extract {
                 continue;
             }
          
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
             
@@ -202,7 +202,7 @@ class ExtractIE extends Extract {
         
         dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
             if (cookiesFile.getSize() == 0) {
@@ -312,7 +312,7 @@ class ExtractIE extends Extract {
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
             temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName;
             File datFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
             try {

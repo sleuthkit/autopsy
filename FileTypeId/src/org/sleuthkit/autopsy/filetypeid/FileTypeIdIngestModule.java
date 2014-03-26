@@ -109,7 +109,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-        IngestServices.getDefault().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
+        IngestServices.getInstance().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "FileTypeIdIngestModule.complete.srvMsg.text"),
                 detailsSb.toString()));

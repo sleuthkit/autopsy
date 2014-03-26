@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
-    private final IngestServices services = IngestServices.getDefault();
+    private final IngestServices services = IngestServices.getInstance();
     private int filesProcessed = 0;
     private boolean filesToFire = false;
 

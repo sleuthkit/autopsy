@@ -58,7 +58,7 @@ class Firefox extends Extract {
     private static final String bookmarkQuery = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) as dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
     private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads";
     private static final String downloadQueryVersion24 = "SELECT url, content as target, (lastModified/1000000) as lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3";
-    private final IngestServices services = IngestServices.getDefault();
+    private final IngestServices services = IngestServices.getInstance();
     
     Firefox() {
         moduleName = NbBundle.getMessage(Firefox.class, "Firefox.moduleName");
@@ -111,7 +111,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -195,7 +195,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -278,7 +278,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -392,7 +392,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -504,7 +504,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 dbFile.delete();
                 break;
             }

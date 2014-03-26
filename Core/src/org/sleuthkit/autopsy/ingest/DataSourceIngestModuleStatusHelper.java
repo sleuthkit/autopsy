@@ -45,7 +45,7 @@ public class DataSourceIngestModuleStatusHelper {
      *
      * @return True if the task has been canceled, false otherwise.
      */
-    public boolean isCancelled() {
+    public boolean isIngestJobCancelled() {
         return worker.isCancelled();
     }
 

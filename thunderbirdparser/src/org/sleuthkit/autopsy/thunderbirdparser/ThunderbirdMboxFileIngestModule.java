@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskException;
 public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
-    private IngestServices services = IngestServices.getDefault();
+    private IngestServices services = IngestServices.getInstance();
     private int messageId = 0; // RJCTODO: Not thread safe
     private FileManager fileManager;
     private IngestJobContext context;
@@ -291,7 +291,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
                 services.fireModuleContentEvent(new ModuleContentEvent(derived));
             }
         }
-        context.addFilesToPipeline(derivedFiles);
+        context.addFiles(derivedFiles);
         services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
     }
 

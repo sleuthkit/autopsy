@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 public final class SevenZipIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
-    private IngestServices services = IngestServices.getDefault();
+    private IngestServices services = IngestServices.getInstance();
     private volatile int messageID = 0; // RJCTODO: This is not actually thread safe
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"};
     private String unpackDir; //relative to the case, to store in db
@@ -174,7 +174,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
             sendNewFilesEvent(abstractFile, unpackedFiles);
-            context.addFilesToPipeline(unpackedFiles);
+            context.addFiles(unpackedFiles);
         }
 
         return ProcessResult.OK;
