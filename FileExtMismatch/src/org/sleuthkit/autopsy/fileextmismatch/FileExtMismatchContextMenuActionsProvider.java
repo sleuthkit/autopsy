@@ -27,14 +27,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestConfigurator;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -51,8 +50,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
         ArrayList<Action> actions = new ArrayList<>();
 
         // Ignore if file ingest is in progress.
-        IngestConfigurator ingestConfigurator = Lookup.getDefault().lookup(IngestConfigurator.class);
-        if (ingestConfigurator != null && !ingestConfigurator.isIngestRunning()) {
+        if (!IngestManager.getDefault().isIngestRunning()) {
             
             final Collection<? extends BlackboardArtifact> selectedArts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
 

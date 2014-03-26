@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
@@ -45,8 +44,7 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
     private void activateWidgets() {
         skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
         showSnippetsCB.setSelected(KeywordSearchSettings.getShowSnippets());
-        boolean enable = !IngestManager.getDefault().isIngestRunning()
-                && !IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
+        boolean enable = !IngestManager.getDefault().isIngestRunning();
         skipNSRLCheckBox.setEnabled(enable);
         setTimeSettingEnabled(enable);
 
@@ -70,7 +68,6 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
                 timeRadioButton3.setSelected(true);
                 break;
         }
-
     }
 
     /**
@@ -205,7 +202,6 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
                 .addContainerGap(116, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel chunksLabel;
     private javax.swing.JLabel chunksValLabel;
@@ -248,14 +244,11 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
     private UpdateFrequency getSelectedTimeValue() {
         if (timeRadioButton1.isSelected()) {
             return UpdateFrequency.FAST;
-        } 
-        else if (timeRadioButton2.isSelected()) {
+        } else if (timeRadioButton2.isSelected()) {
             return UpdateFrequency.AVG;
-        } 
-        else if (timeRadioButton3.isSelected()) {
+        } else if (timeRadioButton3.isSelected()) {
             return UpdateFrequency.SLOW;
-        }
-        else if (timeRadioButton4.isSelected()) {
+        } else if (timeRadioButton4.isSelected()) {
             return UpdateFrequency.SLOWEST;
         }
         return UpdateFrequency.DEFAULT;
@@ -273,36 +266,28 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
             chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
-
-        } catch (NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
         }
 
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        String changed = evt.getPropertyName();
-                        Object newValue = evt.getNewValue();
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String changed = evt.getPropertyName();
+                Object newValue = evt.getNewValue();
 
-                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                            int newFilesIndexed = ((Integer) newValue).intValue();
-                            filesIndexedValue.setText(Integer.toString(newFilesIndexed));
-                            try {
-                                chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
-                            } catch (KeywordSearchModuleException ex) {
-                                logger.log(Level.WARNING, "Could not get number of indexed chunks");
+                if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                    int newFilesIndexed = ((Integer) newValue).intValue();
+                    filesIndexedValue.setText(Integer.toString(newFilesIndexed));
+                    try {
+                        chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
+                    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                        logger.log(Level.WARNING, "Could not get number of indexed chunks");
 
-                            } catch (NoOpenCoreException ex) {
-                                logger.log(Level.WARNING, "Could not get number of indexed chunks");
-                            }
-
-                        }
                     }
-                });
-
-
+                }
+            }
+        });
     }
 }
