@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -40,7 +40,7 @@ public class IngestMessage {
     
     private long ID;
     private MessageType messageType;
-    private IngestModuleAbstract source;
+    private String source;
     private String subject;
     private String detailsHtml;
     private String uniqueKey;
@@ -52,7 +52,7 @@ public class IngestMessage {
     /**
      * Private constructor used by factory methods
      */
-    private IngestMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey) {
+    private IngestMessage(long ID, MessageType messageType, String source, String subject, String detailsHtml, String uniqueKey) {
         this.ID = ID;
         this.source = source;
         this.messageType = messageType;
@@ -69,7 +69,7 @@ public class IngestMessage {
         return ID;
     }
 
-    public IngestModuleAbstract getSource() {
+    public String getSource() {
         return source;
     }
 
@@ -101,18 +101,19 @@ public class IngestMessage {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(Long.toString(ID)).append(": ");
-        sb.append("type: ").append(messageType.name());
+        sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.type.text", messageType.name()));
         if (source != null) //can be null for manager messages
         {
-            sb.append(" source: ").append(source.getName());
+            sb.append(source);
         }
-        sb.append(" date: ").append(dateFormat.format(datePosted));
-        sb.append(" subject: ").append(subject);
+        sb.append(
+                NbBundle.getMessage(this.getClass(), "IngestMessage.toString.date.text", dateFormat.format(datePosted)));
+        sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.subject.text", subject));
         if (detailsHtml != null) {
-            sb.append(" details: ").append(detailsHtml);
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.details.text", detailsHtml));
         }
         if (data != null) {
-            sb.append(" data: ").append(data.toString()).append(' ');
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestMessage.toString.data.text", data.toString()));
         }
         return sb.toString();
     }
@@ -174,9 +175,10 @@ public class IngestMessage {
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. Or null.
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, String source, String subject, String detailsHtml) {
         if (messageType == null || source == null || subject == null) {
-            throw new IllegalArgumentException("message type, source and subject cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.typeSrcSubjNotNull.msg"));
         }
         return new IngestMessage(ID, messageType, source, subject, detailsHtml, null);
     }
@@ -189,7 +191,7 @@ public class IngestMessage {
      * @param subject message subject to be displayed
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, String source, String subject) {
         return createMessage(ID, messageType, source, subject, null);
     }
 
@@ -202,9 +204,10 @@ public class IngestMessage {
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null
      * @return 
      */
-    public static IngestMessage createErrorMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createErrorMessage(long ID, String source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
-            throw new IllegalArgumentException("source and subject cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjNotNull.msg"));
         }
         return new IngestMessage(ID, MessageType.ERROR, source, subject, detailsHtml, null);
     }
@@ -217,9 +220,10 @@ public class IngestMessage {
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null 
      * @return 
      */
-    public static IngestMessage createWarningMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createWarningMessage(long ID, String source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
-            throw new IllegalArgumentException("source and subject cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjNotNull.msg"));
         }
         return new IngestMessage(ID, MessageType.WARNING, source, subject, detailsHtml, null);
     }
@@ -234,9 +238,10 @@ public class IngestMessage {
      * @param data  blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
      * @return 
      */
-    public static IngestMessage createDataMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
+    public static IngestMessage createDataMessage(long ID, String source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
         if (source == null || subject == null || detailsHtml == null || data == null) {
-            throw new IllegalArgumentException("source, subject, details and data cannot be null");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjDetailsDataNotNull.msg"));
         }
 
         IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml, uniqueKey);

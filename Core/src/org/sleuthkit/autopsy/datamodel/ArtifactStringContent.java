@@ -22,6 +22,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.TimeZone;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -135,7 +137,9 @@ public class ArtifactStringContent implements StringContent {
                 //add file path
 
                 buffer.append("<tr>");
-                buffer.append("<td>Source File Path</td>");
+                buffer.append("<td>");
+                buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.srcFilePath.text"));
+                buffer.append("</td>");
                 buffer.append("<td>");
                 buffer.append(path);
                 buffer.append("</td>");
@@ -146,7 +150,7 @@ public class ArtifactStringContent implements StringContent {
                 
                 stringContent = buffer.toString();
             } catch (TskException ex) {
-                stringContent = "Error getting content";
+                stringContent = NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.err");
             }
         }
         
@@ -159,7 +163,7 @@ public class ArtifactStringContent implements StringContent {
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Getting file failed", ex);
         }
-        throw new IllegalArgumentException("Couldn't get file from database");
+        throw new IllegalArgumentException(NbBundle.getMessage(ArtifactStringContent.class, "ArtifactStringContent.exception.msg"));
     }
 
     private static TimeZone getTimeZone(BlackboardArtifact artifact) {

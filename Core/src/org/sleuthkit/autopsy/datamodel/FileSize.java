@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -99,14 +100,12 @@ public class FileSize implements AutopsyVisitableItem {
 
     public static class FileSizeRootNode extends DisplayableItemNode {
 
-        private static final String NAME = "File Size";
-        private SleuthkitCase skCase;
+        private static final String NAME = NbBundle.getMessage(FileSize.class, "FileSize.fileSizeRootNode.name");
 
         FileSizeRootNode(SleuthkitCase skCase) {
             super(Children.create(new FileSizeRootChildren(skCase), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
-            this.skCase = skCase;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png");
         }
 
@@ -114,7 +113,7 @@ public class FileSize implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             return false;
         }
-                
+
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -129,9 +128,9 @@ public class FileSize implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty("Name",
-                    "Name",
-                    "no description",
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.desc"),
                     NAME));
             return s;
         }
@@ -159,14 +158,12 @@ public class FileSize implements AutopsyVisitableItem {
 
         public class FileSizeNode extends DisplayableItemNode {
 
-            private SleuthkitCase skCase;
             private FileSizeFilter filter;
             private final Logger logger = Logger.getLogger(FileSizeNode.class.getName());
 
             FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter) {
                 super(Children.create(new FileSizeChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
                 super.setName(filter.getName());
-                this.skCase = skCase;
                 this.filter = filter;
 
                 String tooltip = filter.getDisplayName();
@@ -193,9 +190,9 @@ public class FileSize implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty("Filter Type",
-                        "Filter Type",
-                        "no description",
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.name"),
+                        NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.displayName"),
+                        NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.desc"),
                         filter.getDisplayName()));
 
                 return s;
@@ -243,7 +240,7 @@ public class FileSize implements AutopsyVisitableItem {
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: " + filter);
+                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: {0}", filter);
                         return null;
                 }
                 // ignore unalloc block files
@@ -253,13 +250,13 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             private List<AbstractFile> runFsQuery() {
-                List<AbstractFile> ret = new ArrayList<AbstractFile>();
+                List<AbstractFile> ret = new ArrayList<>();
 
                 String query = makeQuery();
                 if (query == null) {
                     return null;
                 }
-                
+
                 try {
                     ret = skCase.findAllFilesWhere(query);
                 } catch (TskCoreException e) {
@@ -327,7 +324,10 @@ public class FileSize implements AutopsyVisitableItem {
 
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
+                        throw new UnsupportedOperationException(
+                                NbBundle.getMessage(this.getClass(),
+                                "FileSize.exception.notSupported.msg",
+                                di.toString()));
                     }
                 });
             }

@@ -35,6 +35,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -84,20 +86,20 @@ import org.sleuthkit.datamodel.TskCoreException;
 
         this.add(filterPanel, BorderLayout.CENTER);
 
-        JLabel label = new JLabel("Search for files that match the following criteria:");
+        JLabel label = new JLabel(NbBundle.getMessage(this.getClass(), "FileSearchPanel.custComp.label.text"));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setBorder(new EmptyBorder(0, 0, 10, 0));
         filterPanel.add(label);
 
         // Create and add filter areas
-        this.filterAreas.add(new FilterArea("Name", new NameSearchFilter()));
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), new NameSearchFilter()));
 
         List<FileSearchFilter> metadataFilters = new ArrayList<FileSearchFilter>();
         metadataFilters.add(new SizeSearchFilter());
         metadataFilters.add(new DateSearchFilter());
-        this.filterAreas.add(new FilterArea("Metadata", metadataFilters));
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
-        this.filterAreas.add(new FilterArea("Known Status", new KnownStatusSearchFilter()));
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
 
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
@@ -106,7 +108,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
 
         // Create and add search button
-        this.searchButton = new JButton("Search");
+        this.searchButton = new JButton(NbBundle.getMessage(this.getClass(), "FileSearchPanel.searchButton.text"));
         this.searchButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         filterPanel.add(searchButton);
 
@@ -140,8 +142,8 @@ import org.sleuthkit.datamodel.TskCoreException;
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (this.anyFiltersEnabled()) {
-                String title = "File Search Results " + (++resultWindowCount);
-                String pathText = "Filename Search Results:";
+                String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
+                String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
 
                 // try to get the number of matches first
                 Case currentCase = Case.getCurrentCase(); // get the most updated case
@@ -173,15 +175,17 @@ import org.sleuthkit.datamodel.TskCoreException;
                  */
                 if (totalMatches > 10000) {
                     // show info
-                    String msg = "File Search: " + totalMatches + " matches found";
-                    String details = "Large number of matches may impact performance on some operations";
+                    String msg = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.msg", totalMatches);
+                    String details = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.details");
                     MessageNotifyUtil.Notify.info(msg, details);
                 }
             } else {
-                throw new FilterValidationException("At least one filter must be selected.");
+                throw new FilterValidationException(
+                        NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.exception.noFilterSelected.msg"));
             }
         } catch (FilterValidationException ex) {
-            NotifyDescriptor d = new NotifyDescriptor.Message("Validation Error: " + ex.getMessage());
+            NotifyDescriptor d = new NotifyDescriptor.Message(
+                    NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.validationErr.msg", ex.getMessage()));
             DialogDisplayer.getDefault().notify(d);
         } finally {
             this.setCursor(null);

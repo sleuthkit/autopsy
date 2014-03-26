@@ -41,12 +41,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.HashSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -64,7 +65,6 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Instances of this class use GeneralReportModules, TableReportModules and 
@@ -168,7 +168,7 @@ import org.sleuthkit.datamodel.TskException;
     public void displayProgressPanels() {
         final JDialog dialog = new JDialog(new JFrame(), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        dialog.setTitle("Report Generation Progress...");
+        dialog.setTitle(NbBundle.getMessage(this.getClass(), "ReportGenerator.displayProgress.title.text"));
         dialog.add(this.panel);
         dialog.pack();
         
@@ -209,7 +209,7 @@ import org.sleuthkit.datamodel.TskException;
      * @param artifactTypeSelections the enabled/disabled state of the artifact types to be included in the report
      * @param tagSelections the enabled/disabled state of the tag names to be included in the report
      */
-    public void generateBlackboardArtifactsReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    public void generateTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
             TableReportsWorker worker = new TableReportsWorker(artifactTypeSelections, tagNameSelections);
             worker.execute();
@@ -251,6 +251,21 @@ import org.sleuthkit.datamodel.TskException;
             return 0;
         }
         
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "failed to generate reports", ex);
+            }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
+        }
+        
     }
     
     /**
@@ -273,7 +288,8 @@ import org.sleuthkit.datamodel.TskException;
                 ReportProgressPanel progress = fileProgress.get(module);
                 if (progress.getStatus() != ReportStatus.CANCELED) {
                     progress.start();
-                    progress.updateStatusLabel("Querying database...");
+                    progress.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.queryingDb.text"));
                 }
             }
             
@@ -306,7 +322,9 @@ import org.sleuthkit.datamodel.TskException;
                     }
                     
                     if ((i % 100) == 0) {
-                        progress.updateStatusLabel("Now processing " + file.getName());
+                        progress.updateStatusLabel(
+                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingFile.text",
+                                                    file.getName()));
                     }
                 }
                 i++;
@@ -333,8 +351,23 @@ import org.sleuthkit.datamodel.TskException;
                 return absFiles;
             } catch (TskCoreException ex) {
                 // TODO
-                return Collections.EMPTY_LIST;
+                return Collections.<AbstractFile>emptyList();
             }
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "failed to generate reports", ex);
+            }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
     }
     
@@ -412,7 +445,7 @@ import org.sleuthkit.datamodel.TskException;
             // Make a comment string describing the tag names filter in effect. 
             StringBuilder comment = new StringBuilder();
             if (!tagNamesFilter.isEmpty()) {
-                comment.append("Contains results that were tagged with one of the following: ");
+                comment.append(NbBundle.getMessage(this.getClass(), "ReportGenerator.artifactTable.taggedResults.text"));
                 comment.append(makeCommaSeparatedList(tagNamesFilter));
             }            
 
@@ -425,7 +458,9 @@ import org.sleuthkit.datamodel.TskException;
                 }
                                                         
                 for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel("Now processing " + type.getDisplayName() + "...");  
+                    tableProgress.get(module).updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                                                type.getDisplayName()));
                 }
                 
                 // Keyword hits and hashset hit artifacts get sepcial handling.                
@@ -457,7 +492,10 @@ import org.sleuthkit.datamodel.TskException;
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
                 if (columnHeaders == null) {
                     // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
-                    MessageNotifyUtil.Notify.show("Skipping artifact type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
+                    MessageNotifyUtil.Notify.show(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.msgShow.skippingArtType.title", type),
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.msgShow.skippingArtType.msg"),
+                            MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
                 
@@ -475,7 +513,12 @@ import org.sleuthkit.datamodel.TskException;
                         List<String> rowData = artifactData.getRow();
                         if (rowData.isEmpty()) {
                             if (msgSent == false) {
-                                MessageNotifyUtil.Notify.show("Skipping artifact rows for type " + type + " in reports", "Unknown columns to report on", MessageNotifyUtil.MessageType.ERROR);
+                                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(),
+                                                                                  "ReportGenerator.msgShow.skippingArtRow.title",
+                                                                                  type),
+                                                              NbBundle.getMessage(this.getClass(),
+                                                                                  "ReportGenerator.msgShow.skippingArtRow.msg"),
+                                                              MessageNotifyUtil.MessageType.ERROR);
                                 msgSent = true;
                             }
                             continue;
@@ -484,7 +527,6 @@ import org.sleuthkit.datamodel.TskException;
                         module.addRow(rowData);
                     }
                 }
-                
                 // Finish up this data type
                 for (TableReportModule module : tableModules) {
                     tableProgress.get(module).increment();
@@ -518,11 +560,14 @@ import org.sleuthkit.datamodel.TskException;
             for (TableReportModule module : tableModules) {            
                 // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                 // @@@ Alos Using the obsolete ARTIFACT_TYPE.TSK_TAG_FILE is also an expedient hack.
-                tableProgress.get(module).updateStatusLabel("Now processing " + ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName() + "...");                                
+                tableProgress.get(module).updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                                            ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
                 ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList("File", "Tag", "Comment"));                
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
-                    comment.append("Contains files that were tagged with one of the following: ");
+                    comment.append(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.makeContTagTab.taggedFiles.msg"));
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }            
                 if (module instanceof ReportHTML) {
@@ -574,6 +619,21 @@ import org.sleuthkit.datamodel.TskException;
             }            
         }
         
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "failed to generate reports", ex);
+            }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
+        }
+        
         /**
          * Generate the tables for the tagged artifacts
          */
@@ -596,14 +656,21 @@ import org.sleuthkit.datamodel.TskException;
             // Tell the modules reporting on blackboard artifact tags data type is beginning.
             // @@@ Using the obsolete ARTIFACT_TYPE.TSK_TAG_ARTIFACT is an expedient hack.
             for (TableReportModule module : tableModules) {
-                tableProgress.get(module).updateStatusLabel("Now processing " + ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName() + "...");                                
+                tableProgress.get(module).updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                                            ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName()));
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
-                    comment.append("This report only includes results tagged with: ");
+                    comment.append(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.makeBbArtTagTab.taggedRes.msg"));
                     comment.append(makeCommaSeparatedList(tagNamesFilter));
                 }                        
                 module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());  
-                module.startTable(new ArrayList<>(Arrays.asList("Result Type", "Tag", "Comment", "Source File")));
+                module.startTable(new ArrayList<>(Arrays.asList(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.resultType"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.tag"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.comment"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"))));
             }
                         
             // Give the modules the rows for the content tags. 
@@ -655,11 +722,14 @@ import org.sleuthkit.datamodel.TskException;
          */
         private void makeThumbnailTable() {
             for (TableReportModule module : tableModules) {
-                tableProgress.get(module).updateStatusLabel("Creating thumbnails..."); 
+                tableProgress.get(module).updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.createdThumb.text"));
                 
                 if (module instanceof ReportHTML) {
                     ReportHTML htmlModule = (ReportHTML) module;
-                    htmlModule.startDataType("Thumbnails", "Contains thumbnails of images that are associated with tagged files and results.");
+                    htmlModule.startDataType(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.name"),
+                                             NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.desc"));
                     List<String> emptyHeaders = new ArrayList<>();
                     for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
                         emptyHeaders.add("");
@@ -785,7 +855,7 @@ import org.sleuthkit.datamodel.TskException;
             while(listsRs.next()) {
                 String list = listsRs.getString("list");
                 if(list.isEmpty()) {
-                    list = "User Searches";
+                    list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
                 }
                 lists.add(list);
             }
@@ -794,8 +864,9 @@ import org.sleuthkit.datamodel.TskException;
             for (TableReportModule module : tableModules) {
                 module.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);
                 module.addSetIndex(lists);
-                tableProgress.get(module).updateStatusLabel("Now processing "
-                        + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName() + "...");
+                tableProgress.get(module).updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                                            ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
             }
         }
         catch (SQLException ex) {
@@ -862,20 +933,22 @@ import org.sleuthkit.datamodel.TskException;
                 }
 
                 // If the lists aren't the same, we've started a new list
-                if((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals("User Searches"))) {
+                if((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs")))) {
                     if(!currentList.isEmpty()) {
                         for (TableReportModule module : tableModules) {
                             module.endTable();
                             module.endSet();
                         }
                     }
-                    currentList = list.isEmpty() ? "User Searches" : list;
+                    currentList = list.isEmpty() ? NbBundle
+                            .getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs") : list;
                     currentKeyword = ""; // reset the current keyword because it's a new list
                     for (TableReportModule module : tableModules) {
                         module.startSet(currentList);
-                        tableProgress.get(module).updateStatusLabel("Now processing "
-                                + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()
-                                + " (" + currentList + ")...");
+                        tableProgress.get(module).updateStatusLabel(
+                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
+                                                    ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), currentList));
                     }
                 }
                 if (!keyword.equals(currentKeyword)) {
@@ -937,8 +1010,9 @@ import org.sleuthkit.datamodel.TskException;
             for (TableReportModule module : tableModules) {
                 module.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);
                 module.addSetIndex(lists);
-                tableProgress.get(module).updateStatusLabel("Now processing "
-                        + ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName() + "...");
+                tableProgress.get(module).updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                                            ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
             }
         } catch (SQLException ex) {        
             logger.log(Level.SEVERE, "Failed to query hashset lists.", ex);
@@ -1009,9 +1083,9 @@ import org.sleuthkit.datamodel.TskException;
                     for (TableReportModule module : tableModules) {
                         module.startSet(currentSet);
                         module.startTable(getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()));
-                        tableProgress.get(module).updateStatusLabel("Now processing "
-                                + ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()
-                                + " (" + currentSet + ")...");
+                        tableProgress.get(module).updateStatusLabel(
+                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
+                                                    ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), currentSet));
                     }
                 }
                 
@@ -1050,81 +1124,208 @@ import org.sleuthkit.datamodel.TskException;
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId);        
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Title", "Date Created", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateCreated"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_COOKIE: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date/Time", "Name", "Value", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.value"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_HISTORY: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"URL", "Date Accessed", "Referrer", "Title", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_DOWNLOAD: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Destination", "Source URL", "Date Accessed", "Program", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dest"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.sourceUrl"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_RECENT_OBJECT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Path", "Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_INSTALLED_PROG: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Install Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.instDateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_KEYWORD_HIT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Preview", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.preview"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_HASHSET_HIT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"File", "Size"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size")}));
                 break;
             case TSK_DEVICE_ATTACHED: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Name", "Device ID", "Date/Time", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceId"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_SEARCH_QUERY: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Text", "Domain", "Date Accessed", "Program Name", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.domain"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_METADATA_EXIF: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Date Taken", "Device Manufacturer", "Device Model", "Latitude", "Longitude", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTaken"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devManufacturer"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_CONTACT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Phone Number (Home)", "Phone Number (Office)", "Phone Number (Mobile)", "Email", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumHome"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumOffice"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumMobile"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.email"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_MESSAGE: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Message Type", "Direction", "Date/Time",  "From Phone Number", "From Email", "To Phone Number", "To Email", "Subject", "Text", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.msgType"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromEmail"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toEmail"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.subject"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_CALLLOG:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Person Name", "Phone Number", "Date/Time", "Direction", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_CALENDAR_ENTRY:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Calendar Entry Type", "Description", "Start Date/Time", "End Date/Time", "Location", "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.calendarEntryType"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.startDateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.endDateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_SPEED_DIAL_ENTRY:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Short Cut", "Person Name", "Phone Number",  "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.shortCut"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_BLUETOOTH_PAIRING:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Device Name", "Device Address", "Date/Time",  "Source File"  }));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceAddress"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_GPS_TRACKPOINT:
-                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_GPS_BOOKMARK:
-                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_GPS_LAST_KNOWN_LOCATION:
-                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_GPS_SEARCH:
-                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Latitude", "Longitude", "Altitude",  "Name", "Location Address", "Date/Time", "Source File"  }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
                 break;
             case TSK_SERVICE_ACCOUNT:
-                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Category", "User ID", "Password",  "Person Name", "App Name", "URL", "App Path", "Description", "ReplyTo Address", "Mail Server", "Source File" }));
+                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.category"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.password"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.appName"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.appPath"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.replytoAddress"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile") }));
                 break;
             case TSK_TOOL_OUTPUT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Program Name", "Text", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_ENCRYPTION_DETECTED:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {"Name", "Source File"}));
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             default:
                 return null;
         }
-        columnHeaders.add("Tags");
+        columnHeaders.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
         
         return columnHeaders;
     }

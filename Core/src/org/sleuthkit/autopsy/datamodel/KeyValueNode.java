@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -30,10 +31,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Node that contains a KeyValue object. The node also has that KeyValue object
  * set to its lookup so that when the node is passed to the content viewers its
  * string will be displayed.
- *
- * @author alawrence
  */
- public class KeyValueNode extends AbstractNode {
+public class KeyValueNode extends AbstractNode {
 
     private KeyValue data;
 
@@ -49,12 +48,12 @@ import org.sleuthkit.datamodel.AbstractFile;
         super(children, lookup);
         this.setName(thing.getName());
         this.data = thing;
-        
+
         setIcon();
     }
-    
+
     private void setIcon() {
-         //if file/dir, set icon
+        //if file/dir, set icon
         AbstractFile af = Lookup.getDefault().lookup(AbstractFile.class);
         if (af != null) {
             // set name, display name, and icon
@@ -78,12 +77,18 @@ import org.sleuthkit.datamodel.AbstractFile;
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty("Name", "Name", "n/a", data.getName()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.desc"),
+                data.getName()));
 
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            ss.put(new NodeProperty(key, key, "n/a", value));
+            ss.put(new NodeProperty<>(key,
+                    key,
+                    NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.map.desc"),
+                    value));
         }
 
         return s;

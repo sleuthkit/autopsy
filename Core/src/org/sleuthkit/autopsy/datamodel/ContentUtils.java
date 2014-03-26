@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -50,7 +52,7 @@ public final class ContentUtils {
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
+    private static boolean displayInLocalTime;
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -104,12 +106,11 @@ public final class ContentUtils {
     public static String getStringTimeISO8601(long epochSeconds, Content c) {
         return getStringTimeISO8601(epochSeconds, getTimeZone(c));
     }
-
+     
     public static TimeZone getTimeZone(Content c) {
-        Preferences generalPanelPrefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
-        boolean useLocalTime = generalPanelPrefs.getBoolean("useLocalTime", true);
+        
         try {
-            if (!useLocalTime) {
+            if (!getDisplayInLocalTime()) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
@@ -158,8 +159,8 @@ public final class ContentUtils {
      * @return number of bytes extracted
      * @throws IOException if file could not be written
      */
-    public static long writeToFile(Content content, java.io.File outputFile,
-            ProgressHandle progress, SwingWorker worker, boolean source) throws IOException {
+    public static <T,V> long writeToFile(Content content, java.io.File outputFile,
+            ProgressHandle progress, SwingWorker<T,V> worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
 
@@ -214,11 +215,11 @@ public final class ContentUtils {
      * Assumes there will be no collisions with existing directories/files, and
      * that the directory to contain the destination file already exists.
      */
-    public static class ExtractFscContentVisitor extends ContentVisitor.Default<Void> {
+    public static class ExtractFscContentVisitor<T,V> extends ContentVisitor.Default<Void> {
 
         java.io.File dest;
         ProgressHandle progress;
-        SwingWorker worker;
+        SwingWorker<T,V> worker;
         boolean source = false;
 
         /**
@@ -233,7 +234,7 @@ public final class ContentUtils {
          * @param source true if source file
          */
         public ExtractFscContentVisitor(java.io.File dest,
-                ProgressHandle progress, SwingWorker worker, boolean source) {
+                ProgressHandle progress, SwingWorker<T,V> worker, boolean source) {
             this.dest = dest;
             this.progress = progress;
             this.worker = worker;
@@ -248,8 +249,8 @@ public final class ContentUtils {
          * Convenience method to make a new instance for given destination and
          * extract given content
          */
-        public static void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker worker) {
-            cntnt.accept(new ExtractFscContentVisitor(dest, progress, worker, true));
+        public static <T,V> void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker<T,V> worker) {
+            cntnt.accept(new ExtractFscContentVisitor<>(dest, progress, worker, true));
         }
 
         @Override
@@ -332,8 +333,8 @@ public final class ContentUtils {
                 // recurse on children
                 for (Content child : dir.getChildren()) {
                     java.io.File childFile = getFsContentDest(child);
-                    ExtractFscContentVisitor childVisitor =
-                            new ExtractFscContentVisitor(childFile, progress, worker, false);
+                    ExtractFscContentVisitor<T,V> childVisitor =
+                            new ExtractFscContentVisitor<>(childFile, progress, worker, false);
                     // If this is the source directory of an extract it
                     // will have a progress and worker, and will keep track
                     // of the progress bar's progress
@@ -356,8 +357,23 @@ public final class ContentUtils {
 
         @Override
         protected Void defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Can't extract a "
-                    + cntnt.getClass().getSimpleName());
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                                                                        "ContentUtils.exception.msg",
+                                                                        cntnt.getClass().getSimpleName()));
         }
+    }
+    /**sets displayInlocalTime value based on button in GeneralPanel.java
+     * 
+     * @param flag 
+     */
+    public static void setDisplayInLocalTime(boolean flag) {
+    displayInLocalTime = flag;
+    }
+    /** get global timezone setting for displaying time values 
+     *  
+     * @return 
+     */
+    public static boolean getDisplayInLocalTime(){
+        return displayInLocalTime;
     }
 }

@@ -71,7 +71,7 @@
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
          
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
-        <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
+        <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         <if>
             <equals arg1="${os.family}" arg2="windows"/>
             <then>
@@ -151,15 +151,10 @@
         <property name="disabled.modules" value=""/>
         <property name="enabled.clusters" value=""/>
         <property name="disabled.clusters" value=""/>
-        <condition property="branding.dir" value="branding_${app.name}">
-            <not>
-                <equals arg1="${app.name}" arg2="autopsy"/> 
-            </not>
-        </condition>
+
         <property name="branding.dir" location="branding"/>
         <property name="dist.dir" location="dist"/>
-        <!-- MOVE THE .DLL FILES TO THE NETBEANS DIRECTORY -->
-
+        
         <condition property="run.branding"> <!-- #84689 -->
             <and>
                 <available file="${branding.dir}" type="dir"/>
@@ -174,9 +169,7 @@
     <target name="build-brand" depends="-init">
         
         <echo>${app.name} branding</echo>
-        
-        <copy file="${basedir}/branding_${app.name}/welcome_logo.png" tofile="${basedir}/Core/src/org/sleuthkit/autopsy/casemodule/welcome_logo.png" overwrite="true"/>
-        
+          
         <propertyfile
         file="${branding.dir}/core/core.jar/org/netbeans/core/startup/Bundle.properties" 
         comment="Updated by build script">
@@ -198,10 +191,6 @@
             <entry key="build.type" value="${build.type}" />
         </propertyfile>
         
-        <copy todir="${basedir}" failonerror="false">
-            <fileset dir="${branding.dir}/bundles"
-                    includes="**/*"/>
-        </copy>
     </target>
     
     <target name="jni" depends="build,findTSK">

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -28,13 +29,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class FileTypesNode extends DisplayableItemNode {
 
-    private static final String FNAME = "File Types";
-    private SleuthkitCase skCase;
+    private static final String FNAME = NbBundle.getMessage(FileTypesNode.class, "FileTypesNode.fname.text");
 
     /**
-     * 
+     *
      * @param skCase
-     * @param filter null to display root node of file type tree, pass in something to provide a sub-node.  
+     * @param filter null to display root node of file type tree, pass in
+     * something to provide a sub-node.
      */
     FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
         super(Children.create(new FileTypesChildren(skCase, filter), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
@@ -42,13 +43,11 @@ public class FileTypesNode extends DisplayableItemNode {
         if (filter == null) {
             super.setName(FNAME);
             super.setDisplayName(FNAME);
-        } 
-        // sub-node in file tree (i.e. documents, exec, etc.)
+        } // sub-node in file tree (i.e. documents, exec, etc.)
         else {
             super.setName(filter.getName());
             super.setDisplayName(filter.getDisplayName());
         }
-        this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
     }
 
@@ -56,7 +55,7 @@ public class FileTypesNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -71,9 +70,9 @@ public class FileTypesNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name",
-                "Name",
-                "no description",
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.desc"),
                 getName()));
         return s;
     }

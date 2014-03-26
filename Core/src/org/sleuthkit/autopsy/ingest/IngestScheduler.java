@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,21 +50,21 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 
 /**
- * Schedules data source (images, file-sets, etc) and files with their associated modules for ingest, and
- * manage queues of the scheduled tasks.
+ * Schedules data source (images, file-sets, etc) and files with their
+ * associated modules for ingest, and manage queues of the scheduled tasks.
  *
  * Currently a singleton object only (as there is one pipeline at a time)
  *
- * Contains internal schedulers for content objects into data source and and file ingest
- * pipelines.
+ * Contains internal schedulers for content objects into data source and and
+ * file ingest pipelines.
  *
  */
-class IngestScheduler {
+final class IngestScheduler {
     private static IngestScheduler instance;
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
     private final DataSourceScheduler dataSourceScheduler = new DataSourceScheduler();
     private final FileScheduler fileScheduler = new FileScheduler();
-
+    
     private IngestScheduler() {
     }
 
@@ -101,61 +101,125 @@ class IngestScheduler {
      *
      */
     static class FileScheduler implements Iterator<FileScheduler.FileTask> {
-        //root folders enqueued
-        private TreeSet<FileTask> rootProcessTasks;
+         //root folders enqueued
+        private TreeSet<FileTask> rootDirectoryTasks;
         
         //stack of current dirs to be processed recursively
-        private List<FileTask> curDirProcessTasks;
+        private List<FileTask> directoryTasks;
         
         //list of files being processed in the currently processed directory
-        private LinkedList<FileTask> curFileProcessTasks; //need to add to start and end quickly
+        private LinkedList<FileTask> fileTasks; //need to add to start and end quickly
         
-        //estimated total files to be enqueued for currently scheduled content objects
-        private int filesEnqueuedEst;
-        private int filesDequeued;
-        private final static int FAT_NTFS_FLAGS =
-                TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
+        //estimated total files to be enqueued for currently scheduled content objects        
+        private int filesEnqueuedEst = 0;
+        private int filesDequeued = 0;
+        private final static int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
 
         private FileScheduler() {
-            rootProcessTasks = new TreeSet<>(new RootTaskComparator());
-            curDirProcessTasks = new ArrayList<>();
-            curFileProcessTasks = new LinkedList<>();
-            resetCounters();
+            rootDirectoryTasks = new TreeSet<>(new RootTaskComparator());
+            directoryTasks = new ArrayList<>();
+            fileTasks = new LinkedList<>();
+            resetCounters();            
         }
         
         private void resetCounters() {
             filesEnqueuedEst = 0;
             filesDequeued = 0;
-        }
-
+        }        
+        
         @Override
         public synchronized String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("\nRootDirs(sorted), size: ").append(rootProcessTasks.size());
-            for (FileTask task : rootProcessTasks) {
+            sb.append("\nRootDirs(sorted), size: ").append(rootDirectoryTasks.size());
+            for (FileTask task : rootDirectoryTasks) {
                 sb.append(task.toString()).append(" ");
             }
-            sb.append("\nCurDirs(stack), size: ").append(curDirProcessTasks.size());
-            for (FileTask task : curDirProcessTasks) {
+            sb.append("\nCurDirs(stack), size: ").append(directoryTasks.size());
+            for (FileTask task : directoryTasks) {
                 sb.append(task.toString()).append(" ");
             }
-            sb.append("\nCurFiles, size: ").append(curFileProcessTasks.size());
-            for (FileTask task : curFileProcessTasks) {
+            sb.append("\nCurFiles, size: ").append(fileTasks.size());
+            for (FileTask task : fileTasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();
         }
 
+        synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
+            Content dataSource = dataSourceTask.getDataSource();
+            Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirVisitor());
+            List<AbstractFile> firstLevelFiles = new ArrayList<>();
+            if (rootObjects.isEmpty() && dataSource instanceof AbstractFile) {
+                // The data source is file.
+                firstLevelFiles.add((AbstractFile)dataSource);
+            } 
+            else {
+                for (AbstractFile root : rootObjects) {
+                    List<Content> children;
+                    try {
+                        children = root.getChildren();
+                        if (children.isEmpty()) {
+                            //add the root itself, could be unalloc file, child of volume or image
+                            firstLevelFiles.add(root);
+                        } 
+                        else {
+                            //root for fs root dir, schedule children dirs/files
+                            for (Content child : children) {
+                                if (child instanceof AbstractFile) {
+                                    firstLevelFiles.add((AbstractFile) child);
+                                }
+                            }
+                        }
+                    } 
+                    catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Could not get children of root to enqueue: " + root.getId() + ": " + root.getName(), ex);
+                    }
+                }
+            }
+
+            for (AbstractFile firstLevelFile : firstLevelFiles) {
+                FileTask fileTask = new FileTask(firstLevelFile, dataSourceTask);
+                if (shouldEnqueueTask(fileTask)) {
+                    rootDirectoryTasks.add(fileTask);
+                }
+            }
+
+            // Update approx count of files to process in queues
+            filesEnqueuedEst = queryNumFilesinEnqueuedContents();
+
+            // Reshuffle/update the dir and file level queues if needed
+            updateQueues();
+        }
+        
+        /**
+         * Schedule a file to the file ingest, with associated modules. This
+         * will add the file to beginning of the file queue. The method is
+         * intended for rescheduling a file that is a derivative of another
+         * content object that has already ingested and produced this file. As a
+         * result, the derivative file will be scheduled with the same priority
+         * as the parent origin file.
+         *
+         * @param file file to be scheduled
+         * @param originalContext original content schedule context that was used
+         * to schedule the parent origin content, with the modules, settings, etc.
+         */
+        synchronized void scheduleFile(IngestJob ingestJob, AbstractFile file) {
+            FileTask fileTask = new FileTask(file, ingestJob);
+            if (shouldEnqueueTask(fileTask)) {
+                fileTasks.addFirst(fileTask);
+                fileTasks.add(fileTask);
+                ++filesEnqueuedEst;
+            }            
+        }        
+        
         float getPercentageDone() {
             if (filesEnqueuedEst == 0) {
                 return 0;
             }
-
             return ((100.f) * filesDequeued) / filesEnqueuedEst;
-
         }
 
         /**
@@ -199,231 +263,12 @@ class IngestScheduler {
         int getFilesDequeued() {
             return filesDequeued;
         }
-
-        /**
-         * Task for a specific file to process. More specific than the
-         * higher-level DataSourceTask.
-         */
-        static class FileTask {
-            private final AbstractFile file;
-            private final DataSourceTask dataSourceTask;
-
-            public FileTask(AbstractFile file, DataSourceTask dataSourceTask) {
-                this.file = file;
-                this.dataSourceTask = dataSourceTask;
-            }
-            
-            public DataSourceTask getDataSourceTask() {
-                return dataSourceTask;
-            }
-            
-            public AbstractFile getFile() {
-                return file;
-            }
-
-            @Override
-            public String toString() {
-                try {
-                    return "ProcessTask{" + "file=" + file.getId() + ": "
-                            + file.getUniquePath() + "}"; // + ", dataSourceTask=" + dataSourceTask + '}';
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex);
-                }
-                return "ProcessTask{" + "file=" + file.getId() + ": "
-                        + file.getName() + '}';
-            }
-
-            /**
-             * two process tasks are equal when the file/dir and modules are the
-             * same this enables are not to queue up the same file/dir, modules
-             * tuples into the root dir set
-             *
-             * @param obj
-             * @return
-             */
-            @Override
-            public boolean equals(Object obj) {
-                if (obj == null) {
-                    return false;
-                }
-                if (getClass() != obj.getClass()) {
-                    return false;
-                }
-                final FileTask other = (FileTask) obj;
-                if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
-                    return false;
-                }
-                DataSourceTask<IngestModuleAbstractFile> thisTask = this.getDataSourceTask();
-                DataSourceTask<IngestModuleAbstractFile> otherTask = other.getDataSourceTask();
-
-                if (thisTask != otherTask
-                        && (thisTask == null || !thisTask.equals(otherTask))) {
-                    return false;
-                }
-                return true;
-            }
-
-
-            /**
-             * Create 1 or more ProcessTasks for each root dir in the Content from
-             * the context supplied
-             *
-             * @param context the original ingest context
-             * @return
-             */
-            private static List<FileTask> createFromScheduledTask(DataSourceTask<IngestModuleAbstractFile> scheduledTask) {
-                final Content scheduledContent = scheduledTask.getContent();
-                Collection<AbstractFile> rootObjects = scheduledContent.accept(new GetRootDirVisitor());
-                List<AbstractFile> firstLevelFiles = new ArrayList<>();
-                if (rootObjects.isEmpty() && scheduledContent instanceof AbstractFile) {
-                    //add the root, which is a leaf itself
-                    firstLevelFiles.add((AbstractFile) scheduledContent);
-                } else {
-                    for (AbstractFile root : rootObjects) {
-                        //TODO the type-specific AbstractFile getChildren() method
-                        List<Content> children;
-                        try {
-                            children = root.getChildren();
-                            if (children.isEmpty()) {
-                                //add the root itself, could be unalloc file, child of volume or image
-                                firstLevelFiles.add(root);
-                            } else {
-                                //root for fs root dir, schedule children dirs/files
-                                for (Content child : children) {
-                                    if (child instanceof AbstractFile) {
-                                        firstLevelFiles.add((AbstractFile) child);
-                                    }
-                                }
-                            }
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.WARNING, "Could not get children of root to enqueue: "
-                                    + root.getId() + ": " + root.getName(), ex);
-                        }
-
-                    }
-                }
-
-                List<FileTask> processTasks = new ArrayList<>();
-                for (AbstractFile firstLevelFile : firstLevelFiles) {
-                    FileTask newTask = new FileTask(firstLevelFile, scheduledTask);
-                    if (shouldEnqueueTask(newTask)) {
-                        processTasks.add(newTask);
-                    }
-                }
-                return processTasks;
-            }
-        }
-
-        /**
-         * Remove duplicated tasks from previous ingest enqueue currently it
-         * removes all previous tasks scheduled in queues for this Content
-         *
-         * @param task tasks similar to this one should be removed
-         */
-        private void removeDupTasks(DataSourceTask task) {
-            final Content inputContent = task.getContent();
-
-            //remove from root queue
-            List<FileTask> toRemove = new ArrayList<>();
-            for (FileTask pt : rootProcessTasks) {
-                if (pt.getDataSourceTask().getContent().equals(inputContent)) {
-                    toRemove.add(pt);
-                }
-            }
-            rootProcessTasks.removeAll(toRemove);
-
-            //remove from dir stack
-            toRemove = new ArrayList<>();
-            for (FileTask pt : curDirProcessTasks) {
-                if (pt.getDataSourceTask().getContent().equals(inputContent)) {
-                    toRemove.add(pt);
-                }
-            }
-            curDirProcessTasks.removeAll(toRemove);
-
-            //remove from file queue
-            toRemove = new ArrayList<>();
-            for (FileTask pt : curFileProcessTasks) {
-                if (pt.getDataSourceTask().getContent().equals(inputContent)) {
-                    toRemove.add(pt);
-                }
-            }
-            curFileProcessTasks.removeAll(toRemove);
-
-
-        }
-
-        /**
-         * Schedule a file to the file ingest, with associated modules. This
-         * will add the file to beginning of the file queue. The method is
-         * intended for rescheduling a file that is a derivative of another
-         * content object that has already ingested and produced this file. As a
-         * result, the derivative file will be scheduled with the same priority
-         * as the parent origin file.
-         *
-         * @param file file to be scheduled
-         * @param originalContext original content schedule context that was used
-         * to schedule the parent origin content, with the modules, settings, etc.
-         */
-        synchronized void schedule(AbstractFile file, PipelineContext originalContext) {
-            DataSourceTask originalTask = originalContext.getDataSourceTask();
-
-            //skip if task contains no modules
-            if (originalTask.getModules().isEmpty()) {
-                return;
-            }
-
-            FileTask fileTask = new FileTask(file, originalContext.getDataSourceTask());
-            if (shouldEnqueueTask(fileTask)) {
-                this.curFileProcessTasks.addFirst(fileTask);
-                ++filesEnqueuedEst;
-            }
-
-
-        }
-
-        /**
-         * Schedule new Content object for a file ingest with associated
-         * modules.
-         *
-         * @param context context to schedule, with scheduled task containing content to process and modules
-         */
-        synchronized void schedule(DataSourceTask<IngestModuleAbstractFile> task) {
-
-            //skip if task contains no modules
-            if (task.getModules().isEmpty()) {
-                return;
-            }
-
-            final Content contentToSchedule = task.getContent();
-
-            if (getSourceContent().contains(contentToSchedule)) {
-                //reset counters if the same content enqueued twice
-                //Note, not very accurate, because we may have processed some files from 
-                //another content
-                this.filesDequeued = 0;
-            }
-
-            //remove duplicate scheduled tasks still in queues for this content if enqueued previously
-            removeDupTasks(task);
-
-            List<FileTask> rootTasks = FileTask.createFromScheduledTask(task);
-
-            //adds and resorts the tasks
-            this.rootProcessTasks.addAll(rootTasks);
-
-            //update approx count of files to process in queues
-            this.filesEnqueuedEst = this.queryNumFilesinEnqueuedContents();
-
-            //reshuffle/update the dir and file level queues if needed
-            updateQueues();
-
-        }
-
+        
         @Override
         public synchronized boolean hasNext() {
-            if (curFileProcessTasks.isEmpty()) {
-                resetCounters();
+            if (fileTasks.isEmpty()) {
+                filesEnqueuedEst = 0;
+                filesDequeued = 0;
                 return false;
             }
             return true;
@@ -436,7 +281,7 @@ class IngestScheduler {
             }
 
             //dequeue the last in the list
-            final FileTask task = curFileProcessTasks.pollLast();
+            final FileTask task = fileTasks.pollLast();
             filesDequeued++;
             updateQueues();
             
@@ -453,28 +298,28 @@ class IngestScheduler {
             // that do not get enqueued
             while (true) {
                 // There are files in the queue, we're done
-                if (this.curFileProcessTasks.isEmpty() == false) {
+                if (this.fileTasks.isEmpty() == false) {
                     return;
                 }
                 
                 // fill in the directory queue if it is empty. 
-                if (this.curDirProcessTasks.isEmpty()) {
+                if (this.directoryTasks.isEmpty()) {
                     // bail out if root is also empty -- we are done
-                    if (rootProcessTasks.isEmpty()) {
+                    if (rootDirectoryTasks.isEmpty()) {
                         return;
                     }
-                    FileTask rootTask = this.rootProcessTasks.pollFirst();
-                    curDirProcessTasks.add(rootTask);
+                    FileTask rootTask = this.rootDirectoryTasks.pollFirst();
+                    directoryTasks.add(rootTask);
                 }
 
                 //pop and push AbstractFile directory children if any
                 //add the popped and its leaf children onto cur file list
-                FileTask parentTask = curDirProcessTasks.remove(curDirProcessTasks.size() - 1);
+                FileTask parentTask = directoryTasks.remove(directoryTasks.size() - 1);
                 final AbstractFile parentFile = parentTask.file;
 
                 // add itself to the file list
                 if (shouldEnqueueTask(parentTask)) {
-                    this.curFileProcessTasks.addLast(parentTask);
+                    this.fileTasks.addLast(parentTask);
                 }
 
                 // add its children to the file and directory lists
@@ -483,13 +328,13 @@ class IngestScheduler {
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
                             AbstractFile childFile = (AbstractFile) c;
-                            FileTask childTask = new FileTask(childFile, parentTask.getDataSourceTask());
+                            FileTask childTask = new FileTask(childFile, parentTask.getJob());
 
                             if (childFile.hasChildren()) {
-                                this.curDirProcessTasks.add(childTask);
+                                this.directoryTasks.add(childTask);
                             } 
                             else if (shouldEnqueueTask(childTask)) {
-                                this.curFileProcessTasks.addLast(childTask);
+                                this.fileTasks.addLast(childTask);
                             }
                         }
                     }
@@ -515,61 +360,25 @@ class IngestScheduler {
          * enqueued
          */
         synchronized List<Content> getSourceContent() {
-            final Set<Content> contentSet = new HashSet<Content>();
+            final Set<Content> contentSet = new HashSet<>();
 
-            for (FileTask task : rootProcessTasks) {
-                contentSet.add(task.getDataSourceTask().getContent());
+            for (FileTask task : rootDirectoryTasks) {
+                contentSet.add(task.getJob().getDataSource());
             }
-            for (FileTask task : curDirProcessTasks) {
-                contentSet.add(task.getDataSourceTask().getContent());
+            for (FileTask task : directoryTasks) {
+                contentSet.add(task.getJob().getDataSource());
             }
-            for (FileTask task : curFileProcessTasks) {
-                contentSet.add(task.getDataSourceTask().getContent());
-            }
-
-            return new ArrayList<Content>(contentSet);
-        }
-
-        /**
-         * Determine if a module is in a pipeline in the queue.
-         * @param module
-         * @return true if it is in the queue.
-         */
-        synchronized boolean hasModuleEnqueued(IngestModuleAbstractFile module) {
-            for (FileTask task : rootProcessTasks) {
-                List<IngestModuleAbstractFile> modules = task.getDataSourceTask().getModules();
-                for (IngestModuleAbstractFile m : modules) {
-                    if (m.getName().equals(module.getName())) {
-                        return true;
-                    }
-                }
+            for (FileTask task : fileTasks) {
+                contentSet.add(task.getJob().getDataSource());
             }
 
-            for (FileTask task : curDirProcessTasks) {
-                List<IngestModuleAbstractFile> modules = task.getDataSourceTask().getModules();
-                for (IngestModuleAbstractFile m : modules) {
-                    if (m.getName().equals(module.getName())) {
-                        return true;
-                    }
-                }
-            }
-
-            for (FileTask task : curFileProcessTasks) {
-                List<IngestModuleAbstractFile> modules = task.getDataSourceTask().getModules();
-                for (IngestModuleAbstractFile m : modules) {
-                    if (m.getName().equals(module.getName())) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return new ArrayList<>(contentSet);
         }
 
         synchronized void empty() {
-            this.rootProcessTasks.clear();
-            this.curDirProcessTasks.clear();
-            this.curFileProcessTasks.clear();
+            this.rootDirectoryTasks.clear();
+            this.directoryTasks.clear();
+            this.fileTasks.clear();
         }
 
         /**
@@ -583,7 +392,7 @@ class IngestScheduler {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
-            if (processTask.getDataSourceTask().isProcessUnalloc() == false
+            if (processTask.getJob().shouldProcessUnallocatedSpace() == false
                     && aFile.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS //unalloc files
                     )) {
                 return false;
@@ -637,6 +446,70 @@ class IngestScheduler {
             return true;
         }
 
+        /**
+         * Task for a specific file to process. More specific than the
+         * higher-level DataSourceTask.
+         */
+        static class FileTask {
+            private final AbstractFile file;
+            private final IngestJob task;
+
+            public FileTask(AbstractFile file, IngestJob task) {
+                this.file = file;
+                this.task = task;
+            }
+            
+            public IngestJob getJob() {
+                return task;
+            }
+            
+            public AbstractFile getFile() {
+                return file;
+            }
+
+            @Override
+            public String toString() {
+                try {
+                    return "ProcessTask{" + "file=" + file.getId() + ": "
+                            + file.getUniquePath() + "}"; // + ", dataSourceTask=" + dataSourceTask + '}';
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex);
+                }
+                return "ProcessTask{" + "file=" + file.getId() + ": "
+                        + file.getName() + '}';
+            }
+
+            /**
+             * two process tasks are equal when the file/dir and modules are the
+             * same this enables are not to queue up the same file/dir, modules
+             * tuples into the root dir set
+             *
+             * @param obj
+             * @return
+             */
+            @Override
+            public boolean equals(Object obj) {
+                if (obj == null) {
+                    return false;
+                }
+                if (getClass() != obj.getClass()) {
+                    return false;
+                }
+                final FileTask other = (FileTask) obj;
+                if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
+                    return false;
+                }
+                IngestJob thisTask = this.getJob();
+                IngestJob otherTask = other.getJob();
+
+                if (thisTask != otherTask
+                        && (thisTask == null || !thisTask.equals(otherTask))) {
+                    return false;
+                }
+                return true;
+            }
+        }      
+                
         /**
          * Root dir sorter
          */
@@ -883,60 +756,36 @@ class IngestScheduler {
     /**
      * DataSourceScheduler ingest scheduler
      */
-    static class DataSourceScheduler implements Iterator<DataSourceTask<IngestModuleDataSource>> {
+    static class DataSourceScheduler implements Iterator<IngestJob> {
 
-        private LinkedList<DataSourceTask<IngestModuleDataSource>> tasks;
+        private LinkedList<IngestJob> tasks;
 
         DataSourceScheduler() {
-            tasks = new LinkedList<DataSourceTask<IngestModuleDataSource>>();
+            tasks = new LinkedList<>();
         }
 
-        synchronized void schedule(DataSourceTask<IngestModuleDataSource> task) {
-
-            //skip if task contains no modules
-            if (task.getModules().isEmpty()) {
-                return;
-            }
-
+        synchronized void schedule(IngestJob task) {
             try {
-                if (task.getContent().getParent() != null) {
+                if (task.getDataSource().getParent() != null) {
                     //only accepting parent-less content objects (Image, parentless VirtualDirectory)
-                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: " + task.getContent());
+                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: {0}", task.getDataSource());
                     return;
                 }
             } catch (TskCoreException e) {
-                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + task.getContent(), e);
+                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + task.getDataSource(), e);
                 return;
             }
 
-            // see if we already have a task for this data source
-            DataSourceTask<IngestModuleDataSource> existTask = null;
-            for (DataSourceTask<IngestModuleDataSource> curTask : tasks) {
-                if (curTask.getContent().equals(task.getContent())) {
-                    existTask = curTask;
-                    break;
-                }
-            }
-
-            // add these modules to the existing task for the data source
-            // @@@ BC: I'm not sure I like this and it will probably break a more formal pipeline structure
-            // @@@ TODO: Verify that if this is called mid-way during ingest that all of the already ingested files get scheduled with the new modules...
-            if (existTask != null) {
-                //merge modules for the data source task
-                existTask.addModules(task.getModules());
-            } else {
-                //enqueue a new task
-                tasks.addLast(task);
-            }
+            tasks.addLast(task);
         }
 
         @Override
-        public synchronized DataSourceTask<IngestModuleDataSource> next() throws IllegalStateException {
+        public synchronized IngestJob next() throws IllegalStateException {
             if (!hasNext()) {
                 throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
             }
 
-            final DataSourceTask<IngestModuleDataSource> ret = tasks.pollFirst();
+            final IngestJob ret = tasks.pollFirst();
             return ret;
         }
 
@@ -947,8 +796,8 @@ class IngestScheduler {
          */
         synchronized List<org.sleuthkit.datamodel.Content> getContents() {
             List<org.sleuthkit.datamodel.Content> contents = new ArrayList<org.sleuthkit.datamodel.Content>();
-            for (DataSourceTask<IngestModuleDataSource> task : tasks) {
-                contents.add(task.getContent());
+            for (IngestJob task : tasks) {
+                contents.add(task.getDataSource());
             }
             return contents;
         }
@@ -975,7 +824,7 @@ class IngestScheduler {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("DataSourceQueue, size: ").append(getCount());
-            for (DataSourceTask<IngestModuleDataSource> task : tasks) {
+            for (IngestJob task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
             return sb.toString();

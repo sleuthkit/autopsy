@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.recentactivity;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -33,12 +31,12 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -54,9 +52,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * This module attempts to extract web queries from major search engines by
- * querying the blackboard for web history and bookmark artifacts, and
- * extracting search text from them.
+ * This recent activity extractor attempts to extract web queries from major
+ * search engines by querying the blackboard for web history and bookmark
+ * artifacts, and extracting search text from them.
  *
  *
  * To add search engines, edit SearchEngines.xml under RecentActivity
@@ -64,85 +62,79 @@ import org.xml.sax.SAXException;
  */
 class SearchEngineURLQueryAnalyzer extends Extract {
 
-    private IngestServices services;
-    
-    private static final String MODULE_NAME = "Search Engine URL Query Analyzer";
-    private final static String MODULE_VERSION = "1.0";
-    
     private static final String XMLFILE = "SEUQAMappings.xml";
     private static final String XSDFILE = "SearchEngineSchema.xsd";
-
-    
     private static String[] searchEngineNames;
     private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
     private static Document xmlinput;
-    private static final SearchEngineURLQueryAnalyzer.SearchEngine NullEngine = new SearchEngineURLQueryAnalyzer.SearchEngine("NONE", "NONE", new HashMap<String,String>());
+    private static final SearchEngineURLQueryAnalyzer.SearchEngine NullEngine = new SearchEngineURLQueryAnalyzer.SearchEngine(
+            NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class, "SearchEngineURLQueryAnalyzer.engineName.none"),
+            NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class, "SearchEngineURLQueryAnalyzer.domainSubStr.none"),
+            new HashMap<String,String>());
 
-    
-    //hide public constructor to prevent from instantiation by ingest module loader
-     SearchEngineURLQueryAnalyzer() {
-          
+    SearchEngineURLQueryAnalyzer() {
     }
 
-    private static class SearchEngine   {
-        private  String _engineName;
-        private  String _domainSubstring;
-        private  Map<String,String> _splits;
-        private  int _count;
-        
-        SearchEngine(String engineName, String domainSubstring, Map<String, String> splits){
+    private static class SearchEngine {
+
+        private String _engineName;
+        private String _domainSubstring;
+        private Map<String, String> _splits;
+        private int _count;
+
+        SearchEngine(String engineName, String domainSubstring, Map<String, String> splits) {
             _engineName = engineName;
             _domainSubstring = domainSubstring;
             _splits = splits;
             _count = 0;
         }
-        
-        void increment(){
-           ++_count;
+
+        void increment() {
+            ++_count;
         }
-        
-        String getEngineName(){
+
+        String getEngineName() {
             return _engineName;
         }
-        
-        String getDomainSubstring(){
+
+        String getDomainSubstring() {
             return _domainSubstring;
         }
-        
-        int getTotal(){
+
+        int getTotal() {
             return _count;
         }
-        
-        Set<Map.Entry<String,String>> getSplits(){
+
+        Set<Map.Entry<String, String>> getSplits() {
             return this._splits.entrySet();
         }
-        
+
         @Override
-        public String toString(){
+        public String toString() {
             String split = " ";
-            for(Map.Entry<String,String> kvp : getSplits()){
-                split = split + "[ " + kvp.getKey() + " :: " +  kvp.getValue() + " ]" + ", ";
+            for (Map.Entry<String, String> kvp : getSplits()) {
+                split = split + "[ " + kvp.getKey() + " :: " + kvp.getValue() + " ]" + ", ";
             }
-            return "Name: " + _engineName + "\n Domain Substring: " + _domainSubstring + "\n count: " + _count + "\n Split Tokens: \n " + split;
+            return NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.toString",
+                                       _engineName, _domainSubstring, _count, split);
         }
-                
     }
-    
-    private void createEngines(){
+
+    private void createEngines() {
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine");
         SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
-        for(int i = 0;i < nlist.getLength(); i++){
+        for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
 
             String EngineName = nnm.getNamedItem("engine").getNodeValue();
             String EnginedomainSubstring = nnm.getNamedItem("domainSubstring").getNodeValue();
-            Map<String,String> splits = new HashMap<String,String>();
+            Map<String, String> splits = new HashMap<>();
 
             NodeList listSplits = xmlinput.getElementsByTagName("splitToken");
-            for(int k = 0; k<listSplits.getLength();k++){
-               if(listSplits.item(k).getParentNode().getAttributes().getNamedItem("engine").getNodeValue().equals(EngineName)){
-                   splits.put(listSplits.item(k).getAttributes().getNamedItem("plainToken").getNodeValue(), listSplits.item(k).getAttributes().getNamedItem("regexToken").getNodeValue());
-               }
+            for (int k = 0; k < listSplits.getLength(); k++) {
+                if (listSplits.item(k).getParentNode().getAttributes().getNamedItem("engine").getNodeValue().equals(EngineName)) {
+                    splits.put(listSplits.item(k).getAttributes().getNamedItem("plainToken").getNodeValue(), listSplits.item(k).getAttributes().getNamedItem("regexToken").getNodeValue());
+                }
             }
 
             SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, splits);
@@ -151,7 +143,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         }
         engines = listEngines;
     }
-    
+
     /**
      * Returns which of the supported SearchEngines, if any, the given string
      * belongs to.
@@ -160,30 +152,25 @@ class SearchEngineURLQueryAnalyzer extends Extract {
      * @return supported search engine the domain belongs to, if any
      *
      */
-    
-    private static SearchEngineURLQueryAnalyzer.SearchEngine getSearchEngine(String domain){     
+    private static SearchEngineURLQueryAnalyzer.SearchEngine getSearchEngine(String domain) {
         if (engines == null) {
             return SearchEngineURLQueryAnalyzer.NullEngine;
         }
-        for(int i = 0; i < engines.length; i++){
-            if(domain.contains(engines[i].getDomainSubstring())){
+        for (int i = 0; i < engines.length; i++) {
+            if (domain.contains(engines[i].getDomainSubstring())) {
                 return engines[i];
             }
         }
         return SearchEngineURLQueryAnalyzer.NullEngine;
     }
-    
-   
-    
-    private void getSearchEngineNames(){
+
+    private void getSearchEngineNames() {
         String[] listNames = new String[engines.length];
-        for(int i = 0;i<listNames.length; i++){
+        for (int i = 0; i < listNames.length; i++) {
             listNames[i] = engines[i]._engineName;
         }
         searchEngineNames = listNames;
     }
-    
-    
 
     /**
      * Attempts to extract the query from a URL.
@@ -191,13 +178,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
      * @param url The URL string to be dissected.
      * @return The extracted search query.
      */
-       
-
-    private String extractSearchEngineQuery(String url){
+    private String extractSearchEngineQuery(String url) {
         String x = "NoQuery";
         SearchEngineURLQueryAnalyzer.SearchEngine eng = getSearchEngine(url);
-        for(Map.Entry<String,String> kvp : eng.getSplits()){
-            if(url.contains(kvp.getKey())){
+        for (Map.Entry<String, String> kvp : eng.getSplits()) {
+            if (url.contains(kvp.getKey())) {
                 x = split2(url, kvp.getValue());
                 break;
             }
@@ -215,8 +200,8 @@ class SearchEngineURLQueryAnalyzer extends Extract {
      * Splits URLs based on a delimeter (key). .contains() and .split()
      *
      * @param url The URL to be split
-     * @param value the delimeter value used to split the URL into its
-     * search token, extracted from the xml.
+     * @param value the delimeter value used to split the URL into its search
+     * token, extracted from the xml.
      * @return The extracted search query
      *
      */
@@ -238,13 +223,13 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         return basereturn;
     }
 
-    private void getURLs(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getURLs(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         int totalQueries = 0;
         try {
             //from blackboard_artifacts
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (`artifact_type_id` = '" + ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                     + "' OR `artifact_type_id` = '" + ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() + "') ");  //List of every 'web_history' and 'bookmark' artifact
-            logger.info("Processing " + listArtifacts.size() + " blackboard artifacts.");
+            logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size());
             getAll:
             for (BlackboardArtifact artifact : listArtifacts) {
                 //initializing default attributes
@@ -259,10 +244,10 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     //File was from a different dataSource. Skipping.
                     continue;
                 }
-                
+
                 AbstractFile file = tskCase.getAbstractFileById(fileId);
-                if (file == null ) {
-                    continue; 
+                if (file == null) {
+                    continue;
                 }
 
                 SearchEngineURLQueryAnalyzer.SearchEngine se = NullEngine;
@@ -294,14 +279,14 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 }
 
                 if (!se.equals(NullEngine) && !query.equals("NoQuery") && !query.equals("")) {
-                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), MODULE_NAME, searchEngineDomain));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, query));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), MODULE_NAME, browser));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), MODULE_NAME, last_accessed));
-                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
-                        se.increment();
-                        ++totalQueries;
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", searchEngineDomain));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "Recent Activity", query));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", browser));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", last_accessed));
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
+                    se.increment();
+                    ++totalQueries;
                 }
             }
         } catch (TskException e) {
@@ -310,41 +295,42 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             if (controller.isCancelled()) {
                 logger.info("Operation terminated by user.");
             }
-            services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
+            IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(
+                    NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.parentModuleName.noSpace"),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
             logger.info("Extracted " + totalQueries + " queries from the blackboard");
         }
     }
 
-   private String getTotals() {
+    private String getTotals() {
         String total = "";
         if (engines == null) {
             return total;
         }
         for (SearchEngineURLQueryAnalyzer.SearchEngine se : engines) {
-           total+= se.getEngineName() + " : "+ se.getTotal() + "\n";
+            total += se.getEngineName() + " : " + se.getTotal() + "\n";
         }
         return total;
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         this.getURLs(dataSource, controller);
-        logger.info("Search Engine stats: \n" + getTotals());
+        logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals());
     }
 
     @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        try{
-            services = IngestServices.getDefault();   
+    void init() throws IngestModuleException {
+        try {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
             init2();
-        }
-        catch(IOException e){
-            logger.log(Level.SEVERE, "Unable to find " + XMLFILE , e);
+        } catch (IOException e) {
+            String message = "Unable to find " + XMLFILE;
+            logger.log(Level.SEVERE, message, e);
+            throw new IngestModuleException(message);
         }
     }
 
-    
     private void init2() {
         try {
             String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
@@ -358,54 +344,24 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             if (!XMLUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
                 logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
             }
-           createEngines();
-           getSearchEngineNames();
+            createEngines();
+            getSearchEngineNames();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Was not able to load SEUQAMappings.xml", e);
-        }
-        catch(ParserConfigurationException pce){
+        } catch (ParserConfigurationException pce) {
             logger.log(Level.SEVERE, "Unable to build XML parser", pce);
-        }
-        catch(SAXException sxe){
+        } catch (SAXException sxe) {
             logger.log(Level.SEVERE, "Unable to parse XML file", sxe);
         }
     }
 
-    
-    
     @Override
     public void complete() {
         logger.info("Search Engine URL Query Analyzer has completed.");
     }
-    
 
     @Override
     public void stop() {
         logger.info("Attempted to stop Search Engine URL Query Analyzer, but operation is not supported; skipping...");
-    }
-
-    @Override
-    public String getName() {
-        return MODULE_NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        String total = "";
-        for(String name : searchEngineNames){
-            total += name + "\n";
-        }
-        return "Extracts search queries on the following search engines: \n" + total;
-    }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
@@ -36,12 +35,12 @@ import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -109,17 +108,19 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     public void actionPerformed(ActionEvent e) {
         Logger.noteAction(AddImageAction.class);
         
-        final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        if (null != ingestConfig && ingestConfig.isIngestRunning()) {
-            final String msg = "<html>Ingest is ongoing on another data source. Adding a new source now might slow down the current ingest.<br />Do you want to proceed and add a new data source now?</html>";
-            if (JOptionPane.showConfirmDialog(null, msg, "Ingest in progress", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
+        if (IngestManager.getDefault().isIngestRunning()) {
+            final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
+            if (JOptionPane.showConfirmDialog(null, msg,
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "AddImageAction.ingestConfig.ongoingIngest.title"),
+                                              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
                 return;
             }
         }
 
         iterator = new AddImageWizardIterator(this);
         wizardDescriptor = new WizardDescriptor(iterator);
-        wizardDescriptor.setTitle("Add Data Source");
+        wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
         wizardDescriptor.putProperty(NAME, e);
 
         if (dialog != null) {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Volume;
@@ -68,9 +69,10 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actionsList = new ArrayList<Action>();
+        List<Action> actionsList = new ArrayList<>();
 
-        actionsList.add(new NewWindowViewAction("View in New Window", this));
+        actionsList.add(new NewWindowViewAction(
+                NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
 
         return actionsList.toArray(new Action[0]);
@@ -85,12 +87,30 @@ public class VolumeNode extends AbstractContentNode<Volume> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name", "Name", "no description", this.getDisplayName()));
-        ss.put(new NodeProperty("ID", "ID", "no description", content.getAddr()));
-        ss.put(new NodeProperty("Starting Sector", "Starting Sector", "no description", content.getStart()));
-        ss.put(new NodeProperty("Length in Sectors", "Length in Sectors", "no description", content.getLength()));
-        ss.put(new NodeProperty("Description", "Description", "no description", content.getDescription()));
-        ss.put(new NodeProperty("Flags", "Flags", "no description", content.getFlagsAsString()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.desc"),
+                this.getDisplayName()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.name"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.desc"),
+                content.getAddr()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.name"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.desc"),
+                content.getStart()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.name"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.desc"),
+                content.getLength()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.name"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.desc"),
+                content.getDescription()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.name"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.displayName"),
+                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.desc"),
+                content.getFlagsAsString()));
 
         return s;
     }
@@ -104,7 +124,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public boolean isLeafTypeNode() {
         return false;
     }
-                
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

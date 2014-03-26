@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,16 +27,15 @@ import org.sleuthkit.datamodel.AbstractFile;
  * to an extension string list instead of the third-party library's extension
  * reporting.
  */
- interface FileTypeDetectionInterface {
-    
-    // Struct to hold multiple values for return 
+interface FileTypeDetectionInterface {
+
     public class FileIdInfo {
-       public String type;     
-       public String extension; 
+
+        public String type;
+        public String extension;
     }
-    
-    // You only have one job
+
     FileIdInfo attemptMatch(AbstractFile abstractFile);
-    
+
     boolean isMimeTypeDetectable(String mimeType);
 }

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -32,14 +32,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
 import org.sleuthkit.autopsy.recentactivity.ExtractUSB.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -104,12 +102,6 @@ class ExtractRegistry extends Extract {
             RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl";
         }
     }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
     
     /**
      * Search for the registry hives on the system.
@@ -135,7 +127,8 @@ class ExtractRegistry extends Extract {
                 allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
             } 
             catch (TskCoreException ex) {
-                String msg = "Error fetching registry file: " + regFileName;
+                String msg = NbBundle.getMessage(this.getClass(),
+                                                 "ExtractRegistry.findRegFiles.errMsg.errReadingFile", regFileName);
                 logger.log(Level.WARNING, msg);
                 this.addErrorMessage(this.getName() + ": " + msg);
             }
@@ -149,7 +142,7 @@ class ExtractRegistry extends Extract {
      * @param dataSource
      * @param controller 
      */
-    private void analyzeRegistryFiles(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void analyzeRegistryFiles(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         List<AbstractFile> allRegistryFiles = findRegistryFiles(dataSource);
         
         // open the log file
@@ -172,7 +165,9 @@ class ExtractRegistry extends Extract {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
-                this.addErrorMessage(this.getName() + ": Error analyzing registry file " + regFileName);
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                            this.getName(), regFileName));
                 continue;
             }
             
@@ -199,7 +194,9 @@ class ExtractRegistry extends Extract {
             // parse the autopsy-specific output
             if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
                 if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
-                    this.addErrorMessage(this.getName() + ": Failed parsing registry file results " + regFileName);
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                                this.getName(), regFileName));
                 }
             }
 
@@ -207,7 +204,11 @@ class ExtractRegistry extends Extract {
             if (regOutputFiles.fullPlugins.isEmpty() == false) {
                 try {
                     BlackboardArtifact art = regFile.newArtifact(ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID());
-                    BlackboardAttribute att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "RegRipper");
+                    BlackboardAttribute att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                                                                      NbBundle.getMessage(this.getClass(),
+                                                                                          "ExtractRegistry.parentModuleName.noSpace"),
+                                                                      NbBundle.getMessage(this.getClass(),
+                                                                                          "ExtractRegistry.programName"));
                     art.addAttribute(att);
 
                     FileReader fread = new FileReader(regOutputFiles.fullPlugins);
@@ -231,10 +232,14 @@ class ExtractRegistry extends Extract {
                             logger.log(Level.WARNING, "Failed to close reader.", ex);
                         }
                     }
-                    att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", sb.toString());
+                    att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "ExtractRegistry.parentModuleName.noSpace"), sb.toString());
                     art.addAttribute(att);
                 } catch (FileNotFoundException ex) {
-                    this.addErrorMessage(this.getName() + ": Error reading registry file - " + regOutputFiles.fullPlugins);
+                    this.addErrorMessage(NbBundle.getMessage(this.getClass(),
+                                                             "ExtractRegistry.analyzeRegFiles.errMsg.errReadingRegFile",
+                                                             this.getName(), regOutputFiles.fullPlugins));
                     java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (TskCoreException ex) {
                     // TODO - add error message here?
@@ -306,10 +311,14 @@ class ExtractRegistry extends Extract {
                         "-r", regFilePath, "-f", autopsyType);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
-                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile",
+                                            this.getName()));
             } catch (InterruptedException ex) {
                 logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
-                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile2",
+                                            this.getName()));
             } finally {
                 if (writer != null) {
                     try {
@@ -333,10 +342,14 @@ class ExtractRegistry extends Extract {
                         "-r", regFilePath, "-f", fullType);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex);
-                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile3",
+                                            this.getName()));
             } catch (InterruptedException ex) {
                 logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex);
-                this.addErrorMessage(this.getName() + ": Failed to analyze registry file");
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile4",
+                                            this.getName()));
             } finally {
                 if (writer != null) {
                     try {
@@ -429,18 +442,26 @@ class ExtractRegistry extends Extract {
                                 usbMtime = Long.valueOf(usbMtime.toString());
 
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", usbMtime));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), usbMtime));
                                 String dev = artnode.getAttribute("dev");       
                                 String model = dev; 
                                 if (dev.toLowerCase().contains("vid")) {
                                     USBInfo info = extrctr.get(dev);
                                     if(info.getVendor()!=null)
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), "RecentActivity", info.getVendor()));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
+                                                                                 NbBundle.getMessage(this.getClass(),
+                                                                                                     "ExtractRegistry.parentModuleName.noSpace"), info.getVendor()));
                                     if(info.getProduct() != null)
                                         model = info.getProduct();
                                 }
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", model));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), model));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), value));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");
@@ -457,8 +478,12 @@ class ExtractRegistry extends Extract {
                             }
 
                             try {
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", value));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", itemMtime));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), value));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), itemMtime));
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
@@ -485,8 +510,12 @@ class ExtractRegistry extends Extract {
                                     logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
                                 }
                                 try {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", winver));
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", installtime));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                                                                             NbBundle.getMessage(this.getClass(),
+                                                                                                 "ExtractRegistry.parentModuleName.noSpace"), winver));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                                                                             NbBundle.getMessage(this.getClass(),
+                                                                                                 "ExtractRegistry.parentModuleName.noSpace"), installtime));
                                     BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                     bbart.addAttributes(bbattributes);
                                 } catch (TskCoreException ex) {
@@ -501,11 +530,19 @@ class ExtractRegistry extends Extract {
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                                 // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
                                 if (mtime != null) {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", mtime));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
+                                                                             NbBundle.getMessage(this.getClass(),
+                                                                                                 "ExtractRegistry.parentModuleName.noSpace"), mtime));
                                 }
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getNodeName()));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), name));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), value));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                                                                         NbBundle.getMessage(this.getClass(),
+                                                                                             "ExtractRegistry.parentModuleName.noSpace"), artnode.getNodeName()));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.");
@@ -535,16 +572,8 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         analyzeRegistryFiles(dataSource, controller);
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-    }
-
-    @Override
-    public void complete() {
     }
 
     @Override
@@ -553,20 +582,5 @@ class ExtractRegistry extends Extract {
             execRR.stop();
             execRR = null;
         }
-    }
-
-    @Override
-    public String getName() {
-        return "Registry";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Extracts activity from the Windows registry utilizing RegRipper.";
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

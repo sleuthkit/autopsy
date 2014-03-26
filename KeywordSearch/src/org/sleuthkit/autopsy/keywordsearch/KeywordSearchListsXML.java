@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -29,6 +30,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
@@ -39,8 +41,12 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
  * or to any file provided in constructor
  */
-public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
+final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
+    private static final Logger xmlListslogger = Logger.getLogger(KeywordSearchListsXML.class.getName());
+    private static final String CUR_LISTS_FILE_NAME = "keywords.xml";    
+    private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;   
+    private static final String XSDFILE = "KeywordsSchema.xsd";
     private static final String ROOT_EL = "keyword_lists";
     private static final String LIST_EL = "keyword_list";
     private static final String LIST_NAME_ATTR = "name";
@@ -53,11 +59,20 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
     private static final String KEYWORD_SELECTOR_ATTR = "selector";
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final String ENCODING = "UTF-8";
-    private static final String XSDFILE = "KeywordsSchema.xsd";
-    private static final Logger logger = Logger.getLogger(KeywordSearchListsXML.class.getName());
+    private static KeywordSearchListsXML currentInstance = null; 
     private DateFormat dateFormatter;
 
-    
+    /**
+     * RJCTODO: Move this one to the manager
+     * @return 
+     */
+    static KeywordSearchListsXML getCurrent() {
+        if (currentInstance == null) {
+            currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);
+            currentInstance.reload();
+        }
+        return currentInstance;
+    }
 
     /**
      * Constructor to obtain handle on other that the current keyword list
@@ -91,7 +106,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 if (theLists.get(listName).isLocked() == true) {
                     continue;
                 }
-                KeywordSearchList list = theLists.get(listName);
+                KeywordList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
                 String useForIngest = list.getUseForIngest().toString();
@@ -104,7 +119,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
                 
                 // only write the 'useForIngest' and 'ingestMessages' attributes
-                // if we're not exporting the list
+                // if we're not exporting the list.
                 if (!isExport) {
                     listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
                     listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
@@ -126,7 +141,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
 
             success = XMLUtil.saveDoc(KeywordSearchListsXML.class, filePath, ENCODING, doc);
         } catch (ParserConfigurationException e) {
-            logger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e);
+            xmlListslogger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e);
         }
         return success;
     }
@@ -143,7 +158,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
 
         Element root = doc.getDocumentElement();
         if (root == null) {
-            logger.log(Level.SEVERE, "Error loading keyword list: invalid file format.");
+            xmlListslogger.log(Level.SEVERE, "Error loading keyword list: invalid file format.");
             return false;
         }
         try {
@@ -176,8 +191,8 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
 
-                List<Keyword> words = new ArrayList<Keyword>();
-                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
+                List<Keyword> words = new ArrayList<>();
+                KeywordList list = new KeywordList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
 
                 //parse all words
                 NodeList wordsNList = listEl.getElementsByTagName(KEYWORD_EL);
@@ -199,7 +214,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
             }
         } catch (ParseException e) {
             //error parsing dates
-            logger.log(Level.SEVERE, "Error loading keyword list: can't parse dates.", e);
+            xmlListslogger.log(Level.SEVERE, "Error loading keyword list: can't parse dates.", e);
             return false;
         }
         return true;

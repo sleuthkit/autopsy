@@ -25,6 +25,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TskFileRange;
 
 /**
@@ -32,7 +34,8 @@ import org.sleuthkit.datamodel.TskFileRange;
  */
 public class ScalpelOutputParser {
     
-    private static final String OUTPUT_START = "The following files were carved:";
+    private static final String OUTPUT_START = NbBundle.getMessage(ScalpelOutputParser.class,
+                                                                   "ScalpelOutputParser.outputStart.text");
     
     public static class CarvedFileMeta {
 
@@ -62,7 +65,8 @@ public class ScalpelOutputParser {
 
         @Override
         public String toString() {
-            return "CarvedFileMeta{" + "fileName=" + fileName + ", start: " + byteRange.getByteStart() + ", size: " + byteRange.getByteLen() + '}';
+            return NbBundle.getMessage(this.getClass(), "ScalpelOutputParser.toString.text",
+                                       fileName, byteRange.getByteStart(), byteRange.getByteLen());
         }
     }
     

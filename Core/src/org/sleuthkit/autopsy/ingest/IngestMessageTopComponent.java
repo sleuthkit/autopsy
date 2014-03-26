@@ -213,7 +213,7 @@ import org.sleuthkit.datamodel.Content;
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
+                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     Case oldCase = (Case) evt.getOldValue();
                     if (oldCase == null) //nothing to do, new case had been opened
                     {
@@ -249,11 +249,12 @@ import org.sleuthkit.datamodel.Content;
     @Override
     public void displayReport(String ingestReport) {
 
-        Object[] options = {"OK",
-            "Generate Report"};
+        Object[] options = {NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.displayReport.option.OK"),
+                            NbBundle.getMessage(this.getClass(),
+                                                "IngestMessageTopComponent.displayReport.option.GenRpt")};
         final int choice = JOptionPane.showOptionDialog(null,
                 ingestReport,
-                "Ingest Report",
+                NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.msgDlg.ingestRpt.text"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
                 null,

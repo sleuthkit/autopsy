@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,6 +53,7 @@ import org.apache.james.mime4j.message.DefaultMessageBuilder;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 
 /**
@@ -116,15 +116,15 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 // Not the right encoder
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "couldn't find mbox file.", ex);
-                addErrorMessage("Failed to read mbox file from disk.");
-                return Collections.EMPTY_LIST;
+                addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToReadFile"));
+                return new ArrayList<>();
             }
         }
         
         // If no encoders work, post an error message and return.
         if (mboxIterator == null || theEncoder == null) {
-            addErrorMessage("Couldn't find appropriate charset encoder.");
-            return Collections.EMPTY_LIST;
+            addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.couldntFindCharset"));
+            return new ArrayList<>();
         }
         
         List<EmailMessage> emails = new ArrayList<>();
@@ -136,13 +136,14 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 Message msg = messageBuilder.parseMessage(message.asInputStream(theEncoder.charset()));
                 emails.add(extractEmail(msg));
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to get message from mbox: " + ex.getMessage());
+                logger.log(Level.WARNING, "Failed to get message from mbox: {0}", ex.getMessage());
                 failCount++;
             }
         }
         
         if (failCount > 0) {
-            addErrorMessage("Failed to extract " + failCount + " email messages.");
+            addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToParseNMsgs", failCount));
         }
         return emails;
     }
@@ -218,7 +219,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         try {
             r = new BufferedReader(tb.getReader());
             StringBuilder bodyString = new StringBuilder();
-            String line = "";
+            String line;
             while ((line = r.readLine()) != null) {
                 bodyString.append(line).append("\n");
             }
@@ -255,7 +256,9 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         try {
             fos = new FileOutputStream(outPath);
         } catch (FileNotFoundException ex) {
-            addErrorMessage("Failed to extract attachment to disk: " + filename);
+            addErrorMessage(
+                    NbBundle.getMessage(this.getClass(),
+                                        "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", filename));
             logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex);
             return;
         }
@@ -270,7 +273,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             }
         } catch (IOException ex) {
             logger.log(Level.INFO, "Failed to write mbox email attachment to disk.", ex);
-            addErrorMessage("Failed to extract attachment to disk: " + filename);
+            addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.handleAttch.failedWriteToDisk", filename));
             return;
         } finally {
             try {

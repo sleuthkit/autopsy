@@ -24,6 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -114,7 +116,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         prevPageButton = new javax.swing.JButton();
         goToPageLabel = new javax.swing.JLabel();
         goToPageTextField = new javax.swing.JTextField();
-        languageCombo = new javax.swing.JComboBox();
+        languageCombo = new javax.swing.JComboBox<>();
         languageLabel = new javax.swing.JLabel();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
@@ -286,8 +288,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             pageNumber = maxPage + 1;
         }
         if (pageNumber > maxPage || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid page number between 1 and " + maxPage,
-                    "Invalid page number", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataContentViewerString.goToPageTextField.msgDlg",
+                                                              maxPage),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DataContentViewerString.goToPageTextField.err"),
+                                          JOptionPane.WARNING_MESSAGE);
             return;
         }
         currentOffset = (pageNumber - 1) * pageLength;
@@ -309,7 +316,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JTextField goToPageTextField;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JComboBox languageCombo;
+    private javax.swing.JComboBox<SCRIPT> languageCombo;
     private javax.swing.JLabel languageLabel;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
@@ -346,8 +353,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             try {
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
-                text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
-                        + " could not be read)";
+                text = NbBundle.getMessage(this.getClass(),
+                                           "DataContentViewerString.setDataView.errorText", currentOffset,
+                                           currentOffset + pageLength);
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex);
             }
         }
@@ -359,12 +367,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
             text = res.getText();
             if (text.trim().isEmpty()) {
-                text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
-                        + " contains no text)";
+                text = NbBundle.getMessage(this.getClass(),
+                                           "DataContentViewerString.setDataView.errorNoText", currentOffset,
+                                           currentOffset + pageLength);
             }
         } else {
-            text = "(offset " + currentOffset + "-" + (currentOffset + pageLength)
-                    + " could not be read)";
+            text = NbBundle.getMessage(this.getClass(), "DataContentViewerString.setDataView.errorText", currentOffset,
+                                       currentOffset + pageLength);
         }
 
         // disable or enable the next button
@@ -459,12 +468,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     @Override
     public String getTitle() {
-        return "Strings";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.title");
     }
 
     @Override
     public String getToolTip() {
-        return "Displays ASCII and Unicode strings extracted from the file.";
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.toolTip");
     }
 
     @Override

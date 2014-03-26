@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,18 +17,12 @@
  * limitations under the License.
  */
 
-/*
- * KeywordSearchListImportExportForm.java
- *
- * Created on Feb 10, 2012, 4:04:13 PM
- */
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
@@ -46,7 +40,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
     private Logger logger = Logger.getLogger(KeywordSearchListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
     
-    /** Creates new form KeywordSearchListImportExportForm */
     KeywordSearchListsManagementPanel() {
         tableModel = new KeywordListTableModel();
         initComponents();
@@ -54,8 +47,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
     }
     
     private void customizeComponents() {
-
-
         listsTable.setAutoscrolls(true);
         listsTable.setTableHeader(null);
         listsTable.setShowHorizontalLines(false);
@@ -89,7 +80,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                 }
             }
         });*/
-
     }
 
     /** This method is called from within the constructor to
@@ -244,12 +234,12 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                 return;
             }
 
-            List<KeywordSearchListsAbstract.KeywordSearchList> toImport = reader.getListsL();
-            List<KeywordSearchListsAbstract.KeywordSearchList> toImportConfirmed = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
+            List<KeywordList> toImport = reader.getListsL();
+            List<KeywordList> toImportConfirmed = new ArrayList<KeywordList>();
 
             final KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
 
-            for (KeywordSearchListsAbstract.KeywordSearchList list : toImport) {
+            for (KeywordList list : toImport) {
                 //check name collisions
                 if (writer.listExists(list.getName())) {
                     Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
@@ -313,20 +303,19 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
     @Override
     public void store() {
         // Implemented by parent panel
+        // RJCTODO: The parent panel calls save on the XML doc thing, does this still work?
     }
 
     @Override
     public void load() {
-        listsTable.clearSelection();
+        listsTable.clearSelection(); 
     }
     
     void resync() {
         tableModel.resync();
     }
 
-    
     private class KeywordListTableModel extends AbstractTableModel {
-        //data
 
         private KeywordSearchListsXML listsHandle = KeywordSearchListsXML.getCurrent();
 
@@ -342,7 +331,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
         @Override
         public String getColumnName(int column) {
-            return "Name";
+            return NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.getColName.text");
         }
 
         @Override
@@ -357,7 +346,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            throw new UnsupportedOperationException("Editing of cells is not supported");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.setValueAt.exception.msg"));
         }
 
         @Override
@@ -367,7 +357,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
 
         //delete selected from handle, events are fired from the handle
         void deleteSelected(int[] selected) {
-            List<String> toDel = new ArrayList<String>();
+            List<String> toDel = new ArrayList<>();
             for(int i = 0; i < selected.length; i++){
                 toDel.add((String) getValueAt(0, selected[i]));
             }

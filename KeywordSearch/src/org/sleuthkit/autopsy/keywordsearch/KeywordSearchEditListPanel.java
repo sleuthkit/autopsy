@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -30,13 +27,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.DefaultListSelectionModel;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JTable;
@@ -45,32 +39,29 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
-import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
 
 /**
- *  KeywordSearchEditListPanel widget to manage keywords in lists
+ * KeywordSearchEditListPanel widget to manage keywords in lists
  */
 class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
-    private KeywordSearchListsAbstract.KeywordSearchList currentKeywordList;
-
-    
+    private KeywordList currentKeywordList;
     private boolean ingestRunning;
 
-    /** Creates new form KeywordSearchEditListPanel */
+    /**
+     * Creates new form KeywordSearchEditListPanel
+     */
     KeywordSearchEditListPanel() {
         tableModel = new KeywordTableModel();
         initComponents();
         customizeComponents();
     }
-    
 
     private void customizeComponents() {
         chRegex.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.kwReToolTip"));
@@ -80,17 +71,12 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
 
-        //keywordTable.setAutoscrolls(true);
-        //keywordTable.setTableHeader(null);
         keywordTable.setShowHorizontalLines(false);
         keywordTable.setShowVerticalLines(false);
-
         keywordTable.getParent().setBackground(keywordTable.getBackground());
-
-        //customize column witdhs
         final int width = jScrollPane1.getPreferredSize().width;
         keywordTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-        TableColumn column = null;
+        TableColumn column;
         for (int i = 0; i < keywordTable.getColumnCount(); i++) {
             column = keywordTable.getColumnModel().getColumn(i);
             if (i == 0) {
@@ -105,41 +91,20 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         final ListSelectionModel lsm = keywordTable.getSelectionModel();
         lsm.addListSelectionListener(new ListSelectionListener() {
-   
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (lsm.isSelectionEmpty() || currentKeywordList.isLocked()) {
                     deleteWordButton.setEnabled(false);
-                    return;
                 } else {
                     deleteWordButton.setEnabled(true);
                 }
-                
-                //show selector if available
-                DefaultListSelectionModel selModel = (DefaultListSelectionModel) e.getSource();
-                if (!selModel.getValueIsAdjusting()) {
-                    List<Keyword> keywords = currentKeywordList.getKeywords();
-                    final int minIndex = selModel.getMinSelectionIndex();
-                    final int maxIndex = selModel.getMaxSelectionIndex();
-                    int selected = -1;
-                    for (int i = minIndex; i <= maxIndex; i++) {
-                        if (selModel.isSelectedIndex(i)) {
-                            selected = i;
-                            break;
-                        }
-                    }
-                }
             }
         });
-
-        //loadDefaultKeywords();
-        
 
         initButtons();
 
         addWordField.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
@@ -159,39 +124,35 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
 
-
-
-        if (IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
+        if (IngestManager.getDefault().isIngestRunning()) {
             initIngest(0);
         } else {
             initIngest(1);
         }
 
         IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
-
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestModuleEvent.COMPLETED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                if (changed.equals(IngestEvent.COMPLETED.toString())
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
-                } else if (changed.equals(IngestModuleEvent.STARTED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                } else if (changed.equals(IngestEvent.STARTED.toString())
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(0);
-                } else if (changed.equals(IngestModuleEvent.STOPPED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
+                } else if (changed.equals(IngestEvent.STOPPED.toString())
+                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
                     initIngest(1);
                 }
             }
         });
     }
 
-    /** 
+    /**
      * Initialize this panel depending on whether ingest is running
-     * @param running 
-     * case 0: ingest running
-     * case 1: ingest not running
+     *
+     * @param running case 0: ingest running case 1: ingest not running
      */
     private void initIngest(int running) {
         switch (running) {
@@ -206,43 +167,22 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     }
 
     void initButtons() {
-        //initialize buttons
-        // Certain buttons will be disabled if no list is set
         boolean listSet = currentKeywordList != null;
-        // Certain buttons will be disabled if ingest is ongoing
-        boolean ingestOngoing = this.ingestRunning;
-        // Certain buttons will be disabled if ingest is ongoing on this list
-        boolean useForIngest = !listSet ? false : currentKeywordList.getUseForIngest();
-        // Certain buttons will be disabled if the list shouldn't send ingest messages
-        boolean sendIngestMessages = !listSet ? false : currentKeywordList.getIngestMessages();
-        // Certain buttons will be disabled if the selected list is locked
         boolean isLocked = !listSet ? true : currentKeywordList.isLocked();
-        // Certain buttons will be disabled if no keywords are set
         boolean noKeywords = !listSet ? true : currentKeywordList.getKeywords().isEmpty();
-
-        // Certain buttons will be disabled if ingest is ongoing on this list
-        List<String> ingestLists = new ArrayList<String>();
-        if (ingestOngoing) {
-            ingestLists = KeywordSearchIngestModule.getDefault().getKeywordLists();
-        }
-        boolean inIngest = !listSet ? false : ingestLists.contains(currentKeywordList.getName());
-
-        addWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
-        addWordField.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
-        chRegex.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
+        addWordButton.setEnabled(listSet && !ingestRunning && !isLocked);
+        addWordField.setEnabled(listSet && !ingestRunning && !isLocked);
+        chRegex.setEnabled(listSet && ingestRunning && !isLocked);
         keywordOptionsLabel.setEnabled(addWordButton.isEnabled() || chRegex.isEnabled());
         keywordOptionsSeparator.setEnabled(addWordButton.isEnabled() || chRegex.isEnabled());
-        useForIngestCheckbox.setEnabled(listSet && (!ingestOngoing || !inIngest));
-        useForIngestCheckbox.setSelected(useForIngest);
-        ingestMessagesCheckbox.setEnabled(useForIngestCheckbox.isEnabled() && useForIngestCheckbox.isSelected());
-        ingestMessagesCheckbox.setSelected(sendIngestMessages);
-        listOptionsLabel.setEnabled(useForIngestCheckbox.isEnabled() || ingestMessagesCheckbox.isEnabled());
-        listOptionsSeparator.setEnabled(useForIngestCheckbox.isEnabled() || ingestMessagesCheckbox.isEnabled());
+        ingestMessagesCheckbox.setEnabled(listSet && !ingestRunning);
+        ingestMessagesCheckbox.setSelected(!listSet ? false : currentKeywordList.getIngestMessages());
+        listOptionsLabel.setEnabled(ingestMessagesCheckbox.isEnabled());
+        listOptionsSeparator.setEnabled(ingestMessagesCheckbox.isEnabled());
         saveListButton.setEnabled(listSet);
         exportButton.setEnabled(listSet);
-        deleteListButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
-        deleteWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
-
+        deleteListButton.setEnabled(listSet && !ingestRunning && !isLocked);
+        deleteWordButton.setEnabled(listSet && !ingestRunning && !isLocked);
         if (noKeywords) {
             saveListButton.setEnabled(false);
             exportButton.setEnabled(false);
@@ -253,10 +193,10 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         }
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -270,7 +210,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         listEditorPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         keywordTable = new javax.swing.JTable();
-        useForIngestCheckbox = new javax.swing.JCheckBox();
         addKeywordPanel = new javax.swing.JPanel();
         addWordButton = new javax.swing.JButton();
         addWordField = new javax.swing.JTextField();
@@ -310,13 +249,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
-        useForIngestCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.useForIngestCheckbox.text")); // NOI18N
-        useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                useForIngestCheckboxActionPerformed(evt);
-            }
-        });
-
         addWordButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
         addWordButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -332,11 +264,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         });
 
         chRegex.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.chRegex.text")); // NOI18N
-        chRegex.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chRegexActionPerformed(evt);
-            }
-        });
 
         deleteWordButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.deleteWordButton.text")); // NOI18N
         deleteWordButton.addActionListener(new java.awt.event.ActionListener() {
@@ -429,15 +356,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                                         .addGap(10, 10, 10)
                                         .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(ingestMessagesCheckbox)
                                             .addGroup(listEditorPanelLayout.createSequentialGroup()
                                                 .addComponent(exportButton)
-                                                .addGap(18, 18, 18)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(saveListButton)
-                                                .addGap(18, 18, 18)
-                                                .addComponent(deleteListButton))
-                                            .addComponent(useForIngestCheckbox)
-                                            .addComponent(ingestMessagesCheckbox))))
-                                .addGap(0, 0, Short.MAX_VALUE)))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(deleteListButton)))))
+                                .addGap(0, 44, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
         listEditorPanelLayout.setVerticalGroup(
@@ -459,16 +385,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                         .addGap(123, 123, 123)
                         .addComponent(listOptionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(7, 7, 7)
-                .addComponent(useForIngestCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(ingestMessagesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exportButton)
                     .addComponent(saveListButton)
                     .addComponent(deleteListButton))
-                .addContainerGap())
+                .addGap(42, 42, 42))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -496,7 +420,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             return;
         }
 
-
         //check if valid
         boolean valid = true;
         try {
@@ -522,13 +445,11 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
-        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg")
-                , NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg")
-                , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
-        
-        tableModel.deleteSelected(keywordTable.getSelectedRows());
-        KeywordSearchListsXML.getCurrent().addList(currentKeywordList);
-        initButtons();
+        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+
+            tableModel.deleteSelected(keywordTable.getSelectedRows());
+            KeywordSearchListsXML.getCurrent().addList(currentKeywordList);
+            initButtons();
         }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
@@ -566,16 +487,15 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             if (selFile.exists()) {
                 shouldWrite = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME,
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileExistPrompt",
-                                selFile.getName()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                        selFile.getName()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             }
             if (!shouldWrite) {
                 return;
             }
 
-
             KeywordSearchListsXML reader = KeywordSearchListsXML.getCurrent();
 
-            List<KeywordSearchListsAbstract.KeywordSearchList> toWrite = new ArrayList<KeywordSearchListsAbstract.KeywordSearchList>();
+            List<KeywordList> toWrite = new ArrayList<>();
             toWrite.add(reader.getList(currentKeywordList.getName()));
             final KeywordSearchListsXML exporter = new KeywordSearchListsXML(fileAbs);
             boolean written = exporter.saveLists(toWrite);
@@ -587,22 +507,11 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         }
     }//GEN-LAST:event_exportButtonActionPerformed
 
-    private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
-    }//GEN-LAST:event_chRegexActionPerformed
-
-private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
-    ingestMessagesCheckbox.setEnabled(useForIngestCheckbox.isSelected());
-    currentKeywordList.setUseForIngest(useForIngestCheckbox.isSelected());
-    KeywordSearchListsXML updater = KeywordSearchListsXML.getCurrent();
-    updater.addList(currentKeywordList);
-}//GEN-LAST:event_useForIngestCheckboxActionPerformed
-
     private void ingestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesCheckboxActionPerformed
         currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
         KeywordSearchListsXML updater = KeywordSearchListsXML.getCurrent();
         updater.addList(currentKeywordList);
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
     private javax.swing.JButton addWordButton;
@@ -626,7 +535,6 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JButton saveListButton;
     private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -658,26 +566,24 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
     public void load() {
         // Implemented by parent panel
     }
-    
-    KeywordSearchListsAbstract.KeywordSearchList getCurrentKeywordList() {
+
+    KeywordList getCurrentKeywordList() {
         return currentKeywordList;
     }
-    
-    void setCurrentKeywordList(KeywordSearchListsAbstract.KeywordSearchList list) {
+
+    void setCurrentKeywordList(KeywordList list) {
         currentKeywordList = list;
     }
-    
+
     void addDeleteButtonActionPerformed(ActionListener l) {
         deleteListButton.addActionListener(l);
     }
-    
+
     void addSaveButtonActionPerformed(ActionListener l) {
         saveListButton.addActionListener(l);
     }
 
-
     private class KeywordTableModel extends AbstractTableModel {
-        //data
 
         @Override
         public int getColumnCount() {
@@ -710,7 +616,7 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
-            if(currentKeywordList == null) {
+            if (currentKeywordList == null) {
                 return "";
             }
             Keyword word = currentKeywordList.getKeywords().get(rowIndex);
@@ -722,7 +628,7 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
                     ret = (Object) !word.isLiteral();
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex);
                     break;
             }
             return ret;
@@ -743,7 +649,7 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
         }
 
         void addKeyword(Keyword keyword) {
-            if(!currentKeywordList.hasKeyword(keyword)) {
+            if (!currentKeywordList.hasKeyword(keyword)) {
                 currentKeywordList.getKeywords().add(keyword);
             }
             fireTableDataChanged();
@@ -757,37 +663,10 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
         void deleteSelected(int[] selected) {
             List<Keyword> words = currentKeywordList.getKeywords();
             Arrays.sort(selected);
-            for(int arrayi = selected.length-1; arrayi >= 0; arrayi--) {
+            for (int arrayi = selected.length - 1; arrayi >= 0; arrayi--) {
                 words.remove(selected[arrayi]);
             }
             resync();
-        }
-
-    }
-
-    private class CheckBoxRenderer extends JCheckBox implements TableCellRenderer {
-
-        @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {
-
-            this.setHorizontalAlignment(JCheckBox.CENTER);
-            this.setVerticalAlignment(JCheckBox.CENTER);
-
-            Boolean selected = (Boolean) table.getModel().getValueAt(row, 1);
-            setSelected(selected);
-            if (isSelected) {
-                setBackground(keywordTable.getSelectionBackground());
-                setForeground(keywordTable.getSelectionForeground());
-            } else {
-                setBackground(keywordTable.getBackground());
-                setForeground(keywordTable.getForeground());
-            }
-            setEnabled(false);
-
-            return this;
         }
     }
 }
