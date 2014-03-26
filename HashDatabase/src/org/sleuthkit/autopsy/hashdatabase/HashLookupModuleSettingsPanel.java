@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * Instances of this class provide a simplified UI for managing the hash sets
  * configuration.
  */
-public class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener  {
+public class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener {
 
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private HashDatabasesTableModel knownTableModel;

@@ -29,14 +29,14 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
 /**
  * General, not per list, keyword search configuration and status display widget
  */
-class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements OptionsPanel {
+class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel2.class.getName());
+    private final Logger logger = Logger.getLogger(KeywordSearchGlobalSearchSettingsPanel.class.getName());
 
     /**
      * Creates new form KeywordSearchConfigurationPanel2
      */
-    KeywordSearchConfigurationPanel2() {
+    KeywordSearchGlobalSearchSettingsPanel() {
         initComponents();
         customizeComponents();
     }
@@ -96,37 +96,37 @@ class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements Opt
         timeRadioButton4 = new javax.swing.JRadioButton();
         showSnippetsCB = new javax.swing.JCheckBox();
 
-        skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.text")); // NOI18N
-        skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.toolTipText")); // NOI18N
+        skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.skipNSRLCheckBox.text")); // NOI18N
+        skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.skipNSRLCheckBox.toolTipText")); // NOI18N
 
-        filesIndexedLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.filesIndexedLabel.text")); // NOI18N
+        filesIndexedLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.filesIndexedLabel.text")); // NOI18N
 
-        filesIndexedValue.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.filesIndexedValue.text")); // NOI18N
+        filesIndexedValue.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.filesIndexedValue.text")); // NOI18N
         filesIndexedValue.setMaximumSize(null);
 
-        chunksLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.chunksLabel.text")); // NOI18N
+        chunksLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.chunksLabel.text")); // NOI18N
 
-        chunksValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.chunksValLabel.text")); // NOI18N
+        chunksValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.chunksValLabel.text")); // NOI18N
 
-        settingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.settingsLabel.text")); // NOI18N
+        settingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.settingsLabel.text")); // NOI18N
 
-        informationLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.informationLabel.text")); // NOI18N
+        informationLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.informationLabel.text")); // NOI18N
 
-        frequencyLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.frequencyLabel.text")); // NOI18N
+        frequencyLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.frequencyLabel.text")); // NOI18N
 
-        timeRadioButton1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton1.text")); // NOI18N
-        timeRadioButton1.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton1.toolTipText")); // NOI18N
+        timeRadioButton1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.text")); // NOI18N
+        timeRadioButton1.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.toolTipText")); // NOI18N
 
-        timeRadioButton2.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton2.text")); // NOI18N
-        timeRadioButton2.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton2.toolTipText")); // NOI18N
+        timeRadioButton2.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton2.text")); // NOI18N
+        timeRadioButton2.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton2.toolTipText")); // NOI18N
 
-        timeRadioButton3.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton3.text")); // NOI18N
-        timeRadioButton3.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton3.toolTipText")); // NOI18N
+        timeRadioButton3.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton3.text")); // NOI18N
+        timeRadioButton3.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton3.toolTipText")); // NOI18N
 
-        timeRadioButton4.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton4.text_1")); // NOI18N
-        timeRadioButton4.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton4.toolTipText")); // NOI18N
+        timeRadioButton4.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton4.text_1")); // NOI18N
+        timeRadioButton4.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton4.toolTipText")); // NOI18N
 
-        showSnippetsCB.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.showSnippetsCB.text")); // NOI18N
+        showSnippetsCB.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.showSnippetsCB.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

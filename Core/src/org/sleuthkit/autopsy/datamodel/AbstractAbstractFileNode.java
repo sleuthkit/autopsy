@@ -169,7 +169,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         ObjectID {
             @Override
             public String toString() {
-                return "Object ID";
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.objectId");
 
             }
         }, 
