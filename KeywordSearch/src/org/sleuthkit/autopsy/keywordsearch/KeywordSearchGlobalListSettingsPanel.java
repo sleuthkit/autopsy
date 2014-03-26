@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
@@ -24,54 +23,40 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
-/**
- * Panel containing all other Keyword search Options panels.
- */
-class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
+final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    KeywordSearchListsManagementPanel listsManagementPanel;
-    KeywordSearchEditListPanel editListPanel;
-    private static final Logger logger = Logger.getLogger(KeywordSearchGlobalListSettingsPanel.class.getName());
-    private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
-    
-    KeywordSearchGlobalListSettingsPanel() {        
+    private final KeywordSearchListsManagementPanel listsManagementPanel = new KeywordSearchListsManagementPanel();
+    private final KeywordSearchEditListPanel editListPanel = new KeywordSearchEditListPanel();
+
+    KeywordSearchGlobalListSettingsPanel() {
         initComponents();
         customizeComponents();
-        setName(KEYWORD_CONFIG_NAME);
+        setName(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig"));
     }
 
     private void customizeComponents() {
-        listsManagementPanel = new KeywordSearchListsManagementPanel();
-        editListPanel = new KeywordSearchEditListPanel();
-
         listsManagementPanel.addListSelectionListener(editListPanel);
         editListPanel.addDeleteButtonActionPerformed(new ActionListener() {
- 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title")
-                        , NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body" )
-                        , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
-
-                    KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
+                if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
                     editListPanel.setCurrentKeywordList(null);
                     editListPanel.initButtons();
+                    // RJCTODO: Move this into a deleteList method in the manager
+                    KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
                     deleter.deleteList(toDelete);
                     listsManagementPanel.resync();
                 }
             }
         });
-        
+
         editListPanel.addSaveButtonActionPerformed(new ActionListener() {
-           
             @Override
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = "Save Keyword List";
-                KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
                 KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();
@@ -93,6 +78,8 @@ class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements
                     return;
                 }
 
+                // RJCTODO: Move chunks of this into manager
+                KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
                 if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
@@ -113,33 +100,33 @@ class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements
                     writer.addList(listName, keywords);
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 }
-                
+
                 listsManagementPanel.resync();
             }
         });
-        
+
         mainSplitPane.setLeftComponent(listsManagementPanel);
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
     }
-    
+
     @Override
     public void store() {
         KeywordSearchListsXML.getCurrent().save(false);
         //refresh the list viewer/searcher panel
         KeywordSearchListsViewerPanel.getDefault().resync();
     }
-    
+
     @Override
     public void load() {
         listsManagementPanel.load();
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -189,11 +176,9 @@ class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements
             .addComponent(mainSplitPane)
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel leftPanel;
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JPanel rightPanel;
     // End of variables declaration//GEN-END:variables
-
 }

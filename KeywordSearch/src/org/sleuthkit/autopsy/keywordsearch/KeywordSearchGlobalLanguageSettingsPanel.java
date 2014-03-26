@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JCheckBox;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
@@ -34,38 +33,24 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * Advanced configuration panel handling languages config.
+ * Child panel of the global settings panel (Languages tab).
  */
 class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private static KeywordSearchGlobalLanguageSettingsPanel instance = null;
-    private final Logger logger = Logger.getLogger(KeywordSearchGlobalLanguageSettingsPanel.class.getName());
-    private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<String, StringExtract.StringExtractUnicodeTable.SCRIPT>();
+    private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
 
-    /**
-     * Creates new form KeywordSearchConfigurationPanel3
-     */
-    public KeywordSearchGlobalLanguageSettingsPanel() {
+    KeywordSearchGlobalLanguageSettingsPanel() {
         initComponents();
         customizeComponents();
     }
 
-    public static KeywordSearchGlobalLanguageSettingsPanel getDefault() {
-        if (instance == null) {
-            instance = new KeywordSearchGlobalLanguageSettingsPanel();
-        }
-        return instance;
-    }
-
     private void customizeComponents() {
-
-
         updateLanguagesAction = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                toUpdate = new ArrayList<SCRIPT>();
+                toUpdate = new ArrayList<>();
                 final int components = checkPanel.getComponentCount();
                 for (int i = 0; i < components; ++i) {
                     JCheckBox ch = (JCheckBox) checkPanel.getComponent(i);
@@ -79,7 +64,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
         initScriptsCheckBoxes();
         reloadScriptsCheckBoxes();
-
     }
 
     private void activateScriptsCheckboxes(boolean activate) {
@@ -111,8 +95,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         }
     }
 
-    private void reloadScriptsCheckBoxes() {
-       
+    private void reloadScriptsCheckBoxes() {       
         boolean utf16 = 
                 Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
        
@@ -132,12 +115,10 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
             
             ch.setSelected(serviceScripts.contains(script));
         }
-        
     }
 
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
-        
         
          boolean utf16 = 
                 Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
@@ -277,11 +258,12 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
            KeywordSearchSettings.setStringExtractScripts(toUpdate);
         }
         
+        // This is a stop-gap way of notifying the job settings panel of potential changes.
+        KeywordSearchListsXML.getCurrent().fireLanguagesEvent(KeywordSearchListsAbstract.LanguagesEvent.LANGUAGES_CHANGED);
     }
 
     @Override
     public void load() {
         activateWidgets();
-  
     }
 }
