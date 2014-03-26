@@ -142,7 +142,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (ingestRunning) {
-                    KeywordListsManager.getInstance().addKeywordListsForFileIngest(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest");
                 } else {
                     searchAction(e);
@@ -396,8 +395,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            List<String> locked = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
-            return (columnIndex == 0 && (!locked.contains((String) getValueAt(rowIndex, 1))|| !ingestRunning));
+            return (columnIndex == 0 && !ingestRunning);
         }
 
         @Override
@@ -606,10 +604,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             this.setHorizontalAlignment(JCheckBox.CENTER);
             this.setVerticalAlignment(JCheckBox.CENTER);
 
-            String name = (String) table.getModel().getValueAt(row, 1);
-            List<String> currentIngest = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
-            boolean currentIngestUsed = currentIngest.contains(name);
-            setEnabled(!currentIngestUsed || !ingestRunning);
+            setEnabled(!ingestRunning);
 
             boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
             setSelected(selected);

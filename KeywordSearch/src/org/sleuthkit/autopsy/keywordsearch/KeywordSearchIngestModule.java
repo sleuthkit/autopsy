@@ -113,10 +113,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0; // RJCTODO: Despite volatile, this is not thread safe, uses increment (not atomic)
     private boolean processedFiles;
-    private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
     private SleuthkitCase caseHandle = null;
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
+    private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private Tika tikaFormatDetector;
 
@@ -131,7 +131,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     };
     private Map<Long, IngestStatus> ingestStatus;
 
-    KeywordSearchIngestModule() {
+    KeywordSearchIngestModule(KeywordSearchJobSettings settings) {
+        this.settings = settings;
     }
 
     /**
@@ -196,14 +197,20 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
         ingestStatus = new HashMap<>();
 
-        if (KeywordListsManager.getInstance().hasNoKeywordsForSearch()) {
-          services.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-             
+        List<KeywordList> keywordLists = KeywordSearchListsXML.getCurrent().getListsL();
+        boolean hasKeywordsForSearch = false;
+        for (KeywordList keywordList : keywordLists) {
+            if (settings.isKeywordListEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
+                hasKeywordsForSearch = true;
+                break;
+            }
         }
-        
+        if (!hasKeywordsForSearch) {
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+        }
+
         processedFiles = false;
-        finalSearcherDone = false;
         searcherDone = true; //make sure to start the initial currentSearcher
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<>();
@@ -298,12 +305,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         postIndexSummary();
 
         //run one last search as there are probably some new files committed
-        List<String> keywordLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
+        List<String> keywordLists = settings.getNamesOfEnabledKeyWordLists();
         if (!keywordLists.isEmpty() && processedFiles == true) {
             finalSearcher = new Searcher(keywordLists, true); //final searcher run
             finalSearcher.execute();
-        } else {
-            finalSearcherDone = true;
         }
 
         //log number of files / chunks in index
@@ -338,7 +343,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             searchTimer.stop();
         }
         runSearcher = false;
-        finalSearcherDone = true;
 
         //commit uncommited files, don't search again
         commit();
@@ -466,7 +470,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             //in worst case, we will run search next time after commit timer goes off, or at the end of ingest
             if (searcherDone && runSearcher) {
                 //start search if previous not running
-                List<String> keywordLists = KeywordListsManager.getInstance().getNamesOfKeywordListsForFileIngest();
+                List<String> keywordLists = settings.getNamesOfEnabledKeyWordLists();
                 if (!keywordLists.isEmpty()) {
                     currentSearcher = new Searcher(keywordLists);
                     currentSearcher.execute();//searcher will stop timer and restart timer when done
@@ -1000,9 +1004,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
             }
-            // catch and ignore if we were cancelled
-            catch (java.util.concurrent.CancellationException ex ) { }
         }
 
         /**
@@ -1047,7 +1051,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             if (finalRun) {
                 //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
-                finalSearcherDone = true;
 
                 //run module cleanup
                 cleanup();
