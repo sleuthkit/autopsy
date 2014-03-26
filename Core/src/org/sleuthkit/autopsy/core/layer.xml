@@ -152,8 +152,9 @@
                 <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
                 <attr name="position" intvalue="101"/>
             </file>
-            <folder name="Open Recent Case">
+            <folder name="OpenRecentCase">
                 <attr name="position" intvalue="102"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
