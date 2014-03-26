@@ -990,7 +990,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName"))
                    .append("</td><td>").append(caseName).append("</td></tr>\n");
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum"))
-                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
+                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle
+                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n");
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>")
                    .append(!examiner.isEmpty() ? examiner : NbBundle
                            .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
