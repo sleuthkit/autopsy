@@ -16,32 +16,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Settings for a hash lookup file ingest module instance.
+ * Settings for a keyword search file ingest module instance.
  */
-final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
+final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
+    
+    private final HashSet<String> namesOfEnabledKeywordLists = new HashSet<>();
 
-    private final HashSet<String> enabledHashSets = new HashSet<>();
-    private boolean shouldCalculateHashes = true;
-
-    HashLookupModuleSettings(boolean shouldCalculateHashes, List<String> enabledHashSetNames) {
-        this.shouldCalculateHashes = shouldCalculateHashes;
-        for (String hashSet : enabledHashSetNames) {
-            enabledHashSets.add(hashSet);
+    KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists) {
+        for (String keywordList : namesOfEnabledKeywordLists) {
+            this.namesOfEnabledKeywordLists.add(keywordList);
         }
     }
 
-    boolean shouldCalculateHashes() {
-        return shouldCalculateHashes;
+    boolean isKeywordListEnabled(String keywordListName) {
+        return namesOfEnabledKeywordLists.contains(keywordListName);
     }
     
-    boolean isHashSetEnabled(String hashSetName) {
-        return enabledHashSets.contains(hashSetName);
-    }
+    List<String> getNamesOfEnabledKeyWordLists() {
+        return new ArrayList<>(namesOfEnabledKeywordLists);
+    }    
 }
+    
+

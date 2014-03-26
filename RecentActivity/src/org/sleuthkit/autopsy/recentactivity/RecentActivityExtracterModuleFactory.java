@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * A factory that creates data source ingest modules that extract recent
@@ -58,7 +58,7 @@ public class RecentActivityExtracterModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleSettings ingestJobOptions) {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestJobOptions) {
         return new RAImageIngestModule();
     }
 }

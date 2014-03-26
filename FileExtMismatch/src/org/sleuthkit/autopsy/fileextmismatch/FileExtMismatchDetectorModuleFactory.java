@@ -24,8 +24,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 
 /**
@@ -57,7 +57,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
         return new FileExtMismatchDetectorModuleSettings();
     }
 
@@ -67,7 +67,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings settings) {
+    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
@@ -94,7 +94,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings settings) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");

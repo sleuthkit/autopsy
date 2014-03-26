@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.scalpel;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.openide.util.NbBundle;
 
 /**
@@ -60,7 +60,7 @@ public class ScalpelCarverModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new ScalpelCarverIngestModule();
     }
 }

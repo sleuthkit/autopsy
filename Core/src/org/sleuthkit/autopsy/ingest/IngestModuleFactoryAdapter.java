@@ -44,7 +44,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
         return new NoIngestModuleSettings();
     }
 
@@ -54,7 +54,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleSettingsPanel getModuleSettingsPanel(IngestModuleSettings ingestOptions) {
+    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
@@ -64,7 +64,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleSettings ingestOptions) {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
@@ -74,7 +74,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleSettings ingestOptions) {
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 }
