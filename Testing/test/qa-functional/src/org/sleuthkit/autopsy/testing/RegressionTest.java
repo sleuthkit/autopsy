@@ -230,7 +230,6 @@ public class RegressionTest extends TestCase {
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
-        //setListForIngest();
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
         jbo0.pushNoBlock();
@@ -266,13 +265,9 @@ public class RegressionTest extends TestCase {
         logger.info("Ingest 3");
         long startIngest = System.currentTimeMillis();
         IngestManager man = IngestManager.getInstance();
-        // there is no longer a way to monitor enqueue. Keeping for a moment in case we decide to put it back.
-        // TODO: delete this
-        //logger.log(Level.INFO, "Enqueue took {0}ms", (System.currentTimeMillis() - startIngest));
         while (man.isIngestRunning()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
-        
         logger.log(Level.INFO, "Ingest (including enqueue) took {0}ms", (System.currentTimeMillis() - startIngest));
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
@@ -337,11 +332,4 @@ public class RegressionTest extends TestCase {
 
         }
     }
-/*
-    private void setListForIngest() {
-        KeywordSearchListsXML curr;
-        curr = KeywordSearchListsXML.getCurrent();
-        curr.setUseForIngest("URLs", true);
-    }
-*/
 }
