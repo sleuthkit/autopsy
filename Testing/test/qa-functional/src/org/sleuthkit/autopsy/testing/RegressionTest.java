@@ -80,12 +80,14 @@ public class RegressionTest extends TestCase {
 
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
     long start;
+    Integer jobsNum;
 
     /**
      * Constructor required by JUnit
      */
     public RegressionTest(String name) {
         super(name);
+        jobsNum = null;
     }
 
     /**
@@ -262,21 +264,16 @@ public class RegressionTest extends TestCase {
 
     public void testIngest() {
         logger.info("Ingest 3");
-        long start = System.currentTimeMillis();
-        IngestManager man = IngestManager.getDefault();
-        while (man.isEnqueueRunning()) {
-            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
-        }
-        logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
+        long startIngest = System.currentTimeMillis();
+        IngestManager man = IngestManager.getInstance();
+        // there is no longer a way to monitor enqueue. Keeping for a moment in case we decide to put it back.
+        // TODO: delete this
+        //logger.log(Level.INFO, "Enqueue took {0}ms", (System.currentTimeMillis() - startIngest));
         while (man.isIngestRunning()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
-        new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
-        while (man.areModulesRunning()) {
-           new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
-        }
         
-        logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis() - start) + "ms");
+        logger.log(Level.INFO, "Ingest (including enqueue) took {0}ms", (System.currentTimeMillis() - startIngest));
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
         //   consistently, making it seem like default behavior
@@ -340,9 +337,11 @@ public class RegressionTest extends TestCase {
 
         }
     }
-
+/*
     private void setListForIngest() {
-        KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
+        KeywordSearchListsXML curr;
+        curr = KeywordSearchListsXML.getCurrent();
         curr.setUseForIngest("URLs", true);
     }
+*/
 }
