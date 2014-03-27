@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 //   method could be implemented. If the different nodes are necessary, is it merely because of some misuse of the Visitor pattern somewhere?
 //   2. All of this would be much improved by not constructing nodes with actions, but this might be necessary with pushing of nodes rather than use of lookups to 
 //   handle selections.
-class DataModelActionsFactory  {
+public class DataModelActionsFactory  {
     public static final String VIEW_SOURCE_FILE_IN_DIR = NbBundle
             .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.srcFileInDir.text");
     public static final String VIEW_FILE_IN_DIR = NbBundle
@@ -60,7 +60,7 @@ class DataModelActionsFactory  {
     public static final String SEARCH_FOR_FILES_SAME_MD5 = NbBundle
             .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.srfFileSameMD5.text");
 
-    static List<Action> getActions(File file, boolean isArtifactSource) {
+ public   static List<Action> getActions(File file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         final FileNode fileNode = new FileNode(file);
@@ -79,7 +79,7 @@ class DataModelActionsFactory  {
         return actions;
     }        
 
-    static List<Action> getActions(LayoutFile file, boolean isArtifactSource) {
+  public  static List<Action> getActions(LayoutFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         LayoutFileNode layoutFileNode = new LayoutFileNode(file);
@@ -97,7 +97,7 @@ class DataModelActionsFactory  {
         return actions;
     }        
     
-    static List<Action> getActions(Directory directory, boolean isArtifactSource) {
+  public  static List<Action> getActions(Directory directory, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();        
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
         DirectoryNode directoryNode = new DirectoryNode(directory);
@@ -115,7 +115,7 @@ class DataModelActionsFactory  {
         return actions;
     }        
     
-    static List<Action> getActions(VirtualDirectory directory, boolean isArtifactSource) {
+  public  static List<Action> getActions(VirtualDirectory directory, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
         VirtualDirectoryNode directoryNode = new VirtualDirectoryNode(directory);
@@ -133,7 +133,7 @@ class DataModelActionsFactory  {
         return actions;
     }        
         
-    static List<Action> getActions(LocalFile file, boolean isArtifactSource) {
+  public  static List<Action> getActions(LocalFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         final LocalFileNode localFileNode = new LocalFileNode(file);
@@ -151,7 +151,7 @@ class DataModelActionsFactory  {
         return actions;
     }        
         
-    static List<Action> getActions(DerivedFile file, boolean isArtifactSource) {
+  public  static List<Action> getActions(DerivedFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         final LocalFileNode localFileNode = new LocalFileNode(file);
@@ -169,7 +169,7 @@ class DataModelActionsFactory  {
         return actions;
     }
     
-    static List<Action> getActions(Content content, boolean isArtifactSource) {
+  public  static List<Action> getActions(Content content, boolean isArtifactSource) {
         if (content instanceof File) {
             return getActions((File)content, isArtifactSource);
         }
