@@ -80,14 +80,12 @@ public class RegressionTest extends TestCase {
 
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
     long start;
-    Integer jobsNum;
 
     /**
      * Constructor required by JUnit
      */
     public RegressionTest(String name) {
         super(name);
-        jobsNum = null;
     }
 
     /**
