@@ -56,17 +56,17 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
         return new FileTypeIdModuleSettings();
     }
 
     @Override
-    public boolean hasModuleSettingsPanel() {
+    public boolean hasIngestJobSettingsPanel() {
         return true;
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
