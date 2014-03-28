@@ -286,30 +286,33 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             stop();
             return;
         }
+//
+//        commitTimer.stop();
+//
+//        //NOTE, we let the 1 before last searcher complete fully, and enqueue the last one
+//
+//        //cancel searcher timer, ensure unwanted searcher does not start 
+//        //before we start the final one
+//        if (searchTimer.isRunning()) {
+//            searchTimer.stop();
+//        }
+//        runSearcher = false;
+//
+//        logger.log(Level.INFO, "Running final index commit and search");
+//        //final commit
+//        commit();
 
-        commitTimer.stop();
-
-        //NOTE, we let the 1 before last searcher complete fully, and enqueue the last one
-
-        //cancel searcher timer, ensure unwanted searcher does not start 
-        //before we start the final one
-        if (searchTimer.isRunning()) {
-            searchTimer.stop();
-        }
-        runSearcher = false;
-
-        logger.log(Level.INFO, "Running final index commit and search");
-        //final commit
-        commit();
-
-        postIndexSummary();
-
+        // Remove from the search list and trigger final commit and final search
+        SearchRunner.getInstance().endJob(jobId);
+        
+        postIndexSummary();        
+        
         //run one last search as there are probably some new files committed
-        List<String> keywordLists = settings.getNamesOfEnabledKeyWordLists();
-        if (!keywordLists.isEmpty() && processedFiles == true) {
-            finalSearcher = new Searcher(keywordLists, true); //final searcher run
-            finalSearcher.execute();
-        }
+//        List<String> keywordLists = settings.getNamesOfEnabledKeyWordLists();
+//        if (!keywordLists.isEmpty() && processedFiles == true) {
+//            finalSearcher = new Searcher(keywordLists, true); //final searcher run
+//            finalSearcher.execute();
+//        }
 
         //log number of files / chunks in index
         //signal a potential change in number of text_ingested files
@@ -374,18 +377,18 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         initialized = false;
     }
 
-    /**
-     * Commits index and notifies listeners of index update
-     */
-    private void commit() {
-        if (initialized) {
-            logger.log(Level.INFO, "Commiting index");
-            ingester.commit();
-            logger.log(Level.INFO, "Index comitted");
-            //signal a potential change in number of text_ingested files
-            indexChangeNotify();
-        }
-    }
+//    /**
+//     * Commits index and notifies listeners of index update
+//     */
+//    private void commit() {
+//        if (initialized) {
+//            logger.log(Level.INFO, "Commiting index");
+//            ingester.commit();
+//            logger.log(Level.INFO, "Index comitted");
+//            //signal a potential change in number of text_ingested files
+//            indexChangeNotify();
+//        }
+//    }
 
     /**
      * Posts inbox message with summary of text_ingested files

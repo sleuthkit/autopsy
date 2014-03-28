@@ -49,13 +49,24 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- *
+ * Singleton keyword search manager
+ * Launches search threads for each job and performs commits, 
+ * both on timed intervals.
  */
 public final class SearchRunner {
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
     private static SearchRunner instance = null;
-    private Map<Long, SearchRunnerJob> jobs = new HashMap<>();
+    private IngestServices services = IngestServices.getInstance();
+    private Ingester ingester = null;   
+    private boolean initialized = false;
+    private Map<Long, SearchJobInfo> jobs = new HashMap<>();
+    private Timer searchTimer;
             
+    SearchRunner() {
+        ingester = Server.getIngester();
+        initialized = true;
+    }
+    
     public static synchronized SearchRunner getInstance() {
         if (instance == null) {
             instance = new SearchRunner();
@@ -63,60 +74,83 @@ public final class SearchRunner {
         return instance;
     }
     
-    ///@todo Can we get the keyword lists here instead of passing them in?
-    public void startJob(long jobId, long dataSourceId, List<KeywordList> keywordLists) {
+    public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
         if (!jobs.containsKey(jobId)) {
-            SearchRunnerJob runnerJob = new SearchRunnerJob(jobId, dataSourceId);
-            runnerJob.setKeywordLists(keywordLists);
-            jobs.put(jobId, runnerJob);
-            
-            ///@todo start it up
+            SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
+            jobs.put(jobId, jobData);            
         }
     }
     
-    public void endJob(long jobId) {
-        ///@todo remove this comment if this is ok. otherwise we might need to do module counting
+    public void endJob(long jobId) {        
+        SearchJobInfo job;
+        synchronized(this) {
+            job = jobs.get(jobId);
+            if (job == null) {
+                return;
+            }            
+            jobs.remove(jobId);
+        }
+        doFinalSearch(job);
+    }
+
+    /**
+     * Commits index and notifies listeners of index update
+     */
+    private void commit() {
+        if (initialized) {
+            logger.log(Level.INFO, "Commiting index");
+            ingester.commit();
+            logger.log(Level.INFO, "Index comitted");
+
+            //signal a potential change in number of text_ingested files
+            try {
+                final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
+                KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
+            } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+                logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
+            }
+        }
+    }    
+    
+    private void doFinalSearch(SearchJobInfo job) {
+        //cancel searcher timer, ensure unwanted searcher does not start 
+        //before we start the final one
+        if (searchTimer.isRunning()) {
+            searchTimer.stop();
+        }
+
+        logger.log(Level.INFO, "Running final index commit and search for jobid {0}", jobId);
+        commit();
+
+        //run one last search as there are probably some new files committed
+        if (!job.getKeywordListNames().isEmpty()) {
+            SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job.getKeywordListNames(), true);
+            finalSearcher.execute();
+        }      
+    }
+    
+    private class SearchJobInfo {
+        private long jobId;
+        private long dataSourceId;
+        private List<String> keywordListNames = new ArrayList<>();
+            
+        public SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
+            this.jobId = jobId;
+            this.dataSourceId = dataSourceId;
+            this.keywordListNames = keywordListNames;            
+        }
         
-        ///@todo stuff
-        SearchRunnerJob runnerJob = jobs.get(jobId);
-        if (runnerJob != null) {
-            runnerJob.doFinalSearch();
+        long getDataSourceId() {
+            return dataSourceId;
+        }
+        
+        List<String> getKeywordListNames() {
+            return keywordListNames;
         }
     }
 
-    private void doFinalSearch() {
+    private synchronized void setJobSearcherDone(long jobId, boolean flag) {
         
-    }
-    
-    ///@todo currentResults?
-    private class SearchRunnerJob {
-        private long jobId;
-        private long dataSourceId;
-        private List<KeywordList> keywordLists = new ArrayList<>(); // lists currently being searched
-        private List<Keyword> keywords; //keywords to search
-        private Map<Keyword, List<Long>> currentResults;
-        private SearchRunner.Searcher currentSearcher;
-        private SearchRunner.Searcher finalSearcher;
-        private List<String> keywordListNames = null;
-            
-        public SearchRunnerJob(long jobId, long dataSourceId) {
-            this.jobId = jobId;
-            this.dataSourceId = dataSourceId;
-        }
-        
-        public void setKeywordLists(List<KeywordList> keywordLists) {
-            this.keywordLists = keywordLists;
-            //List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
-        }
-        
-        public List<KeywordList> getKeywordLists() {
-            return keywordLists;
-        }
-        
-        public void doFinalSearch() {
-            finalSearcher = new SearchRunner.Searcher(keywordListNames, true);
-            finalSearcher.execute();
-        }
     }
     
     /**
@@ -136,20 +170,18 @@ public final class SearchRunner {
         private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(SearchRunner.Searcher.class.getName());
         private boolean finalRun = false;
-        private Timer searchTimer;
-        private IngestServices services = IngestServices.getDefault();
-        //private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
-        //private static final Lock searcherLock = rwLock.writeLock();
-        
-        Searcher(List<String> keywordLists) {
+        private long jobId;
+
+        Searcher(List<String> keywordLists, long jobId) {
             this.keywordLists = new ArrayList<>(keywordLists);
-            this.keywords = new ArrayList<>();
-            this.keywordToList = new HashMap<>();
+            this.jobId = jobId;
+            keywords = new ArrayList<>();
+            keywordToList = new HashMap<>();
             //keywords are populated as searcher runs
         }
 
-        Searcher(List<String> keywordLists, boolean finalRun) {
-            this(keywordLists);
+        Searcher(List<String> keywordLists, long jobId, boolean finalRun) {
+            this(keywordLists, jobId);
             this.finalRun = finalRun;
         }
 
@@ -161,15 +193,15 @@ public final class SearchRunner {
                 logger.log(Level.INFO, "Pending start of new searcher");
             }
 
-            final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
-                    + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
+            final String displayName = NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.displayName")
+                    + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.finalizeMsg")) : "");
             progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" ("
-                    + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") + ")"), null, new Cancellable() {
+                    + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.pendingMsg") + ")"), null, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
                     if (progressGroup != null) {
-                        progressGroup.setDisplayName(displayName + " (" + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.cancelMsg") + "...)");
+                        progressGroup.setDisplayName(displayName + " (" + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg") + "...)");
                     }
                     return SearchRunner.Searcher.this.cancel(true);
                 }
@@ -190,15 +222,16 @@ public final class SearchRunner {
 
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
-            searcherLock.lock();
+            //searcherLock.lock();
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             try {
                 logger.log(Level.INFO, "Started a new searcher");
                 progressGroup.setDisplayName(displayName);
                 //make sure other searchers are not spawned 
-                searcherDone = false;
-                runSearcher = false;
+                setJobSearcherDone(jobId, false);
+                //searcherDone = false;
+                //runSearcher = false;
                 if (searchTimer.isRunning()) {
                     searchTimer.stop();
                 }
@@ -330,9 +363,9 @@ public final class SearchRunner {
                                     //final int hitFiles = newResults.size();
 
                                     if (!keywordQuery.isLiteral()) {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
+                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExpHitLbl"));
                                     } else {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
+                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLbl"));
                                     }
                                     //subjectSb.append("<");
                                     String uniqueKey = null;
@@ -350,7 +383,7 @@ public final class SearchRunner {
                                     detailsSb.append("<table border='0' cellpadding='4' width='280'>");
                                     //hit
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLThLbl"));
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLThLbl"));
                                     detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
@@ -358,7 +391,7 @@ public final class SearchRunner {
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                                     if (attr != null) {
                                         detailsSb.append("<tr>");
-                                        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
+                                        detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.previewThLbl"));
                                         detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                         detailsSb.append("</tr>");
 
@@ -366,7 +399,7 @@ public final class SearchRunner {
 
                                     //file
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.fileThLbl"));
                                     detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
 
                                     detailsSb.append("</tr>");
@@ -375,7 +408,7 @@ public final class SearchRunner {
                                     //list
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.listThLbl"));
                                     detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                     detailsSb.append("</tr>");
 
@@ -384,7 +417,7 @@ public final class SearchRunner {
                                         attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                         if (attr != null) {
                                             detailsSb.append("<tr>");
-                                            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
+                                            detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExThLbl"));
                                             detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                             detailsSb.append("</tr>");
 
@@ -422,7 +455,7 @@ public final class SearchRunner {
                     stopWatch.stop();
                     logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
                 } finally {
-                    searcherLock.unlock();
+                    //searcherLock.unlock();
                 }
             }
 
@@ -462,9 +495,6 @@ public final class SearchRunner {
 
         }
 
-        //perform all essential cleanup that needs to be done right AFTER doInBackground() returns
-        //without relying on done() method that is not guaranteed to run after background thread completes
-        //NEED to call this method always right before doInBackground() returns
         /**
          * Performs the cleanup that needs to be done right AFTER
          * doInBackground() returns without relying on done() method that is not
@@ -473,71 +503,16 @@ public final class SearchRunner {
          */
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    progressGroup.finish();
-                }
-            });
-            searcherDone = true;  //next currentSearcher can start
-
-            if (finalRun) {
-                //this is the final searcher
-                logger.log(Level.INFO, "The final searcher in this ingest done.");
-
-                //run module cleanup
-                cleanup();
-            } else {
-                //start counting time for a new searcher to start
-                //unless final searcher is pending
-                if (finalSearcher == null) {
-                    //we need a new Timer object, because restarting previus will not cause firing of the action
-                    final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
-                    searchTimer = new Timer(updateIntervalMs, new KeywordSearchIngestModule.SearchTimerAction());
-                    searchTimer.start();
-                }
-            }
+//            SwingUtilities.invokeLater(new Runnable() {
+//                @Override
+//                public void run() {
+//                    progressGroup.finish();
+//                }
+//            });
+            
+            setJobSearcherDone(jobId, true);
         }
 
-        //calculate new results but substracting results already obtained in this ingest
-        //update currentResults map with the new results
-        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult, boolean isRegex) {
-            Map<Keyword, List<ContentHit>> newResults = new HashMap<>();
-
-            for (String termResult : queryResult.keySet()) {
-                List<ContentHit> queryTermResults = queryResult.get(termResult);
-
-                //translate to list of IDs that we keep track of
-                List<Long> queryTermResultsIDs = new ArrayList<>();
-                for (ContentHit ch : queryTermResults) {
-                    queryTermResultsIDs.add(ch.getId());
-                }
-
-                Keyword termResultK = new Keyword(termResult, !isRegex);
-                List<Long> curTermResults = currentResults.get(termResultK);
-                if (curTermResults == null) {
-                    currentResults.put(termResultK, queryTermResultsIDs);
-                    newResults.put(termResultK, queryTermResults);
-                } else {
-                    //some AbstractFile hits already exist for this keyword
-                    for (ContentHit res : queryTermResults) {
-                        if (!curTermResults.contains(res.getId())) {
-                            //add to new results
-                            List<ContentHit> newResultsFs = newResults.get(termResultK);
-                            if (newResultsFs == null) {
-                                newResultsFs = new ArrayList<>();
-                                newResults.put(termResultK, newResultsFs);
-                            }
-                            newResultsFs.add(res);
-                            curTermResults.add(res.getId());
-                        }
-                    }
-                }
-            }
-
-            return newResults;
-
-        }
     }    
     
 }
