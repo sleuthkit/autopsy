@@ -88,7 +88,4 @@ public class ModuleDataEvent extends ChangeEvent {
     public String getModuleName() {
         return moduleName;
     }
-    
-    
-    
 }

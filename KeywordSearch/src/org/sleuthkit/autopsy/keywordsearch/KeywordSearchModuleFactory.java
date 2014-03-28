@@ -59,7 +59,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
         KeywordSearchListsXML listManager = KeywordSearchListsXML.getCurrent();
         List<String> enabledKeywordLists = new ArrayList<>();
         List<KeywordList> keywordLists = listManager.getListsL();
@@ -71,12 +71,12 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public boolean hasModuleSettingsPanel() {
+    public boolean hasIngestJobSettingsPanel() {
         return true;
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof KeywordSearchJobSettings;
         if (!(settings instanceof KeywordSearchJobSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof KeywordSearchJobSettings");
