@@ -46,7 +46,7 @@ public class Installer extends ModuleInstall {
 
         Logger logger = Logger.getLogger(Installer.class.getName());
         logger.log(Level.INFO, "Initializing ingest manager");
-        final IngestManager manager = IngestManager.getDefault();
+        final IngestManager manager = IngestManager.getInstance();
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {

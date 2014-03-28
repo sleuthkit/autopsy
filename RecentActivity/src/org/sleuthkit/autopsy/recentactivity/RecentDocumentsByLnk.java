@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.*;
  */
 class RecentDocumentsByLnk extends Extract  {
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services = IngestServices.getDefault();    
+    private IngestServices services = IngestServices.getInstance();    
 
     /**
      * Find the documents that Windows stores about recent documents and make artifacts.
@@ -76,7 +76,7 @@ class RecentDocumentsByLnk extends Extract  {
         
         dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
             

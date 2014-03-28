@@ -126,7 +126,7 @@ import org.sleuthkit.datamodel.Content;
         super.componentOpened();
         //create manager instance
         if (manager == null) {
-            manager = IngestManager.getDefault();
+            manager = IngestManager.getInstance();
         }
 
     }
@@ -221,7 +221,7 @@ import org.sleuthkit.datamodel.Content;
                     }
                     //stop workers if running
                     if (manager == null) {
-                        manager = IngestManager.getDefault();
+                        manager = IngestManager.getInstance();
                     }
                     try {
                         manager.stopAll();

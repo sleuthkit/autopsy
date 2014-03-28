@@ -111,7 +111,7 @@ public class IngestManager {
      *
      * @returns Instance of class.
      */
-    synchronized public static IngestManager getDefault() {
+    synchronized public static IngestManager getInstance() {
         if (instance == null) {
             instance = new IngestManager();
         }
@@ -409,7 +409,7 @@ public class IngestManager {
                     if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
-                    IngestManager.getDefault().stopAll();
+                    IngestManager.getInstance().stopAll();
                     return true;
                 }
             });
@@ -509,7 +509,7 @@ public class IngestManager {
                                 "IngestManager.DataSourceTaskWorker.process.cancelling",
                                 "Data source ingest"));
                     }
-                    IngestManager.getDefault().stopAll();
+                    IngestManager.getInstance().stopAll();
                     return true;
                 }
             });
@@ -529,7 +529,7 @@ public class IngestManager {
             }
 
             logger.log(Level.INFO, "Data source ingest thread (id={0}) completed", this.id);
-            IngestManager.getDefault().reportThreadDone(this.id);
+            IngestManager.getInstance().reportThreadDone(this.id);
             return null;
         }
 
@@ -539,11 +539,11 @@ public class IngestManager {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
                 logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
-                IngestManager.getDefault().reportThreadDone(this.id);
+                IngestManager.getInstance().reportThreadDone(this.id);
             } catch (Exception ex) {
                 String message = String.format("Data source ingest thread (id=%d) experienced a fatal error", this.id);
                 logger.log(Level.SEVERE, message, ex);
-                IngestManager.getDefault().reportThreadDone(this.id);
+                IngestManager.getInstance().reportThreadDone(this.id);
             } finally {
                 progress.finish();
             }
@@ -580,7 +580,7 @@ public class IngestManager {
                                 NbBundle.getMessage(this.getClass(), "IngestManager.FileTaskWorker.process.cancelling",
                                 displayName));
                     }
-                    IngestManager.getDefault().stopAll();
+                    IngestManager.getInstance().stopAll();
                     return true;
                 }
             });
@@ -593,7 +593,7 @@ public class IngestManager {
             int processedFiles = 0;
             while (fileScheduler.hasNext()) {
                 if (isCancelled()) {
-                    IngestManager.getDefault().reportThreadDone(this.id);
+                    IngestManager.getInstance().reportThreadDone(this.id);
                     logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
@@ -617,7 +617,7 @@ public class IngestManager {
             }
 
             logger.log(Level.INFO, "File ingest thread (id={0}) completed", this.id);
-            IngestManager.getDefault().reportThreadDone(this.id);
+            IngestManager.getInstance().reportThreadDone(this.id);
             return null;
         }
 
@@ -627,11 +627,11 @@ public class IngestManager {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
                 logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
-                IngestManager.getDefault().reportThreadDone(this.id);
+                IngestManager.getInstance().reportThreadDone(this.id);
             } catch (Exception ex) {
                 String message = String.format("File ingest thread {0} experienced a fatal error", this.id);
                 logger.log(Level.SEVERE, message, ex);
-                IngestManager.getDefault().reportThreadDone(this.id);
+                IngestManager.getInstance().reportThreadDone(this.id);
             } finally {
                 progress.finish();
             }

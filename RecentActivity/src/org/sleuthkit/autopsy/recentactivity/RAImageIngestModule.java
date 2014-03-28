@@ -48,7 +48,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     private static int messageId = 0;
     private final List<Extract> extracters = new ArrayList<>();
     private final List<Extract> browserExtracters = new ArrayList<>();
-    private IngestServices services = IngestServices.getDefault();
+    private IngestServices services = IngestServices.getInstance();
     private StringBuilder subCompleted = new StringBuilder();
 
     RAImageIngestModule() {
@@ -93,7 +93,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
 
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName());
                 break;
             }

@@ -37,19 +37,19 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Dialog box that allows ingest modules to be run on a data source. Used
- * outside of the wizards.
+ * Dialog box that allows ingest modules to be run on a data source that has
+ * already been added to a case.
  */
-public final class IngestDialog extends JDialog {
+public final class RunIngestModulesDialog extends JDialog {
 
-    private static final String TITLE = NbBundle.getMessage(IngestDialog.class, "IngestDialog.title.text");
+    private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private List<Content> dataSources = new ArrayList<>();
     private IngestJobLauncher ingestJobLauncher;
 
-    public IngestDialog(JFrame frame, String title, boolean modal) {
+    public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestJobLauncher = new IngestJobLauncher(IngestDialog.class.getCanonicalName());
+        ingestJobLauncher = new IngestJobLauncher(RunIngestModulesDialog.class.getCanonicalName());
         List<String> messages = ingestJobLauncher.getIngestJobConfigWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
@@ -60,7 +60,7 @@ public final class IngestDialog extends JDialog {
         }
     }
 
-    public IngestDialog() {
+    public RunIngestModulesDialog() {
         this(new JFrame(TITLE), TITLE, true);
     }
 

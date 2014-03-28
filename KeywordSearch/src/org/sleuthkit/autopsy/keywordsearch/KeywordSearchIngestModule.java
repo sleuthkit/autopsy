@@ -95,7 +95,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
     };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private IngestServices services = IngestServices.getDefault();
+    private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
