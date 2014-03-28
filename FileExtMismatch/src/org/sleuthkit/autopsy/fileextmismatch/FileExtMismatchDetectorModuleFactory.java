@@ -57,17 +57,17 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
         return new FileExtMismatchDetectorModuleSettings();
     }
 
     @Override
-    public boolean hasModuleSettingsPanel() {
+    public boolean hasIngestJobSettingsPanel() {
         return true;
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings settings) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");

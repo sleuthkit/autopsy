@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import javax.swing.JPanel;
 
 /**
- * Base class for ingest module resources configuration panels.
+ * Base class for ingest module global settings panels.
  */
 public abstract class IngestModuleGlobalSetttingsPanel extends JPanel {
 
