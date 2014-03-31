@@ -119,7 +119,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private Tika tikaFormatDetector;
-
+    private long jobId = 0; ///@todo where does jobID come from?
+        
     private enum IngestStatus {
 
         TEXT_INGESTED, /// Text was extracted by knowing file type and text_ingested
@@ -377,18 +378,18 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         initialized = false;
     }
 
-//    /**
-//     * Commits index and notifies listeners of index update
-//     */
-//    private void commit() {
-//        if (initialized) {
-//            logger.log(Level.INFO, "Commiting index");
-//            ingester.commit();
-//            logger.log(Level.INFO, "Index comitted");
-//            //signal a potential change in number of text_ingested files
-//            indexChangeNotify();
-//        }
-//    }
+    /**
+     * Commits index and notifies listeners of index update
+     */
+    private void commit() {
+        if (initialized) {
+            logger.log(Level.INFO, "Commiting index");
+            ingester.commit();
+            logger.log(Level.INFO, "Index comitted");
+            //signal a potential change in number of text_ingested files
+            indexChangeNotify();
+        }
+    }
 
     /**
      * Posts inbox message with summary of text_ingested files
