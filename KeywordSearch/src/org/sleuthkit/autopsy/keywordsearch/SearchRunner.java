@@ -32,6 +32,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
@@ -50,7 +51,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Singleton keyword search manager
+ * Singleton keyword search manager:
  * Launches search threads for each job and performs commits, both on timed 
  * intervals.
  */
@@ -59,11 +60,12 @@ public final class SearchRunner {
     private AtomicInteger messageID = new AtomicInteger(0);            
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
-    private Ingester ingester = null;   
+    private Ingester ingester = null;  //guarded by "this"    
     private boolean initialized = false;
-    private Map<Long, SearchJobInfo> jobs = new HashMap<>();
     private Timer updateTimer;
-    private Map<Keyword, List<Long>> currentResults;
+    private Map<Keyword, List<Long>> currentResults;   
+    private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
+    
     
     SearchRunner() {
         ingester = Server.getIngester();       
@@ -74,6 +76,10 @@ public final class SearchRunner {
         initialized = true;
     }
     
+    /**
+     *
+     * @return the singleton object
+     */
     public static synchronized SearchRunner getInstance() {
         if (instance == null) {
             instance = new SearchRunner();
@@ -81,6 +87,12 @@ public final class SearchRunner {
         return instance;
     }
     
+    /**
+     *
+     * @param jobId
+     * @param dataSourceId
+     * @param keywordListNames
+     */
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
         if (!jobs.containsKey(jobId)) {
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
@@ -94,6 +106,10 @@ public final class SearchRunner {
         }
     }
     
+    /**
+     *
+     * @param jobId
+     */
     public void endJob(long jobId) {        
         SearchJobInfo copy;
         synchronized(this) {
@@ -104,6 +120,8 @@ public final class SearchRunner {
             copy = new SearchJobInfo(job);            
             jobs.remove(jobId);
         }
+                
+        commit();        
         doFinalSearch(copy);
     }
     
@@ -113,10 +131,12 @@ public final class SearchRunner {
     private void commit() {
         if (initialized) {
             logger.log(Level.INFO, "Commiting index");
-            ingester.commit();
+            synchronized(this) {
+                ingester.commit();
+            }
             logger.log(Level.INFO, "Index comitted");
 
-            //signal a potential change in number of text_ingested files
+            // Signal a potential change in number of text_ingested files
             try {
                 final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
                 KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
@@ -126,17 +146,19 @@ public final class SearchRunner {
         }
     }    
     
+    /**
+     * Passes arg directly into a Searcher, so providing a copy is a good idea.
+     * @param job 
+     */
     private void doFinalSearch(SearchJobInfo job) {
-        //cancel searcher timer, ensure unwanted searcher does not start 
-        //before we start the final one
+        // Cancel timer to ensure unwanted searchers do not start before we 
+        // start the final one
         if (updateTimer.isRunning()) {
             updateTimer.stop();
         }
 
-        logger.log(Level.INFO, "Running final index commit and search for jobid {0}", job.getJobId());
-        commit();
-
-        //run one last search as there are probably some new files committed
+        // Run one last search as there are probably some new files committed
+        logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());        
         if (!job.getKeywordListNames().isEmpty()) {
             SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
             finalSearcher.execute();
@@ -145,23 +167,24 @@ public final class SearchRunner {
     
    
     /**
-     * Timer triggered re-search for each job
-     * (does a single index commit first)
+     * Timer triggered re-search for each job (does a single index commit first)
      */
     private class UpdateTimerAction implements ActionListener {
         private final Logger logger = Logger.getLogger(SearchRunner.UpdateTimerAction.class.getName());
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            logger.log(Level.INFO, "Commiting index");
             commit();
             
-            // Spawn a search thread for each job
-            ///@todo Don't spawn a new thread if a job still has the previous one running
-            logger.log(Level.INFO, "Launching searchers");            
-            for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                SearchJobInfo copy = new SearchJobInfo(j.getValue());            
-                Searcher s = new Searcher(copy, true);
+            synchronized(SearchRunner.this) {
+                // Spawn a search thread for each job
+                ///@todo Don't spawn a new thread if a job still has the previous one running
+                logger.log(Level.INFO, "Launching searchers");    
+                for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
+                    SearchJobInfo copy = new SearchJobInfo(j.getValue());            
+                    Searcher s = new Searcher(copy, true);
+                    s.execute();
+                }
             }
         }
     }    
@@ -539,12 +562,12 @@ public final class SearchRunner {
          */
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
-//            SwingUtilities.invokeLater(new Runnable() {
-//                @Override
-//                public void run() {
-//                    progressGroup.finish();
-//                }
-//            });
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    progressGroup.finish();
+                }
+            });
         }
 
         //calculate new results but substracting results already obtained in this ingest
