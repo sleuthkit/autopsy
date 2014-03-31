@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -62,51 +64,52 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
     /**
      * Creates appropriate Node for each sub-class of Content
      */
-    public static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode> {
+    public static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode<? extends Content>> {
 
         @Override
-        public AbstractContentNode visit(Directory drctr) {
+        public AbstractContentNode<? extends Content> visit(Directory drctr) {
             return new DirectoryNode(drctr);
         }
 
         @Override
-        public AbstractContentNode visit(File file) {
+        public AbstractContentNode<? extends Content> visit(File file) {
             return new FileNode(file);
         }
 
         @Override
-        public AbstractContentNode visit(Image image) {
+        public AbstractContentNode<? extends Content> visit(Image image) {
             return new ImageNode(image);
         }
 
         @Override
-        public AbstractContentNode visit(Volume volume) {
+        public AbstractContentNode<? extends Content> visit(Volume volume) {
             return new VolumeNode(volume);
         }
 
         @Override
-        public AbstractContentNode visit(LayoutFile lf) {
+        public AbstractContentNode<? extends Content> visit(LayoutFile lf) {
             return new LayoutFileNode(lf);
         }
 
         @Override
-        public AbstractContentNode visit(DerivedFile df) {
+        public AbstractContentNode<? extends Content> visit(DerivedFile df) {
             return new LocalFileNode(df);
         }
 
         @Override
-        public AbstractContentNode visit(LocalFile lf) {
+        public AbstractContentNode<? extends Content> visit(LocalFile lf) {
             return new LocalFileNode(lf);
         }
 
         @Override
-        public AbstractContentNode visit(VirtualDirectory ld) {
+        public AbstractContentNode<? extends Content> visit(VirtualDirectory ld) {
             return new VirtualDirectoryNode(ld);
         }
 
         @Override
-        protected AbstractContentNode defaultVisit(SleuthkitVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given SleuthkitItem");
+        protected AbstractContentNode<? extends Content> defaultVisit(SleuthkitVisitableItem di) {
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
+                    "AbstractContentChildren.CreateTSKNodeVisitor.exception.noNodeMsg"));
         }
     }
 
@@ -149,12 +152,12 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         public AbstractNode visit(HashsetHits hh) {
             return hh.new HashsetHitsRootNode();
         }
-        
+
         @Override
         public AbstractNode visit(InterestingHits ih) {
             return ih.new InterestingHitsRootNode();
         }
-         
+
         @Override
         public AbstractNode visit(EmailExtracted ee) {
             return ee.new EmailExtractedRootNode();
@@ -186,7 +189,9 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(),
+                    "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
         }
     }
 }

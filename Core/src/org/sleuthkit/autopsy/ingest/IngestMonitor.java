@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Timer;
 import org.openide.util.Exceptions;
@@ -36,14 +38,14 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * Monitor health of the system and stop ingest if necessary
  */
- public class IngestMonitor {
+public final class IngestMonitor {
 
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
     private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor");
     private MonitorAction monitor;
-    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
 
     IngestMonitor() {
 
@@ -149,7 +151,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            final IngestManager manager = IngestManager.getDefault();
+            final IngestManager manager = IngestManager.getInstance();
 
             //runs checks only if ingest is running
             if (manager.isIngestRunning() == false) {
@@ -164,9 +166,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
                 MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerErrorMessage("Ingest stopped - low disk space on " + diskPath,
-                        "Stopping ingest due to low disk space on disk " + diskPath
-                        + ". \nEnsure the Case drive has at least 1GB free space and restart ingest."));
+                IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
+                        NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
             }
         }
 

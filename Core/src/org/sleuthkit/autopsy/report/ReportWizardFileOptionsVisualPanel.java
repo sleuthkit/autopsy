@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.openide.util.NbBundle;
+
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,7 +42,7 @@ import javax.swing.event.ListDataListener;
 class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     private List<FileReportDataTypes> options;
     private Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
-    private ListModel model;
+    private ListModel<FileReportDataTypes> model;
     private ReportWizardFileOptionsPanel wizPanel;
     
     
@@ -52,7 +54,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     
     @Override
     public String getName() {
-        return "Configure File Report";
+        return NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsVisualPanel.getName.text");
     }
     
     /**
@@ -78,7 +80,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
             public void mousePressed(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
-                FileReportDataTypes value = (FileReportDataTypes) model.getElementAt(index);
+                FileReportDataTypes value = model.getElementAt(index);
                 optionStates.put(value, !optionStates.get(value));
                 list.repaint();
                 boolean anySelected = anySelected();
@@ -132,15 +134,15 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        optionsList = new javax.swing.JList();
+        optionsList = new javax.swing.JList<>();
         selectAllButton = new javax.swing.JButton();
         deselectAllButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
 
-        optionsList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+        optionsList.setModel(new javax.swing.AbstractListModel<FileReportDataTypes>() {
+            FileReportDataTypes[] types = { };
+            public int getSize() { return types.length; }
+            public FileReportDataTypes getElementAt(int i) { return types[i]; }
         });
         jScrollPane1.setViewportView(optionsList);
 
@@ -217,11 +219,11 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     private javax.swing.JButton deselectAllButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JList optionsList;
+    private javax.swing.JList<FileReportDataTypes> optionsList;
     private javax.swing.JButton selectAllButton;
     // End of variables declaration//GEN-END:variables
 
-    private class OptionsListModel implements ListModel {
+    private class OptionsListModel implements ListModel<FileReportDataTypes> {
 
         @Override
         public int getSize() {
@@ -229,7 +231,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public FileReportDataTypes getElementAt(int index) {
             return options.get(index);
         }
 
@@ -245,12 +247,12 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     /**
      * Render each item in the list to be a selectable check box.
      */
-    private class OptionsListRenderer extends JCheckBox implements ListCellRenderer {
+    private class OptionsListRenderer extends JCheckBox implements ListCellRenderer<FileReportDataTypes> {
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends FileReportDataTypes> list, FileReportDataTypes value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
-                FileReportDataTypes col = (FileReportDataTypes) value;
+                FileReportDataTypes col = value;
                 setEnabled(list.isEnabled());
                 setSelected(optionStates.get(col));
                 setFont(list.getFont());

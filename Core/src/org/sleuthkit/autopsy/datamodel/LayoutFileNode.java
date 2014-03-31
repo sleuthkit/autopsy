@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -42,7 +43,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         PARTS {
             @Override
             public String toString() {
-                return "Parts";
+                return NbBundle.getMessage(this.getClass(), "LayoutFileNode.propertyType.parts");
             }
         }
     }
@@ -72,16 +73,18 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             s.put(ss);
         }
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, content);
 
-        ss.put(new NodeProperty("Name", "Name", "no description", getName()));
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
+                getName()));
 
-        final String NO_DESCR = "no description";
+        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+            ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        // @@@ add more properties here...
 
         return s;
     }
@@ -95,7 +98,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -104,8 +107,10 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.add(new NewWindowViewAction("View in New Window", this));
-        actionsList.add(new ExternalViewerAction("Open in External Viewer", this));
+        actionsList.add(new NewWindowViewAction(
+                NbBundle.getMessage(this.getClass(), "LayoutFileNode.getActions.viewInNewWin.text"), this));
+        actionsList.add(new ExternalViewerAction(
+                NbBundle.getMessage(this.getClass(), "LayoutFileNode.getActions.openInExtViewer.text"), this));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator

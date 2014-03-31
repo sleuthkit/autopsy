@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
@@ -31,52 +30,46 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import  org.sleuthkit.autopsy.casemodule.GeneralFilter;
-
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+class MissingImageDialog extends javax.swing.JDialog {
 
- 
- class MissingImageDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(MissingImageDialog.class.getName());
     long obj_id;
     SleuthkitCase db;
-    
-    
-   
     static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
     static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
-
     static final List<String> allExt = new ArrayList<String>();
+
     static {
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
     }
-    static final String allDesc = "All Supported Types";
+    static final String allDesc = NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.allDesc.text");
     static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-    
     private JFileChooser fc = new JFileChooser();
-    
+
     private MissingImageDialog(long obj_id, SleuthkitCase db) {
         super(new JFrame(), true);
         this.obj_id = obj_id;
         this.db = db;
         initComponents();
-        
+
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        
+
         fc.addChoosableFileFilter(rawFilter);
         fc.addChoosableFileFilter(encaseFilter);
         fc.setFileFilter(allFilter);
-        
-        
+
+
         customInit();
     }
-    
+
 //    
 //     * Client call to create a MissingImageDialog.
 //     * 
@@ -89,45 +82,45 @@ import org.sleuthkit.datamodel.TskCoreException;
             @Override
             public void windowClosing(WindowEvent e) {
                 dialog.cancel();
-            }            
+            }
         });
         dialog.display();
     }
-    
+
     private void customInit() {
-      
-       selectButton.setEnabled(false);
+
+        selectButton.setEnabled(false);
     }
-    
+
     private void display() {
-        this.setTitle("Search for Missing Image");
+        this.setTitle(NbBundle.getMessage(this.getClass(), "MissingImageDialog.display.title"));
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         // set the popUp window / JFrame
         int w = this.getSize().width;
         int h = this.getSize().height;
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        
+
         this.setVisible(true);
     }
-    
+
 //    
 //     * Focuses the select button for easy enter-pressing access.
 //     
     private void moveFocusToSelect() {
         this.selectButton.requestFocusInWindow();
     }
-    
+
 //    
 //     * Enables/disables the select button based off the current panel.
 //     
     private void updateSelectButton() {
-        
+
         // Enable this based on whether there is a valid path
         if (!pathNameTextField.getText().isEmpty()) {
             String filePath = pathNameTextField.getText();
             boolean isExist = Case.pathExists(filePath) || Case.driveExists(filePath);
-            selectButton.setEnabled(isExist);   
+            selectButton.setEnabled(isExist);
         }
     }
 
@@ -274,16 +267,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     private void pathNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pathNameTextFieldActionPerformed
         // TODO add your handling code here:
-        
-         updateSelectButton();
+
+        updateSelectButton();
     }//GEN-LAST:event_pathNameTextFieldActionPerformed
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-        
-        
-       
+
         String oldText = pathNameTextField.getText();
-        
+
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentDir = new File(oldText);
         if (currentDir.exists()) {
@@ -296,10 +287,9 @@ import org.sleuthkit.datamodel.TskCoreException;
             pathNameTextField.setText(path);
         }
         //pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
-        
-         updateSelectButton();
-    }//GEN-LAST:event_browseButtonActionPerformed
 
+        updateSelectButton();
+    }//GEN-LAST:event_browseButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JPanel buttonPanel;
@@ -310,19 +300,19 @@ import org.sleuthkit.datamodel.TskCoreException;
     private javax.swing.JLabel titleLabel;
     private javax.swing.JSeparator titleSeparator;
     // End of variables declaration//GEN-END:variables
-    
+
 //    
 //     * Verify the user wants to cancel searching for the image.
 //     
     void cancel() {
         int ret = JOptionPane.showConfirmDialog(null,
-                "No image file has been selected, are you sure you\n" + 
-                "would like to exit without finding the image.",
-                "Missing Image", JOptionPane.YES_NO_OPTION);
+                NbBundle.getMessage(this.getClass(),
+                "MissingImageDialog.confDlg.noFileSel.msg"),
+                NbBundle.getMessage(this.getClass(),
+                "MissingImageDialog.confDlg.noFileSel.title"),
+                JOptionPane.YES_NO_OPTION);
         if (ret == JOptionPane.YES_OPTION) {
             this.dispose();
         }
     }
-    
-
 }

@@ -486,6 +486,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
      * Displays a chart with events from one month only.
      * Up to 31 days per month, as low as 28 as determined by the specific MonthEpoch
      */
+    @SuppressWarnings("unchecked")
     private BarChart<String, Number> createEventsByMonth(final MonthEpoch me, final YearEpoch ye) {
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
@@ -1163,7 +1164,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 logger.log(Level.INFO, "Error creating timeline, there are no data sources. ");
             } else {
 
-                if (IngestManager.getDefault().isIngestRunning()) {
+                if (IngestManager.getInstance().isIngestRunning()) {
                     int answer = JOptionPane.showConfirmDialog(new JFrame(),
                                                                NbBundle.getMessage(this.getClass(),
                                                                                    "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),

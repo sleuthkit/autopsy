@@ -39,7 +39,13 @@ interface KeywordSearchPerformerInterface {
      * True if the user did not choose to do a regular expression search
      * @return 
      */
-    boolean isLuceneQuerySelected();
+    boolean isRegExQuerySelected();
+    
+    /**
+     * True if the user wants to match substrings instead of just whole words
+     * @return 
+     */    
+    boolean isWholewordQuerySelected();
     
     /**
      * Returns the query/keyword string that the user entered/selected

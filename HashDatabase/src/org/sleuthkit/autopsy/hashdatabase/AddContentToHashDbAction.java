@@ -32,11 +32,12 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.ingest.IngestConfigurator;
+import org.sleuthkit.autopsy.ingest.IngestJobLauncher;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Instances of this Action allow users to content to a hash database.
@@ -81,8 +82,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             super(SINGLE_SELECTION_NAME);
                         
             // Disable the menu if file ingest is in progress.
-            IngestConfigurator ingestConfigurator = Lookup.getDefault().lookup(IngestConfigurator.class);
-            if (null != ingestConfigurator && ingestConfigurator.isIngestRunning()) {
+            if (IngestManager.getInstance().isIngestRunning()) {
                 setEnabled(false);
                 return;
             }
@@ -170,7 +170,11 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     JOptionPane.showMessageDialog(null,
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
-                                                                      files.size() > 1 ? "files" : "file"),
+                                                                      files.size() > 1 ? NbBundle
+                                                                              .getMessage(this.getClass(),
+                                                                                          "AddContentToHashDbAction.addFilesToHashSet.files") : NbBundle
+                                                                              .getMessage(this.getClass(),
+                                                                                          "AddContentToHashDbAction.addFilesToHashSet.file")),
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
                                                   JOptionPane.ERROR_MESSAGE);

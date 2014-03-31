@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
@@ -25,18 +24,20 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this class wrap ContentTag objects. In the Autopsy
- * presentation of the SleuthKit data model, they are leaf nodes of a tree 
- * consisting of content and blackboard artifact tags, grouped first by tag 
- * type, then by tag name.
+ * Instances of this class wrap ContentTag objects. In the Autopsy presentation
+ * of the SleuthKit data model, they are leaf nodes of a tree consisting of
+ * content and blackboard artifact tags, grouped first by tag type, then by tag
+ * name.
  */
- class ContentTagNode extends DisplayableItemNode {
+class ContentTagNode extends DisplayableItemNode {
+
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png";
     private final ContentTag tag;
 
@@ -57,18 +58,26 @@ import org.sleuthkit.datamodel.TskCoreException;
             propertySheet.put(properties);
         }
 
-        properties.put(new NodeProperty("File", "File", "", tag.getContent().getName()));
-        String contentPath; 
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.displayName"),
+                "",
+                tag.getContent().getName()));
+        String contentPath;
         try {
             contentPath = tag.getContent().getUniquePath();
+        } catch (TskCoreException ex) {
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);
+            contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
         }
-        catch (TskCoreException ex) {
-            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);                    
-            contentPath = "Unavailable";
-        }
-        properties.put(new NodeProperty("File Path", "File Path", "", contentPath));        
-        properties.put(new NodeProperty("Comment", "Comment", "", tag.getComment()));
-        
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.displayName"),
+                "",
+                contentPath));
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.displayName"),
+                "",
+                tag.getComment()));
+
         return propertySheet;
     }
 
@@ -78,8 +87,8 @@ import org.sleuthkit.datamodel.TskCoreException;
         actions.add(null); // Adds a menu item separator. 
         actions.add(DeleteContentTagAction.getInstance());
         return actions.toArray(new Action[0]);
-    }    
-    
+    }
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -88,5 +97,5 @@ import org.sleuthkit.datamodel.TskCoreException;
     @Override
     public boolean isLeafTypeNode() {
         return true;
-    }    
+    }
 }

@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -81,7 +81,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private DataResultTopComponent dataResult = new DataResultTopComponent(true, "Directory Listing");
+    private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
+                                                                                                     "DirectoryTreeTopComponent.title.text"));
     private LinkedList<String[]> backList;
     private LinkedList<String[]> forwardList;
     /**
@@ -586,7 +587,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
-        } else if (changed.equals(IngestModuleEvent.DATA.toString())) {
+        } else if (changed.equals(IngestEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
             if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
                 return;
@@ -597,7 +598,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     refreshTree(event.getArtifactType());
                 }
             });
-        } else if (changed.equals(IngestModuleEvent.COMPLETED.toString())) {
+        } else if (changed.equals(IngestEvent.COMPLETED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -605,7 +606,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     refreshTree();
                 }
             });
-        } else if (changed.equals(IngestModuleEvent.CONTENT_CHANGED.toString())) {
+        } else if (changed.equals(IngestEvent.CONTENT_CHANGED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -1014,7 +1015,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
-        new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
+        new ViewContextAction(
+                NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
+                new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
 //    private class HistoryManager<T> {
@@ -1033,7 +1036,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         catch (Exception e) {
             logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to DirectoryTreeTopComponent updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "DirectoryTreeTopComponent.moduleErr.msg"),
+                                          MessageNotifyUtil.MessageType.ERROR);
         }
     }
 }

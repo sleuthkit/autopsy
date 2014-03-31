@@ -30,6 +30,8 @@ import org.openide.util.NbBundle;
 /**
  * Common functionality among keyword search performers / widgets.
  * This is extended by the various panels and interfaces that perform the keyword searches.
+ * This class and extended classes model the user's intentions, not necessarily how the 
+ * search manager and 3rd party tools actually perform the search.
  */
 abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface {
 
@@ -66,8 +68,11 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
     public abstract boolean isMultiwordQuery();
 
     @Override
-    public abstract boolean isLuceneQuerySelected();
+    public abstract boolean isRegExQuerySelected();
 
+    @Override
+    public abstract boolean isWholewordQuerySelected();
+    
     @Override
     public abstract String getQueryText();
 
@@ -81,10 +86,10 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
 
     @Override
     public void search() {
-        boolean isRunning = IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
+        boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
         if (filesIndexed == 0) {
-            if (isRunning) {
+            if (isIngestRunning) {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
                         "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
                         KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
@@ -96,14 +101,16 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
         }
 
         //check if keyword search module  ingest is running (indexing, etc)
-        if (isRunning) {
+        if (isIngestRunning) {
             if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
                     NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.ingestInProgressBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
                 return;
             }
         }
-
+        
+        boolean isWholeword = isWholewordQuerySelected();
         KeywordSearchQueryManager man = null;
+        
         if (isMultiwordQuery()) {
             final List<Keyword> keywords = getQueryList();
             if (keywords.isEmpty()) {
@@ -112,13 +119,13 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(keywords, Presentation.FLAT);
+            man = new KeywordSearchQueryManager(keywords, isWholeword, Presentation.FLAT);
         } else {
-            QueryType queryType = null;
-            if (isLuceneQuerySelected()) {
-                queryType = QueryType.WORD;
+            QueryType userQueryType = null;
+            if (isRegExQuerySelected()) {
+                userQueryType = QueryType.REGEX;
             } else {
-                queryType = QueryType.REGEX;
+                userQueryType = QueryType.LITERAL;
             }
             final String queryText = getQueryText();
             if (queryText == null || queryText.trim().equals("")) {
@@ -126,7 +133,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         "AbstractKeywordSearchPerformer.search.pleaseEnterKeywordBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.FLAT);
+            man = new KeywordSearchQueryManager(getQueryText(), userQueryType, isWholeword, Presentation.FLAT);
         }
 
         if (man.validate()) {

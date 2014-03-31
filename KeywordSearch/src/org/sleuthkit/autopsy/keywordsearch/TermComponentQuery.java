@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -40,7 +40,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskException;
-
 
 /**
  * Performs a regular expression query to the SOLR/Lucene instance. 
@@ -57,15 +56,14 @@ class TermComponentQuery implements KeywordSearchQuery {
     private String queryEscaped;
     private boolean isEscaped;
     private List<Term> terms;
-    private Keyword keywordQuery = null;
-    private final List<KeywordQueryFilter> filters = new ArrayList<KeywordQueryFilter>();
-    private String field = null;
+    private final List<KeywordQueryFilter> filters = new ArrayList<>();
+    private String field;
     private static int MAX_TERMS_RESULTS = 20000;
     
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public TermComponentQuery(Keyword keywordQuery) {
-        this.keywordQuery = keywordQuery;
+        this.field = null;
         this.termsQuery = keywordQuery.getQuery();
         this.queryEscaped = termsQuery;
         isEscaped = false;
@@ -82,6 +80,11 @@ class TermComponentQuery implements KeywordSearchQuery {
         this.field = field;
     }
 
+    @Override
+    public void setSubstringQuery() {
+        queryEscaped = ".*" + queryEscaped + ".*";
+    }
+    
     @Override
     public void escape() {
         queryEscaped = Pattern.quote(termsQuery);
@@ -139,11 +142,10 @@ class TermComponentQuery implements KeywordSearchQuery {
      * execute query and return terms, helper method
      */
     protected List<Term> executeQuery(SolrQuery q) throws NoOpenCoreException {
-        List<Term> termsCol = null;
         try {
             Server solrServer = KeywordSearch.getServer();
             TermsResponse tr = solrServer.queryTerms(q);
-            termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
+            List<Term> termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex);
@@ -168,12 +170,12 @@ class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
-        final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
+        final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         //there is match actually in this file, create artifact only then
-        BlackboardArtifact bba = null;
-        KeywordWriteResult writeResult = null;
-        Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
+        BlackboardArtifact bba;
+        KeywordWriteResult writeResult;
+        Collection<BlackboardAttribute> attributes = new ArrayList<>();
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordWriteResult(bba);
@@ -181,7 +183,6 @@ class TermComponentQuery implements KeywordSearchQuery {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e);
             return null;
         }
-
 
         //regex match
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
@@ -198,16 +199,6 @@ class TermComponentQuery implements KeywordSearchQuery {
         //regex keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, termsQuery));
 
-        //selector TODO move to general info artifact
-            /*
-        if (keywordQuery != null) {
-        BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
-        if (selType != null) {
-        BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch);
-        attributes.add(selAttr);
-        }
-        } */
-
         try {
             bba.addAttributes(attributes);
             writeResult.add(attributes);
@@ -217,17 +208,16 @@ class TermComponentQuery implements KeywordSearchQuery {
         }
 
         return null;
-
     }
 
     @Override
     public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
-        Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
+        Map<String, List<ContentHit>> results = new HashMap<>();
 
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
         q.setTermsLimit(MAX_TERMS_RESULTS); 
-        logger.log(Level.INFO, "Query: " + q.toString());
+        logger.log(Level.INFO, "Query: {0}", q.toString());
         terms = executeQuery(q);
 
         int resultSize = 0;
@@ -245,13 +235,13 @@ class TermComponentQuery implements KeywordSearchQuery {
             }
             try {
                 Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
-                Set<ContentHit> filesResults = new HashSet<ContentHit>();
+                Set<ContentHit> filesResults = new HashSet<>();
                 for (String key : subResults.keySet()) {
                     List<ContentHit> keyRes = subResults.get(key);
                     resultSize += keyRes.size();
                     filesResults.addAll(keyRes);
                 }
-                results.put(term.getTerm(), new ArrayList<ContentHit>(filesResults));
+                results.put(term.getTerm(), new ArrayList<>(filesResults));
             } catch (NoOpenCoreException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e);
                 throw e;
@@ -262,8 +252,7 @@ class TermComponentQuery implements KeywordSearchQuery {
         }
         
         //TODO limit how many results we store, not to hit memory limits
-        logger.log(Level.INFO, "Regex # results: " + resultSize);
-
+        logger.log(Level.INFO, "Regex # results: {0}", resultSize);
 
         return results;
     }

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.filesystems.FileUtil;
@@ -96,7 +97,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     private static void validateCaseIndex(int i) {
         if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Recent case index " + i + " is out of range.");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(RecentCases.class, "RecentCases.exception.caseIdxOutOfRange.msg", i));
         }
     }
 
@@ -419,7 +421,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     @Override
     public String getName() {
         //return NbBundle.getMessage(RecentCases.class, "CTL_RecentCases");
-        return "Clear Recent Cases";
+        return NbBundle.getMessage(this.getClass(), "RecentCases.getName.text");
     }
 
     /**

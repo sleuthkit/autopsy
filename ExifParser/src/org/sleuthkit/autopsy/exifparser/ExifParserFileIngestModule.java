@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,11 +35,9 @@ import java.util.Date;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -55,58 +53,44 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
-public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
+public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
-    private IngestServices services;
-    final public static String MODULE_NAME = "Exif Parser";
-    final public static String MODULE_VERSION = Version.getVersion();
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
-    private static ExifParserFileIngestModule defaultInstance = null;
+    private final IngestServices services = IngestServices.getInstance();
     private int filesProcessed = 0;
     private boolean filesToFire = false;
 
-    //file ingest modules require a private constructor
-    //to ensure singleton instances
-    private ExifParserFileIngestModule() {
-    }
-
-    //default instance used for module registration
-    public static synchronized ExifParserFileIngestModule getDefault() {
-        if (defaultInstance == null) {
-            defaultInstance = new ExifParserFileIngestModule();
-        }
-        return defaultInstance;
+    ExifParserFileIngestModule() {
     }
 
     @Override
-    public IngestModuleAbstractFile.ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile content) {
-
+    public ProcessResult process(AbstractFile content) {
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return IngestModuleAbstractFile.ProcessResult.OK;
+            return ProcessResult.OK;
         }
 
         // skip known
         if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
-            return IngestModuleAbstractFile.ProcessResult.OK;
+            return ProcessResult.OK;
         }
 
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
         filesProcessed++;
         if ((filesToFire) && (filesProcessed % 1000 == 0)) {
-            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
             filesToFire = false;
         }
-        
+
         //skip unsupported
         if (!parsableFormat(content)) {
-            return IngestModuleAbstractFile.ProcessResult.OK;
+            return ProcessResult.OK;
         }
 
         return processFile(content);
     }
 
-    public IngestModuleAbstractFile.ProcessResult processFile(AbstractFile f) {
+    ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
 
@@ -114,7 +98,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             in = new ReadContentInputStream(f);
             bin = new BufferedInputStream(in);
 
-            Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             Metadata metadata = ImageMetadataReader.readMetadata(bin, true);
 
             // Date
@@ -122,7 +106,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             if (exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), MODULE_NAME, date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
             }
 
@@ -133,13 +117,13 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
                 if (loc != null) {
                     double latitude = loc.getLatitude();
                     double longitude = loc.getLongitude();
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), latitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
                 }
-                
+
                 Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude.doubleValue()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
                 }
             }
 
@@ -148,12 +132,12 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null && !model.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), MODULE_NAME, model));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), ExifParserModuleFactory.getModuleName(), model));
                 }
-                
+
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null && !make.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), MODULE_NAME, make));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
                 }
             }
 
@@ -164,14 +148,16 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
                 filesToFire = true;
             }
 
-            return IngestModuleAbstractFile.ProcessResult.OK;
-
+            return ProcessResult.OK;
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata (" + ex.getLocalizedMessage() + ").");
+            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage());
+            return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: " + f.getParentPath() + "/" + f.getName() + "(" + ex.getLocalizedMessage() + ")");
+            logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()});
+            return ProcessResult.ERROR;
         } catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex);
+            return ProcessResult.ERROR;
         } finally {
             try {
                 if (in != null) {
@@ -182,11 +168,9 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to close InputStream.", ex);
+                return ProcessResult.ERROR;
             }
         }
-
-        // If we got here, there was an error
-        return IngestModuleAbstractFile.ProcessResult.ERROR;
     }
 
     /**
@@ -202,44 +186,10 @@ public final class ExifParserFileIngestModule extends IngestModuleAbstractFile {
     }
 
     @Override
-    public void complete() {
-        logger.log(Level.INFO, "completed exif parsing " + this.toString());
+    public void shutDown(boolean ingestJobCancelled) {
         if (filesToFire) {
             //send the final new data event
-            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-    @Override
-    public String getName() {
-        return "Exif Image Parser";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Ingests JPEG files and retrieves their EXIF metadata.";
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        services = IngestServices.getDefault();
-        logger.log(Level.INFO, "init() " + this.toString());
-
-        filesProcessed = 0;
-        filesToFire = false;
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

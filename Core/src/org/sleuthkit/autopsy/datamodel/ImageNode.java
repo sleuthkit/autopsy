@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -66,8 +67,10 @@ public class ImageNode extends AbstractContentNode<Image> {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<Action>();
 
-        actionsList.add(new NewWindowViewAction("View in New Window", this));
-        actionsList.add(new FileSearchAction("Open File Search by Attributes"));
+        actionsList.add(new NewWindowViewAction(
+                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
+        actionsList.add(new FileSearchAction(
+                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.openFileSearchByAttr.text")));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
 
         return actionsList.toArray(new Action[0]);
@@ -82,8 +85,10 @@ public class ImageNode extends AbstractContentNode<Image> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name", "Name", "no description", getName()));
-        // @@@ add more properties here...
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.desc"),
+                getName()));
 
         return s;
     }
@@ -97,7 +102,7 @@ public class ImageNode extends AbstractContentNode<Image> {
     public boolean isLeafTypeNode() {
         return false;
     }
-                
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

@@ -387,7 +387,7 @@ public class Server {
                 try {
                     //block, give time to fully start the process
                     //so if it's restarted solr operations can be resumed seamlessly
-                    Thread.sleep(3000);
+                    Thread.sleep(10000);
                 } catch (InterruptedException ex) {
                     logger.log(Level.WARNING, "Timer interrupted");
                 }
