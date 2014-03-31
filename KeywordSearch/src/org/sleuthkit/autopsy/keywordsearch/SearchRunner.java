@@ -126,6 +126,19 @@ public final class SearchRunner {
     }
     
     /**
+     * Add this list to all of the jobs
+     * @param keywordListName 
+     */
+    public void addKeywordListToAllJobs(String keywordListName) {
+        logger.log(Level.INFO, "Adding keyword list {0} to all jobs", keywordListName);
+        synchronized(this) {
+            for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
+                j.getValue().getKeywordListNames().add(keywordListName);                
+            }
+        }        
+    }
+    
+    /**
      * Commits index and notifies listeners of index update
      */
     private void commit() {
@@ -175,11 +188,11 @@ public final class SearchRunner {
         @Override
         public void actionPerformed(ActionEvent e) {
             commit();
-            
+
+            logger.log(Level.INFO, "Launching searchers");
             synchronized(SearchRunner.this) {
                 // Spawn a search thread for each job
                 ///@todo Don't spawn a new thread if a job still has the previous one running
-                logger.log(Level.INFO, "Launching searchers");    
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
                     SearchJobInfo copy = new SearchJobInfo(j.getValue());            
                     Searcher s = new Searcher(copy, true);
