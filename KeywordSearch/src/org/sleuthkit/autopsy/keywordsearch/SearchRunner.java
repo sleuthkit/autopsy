@@ -121,6 +121,26 @@ public final class SearchRunner {
         doFinalSearch(job);
     }
     
+    public void stopJob(long jobId) {
+        SearchJobInfo job;
+        synchronized(this) {
+            job = jobs.get(jobId);
+            if (job == null) {
+                return;
+            }            
+                
+            ///@todo
+            //stop currentSearcher
+//            if (currentSearcher != null) {
+//                currentSearcher.cancel(true);
+//            }            
+            
+            jobs.remove(jobId);
+        }
+        
+        commit(); 
+    }
+    
     /**
      * Add this list to all of the jobs
      * @param keywordListName 
@@ -201,6 +221,7 @@ public final class SearchRunner {
                 // Spawn a search thread for each job
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
                     SearchJobInfo job = j.getValue();
+                    // If no lists or the worker is already running then skip it
                     if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
                         Searcher s = new Searcher(job);
                         s.execute();
