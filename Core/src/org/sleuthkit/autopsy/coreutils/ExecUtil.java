@@ -90,7 +90,7 @@ public final class ExecUtil {
         outputStringRedirect = null;
 
         //gc process with its streams
-        proc = null;
+        //proc = null;
 
         return output;
     }
@@ -137,7 +137,7 @@ public final class ExecUtil {
         logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
 
         //gc process with its streams
-        proc = null;
+        //proc = null;
     }
 
     /**
