@@ -97,7 +97,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
         importButton = new javax.swing.JButton();
         keywordListsLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(200, 0));
+        setMinimumSize(new java.awt.Dimension(250, 0));
         setPreferredSize(new java.awt.Dimension(250, 492));
 
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
@@ -146,7 +146,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                                 .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
                                 .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 4, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
