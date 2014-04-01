@@ -120,6 +120,11 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
      */
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+        // There are two tasks to do. Use the status helper to set the the 
+        // progress bar to determinate and to set the remaining number of work 
+        // units to be completed.
+        statusHelper.switchToDeterminate(2);
+        
         Case autopsyCase = Case.getCurrentCase();
         SleuthkitCase sleuthkitCase = autopsyCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
@@ -134,6 +139,8 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
                 }                
             }
             
+            statusHelper.progress(1);
+            
             // Get files by creation time.
             long currentTime = System.currentTimeMillis() / 1000;
             long minTime = currentTime - (14 * 24 * 60 * 60); // Go back two weeks.
@@ -146,7 +153,9 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             
             // This method is thread-safe and keeps per ingest job counters.
             addToFileCount(context.getJobId(), fileCount);
-
+            
+            statusHelper.progress(1);
+            
         } catch (TskCoreException ex) {
             IngestServices ingestServices = IngestServices.getInstance();
             Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());

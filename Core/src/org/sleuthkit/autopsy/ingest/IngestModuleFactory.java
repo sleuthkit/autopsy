@@ -23,10 +23,10 @@ package org.sleuthkit.autopsy.ingest;
  * modules. An ingest module factory is used to create instances of a type of
  * data source ingest module, a type of file ingest module, or both.
  * <p>
- * Autopsy will generally use the factory to several instances of each type of
- * module for each ingest job it performs. Completing an ingest job entails
- * processing a single data source (e.g., a disk image) and all of the files
- * from the data source, including files extracted from archives and any
+ * Autopsy will generally use the factory to create several instances of each
+ * type of module for each ingest job it performs. Completing an ingest job
+ * entails processing a single data source (e.g., a disk image) and all of the
+ * files from the data source, including files extracted from archives and any
  * unallocated space (made to look like a series of files). The data source is
  * passed through one or more pipelines of data source ingest modules. The files
  * are passed through one or more pipelines of file ingest modules.
@@ -52,7 +52,7 @@ package org.sleuthkit.autopsy.ingest;
  * @ServiceProvider(service=IngestModuleFactory.class)
  * <p>
  * IMPORTANT TIP: If an implementation of IngestModuleFactory does not need to
- * provide implementations of all of the IngestModuleFactory methods, it can 
+ * provide implementations of all of the IngestModuleFactory methods, it can
  * extend the abstract class IngestModuleFactoryAdapter to get default
  * implementations of most of the IngestModuleFactory methods.
  */

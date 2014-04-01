@@ -57,7 +57,7 @@ public class DataSourceIngestModuleStatusHelper {
      * @param workUnits Total number of work units for the processing of the
      * data source.
      */
-    public void switchToDeterminate(int workUnits) {
+    public void switchToDeterminate(int workUnits) { // RJCTODO: Fix this
         if (progress != null) {
             progress.switchToDeterminate(workUnits);
         }

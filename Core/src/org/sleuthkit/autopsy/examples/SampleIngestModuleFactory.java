@@ -55,10 +55,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * create instances of a type of data source ingest module, a type of file
  * ingest module, or both.
  * <p>
- * Autopsy will generally use the factory to several instances of each type of
- * module for each ingest job it performs. Completing an ingest job entails
- * processing a single data source (e.g., a disk image) and all of the files
- * from the data source, including files extracted from archives and any
+ * Autopsy will generally use the factory to create several instances of each
+ * type of module for each ingest job it performs. Completing an ingest job
+ * entails processing a single data source (e.g., a disk image) and all of the
+ * files from the data source, including files extracted from archives and any
  * unallocated space (made to look like a series of files). The data source is
  * passed through one or more pipelines of data source ingest modules. The files
  * are passed through one or more pipelines of file ingest modules.
