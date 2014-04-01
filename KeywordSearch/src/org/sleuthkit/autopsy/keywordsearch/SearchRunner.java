@@ -39,7 +39,6 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -201,17 +200,19 @@ public final class SearchRunner {
                 // Spawn a search thread for each job
                 ///@todo Don't spawn a new thread if a job still has the previous one running
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                    SearchJobInfo copy = new SearchJobInfo(j.getValue());            
-                    Searcher s = new Searcher(copy, true);
-                    s.execute();
+                    if (!j.getValue().getKeywordListNames().isEmpty()) {
+                        SearchJobInfo copy = new SearchJobInfo(j.getValue());            
+                        Searcher s = new Searcher(copy, true);
+                        s.execute();
+                    }
                 }
             }
         }
     }    
     
     /**
-     * Simple data structure so we can keep track of keyword lists and data sources for each jobid
-     * Provides a copy constructor for defensive copying
+     * Simple data structure so we can keep track of keyword lists and data 
+     * sources for each jobid
      */
     private class SearchJobInfo {
         private long jobId;
