@@ -169,10 +169,17 @@ public final class SearchRunner {
 
         // Run one last search as there are probably some new files committed
         logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());        
-        if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
-            SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
-            finalSearcher.execute();
-            try {
+        if (!job.getKeywordListNames().isEmpty()) {
+            try {           
+                // In case this job still has a worker running, wait for it to finish
+                synchronized(this) {
+                    while(job.isWorkerRunning()) {
+                        this.wait();
+                    }
+                }
+
+                SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
+                finalSearcher.execute();
                 // block until the search is complete
                 finalSearcher.get();        
             } catch (InterruptedException | ExecutionException ex) {
@@ -198,7 +205,7 @@ public final class SearchRunner {
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
                     SearchJobInfo job = j.getValue();
                     if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
-                        Searcher s = new Searcher(job, true);
+                        Searcher s = new Searcher(job);
                         s.execute();
                         job.setWorkerRunning(true);
                     }
@@ -256,7 +263,7 @@ public final class SearchRunner {
         }
         
         public void setWorkerRunning(boolean flag) {
-            workerRunning = flag;
+            workerRunning = flag;           
         }
     }
     
@@ -549,6 +556,12 @@ public final class SearchRunner {
                     finalizeSearcher();
                     stopWatch.stop();
                     job.setWorkerRunning(false);
+                    
+                    // In case the enclosing class instance is waiting on this worker to be done
+                    synchronized(SearchRunner.this) {
+                        SearchRunner.this.notify();
+                    }
+                    
                     logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
                 } finally {
                     //searcherLock.unlock();
