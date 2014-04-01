@@ -39,6 +39,7 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -175,7 +176,13 @@ public final class SearchRunner {
         if (!job.getKeywordListNames().isEmpty()) {
             SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
             finalSearcher.execute();
-        }      
+            try {
+                // block until the search is complete
+                finalSearcher.get();        
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Job {1} final search thread failed: {2}", new Object[]{job.getJobId(), ex});
+            }
+        }
     }
     
    
