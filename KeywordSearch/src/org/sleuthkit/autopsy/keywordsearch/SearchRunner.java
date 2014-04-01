@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
@@ -126,13 +125,11 @@ public final class SearchRunner {
      * Add this list to all of the jobs
      * @param keywordListName 
      */
-    public void addKeywordListToAllJobs(String keywordListName) {
+    public synchronized void addKeywordListToAllJobs(String keywordListName) {
         logger.log(Level.INFO, "Adding keyword list {0} to all jobs", keywordListName);
-        synchronized(this) {
-            for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                j.getValue().addKeywordListName(keywordListName);
-            }
-        }        
+        for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
+            j.getValue().addKeywordListName(keywordListName);
+        }
     }
     
     /**
@@ -309,8 +306,8 @@ public final class SearchRunner {
 
             final String displayName = NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.displayName")
                     + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.finalizeMsg")) : "");
-            progressGroup = AggregateProgressFactory.createSystemHandle(displayName + (" ("
-                    + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.pendingMsg") + ")"), null, new Cancellable() {
+            final String pgDisplayName = displayName + (" (" + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.pendingMsg") + ")");
+            progressGroup = AggregateProgressFactory.createSystemHandle(pgDisplayName, null, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
@@ -326,8 +323,7 @@ public final class SearchRunner {
             ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
             int i = 0;
             for (Keyword keywordQuery : keywords) {
-                subProgresses[i] =
-                        AggregateProgressFactory.createProgressContributor(keywordQuery.getQuery());
+                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getQuery());
                 progressGroup.addContributor(subProgresses[i]);
                 i++;
             }
@@ -357,7 +353,6 @@ public final class SearchRunner {
                     if (keywordsSearched > 0) {
                         subProgresses[keywordsSearched - 1].finish();
                     }
-
 
                     KeywordSearchQuery del = null;
 
@@ -413,8 +408,7 @@ public final class SearchRunner {
                         }
                         subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
 
-
-                        /* cycle through the keywords returned -- only one unless it was a regexp */
+                        // cycle through the keywords returned -- only one unless it was a regexp
                         for (final Keyword hitTerm : newResults.keySet()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
@@ -428,7 +422,6 @@ public final class SearchRunner {
                                 hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                             }
                             subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
-                            //subProgresses[keywordsSearched].progress(unitProgress);
 
                             // this returns the unique files in the set with the first chunk that has a hit
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(newResults.get(hitTerm));
@@ -462,14 +455,12 @@ public final class SearchRunner {
                                 if (list.getIngestMessages()) {
                                     StringBuilder subjectSb = new StringBuilder();
                                     StringBuilder detailsSb = new StringBuilder();
-                                    //final int hitFiles = newResults.size();
 
                                     if (!keywordQuery.isLiteral()) {
                                         subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExpHitLbl"));
                                     } else {
                                         subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLbl"));
                                     }
-                                    //subjectSb.append("<");
                                     String uniqueKey = null;
                                     BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                                     if (attr != null) {
@@ -477,9 +468,6 @@ public final class SearchRunner {
                                         subjectSb.append(keyword);
                                         uniqueKey = keyword.toLowerCase();
                                     }
-
-                                    //subjectSb.append(">");
-                                    //String uniqueKey = queryStr;
 
                                     //details
                                     detailsSb.append("<table border='0' cellpadding='4' width='280'>");
@@ -496,16 +484,13 @@ public final class SearchRunner {
                                         detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.previewThLbl"));
                                         detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                         detailsSb.append("</tr>");
-
                                     }
 
                                     //file
                                     detailsSb.append("<tr>");
                                     detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.fileThLbl"));
                                     detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
-
                                     detailsSb.append("</tr>");
-
 
                                     //list
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
@@ -522,7 +507,6 @@ public final class SearchRunner {
                                             detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExThLbl"));
                                             detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                             detailsSb.append("</tr>");
-
                                         }
                                     }
                                     detailsSb.append("</table>");
