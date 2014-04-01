@@ -231,11 +231,9 @@ class TestRunner(object):
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
-            print("234 attaching " + str(test_data.common_log_path))
             onlyfiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
             for f in onlyfiles:
                if f.endswith("Diff.txt"):
-                  print(str("Attaching " + f))
                   Errors.add_email_attachment(os.path.join(test_data.output_path, f))
             Errors.add_email_attachment(test_data.common_log_path)
 
@@ -752,8 +750,6 @@ class TestResultsDiffer(object):
             test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
             gold_dump=gold_dump).run_diff())
             
-            print("regression 748 db_diff_passed is " + str(test_data.db_diff_passed))
-
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
             # this is needed so dates and times will not cause the diff to fail
@@ -809,7 +805,6 @@ class TestResultsDiffer(object):
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             Errors.add_email_attachment(diff_path)
-            print("806 attaching " + str(diff_path))
             msg = "There was a difference in "
             msg += os.path.basename(output_file) + ".\n"
             Errors.add_email_msg(msg)
@@ -1530,7 +1525,6 @@ class Errors:
         Args:
             file: a pathto_File, the file to add
         """
-        print("1526 attaching " + str(path))
         Errors.email_attachs.append(path)
 
 
