@@ -63,9 +63,7 @@ public final class SearchRunner {
     private Ingester ingester = null;  //guarded by "this"    
     private boolean initialized = false;
     private Timer updateTimer;
-    private Map<Keyword, List<Long>> currentResults;   
-    private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
-    
+    private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"    
     
     SearchRunner() {
         ingester = Server.getIngester();       
@@ -111,18 +109,17 @@ public final class SearchRunner {
      * @param jobId
      */
     public void endJob(long jobId) {        
-        SearchJobInfo copy;
+        SearchJobInfo job;
         synchronized(this) {
-            SearchJobInfo job = jobs.get(jobId);
+            job = jobs.get(jobId);
             if (job == null) {
                 return;
             }            
-            copy = new SearchJobInfo(job);            
             jobs.remove(jobId);
         }
                 
         commit();        
-        doFinalSearch(copy);
+        doFinalSearch(job);
     }
     
     /**
@@ -133,7 +130,7 @@ public final class SearchRunner {
         logger.log(Level.INFO, "Adding keyword list {0} to all jobs", keywordListName);
         synchronized(this) {
             for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                j.getValue().getKeywordListNames().add(keywordListName);                
+                j.getValue().addKeywordListName(keywordListName);
             }
         }        
     }
@@ -160,7 +157,7 @@ public final class SearchRunner {
     }    
     
     /**
-     * Passes arg directly into a Searcher, so providing a copy is a good idea.
+     * 
      * @param job 
      */
     private void doFinalSearch(SearchJobInfo job) {
@@ -201,8 +198,7 @@ public final class SearchRunner {
                 ///@todo Don't spawn a new thread if a job still has the previous one running
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
                     if (!j.getValue().getKeywordListNames().isEmpty()) {
-                        SearchJobInfo copy = new SearchJobInfo(j.getValue());            
-                        Searcher s = new Searcher(copy, true);
+                        Searcher s = new Searcher(j.getValue(), true);
                         s.execute();
                     }
                 }
@@ -211,34 +207,51 @@ public final class SearchRunner {
     }    
     
     /**
-     * Simple data structure so we can keep track of keyword lists and data 
-     * sources for each jobid
+     * Data structure to keep track of keyword lists, current results, and search
+     * running status for each jobid
      */
     private class SearchJobInfo {
-        private long jobId;
-        private long dataSourceId;
-        private List<String> keywordListNames;
-            
+        private final long jobId;
+        private final long dataSourceId;
+        // mutable state:
+        private volatile boolean workerRunning;
+        private List<String> keywordListNames; //guarded by SearchJobInfo.this
+        private Map<Keyword, List<Long>> currentResults; //guarded by SearchJobInfo.this
+        
         public SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
             this.jobId = jobId;
             this.dataSourceId = dataSourceId;
             this.keywordListNames = new ArrayList<>(keywordListNames);
+            currentResults = new HashMap<>();
+            workerRunning = false;
         }
-        
-        public SearchJobInfo(SearchJobInfo src) {
-            this(src.jobId, src.dataSourceId, src.keywordListNames);
-        }
-        
-        long getJobId() {
+              
+        public long getJobId() {
             return jobId;
         }
         
-        long getDataSourceId() {
+        public long getDataSourceId() {
             return dataSourceId;
         }
         
-        List<String> getKeywordListNames() {
-            return keywordListNames;
+        public synchronized List<String> getKeywordListNames() {
+            return new ArrayList<>(keywordListNames);
+        }
+        
+        public synchronized void addKeywordListName(String keywordListName) {
+            keywordListNames.add(keywordListName);
+        }
+        
+        public synchronized List<Long> currentKeywordResults(Keyword k) {
+            return currentResults.get(k);
+        }
+
+        public synchronized void addKeywordResults(Keyword k, List<Long> resultsIDs) {
+            currentResults.put(k, resultsIDs);
+        }
+        
+        boolean isWorkerRunning() {
+            return workerRunning;
         }
     }
     
@@ -606,9 +619,9 @@ public final class SearchRunner {
                 }
 
                 Keyword termResultK = new Keyword(termResult, !isRegex);
-                List<Long> curTermResults = currentResults.get(termResultK);
+                List<Long> curTermResults = job.currentKeywordResults(termResultK);
                 if (curTermResults == null) {
-                    currentResults.put(termResultK, queryTermResultsIDs);
+                    job.addKeywordResults(termResultK, queryTermResultsIDs);
                     newResults.put(termResultK, queryTermResults);
                 } else {
                     //some AbstractFile hits already exist for this keyword
