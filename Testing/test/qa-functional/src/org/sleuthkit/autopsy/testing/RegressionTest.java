@@ -235,10 +235,6 @@ public class RegressionTest extends TestCase {
         jfco0.chooseFile(words);
         JTableOperator jto = new JTableOperator(jdo, 0);
         jto.clickOnCell(0, 0);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
-        if (!(jcbo.isSelected())) {
-            jcbo.doClick();
-        }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
         if (Boolean.parseBoolean(System.getProperty("mugen_mode"))) {
             JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);

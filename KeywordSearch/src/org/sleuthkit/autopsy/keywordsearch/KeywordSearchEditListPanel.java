@@ -237,9 +237,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(340, 300));
-        setPreferredSize(new java.awt.Dimension(340, 420));
-
         jScrollPane1.setPreferredSize(new java.awt.Dimension(340, 300));
 
         keywordTable.setModel(tableModel);
@@ -363,7 +360,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                                                 .addComponent(saveListButton)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(deleteListButton)))))
-                                .addGap(0, 44, Short.MAX_VALUE)))
+                                .addGap(0, 0, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
         listEditorPanelLayout.setVerticalGroup(
@@ -372,7 +369,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addContainerGap()
                 .addComponent(keywordsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 188, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                         .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -385,14 +383,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                         .addGap(123, 123, 123)
                         .addComponent(listOptionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestMessagesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exportButton)
                     .addComponent(saveListButton)
                     .addComponent(deleteListButton))
-                .addGap(42, 42, 42))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -403,7 +401,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(listEditorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
