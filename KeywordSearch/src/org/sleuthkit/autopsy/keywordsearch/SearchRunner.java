@@ -169,7 +169,7 @@ public final class SearchRunner {
 
         // Run one last search as there are probably some new files committed
         logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());        
-        if (!job.getKeywordListNames().isEmpty()) {
+        if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
             SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
             finalSearcher.execute();
             try {
@@ -195,11 +195,12 @@ public final class SearchRunner {
             logger.log(Level.INFO, "Launching searchers");
             synchronized(SearchRunner.this) {
                 // Spawn a search thread for each job
-                ///@todo Don't spawn a new thread if a job still has the previous one running
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                    if (!j.getValue().getKeywordListNames().isEmpty()) {
-                        Searcher s = new Searcher(j.getValue(), true);
+                    SearchJobInfo job = j.getValue();
+                    if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
+                        Searcher s = new Searcher(job, true);
                         s.execute();
+                        job.setWorkerRunning(true);
                     }
                 }
             }
@@ -250,8 +251,12 @@ public final class SearchRunner {
             currentResults.put(k, resultsIDs);
         }
         
-        boolean isWorkerRunning() {
+        public boolean isWorkerRunning() {
             return workerRunning;
+        }
+        
+        public void setWorkerRunning(boolean flag) {
+            workerRunning = flag;
         }
     }
     
@@ -322,9 +327,6 @@ public final class SearchRunner {
 
             progressGroup.start();
 
-            //block to ensure previous searcher is completely done with doInBackground()
-            //even after previous searcher cancellation, we need to check this
-            //searcherLock.lock();
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             try {
@@ -546,6 +548,7 @@ public final class SearchRunner {
                 try {
                     finalizeSearcher();
                     stopWatch.stop();
+                    job.setWorkerRunning(false);
                     logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
                 } finally {
                     //searcherLock.unlock();
@@ -584,15 +587,12 @@ public final class SearchRunner {
                     this.keywordToList.put(k.getQuery(), list);
                 }
             }
-
-
         }
 
         /**
          * Performs the cleanup that needs to be done right AFTER
          * doInBackground() returns without relying on done() method that is not
-         * guaranteed to run after background thread completes REQUIRED to call
-         * this method always right before doInBackground() returns
+         * guaranteed to run.
          */
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
