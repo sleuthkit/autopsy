@@ -231,8 +231,8 @@ class TestRunner(object):
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
-            onlyfiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
-            for f in onlyfiles:
+            diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
+            for f in diffFiles:
                if f.endswith("Diff.txt"):
                   Errors.add_email_attachment(os.path.join(test_data.output_path, f))
             Errors.add_email_attachment(test_data.common_log_path)
