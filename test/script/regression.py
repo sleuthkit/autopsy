@@ -231,7 +231,12 @@ class TestRunner(object):
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
+            diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
+            for f in diffFiles:
+               if f.endswith("Diff.txt"):
+                  Errors.add_email_attachment(os.path.join(test_data.output_path, f))
             Errors.add_email_attachment(test_data.common_log_path)
+
         return logres
 
     def _extract_gold(test_data):
@@ -744,7 +749,7 @@ class TestResultsDiffer(object):
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
             test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
             gold_dump=gold_dump).run_diff())
-
+            
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
             # this is needed so dates and times will not cause the diff to fail
