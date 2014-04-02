@@ -306,12 +306,17 @@ public class IngestManager {
     }
 
     synchronized void reportThreadDone(long threadId) {
+        List<Long> completedJobs = new ArrayList<>();
         for (IngestJob job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
             if (job.areIngestPipelinesShutDown()) {
-                ingestJobs.remove(job.getId());
+                completedJobs.add(job.getId());
             }
         }
+
+        for (Long jobId : completedJobs) {
+            ingestJobs.remove(jobId);
+        }        
     }
 
     synchronized void stopAll() {
@@ -334,9 +339,17 @@ public class IngestManager {
         // Cancel the worker threads.
         if (dataSourceTaskWorker != null) {
             dataSourceTaskWorker.cancel(true);
+            while (!dataSourceTaskWorker.isDone()) {
+                // Wait.
+            }
+            dataSourceTaskWorker = null;
         }
         if (fileTaskWorker != null) {
             fileTaskWorker.cancel(true);
+            while (!fileTaskWorker.isDone()) {
+                // Wait.
+            }
+            fileTaskWorker = null;
         }
 
         // Jettision the remaining tasks. This will dispose of any tasks that
@@ -502,7 +515,6 @@ public class IngestManager {
                     logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
-
                 IngestJob job = scheduler.next();
                 DataSourceIngestPipeline pipeline = job.getDataSourceIngestPipelineForThread(this.id);
                 pipeline.process(this, job.getDataSourceTaskProgressBar());
@@ -544,7 +556,6 @@ public class IngestManager {
             IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
             while (fileScheduler.hasNext()) {
                 if (isCancelled()) {
-                    IngestManager.getInstance().reportThreadDone(this.id);
                     logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }

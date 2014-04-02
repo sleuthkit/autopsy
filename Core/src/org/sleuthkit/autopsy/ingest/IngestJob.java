@@ -167,6 +167,7 @@ final class IngestJob {
         dataSourceIngestPipelines.remove(threadId);
         if (dataSourceIngestPipelines.isEmpty() && dataSourceTaskProgress != null) {
             dataSourceTaskProgress.finish();
+            dataSourceTaskProgress = null;
         }
 
         FileIngestPipeline fileIngestPipeline = fileIngestPipelines.get(threadId);
@@ -176,6 +177,7 @@ final class IngestJob {
         fileIngestPipelines.remove(threadId);
         if (fileIngestPipelines.isEmpty() && fileTasksProgress != null) {
             fileTasksProgress.finish();
+            fileTasksProgress = null;
         }
 
         return errors;
