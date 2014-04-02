@@ -347,9 +347,9 @@ public final class SearchRunner {
                 logger.log(Level.INFO, "Pending start of new searcher");
             }
 
-            final String displayName = NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.displayName")
-                    + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.finalizeMsg")) : "");
-            final String pgDisplayName = displayName + (" (" + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.pendingMsg") + ")");
+            final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
+                    + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
+            final String pgDisplayName = displayName + (" (" + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") + ")");
             progressGroup = AggregateProgressFactory.createSystemHandle(pgDisplayName, null, new Cancellable() {
                 @Override
                 public boolean cancel() {
