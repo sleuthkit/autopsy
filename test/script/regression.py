@@ -43,7 +43,8 @@ import zlib
 import Emailer
 import srcupdater
 from regression_utils import *
-
+import shutil
+import ntpath
 #
 # Please read me...
 #
@@ -152,8 +153,9 @@ class TestRunner(object):
         if (len(logres)>0):
             for lm in logres:
                 for ln in lm:
-                    Errors.add_email_msg(ln)
-
+                    #EMAIL HERE
+                   Errors.add_email_msg(ln)
+#LOTS OF EMAIL HERE
         # TODO: possibly worth putting this in a sub method
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             Errors.add_email_msg("All images passed.\n")
@@ -166,8 +168,9 @@ class TestRunner(object):
             html = open(test_config.html_log)
             Errors.add_email_attachment(html.name)
             html.close()
-
+#EMAIL HERE
             if test_config.email_enabled:
+                setupAttachments(Errors.email_attachs, test_config)
                 Emailer.send_email(test_config.mail_to, test_config.mail_server,
                 test_config.mail_subject, Errors.email_body, Errors.email_attachs)
 
@@ -234,6 +237,7 @@ class TestRunner(object):
             diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
             for f in diffFiles:
                if f.endswith("Diff.txt"):
+                  #EMAIL HERE
                   Errors.add_email_attachment(os.path.join(test_data.output_path, f))
             Errors.add_email_attachment(test_data.common_log_path)
         return logres
@@ -303,6 +307,7 @@ class TestRunner(object):
             shutil.copy(test_data.sorted_log, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
+            #EMAIL HERE
             Errors.add_email_message("Not rebuilt properly")
             print(str(e))
             print(traceback.format_exc())
@@ -365,6 +370,7 @@ class TestRunner(object):
         test_data.ant.append("-Dgold_path=" + test_config.gold)
         test_data.ant.append("-Dout_path=" +
         make_local_path(test_data.output_path))
+        test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
@@ -609,6 +615,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         # Email info
+        # EMAIL HERE
         self.email_enabled = args.email_enabled
         self.mail_server = ""
         self.mail_to = ""
@@ -650,7 +657,10 @@ class TestConfiguration(object):
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
                 self.img_gold = make_path(self.gold, 'tmp')
-
+            if parsed_config.getElementsByTagName("diffdir"):
+                self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
+                print("660 self.diff_dir is " + str(self.diff_dir))
+#EMAIL HERE
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
             self._init_email_info(parsed_config)
@@ -658,6 +668,7 @@ class TestConfiguration(object):
         except IOError as e:
             msg = "There was an error loading the configuration file.\n"
             msg += "\t" + str(e)
+            # EMAIL HERE
             Errors.add_email_msg(msg)
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
@@ -691,6 +702,7 @@ class TestConfiguration(object):
             else:
                 msg = "File: " + value + " doesn't exist"
                 Errors.print_error(msg)
+                #EMAIL HERE
                 Errors.add_email_msg(msg)
         image_count = len(self.images)
 
@@ -704,7 +716,7 @@ class TestConfiguration(object):
             print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
         elif (image_count < gold_count):
             print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-
+#EMAIL HERE
     def _init_email_info(self, parsed_config):
         """Initializes email information dictionary"""
         email_elements = parsed_config.getElementsByTagName("email")
@@ -803,6 +815,7 @@ class TestResultsDiffer(object):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
+            #EMAIL HERE
             Errors.add_email_attachment(diff_path)
             msg = "There was a difference in "
             msg += os.path.basename(output_file) + ".\n"
@@ -1472,6 +1485,7 @@ class Errors:
         email_attchs: a listof_pathto_File, the files to be attached to the
         report email
     """
+    #EMAIL HERE
     printout = []
     printerror = []
     email_body = ""
@@ -1484,6 +1498,7 @@ class Errors:
         Args:
             image_name: a String, representing the current image being tested
         """
+        #EMAIL HERE
         Errors.email_msg_prefix = image_name
 
     def print_out(msg):
@@ -1508,7 +1523,7 @@ class Errors:
         """Reset the image-specific attributes of the Errors class."""
         Errors.printout = []
         Errors.printerror = []
-
+#EMAIL HERE
     def add_email_msg(msg):
         """Add the given message to the body of the report email.
 
@@ -1523,6 +1538,7 @@ class Errors:
         Args:
             file: a pathto_File, the file to add
         """
+        #EMAIL HERE
         Errors.email_attachs.append(path)
 
 
@@ -1605,6 +1621,7 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
+        #EMAIL HERE
         self.email_enabled = False
 
     def parse(self):
@@ -1666,6 +1683,7 @@ class Args(object):
                 print("Not downloading new images")
                 self.fr = True
             elif arg == "--email":
+                #EMAIL HERE
                 self.email_enabled = True
             else:
                 print(usage())
@@ -1875,10 +1893,21 @@ def find_file_in_dir(dir, name, ext):
     except:
         raise DirNotFoundException(dir)
 
+def setupAttachments(attachments, test_config):
+    for file in attachments:
+        print(str(file))
+        print(str(test_config.diff_dir))
+        print("I need to figure out how to move these things into that folder.")
+        filename = ntpath.basename(file)
+        destination = os.path.join(test_config.diff_dir, filename)
+        call = ['cp', file, destination]
+        print("call is " + str(call))
+        subprocess.call(call)
+        #shutil.copy2(filename, os.path.join(test_config.diff_dir, filename))
+        
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
-
 
 if __name__ == "__main__":
     global SYS
