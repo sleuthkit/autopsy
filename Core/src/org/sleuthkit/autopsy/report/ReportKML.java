@@ -49,7 +49,7 @@ import org.jdom2.Element;
 import org.jdom2.Namespace;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-
+import org.apache.commons.lang.StringEscapeUtils;
 /**
  * ReportBodyFile generates a report in the body file format specified on
  * The Sleuth Kit wiki as MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
@@ -134,8 +134,13 @@ import org.jdom2.output.XMLOutputter;
                          }
                      }
                      if (lon != 0 && lat != 0) {
-                         aFile=artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-                         geoPath= aFile.getUniquePath();
+                        aFile=artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
+                                    
+                        extractedToPath = reportPath +aFile.getName();
+                        geoPath=extractedToPath;
+                        f = new File(extractedToPath);
+                        f.createNewFile();
+                        copyFileUsingStream(aFile,f);
                          imageName= aFile.getName();
                          out.write(String.valueOf(lat));
                          out.write(";");
@@ -146,13 +151,6 @@ import org.jdom2.output.XMLOutputter;
                          out.write(String.valueOf(imageName));
                          out.write("\n");
                          // lat lon path name
-           
-                         
-                         
-                        extractedToPath = reportPath +aFile.getName();
-                        f = new File(extractedToPath);
-                        f.createNewFile();
-                        copyFileUsingStream(aFile,f);
                      }
                  }
                  out.flush();
@@ -226,9 +224,16 @@ import org.jdom2.output.XMLOutputter;
                          pmName.setText(lineParts[3].trim());
                          placemark.addContent(pmName);
 
+                         // Path
+                         Element pmPath = new Element("Path", ns);
+                         pmPath.setText(lineParts[2].trim());
+                         placemark.addContent(pmPath);
+                         
                          // description
-                         Element pmDescription = new Element("Path", ns);
-                         pmDescription.setText(lineParts[2].trim());
+                         Element pmDescription = new Element("description", ns);
+                         String xml= "<![CDATA[  \n" +" <img src='file:///"+lineParts[2].trim()+"' width='400' /><br/&gt;  \n" ;
+                         StringEscapeUtils.unescapeXml(xml);
+                         pmDescription.setText(xml);
                          placemark.addContent(pmDescription);
 
                          // styleUrl
