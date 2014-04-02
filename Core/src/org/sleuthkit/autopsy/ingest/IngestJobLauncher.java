@@ -92,7 +92,7 @@ public final class IngestJobLauncher {
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);
             } else if (disabledModuleNames.contains(moduleName)) {
-                moduleTemplate.setEnabled(true);
+                moduleTemplate.setEnabled(false);
             } else {
                 // The module factory was loaded, but the module name does not
                 // appear in the enabled/disabled module settings. Treat the
