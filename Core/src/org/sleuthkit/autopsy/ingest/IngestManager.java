@@ -306,12 +306,17 @@ public class IngestManager {
     }
 
     synchronized void reportThreadDone(long threadId) {
+        List<Long> completedJobs = new ArrayList<>();
         for (IngestJob job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
             if (job.areIngestPipelinesShutDown()) {
-                ingestJobs.remove(job.getId());
+                completedJobs.add(job.getId());
             }
         }
+
+        for (Long jobId : completedJobs) {
+            ingestJobs.remove(jobId);
+        }        
     }
 
     synchronized void stopAll() {
@@ -334,9 +339,17 @@ public class IngestManager {
         // Cancel the worker threads.
         if (dataSourceTaskWorker != null) {
             dataSourceTaskWorker.cancel(true);
+            while (!dataSourceTaskWorker.isDone()) {
+                // Wait.
+            }
+            dataSourceTaskWorker = null;
         }
         if (fileTaskWorker != null) {
             fileTaskWorker.cancel(true);
+            while (!fileTaskWorker.isDone()) {
+                // Wait.
+            }
+            fileTaskWorker = null;
         }
 
         // Jettision the remaining tasks. This will dispose of any tasks that
@@ -488,7 +501,6 @@ public class IngestManager {
     class DataSourceTaskWorker extends SwingWorker<Object, Void> {
 
         private final long id;
-        private ProgressHandle progress;
 
         DataSourceTaskWorker(long threadId) {
             this.id = threadId;
@@ -497,39 +509,17 @@ public class IngestManager {
         @Override
         protected Void doInBackground() throws Exception {
             logger.log(Level.INFO, "Data source ingest thread (id={0}) started", this.id);
-
-            // Set up a progress bar that can be used to cancel all of the 
-            // ingest jobs currently being performed. 
-            progress = ProgressHandleFactory.createHandle("Data source ingest", new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", DataSourceTaskWorker.this.id);
-                    if (progress != null) {
-                        progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                "IngestManager.DataSourceTaskWorker.process.cancelling",
-                                "Data source ingest"));
-                    }
-                    IngestManager.getInstance().stopAll();
-                    return true;
-                }
-            });
-            progress.start();
-            progress.switchToIndeterminate();
-
             IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
             while (scheduler.hasNext()) {
                 if (isCancelled()) {
                     logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
-
-                IngestJob ingestJob = scheduler.next();
-                IngestJob.DataSourceIngestPipeline pipeline = ingestJob.getDataSourceIngestPipelineForThread(this.id);
-                pipeline.process(this, this.progress);
+                IngestJob job = scheduler.next();
+                DataSourceIngestPipeline pipeline = job.getDataSourceIngestPipelineForThread(this.id);
+                pipeline.process(this, job.getDataSourceTaskProgressBar());
             }
-
             logger.log(Level.INFO, "Data source ingest thread (id={0}) completed", this.id);
-            IngestManager.getInstance().reportThreadDone(this.id);
             return null;
         }
 
@@ -539,13 +529,11 @@ public class IngestManager {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
                 logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
-                IngestManager.getInstance().reportThreadDone(this.id);
             } catch (Exception ex) {
                 String message = String.format("Data source ingest thread (id=%d) experienced a fatal error", this.id);
                 logger.log(Level.SEVERE, message, ex);
-                IngestManager.getInstance().reportThreadDone(this.id);
             } finally {
-                progress.finish();
+                IngestManager.getInstance().reportThreadDone(this.id);
             }
         }
     }
@@ -557,7 +545,6 @@ public class IngestManager {
     class FileTaskWorker extends SwingWorker<Object, Void> {
 
         private final long id;
-        private ProgressHandle progress;
 
         FileTaskWorker(long threadId) {
             this.id = threadId;
@@ -566,58 +553,19 @@ public class IngestManager {
         @Override
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, "File ingest thread (id={0}) started", this.id);
-
-            // Set up a progress bar that can be used to cancel all of the 
-            // ingest jobs currently being performed. 
-            final String displayName = NbBundle
-                    .getMessage(this.getClass(), "IngestManager.FileTaskWorker.displayName");
-            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", FileTaskWorker.this.id);
-                    if (progress != null) {
-                        progress.setDisplayName(
-                                NbBundle.getMessage(this.getClass(), "IngestManager.FileTaskWorker.process.cancelling",
-                                displayName));
-                    }
-                    IngestManager.getInstance().stopAll();
-                    return true;
-                }
-            });
-            progress.start();
-            progress.switchToIndeterminate();
             IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
-            int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
-            progress.switchToDeterminate(totalEnqueuedFiles);
-
-            int processedFiles = 0;
             while (fileScheduler.hasNext()) {
                 if (isCancelled()) {
-                    IngestManager.getInstance().reportThreadDone(this.id);
                     logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
-
                 IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
-                AbstractFile file = task.getFile();
-                progress.progress(file.getName(), processedFiles);
-                IngestJob.FileIngestPipeline pipeline = task.getJob().getFileIngestPipelineForThread(this.id);
-                pipeline.process(file);
-
-                // Update the progress bar.
-                int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
-                if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
-                    totalEnqueuedFiles = newTotalEnqueuedFiles + 1;
-                    progress.switchToIndeterminate();
-                    progress.switchToDeterminate(totalEnqueuedFiles);
-                }
-                if (processedFiles < totalEnqueuedFiles) {
-                    ++processedFiles;
-                }
+                IngestJob job = task.getJob();
+                FileIngestPipeline pipeline = job.getFileIngestPipelineForThread(this.id);
+                job.handleFileTaskStarted(task);
+                pipeline.process(task.getFile());
             }
-
             logger.log(Level.INFO, "File ingest thread (id={0}) completed", this.id);
-            IngestManager.getInstance().reportThreadDone(this.id);
             return null;
         }
 
@@ -627,13 +575,11 @@ public class IngestManager {
                 super.get();
             } catch (CancellationException | InterruptedException e) {
                 logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
-                IngestManager.getInstance().reportThreadDone(this.id);
             } catch (Exception ex) {
                 String message = String.format("File ingest thread {0} experienced a fatal error", this.id);
                 logger.log(Level.SEVERE, message, ex);
-                IngestManager.getInstance().reportThreadDone(this.id);
             } finally {
-                progress.finish();
+                IngestManager.getInstance().reportThreadDone(this.id);
             }
         }
     }

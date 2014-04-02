@@ -231,6 +231,10 @@ class TestRunner(object):
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
+            diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
+            for f in diffFiles:
+               if f.endswith("Diff.txt"):
+                  Errors.add_email_attachment(os.path.join(test_data.output_path, f))
             Errors.add_email_attachment(test_data.common_log_path)
         return logres
 
@@ -1242,7 +1246,6 @@ class Logs(object):
             # Set the TestData start time based off the first line of autopsy.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
-
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
@@ -1261,27 +1264,27 @@ class Logs(object):
 
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
             test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
-
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-
+            
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
-
-            message_line = search_log_set("autopsy", "Ingest messages count:", test_data)[0]
-            test_data.ingest_messages = int(message_line.rstrip().split(": ")[2])
-
-            files_line = search_log_set("autopsy", "Indexed files count:", test_data)[0]
-            test_data.indexed_files = int(files_line.rstrip().split(": ")[2])
-
-            chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_data)[0]
-            test_data.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
+            
+            message_line_count = find_msg_in_log_set("Ingest messages count:", test_data)
+            test_data.indexed_files = message_line_count
+            
+            files_line_count = find_msg_in_log_set("Indexed files count:", test_data)
+            test_data.indexed_files = files_line_count
+            
+            chunks_line_count = find_msg_in_log_set("Indexed file chunks count:", test_data)
+            test_data.indexed_chunks = chunks_line_count
+            
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to find the required information to fill test_config data.")
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
-            service_lines = search_log("autopsy.log.0", "to process()", test_data)
+            service_lines = find_msg_in_log("autopsy.log.0", "to process()", test_data)
             service_list = []
             for line in service_lines:
                 words = line.split(" ")
@@ -1769,6 +1772,40 @@ def search_log_set(type, string, test_data):
             log.close()
     return results
 
+def find_msg_in_log_set(string, test_data):
+   """Count how many strings of a certain type are in a log set.
+
+   Args:
+      string: the String to search for.
+      test_data: the TestData containing the logs to search.
+   Returns:
+      an int, the number of occurances of the string type.
+   """
+   count = 0
+   try:
+      line = search_log_set("autopsy", string, test_data)[0]
+      count = int(line.rstrip().split(": ")[2])
+   except (Exception) as e:
+      # there weren't any matching messages found
+      pass
+   return count
+            
+def find_msg_in_log(log, string, test_data):
+   """Get the strings of a certain type that are in a log.
+
+   Args:
+      string: the String to search for.
+      test_data: the TestData containing the log to search.
+   Returns:
+      a listof_String, the lines on which the String was found. 
+   """
+   lines = []
+   try:
+      lines = search_log("autopsy.log.0", string, test_data)[0]
+   except (Exception) as e:
+      # there weren't any matching messages found
+      pass
+   return lines
 
 def clear_dir(dir):
     """Clears all files from a directory and remakes it.
