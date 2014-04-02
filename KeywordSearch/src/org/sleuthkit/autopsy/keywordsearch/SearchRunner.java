@@ -104,7 +104,8 @@ public final class SearchRunner {
     }
     
     /**
-     *
+     * Perform normal finishing of searching for this job, including one last
+     * commit and search. Blocks until the final search is complete.
      * @param jobId
      */
     public void endJob(long jobId) {        
@@ -118,9 +119,15 @@ public final class SearchRunner {
         }
                 
         commit();        
-        doFinalSearch(job);
+        doFinalSearch(job); //this will block until it's done
     }
     
+    
+    /**
+     * Immediate stop and removal of job from SearchRunner. Cancels the 
+     * associated search worker if it's still running.
+     * @param jobId
+     */
     public void stopJob(long jobId) {
         SearchJobInfo job;
         synchronized(this) {
@@ -129,11 +136,11 @@ public final class SearchRunner {
                 return;
             }            
                 
-            ///@todo
             //stop currentSearcher
-//            if (currentSearcher != null) {
-//                currentSearcher.cancel(true);
-//            }            
+            SearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
+            if ((currentSearcher != null) && (!currentSearcher.isDone())) {
+                currentSearcher.cancel(true);
+            }            
             
             jobs.remove(jobId);
         }
@@ -174,7 +181,8 @@ public final class SearchRunner {
     }    
     
     /**
-     * 
+     * A final search waits for any still-running workers, and then executes a
+     * new one and waits until that is done.
      * @param job 
      */
     private void doFinalSearch(SearchJobInfo job) {
@@ -196,9 +204,12 @@ public final class SearchRunner {
                 }
 
                 SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
-                finalSearcher.execute();
+                job.setCurrentSearcher(finalSearcher); //save the ref
+                finalSearcher.execute(); //start thread
+                
                 // block until the search is complete
-                finalSearcher.get();        
+                finalSearcher.get();
+                
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Job {1} final search thread failed: {2}", new Object[]{job.getJobId(), ex});
             }
@@ -223,8 +234,9 @@ public final class SearchRunner {
                     SearchJobInfo job = j.getValue();
                     // If no lists or the worker is already running then skip it
                     if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
-                        Searcher s = new Searcher(job);
-                        s.execute();
+                        Searcher searcher = new Searcher(job);
+                        job.setCurrentSearcher(searcher); //save the ref                        
+                        searcher.execute(); //start thread
                         job.setWorkerRunning(true);
                     }
                 }
@@ -243,6 +255,7 @@ public final class SearchRunner {
         private volatile boolean workerRunning;
         private List<String> keywordListNames; //guarded by SearchJobInfo.this
         private Map<Keyword, List<Long>> currentResults; //guarded by SearchJobInfo.this
+        private SearchRunner.Searcher currentSearcher;
         
         public SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
             this.jobId = jobId;
@@ -250,6 +263,7 @@ public final class SearchRunner {
             this.keywordListNames = new ArrayList<>(keywordListNames);
             currentResults = new HashMap<>();
             workerRunning = false;
+            currentSearcher = null;
         }
               
         public long getJobId() {
@@ -283,6 +297,14 @@ public final class SearchRunner {
         public void setWorkerRunning(boolean flag) {
             workerRunning = flag;           
         }
+        
+        public synchronized SearchRunner.Searcher getCurrentSearcher() {
+            return currentSearcher;
+        }
+        
+        public synchronized void setCurrentSearcher(SearchRunner.Searcher searchRunner) {
+            currentSearcher = searchRunner;
+        }
     }
     
     /**
@@ -306,7 +328,7 @@ public final class SearchRunner {
 
         Searcher(SearchJobInfo job) {
             this.job = job;
-            this.keywordLists = job.getKeywordListNames();            
+            this.keywordLists = job.getKeywordListNames();
             keywords = new ArrayList<>();
             keywordToList = new HashMap<>();
             //keywords are populated as searcher runs
