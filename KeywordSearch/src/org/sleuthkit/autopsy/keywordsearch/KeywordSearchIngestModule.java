@@ -87,7 +87,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private Tika tikaFormatDetector;
-    private long jobId = 0; ///@todo get from IngestJobContext
+    private long jobId;
     private long dataSourceId;
     
     private enum IngestStatus {
@@ -114,11 +114,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     public void startUp(IngestJobContext context) throws IngestModuleException {
         logger.log(Level.INFO, "init()");
         initialized = false;
-
+        
+        jobId = context.getJobId();
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
-
         tikaFormatDetector = new Tika();
-
         ingester = Server.getIngester();
 
         final Server server = KeywordSearch.getServer();
