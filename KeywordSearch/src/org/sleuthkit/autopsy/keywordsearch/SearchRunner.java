@@ -56,13 +56,13 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public final class SearchRunner {
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
-    private AtomicInteger messageID = new AtomicInteger(0);            
+    private AtomicInteger messageID = new AtomicInteger(0);
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;  //guarded by "this"    
     private boolean initialized = false;
     private Timer updateTimer;
-    private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"    
+    private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
     private static final Object finalSearchLock = new Object(); //used for a condition wait
     
     SearchRunner() {
@@ -236,7 +236,7 @@ public final class SearchRunner {
                     // If no lists or the worker is already running then skip it
                     if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
                         Searcher searcher = new Searcher(job);
-                        job.setCurrentSearcher(searcher); //save the ref                        
+                        job.setCurrentSearcher(searcher); //save the ref
                         searcher.execute(); //start thread
                         job.setWorkerRunning(true);
                     }
@@ -582,17 +582,15 @@ public final class SearchRunner {
             } finally {
                 try {
                     finalizeSearcher();
-                    stopWatch.stop();
+                    stopWatch.stop();                   
                     
+                    logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
+                } finally {
                     // In case the enclosing class instance is waiting on this worker to be done
                     synchronized(SearchRunner.finalSearchLock) {
                         job.setWorkerRunning(false);
                         SearchRunner.finalSearchLock.notify();
                     }
-                    
-                    logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
-                } finally {
-                    //searcherLock.unlock();
                 }
             }
 
