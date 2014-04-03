@@ -34,13 +34,12 @@ import xml
 from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
 import smtplib
-from email.mime.image import MIMEImage
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+#from email.mime.image import MIMEImage
+#from email.mime.multipart import MIMEMultipart
+#from email.mime.text import MIMEText
 import re
 import zipfile
 import zlib
-import Emailer
 import srcupdater
 from regression_utils import *
 import shutil
@@ -131,7 +130,6 @@ class TestRunner(object):
         logres =[]
         for test_data in test_data_list:
             Errors.clear_print_logs()
-            Errors.set_testing_phase(test_data.image)
             if not (test_config.args.rebuild or os.path.exists(test_data.gold_archive)):
                 msg = "Gold standard doesn't exist, skipping image:"
                 Errors.print_error(msg)
@@ -154,25 +152,18 @@ class TestRunner(object):
             for lm in logres:
                 for ln in lm:
                     #EMAIL HERE
-                   Errors.add_email_msg(ln)
+                    print("I should probably do something with " + str(ln) + " on line 156...")
 #LOTS OF EMAIL HERE
         # TODO: possibly worth putting this in a sub method
         if all([ test_data.overall_passed for test_data in test_data_list ]):
-            Errors.add_email_msg("All images passed.\n")
+            print("something needs to be done here")
         else:
-            msg = "The following images failed:\n"
-            for test_data in test_data_list:
-                if not test_data.overall_passed:
-                    msg += "\t" + test_data.image + "\n"
-            Errors.add_email_msg(msg)
             html = open(test_config.html_log)
             Errors.add_email_attachment(html.name)
             html.close()
 #EMAIL HERE
-            if test_config.email_enabled:
-                setupAttachments(Errors.email_attachs, test_config)
-                Emailer.send_email(test_config.mail_to, test_config.mail_server,
-                test_config.mail_subject, Errors.email_body, Errors.email_attachs)
+        if test_config.jenkins:
+            setupAttachments(Errors.email_attachs, test_config)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -588,6 +579,7 @@ class TestConfiguration(object):
         images: a listof_Image, the images to be tested
         timeout: a Nat, the amount of time before killing the test
         ant: a listof_String, the ant command to run the tests
+        jenkins: a boolean, is this test running through a Jenkins job?
     """
 
     def __init__(self, args):
@@ -620,6 +612,7 @@ class TestConfiguration(object):
         self.mail_server = ""
         self.mail_to = ""
         self.mail_subject = ""
+        self.jenkins = False
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -657,13 +650,14 @@ class TestConfiguration(object):
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
                 self.img_gold = make_path(self.gold, 'tmp')
-            if parsed_config.getElementsByTagName("diffdir"):
-                self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
-                print("660 self.diff_dir is " + str(self.diff_dir))
-#EMAIL HERE
+            if parsed_config.getElementsByTagName("jenkins"):
+                self.jenkins = True
+                if parsed_config.getElementsByTagName("diffdir"):
+                    self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
+            else:
+                self.jenkins = False
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
-            self._init_email_info(parsed_config)
 
         except IOError as e:
             msg = "There was an error loading the configuration file.\n"
@@ -716,27 +710,6 @@ class TestConfiguration(object):
             print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
         elif (image_count < gold_count):
             print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-#EMAIL HERE
-    def _init_email_info(self, parsed_config):
-        """Initializes email information dictionary"""
-        email_elements = parsed_config.getElementsByTagName("email")
-        if email_elements:
-            mail_to = email_elements[0]
-            self.mail_to = mail_to.getAttribute("value").encode().decode("utf_8")
-        mail_server_elements = parsed_config.getElementsByTagName("mail_server")
-        if mail_server_elements:
-            mail_from = mail_server_elements[0]
-            self.mail_server = mail_from.getAttribute("value").encode().decode("utf_8")
-        subject_elements = parsed_config.getElementsByTagName("subject")
-        if subject_elements:
-            subject = subject_elements[0]
-            self.mail_subject = subject.getAttribute("value").encode().decode("utf_8")
-        if self.mail_server and self.mail_to and self.args.email_enabled:
-            self.email_enabled = True
-            print("Email will be sent to ", self.mail_to)
-        else:
-            self.email_enabled = False
-            print("No email will be sent.")
 
 
 #-------------------------------------------------#
@@ -817,10 +790,6 @@ class TestResultsDiffer(object):
             subprocess.call(dffcmdlst, stdout = diff_file)
             #EMAIL HERE
             Errors.add_email_attachment(diff_path)
-            msg = "There was a difference in "
-            msg += os.path.basename(output_file) + ".\n"
-            Errors.add_email_msg(msg)
-            Errors.print_error(msg)
             return False
         else:
             return True
@@ -1480,26 +1449,13 @@ class Errors:
     Attributes:
         printout: a listof_String, the non-error messages that were printed
         printerror: a listof_String, the error messages that were printed
-        email_body: a String, the body of the report email
-        email_msg_prefix: a String, the prefix for lines added to the email
         email_attchs: a listof_pathto_File, the files to be attached to the
         report email
     """
     #EMAIL HERE
     printout = []
     printerror = []
-    email_body = ""
-    email_msg_prefix = "Configuration"
     email_attachs = []
-
-    def set_testing_phase(image_name):
-        """Change the email message prefix to be the given testing phase.
-
-        Args:
-            image_name: a String, representing the current image being tested
-        """
-        #EMAIL HERE
-        Errors.email_msg_prefix = image_name
 
     def print_out(msg):
         """Print out an informational message.
@@ -1523,14 +1479,6 @@ class Errors:
         """Reset the image-specific attributes of the Errors class."""
         Errors.printout = []
         Errors.printerror = []
-#EMAIL HERE
-    def add_email_msg(msg):
-        """Add the given message to the body of the report email.
-
-        Args:
-            msg: a String, the message to be added to the email
-        """
-        Errors.email_body += Errors.email_msg_prefix + ":" + msg
 
     def add_email_attachment(path):
         """Add the given file to be an attachment for the report email
@@ -1894,6 +1842,14 @@ def find_file_in_dir(dir, name, ext):
         raise DirNotFoundException(dir)
 
 def setupAttachments(attachments, test_config):
+    """Move email attachments to the location specified in the config file.
+       Used for Jenkins build.
+       
+    Args:
+       attachments: a listof_String, the files to be moved
+       test_config: TestConfiguration, used to determine where to move the files to
+    """
+    
     for file in attachments:
         filename = ntpath.basename(file)
         destination = os.path.join(test_config.diff_dir, filename)
