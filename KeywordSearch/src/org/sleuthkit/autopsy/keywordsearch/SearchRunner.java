@@ -500,9 +500,11 @@ public final class SearchRunner {
                                     StringBuilder detailsSb = new StringBuilder();
 
                                     if (!keywordQuery.isLiteral()) {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExpHitLbl"));
+                                        //subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExpHitLbl"));
+                                        subjectSb.append("RegEx"); ///@todo make a bundle prop for this
                                     } else {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLbl"));
+                                        //subjectSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLbl"));
+                                        subjectSb.append("Keyword"); ///@todo make a bundle prop for this
                                     }
                                     String uniqueKey = null;
                                     BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
@@ -516,7 +518,8 @@ public final class SearchRunner {
                                     detailsSb.append("<table border='0' cellpadding='4' width='280'>");
                                     //hit
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLThLbl"));
+                                    //detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.kwHitLThLbl"));
+                                    detailsSb.append("Keyword"); ///@todo make a bundle prop for this
                                     detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
@@ -524,21 +527,25 @@ public final class SearchRunner {
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                                     if (attr != null) {
                                         detailsSb.append("<tr>");
-                                        detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.previewThLbl"));
+                                        //detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.previewThLbl"));
+                                        detailsSb.append("Preview"); ///@todo make a bundle prop for this                                    
                                         detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                         detailsSb.append("</tr>");
                                     }
 
                                     //file
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.fileThLbl"));
+                                    //detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.fileThLbl"));
+                                    detailsSb.append("File"); ///@todo make a bundle prop for this                                    
                                     detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
                                     detailsSb.append("</tr>");
 
                                     //list
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.listThLbl"));
+                                    //detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.listThLbl"));
+                                    detailsSb.append("List"); ///@todo make a bundle prop for this                                    
+
                                     detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                     detailsSb.append("</tr>");
 
@@ -547,7 +554,9 @@ public final class SearchRunner {
                                         attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                         if (attr != null) {
                                             detailsSb.append("<tr>");
-                                            detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExThLbl"));
+                                            //detailsSb.append(NbBundle.getMessage(this.getClass(), "SearchRunner.regExThLbl"));
+                                            detailsSb.append("RegEx"); ///@todo make a bundle prop for this                                    
+
                                             detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                             detailsSb.append("</tr>");
                                         }
