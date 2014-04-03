@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -97,6 +98,8 @@ public final class SearchRunner {
             jobs.put(jobId, jobData);         
         }
         
+        jobs.get(jobId).incrementModuleReferenceCount();
+        
         if (jobs.size() > 0) {            
             if (!updateTimer.isRunning()) {
                 updateTimer.start();              
@@ -111,16 +114,24 @@ public final class SearchRunner {
      */
     public void endJob(long jobId) {        
         SearchJobInfo job;
+        boolean readyForFinalSearch = false;
         synchronized(this) {
             job = jobs.get(jobId);
             if (job == null) {
                 return;
-            }            
-            jobs.remove(jobId);
+            }
+            
+            // Only do final search if this is the last module in this job to call endJob()
+            if(job.decrementModuleReferenceCount() == 0) {
+                jobs.remove(jobId);
+                readyForFinalSearch = true;
+            }
         }
-                
-        commit();        
-        doFinalSearch(job); //this will block until it's done
+            
+        if (readyForFinalSearch) {
+            commit();        
+            doFinalSearch(job); //this will block until it's done
+        }
     }
     
     
@@ -257,7 +268,8 @@ public final class SearchRunner {
         private List<String> keywordListNames; //guarded by SearchJobInfo.this
         private Map<Keyword, List<Long>> currentResults; //guarded by SearchJobInfo.this
         private SearchRunner.Searcher currentSearcher;
-        
+        private AtomicLong moduleReferenceCount = new AtomicLong(0);
+
         public SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
             this.jobId = jobId;
             this.dataSourceId = dataSourceId;
@@ -306,6 +318,14 @@ public final class SearchRunner {
         public synchronized void setCurrentSearcher(SearchRunner.Searcher searchRunner) {
             currentSearcher = searchRunner;
         }
+        
+        public void incrementModuleReferenceCount() {
+            moduleReferenceCount.incrementAndGet();
+        }
+        
+        public long decrementModuleReferenceCount() {
+            return moduleReferenceCount.decrementAndGet();
+        }        
     }
     
     /**

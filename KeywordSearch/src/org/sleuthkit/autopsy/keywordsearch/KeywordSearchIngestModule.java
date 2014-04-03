@@ -80,7 +80,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
     private AtomicInteger messageID = new AtomicInteger(0);            
-    private boolean processedFiles;
+    private boolean startedSearching = false;
     private SleuthkitCase caseHandle = null;
     private static List<AbstractFileExtract> textExtractors;
     private static AbstractFileStringExtract stringExtractor;
@@ -88,7 +88,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private boolean initialized = false;
     private Tika tikaFormatDetector;
     private long jobId;
-    private long dataSourceId;
+    private long dataSourceId;   
     
     private enum IngestStatus {
 
@@ -179,8 +179,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
         }
 
-        processedFiles = false;
-
         indexer = new Indexer();
 
         final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
@@ -219,14 +217,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             return ProcessResult.OK;
         }
 
-        processedFiles = true;
-
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
 
         // Start searching if it hasn't started already
-        List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
-        SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);       
+        if (!startedSearching) {
+            List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
+            SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
+            startedSearching = true;
+        }
         
         return ProcessResult.OK;
     }
