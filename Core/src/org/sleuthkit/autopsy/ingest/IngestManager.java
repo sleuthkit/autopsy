@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import java.util.prefs.Preferences;
-import org.openide.util.Exceptions;
 
 /**
  * Manages the execution of ingest jobs.
@@ -50,12 +49,12 @@ public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private static IngestManager instance;
-    private final IngestScheduler scheduler;
+    private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final Preferences userPreferences = NbPreferences.forModule(this.getClass());
     private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
-    private TaskSchedulingWorker taskSchedulingWorker;
-    private DataSourceTaskWorker dataSourceTaskWorker;
+    private TaskSchedulingWorker taskSchedulingWorker = null;
+    private DataSourceTaskWorker dataSourceTaskWorker = null;
     private final List<FileTaskWorker> fileTaskWorkers = new ArrayList<>();
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
@@ -111,8 +110,6 @@ public class IngestManager {
     };
 
     private IngestManager() {
-        this.scheduler = IngestScheduler.getInstance();
-        //numberOfFileIngestThreads = user
     }
 
     /**
@@ -153,7 +150,7 @@ public class IngestManager {
                 || numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS) {
             numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
         }
-        userPreferences.putInt(null, numberOfThreads);
+        userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
     }
 
     /**
@@ -304,7 +301,8 @@ public class IngestManager {
         // Make sure a data source task worker is running.
         // TODO: There is a race condition here with SwingWorker.isDone().
         // The highly unlikely chance that no data source task worker will 
-        // run for this job needs to be addressed.
+        // run for this job needs to be addressed. Fix by using a thread pool 
+        // and converting the SwingWorkers to Runnables.
         if (dataSourceTaskWorker == null || dataSourceTaskWorker.isDone()) {
             dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId());
             dataSourceTaskWorker.execute();
@@ -314,7 +312,8 @@ public class IngestManager {
         // TODO: There is a race condition here with SwingWorker.isDone().
         // The highly unlikely chance that no file task workers or the wrong
         // number of file task workers will run for this job needs to be 
-        // addressed. 
+        // addressed. Fix by using a thread pool and converting the SwingWorkers
+        // to Runnables.
         int workersRequested = getNumberOfFileIngestThreads();
         int workersRunning = 0;
         for (FileTaskWorker worker : fileTaskWorkers) {
@@ -420,7 +419,9 @@ public class IngestManager {
      */
     public synchronized boolean isIngestRunning() {
         // TODO: There is a race condition here with SwingWorker.isDone().
-        // It probably needs to be addressed at a later date.
+        // It probably needs to be addressed at a later date. If we replace the
+        // SwingWorkers with a thread pool and Runnables, one solution would be
+        // to check the ingest jobs list.
         if (taskSchedulingWorker != null && !taskSchedulingWorker.isDone()) {
             return true;
         }
