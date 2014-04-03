@@ -1895,13 +1895,10 @@ def find_file_in_dir(dir, name, ext):
 
 def setupAttachments(attachments, test_config):
     for file in attachments:
-        print(str(file))
-        print(str(test_config.diff_dir))
-        print("I need to figure out how to move these things into that folder.")
         filename = ntpath.basename(file)
         destination = os.path.join(test_config.diff_dir, filename)
         call = ['cp', file, destination]
-        print("call is " + str(call))
+        print("about to copy " + file + " to " + destination)
         subprocess.call(call)
         #shutil.copy2(filename, os.path.join(test_config.diff_dir, filename))
         
