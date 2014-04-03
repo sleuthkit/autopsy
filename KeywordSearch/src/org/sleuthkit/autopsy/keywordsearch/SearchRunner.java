@@ -63,6 +63,7 @@ public final class SearchRunner {
     private boolean initialized = false;
     private Timer updateTimer;
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"    
+    private static final Object finalSearchLock = new Object(); //used for a condition wait
     
     SearchRunner() {
         ingester = Server.getIngester();       
@@ -93,12 +94,12 @@ public final class SearchRunner {
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
         if (!jobs.containsKey(jobId)) {
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
-            jobs.put(jobId, jobData);
+            jobs.put(jobId, jobData);         
         }
         
         if (jobs.size() > 0) {            
             if (!updateTimer.isRunning()) {
-                updateTimer.start();
+                updateTimer.start();              
             }
         }
     }
@@ -195,11 +196,11 @@ public final class SearchRunner {
         // Run one last search as there are probably some new files committed
         logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());        
         if (!job.getKeywordListNames().isEmpty()) {
-            try {           
+            try {
                 // In case this job still has a worker running, wait for it to finish
-                synchronized(this) {
+                synchronized(finalSearchLock) {
                     while(job.isWorkerRunning()) {
-                        this.wait();
+                        finalSearchLock.wait();
                     }
                 }
 
@@ -582,11 +583,11 @@ public final class SearchRunner {
                 try {
                     finalizeSearcher();
                     stopWatch.stop();
-                    job.setWorkerRunning(false);
                     
                     // In case the enclosing class instance is waiting on this worker to be done
-                    synchronized(SearchRunner.this) {
-                        SearchRunner.this.notify();
+                    synchronized(SearchRunner.finalSearchLock) {
+                        job.setWorkerRunning(false);
+                        SearchRunner.finalSearchLock.notify();
                     }
                     
                     logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
