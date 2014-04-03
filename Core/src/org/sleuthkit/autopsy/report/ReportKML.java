@@ -8,9 +8,6 @@ package org.sleuthkit.autopsy.report;
  * Autopsy Forensic Browser
  * 
  * Copyright 2012 Basis Technology Corp.
- * 
- * Copyright 2012 42six Solutions.
- * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -124,11 +121,12 @@ import org.apache.commons.lang.StringEscapeUtils;
                      geoPath = "";
                      String extractedToPath;
                      for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                         if (attribute.getAttributeTypeID() == 54) //latitude
+                         if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) //latitude
                          {
+                            
                              lat = attribute.getValueDouble();
                          }
-                         if (attribute.getAttributeTypeID() == 55) //longitude
+                         if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) //longitude
                          {
                              lon = attribute.getValueDouble();
                          }

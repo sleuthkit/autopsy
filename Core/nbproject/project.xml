@@ -220,14 +220,6 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jdom-2.0.5-junit.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jdom-2.0.5-junit.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jdom-2.0.5-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jdom-2.0.5-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
             </class-path-extension>
