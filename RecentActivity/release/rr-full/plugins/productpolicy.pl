@@ -69,28 +69,31 @@ sub pluginmain {
 	my $key;
 	my $key_path = "ControlSet00".$curr."\\Control\\ProductOptions";
 	if ($key = $root_key->get_subkey($key_path)) {
-		my $prod;
 		eval {
-			$prod = $key->get_value("ProductPolicy")->get_data();
+			my $v1 = $key->get_value("ProductPolicy");
+                        if (defined $v1) {
+                            my $prod = $v1->get_data();
+                            my %pol = parseData($prod);	
+                            ::rptMsg("");
+                            ::rptMsg("Note: This plugin applies to Vista and Windows 2008 ONLY.");
+                            ::rptMsg("For a listing of names and values, see:");
+                            ::rptMsg("http://www.geoffchappell.com/viewer.htm?doc=notes/windows/license/install.htm&tx=3,5,6;4");
+                            ::rptMsg("");	
+                            foreach my $p (sort keys %pol) {
+                                    ::rptMsg($p." - ".$pol{$p});
+                            }
+
+                            if (exists $prodinfo{$pol{"Kernel\-ProductInfo"}}) {
+                                    ::rptMsg("");
+                                    ::rptMsg("Kernel\-ProductInfo = ".$prodinfo{$pol{"Kernel\-ProductInfo"}});
+                            }
+                        }
+                        else {
+                            ::rptMsg("Error getting ProductPolicy value");
+                        }
 		};
 		if ($@) {
 			::rptMsg("Error getting ProductPolicy value: $@");
-		}
-		else {	
-			my %pol = parseData($prod);	
-			::rptMsg("");
-			::rptMsg("Note: This plugin applies to Vista and Windows 2008 ONLY.");
-			::rptMsg("For a listing of names and values, see:");
-			::rptMsg("http://www.geoffchappell.com/viewer.htm?doc=notes/windows/license/install.htm&tx=3,5,6;4");
-			::rptMsg("");	
-			foreach my $p (sort keys %pol) {
-				::rptMsg($p." - ".$pol{$p});
-			}
-			
-			if (exists $prodinfo{$pol{"Kernel\-ProductInfo"}}) {
-				::rptMsg("");
-				::rptMsg("Kernel\-ProductInfo = ".$prodinfo{$pol{"Kernel\-ProductInfo"}});
-			}
 		}
 	}
 	else {
