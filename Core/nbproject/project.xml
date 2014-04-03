@@ -212,10 +212,6 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jdom-2.0.5-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jdom-2.0.5-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
             </class-path-extension>
