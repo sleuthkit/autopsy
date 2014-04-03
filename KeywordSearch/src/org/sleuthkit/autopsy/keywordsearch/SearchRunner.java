@@ -161,13 +161,15 @@ public final class SearchRunner {
     }
     
     /**
-     * Add this list to all of the jobs
+     * Add these lists to all of the jobs
      * @param keywordListName 
      */
-    public synchronized void addKeywordListToAllJobs(String keywordListName) {
-        logger.log(Level.INFO, "Adding keyword list {0} to all jobs", keywordListName);
-        for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-            j.getValue().addKeywordListName(keywordListName);
+    public synchronized void addKeywordListsToAllJobs(List<String> keywordListNames) {
+        for(String listName : keywordListNames) {
+            logger.log(Level.INFO, "Adding keyword list {0} to all jobs", listName);
+            for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
+                j.getValue().addKeywordListName(listName);
+            }
         }
     }
     
@@ -292,7 +294,9 @@ public final class SearchRunner {
         }
         
         public synchronized void addKeywordListName(String keywordListName) {
-            keywordListNames.add(keywordListName);
+            if (!keywordListNames.contains(keywordListName)) {
+                keywordListNames.add(keywordListName);
+            }
         }
         
         public synchronized List<Long> currentKeywordResults(Keyword k) {
