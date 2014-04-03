@@ -31,11 +31,13 @@ public class DataSourceIngestModuleStatusHelper {
     private final SwingWorker worker;
     private final ProgressHandle progress;
     private final Content dataSource;
+    private final String moduleDisplayName;
 
-    DataSourceIngestModuleStatusHelper(SwingWorker worker, ProgressHandle progress, Content dataSource) {
+    DataSourceIngestModuleStatusHelper(SwingWorker worker, ProgressHandle progress, Content dataSource, String moduleDisplayName) {
         this.worker = worker;
         this.progress = progress;
         this.dataSource = dataSource;
+        this.moduleDisplayName = moduleDisplayName;
     }
 
     /**
@@ -81,7 +83,7 @@ public class DataSourceIngestModuleStatusHelper {
      */
     public void progress(int workUnits) {
         if (progress != null) {
-            progress.progress(dataSource.getName(), workUnits);
+            progress.progress(this.moduleDisplayName, workUnits);
         }
     }
 }
