@@ -320,9 +320,9 @@ public class IngestManager {
             if (worker != null) {
                 if (worker.isDone()) {
                     if (workersRunning < workersRequested) {
-                        ++workersRunning;
                         worker = new FileTaskWorker(getNextThreadId());
                         worker.execute();
+                        ++workersRunning;
                     } else {
                         worker = null;
                     }
@@ -330,16 +330,17 @@ public class IngestManager {
                     ++workersRunning;
                 }
             } else if (workersRunning < workersRequested) {
-                ++workersRunning;
                 worker = new FileTaskWorker(getNextThreadId());
                 worker.execute();
+                ++workersRunning;
             }
         }
-        if (workersRunning < workersRequested
+        while (workersRunning < workersRequested
                 && fileTaskWorkers.size() < MAX_NUMBER_OF_FILE_INGEST_THREADS) {
             FileTaskWorker worker = new FileTaskWorker(getNextThreadId());
-            worker.execute();
             fileTaskWorkers.add(worker);
+            worker.execute();
+            ++workersRunning;
         }
     }
 
