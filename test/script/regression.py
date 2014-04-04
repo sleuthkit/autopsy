@@ -34,9 +34,6 @@ import xml
 from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
 import smtplib
-#from email.mime.image import MIMEImage
-#from email.mime.multipart import MIMEMultipart
-#from email.mime.text import MIMEText
 import re
 import zipfile
 import zlib
@@ -147,23 +144,16 @@ class TestRunner(object):
             time.sleep(10)
 
         Reports.write_html_foot(test_config.html_log)
-        # TODO: move this elsewhere
-        if (len(logres)>0):
-            for lm in logres:
-                for ln in lm:
-                    #EMAIL HERE
-                    print("I should probably do something with " + str(ln) + " on line 156...")
-#LOTS OF EMAIL HERE
         # TODO: possibly worth putting this in a sub method
         if all([ test_data.overall_passed for test_data in test_data_list ]):
-            print("something needs to be done here")
+            pass 
         else:
             html = open(test_config.html_log)
-            Errors.add_email_attachment(html.name)
+            Errors.add_errors_out(html.name)
             html.close()
-#EMAIL HERE
+        
         if test_config.jenkins:
-            setupAttachments(Errors.email_attachs, test_config)
+            setupAttachments(Errors.errors_out, test_config)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -228,9 +218,8 @@ class TestRunner(object):
             diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
             for f in diffFiles:
                if f.endswith("Diff.txt"):
-                  #EMAIL HERE
-                  Errors.add_email_attachment(os.path.join(test_data.output_path, f))
-            Errors.add_email_attachment(test_data.common_log_path)
+                  Errors.add_errors_out(os.path.join(test_data.output_path, f))
+            Errors.add_errors_out(test_data.common_log_path)
         return logres
 
     def _extract_gold(test_data):
@@ -298,8 +287,6 @@ class TestRunner(object):
             shutil.copy(test_data.sorted_log, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
-            #EMAIL HERE
-            Errors.add_email_message("Not rebuilt properly")
             print(str(e))
             print(traceback.format_exc())
         # Rebuild the HTML report
@@ -606,12 +593,6 @@ class TestConfiguration(object):
         # Infinite Testing info
         timer = 0
         self.images = []
-        # Email info
-        # EMAIL HERE
-        self.email_enabled = args.email_enabled
-        self.mail_server = ""
-        self.mail_to = ""
-        self.mail_subject = ""
         self.jenkins = False
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
@@ -662,8 +643,6 @@ class TestConfiguration(object):
         except IOError as e:
             msg = "There was an error loading the configuration file.\n"
             msg += "\t" + str(e)
-            # EMAIL HERE
-            Errors.add_email_msg(msg)
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
 
@@ -696,8 +675,6 @@ class TestConfiguration(object):
             else:
                 msg = "File: " + value + " doesn't exist"
                 Errors.print_error(msg)
-                #EMAIL HERE
-                Errors.add_email_msg(msg)
         image_count = len(self.images)
 
         # Sanity check to see if there are obvious gold images that we are not testing
@@ -788,8 +765,7 @@ class TestResultsDiffer(object):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
-            #EMAIL HERE
-            Errors.add_email_attachment(diff_path)
+            Errors.add_errors_out(diff_path)
             return False
         else:
             return True
@@ -1452,10 +1428,9 @@ class Errors:
         email_attchs: a listof_pathto_File, the files to be attached to the
         report email
     """
-    #EMAIL HERE
     printout = []
     printerror = []
-    email_attachs = []
+    errors_out = []
 
     def print_out(msg):
         """Print out an informational message.
@@ -1480,14 +1455,13 @@ class Errors:
         Errors.printout = []
         Errors.printerror = []
 
-    def add_email_attachment(path):
+    def add_errors_out(path):
         """Add the given file to be an attachment for the report email
 
         Args:
             file: a pathto_File, the file to add
         """
-        #EMAIL HERE
-        Errors.email_attachs.append(path)
+        Errors.errors_out.append(path)
 
 
 class DiffResults(object):
@@ -1569,8 +1543,6 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
-        #EMAIL HERE
-        self.email_enabled = False
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -1630,9 +1602,6 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
-            elif arg == "--email":
-                #EMAIL HERE
-                self.email_enabled = True
             else:
                 print(usage())
                 return False
@@ -1854,9 +1823,7 @@ def setupAttachments(attachments, test_config):
         filename = ntpath.basename(file)
         destination = os.path.join(test_config.diff_dir, filename)
         call = ['cp', file, destination]
-        print("about to copy " + file + " to " + destination)
         subprocess.call(call)
-        #shutil.copy2(filename, os.path.join(test_config.diff_dir, filename))
         
 
 class OS:
