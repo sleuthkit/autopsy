@@ -579,7 +579,7 @@ public final class SearchRunner {
                                     }
                                     detailsSb.append("</table>");
 
-                                    services.postMessage(IngestMessage.createDataMessage(messageID.incrementAndGet(), KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                    services.postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
                             } //for each file hit
 
@@ -628,7 +628,7 @@ public final class SearchRunner {
                 get();
             } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(messageID.incrementAndGet(), KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }

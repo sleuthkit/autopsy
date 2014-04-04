@@ -79,6 +79,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private Indexer indexer;
     //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
+
     private AtomicInteger messageID = new AtomicInteger(0);            
     private boolean startedSearching = false;
     private SleuthkitCase caseHandle = null;
@@ -126,7 +127,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                 logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(messageID.getAndIncrement(), KeywordSearchModuleFactory.getModuleName(), msg, details));
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                 throw new IngestModuleException(msg);
             }
         } catch (KeywordSearchModuleException ex) {
@@ -134,7 +135,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             //this means Solr is not properly initialized
             String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
             String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(messageID.getAndIncrement(), KeywordSearchModuleFactory.getModuleName(), msg, details));
+            services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
             throw new IngestModuleException(msg);
         }
         try {
@@ -175,7 +176,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             }
         }
         if (!hasKeywordsForSearch) {
-            services.postMessage(IngestMessage.createWarningMessage(messageID.getAndIncrement(), KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+            services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
         }
 
@@ -333,7 +334,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         msg.append("</table>");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats);
-        services.postMessage(IngestMessage.createMessage(messageID.getAndIncrement(), MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
         if (error_index > 0) {
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
