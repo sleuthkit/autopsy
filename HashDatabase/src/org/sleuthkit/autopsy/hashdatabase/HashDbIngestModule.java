@@ -56,10 +56,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
-    private int knownBadCount = 0;
-    private long calctime = 0;
-    private long lookuptime = 0;
-    long jobID;
+    private long jobID;
     static HashMap<Long, Long> refMap = new HashMap<>(); 
     static AtomicLong totalKnownBadCount = new AtomicLong(0);
     static AtomicLong totalCalctime = new AtomicLong(0);
@@ -145,7 +142,6 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 long calcstart = System.currentTimeMillis();
                 md5Hash = hasher.calculateMd5(file);
                 long delta = (System.currentTimeMillis() - calcstart);
-                calctime += delta;
                 totalCalctime.addAndGet(delta);
                 
             } catch (IOException ex) {
@@ -171,7 +167,6 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 HashInfo hashInfo = db.lookUp(file);
                 if (null != hashInfo) {
                     foundBad = true;
-                    knownBadCount += 1;
                     totalKnownBadCount.incrementAndGet();
                     
                     try {
@@ -207,7 +202,6 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                     postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                 }
                 long delta = (System.currentTimeMillis() - lookupstart);
-                lookuptime += delta;
                 totalLookuptime.addAndGet(delta);
 
             } catch (TskException ex) {
@@ -241,7 +235,6 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                         }
                     }
                     long delta = (System.currentTimeMillis() - lookupstart);
-                    lookuptime += delta;
                     totalLookuptime.addAndGet(delta);
 
                 } catch (TskException ex) {
