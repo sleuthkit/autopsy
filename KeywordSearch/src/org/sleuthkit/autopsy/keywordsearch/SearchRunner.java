@@ -58,17 +58,13 @@ public final class SearchRunner {
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;  //guarded by "ingester"    
-    private boolean initialized = false;
     private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
     
     SearchRunner() {
         ingester = Server.getIngester();       
-
         updateTimer = new Timer(true); // run as a daemon
-
-        initialized = true;
     }
     
     /**
@@ -180,20 +176,18 @@ public final class SearchRunner {
      * Commits index and notifies listeners of index update
      */
     private void commit() {
-        if (initialized) {
-            logger.log(Level.INFO, "Committing index");
-            synchronized(ingester) {
-                ingester.commit();
-            }
-            logger.log(Level.INFO, "Index comitted");
+        logger.log(Level.INFO, "Committing index");
+        synchronized(ingester) {
+            ingester.commit();
+        }
+        logger.log(Level.INFO, "Index comitted");
 
-            // Signal a potential change in number of text_ingested files
-            try {
-                final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-                KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
-            } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
-            }
+        // Signal a potential change in number of text_ingested files
+        try {
+            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
+            KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
+        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
         }
     }    
     
