@@ -57,7 +57,7 @@ public final class SearchRunner {
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
-    private Ingester ingester = null;  //guarded by "this"    
+    private Ingester ingester = null;  //guarded by "ingester"    
     private boolean initialized = false;
     private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
@@ -91,6 +91,7 @@ public final class SearchRunner {
      */
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
         if (!jobs.containsKey(jobId)) {
+            logger.log(Level.INFO, "Adding job {0}", jobId);
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
             jobs.put(jobId, jobData);         
         }
@@ -113,6 +114,7 @@ public final class SearchRunner {
      * @param jobId
      */
     public void endJob(long jobId) {        
+        logger.log(Level.INFO, "Ending job {0}", jobId);
         SearchJobInfo job;
         boolean readyForFinalSearch = false;
         synchronized(this) {
@@ -141,6 +143,8 @@ public final class SearchRunner {
      * @param jobId
      */
     public void stopJob(long jobId) {
+        logger.log(Level.INFO, "Stopping job");
+
         SearchJobInfo job;
         synchronized(this) {
             job = jobs.get(jobId);
@@ -179,7 +183,7 @@ public final class SearchRunner {
     private void commit() {
         if (initialized) {
             logger.log(Level.INFO, "Committing index");
-            synchronized(this) {
+            synchronized(ingester) {
                 ingester.commit();
             }
             logger.log(Level.INFO, "Index comitted");
@@ -207,7 +211,7 @@ public final class SearchRunner {
                 // In case this job still has a worker running, wait for it to finish
                 synchronized(finalSearchLock) {
                     while(job.isWorkerRunning()) {
-                        finalSearchLock.wait();
+                        finalSearchLock.wait(); //wait() releases the lock
                     }
                 }
 
