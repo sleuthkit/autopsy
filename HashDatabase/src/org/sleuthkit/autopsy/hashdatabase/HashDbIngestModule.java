@@ -57,6 +57,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
     private long jobID;
+    // Maps a JobId to the count of instances
     static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
     static AtomicLong totalKnownBadCount = new AtomicLong(0);
     static AtomicLong totalCalctime = new AtomicLong(0);
