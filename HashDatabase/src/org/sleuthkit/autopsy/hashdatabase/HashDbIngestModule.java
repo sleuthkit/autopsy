@@ -57,20 +57,20 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
     private long jobID;
-    static HashMap<Long, Long> refMap = new HashMap<>(); 
+    static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
     static AtomicLong totalKnownBadCount = new AtomicLong(0);
     static AtomicLong totalCalctime = new AtomicLong(0);
     static AtomicLong totalLookuptime = new AtomicLong(0);
     
-    private static synchronized void refMapIncrement(long jobID) {
-        long count = refMap.containsKey(jobID) ? refMap.get(jobID) : 0;
-        refMap.put(jobID, count + 1);    
+    private static synchronized void moduleRefCountIncrement(long jobID) {
+        long count = moduleRefCount.containsKey(jobID) ? moduleRefCount.get(jobID) : 0;
+        moduleRefCount.put(jobID, count + 1);    
     }
     
-    private static synchronized long refMapDecrementAndGet(long jobID) {
-        if (refMap.containsKey(jobID)) {
-            long count = refMap.get(jobID);
-            refMap.put(jobID, --count);
+    private static synchronized long moduleRefCountDecrementAndGet(long jobID) {
+        if (moduleRefCount.containsKey(jobID)) {
+            long count = moduleRefCount.get(jobID);
+            moduleRefCount.put(jobID, --count);
             return count;
         } else {
             return 0;
@@ -84,7 +84,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobID = context.getJobId();
-        refMapIncrement(jobID);
+        moduleRefCountIncrement(jobID);
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         if (knownBadHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(
@@ -316,7 +316,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        if (refMapDecrementAndGet(jobID) == 0) {
+        if (moduleRefCountDecrementAndGet(jobID) == 0) {
             if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details
