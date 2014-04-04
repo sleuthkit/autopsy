@@ -111,7 +111,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private Set<Long> curDataSourceIds;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
-    private volatile int messageID = 0; // RJCTODO: Despite volatile, this is not thread safe, uses increment (not atomic)
     private boolean processedFiles;
     private SleuthkitCase caseHandle = null;
     private static List<AbstractFileExtract> textExtractors;
@@ -157,7 +156,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                 logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                 throw new IngestModuleException(msg);
             }
         } catch (KeywordSearchModuleException ex) {
@@ -165,7 +164,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             //this means Solr is not properly initialized
             String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
             String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), msg, details));
+            services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
             throw new IngestModuleException(msg);
         }
         try {
@@ -206,7 +205,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             }
         }
         if (!hasKeywordsForSearch) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+            services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
         }
 
@@ -432,7 +431,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         msg.append("</table>");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats);
-        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
         if (error_index > 0) {
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
@@ -959,7 +958,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                                     }
                                     detailsSb.append("</table>");
 
-                                    services.postMessage(IngestMessage.createDataMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                    services.postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
                             } //for each file hit
 
@@ -1003,7 +1002,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 get();
             } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }
