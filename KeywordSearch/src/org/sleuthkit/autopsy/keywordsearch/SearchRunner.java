@@ -19,8 +19,6 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,12 +27,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.Timer;
+import java.util.Timer;
+import java.util.TimerTask;
 import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
@@ -57,11 +55,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public final class SearchRunner {
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
-    private AtomicInteger messageID = new AtomicInteger(0);
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;  //guarded by "this"    
     private boolean initialized = false;
+    private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
     private static final Object finalSearchLock = new Object(); //used for a condition wait
@@ -69,8 +67,7 @@ public final class SearchRunner {
     SearchRunner() {
         ingester = Server.getIngester();       
 
-        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
-        updateTimer = new Timer(updateIntervalMs, new SearchRunner.UpdateTimerAction());
+        updateTimer = new Timer(true); // run as a daemon
 
         initialized = true;
     }
@@ -100,9 +97,12 @@ public final class SearchRunner {
         
         jobs.get(jobId).incrementModuleReferenceCount();
         
-        if (jobs.size() > 0) {            
-            if (!updateTimer.isRunning()) {
-                updateTimer.start();              
+        if (jobs.size() > 0) {
+            final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
+            if (!updateTimerRunning) {
+                logger.log(Level.INFO, "Scheduling update daemon");
+                updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
+                updateTimerRunning = true;
             }
         }
     }
@@ -126,9 +126,9 @@ public final class SearchRunner {
                 jobs.remove(jobId);
                 readyForFinalSearch = true;
             }
-        }
-            
-        if (readyForFinalSearch) {
+        }                  
+        
+        if (readyForFinalSearch) {          
             commit();        
             doFinalSearch(job); //this will block until it's done
         }
@@ -146,8 +146,8 @@ public final class SearchRunner {
             job = jobs.get(jobId);
             if (job == null) {
                 return;
-            }            
-                
+            }
+            
             //stop currentSearcher
             SearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
             if ((currentSearcher != null) && (!currentSearcher.isDone())) {
@@ -178,7 +178,7 @@ public final class SearchRunner {
      */
     private void commit() {
         if (initialized) {
-            logger.log(Level.INFO, "Commiting index");
+            logger.log(Level.INFO, "Committing index");
             synchronized(this) {
                 ingester.commit();
             }
@@ -200,12 +200,6 @@ public final class SearchRunner {
      * @param job 
      */
     private void doFinalSearch(SearchJobInfo job) {
-        // Cancel timer to ensure unwanted searchers do not start before we 
-        // start the final one
-        if (updateTimer.isRunning()) {
-            updateTimer.stop();
-        }
-
         // Run one last search as there are probably some new files committed
         logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());        
         if (!job.getKeywordListNames().isEmpty()) {
@@ -234,11 +228,17 @@ public final class SearchRunner {
     /**
      * Timer triggered re-search for each job (does a single index commit first)
      */
-    private class UpdateTimerAction implements ActionListener {
-        private final Logger logger = Logger.getLogger(SearchRunner.UpdateTimerAction.class.getName());
+    private class UpdateTimerTask extends TimerTask {
+        private final Logger logger = Logger.getLogger(SearchRunner.UpdateTimerTask.class.getName());
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void run() {
+            if (jobs.isEmpty()) {
+                this.cancel(); //terminate this timer task
+                updateTimerRunning = false;
+                return;
+            }
+            
             commit();
 
             logger.log(Level.INFO, "Launching searchers");
