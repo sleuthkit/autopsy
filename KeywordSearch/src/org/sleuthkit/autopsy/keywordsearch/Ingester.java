@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -66,7 +65,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
-    private boolean uncommitedIngests = false;
+    private volatile boolean uncommitedIngests = false;
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
@@ -74,8 +73,7 @@ class Ingester {
    
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
-    private final static int MAX_DOC_CHUNK_SIZE = 1024*1024;
-    private final byte[] docChunkContentBuf = new byte[MAX_DOC_CHUNK_SIZE];
+    private static final int MAX_DOC_CHUNK_SIZE = 1024*1024;
     private static final String docContentEncoding = "UTF-8";
 
 
@@ -286,6 +284,7 @@ class Ingester {
             throw new IngesterException(msg);
         }
         
+        final byte[] docChunkContentBuf = new byte[MAX_DOC_CHUNK_SIZE];
         SolrInputDocument updateDoc = new SolrInputDocument();
 
         for (String key : fields.keySet()) {
