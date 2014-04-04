@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -80,7 +79,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
-    private AtomicInteger messageID = new AtomicInteger(0);            
     private boolean startedSearching = false;
     private SleuthkitCase caseHandle = null;
     private List<AbstractFileExtract> textExtractors;
@@ -196,7 +194,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
         try {
             //add data source id of the file to the set, keeping track of images being ingested
-            ///@todo this should come from IngestJobContext
             dataSourceId = caseHandle.getFileDataSource(abstractFile);
 
         } catch (TskCoreException ex) {
@@ -238,6 +235,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
 
         if (ingestJobCancelled) {
+            logger.log(Level.INFO, "Ingest job cancelled");
             stop();
             return;
         }
