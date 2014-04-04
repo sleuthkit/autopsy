@@ -62,7 +62,6 @@ public final class SearchRunner {
     private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
-    private static final Object finalSearchLock = new Object(); //used for a condition wait
     
     SearchRunner() {
         ingester = Server.getIngester();       
@@ -209,11 +208,7 @@ public final class SearchRunner {
         if (!job.getKeywordListNames().isEmpty()) {
             try {
                 // In case this job still has a worker running, wait for it to finish
-                synchronized(finalSearchLock) {
-                    while(job.isWorkerRunning()) {
-                        finalSearchLock.wait(); //wait() releases the lock
-                    }
-                }
+                job.waitForCurrentWorker();
 
                 SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
                 job.setCurrentSearcher(finalSearcher); //save the ref
@@ -237,6 +232,7 @@ public final class SearchRunner {
 
         @Override
         public void run() {
+            // If no jobs then cancel the task. If more job(s) come along, a new task will start up.
             if (jobs.isEmpty()) {
                 this.cancel(); //terminate this timer task
                 updateTimerRunning = false;
@@ -275,6 +271,7 @@ public final class SearchRunner {
         private Map<Keyword, List<Long>> currentResults; //guarded by SearchJobInfo.this
         private SearchRunner.Searcher currentSearcher;
         private AtomicLong moduleReferenceCount = new AtomicLong(0);
+        private final Object finalSearchLock = new Object(); //used for a condition wait
 
         public SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
             this.jobId = jobId;
@@ -333,7 +330,29 @@ public final class SearchRunner {
         
         public long decrementModuleReferenceCount() {
             return moduleReferenceCount.decrementAndGet();
-        }        
+        }
+        
+        /** In case this job still has a worker running, wait for it to finish
+         * 
+         * @throws InterruptedException 
+         */
+        public void waitForCurrentWorker() throws InterruptedException {            
+            synchronized(finalSearchLock) {
+                while(workerRunning) {
+                    finalSearchLock.wait(); //wait() releases the lock
+                }
+            }
+        }
+        
+        /**
+         * Unset workerRunning and wake up thread(s) waiting on finalSearchLock 
+         */
+        public void searchNotify() {
+            synchronized(finalSearchLock) {                        
+                workerRunning = false;
+                finalSearchLock.notify();
+            }
+        }
     }
     
     /**
@@ -614,11 +633,8 @@ public final class SearchRunner {
                     
                     logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
                 } finally {
-                    // In case the enclosing class instance is waiting on this worker to be done
-                    synchronized(SearchRunner.finalSearchLock) {
-                        job.setWorkerRunning(false);
-                        SearchRunner.finalSearchLock.notify();
-                    }
+                    // In case a thread is waiting on this worker to be done
+                    job.searchNotify();
                 }
             }
 
