@@ -62,7 +62,6 @@ class SampleFileIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, Integer> moduleReferenceCountsForIngestJobs = new HashMap<>();
     private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
-    private static long messageCount = 0;
     private static int attrId = -1;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
@@ -258,7 +257,6 @@ class SampleFileIngestModule implements FileIngestModule {
             Long filesCount = artifactCountsForIngestJobs.remove(ingestJobId);
             String msgText = String.format("Posted %d times to the blackboard", filesCount);
             IngestMessage message = IngestMessage.createMessage(
-                    ++messageCount,
                     IngestMessage.MessageType.INFO,
                     SampleIngestModuleFactory.getModuleName(),
                     msgText);

@@ -64,7 +64,6 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
     private static final HashMap<Long, Integer> moduleReferenceCountsForIngestJobs = new HashMap<>();
     private static final HashMap<Long, Long> fileCountsForIngestJobs = new HashMap<>();
-    private static long messageCount = 0;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
 
@@ -224,7 +223,6 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             Long filesCount = fileCountsForIngestJobs.remove(ingestJobId);
             String msgText = String.format("Found %d files", filesCount);
             IngestMessage message = IngestMessage.createMessage(
-                    ++messageCount,
                     IngestMessage.MessageType.DATA,
                     SampleIngestModuleFactory.getModuleName(),
                     msgText);
