@@ -45,7 +45,6 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     private static final long MIN_FILE_SIZE = 512;
     private final FileTypeIdModuleSettings settings;
     private long matchTime = 0;
-    private int messageId = 0; // RJCTODO: If this is not made a thread safe static, duplicate message ids will be used 
     private long numFiles = 0;
     // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
     // If desired in the future to be more knowledgable about weird files or rare formats, we could 
@@ -109,7 +108,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
                 .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-        IngestServices.getInstance().postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
+        IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "FileTypeIdIngestModule.complete.srvMsg.text"),
                 detailsSb.toString()));
