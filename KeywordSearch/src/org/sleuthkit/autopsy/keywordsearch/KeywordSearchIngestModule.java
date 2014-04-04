@@ -83,8 +83,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private AtomicInteger messageID = new AtomicInteger(0);            
     private boolean startedSearching = false;
     private SleuthkitCase caseHandle = null;
-    private static List<AbstractFileExtract> textExtractors;
-    private static AbstractFileStringExtract stringExtractor;
+    private List<AbstractFileExtract> textExtractors;
+    private AbstractFileStringExtract stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private Tika tikaFormatDetector;
@@ -181,10 +181,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
 
         indexer = new Indexer();
-
-        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
-        logger.log(Level.INFO, "Using commit interval (ms): {0}", updateIntervalMs);
-        logger.log(Level.INFO, "Using searcher interval (ms): {0}", updateIntervalMs);
         
         initialized = true;
     }
