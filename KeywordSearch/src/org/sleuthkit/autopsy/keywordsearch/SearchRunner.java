@@ -64,7 +64,7 @@ public final class SearchRunner {
     
     SearchRunner() {
         ingester = Server.getIngester();       
-        updateTimer = new Timer(true); // run as a daemon
+        updateTimer = new Timer("SearchRunner update timer", true); // run as a daemon
     }
     
     /**
