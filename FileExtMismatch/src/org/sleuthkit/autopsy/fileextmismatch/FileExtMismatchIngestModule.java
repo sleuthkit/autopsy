@@ -77,10 +77,6 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
             return ProcessResult.OK;
         }
 
-        if (settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
-            return ProcessResult.OK;
-        }
-
         try {
             long startTime = System.currentTimeMillis();
 
