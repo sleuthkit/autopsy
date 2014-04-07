@@ -82,8 +82,6 @@ final class FileIngestPipeline {
 
     List<IngestModuleError> process(AbstractFile file) {
         List<IngestModuleError> errors = new ArrayList<>();
-        Content dataSource = this.job.getDataSource();
-        logger.log(Level.INFO, String.format("Processing {0} from {1}", file.getName(), dataSource.getName()));
         for (FileIngestModuleDecorator module : this.modules) {
             try {
                 module.process(file);
