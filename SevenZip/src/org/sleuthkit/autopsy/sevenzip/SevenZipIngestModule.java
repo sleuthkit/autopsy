@@ -69,7 +69,6 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
-    private volatile int messageID = 0; // RJCTODO: This is not actually thread safe
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"};
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
@@ -117,7 +116,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 String details = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.init.errInitModule.details",
                         unpackDirPath, e.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+                services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
                 throw e;
             }
         }
@@ -132,7 +131,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                     ArchiveFileExtractorModuleFactory.getModuleName());
             String details = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errCantInitLib",
                     e.getMessage());
-            services.postMessage(IngestMessage.createErrorMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+            services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
             throw new RuntimeException(e);
         }
 
@@ -242,7 +241,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 String details = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.isZipBombCheck.warnDetails", cRatio);
                 //MessageNotifyUtil.Notify.error(msg, details);
-                services.postMessage(IngestMessage.createWarningMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+                services.postMessage(IngestMessage.createWarningMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
                 return true;
             } else {
                 return false;
@@ -276,7 +275,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                     "SevenZipIngestModule.unpack.warnDetails.zipBomb",
                     parentAr.getDepth());
             //MessageNotifyUtil.Notify.error(msg, details);
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+            services.postMessage(IngestMessage.createWarningMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
             return unpackedFiles;
         }
 
@@ -403,7 +402,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                         String details = NbBundle.getMessage(this.getClass(),
                                 "SevenZipIngestModule.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
-                        services.postMessage(IngestMessage.createErrorMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+                        services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
                         logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: {0}, {1}", new Object[]{archiveFile.getName(), fileName});
                         continue; //skip this file
                     } else {
@@ -501,7 +500,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 String details = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.unpack.errUnpacking.details",
                         fullName, ex.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+                services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
             }
         } finally {
             if (inArchive != null) {
@@ -541,7 +540,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             String details = NbBundle.getMessage(this.getClass(),
                     "SevenZipIngestModule.unpack.encrFileDetected.details",
                     archiveFile.getName(), ArchiveFileExtractorModuleFactory.getModuleName());
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+            services.postMessage(IngestMessage.createWarningMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
         }
 
         return unpackedFiles;

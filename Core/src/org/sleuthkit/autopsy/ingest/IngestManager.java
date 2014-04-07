@@ -31,24 +31,31 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import java.util.prefs.Preferences;
 
 /**
  * Manages the execution of ingest jobs.
  */
 public class IngestManager {
 
+    private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads";
+    private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
+    private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 4;
+    private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private static IngestManager instance;
-    private final IngestScheduler scheduler;
+    private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
+    private final Preferences userPreferences = NbPreferences.forModule(this.getClass());
     private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
-    private TaskSchedulingWorker taskSchedulingWorker;
-    private FileTaskWorker fileTaskWorker;
-    private DataSourceTaskWorker dataSourceTaskWorker;
+    private TaskSchedulingWorker taskSchedulingWorker = null;
+    private DataSourceTaskWorker dataSourceTaskWorker = null;
+    private final List<FileTaskWorker> fileTaskWorkers = new ArrayList<>();
     private long nextDataSourceTaskId = 0;
     private long nextThreadId = 0;
     private volatile IngestUI ingestMessageBox;
@@ -103,7 +110,6 @@ public class IngestManager {
     };
 
     private IngestManager() {
-        this.scheduler = IngestScheduler.getInstance();
     }
 
     /**
@@ -133,6 +139,18 @@ public class IngestManager {
 
     synchronized private long getNextThreadId() {
         return ++this.nextThreadId;
+    }
+
+    public synchronized int getNumberOfFileIngestThreads() {
+        return userPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, DEFAULT_NUMBER_OF_FILE_INGEST_THREADS);
+    }
+
+    public synchronized void setNumberOfFileIngestThreads(int numberOfThreads) {
+        if (numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS
+                || numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS) {
+            numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+        }
+        userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
     }
 
     /**
@@ -274,69 +292,119 @@ public class IngestManager {
         scheduler.getFileScheduler().scheduleFile(job, file);
     }
 
-    /**
-     * Starts the File-level Ingest Module pipeline and the Data Source-level
-     * Ingest Modules for the queued up data sources and files.
-     *
-     * if AbstractFile module is still running, do nothing and allow it to
-     * consume queue otherwise start /restart AbstractFile worker
-     *
-     * data source ingest workers run per (module,content). Checks if one for
-     * the same (module,content) is already running otherwise start/restart the
-     * worker
-     */
     private synchronized void startAll() {
+        // Make sure the ingest monitor is running.
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
         }
 
-        if (scheduler.getDataSourceScheduler().hasNext()) {
-            if (dataSourceTaskWorker == null || dataSourceTaskWorker.isDone()) {
-                dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId());
-                dataSourceTaskWorker.execute();
-            }
+        // Make sure a data source task worker is running.
+        // TODO: There is a race condition here with SwingWorker.isDone().
+        // The highly unlikely chance that no data source task worker will 
+        // run for this job needs to be addressed. Fix by using a thread pool 
+        // and converting the SwingWorkers to Runnables.
+        if (dataSourceTaskWorker == null || dataSourceTaskWorker.isDone()) {
+            dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId());
+            dataSourceTaskWorker.execute();
         }
 
-        if (scheduler.getFileScheduler().hasNext()) {
-            if (fileTaskWorker == null || fileTaskWorker.isDone()) {
-                fileTaskWorker = new FileTaskWorker(getNextThreadId());
-                fileTaskWorker.execute();
+        // Make sure the requested number of file task workers are running.
+        // TODO: There is a race condition here with SwingWorker.isDone().
+        // The highly unlikely chance that no file task workers or the wrong
+        // number of file task workers will run for this job needs to be 
+        // addressed. Fix by using a thread pool and converting the SwingWorkers
+        // to Runnables.
+        int workersRequested = getNumberOfFileIngestThreads();
+        int workersRunning = 0;
+        for (FileTaskWorker worker : fileTaskWorkers) {
+            if (worker != null) {
+                if (worker.isDone()) {
+                    if (workersRunning < workersRequested) {
+                        worker = new FileTaskWorker(getNextThreadId());
+                        worker.execute();
+                        ++workersRunning;
+                    } else {
+                        worker = null;
+                    }
+                } else {
+                    ++workersRunning;
+                }
+            } else if (workersRunning < workersRequested) {
+                worker = new FileTaskWorker(getNextThreadId());
+                worker.execute();
+                ++workersRunning;
             }
+        }
+        while (workersRunning < workersRequested
+                && fileTaskWorkers.size() < MAX_NUMBER_OF_FILE_INGEST_THREADS) {
+            FileTaskWorker worker = new FileTaskWorker(getNextThreadId());
+            fileTaskWorkers.add(worker);
+            worker.execute();
+            ++workersRunning;
         }
     }
 
     synchronized void reportThreadDone(long threadId) {
+        List<Long> completedJobs = new ArrayList<>();
         for (IngestJob job : ingestJobs.values()) {
             job.releaseIngestPipelinesForThread(threadId);
             if (job.areIngestPipelinesShutDown()) {
-                ingestJobs.remove(job.getId());
+                completedJobs.add(job.getId());
             }
+        }
+
+        for (Long jobId : completedJobs) {
+            ingestJobs.remove(jobId);
         }
     }
 
     synchronized void stopAll() {
-        // First get the task scheduling worker to stop. 
+        // First get the task scheduling worker to stop adding new tasks. 
         if (taskSchedulingWorker != null) {
             taskSchedulingWorker.cancel(true);
             while (!taskSchedulingWorker.isDone()) {
-                // Wait.
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                }
             }
             taskSchedulingWorker = null;
         }
 
         // Now mark all of the ingest jobs as cancelled. This way the ingest 
         // modules will know they are being shut down due to cancellation when
-        // the ingest worker threads release their pipelines.
+        // the cancelled ingest workers release their pipelines.
         for (IngestJob job : ingestJobs.values()) {
             job.cancel();
         }
 
-        // Cancel the worker threads.
+        // Cancel the data source task worker. It will release its pipelines
+        // in its done() method and the pipelines will shut down their modules.
         if (dataSourceTaskWorker != null) {
             dataSourceTaskWorker.cancel(true);
+            while (!dataSourceTaskWorker.isDone()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                }
+            }
+            dataSourceTaskWorker = null;
         }
-        if (fileTaskWorker != null) {
-            fileTaskWorker.cancel(true);
+
+        // Cancel the file task workers. They will release their pipelines
+        // in their done() methods and the pipelines will shut down their 
+        // modules.
+        for (FileTaskWorker worker : fileTaskWorkers) {
+            if (worker != null) {
+                worker.cancel(true);
+                while (!worker.isDone()) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                    }
+                }
+                worker = null;
+            }
         }
 
         // Jettision the remaining tasks. This will dispose of any tasks that
@@ -351,9 +419,25 @@ public class IngestManager {
      * @return true if any module is running, false otherwise
      */
     public synchronized boolean isIngestRunning() {
-        return ((taskSchedulingWorker != null && !taskSchedulingWorker.isDone())
-                || (fileTaskWorker != null && !fileTaskWorker.isDone())
-                || (fileTaskWorker != null && !fileTaskWorker.isDone()));
+        // TODO: There is a race condition here with SwingWorker.isDone().
+        // It probably needs to be addressed at a later date. If we replace the
+        // SwingWorkers with a thread pool and Runnables, one solution would be
+        // to check the ingest jobs list.
+        if (taskSchedulingWorker != null && !taskSchedulingWorker.isDone()) {
+            return true;
+        }
+
+        if (dataSourceTaskWorker != null && !dataSourceTaskWorker.isDone()) {
+            return true;
+        }
+
+        for (FileTaskWorker worker : fileTaskWorkers) {
+            if (worker != null && !worker.isDone()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -502,7 +586,6 @@ public class IngestManager {
                     logger.log(Level.INFO, "Data source ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
-
                 IngestJob job = scheduler.next();
                 DataSourceIngestPipeline pipeline = job.getDataSourceIngestPipelineForThread(this.id);
                 pipeline.process(this, job.getDataSourceTaskProgressBar());
@@ -544,7 +627,6 @@ public class IngestManager {
             IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
             while (fileScheduler.hasNext()) {
                 if (isCancelled()) {
-                    IngestManager.getInstance().reportThreadDone(this.id);
                     logger.log(Level.INFO, "File ingest thread (id={0}) cancelled", this.id);
                     return null;
                 }
