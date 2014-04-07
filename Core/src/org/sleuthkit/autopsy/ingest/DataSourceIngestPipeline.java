@@ -81,13 +81,13 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process(SwingWorker worker, ProgressHandle progress) {
+    List<IngestModuleError> process(ProgressHandle progress) {
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = this.job.getDataSource();
         logger.log(Level.INFO, "Processing data source {0}", dataSource.getName());
         for (DataSourceIngestModuleDecorator module : this.modules) {
             try {
-                module.process(dataSource, new DataSourceIngestModuleStatusHelper(worker, progress, dataSource, module.getDisplayName()));
+                module.process(dataSource, new DataSourceIngestModuleStatusHelper(progress, module.getDisplayName()));
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }

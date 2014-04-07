@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Used by data source ingest modules to report progress and detect data source
@@ -28,15 +27,11 @@ import org.sleuthkit.datamodel.Content;
  */
 public class DataSourceIngestModuleStatusHelper {
 
-    private final SwingWorker worker;
     private final ProgressHandle progress;
-    private final Content dataSource;
     private final String moduleDisplayName;
 
-    DataSourceIngestModuleStatusHelper(SwingWorker worker, ProgressHandle progress, Content dataSource, String moduleDisplayName) {
-        this.worker = worker;
+    DataSourceIngestModuleStatusHelper(ProgressHandle progress, String moduleDisplayName) {
         this.progress = progress;
-        this.dataSource = dataSource;
         this.moduleDisplayName = moduleDisplayName;
     }
 
@@ -48,7 +43,7 @@ public class DataSourceIngestModuleStatusHelper {
      * @return True if the task has been canceled, false otherwise.
      */
     public boolean isIngestJobCancelled() {
-        return worker.isCancelled();
+        return (Thread.currentThread().isInterrupted()); // RJCTODO: This is not right? Appears to be right...
     }
 
     /**

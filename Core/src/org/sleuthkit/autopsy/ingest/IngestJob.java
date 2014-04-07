@@ -85,7 +85,7 @@ final class IngestJob {
                             "IngestJob.progress.cancelling",
                             displayName));
                 }
-                IngestManager.getInstance().stopAll();
+                IngestManager.getInstance().cancelIngestTasks();
                 return true;
             }
         });
@@ -104,7 +104,7 @@ final class IngestJob {
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
                             displayName));
                 }
-                IngestManager.getInstance().stopAll();
+                IngestManager.getInstance().cancelIngestTasks();
                 return true;
             }
         });

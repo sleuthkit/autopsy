@@ -23,12 +23,14 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
@@ -49,17 +51,72 @@ public class IngestManager {
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
+    private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
     private static IngestManager instance;
     private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
-    private final Preferences userPreferences = NbPreferences.forModule(this.getClass());
-    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>();
-    private TaskSchedulingWorker taskSchedulingWorker = null;
-    private DataSourceTaskWorker dataSourceTaskWorker = null;
-    private final List<FileTaskWorker> fileTaskWorkers = new ArrayList<>();
-    private long nextDataSourceTaskId = 0;
-    private long nextThreadId = 0;
+    private ExecutorService startIngestJobsExecutor = null;
+    private ExecutorService dataSourceIngestTasksExecutor = null;
+    private ExecutorService fileIngestTasksExecutor = null;
+    private AtomicLong ingestJobId = new AtomicLong(0L);
+    private AtomicLong ingestTaskId = new AtomicLong(0L);
+    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>(); // Maps job ids to jobs
+    private final HashMap<Long, Future<?>> ingestTasks = new HashMap<>(); // Maps task ids to Runnable tasks
+//    private TaskSchedulingWorker taskSchedulingWorker = null;
     private volatile IngestUI ingestMessageBox;
+
+    /**
+     * Gets the IngestManager singleton, creating it if necessary.
+     *
+     * @returns The IngestManager singleton.
+     */
+    public synchronized static IngestManager getInstance() {
+        if (instance == null) {
+            instance = new IngestManager();
+        }
+        return instance;
+    }
+
+    private IngestManager() {
+        createThreadPools();
+    }
+
+    private synchronized void createThreadPools() {
+        if (startIngestJobsExecutor == null) {
+            startIngestJobsExecutor = Executors.newSingleThreadExecutor();
+        }
+        if (dataSourceIngestTasksExecutor == null) {
+            dataSourceIngestTasksExecutor = Executors.newSingleThreadExecutor();
+        }
+        if (fileIngestTasksExecutor == null) {
+            fileIngestTasksExecutor = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
+        }
+    }
+    
+    public synchronized static int getNumberOfFileIngestThreads() {
+        return userPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, DEFAULT_NUMBER_OF_FILE_INGEST_THREADS);
+    }
+
+    public static void setNumberOfFileIngestThreads(int numberOfThreads) {
+        if (numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS
+                || numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS) {
+            numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+        }
+
+        synchronized (IngestManager.class) {
+            userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
+        }
+    }
+
+    /**
+     * Finds the ingest messages in box TopComponent. Called by the custom
+     * installer for this package once the window system is initialized.
+     */
+    void initIngestMessageInbox() {
+        if (this.ingestMessageBox == null) {
+            this.ingestMessageBox = IngestMessageTopComponent.findInstance();
+        }
+    }
 
     /**
      * Ingest events.
@@ -110,65 +167,20 @@ public class IngestManager {
         FILE_DONE,
     };
 
-    private IngestManager() {
-    }
-
     /**
-     * Returns reference to singleton instance.
-     *
-     * @returns Instance of class.
-     */
-    synchronized public static IngestManager getInstance() {
-        if (instance == null) {
-            instance = new IngestManager();
-        }
-        return instance;
-    }
-
-    /**
-     * called by Installer in AWT thread once the Window System is ready
-     */
-    void initIngestMessageInbox() {
-        if (this.ingestMessageBox == null) {
-            this.ingestMessageBox = IngestMessageTopComponent.findInstance();
-        }
-    }
-
-    synchronized private long getNextDataSourceTaskId() {
-        return ++this.nextDataSourceTaskId;
-    }
-
-    synchronized private long getNextThreadId() {
-        return ++this.nextThreadId;
-    }
-
-    public synchronized int getNumberOfFileIngestThreads() {
-        return userPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, DEFAULT_NUMBER_OF_FILE_INGEST_THREADS);
-    }
-
-    public synchronized void setNumberOfFileIngestThreads(int numberOfThreads) {
-        if (numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS
-                || numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS) {
-            numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
-        }
-        userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
-    }
-
-    /**
-     * Add property change listener to listen to ingest events as defined in
-     * IngestModuleEvent.
+     * Add property change listener to listen to ingest events.
      *
      * @param listener PropertyChangeListener to register
      */
-    public static synchronized void addPropertyChangeListener(final PropertyChangeListener listener) {
+    synchronized public static void addPropertyChangeListener(final PropertyChangeListener listener) {
         pcs.addPropertyChangeListener(listener);
     }
 
-    public static synchronized void removePropertyChangeListener(final PropertyChangeListener listener) {
+    synchronized public static void removePropertyChangeListener(final PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(listener);
     }
 
-    static synchronized void fireModuleEvent(String eventType, String moduleName) {
+    synchronized static void fireModuleEvent(String eventType, String moduleName) {
         try {
             pcs.firePropertyChange(eventType, moduleName, null);
         } catch (Exception e) {
@@ -184,7 +196,7 @@ public class IngestManager {
      *
      * @param objId ID of file that is done
      */
-    static synchronized void fireFileDone(long objId) {
+    synchronized static void fireFileDone(long objId) {
         try {
             pcs.firePropertyChange(IngestEvent.FILE_DONE.toString(), objId, null);
         } catch (Exception e) {
@@ -201,7 +213,7 @@ public class IngestManager {
      *
      * @param moduleDataEvent
      */
-    static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
+    synchronized static void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         try {
             pcs.firePropertyChange(IngestEvent.DATA.toString(), moduleDataEvent, null);
         } catch (Exception e) {
@@ -218,7 +230,7 @@ public class IngestManager {
      *
      * @param moduleContentEvent
      */
-    static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
+    synchronized static void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         try {
             pcs.firePropertyChange(IngestEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
         } catch (Exception e) {
@@ -229,126 +241,63 @@ public class IngestManager {
         }
     }
 
-    /**
-     * Multiple data-sources version of scheduleDataSource() method. Enqueues
-     * multiple sources inputs (Content objects) and associated modules at once
-     *
-     * @param modules modules to scheduleDataSource on every data source
-     * @param inputs input data sources to enqueue and scheduleDataSource the
-     * ingest modules on
-     */
-    void scheduleDataSourceTasks(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+    synchronized void startIngestJob(final Content dataSource, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        List<Content> dataSources = new ArrayList<>();
+        dataSources.add(dataSource);
+        startIngestJobs(dataSources, moduleTemplates, processUnallocatedSpace);
+    }
+
+    synchronized void startIngestJobs(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
         if (!isIngestRunning() && ingestMessageBox != null) {
             ingestMessageBox.clearMessages();
         }
 
-        taskSchedulingWorker = new TaskSchedulingWorker(dataSources, moduleTemplates, processUnallocatedSpace);
-        taskSchedulingWorker.execute();
+        createThreadPools();
+                
+        long taskId = ingestTaskId.incrementAndGet();
+        Future<?> dataSourceIngestTask = startIngestJobsExecutor.submit(new StartIngestJobsTask(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
+        ingestTasks.put(taskId, dataSourceIngestTask);
 
         if (ingestMessageBox != null) {
             ingestMessageBox.restoreMessages();
         }
     }
 
-    /**
-     * IngestManager entry point, enqueues data to be processed and starts new
-     * ingest as needed, or just enqueues data to an existing pipeline.
-     *
-     * Spawns background thread which enumerates all sorted files and executes
-     * chosen modules per file in a pre-determined order. Notifies modules when
-     * work is complete or should be interrupted using complete() and stop()
-     * calls. Does not block and can be called multiple times to enqueue more
-     * work to already running background ingest process.
-     *
-     * @param modules modules to scheduleDataSource on the data source input
-     * @param input input data source Content objects to scheduleDataSource the
-     * ingest modules on
-     */
-    void scheduleDataSourceTask(final Content dataSource, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
-        List<Content> dataSources = new ArrayList<>();
-        dataSources.add(dataSource);
-        scheduleDataSourceTasks(dataSources, moduleTemplates, processUnallocatedSpace);
-    }
-
-    /**
-     * Schedule a file for ingest and add it to ongoing file ingest process on
-     * the same data source. Scheduler updates the current progress.
-     *
-     * The file to be added is usually a product of a currently ran ingest. Now
-     * we want to process this new file with the same ingest context.
-     *
-     * @param file file to be scheduled
-     * @param pipelineContext ingest context used to ingest parent of the file
-     * to be scheduled
-     */
-    void scheduleFile(long ingestJobId, AbstractFile file) {
+    synchronized void addFileToIngestJob(long ingestJobId, AbstractFile file) {
         IngestJob job = this.ingestJobs.get(ingestJobId);
-        if (job == null) {
+        if (job != null) {
+            scheduler.getFileScheduler().scheduleFile(job, file);
+        } else {
             logger.log(Level.SEVERE, "Unable to map ingest job id (id = {0}) to an ingest job, failed to schedule file (id = {1})", new Object[]{ingestJobId, file.getId()});
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
                     "Unable to associate " + file.getName() + " with ingest job, file will not be processed by ingest nodules",
                     MessageNotifyUtil.MessageType.ERROR);
         }
-
-        scheduler.getFileScheduler().scheduleFile(job, file);
     }
 
-    private synchronized void startAll() {
-        // Make sure the ingest monitor is running.
+    private synchronized void startIngestTasks() {
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
         }
+        
+        long taskId = ingestTaskId.incrementAndGet();
+        Future<?> dataSourceIngestTask = dataSourceIngestTasksExecutor.submit(new RunDataSourceIngestModulesTask(taskId));
+        ingestTasks.put(taskId, dataSourceIngestTask);
 
-        // Make sure a data source task worker is running.
-        // TODO: There is a race condition here with SwingWorker.isDone().
-        // The highly unlikely chance that no data source task worker will 
-        // run for this job needs to be addressed. Fix by using a thread pool 
-        // and converting the SwingWorkers to Runnables.
-        if (dataSourceTaskWorker == null || dataSourceTaskWorker.isDone()) {
-            dataSourceTaskWorker = new DataSourceTaskWorker(getNextThreadId());
-            dataSourceTaskWorker.execute();
-        }
-
-        // Make sure the requested number of file task workers are running.
-        // TODO: There is a race condition here with SwingWorker.isDone().
-        // The highly unlikely chance that no file task workers or the wrong
-        // number of file task workers will run for this job needs to be 
-        // addressed. Fix by using a thread pool and converting the SwingWorkers
-        // to Runnables.
         int workersRequested = getNumberOfFileIngestThreads();
-        int workersRunning = 0;
-        for (FileTaskWorker worker : fileTaskWorkers) {
-            if (worker != null) {
-                if (worker.isDone()) {
-                    if (workersRunning < workersRequested) {
-                        worker = new FileTaskWorker(getNextThreadId());
-                        worker.execute();
-                        ++workersRunning;
-                    } else {
-                        worker = null;
-                    }
-                } else {
-                    ++workersRunning;
-                }
-            } else if (workersRunning < workersRequested) {
-                worker = new FileTaskWorker(getNextThreadId());
-                worker.execute();
-                ++workersRunning;
-            }
-        }
-        while (workersRunning < workersRequested
-                && fileTaskWorkers.size() < MAX_NUMBER_OF_FILE_INGEST_THREADS) {
-            FileTaskWorker worker = new FileTaskWorker(getNextThreadId());
-            fileTaskWorkers.add(worker);
-            worker.execute();
-            ++workersRunning;
+        for (int i = 0; i < workersRequested; ++i) {
+            taskId = ingestTaskId.incrementAndGet();
+            Future<?> fileIngestTask = fileIngestTasksExecutor.submit(new RunFileSourceIngestModulesTask(taskId));
+            ingestTasks.put(taskId, fileIngestTask);
         }
     }
 
-    synchronized void reportThreadDone(long threadId) {
+    synchronized void reportIngestTaskDone(long taskId) {
+        ingestTasks.remove(taskId);
+
         List<Long> completedJobs = new ArrayList<>();
         for (IngestJob job : ingestJobs.values()) {
-            job.releaseIngestPipelinesForThread(threadId);
+            job.releaseIngestPipelinesForThread(taskId);
             if (job.areIngestPipelinesShutDown()) {
                 completedJobs.add(job.getId());
             }
@@ -359,12 +308,11 @@ public class IngestManager {
         }
     }
 
-    synchronized void stopAll() {
+    synchronized void cancelIngestTasks() {
+//    synchronized void cancelIngestTasks(int waitTime, TimeUnit unit) { // RJCTODO
         // First get the task scheduling worker to stop adding new tasks. 
-        if (taskSchedulingWorker != null) {
-            taskSchedulingWorker.cancel(true);
-            taskSchedulingWorker = null;
-        }        
+//        boolean res = shutDownThreadPool(startIngestJobsExecutor, 1, TimeUnit.SECONDS);
+//        startIngestJobsExecutor = null;
         
         // Now mark all of the ingest jobs as cancelled. This way the ingest 
         // modules will know they are being shut down due to cancellation when
@@ -373,59 +321,58 @@ public class IngestManager {
             job.cancel();
         }
 
-        // Jettision the remaining tasks. This will dispose of any tasks that
+        // Jettision the remaining data tasks. This will dispose of any tasks that
         // the scheduling worker queued up before it was cancelled.
-        scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();
-                
-        // Cancel the data source task worker. It will release its pipelines
-        // in its done() method and the pipelines will shut down their modules.
-        if (dataSourceTaskWorker != null) {
-            dataSourceTaskWorker.cancel(true);
-            dataSourceTaskWorker = null;
+//        scheduler.getFileScheduler().empty();
+//        scheduler.getDataSourceScheduler().empty();
+
+        // Cancel all of the ingest module running tasks.
+        for (Future<?> task : ingestTasks.values()) {
+            task.cancel(true);
         }
 
-        // Cancel the file task workers. They will release their pipelines
-        // in their done() methods and the pipelines will shut down their 
-        // modules.
-        for (FileTaskWorker worker : fileTaskWorkers) {
-            if (worker != null) {
-                worker.cancel(true);
-                worker = null;
-            }
-        }
-
+//        res = shutDownThreadPool(dataSourceIngestTasksExecutor, 30, TimeUnit.SECONDS);
+//        dataSourceIngestTasksExecutor = null;
+//        res = shutDownThreadPool(fileIngestTasksExecutor, 30, TimeUnit.SECONDS);
+//        fileIngestTasksExecutor =  null;        
+        
         // Jettision the remaining tasks again to try to dispose of any tasks 
         // queued up task workers before they were cancelled.
-        scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();
+//        scheduler.getFileScheduler().empty();
+//        scheduler.getDataSourceScheduler().empty();
     }
 
+    // The following method implementation is adapted from:
+    // http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ExecutorService.html#awaitTermination(long, java.util.concurrent.TimeUnit)
+    private boolean shutDownThreadPool(ExecutorService pool, int waitTime, TimeUnit unit) {
+        boolean succeeded = true;
+        // Prevent submission of new tasks.
+        pool.shutdown();
+        try {
+            // Wait a while for existing tasks to terminate.
+            if (!pool.awaitTermination(1, TimeUnit.SECONDS)) {
+                // Cancel currently executing tasks.
+                pool.shutdownNow(); 
+                if (!pool.awaitTermination(waitTime, unit)) {
+                    succeeded = false;
+                }
+            }
+        } catch (InterruptedException ex) {
+            // (Re-)Cancel if current thread also interrupted.
+            pool.shutdownNow();
+            // Preserve interrupt status.
+            Thread.currentThread().interrupt();
+        }
+        return succeeded;
+    }        
+        
     /**
      * Test if any ingest jobs are in progress.
      *
      * @return True if any ingest jobs are in progress, false otherwise
      */
     public synchronized boolean isIngestRunning() {
-        // TODO: There is a race condition here with SwingWorker.isDone().
-        // It probably needs to be addressed at a later date. If we replace the
-        // SwingWorkers with a thread pool and Runnables, one solution would be
-        // to check the ingest jobs list.
-        if (taskSchedulingWorker != null && !taskSchedulingWorker.isDone()) {
-            return true;
-        }
-
-        if (dataSourceTaskWorker != null && !dataSourceTaskWorker.isDone()) {
-            return true;
-        }
-
-        for (FileTaskWorker worker : fileTaskWorkers) {
-            if (worker != null && !worker.isDone()) {
-                return true;
-            }
-        }
-
-        return false;
+        return (ingestJobs.isEmpty() == false);
     }
 
     /**
@@ -456,95 +403,89 @@ public class IngestManager {
         }
     }
 
-    private class TaskSchedulingWorker extends SwingWorker<Object, Void> {
+    private class StartIngestJobsTask implements Runnable {
 
+        private final long id;
         private final List<Content> dataSources;
         private final List<IngestModuleTemplate> moduleTemplates;
         private final boolean processUnallocatedSpace;
         private ProgressHandle progress;
         private volatile boolean finished = false;
 
-        TaskSchedulingWorker(List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        StartIngestJobsTask(long taskId, List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+            this.id = taskId;
             this.dataSources = dataSources;
             this.moduleTemplates = moduleTemplates;
             this.processUnallocatedSpace = processUnallocatedSpace;
         }
 
         @Override
-        protected Object doInBackground() throws Exception {
-            final String displayName = "Queueing ingest tasks";
-            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    if (progress != null) {
-                        progress.setDisplayName(displayName + " (Cancelling...)");
-                    }
-                    IngestManager.getInstance().stopAll();
-                    return true;
-                }
-            });
-
-            progress.start(2 * dataSources.size());
-            int processed = 0;
-            for (Content dataSource : dataSources) {
-                if (isCancelled()) {
-                    return null;
-                }
-                final String inputName = dataSource.getName();
-                IngestJob ingestJob = new IngestJob(IngestManager.this.getNextDataSourceTaskId(), dataSource, moduleTemplates, processUnallocatedSpace);
-
-                List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
-                if (!errors.isEmpty()) {
-                    StringBuilder failedModules = new StringBuilder();
-                    for (int i = 0; i < errors.size(); ++i) {
-                        IngestModuleError error = errors.get(i);
-                        String moduleName = error.getModuleDisplayName();
-                        logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError());
-                        failedModules.append(moduleName);
-                        if ((errors.size() > 1) && (i != (errors.size() - 1))) {
-                            failedModules.append(",");
+        public void run() {
+            try {
+                final String displayName = "Queueing ingest tasks";
+                progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                    @Override
+                    public boolean cancel() {
+                        if (progress != null) {
+                            progress.setDisplayName(displayName + " (Cancelling...)");
                         }
+                        IngestManager.getInstance().cancelIngestTasks();
+                        return true;
                     }
-                    MessageNotifyUtil.Message.error( // RJCTODO: Fix this
-                            "Failed to start the following ingest modules: " + failedModules.toString() + " .\n\n"
-                            + "No ingest modules will be run. Please disable the module "
-                            + "or fix the error and restart ingest by right clicking on "
-                            + "the data source and selecting Run Ingest Modules.\n\n"
-                            + "Error: " + errors.get(0).getModuleError().getMessage());
-                    return null;
+                });
+
+                progress.start(2 * dataSources.size());
+                int processed = 0;
+                for (Content dataSource : dataSources) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+
+                    final String inputName = dataSource.getName();
+                    IngestJob ingestJob = new IngestJob(IngestManager.this.ingestJobId.incrementAndGet(), dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
+                    if (!errors.isEmpty()) {
+                        StringBuilder failedModules = new StringBuilder();
+                        for (int i = 0; i < errors.size(); ++i) {
+                            IngestModuleError error = errors.get(i);
+                            String moduleName = error.getModuleDisplayName();
+                            logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError());
+                            failedModules.append(moduleName);
+                            if ((errors.size() > 1) && (i != (errors.size() - 1))) {
+                                failedModules.append(",");
+                            }
+                        }
+                        MessageNotifyUtil.Message.error( // RJCTODO: Fix this to show all errors
+                                "Failed to start the following ingest modules: " + failedModules.toString() + " .\n\n"
+                                + "No ingest modules will be run. Please disable the module "
+                                + "or fix the error and restart ingest by right clicking on "
+                                + "the data source and selecting Run Ingest Modules.\n\n"
+                                + "Error: " + errors.get(0).getModuleError().getMessage());
+                        break;
+                    }
+
+                    // Save the ingest job for later cleanup of pipelines.
+                    ingestJobs.put(ingestJob.getId(), ingestJob);
+
+                    // Queue the data source ingest tasks for the ingest job.
+                    progress.progress("DataSource Ingest" + " " + inputName, processed);
+                    scheduler.getDataSourceScheduler().schedule(ingestJob);
+                    progress.progress("DataSource Ingest" + " " + inputName, ++processed);
+
+                    // Queue the file ingest tasks for the ingest job.
+                    progress.progress("File Ingest" + " " + inputName, processed);
+                    scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
+                    progress.progress("File Ingest" + " " + inputName, ++processed);
                 }
 
-                // Save the ingest job for later cleanup of pipelines.
-                ingestJobs.put(ingestJob.getId(), ingestJob);
-
-                // Queue the data source ingest tasks for the ingest job.
-                progress.progress("DataSource Ingest" + " " + inputName, processed);
-                scheduler.getDataSourceScheduler().schedule(ingestJob);
-                progress.progress("DataSource Ingest" + " " + inputName, ++processed);
-
-                // Queue the file ingest tasks for the ingest job.
-                progress.progress("File Ingest" + " " + inputName, processed);
-                scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
-                progress.progress("File Ingest" + " " + inputName, ++processed);
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void done() {
-            try {
-                super.get();
-            } catch (CancellationException | InterruptedException ex) {
+                if (!Thread.currentThread().isInterrupted()) {
+                    startIngestTasks();
+                }
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Error while scheduling ingest jobs", ex);
-                MessageNotifyUtil.Message.error("An error occurred while starting ingest. Results may only be partial");
+                // RJCTODO:
             } finally {
-                if (!isCancelled()) {
-                    startAll();
-                }
+                // RJCTODO: Release
                 progress.finish();
-                finished = true;
             }
         }
 
@@ -553,103 +494,71 @@ public class IngestManager {
         }
     }
 
-    /**
-     * Performs data source ingest tasks for one or more ingest jobs on a worker
-     * thread.
-     */
-    class DataSourceTaskWorker extends SwingWorker<Object, Void> {
+    private class RunDataSourceIngestModulesTask implements Runnable {
 
         private final long id;
-        private volatile boolean finished = false;
 
-        DataSourceTaskWorker(long threadId) {
+        RunDataSourceIngestModulesTask(long threadId) {
             this.id = threadId;
         }
 
         @Override
-        protected Void doInBackground() throws Exception {
-            IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
-            while (scheduler.hasNext()) {
-                if (isCancelled()) {
-                    return null;
-                }
-                IngestJob job = scheduler.next();
-                DataSourceIngestPipeline pipeline = job.getDataSourceIngestPipelineForThread(this.id);
-                pipeline.process(this, job.getDataSourceTaskProgressBar());
-                if (isCancelled()) {
-                    return null;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void done() {
+        public void run() {
             try {
-                super.get();
-            } catch (CancellationException | InterruptedException e) {
+                IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
+                while (scheduler.hasNext()) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    IngestJob job = scheduler.next();
+                    DataSourceIngestPipeline pipeline = job.getDataSourceIngestPipelineForThread(this.id);
+                    pipeline.process(job.getDataSourceTaskProgressBar());
+                }
             } catch (Exception ex) {
-                String message = String.format("Data source ingest thread (id=%d) experienced a fatal error", this.id);
+                String message = String.format("Data source ingest thread (id=%d) caught exception", this.id); // RJCTODO
                 logger.log(Level.SEVERE, message, ex);
             } finally {
-                IngestManager.getInstance().reportThreadDone(this.id);
-                finished = true;
+                IngestManager.getInstance().reportIngestTaskDone(this.id);
             }
-        }
-
-        boolean isFinished() {
-            return finished;
         }
     }
 
-    /**
-     * Performs file ingest tasks for one or more ingest jobs on a worker
-     * thread.
-     */
-    class FileTaskWorker extends SwingWorker<Object, Void> {
+    private class RunFileSourceIngestModulesTask implements Runnable {
 
         private final long id;
-        private volatile boolean finished = false;
 
-        FileTaskWorker(long threadId) {
-            this.id = threadId;
+        RunFileSourceIngestModulesTask(long taskId) {
+            this.id = taskId;
         }
 
         @Override
-        protected Object doInBackground() throws Exception {
-            IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
-            while (fileScheduler.hasNext()) {
-                if (isCancelled()) {
-                    return null;
-                }
-                IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
-                IngestJob job = task.getJob();
-                FileIngestPipeline pipeline = job.getFileIngestPipelineForThread(this.id);
-                job.handleFileTaskStarted(task);
-                pipeline.process(task.getFile());
-                if (isCancelled()) {
-                    return null;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void done() {
+        public void run() {
             try {
-                super.get();
-            } catch (CancellationException | InterruptedException e) {
+                IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
+                while (fileScheduler.hasNext()) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
+                    IngestJob job = task.getJob();
+                    FileIngestPipeline pipeline = job.getFileIngestPipelineForThread(this.id);
+                    job.handleFileTaskStarted(task);
+                    pipeline.process(task.getFile());
+                }
             } catch (Exception ex) {
-                String message = String.format("File ingest thread {0} experienced a fatal error", this.id);
+                String message = String.format("Data source ingest thread (id=%d) caught exception", this.id); // RJCTODO
                 logger.log(Level.SEVERE, message, ex);
             } finally {
-                IngestManager.getInstance().reportThreadDone(this.id);
-                finished = true;
+                IngestManager.getInstance().reportIngestTaskDone(this.id);
             }
         }
-
-        boolean isFinished() {
-            return finished;
-        }
     }
+
+    class IngestCancellationTask implements Runnable {
+
+        @Override
+        public void run() {
+            // RJCTODO: Run
+        }
+    }    
 }
