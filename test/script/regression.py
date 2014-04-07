@@ -1822,6 +1822,12 @@ def setupAttachments(attachments, test_config):
     for file in attachments:
         filename = ntpath.basename(file)
         destination = os.path.join(test_config.diff_dir, filename)
+        
+        # removing old files
+        call = ['rm', str(test_config.diff_dir) + '*.txt']
+        print("deleting file with command: " + call)
+        subprocess.call(call)
+       
         call = ['cp', file, destination]
         subprocess.call(call)
         
