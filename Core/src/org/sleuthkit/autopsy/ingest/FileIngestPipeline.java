@@ -88,7 +88,7 @@ final class FileIngestPipeline {
             }
         }
         file.close();
-        if (job.isCancelled()) {
+        if (!job.isCancelled()) {
             IngestManager.fireFileDone(file.getId());
         }
         return errors;
