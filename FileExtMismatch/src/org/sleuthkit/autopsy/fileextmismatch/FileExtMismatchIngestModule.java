@@ -47,7 +47,6 @@ import org.sleuthkit.datamodel.TskException;
 public class FileExtMismatchIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
-    private static int messageId = 0; // RJCTODO: This is not thread safe
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
@@ -75,10 +74,6 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
         // deleted files often have content that was not theirs and therefor causes mismatch
         if ((abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC))
                 || (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
-            return ProcessResult.OK;
-        }
-
-        if (settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
@@ -164,7 +159,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
                 NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
                 .append("</td><td>").append(numFiles).append("</td></tr>\n");
         detailsSb.append("</table>");
-        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
+        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "FileExtMismatchIngestModule.complete.svcMsg.text"),
                 detailsSb.toString()));

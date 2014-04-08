@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJobSettings {
 
-    private boolean skipKnownFiles = false;
     private boolean skipFilesWithNoExtension = true;
     private boolean skipFilesWithTextPlainMimeType = false;
 
@@ -33,17 +32,8 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     }
 
     FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
-        this.skipKnownFiles = skipKnownFiles;
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
         this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
-    }
-
-    void setSkipKnownFiles(boolean enabled) {
-        skipKnownFiles = enabled;
-    }
-
-    boolean skipKnownFiles() {
-        return skipKnownFiles;
     }
 
     void setSkipFilesWithNoExtension(boolean enabled) {
