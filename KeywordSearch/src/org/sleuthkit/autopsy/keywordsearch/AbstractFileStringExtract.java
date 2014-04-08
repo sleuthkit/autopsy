@@ -147,10 +147,6 @@ class AbstractFileStringExtract implements AbstractFileExtract {
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
 
-                //check if need invoke commit/search between chunks
-                //not to delay commit if timer has gone off
-                module.checkRunCommitSearch();
-
                 //debug.close();    
             }
 
