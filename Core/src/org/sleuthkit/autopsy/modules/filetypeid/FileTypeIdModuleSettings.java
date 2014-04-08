@@ -16,22 +16,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ingest;
+package org.sleuthkit.autopsy.modules.filetypeid;
 
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Interface that must be implemented by all file ingest modules. 
- * See description of IngestModule for more details on interface behavior.
+ * Ingest job options for the file type identifier ingest module instances.
  */
-public interface FileIngestModule extends IngestModule {
+public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
-    /**
-     * Processes a file. Called between calls to startUp() and shutDown().
-     * Will be called for each file in a data source.
-     *
-     * @param file The file to analyze.
-     * @return A result code indicating success or failure of the processing.
-     */
-    ProcessResult process(AbstractFile file);
+    private boolean skipKnownFiles = true;
+
+    FileTypeIdModuleSettings() {
+    }
+
+    FileTypeIdModuleSettings(boolean skipKnownFiles) {
+        this.skipKnownFiles = skipKnownFiles;
+    }
+
+    void setSkipKnownFiles(boolean enabled) {
+        skipKnownFiles = enabled;
+    }
+
+    boolean skipKnownFiles() {
+        return skipKnownFiles;
+    }
 }
