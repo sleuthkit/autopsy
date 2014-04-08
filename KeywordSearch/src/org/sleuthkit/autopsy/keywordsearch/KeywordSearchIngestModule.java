@@ -916,7 +916,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                                     detailsSb.append("<table border='0' cellpadding='4' width='280'>");
                                     //hit
                                     detailsSb.append("<tr>");
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLThLbl"));
+                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
                                     detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
