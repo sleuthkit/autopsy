@@ -125,6 +125,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         initialized = false;
         
         jobId = context.getJobId();
+        IngestModuleAdapter.moduleRefCountIncrement(jobId);
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
@@ -251,7 +252,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         // Remove from the search list and trigger final commit and final search
         SearchRunner.getInstance().endJob(jobId);
         
-        postIndexSummary();        
+        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+            postIndexSummary();
+        }
         
         //log number of files / chunks in index
         //signal a potential change in number of text_ingested files
