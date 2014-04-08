@@ -38,14 +38,13 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Loads a file that maps USB IDs to names of makes and models. Uses Linux USB info. 
- * This should be renamed because it isn't extracting.  It's just mapping IDs to names. 
  */
-class ExtractUSB {
-    private static final Logger logger = Logger.getLogger(ExtractUSB.class.getName());
+class UsbDeviceIdMapper {
+    private static final Logger logger = Logger.getLogger(UsbDeviceIdMapper.class.getName());
     private HashMap<String, USBInfo> devices;
     private static final String DataFile = "USB_DATA.txt";
 
-    public ExtractUSB() {
+    public UsbDeviceIdMapper() {
         try {
             loadDeviceMap();
         } catch (FileNotFoundException ex) {
@@ -57,12 +56,12 @@ class ExtractUSB {
     }
     
     /**
-     * Example inputs:
-     * Vid_XXXX&Pid_XXXX
-     * @param dev
+     * Parses the passed in device ID and returns info that includes make and model. 
+     * 
+     * @param dev String to parse (i.e.: Vid_XXXX&Pid_XXXX)
      * @return 
      */
-    public USBInfo get(String dev) {
+    public USBInfo parseAndLookup(String dev) {
         String[] dtokens = dev.split("[_&]");
         String vID = dtokens[1];
         String pID;
@@ -72,6 +71,7 @@ class ExtractUSB {
             pID = dtokens[3];
         }
         String key = vID + pID;
+        key = key.toUpperCase();
         if (!devices.containsKey(key)) {
             return new USBInfo(null, null);
         } else {
@@ -80,11 +80,8 @@ class ExtractUSB {
     }
 
     /**
-     * Reads the USB file.  Syntax of file: 
-     *
-     * # vendor  vendor_name
-     * #	device  device_name				<-- single tab
-     * #		interface  interface_name		<-- two tabs
+     * Reads the local USB txt file and stores in map.
+     * 
      * @throws FileNotFoundException
      * @throws IOException 
      */
@@ -92,50 +89,69 @@ class ExtractUSB {
         devices = new HashMap<>();
         PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile);
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
+            /* Syntax of file: 
+             *
+             * # vendor  vendor_name
+             * #	device  device_name				<-- single tab
+             * #		interface  interface_name		<-- two tabs
+             */
             String line = dat.nextLine();
             while (dat.hasNext()) {
-                String dvc = "";
-                if (!(line.startsWith("#") || (line.equals("")))) {
-                    String[] tokens = line.split("[\\t\\s]+");
-                    String vID = tokens[0];
-                    for (int n = 1; n < tokens.length; n++) {
-                        dvc += tokens[n] + " ";
-                    }
-                    String pID = vID + "0000";
-                    USBInfo info = new USBInfo(dvc, null);
-                    
-                    // make an entry with just the vendor ID
-                    devices.put(pID, info);
-                    
-                    // get the later lines that have specific products
+                
+                // comments
+                if ((line.startsWith("#")) || (line.equals(""))) {
                     line = dat.nextLine();
-                    if (line.startsWith("\t")) {
-                        while (dat.hasNext() && line.startsWith("\t")) {
-                            tokens = line.split("[\\t\\s]+");
-                            pID = vID + tokens[1];
-                            String device = "";
-                            line = dat.nextLine();
-                            for (int n = 2; n < tokens.length; n++) {
-                                device += tokens[n] + " ";
-                            }
-                            
-                            info = new USBInfo(dvc, device);
-                            //make an entry where the key is both the vendor and product IDs concatenated
-                            devices.put(pID, info);
-                        }
-                    }
-                } else {
-                    line = dat.nextLine();
+                    continue;
                 }
+                
+                // stop once we've hitten the part of the file that starts to talk about class types
                 if (line.startsWith("C 00")) {
                     return;
+                }
+                
+                String dvc = "";
+                String[] tokens = line.split("[\\t\\s]+");
+                String vID = tokens[0];
+                for (int n = 1; n < tokens.length; n++) {
+                    dvc += tokens[n] + " ";
+                }
+                
+                // make an entry with just the vendor ID
+                String pID = vID + "0000";
+                pID = pID.toUpperCase();
+                USBInfo info = new USBInfo(dvc, null);
+                devices.put(pID, info);
+
+                // parseAndLookup the later lines that have specific products
+                line = dat.nextLine();
+                if (line.startsWith("\t")) {
+                    while (dat.hasNext() && line.startsWith("\t")) {
+                        tokens = line.split("[\\t\\s]+");
+
+                        // make key based on upper case version of vendor and product IDs
+                        pID = vID + tokens[1];
+                        pID = pID.toUpperCase();
+
+                        String device = "";
+                        line = dat.nextLine();
+                        for (int n = 2; n < tokens.length; n++) {
+                            device += tokens[n] + " ";
+                        }
+
+                        info = new USBInfo(dvc, device);
+
+                        // store based on the previously generated key
+                        devices.put(pID, info);
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Stores the vendor information about a USB device 
+     */
     public class USBInfo {
-
         private String vendor;
         private String product;
 
@@ -144,10 +160,18 @@ class ExtractUSB {
             product = prod;
         }
 
+        /**
+         * Get Vendor (make) information
+         * @return 
+         */
         public String getVendor() {
             return vendor;
         }
 
+        /**
+         * Get product (model) information
+         * @return 
+         */
         public String getProduct() {
             return product;
         }

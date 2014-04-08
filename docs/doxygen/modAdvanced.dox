@@ -10,7 +10,7 @@ These aren't really advanced, but you don't need to know them in detail when you
 
 Some modules may have configuration settings that uses can change.  We recommend that you use the infrastructure provided by Autopsy and NetBeans to do this so that all module condiguration is done in a single place.
 
-Note: This option panel applies to all module types.  Ingest modules have a second type of option panel that can be accessed when a data source is added to a case.   Refer to \ref ingestmodule_making_configuration for details on how to use those option panels. 
+Note: This option panel applies to all module types.  Ingest modules have a second type of option panel that can be accessed when a data source is added to a case.   Refer to \ref ingest_modules_making_options for details on how to use those option panels. 
 
 To add a panel to the options menu, right click the module and choose New > Other. Under the Module Development category, select Options Panel and press Next.
 
