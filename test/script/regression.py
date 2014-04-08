@@ -1818,16 +1818,19 @@ def setupAttachments(attachments, test_config):
        attachments: a listof_String, the files to be moved
        test_config: TestConfiguration, used to determine where to move the files to
     """
-    
+    call = ['pwd']
+    subprocess.call(call)
+
+    # remove old diff files
+    filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
+    for f in filelist:
+        if os.path.isfile(test_config.diff_dir + "/" + f):
+            os.remove(test_config.diff_dir + "/" + f)
+
+    # move in the new diff files
     for file in attachments:
         filename = ntpath.basename(file)
         destination = os.path.join(test_config.diff_dir, filename)
-        
-        # removing old files
-        call = ['rm', str(test_config.diff_dir) + '*.txt']
-        print("deleting file with command: " + call)
-        subprocess.call(call)
-       
         call = ['cp', file, destination]
         subprocess.call(call)
         
