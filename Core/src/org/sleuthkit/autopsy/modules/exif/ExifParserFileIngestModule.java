@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.exifparser;
+package org.sleuthkit.autopsy.modules.exif;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
