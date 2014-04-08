@@ -22,13 +22,15 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Interface that must be implemented by all file ingest modules. 
+ * See description of IngestModule for more details on interface behavior.
  */
 public interface FileIngestModule extends IngestModule {
 
     /**
-     * Processes a file.
+     * Processes a file. Called between calls to startUp() and shutDown().
+     * Will be called for each file in a data source.
      *
-     * @param file The file.
+     * @param file The file to analyze.
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(AbstractFile file);
