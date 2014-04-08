@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -84,6 +83,9 @@ final class DataSourceIngestPipeline {
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
+            if (job.isCancelled()) {
+                break;
+            }
         }
         return errors;
     }
@@ -95,9 +97,6 @@ final class DataSourceIngestPipeline {
                 module.shutDown(ingestJobCancelled);
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
-            }
-            if (job.isCancelled()) {
-                break;
             }
         }
         return errors;
