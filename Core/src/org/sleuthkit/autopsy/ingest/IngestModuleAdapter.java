@@ -18,11 +18,30 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.HashMap;
+
 /**
  * An adapter that provides a default implementation of the IngestModule
  * interface.
  */
 public abstract class IngestModuleAdapter implements IngestModule {
+    // Maps a JobId to the count of instances
+    static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
+    
+    public static synchronized void moduleRefCountIncrement(long jobID) {
+        long count = moduleRefCount.containsKey(jobID) ? moduleRefCount.get(jobID) : 0;
+        moduleRefCount.put(jobID, count + 1);    
+    }
+    
+    public static synchronized long moduleRefCountDecrementAndGet(long jobID) {
+        if (moduleRefCount.containsKey(jobID)) {
+            long count = moduleRefCount.get(jobID);
+            moduleRefCount.put(jobID, --count);
+            return count;
+        } else {
+            return 0;
+        }
+    }    
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {

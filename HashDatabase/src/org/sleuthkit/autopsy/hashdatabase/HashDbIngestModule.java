@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -57,27 +56,10 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
     private long jobID;
-    // Maps a JobId to the count of instances
-    static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
     static AtomicLong totalKnownBadCount = new AtomicLong(0);
     static AtomicLong totalCalctime = new AtomicLong(0);
     static AtomicLong totalLookuptime = new AtomicLong(0);
-    
-    private static synchronized void moduleRefCountIncrement(long jobID) {
-        long count = moduleRefCount.containsKey(jobID) ? moduleRefCount.get(jobID) : 0;
-        moduleRefCount.put(jobID, count + 1);    
-    }
-    
-    private static synchronized long moduleRefCountDecrementAndGet(long jobID) {
-        if (moduleRefCount.containsKey(jobID)) {
-            long count = moduleRefCount.get(jobID);
-            moduleRefCount.put(jobID, --count);
-            return count;
-        } else {
-            return 0;
-        }
-    }    
-    
+        
     HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;
     }
@@ -85,7 +67,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobID = context.getJobId();
-        moduleRefCountIncrement(jobID);
+        IngestModuleAdapter.moduleRefCountIncrement(jobID);
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         if (knownBadHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(
@@ -317,7 +299,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        if (moduleRefCountDecrementAndGet(jobID) == 0) {
+        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobID) == 0) {
             if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details
