@@ -362,7 +362,7 @@ public final class SearchRunner {
          */
         private SearchJobInfo job;
         private List<Keyword> keywords; //keywords to search
-        private List<String> keywordLists; // lists currently being searched
+        private List<String> keywordListNames; // lists currently being searched
         private Map<String, KeywordList> keywordToList; //keyword to list name mapping
         private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(SearchRunner.Searcher.class.getName());
@@ -370,7 +370,7 @@ public final class SearchRunner {
 
         Searcher(SearchJobInfo job) {
             this.job = job;
-            this.keywordLists = job.getKeywordListNames();
+            keywordListNames = job.getKeywordListNames();
             keywords = new ArrayList<>();
             keywordToList = new HashMap<>();
             //keywords are populated as searcher runs
@@ -654,10 +654,11 @@ public final class SearchRunner {
         private void updateKeywords() {
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
-            this.keywords.clear();
-            this.keywordToList.clear();
+            keywords.clear();
+            keywordToList.clear();
+            
 
-            for (String name : this.keywordLists) {
+            for (String name : keywordListNames) {
                 KeywordList list = loader.getList(name);
                 for (Keyword k : list.getKeywords()) {
                     this.keywords.add(k);
