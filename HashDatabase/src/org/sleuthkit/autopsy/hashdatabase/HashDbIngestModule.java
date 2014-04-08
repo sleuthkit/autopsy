@@ -55,7 +55,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
-    private long jobID;
+    private long jobId;
     static AtomicLong totalKnownBadCount = new AtomicLong(0);
     static AtomicLong totalCalctime = new AtomicLong(0);
     static AtomicLong totalLookuptime = new AtomicLong(0);
@@ -66,8 +66,8 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
-        jobID = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrement(jobID);
+        jobId = context.getJobId();
+        IngestModuleAdapter.moduleRefCountIncrement(jobId);
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         if (knownBadHashSets.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(
@@ -299,7 +299,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobID) == 0) {
+        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
             if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details

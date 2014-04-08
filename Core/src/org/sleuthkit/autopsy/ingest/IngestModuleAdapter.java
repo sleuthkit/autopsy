@@ -28,15 +28,15 @@ public abstract class IngestModuleAdapter implements IngestModule {
     // Maps a JobId to the count of instances
     static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
     
-    public static synchronized void moduleRefCountIncrement(long jobID) {
-        long count = moduleRefCount.containsKey(jobID) ? moduleRefCount.get(jobID) : 0;
-        moduleRefCount.put(jobID, count + 1);    
+    public static synchronized void moduleRefCountIncrement(long jobId) {
+        long count = moduleRefCount.containsKey(jobId) ? moduleRefCount.get(jobId) : 0;
+        moduleRefCount.put(jobId, count + 1);    
     }
     
-    public static synchronized long moduleRefCountDecrementAndGet(long jobID) {
-        if (moduleRefCount.containsKey(jobID)) {
-            long count = moduleRefCount.get(jobID);
-            moduleRefCount.put(jobID, --count);
+    public static synchronized long moduleRefCountDecrementAndGet(long jobId) {
+        if (moduleRefCount.containsKey(jobId)) {
+            long count = moduleRefCount.get(jobId);
+            moduleRefCount.put(jobId, --count);
             return count;
         } else {
             return 0;
