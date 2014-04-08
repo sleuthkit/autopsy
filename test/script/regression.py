@@ -348,7 +348,8 @@ class TestRunner(object):
         test_data.ant.append("-Dgold_path=" + test_config.gold)
         test_data.ant.append("-Dout_path=" +
         make_local_path(test_data.output_path))
-        test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
+        if test_config.jenkins:
+            test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
@@ -1824,8 +1825,8 @@ def setupAttachments(attachments, test_config):
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:
-        if os.path.isfile(f):
-            os.remove(f)
+        if os.path.isfile(test_config.diff_dir + "/" + f):
+            os.remove(test_config.diff_dir + "/" + f)
 
     # move in the new diff files
     for file in attachments:
