@@ -348,7 +348,8 @@ class TestRunner(object):
         test_data.ant.append("-Dgold_path=" + test_config.gold)
         test_data.ant.append("-Dout_path=" +
         make_local_path(test_data.output_path))
-        test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
+        if test_config.jenkins:
+            test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
@@ -1242,7 +1243,7 @@ class Logs(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
-            service_lines = find_msg_in_log("autopsy.log.0", "to process()", test_data)
+            service_lines = search_log("autopsy.log.0", "to process()", test_data)
             service_list = []
             for line in service_lines:
                 words = line.split(" ")
