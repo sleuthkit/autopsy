@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 
 /**
@@ -27,11 +26,11 @@ import org.netbeans.api.progress.ProgressHandle;
  */
 public class DataSourceIngestModuleStatusHelper {
 
-    private final ProgressHandle progress;
+    private final IngestJob ingestJob;
     private final String moduleDisplayName;
 
-    DataSourceIngestModuleStatusHelper(ProgressHandle progress, String moduleDisplayName) {
-        this.progress = progress;
+    DataSourceIngestModuleStatusHelper(IngestJob ingestJob, String moduleDisplayName) {
+        this.ingestJob = ingestJob;
         this.moduleDisplayName = moduleDisplayName;
     }
 
@@ -43,7 +42,7 @@ public class DataSourceIngestModuleStatusHelper {
      * @return True if the task has been canceled, false otherwise.
      */
     public boolean isIngestJobCancelled() {
-        return (Thread.currentThread().isInterrupted()); // RJCTODO: This is not right? Appears to be right...
+        return (ingestJob.isCancelled());
     }
 
     /**
@@ -55,9 +54,7 @@ public class DataSourceIngestModuleStatusHelper {
      * data source.
      */
     public void switchToDeterminate(int workUnits) {
-        if (progress != null) {
-            progress.switchToDeterminate(workUnits);
-        }
+        ingestJob.getDataSourceTaskProgressBar().switchToDeterminate(workUnits);
     }
 
     /**
@@ -65,9 +62,7 @@ public class DataSourceIngestModuleStatusHelper {
      * the total work units to process the data source is unknown.
      */
     public void switchToIndeterminate() {
-        if (progress != null) {
-            progress.switchToIndeterminate();
-        }
+        ingestJob.getDataSourceTaskProgressBar().switchToIndeterminate();
     }
 
     /**
@@ -77,8 +72,6 @@ public class DataSourceIngestModuleStatusHelper {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        if (progress != null) {
-            progress.progress(this.moduleDisplayName, workUnits);
-        }
+        ingestJob.getDataSourceTaskProgressBar().progress(this.moduleDisplayName, workUnits);
     }
 }

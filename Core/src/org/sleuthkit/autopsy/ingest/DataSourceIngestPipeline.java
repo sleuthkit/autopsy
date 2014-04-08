@@ -22,10 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -34,7 +31,6 @@ import org.sleuthkit.datamodel.Content;
  */
 final class DataSourceIngestPipeline {
 
-    private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
     private final IngestJob job;
     private final List<IngestModuleTemplate> moduleTemplates;
     private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
@@ -59,7 +55,6 @@ final class DataSourceIngestPipeline {
                 try {
                     module.startUp(context);
                     modulesByClass.put(module.getClassName(), module);
-                    IngestManager.fireModuleEvent(IngestManager.IngestEvent.STARTED.toString(), module.getDisplayName());
                 } catch (Exception ex) {
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 }
@@ -81,18 +76,13 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process(ProgressHandle progress) {
+    List<IngestModuleError> process() {
         List<IngestModuleError> errors = new ArrayList<>();
-        Content dataSource = this.job.getDataSource();
-        logger.log(Level.INFO, "Processing data source {0}", dataSource.getName());
         for (DataSourceIngestModuleDecorator module : this.modules) {
             try {
-                module.process(dataSource, new DataSourceIngestModuleStatusHelper(progress, module.getDisplayName()));
+                module.process(job.getDataSource(), new DataSourceIngestModuleStatusHelper(job, module.getDisplayName()));
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
-            }
-            if (job.isCancelled()) {
-                break;
             }
         }
         return errors;
@@ -105,8 +95,9 @@ final class DataSourceIngestPipeline {
                 module.shutDown(ingestJobCancelled);
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
-            } finally {
-                IngestManager.fireModuleEvent(IngestManager.IngestEvent.COMPLETED.toString(), module.getDisplayName());
+            }
+            if (job.isCancelled()) {
+                break;
             }
         }
         return errors;
