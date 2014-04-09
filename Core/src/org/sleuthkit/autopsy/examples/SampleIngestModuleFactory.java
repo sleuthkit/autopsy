@@ -87,7 +87,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * extend the abstract class IngestModuleFactoryAdapter to get default
  * implementations of most of the IngestModuleFactory methods.
  */
-// @ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service = IngestModuleFactory.class) // Sample is discarded at runtime 
 public class SampleIngestModuleFactory implements IngestModuleFactory {
 
     private static final String VERSION_NUMBER = "1.0.0";
