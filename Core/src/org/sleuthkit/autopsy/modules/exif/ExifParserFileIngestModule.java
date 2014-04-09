@@ -197,7 +197,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        // We only need to check for this final event on the last thread per job
+        // We only need to check for this final event on the last module per job
         if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
             if (filesToFire) {
                 //send the final new data event

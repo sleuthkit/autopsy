@@ -255,6 +255,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         // Remove from the search list and trigger final commit and final search
         SearchRunner.getInstance().endJob(jobId);
         
+        // We only need to post the summary msg from the last module per job
         if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
             postIndexSummary();
         }
