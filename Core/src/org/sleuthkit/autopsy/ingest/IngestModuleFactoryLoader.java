@@ -47,7 +47,7 @@ final class IngestModuleFactoryLoader {
     
     synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         // Discover the ingest module factories, making sure that there are no
-        // duplicate module display names. The duplicates requirment could be
+        // duplicate module display names. The duplicates requirement could be
         // eliminated if the enabled/disabled modules setting was by factory 
         // class name instead of module display name. Also note that that we are 
         // temporarily  hard-coding ordering of module factories until the 
