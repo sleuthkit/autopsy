@@ -73,6 +73,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+
 /**
  * Top component which displays something.
  */
@@ -82,7 +83,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
     private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
-                                                                                                     "DirectoryTreeTopComponent.title.text"));
+            "DirectoryTreeTopComponent.title.text"));
     private LinkedList<String[]> backList;
     private LinkedList<String[]> forwardList;
     /**
@@ -222,12 +223,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        
+
         // the end is the current place,
         String[] currentNodePath = backList.pollLast();
         forwardList.addLast(currentNodePath);
         forwardButton.setEnabled(true);
-        
+
         /* We peek instead of poll because we use its existence
          * in the list later on so that we do not reset the forward list
          * after the selection occurs. */
@@ -239,7 +240,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else {
             backButton.setEnabled(false);
         }
-        
+
         // update the selection on directory tree
         setSelectedNode(newCurrentNodePath, null);
 
@@ -256,10 +257,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else {
             forwardButton.setEnabled(false);
         }
-        
+
         backList.addLast(newCurrentNodePath);
         backButton.setEnabled(true);
- 
+
         // update the selection on directory tree
         setSelectedNode(newCurrentNodePath, null);
 
@@ -543,8 +544,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 // The current case has been closed. Reset the ExplorerManager.
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode);
-            }
-            else if (newValue != null) {
+            } else if (newValue != null) {
                 // A new case has been opened. Reset the forward and back 
                 // buttons. Note that a call to CoreComponentControl.openCoreWindows()
                 // by the new Case object will lead to a componentOpened() call
@@ -598,7 +598,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     refreshTree(event.getArtifactType());
                 }
             });
-        } else if (changed.equals(IngestEvent.COMPLETED.toString())) {
+        } else if (changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
+                || changed.equals(IngestEvent.INGEST_JOB_CANCELLED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -654,7 +655,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             return;
                         }
                         Node originNode = origin.getNode();
-                        
+
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
@@ -667,9 +668,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                                 displayName = content.getUniquePath();
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode);
-                            }    
-                        } 
-                        else if (originNode.getLookup().lookup(String.class) != null) {
+                            }
+                        } else if (originNode.getLookup().lookup(String.class) != null) {
                             displayName = originNode.getLookup().lookup(String.class);
                         }
                         dataResult.setPath(displayName);
@@ -695,12 +695,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // update the back and forward list
         updateHistory(em.getSelectedNodes());
     }
-   
+
     private void updateHistory(Node[] selectedNodes) {
         if (selectedNodes.length == 0) {
             return;
         }
-        
+
         Node selectedNode = selectedNodes[0];
         String selectedNodeName = selectedNode.getName();
 
@@ -729,7 +729,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             forwardButton.setEnabled(false); // disable the forward Button
         }
     }
-    
+
     /**
      * Resets the back and forward list, and also disable the back and forward
      * buttons.
@@ -752,8 +752,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         pcs.removePropertyChangeListener(listener);
     }
 
-    
-
     /**
      * Gets the tree on this DirectoryTreeTopComponent.
      *
@@ -768,13 +766,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     public void refreshContentTreeSafe() {
         SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    refreshContentTree();
-                }
-            });
+            @Override
+            public void run() {
+                refreshContentTree();
+            }
+        });
     }
-    
+
     /**
      * Refreshes changed content nodes
      */
@@ -865,7 +863,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     /**
      * Set the selected node using a path to a previously selected node.
      *
-     * @param previouslySelectedNodePath Path to a previously selected node. 
+     * @param previouslySelectedNodePath Path to a previously selected node.
      * @param rootNodeName Name of the root node to match, may be null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
@@ -876,28 +874,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             @Override
             public void run() {
                 if (previouslySelectedNodePath.length > 0 && (rootNodeName == null || previouslySelectedNodePath[0].equals(rootNodeName))) {
-                    Node selectedNode = null;                    
+                    Node selectedNode = null;
                     ArrayList<String> selectedNodePath = new ArrayList<>(Arrays.asList(previouslySelectedNodePath));
                     while (null == selectedNode && !selectedNodePath.isEmpty()) {
                         try {
-                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[0]));                        
-                        }
-                        catch (NodeNotFoundException ex) {
+                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[0]));
+                        } catch (NodeNotFoundException ex) {
                             // The selected node may have been deleted (e.g., a deleted tag), so truncate the path and try again. 
                             if (selectedNodePath.size() > 1) {
                                 selectedNodePath.remove(selectedNodePath.size() - 1);
-                            }                            
-                            else {
+                            } else {
                                 StringBuilder nodePath = new StringBuilder();
                                 for (int i = 0; i < previouslySelectedNodePath.length; ++i) {
                                     nodePath.append(previouslySelectedNodePath[i]).append("/");
                                 }
                                 logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex);
-                                break; 
+                                break;
                             }
-                        } 
+                        }
                     }
-                    
+
                     if (null != selectedNode) {
                         if (rootNodeName != null) {
                             //called from tree auto refresh context
@@ -905,9 +901,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             backList.pollLast();
                         }
                         try {
-                            em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});                                                    
-                        }
-                        catch (PropertyVetoException ex) {
+                            em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
+                        } catch (PropertyVetoException ex) {
                             logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex);
                         }
                     }
@@ -970,11 +965,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex);
             }
-        } else if ( type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT) || 
-                    type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) )   { 
+        } else if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+                || type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT)) {
             Node interestingItemsRootNode = resultsChilds.findChild(type.getLabel());
             Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
-             try {
+            try {
                 String setName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
@@ -1030,16 +1025,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     void fireViewerComplete() {
-        
+
         try {
             firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DirectoryTreeTopComponent.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(),
+                    "DirectoryTreeTopComponent.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 }
