@@ -128,9 +128,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
 
+        // increment the module reference count
+        // if first instance of this module for this job then check the server and existence of keywords
         if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {
-            // if first module for this job then check the server and existence of keywords       
-
             final Server server = KeywordSearch.getServer();
             try {
                 if (!server.isRunning()) {

@@ -90,6 +90,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
     private static final int ZIP_SIGNATURE_BE = 0x504B0304;
     private IngestJobContext context;
+    private long jobId;
 
     SevenZipIngestModule() {
     }
@@ -97,6 +98,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+        jobId = context.getJobId();
 
         final Case currentCase = Case.getCurrentCase();
 
@@ -121,20 +123,23 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             }
         }
 
-        try {
-            SevenZip.initSevenZipFromPlatformJAR();
-            String platform = SevenZip.getUsedPlatform();
-            logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: {0}", platform);
-        } catch (SevenZipNativeInitializationException e) {
-            logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e);
-            String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errInitModule.msg",
-                    ArchiveFileExtractorModuleFactory.getModuleName());
-            String details = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errCantInitLib",
-                    e.getMessage());
-            services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
-            throw new RuntimeException(e);
+        // if first instance of this module for this job then check 7zip init
+        if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {
+            try {
+                SevenZip.initSevenZipFromPlatformJAR();
+                String platform = SevenZip.getUsedPlatform();
+                logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: {0}", platform);
+            } catch (SevenZipNativeInitializationException e) {
+                logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e);
+                String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errInitModule.msg",
+                        ArchiveFileExtractorModuleFactory.getModuleName());
+                String details = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errCantInitLib",
+                        e.getMessage());
+                services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
+                throw new RuntimeException(e);
+            }
         }
-
+        
         archiveDepthCountTree = new ArchiveDepthCountTree();
     }
 
