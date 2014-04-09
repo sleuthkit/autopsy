@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -88,6 +89,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private Tika tikaFormatDetector;
     private long jobId;
     private long dataSourceId;   
+    private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
+    private int instanceNum = 0;
     
     private enum IngestStatus {
 
@@ -102,6 +105,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
     KeywordSearchIngestModule(KeywordSearchJobSettings settings) {
         this.settings = settings;
+        instanceNum = instanceCount.getAndIncrement();
     }
 
     /**
@@ -111,7 +115,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        logger.log(Level.INFO, "init()");
+        logger.log(Level.INFO, "Initializing instance {0}", instanceNum);
         initialized = false;
         
         jobId = context.getJobId();
@@ -179,13 +183,11 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
 
         indexer = new Indexer();
-        
         initialized = true;
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-
         if (initialized == false) //error initializing indexing/Solr
         {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());
@@ -230,6 +232,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      */
     @Override
     public void shutDown(boolean ingestJobCancelled) {
+        logger.log(Level.INFO, "Instance {0}", instanceNum);
+       
         if (initialized == false) {
             return;
         }

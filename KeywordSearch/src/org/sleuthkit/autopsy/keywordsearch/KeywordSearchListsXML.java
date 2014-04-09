@@ -66,7 +66,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
      * RJCTODO: Move this one to the manager
      * @return 
      */
-    static KeywordSearchListsXML getCurrent() {
+    static synchronized KeywordSearchListsXML getCurrent() {
         if (currentInstance == null) {
             currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);
             currentInstance.reload();
