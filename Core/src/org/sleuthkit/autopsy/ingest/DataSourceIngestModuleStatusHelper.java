@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Used by data source ingest modules to report progress and detect data source
@@ -28,15 +26,11 @@ import org.sleuthkit.datamodel.Content;
  */
 public class DataSourceIngestModuleStatusHelper {
 
-    private final SwingWorker worker;
-    private final ProgressHandle progress;
-    private final Content dataSource;
+    private final IngestJob ingestJob;
     private final String moduleDisplayName;
 
-    DataSourceIngestModuleStatusHelper(SwingWorker worker, ProgressHandle progress, Content dataSource, String moduleDisplayName) {
-        this.worker = worker;
-        this.progress = progress;
-        this.dataSource = dataSource;
+    DataSourceIngestModuleStatusHelper(IngestJob ingestJob, String moduleDisplayName) {
+        this.ingestJob = ingestJob;
         this.moduleDisplayName = moduleDisplayName;
     }
 
@@ -48,7 +42,7 @@ public class DataSourceIngestModuleStatusHelper {
      * @return True if the task has been canceled, false otherwise.
      */
     public boolean isIngestJobCancelled() {
-        return worker.isCancelled();
+        return (ingestJob.isCancelled());
     }
 
     /**
@@ -60,9 +54,7 @@ public class DataSourceIngestModuleStatusHelper {
      * data source.
      */
     public void switchToDeterminate(int workUnits) {
-        if (progress != null) {
-            progress.switchToDeterminate(workUnits);
-        }
+        ingestJob.getDataSourceTaskProgressBar().switchToDeterminate(workUnits);
     }
 
     /**
@@ -70,9 +62,7 @@ public class DataSourceIngestModuleStatusHelper {
      * the total work units to process the data source is unknown.
      */
     public void switchToIndeterminate() {
-        if (progress != null) {
-            progress.switchToIndeterminate();
-        }
+        ingestJob.getDataSourceTaskProgressBar().switchToIndeterminate();
     }
 
     /**
@@ -82,8 +72,6 @@ public class DataSourceIngestModuleStatusHelper {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        if (progress != null) {
-            progress.progress(this.moduleDisplayName, workUnits);
-        }
+        ingestJob.getDataSourceTaskProgressBar().progress(this.moduleDisplayName, workUnits);
     }
 }

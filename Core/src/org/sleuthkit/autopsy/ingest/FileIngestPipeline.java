@@ -22,10 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * A file ingest pipeline composed of a sequence of file ingest modules
@@ -33,7 +30,6 @@ import org.sleuthkit.datamodel.Content;
  */
 final class FileIngestPipeline {
 
-    private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private final IngestJob job;
     private final List<IngestModuleTemplate> moduleTemplates;
     private List<FileIngestModuleDecorator> modules = new ArrayList<>();
@@ -58,7 +54,6 @@ final class FileIngestPipeline {
                 try {
                     module.startUp(context);
                     modulesByClass.put(module.getClassName(), module);
-                    IngestManager.fireModuleEvent(IngestManager.IngestEvent.STARTED.toString(), template.getModuleName());
                 } catch (Exception ex) {
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 }
@@ -93,7 +88,9 @@ final class FileIngestPipeline {
             }
         }
         file.close();
-        IngestManager.fireFileDone(file.getId());
+        if (!job.isCancelled()) {
+            IngestManager.fireFileIngestDone(file.getId());
+        }
         return errors;
     }
 
@@ -104,8 +101,6 @@ final class FileIngestPipeline {
                 module.shutDown(ingestJobCancelled);
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
-            } finally {
-                IngestManager.fireModuleEvent(IngestManager.IngestEvent.COMPLETED.toString(), module.getDisplayName());
             }
         }
         return errors;

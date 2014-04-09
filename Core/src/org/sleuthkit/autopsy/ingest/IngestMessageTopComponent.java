@@ -224,7 +224,7 @@ import org.sleuthkit.datamodel.Content;
                         manager = IngestManager.getInstance();
                     }
                     try {
-                        manager.stopAll();
+                        manager.cancelIngestJobs();
                     } finally {
                         //clear inbox 
                         clearMessages();

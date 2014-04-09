@@ -46,7 +46,7 @@ final class IngestJob {
     private ProgressHandle fileTasksProgress;
     int totalEnqueuedFiles = 0;
     private int processedFiles = 0;
-    private boolean cancelled;
+    private volatile boolean cancelled;
 
     IngestJob(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
         this.id = id;
@@ -85,7 +85,7 @@ final class IngestJob {
                             "IngestJob.progress.cancelling",
                             displayName));
                 }
-                IngestManager.getInstance().stopAll();
+                IngestManager.getInstance().cancelIngestJobs();
                 return true;
             }
         });
@@ -104,7 +104,7 @@ final class IngestJob {
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
                             displayName));
                 }
-                IngestManager.getInstance().stopAll();
+                IngestManager.getInstance().cancelIngestJobs();
                 return true;
             }
         });
@@ -159,13 +159,13 @@ final class IngestJob {
 
     synchronized List<IngestModuleError> releaseIngestPipelinesForThread(long threadId) {
         List<IngestModuleError> errors = new ArrayList<>();
-
+        
         DataSourceIngestPipeline dataSourceIngestPipeline = dataSourceIngestPipelines.get(threadId);
         if (dataSourceIngestPipeline != null) {
             errors.addAll(dataSourceIngestPipeline.shutDown(cancelled));
+            dataSourceIngestPipelines.remove(threadId);
         }
-        dataSourceIngestPipelines.remove(threadId);
-        if (dataSourceIngestPipelines.isEmpty() && dataSourceTaskProgress != null) {
+        if (initialDataSourceIngestPipeline == null && dataSourceIngestPipelines.isEmpty() && dataSourceTaskProgress != null) {
             dataSourceTaskProgress.finish();
             dataSourceTaskProgress = null;
         }
@@ -173,9 +173,9 @@ final class IngestJob {
         FileIngestPipeline fileIngestPipeline = fileIngestPipelines.get(threadId);
         if (fileIngestPipeline != null) {
             errors.addAll(fileIngestPipeline.shutDown(cancelled));
+            fileIngestPipelines.remove(threadId);
         }
-        fileIngestPipelines.remove(threadId);
-        if (fileIngestPipelines.isEmpty() && fileTasksProgress != null) {
+        if (initialFileIngestPipeline == null && fileIngestPipelines.isEmpty() && fileTasksProgress != null) {
             fileTasksProgress.finish();
             fileTasksProgress = null;
         }
@@ -184,14 +184,17 @@ final class IngestJob {
     }
 
     synchronized boolean areIngestPipelinesShutDown() {
-        return (dataSourceIngestPipelines.isEmpty() && fileIngestPipelines.isEmpty());
+        return (initialDataSourceIngestPipeline == null
+                && dataSourceIngestPipelines.isEmpty()
+                && initialFileIngestPipeline == null
+                && fileIngestPipelines.isEmpty());
     }
 
     synchronized ProgressHandle getDataSourceTaskProgressBar() {
         return this.dataSourceTaskProgress;
     }
 
-    synchronized void handleFileTaskStarted(IngestScheduler.FileScheduler.FileTask task) {
+    synchronized void updateFileTasksProgressBar(String currentFileName) {
         int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
         if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
             totalEnqueuedFiles = newTotalEnqueuedFiles + 1;
@@ -202,14 +205,23 @@ final class IngestJob {
             ++processedFiles;
         }
 
-        fileTasksProgress.progress(task.getFile().getName(), processedFiles);
+        fileTasksProgress.progress(currentFileName, processedFiles);
     }
 
     synchronized void cancel() {
+        if (initialDataSourceIngestPipeline != null) {
+            initialDataSourceIngestPipeline.shutDown(true);
+            initialDataSourceIngestPipeline =  null;
+        }
+        if (initialFileIngestPipeline != null) {
+            initialFileIngestPipeline.shutDown(true);
+            initialFileIngestPipeline = null;
+        }
+       
         cancelled = true;
     }
 
-    synchronized boolean isCancelled() {
+    boolean isCancelled() {
         return cancelled;
     }
 }
