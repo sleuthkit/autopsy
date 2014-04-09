@@ -44,7 +44,7 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
                 if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
                     editListPanel.setCurrentKeywordList(null);
-                    editListPanel.initButtons();
+                    editListPanel.setButtonStates();
                     // RJCTODO: Move this into a deleteList method in the manager
                     KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
                     deleter.deleteList(toDelete);
