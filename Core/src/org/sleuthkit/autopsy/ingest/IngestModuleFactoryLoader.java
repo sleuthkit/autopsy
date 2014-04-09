@@ -44,22 +44,6 @@ final class IngestModuleFactoryLoader {
         }
         return instance;
     }
-
-    synchronized List<IngestModuleFactory> OLDgetIngestModuleFactories() {
-        List<IngestModuleFactory> moduleFactories = new ArrayList<>();
-        HashSet<String> moduleDisplayNames = new HashSet<>();
-        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
-        for (IngestModuleFactory factory : factories) {
-            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
-            if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
-                moduleFactories.add(factory);
-                moduleDisplayNames.add(factory.getModuleDisplayName());
-            } else {
-                logger.log(Level.SEVERE, "Found duplicate ingest module display name, discarding ingest module factory (name = {0}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()});
-            }
-        }
-        return new ArrayList<>(moduleFactories);
-    }
     
     synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         // Discover the ingest module factories, making sure that there are no
