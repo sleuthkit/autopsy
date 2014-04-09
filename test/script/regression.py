@@ -34,16 +34,13 @@ import xml
 from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
 import smtplib
-from email.mime.image import MIMEImage
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import re
 import zipfile
 import zlib
-import Emailer
 import srcupdater
 from regression_utils import *
-
+import shutil
+import ntpath
 #
 # Please read me...
 #
@@ -130,7 +127,6 @@ class TestRunner(object):
         logres =[]
         for test_data in test_data_list:
             Errors.clear_print_logs()
-            Errors.set_testing_phase(test_data.image)
             if not (test_config.args.rebuild or os.path.exists(test_data.gold_archive)):
                 msg = "Gold standard doesn't exist, skipping image:"
                 Errors.print_error(msg)
@@ -148,28 +144,16 @@ class TestRunner(object):
             time.sleep(10)
 
         Reports.write_html_foot(test_config.html_log)
-        # TODO: move this elsewhere
-        if (len(logres)>0):
-            for lm in logres:
-                for ln in lm:
-                    Errors.add_email_msg(ln)
-
         # TODO: possibly worth putting this in a sub method
         if all([ test_data.overall_passed for test_data in test_data_list ]):
-            Errors.add_email_msg("All images passed.\n")
+            pass 
         else:
-            msg = "The following images failed:\n"
-            for test_data in test_data_list:
-                if not test_data.overall_passed:
-                    msg += "\t" + test_data.image + "\n"
-            Errors.add_email_msg(msg)
             html = open(test_config.html_log)
-            Errors.add_email_attachment(html.name)
+            Errors.add_errors_out(html.name)
             html.close()
-
-            if test_config.email_enabled:
-                Emailer.send_email(test_config.mail_to, test_config.mail_server,
-                test_config.mail_subject, Errors.email_body, Errors.email_attachs)
+        
+        if test_config.jenkins:
+            setupAttachments(Errors.errors_out, test_config)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -234,9 +218,8 @@ class TestRunner(object):
             diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
             for f in diffFiles:
                if f.endswith("Diff.txt"):
-                  Errors.add_email_attachment(os.path.join(test_data.output_path, f))
-            Errors.add_email_attachment(test_data.common_log_path)
-
+                  Errors.add_errors_out(os.path.join(test_data.output_path, f))
+            Errors.add_errors_out(test_data.common_log_path)
         return logres
 
     def _extract_gold(test_data):
@@ -304,7 +287,6 @@ class TestRunner(object):
             shutil.copy(test_data.sorted_log, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
-            Errors.add_email_message("Not rebuilt properly")
             print(str(e))
             print(traceback.format_exc())
         # Rebuild the HTML report
@@ -366,6 +348,8 @@ class TestRunner(object):
         test_data.ant.append("-Dgold_path=" + test_config.gold)
         test_data.ant.append("-Dout_path=" +
         make_local_path(test_data.output_path))
+        if test_config.jenkins:
+            test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
@@ -583,6 +567,7 @@ class TestConfiguration(object):
         images: a listof_Image, the images to be tested
         timeout: a Nat, the amount of time before killing the test
         ant: a listof_String, the ant command to run the tests
+        jenkins: a boolean, is this test running through a Jenkins job?
     """
 
     def __init__(self, args):
@@ -609,11 +594,7 @@ class TestConfiguration(object):
         # Infinite Testing info
         timer = 0
         self.images = []
-        # Email info
-        self.email_enabled = args.email_enabled
-        self.mail_server = ""
-        self.mail_to = ""
-        self.mail_subject = ""
+        self.jenkins = False
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -651,15 +632,18 @@ class TestConfiguration(object):
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
                 self.img_gold = make_path(self.gold, 'tmp')
-
+            if parsed_config.getElementsByTagName("jenkins"):
+                self.jenkins = True
+                if parsed_config.getElementsByTagName("diffdir"):
+                    self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
+            else:
+                self.jenkins = False
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
-            self._init_email_info(parsed_config)
 
         except IOError as e:
             msg = "There was an error loading the configuration file.\n"
             msg += "\t" + str(e)
-            Errors.add_email_msg(msg)
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
 
@@ -692,7 +676,6 @@ class TestConfiguration(object):
             else:
                 msg = "File: " + value + " doesn't exist"
                 Errors.print_error(msg)
-                Errors.add_email_msg(msg)
         image_count = len(self.images)
 
         # Sanity check to see if there are obvious gold images that we are not testing
@@ -705,27 +688,6 @@ class TestConfiguration(object):
             print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
         elif (image_count < gold_count):
             print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
-
-    def _init_email_info(self, parsed_config):
-        """Initializes email information dictionary"""
-        email_elements = parsed_config.getElementsByTagName("email")
-        if email_elements:
-            mail_to = email_elements[0]
-            self.mail_to = mail_to.getAttribute("value").encode().decode("utf_8")
-        mail_server_elements = parsed_config.getElementsByTagName("mail_server")
-        if mail_server_elements:
-            mail_from = mail_server_elements[0]
-            self.mail_server = mail_from.getAttribute("value").encode().decode("utf_8")
-        subject_elements = parsed_config.getElementsByTagName("subject")
-        if subject_elements:
-            subject = subject_elements[0]
-            self.mail_subject = subject.getAttribute("value").encode().decode("utf_8")
-        if self.mail_server and self.mail_to and self.args.email_enabled:
-            self.email_enabled = True
-            print("Email will be sent to ", self.mail_to)
-        else:
-            self.email_enabled = False
-            print("No email will be sent.")
 
 
 #-------------------------------------------------#
@@ -749,7 +711,7 @@ class TestResultsDiffer(object):
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
             test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
             gold_dump=gold_dump).run_diff())
-            
+
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
             # this is needed so dates and times will not cause the diff to fail
@@ -804,11 +766,7 @@ class TestResultsDiffer(object):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
-            Errors.add_email_attachment(diff_path)
-            msg = "There was a difference in "
-            msg += os.path.basename(output_file) + ".\n"
-            Errors.add_email_msg(msg)
-            Errors.print_error(msg)
+            Errors.add_errors_out(diff_path)
             return False
         else:
             return True
@@ -1247,7 +1205,6 @@ class Logs(object):
             # Set the TestData start time based off the first line of autopsy.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
-
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
@@ -1266,20 +1223,20 @@ class Logs(object):
 
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
             test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
-
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-
+            
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
-
-            message_line = search_log_set("autopsy", "Ingest messages count:", test_data)[0]
-            test_data.ingest_messages = int(message_line.rstrip().split(": ")[2])
-
-            files_line = search_log_set("autopsy", "Indexed files count:", test_data)[0]
-            test_data.indexed_files = int(files_line.rstrip().split(": ")[2])
-
-            chunks_line = search_log_set("autopsy", "Indexed file chunks count:", test_data)[0]
-            test_data.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
+            
+            message_line_count = find_msg_in_log_set("Ingest messages count:", test_data)
+            test_data.indexed_files = message_line_count
+            
+            files_line_count = find_msg_in_log_set("Indexed files count:", test_data)
+            test_data.indexed_files = files_line_count
+            
+            chunks_line_count = find_msg_in_log_set("Indexed file chunks count:", test_data)
+            test_data.indexed_chunks = chunks_line_count
+            
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to find the required information to fill test_config data.")
             Errors.print_error(str(e) + "\n")
@@ -1469,24 +1426,12 @@ class Errors:
     Attributes:
         printout: a listof_String, the non-error messages that were printed
         printerror: a listof_String, the error messages that were printed
-        email_body: a String, the body of the report email
-        email_msg_prefix: a String, the prefix for lines added to the email
         email_attchs: a listof_pathto_File, the files to be attached to the
         report email
     """
     printout = []
     printerror = []
-    email_body = ""
-    email_msg_prefix = "Configuration"
-    email_attachs = []
-
-    def set_testing_phase(image_name):
-        """Change the email message prefix to be the given testing phase.
-
-        Args:
-            image_name: a String, representing the current image being tested
-        """
-        Errors.email_msg_prefix = image_name
+    errors_out = []
 
     def print_out(msg):
         """Print out an informational message.
@@ -1511,21 +1456,13 @@ class Errors:
         Errors.printout = []
         Errors.printerror = []
 
-    def add_email_msg(msg):
-        """Add the given message to the body of the report email.
-
-        Args:
-            msg: a String, the message to be added to the email
-        """
-        Errors.email_body += Errors.email_msg_prefix + ":" + msg
-
-    def add_email_attachment(path):
+    def add_errors_out(path):
         """Add the given file to be an attachment for the report email
 
         Args:
             file: a pathto_File, the file to add
         """
-        Errors.email_attachs.append(path)
+        Errors.errors_out.append(path)
 
 
 class DiffResults(object):
@@ -1607,7 +1544,6 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
-        self.email_enabled = False
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -1667,8 +1603,6 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
-            elif arg == "--email":
-                self.email_enabled = True
             else:
                 print(usage())
                 return False
@@ -1774,6 +1708,40 @@ def search_log_set(type, string, test_data):
             log.close()
     return results
 
+def find_msg_in_log_set(string, test_data):
+   """Count how many strings of a certain type are in a log set.
+
+   Args:
+      string: the String to search for.
+      test_data: the TestData containing the logs to search.
+   Returns:
+      an int, the number of occurances of the string type.
+   """
+   count = 0
+   try:
+      line = search_log_set("autopsy", string, test_data)[0]
+      count = int(line.rstrip().split(": ")[2])
+   except (Exception) as e:
+      # there weren't any matching messages found
+      pass
+   return count
+            
+def find_msg_in_log(log, string, test_data):
+   """Get the strings of a certain type that are in a log.
+
+   Args:
+      string: the String to search for.
+      test_data: the TestData containing the log to search.
+   Returns:
+      a listof_String, the lines on which the String was found. 
+   """
+   lines = []
+   try:
+      lines = search_log("autopsy.log.0", string, test_data)[0]
+   except (Exception) as e:
+      # there weren't any matching messages found
+      pass
+   return lines
 
 def clear_dir(dir):
     """Clears all files from a directory and remakes it.
@@ -1843,10 +1811,33 @@ def find_file_in_dir(dir, name, ext):
     except:
         raise DirNotFoundException(dir)
 
+def setupAttachments(attachments, test_config):
+    """Move email attachments to the location specified in the config file.
+       Used for Jenkins build.
+       
+    Args:
+       attachments: a listof_String, the files to be moved
+       test_config: TestConfiguration, used to determine where to move the files to
+    """
+    call = ['pwd']
+    subprocess.call(call)
+
+    # remove old diff files
+    filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
+    for f in filelist:
+        if os.path.isfile(test_config.diff_dir + "/" + f):
+            os.remove(test_config.diff_dir + "/" + f)
+
+    # move in the new diff files
+    for file in attachments:
+        filename = ntpath.basename(file)
+        destination = os.path.join(test_config.diff_dir, filename)
+        call = ['cp', file, destination]
+        subprocess.call(call)
+        
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
-
 
 if __name__ == "__main__":
     global SYS
