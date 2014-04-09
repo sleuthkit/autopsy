@@ -66,26 +66,30 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
-        jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrement(jobId);
+        jobId = context.getJobId();        
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
-        if (knownBadHashSets.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(
-                                HashLookupModuleFactory.getModuleName(),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.noKnownBadHashDbSetMsg"),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
-        }        
-
         getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
-        if (knownHashSets.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(
-                                HashLookupModuleFactory.getModuleName(),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+        
+        if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {      
+            // if first module for this job then post error msgs if needed
+            
+            if (knownBadHashSets.isEmpty()) {
+                services.postMessage(IngestMessage.createWarningMessage(
+                    HashLookupModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.noKnownBadHashDbSetMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
+            }        
+
+            if (knownHashSets.isEmpty()) {
+                services.postMessage(IngestMessage.createWarningMessage(
+                    HashLookupModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.noKnownHashDbSetMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+            }
         }
     }
     
