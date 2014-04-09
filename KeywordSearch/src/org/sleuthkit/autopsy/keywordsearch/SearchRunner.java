@@ -96,7 +96,6 @@ public final class SearchRunner {
         if (jobs.size() > 0) {
             final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
             if (!updateTimerRunning) {
-                logger.log(Level.INFO, "Scheduling update daemon");
                 updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
                 updateTimerRunning = true;
             }
@@ -109,7 +108,6 @@ public final class SearchRunner {
      * @param jobId
      */
     public void endJob(long jobId) {        
-        logger.log(Level.INFO, "Ending job {0}", jobId);
         SearchJobInfo job;
         boolean readyForFinalSearch = false;
         synchronized(this) {
@@ -138,7 +136,8 @@ public final class SearchRunner {
      * @param jobId
      */
     public void stopJob(long jobId) {
-        logger.log(Level.INFO, "Stopping job");
+        logger.log(Level.INFO, "Stopping job {0}", jobId);
+        commit(); 
 
         SearchJobInfo job;
         synchronized(this) {
@@ -154,9 +153,7 @@ public final class SearchRunner {
             }            
             
             jobs.remove(jobId);
-        }
-        
-        commit(); 
+        }        
     }
     
     /**
@@ -176,11 +173,9 @@ public final class SearchRunner {
      * Commits index and notifies listeners of index update
      */
     private void commit() {
-        logger.log(Level.INFO, "Committing index");
         synchronized(ingester) {
             ingester.commit();
         }
-        logger.log(Level.INFO, "Index comitted");
 
         // Signal a potential change in number of text_ingested files
         try {
@@ -235,7 +230,6 @@ public final class SearchRunner {
             
             commit();
 
-            logger.log(Level.INFO, "Launching searchers");
             synchronized(SearchRunner.this) {
                 // Spawn a search thread for each job
                 for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
@@ -383,12 +377,6 @@ public final class SearchRunner {
 
         @Override
         protected Object doInBackground() throws Exception {
-            if (finalRun) {
-                logger.log(Level.INFO, "Pending start of new (final) searcher");
-            } else {
-                logger.log(Level.INFO, "Pending start of new searcher");
-            }
-
             final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
                     + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
             final String pgDisplayName = displayName + (" (" + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") + ")");
@@ -418,7 +406,6 @@ public final class SearchRunner {
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             try {
-                logger.log(Level.INFO, "Started a new searcher");
                 progressGroup.setDisplayName(displayName);
 
                 int keywordsSearched = 0;
@@ -672,7 +659,6 @@ public final class SearchRunner {
          * guaranteed to run.
          */
         private void finalizeSearcher() {
-            logger.log(Level.INFO, "Searcher finalizing");
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
