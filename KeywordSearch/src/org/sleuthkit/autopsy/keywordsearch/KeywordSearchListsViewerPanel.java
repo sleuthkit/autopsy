@@ -139,7 +139,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         searchAddListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ingestRunning) {
+                if (ingestRunning) {                    
+                    SearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest");
                 } else {
                     searchAction(e);
