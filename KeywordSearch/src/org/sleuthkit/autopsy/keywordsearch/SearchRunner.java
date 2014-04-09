@@ -163,8 +163,8 @@ public final class SearchRunner {
     public synchronized void addKeywordListsToAllJobs(List<String> keywordListNames) {
         for(String listName : keywordListNames) {
             logger.log(Level.INFO, "Adding keyword list {0} to all jobs", listName);
-            for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                j.getValue().addKeywordListName(listName);
+            for(SearchJobInfo j : jobs.values()) {
+                j.addKeywordListName(listName);
             }
         }
     }
