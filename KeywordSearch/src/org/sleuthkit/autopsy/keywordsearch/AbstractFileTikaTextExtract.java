@@ -223,10 +223,6 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                             + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
-
-                //check if need invoke commit/search between chunks
-                //not to delay commit if timer has gone off
-                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
             final String msg = "Exception: Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
