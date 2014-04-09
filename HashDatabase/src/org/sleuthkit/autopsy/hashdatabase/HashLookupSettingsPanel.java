@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
@@ -71,8 +72,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSetttingsPa
         IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (isFileIngestStatusChangeEvent(evt)) {
-                    updateComponents();
+                if (isIngestJobEvent(evt)) {
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateComponents();
+                        }
+                    });                                
                 }
             }
         });
@@ -224,8 +230,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSetttingsPa
         return shortenedPath;
     }
 
-    private boolean isFileIngestStatusChangeEvent(PropertyChangeEvent evt) {
-        return evt.getPropertyName().equals(IngestManager.IngestEvent.STARTED.toString()) || evt.getPropertyName().equals(IngestManager.IngestEvent.COMPLETED.toString()) || evt.getPropertyName().equals(IngestManager.IngestEvent.STOPPED.toString());
+    private boolean isIngestJobEvent(PropertyChangeEvent evt) {
+        return evt.getPropertyName().equals(IngestManager.IngestEvent.INGEST_JOB_STARTED.toString())
+                || evt.getPropertyName().equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
+                || evt.getPropertyName().equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString());
     }
 
     @Override

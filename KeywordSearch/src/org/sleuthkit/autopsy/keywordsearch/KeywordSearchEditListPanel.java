@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -40,6 +41,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
@@ -52,7 +55,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
     private KeywordList currentKeywordList;
-    private boolean ingestRunning;
 
     /**
      * Creates new form KeywordSearchEditListPanel
@@ -101,7 +103,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             }
         });
 
-        initButtons();
+        setButtonStates();
 
         addWordField.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
@@ -124,49 +126,28 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
 
-        if (IngestManager.getInstance().isIngestRunning()) {
-            initIngest(0);
-        } else {
-            initIngest(1);
-        }
+        setButtonStates();
 
         IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
-                Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestEvent.COMPLETED.toString())
-                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
-                    initIngest(1);
-                } else if (changed.equals(IngestEvent.STARTED.toString())
-                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
-                    initIngest(0);
-                } else if (changed.equals(IngestEvent.STOPPED.toString())
-                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
-                    initIngest(1);
+                if (changed.equals(IngestEvent.INGEST_JOB_STARTED.toString())
+                        || changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
+                        || changed.equals(IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            setButtonStates();
+                        }
+                    });            
                 }
             }
         });
     }
 
-    /**
-     * Initialize this panel depending on whether ingest is running
-     *
-     * @param running case 0: ingest running case 1: ingest not running
-     */
-    private void initIngest(int running) {
-        switch (running) {
-            case 0:
-                ingestRunning = true;
-                break;
-            case 1:
-                ingestRunning = false;
-                break;
-        }
-        initButtons();
-    }
-
-    void initButtons() {
+    void setButtonStates() {
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         boolean listSet = currentKeywordList != null;
         boolean isLocked = !listSet ? true : currentKeywordList.isLocked();
         boolean noKeywords = !listSet ? true : currentKeywordList.getKeywords().isEmpty();
@@ -441,7 +422,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         chRegex.setSelected(false);
         addWordField.setText("");
 
-        initButtons();
+        setButtonStates();
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
@@ -449,7 +430,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
             tableModel.deleteSelected(keywordTable.getSelectedRows());
             KeywordSearchListsXML.getCurrent().addList(currentKeywordList);
-            initButtons();
+            setButtonStates();
         }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
@@ -549,11 +530,11 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
             currentKeywordList = loader.getListsL(false).get(index);
             tableModel.resync();
-            initButtons();
+            setButtonStates();
         } else {
             currentKeywordList = null;
             tableModel.resync();
-            initButtons();
+            setButtonStates();
         }
     }
 
