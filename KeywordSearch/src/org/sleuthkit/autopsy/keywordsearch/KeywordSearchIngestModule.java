@@ -122,41 +122,57 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         logger.log(Level.INFO, "Initializing instance {0}", instanceNum);
-        initialized = false;
-        
+        initialized = false;       
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrement(jobId);
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
 
-        final Server server = KeywordSearch.getServer();
-        try {
-            if (!server.isRunning()) {
+        if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {
+            // if first module for this job then check the server and existence of keywords       
+
+            final Server server = KeywordSearch.getServer();
+            try {
+                if (!server.isRunning()) {
+                    String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+                    logger.log(Level.SEVERE, msg);
+                    String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
+                    throw new IngestModuleException(msg);
+                }
+            } catch (KeywordSearchModuleException ex) {
+                logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+                //this means Solr is not properly initialized
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                logger.log(Level.SEVERE, msg);
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
                 services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                 throw new IngestModuleException(msg);
             }
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
-            //this means Solr is not properly initialized
-            String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-            String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-            services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-            throw new IngestModuleException(msg);
-        }
-        try {
-            // make an actual query to verify that server is responding
-            // we had cases where getStatus was OK, but the connection resulted in a 404
-            server.queryNumIndexedDocuments();
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            throw new IngestModuleException(
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
-                    ex.getMessage()));
-        }
+            try {
+                // make an actual query to verify that server is responding
+                // we had cases where getStatus was OK, but the connection resulted in a 404
+                server.queryNumIndexedDocuments();
+            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                throw new IngestModuleException(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
+                        ex.getMessage()));
+            }
 
+            // check if this job has any searchable keywords    
+            List<KeywordList> keywordLists = KeywordSearchListsXML.getCurrent().getListsL();
+            boolean hasKeywordsForSearch = false;
+            for (KeywordList keywordList : keywordLists) {
+                if (settings.isKeywordListEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
+                    hasKeywordsForSearch = true;
+                    break;
+                }
+            }
+            if (!hasKeywordsForSearch) {
+                services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+            }            
+        }
+        
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract(this);
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
@@ -173,20 +189,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         //order matters, more specific extractors first
         textExtractors.add(new AbstractFileHtmlExtract(this));
         textExtractors.add(new AbstractFileTikaTextExtract(this));
-
-        List<KeywordList> keywordLists = KeywordSearchListsXML.getCurrent().getListsL();
-        boolean hasKeywordsForSearch = false;
-        for (KeywordList keywordList : keywordLists) {
-            if (settings.isKeywordListEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
-                hasKeywordsForSearch = true;
-                break;
-            }
-        }
-        if (!hasKeywordsForSearch) {
-            services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-        }
-
+        
         indexer = new Indexer();
         initialized = true;
     }
