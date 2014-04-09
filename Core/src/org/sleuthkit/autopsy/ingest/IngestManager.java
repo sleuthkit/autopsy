@@ -133,7 +133,7 @@ public class IngestManager {
         }
     }
 
-    synchronized void cancelIngestJobs() {
+    void cancelIngestJobs() {
         new IngestCancellationWorker().execute();
     }
 
@@ -143,29 +143,24 @@ public class IngestManager {
     public enum IngestEvent {
 
         /**
-         * Event sent when an ingest module has been started. Second argument of
-         * the property change is a string form of the module name and the third
-         * argument is null.
+         * Property change event fired when an ingest job is started. The ingest
+         * job id is in old value field of the PropertyChangeEvent object.
          */
-        STARTED,
+        INGEST_JOB_STARTED,
         /**
-         * Event sent when an ingest module has completed processing by its own
-         * means. Second argument of the property change is a string form of the
-         * module name and the third argument is null.
-         *
-         * This event is generally used by listeners to perform a final data
-         * view refresh (listeners need to query all data from the blackboard).
+         * Property change event fired when an ingest job is completed. The
+         * ingest job id is in old value field of the PropertyChangeEvent
+         * object.
          */
-        COMPLETED,
+        INGEST_JOB_COMPLETED,
         /**
-         * Event sent when an ingest module has stopped processing, and likely
-         * not all data has been processed. Second argument of the property
-         * change is a string form of the module name and third argument is
-         * null.
+         * Property change event fired when an ingest job is canceled. The
+         * ingest job id is in old value field of the PropertyChangeEvent
+         * object.
          */
-        STOPPED,
+        INGEST_JOB_CANCELLED,
         /**
-         * Event sent when ingest module posts new data to blackboard or
+         * Event sent when an ingest module posts new data to blackboard or
          * somewhere else. Second argument of the property change fired contains
          * ModuleDataEvent object and third argument is null. The object can
          * contain encapsulated new data created by the module. Listener can
@@ -198,9 +193,9 @@ public class IngestManager {
         pcs.removePropertyChangeListener(listener);
     }
 
-    static void fireModuleEvent(String eventType, String moduleName) {
+    static void fireIngestJobEvent(String eventType, long jobId) {
         try {
-            pcs.firePropertyChange(eventType, moduleName, null);
+            pcs.firePropertyChange(eventType, jobId, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
@@ -212,11 +207,11 @@ public class IngestManager {
     /**
      * Fire event when file is done with a pipeline run
      *
-     * @param objId ID of file that is done
+     * @param fileId ID of file that is done
      */
-    static void fireFileDone(long objId) {
+    static void fireFileIngestDone(long fileId) {
         try {
-            pcs.firePropertyChange(IngestEvent.FILE_DONE.toString(), objId, null);
+            pcs.firePropertyChange(IngestEvent.FILE_DONE.toString(), fileId, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
@@ -340,7 +335,8 @@ public class IngestManager {
         }
 
         for (Long jobId : completedJobs) {
-            ingestJobs.remove(jobId);
+            IngestJob job = ingestJobs.remove(jobId);
+            fireIngestJobEvent(job.isCancelled() ? IngestEvent.INGEST_JOB_CANCELLED.toString() : IngestEvent.INGEST_JOB_COMPLETED.toString(), jobId);
         }
     }
 
@@ -375,7 +371,7 @@ public class IngestManager {
                 });
 
                 progress.start(2 * dataSources.size());
-                int processed = 0;
+                int workUnitsCompleted = 0;
                 for (Content dataSource : dataSources) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
@@ -411,17 +407,18 @@ public class IngestManager {
 
                     // Queue the data source ingest tasks for the ingest job.
                     final String inputName = dataSource.getName();
-                    progress.progress("DataSource Ingest" + " " + inputName, processed);
+                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted); // RJCTODO: Improve
                     scheduler.getDataSourceScheduler().schedule(ingestJob);
-                    progress.progress("DataSource Ingest" + " " + inputName, ++processed);
+                    progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     // Queue the file ingest tasks for the ingest job.
-                    progress.progress("File Ingest" + " " + inputName, processed);
+                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
                     scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
-                    progress.progress("File Ingest" + " " + inputName, ++processed);
+                    progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {
                         startIngestTasks();
+                        fireIngestJobEvent(IngestEvent.INGEST_JOB_STARTED.toString(), ingestJob.getId());
                     }
                 }
             } catch (Exception ex) {

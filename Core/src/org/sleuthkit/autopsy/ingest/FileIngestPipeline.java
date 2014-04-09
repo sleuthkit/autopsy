@@ -89,7 +89,7 @@ final class FileIngestPipeline {
         }
         file.close();
         if (!job.isCancelled()) {
-            IngestManager.fireFileDone(file.getId());
+            IngestManager.fireFileIngestDone(file.getId());
         }
         return errors;
     }
