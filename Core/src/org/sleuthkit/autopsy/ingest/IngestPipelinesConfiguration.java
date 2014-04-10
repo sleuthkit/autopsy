@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
@@ -39,12 +40,15 @@ import org.w3c.dom.NodeList;
 final class IngestPipelinesConfiguration {
 
     private static final Logger logger = Logger.getLogger(IngestPipelinesConfiguration.class.getName());
-    private final static String PIPELINES_CONFIG_FILE = "pipeline_config.xml";
-    private final static String PIPELINES_CONFIG_FILE_XSD = "PipelineConfigSchema.xsd";
+    private static final String PIPELINE_CONFIG_FILE_VERSION_KEY = "PipelineConfigFileVersion";
+    private static final String PIPELINE_CONFIG_FILE_VERSION_NO_STRING = "1";
+    private static final int PIPELINE_CONFIG_FILE_VERSION_NO = 1;
+    private static final String PIPELINES_CONFIG_FILE = "pipeline_config.xml";
+    private static final String PIPELINES_CONFIG_FILE_XSD = "PipelineConfigSchema.xsd";
     private static final String XML_PIPELINE_ELEM = "PIPELINE";
     private static final String XML_PIPELINE_TYPE_ATTR = "type";
-    private final static String DATA_SOURCE_INGEST_PIPELINE_TYPE = "ImageAnalysis";
-    private final static String FILE_INGEST_PIPELINE_TYPE = "FileAnalysis";
+    private static final String DATA_SOURCE_INGEST_PIPELINE_TYPE = "ImageAnalysis";
+    private static final String FILE_INGEST_PIPELINE_TYPE = "FileAnalysis";
     private static final String XML_MODULE_ELEM = "MODULE";
     private static final String XML_MODULE_CLASS_NAME_ATTR = "location";
     private static IngestPipelinesConfiguration instance;
@@ -73,65 +77,77 @@ final class IngestPipelinesConfiguration {
 
     private void readPipelinesConfigurationFile() {
         try {
-            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error copying default pipeline configuration to user dir", ex);
-            return;
-        }
-        
-        String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINES_CONFIG_FILE;
-        Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath, PIPELINES_CONFIG_FILE_XSD);
-        if (doc == null) {
-            return;
-        }
-
-        Element rootElement = doc.getDocumentElement();
-        if (rootElement == null) {
-            logger.log(Level.SEVERE, "Invalid pipelines config file");
-            return;
-        }
-
-        NodeList pipelineElements = rootElement.getElementsByTagName(XML_PIPELINE_ELEM);
-        int numPipelines = pipelineElements.getLength();
-        if (numPipelines < 1 || numPipelines > 2) {
-            logger.log(Level.SEVERE, "Invalid pipelines config file");
-            return;
-        }
-
-        List<String> pipelineConfig = null;
-        for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
-            Element pipelineElement = (Element) pipelineElements.item(pipelineNum);
-            String pipelineTypeAttr = pipelineElement.getAttribute(XML_PIPELINE_TYPE_ATTR);
-            if (pipelineTypeAttr != null) {
-                switch (pipelineTypeAttr) {
-                    case DATA_SOURCE_INGEST_PIPELINE_TYPE:
-                        pipelineConfig = dataSourceIngestPipelineConfig;
-                        break;
-                    case FILE_INGEST_PIPELINE_TYPE:
-                        pipelineConfig = fileIngestPipelineConfig;
-                        break;
-                    default:
-                        logger.log(Level.SEVERE, "Invalid pipelines config file");
-                        return;
-                }
+            boolean overWrite;
+            if (!ModuleSettings.settingExists(this.getClass().getSimpleName(), PIPELINE_CONFIG_FILE_VERSION_KEY)) {
+                ModuleSettings.setConfigSetting(this.getClass().getSimpleName(), PIPELINE_CONFIG_FILE_VERSION_KEY, PIPELINE_CONFIG_FILE_VERSION_NO_STRING);
+                overWrite = true;
+            } else {
+                int versionNumber = Integer.parseInt(ModuleSettings.getConfigSetting(this.getClass().getSimpleName(), PIPELINE_CONFIG_FILE_VERSION_KEY));
+                overWrite = versionNumber < PIPELINE_CONFIG_FILE_VERSION_NO;
+                // TODO: Migrate user edits
             }
 
-            // Create an ordered list of class names. The sequence of class 
-            // names defines the sequence of modules in the pipeline.
-            if (pipelineConfig != null) {
-                NodeList modulesElems = pipelineElement.getElementsByTagName(XML_MODULE_ELEM);
-                int numModules = modulesElems.getLength();
-                if (numModules == 0) {
-                    break;
+            boolean fileCopied = PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, overWrite);
+            if (!fileCopied) {
+                logger.log(Level.SEVERE, "Failure copying default pipeline configuration to user dir");
+            }
+
+            String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINES_CONFIG_FILE;
+            Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath, PIPELINES_CONFIG_FILE_XSD);
+            if (doc == null) {
+                return;
+            }
+
+            Element rootElement = doc.getDocumentElement();
+            if (rootElement == null) {
+                logger.log(Level.SEVERE, "Invalid pipelines config file");
+                return;
+            }
+
+            NodeList pipelineElements = rootElement.getElementsByTagName(XML_PIPELINE_ELEM);
+            int numPipelines = pipelineElements.getLength();
+            if (numPipelines < 1 || numPipelines > 2) {
+                logger.log(Level.SEVERE, "Invalid pipelines config file");
+                return;
+            }
+
+            List<String> pipelineConfig = null;
+            for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
+                Element pipelineElement = (Element) pipelineElements.item(pipelineNum);
+                String pipelineTypeAttr = pipelineElement.getAttribute(XML_PIPELINE_TYPE_ATTR);
+                if (pipelineTypeAttr != null) {
+                    switch (pipelineTypeAttr) {
+                        case DATA_SOURCE_INGEST_PIPELINE_TYPE:
+                            pipelineConfig = dataSourceIngestPipelineConfig;
+                            break;
+                        case FILE_INGEST_PIPELINE_TYPE:
+                            pipelineConfig = fileIngestPipelineConfig;
+                            break;
+                        default:
+                            logger.log(Level.SEVERE, "Invalid pipelines config file");
+                            return;
+                    }
                 }
-                for (int moduleNum = 0; moduleNum < numModules; ++moduleNum) {
-                    Element moduleElement = (Element) modulesElems.item(moduleNum);
-                    final String moduleClassName = moduleElement.getAttribute(XML_MODULE_CLASS_NAME_ATTR);
-                    if (moduleClassName != null) {
-                        pipelineConfig.add(moduleClassName);
+
+                // Create an ordered list of class names. The sequence of class 
+                // names defines the sequence of modules in the pipeline.
+                if (pipelineConfig != null) {
+                    NodeList modulesElems = pipelineElement.getElementsByTagName(XML_MODULE_ELEM);
+                    int numModules = modulesElems.getLength();
+                    if (numModules == 0) {
+                        break;
+                    }
+                    for (int moduleNum = 0; moduleNum < numModules; ++moduleNum) {
+                        Element moduleElement = (Element) modulesElems.item(moduleNum);
+                        final String moduleClassName = moduleElement.getAttribute(XML_MODULE_CLASS_NAME_ATTR);
+                        if (moduleClassName != null) {
+                            pipelineConfig.add(moduleClassName);
+                        }
                     }
                 }
             }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error copying default pipeline configuration to user dir", ex);
         }
     }
 }

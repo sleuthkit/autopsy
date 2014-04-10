@@ -322,7 +322,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     @Override
     void init() throws IngestModuleException {
         try {
-            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
+            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE, false);
             init2();
         } catch (IOException e) {
             String message = "Unable to find " + XMLFILE;
