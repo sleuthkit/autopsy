@@ -61,7 +61,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrement(jobId);
+        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
     }

@@ -61,7 +61,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrement(jobId);
+        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
     }    
     
     @Override
