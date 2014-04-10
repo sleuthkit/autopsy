@@ -70,7 +70,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
         
-        if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {      
+        if (IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId) == 1) {      
             // if first module for this job then post error msgs if needed
             
             if (knownBadHashSets.isEmpty()) {

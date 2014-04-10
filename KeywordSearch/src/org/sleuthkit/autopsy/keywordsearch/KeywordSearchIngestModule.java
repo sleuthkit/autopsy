@@ -130,7 +130,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
-        if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {
+        if (IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId) == 1) {
             final Server server = KeywordSearch.getServer();
             try {
                 if (!server.isRunning()) {

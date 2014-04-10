@@ -28,7 +28,7 @@ public abstract class IngestModuleAdapter implements IngestModule {
     // Maps a JobId to the count of instances
     static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
     
-    public static synchronized long moduleRefCountIncrement(long jobId) {
+    public static synchronized long moduleRefCountIncrementAndGet(long jobId) {
         long count = moduleRefCount.containsKey(jobId) ? moduleRefCount.get(jobId) : 0;
         long nextCount = count + 1;
         moduleRefCount.put(jobId, nextCount);
