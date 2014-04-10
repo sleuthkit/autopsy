@@ -54,7 +54,6 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
-    private int messageId = 0; // RJCTODO: Not thread safe
     private FileManager fileManager;
     private IngestJobContext context;
 
