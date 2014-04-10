@@ -713,13 +713,17 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             messages.add(message);
         }
 
+        private List<IngestMessage> getMessages() {
+            return messages;
+        }        
+        
         synchronized void add(IngestMessage message) {
             messages.add(message);
         }
 
         //add all messages from another group
         synchronized void addAll(IngestMessageGroup group) {
-            for (IngestMessage m : messages) {
+            for (IngestMessage m : group.getMessages()) {
                 messages.add(m);
             }
         }
