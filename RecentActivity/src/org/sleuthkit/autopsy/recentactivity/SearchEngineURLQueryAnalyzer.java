@@ -31,11 +31,11 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -62,6 +62,7 @@ import org.xml.sax.SAXException;
  */
 class SearchEngineURLQueryAnalyzer extends Extract {
 
+    private static final Logger logger = Logger.getLogger(SearchEngineURLQueryAnalyzer.class.getName());
     private static final String XMLFILE = "SEUQAMappings.xml";
     private static final String XSDFILE = "SearchEngineSchema.xsd";
     private static String[] searchEngineNames;
@@ -71,6 +72,8 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class, "SearchEngineURLQueryAnalyzer.engineName.none"),
             NbBundle.getMessage(SearchEngineURLQueryAnalyzer.class, "SearchEngineURLQueryAnalyzer.domainSubStr.none"),
             new HashMap<String,String>());
+    private Content dataSource;
+    private IngestJobContext context;
 
     SearchEngineURLQueryAnalyzer() {
     }
@@ -223,7 +226,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         return basereturn;
     }
 
-    private void getURLs(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    private void getURLs() {
         int totalQueries = 0;
         try {
             //from blackboard_artifacts
@@ -255,7 +258,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
                 getAttributes:
                 for (BlackboardAttribute attribute : listAttributes) {
-                    if (controller.isIngestJobCancelled()) {
+                    if (context.isJobCancelled()) {
                         break getAll;       //User cancled the process.
                     }
                     if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
@@ -292,13 +295,13 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         } catch (TskException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for search engine queries", e);
         } finally {
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 logger.info("Operation terminated by user.");
             }
             IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
                     NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.parentModuleName.noSpace"),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
-            logger.info("Extracted " + totalQueries + " queries from the blackboard");
+            logger.log(Level.INFO, "Extracted {0} queries from the blackboard", totalQueries);
         }
     }
 
@@ -314,8 +317,10 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
-        this.getURLs(dataSource, controller);
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
+        this.getURLs();
         logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals());
     }
 

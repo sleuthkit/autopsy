@@ -79,7 +79,7 @@ final class DataSourceIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModuleDecorator module : this.modules) {
             try {
-                module.process(job.getDataSource(), new DataSourceIngestModuleStatusHelper(job, module.getDisplayName()));
+                module.process(job.getDataSource(), new DataSourceIngestModuleProgress(job, module.getDisplayName()));
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -126,7 +126,7 @@ final class DataSourceIngestPipeline {
         }
 
         @Override
-        public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+        public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
             return module.process(dataSource, statusHelper);
         }
 

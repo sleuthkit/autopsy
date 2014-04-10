@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -118,7 +118,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
      * @return A result code indicating success or failure of the processing.
      */
     @Override
-    public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         // There are two tasks to do. Use the status helper to set the the 
         // progress bar to determinate and to set the remaining number of work 
         // units to be completed.
