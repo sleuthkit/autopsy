@@ -543,7 +543,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             });
 
             if (!this.isCancelled() && !na.isEmpty()) {
-                IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }
 

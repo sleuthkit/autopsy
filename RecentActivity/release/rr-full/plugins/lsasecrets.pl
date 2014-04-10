@@ -49,23 +49,30 @@ sub pluginmain {
 		eval {
 			::rptMsg("");
 			::rptMsg("Domain secret - \$MACHINE\.ACC");
-			my $c = $key->get_subkey("\$MACHINE\.ACC\\CupdTime")->get_value("")->get_data();
-			my @v = unpack("VV",$c);
-			my $cupd = gmtime(::getTime($v[0],$v[1]));
-			::rptMsg("CupdTime = ".$cupd);
+			my $v1 = $key->get_subkey("\$MACHINE\.ACC\\CupdTime")->get_value("");
+                        if (defined $v1) {
+                            my $c = $v1->get_data();
+                            my @v = unpack("VV",$c);
+                            my $cupd = gmtime(::getTime($v[0],$v[1]));
+                            ::rptMsg("CupdTime = ".$cupd);
+                        }
+                        else {
+                            ::rptMsg("CupdTime value not found");
+                        }
 			
-			my $o = $key->get_subkey("\$MACHINE\.ACC\\OupdTime")->get_value("")->get_data();
-			my @v = unpack("VV",$c);
-			my $oupd = gmtime(::getTime($v[0],$v[1]));
-			::rptMsg("OupdTime = ".$oupd);
+			
+			$v1 = $key->get_subkey("\$MACHINE\.ACC\\OupdTime")->get_value("")
+                        if (defined $v1) {
+                            my $c = $v1->get_data();
+                            my @v = unpack("VV",$c);
+                            my $oupd = gmtime(::getTime($v[0],$v[1]));
+                            ::rptMsg("OupdTime = ".$oupd);
+                        }
+                        else {
+                            ::rptMsg("OupdTime value not found");
+                        }
 		};
 		::rptMsg("Error: ".$@) if ($@);
-		
-		
-		
-		
-		
-		
 	}
 	else {
 		::rptMsg($key_path." not found.");

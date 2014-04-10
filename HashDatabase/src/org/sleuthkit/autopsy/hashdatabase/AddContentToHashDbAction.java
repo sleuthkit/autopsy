@@ -82,7 +82,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             super(SINGLE_SELECTION_NAME);
                         
             // Disable the menu if file ingest is in progress.
-            if (IngestManager.getDefault().isIngestRunning()) {
+            if (IngestManager.getInstance().isIngestRunning()) {
                 setEnabled(false);
                 return;
             }
@@ -170,7 +170,11 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     JOptionPane.showMessageDialog(null,
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
-                                                                      files.size() > 1 ? "files" : "file"),
+                                                                      files.size() > 1 ? NbBundle
+                                                                              .getMessage(this.getClass(),
+                                                                                          "AddContentToHashDbAction.addFilesToHashSet.files") : NbBundle
+                                                                              .getMessage(this.getClass(),
+                                                                                          "AddContentToHashDbAction.addFilesToHashSet.file")),
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
                                                   JOptionPane.ERROR_MESSAGE);

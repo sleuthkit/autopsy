@@ -44,17 +44,17 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleIngestJobSettings getDefaultModuleSettings() {
-        return new NoIngestModuleSettings();
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new NoIngestModuleIngestJobSettings();
     }
 
     @Override
-    public boolean hasModuleSettingsPanel() {
+    public boolean hasIngestJobSettingsPanel() {
         return false;
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel(IngestModuleIngestJobSettings ingestOptions) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 

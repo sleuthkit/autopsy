@@ -94,7 +94,7 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public enum SetEvt {
 
-        DB_ADDED, DB_DELETED
+        DB_ADDED, DB_DELETED, DB_INDEXED
     };
 
     /**
@@ -306,7 +306,7 @@ public class HashDbManager implements PropertyChangeListener {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
             MessageNotifyUtil.Notify.show(
-                    "Module Error",
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
@@ -345,7 +345,7 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized void removeHashDatabase(HashDb hashDb) throws HashDbManagerException {
         // Don't remove a database if ingest is running
-        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         if (ingestIsRunning) {
             throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.ingestRunningExceptionMsg"));
         }
@@ -399,7 +399,7 @@ public class HashDbManager implements PropertyChangeListener {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
             MessageNotifyUtil.Notify.show(
-                    "Module Error",
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
@@ -1009,8 +1009,9 @@ public class HashDbManager implements PropertyChangeListener {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error creating index", ex);
-                MessageNotifyUtil.Notify.show("Error creating index",
-                        "Error creating index: " + ex.getMessage(),
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.title"),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.msg", ex.getMessage()),
                         MessageNotifyUtil.MessageType.ERROR);
             }
             // catch and ignore if we were cancelled
@@ -1018,6 +1019,7 @@ public class HashDbManager implements PropertyChangeListener {
 
             try {
                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
+                hashDb.propertyChangeSupport.firePropertyChange(HashDbManager.SetEvt.DB_INDEXED.toString(), null, hashDb.getHashSetName());
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
                 MessageNotifyUtil.Notify.show(

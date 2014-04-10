@@ -58,9 +58,9 @@ public final class IngestJobContext {
      *
      * @param files The files to be processed by the file ingest pipeline.
      */
-    public void addFilesToPipeline(List<AbstractFile> files) {
+    public void addFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            IngestManager.getDefault().scheduleFile(ingestJob.getId(), file);
+            IngestManager.getInstance().addFileToIngestJob(ingestJob.getId(), file);
         }
     }
 }

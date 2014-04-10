@@ -87,12 +87,12 @@ public final class IngestJobLauncher {
             // NOTE: In the future, this code will be modified to get the 
             // module settings for the current context, if available, from 
             // storage; for now always use the defaults.
-            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultModuleSettings());
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultIngestJobSettings());
             String moduleName = moduleTemplate.getModuleName();
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);
             } else if (disabledModuleNames.contains(moduleName)) {
-                moduleTemplate.setEnabled(true);
+                moduleTemplate.setEnabled(false);
             } else {
                 // The module factory was loaded, but the module name does not
                 // appear in the enabled/disabled module settings. Treat the
@@ -232,7 +232,7 @@ public final class IngestJobLauncher {
         }
 
         if ((!enabledModuleTemplates.isEmpty()) && (dataSources != null) && (!dataSources.isEmpty())) {
-            IngestManager.getDefault().scheduleDataSourceTasks(dataSources, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
+            IngestManager.getInstance().startIngestJobs(dataSources, enabledModuleTemplates, ingestConfigPanel.getProcessUnallocSpace());
         }
     }
 }

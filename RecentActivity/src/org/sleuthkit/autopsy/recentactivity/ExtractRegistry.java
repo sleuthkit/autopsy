@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
-import org.sleuthkit.autopsy.recentactivity.ExtractUSB.USBInfo;
+import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -153,7 +153,7 @@ class ExtractRegistry extends Extract {
             java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        ExtractUSB extrctr = new ExtractUSB();
+        UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
         
         int j = 0;
         for (AbstractFile regFile : allRegistryFiles) {
@@ -171,7 +171,7 @@ class ExtractRegistry extends Extract {
                 continue;
             }
             
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
            
@@ -187,13 +187,13 @@ class ExtractRegistry extends Extract {
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
             
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 break;
             }
             
             // parse the autopsy-specific output
             if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
-                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
+                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), usbMapper) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                                 this.getName(), regFileName));
@@ -365,7 +365,7 @@ class ExtractRegistry extends Extract {
     }
     
     // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
-    private boolean parseAutopsyPluginOutput(String regRecord, long orgId, ExtractUSB extrctr) {
+    private boolean parseAutopsyPluginOutput(String regRecord, long orgId, UsbDeviceIdMapper extrctr) {
         FileInputStream fstream = null;
         try {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
@@ -448,7 +448,7 @@ class ExtractRegistry extends Extract {
                                 String dev = artnode.getAttribute("dev");       
                                 String model = dev; 
                                 if (dev.toLowerCase().contains("vid")) {
-                                    USBInfo info = extrctr.get(dev);
+                                    USBInfo info = extrctr.parseAndLookup(dev);
                                     if(info.getVendor()!=null)
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
                                                                                  NbBundle.getMessage(this.getClass(),

@@ -45,17 +45,12 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 public final class RAImageIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
-    private static int messageId = 0;
     private final List<Extract> extracters = new ArrayList<>();
     private final List<Extract> browserExtracters = new ArrayList<>();
-    private IngestServices services = IngestServices.getDefault();
+    private IngestServices services = IngestServices.getInstance();
     private StringBuilder subCompleted = new StringBuilder();
 
     RAImageIngestModule() {
-    }
-
-    synchronized int getNextMessageId() {
-        return ++messageId;
     }
 
     @Override
@@ -85,7 +80,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
-        services.postMessage(IngestMessage.createMessage(getNextMessageId(), MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
 
         controller.switchToDeterminate(extracters.size());
         controller.progress(0);
@@ -93,7 +88,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
 
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
-            if (controller.isCancelled()) {
+            if (controller.isIngestJobCancelled()) {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName());
                 break;
             }
@@ -134,7 +129,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             errorMessage.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.noErrs"));
             errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.noErrs");
         }
-        final IngestMessage msg = IngestMessage.createMessage(getNextMessageId(), msgLevel, RecentActivityExtracterModuleFactory.getModuleName(),
+        final IngestMessage msg = IngestMessage.createMessage(msgLevel, RecentActivityExtracterModuleFactory.getModuleName(),
                                                               NbBundle.getMessage(this.getClass(),
                                                                                   "RAImageIngestModule.process.ingestMsg.finished",
                                                                                   dataSource.getName(), errorMsgSubject),
@@ -152,7 +147,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             historyMsg.append("</li>");
         }
         historyMsg.append("</ul>");
-        final IngestMessage inboxMsg = IngestMessage.createMessage(getNextMessageId(), MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
+        final IngestMessage inboxMsg = IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
                                                                    NbBundle.getMessage(this.getClass(),
                                                                                        "RAImageIngestModule.process.ingestMsg.results",
                                                                                        dataSource.getName()),

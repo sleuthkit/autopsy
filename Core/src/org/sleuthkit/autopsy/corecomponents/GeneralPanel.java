@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 final class GeneralPanel extends javax.swing.JPanel {
 
-    private final GeneralOptionsPanelController controller;
     private static final String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";
     private static final String USE_LOCAL_TIME = "useLocalTime";
     private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
@@ -32,7 +32,6 @@ final class GeneralPanel extends javax.swing.JPanel {
     private final Preferences prefs = NbPreferences.forModule(this.getClass());
 
     GeneralPanel(GeneralOptionsPanelController controller) {
-        this.controller = controller;
         initComponents();
         ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
         // TODO listen to changes in form fields and call controller.changed()
@@ -57,6 +56,8 @@ final class GeneralPanel extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         dataSourcesHideKnownCB = new javax.swing.JCheckBox();
         viewsHideKnownCB = new javax.swing.JCheckBox();
+        jLabel4 = new javax.swing.JLabel();
+        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox();
 
         buttonGroup1.add(useBestViewerRB);
         useBestViewerRB.setSelected(true);
@@ -94,6 +95,11 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(viewsHideKnownCB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.viewsHideKnownCB.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel4.text")); // NOI18N
+
+        numberOfFileIngestThreadsComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4" }));
+        numberOfFileIngestThreadsComboBox.setSelectedIndex(1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -114,14 +120,16 @@ final class GeneralPanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel3)
+                            .addComponent(jLabel4)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(keepCurrentViewerRB)
                                     .addComponent(useBestViewerRB)
                                     .addComponent(dataSourcesHideKnownCB)
-                                    .addComponent(viewsHideKnownCB))))
-                        .addGap(0, 13, Short.MAX_VALUE))))
+                                    .addComponent(viewsHideKnownCB)
+                                    .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -143,7 +151,10 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addComponent(useLocalTimeRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useGMTTimeRB)
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -164,6 +175,7 @@ final class GeneralPanel extends javax.swing.JPanel {
         useGMTTimeRB.setSelected(!useLocalTime);
         dataSourcesHideKnownCB.setSelected(prefs.getBoolean(DS_HIDE_KNOWN, false));
         viewsHideKnownCB.setSelected(prefs.getBoolean(VIEWS_HIDE_KNOWN, true));
+        numberOfFileIngestThreadsComboBox.setSelectedItem(IngestManager.getInstance().getNumberOfFileIngestThreads());
     }
 
     void store() {
@@ -171,6 +183,7 @@ final class GeneralPanel extends javax.swing.JPanel {
         prefs.putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
         prefs.putBoolean(DS_HIDE_KNOWN, dataSourcesHideKnownCB.isSelected());
         prefs.putBoolean(VIEWS_HIDE_KNOWN, viewsHideKnownCB.isSelected());
+        IngestManager.getInstance().setNumberOfFileIngestThreads(Integer.valueOf(numberOfFileIngestThreadsComboBox.getSelectedItem().toString()));
     }
 
     boolean valid() {
@@ -184,7 +197,9 @@ final class GeneralPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JRadioButton keepCurrentViewerRB;
+    private javax.swing.JComboBox numberOfFileIngestThreadsComboBox;
     private javax.swing.JRadioButton useBestViewerRB;
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;

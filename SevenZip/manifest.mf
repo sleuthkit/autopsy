@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.sevenzip/1
-OpenIDE-Module-Implementation-Version: 4
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/sevenzip/Bundle.properties
-
-
