@@ -86,11 +86,7 @@ final class IngestPipelinesConfiguration {
                 overWrite = versionNumber < PIPELINE_CONFIG_FILE_VERSION_NO;
                 // TODO: Migrate user edits
             }
-
-            boolean fileCopied = PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, overWrite);
-            if (!fileCopied) {
-                logger.log(Level.SEVERE, "Failure copying default pipeline configuration to user dir");
-            }
+            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, overWrite);
 
             String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINES_CONFIG_FILE;
             Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath, PIPELINES_CONFIG_FILE_XSD);
