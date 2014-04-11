@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -53,12 +53,14 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     private boolean skipped = false;
     private String calculatedHash = "";
     private String storedHash = "";
+    private IngestJobContext context;
 
     EwfVerifyIngestModule() {
     }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
         verified = false;
         skipped = false;
         img = null;
@@ -79,7 +81,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     }
 
     @Override
-    public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         imgName = dataSource.getName();
         try {
             img = dataSource.getImage();
@@ -145,7 +147,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
         // Read in byte size chunks and update the hash value with the data.
         for (int i = 0; i < totalChunks; i++) {
-            if (statusHelper.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 return ProcessResult.OK;
             }
             data = new byte[(int) chunkSize];

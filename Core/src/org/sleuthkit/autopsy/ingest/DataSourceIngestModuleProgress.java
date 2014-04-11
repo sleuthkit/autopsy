@@ -18,31 +18,17 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.netbeans.api.progress.ProgressHandle;
-
 /**
- * Used by data source ingest modules to report progress and detect data source
- * ingest job cancellation.
+ * Used by data source ingest modules to report progress.
  */
-public class DataSourceIngestModuleStatusHelper {
+public class DataSourceIngestModuleProgress {
 
     private final IngestJob ingestJob;
     private final String moduleDisplayName;
 
-    DataSourceIngestModuleStatusHelper(IngestJob ingestJob, String moduleDisplayName) {
+    DataSourceIngestModuleProgress(IngestJob ingestJob, String moduleDisplayName) {
         this.ingestJob = ingestJob;
         this.moduleDisplayName = moduleDisplayName;
-    }
-
-    /**
-     * Checks for ingest job cancellation. This should be polled by the module
-     * in its process() method. If the ingest task is canceled, the module
-     * should return from its process() method as quickly as possible.
-     *
-     * @return True if the task has been canceled, false otherwise.
-     */
-    public boolean isIngestJobCancelled() {
-        return (ingestJob.isCancelled());
     }
 
     /**
