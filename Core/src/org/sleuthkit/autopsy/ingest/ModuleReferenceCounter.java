@@ -25,19 +25,21 @@ import java.util.HashMap;
 /**
  * A utility class that modules can use to keep track of whether they are the 
  * first/last instance for a particular job.
+ * 
+ * An instance of this should be static in your module class.
  */
 public class ModuleReferenceCounter {
     // Maps a JobId to the count of instances
-    private static HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
+    private HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
 
-    public static synchronized long moduleRefCountIncrementAndGet(long jobId) {
+    public synchronized long moduleRefCountIncrementAndGet(long jobId) {
         long count = moduleRefCount.containsKey(jobId) ? moduleRefCount.get(jobId) : 0;
         long nextCount = count + 1;
         moduleRefCount.put(jobId, nextCount);
         return nextCount;
     }
 
-    public static synchronized long moduleRefCountDecrementAndGet(long jobId) {
+    public synchronized long moduleRefCountDecrementAndGet(long jobId) {
         if (moduleRefCount.containsKey(jobId)) {
             long count = moduleRefCount.get(jobId);
             moduleRefCount.put(jobId, --count);
