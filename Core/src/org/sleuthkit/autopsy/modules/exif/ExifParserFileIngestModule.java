@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -63,7 +63,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     private AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
     private long jobId;
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
         
     ExifParserFileIngestModule() {
     }

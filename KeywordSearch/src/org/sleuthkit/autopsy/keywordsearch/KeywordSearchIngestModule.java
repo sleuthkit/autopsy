@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -92,7 +92,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private long dataSourceId;   
     private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     
     private enum IngestStatus {
 

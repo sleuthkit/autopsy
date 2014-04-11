@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.HashInfo;
 
 public class HashDbIngestModule extends IngestModuleAdapter implements FileIngestModule {
@@ -60,7 +60,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private static AtomicLong totalKnownBadCount = new AtomicLong(0);
     private static AtomicLong totalCalctime = new AtomicLong(0);
     private static AtomicLong totalLookuptime = new AtomicLong(0);
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     
     HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;

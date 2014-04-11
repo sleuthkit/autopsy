@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
@@ -49,7 +49,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     private long jobId;  
     private static AtomicLong matchTime = new AtomicLong(0);
     private static AtomicLong numFiles = new AtomicLong(0);
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
     // If desired in the future to be more knowledgable about weird files or rare formats, we could 

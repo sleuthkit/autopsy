@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
  * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
@@ -92,7 +92,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     private static final int ZIP_SIGNATURE_BE = 0x504B0304;
     private IngestJobContext context;
     private long jobId;
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     SevenZipIngestModule() {
     }

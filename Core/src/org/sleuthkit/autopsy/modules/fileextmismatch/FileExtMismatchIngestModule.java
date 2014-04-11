@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -54,7 +54,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     private long jobId;
     private static AtomicLong processTime = new AtomicLong(0);
     private static AtomicLong numFiles = new AtomicLong(0);
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     FileExtMismatchIngestModule(FileExtMismatchDetectorModuleSettings settings) {
         this.settings = settings;

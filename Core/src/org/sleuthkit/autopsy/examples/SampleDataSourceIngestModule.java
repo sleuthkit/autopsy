@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -61,7 +61,7 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
     private static final HashMap<Long, Long> fileCountsForIngestJobs = new HashMap<>();
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
-    private static ModuleReferenceCounter refCounter = null;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     SampleDataSourceIngestModule(SampleModuleIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
@@ -131,7 +131,7 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
     }
 
     synchronized static void initFileCount(long ingestJobId) {
-        Long refCount = getRefCounter().incrementAndGet(ingestJobId);
+        Long refCount = refCounter.incrementAndGet(ingestJobId);
         if (refCount == 1) {
             fileCountsForIngestJobs.put(ingestJobId, 0L);
         }
@@ -144,7 +144,7 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
     }
 
     synchronized static void postFileCount(long ingestJobId) {
-        Long refCount = getRefCounter().decrementAndGet(ingestJobId);
+        Long refCount = refCounter.decrementAndGet(ingestJobId);
         if (refCount == 0) {
             Long filesCount = fileCountsForIngestJobs.remove(ingestJobId);
             String msgText = String.format("Found %d files", filesCount);
@@ -154,13 +154,6 @@ class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSo
                     msgText);
             IngestServices.getInstance().postMessage(message);
         } 
-    }
-
-    synchronized private static ModuleReferenceCounter getRefCounter() {
-        if (refCounter == null) {
-            refCounter = new ModuleReferenceCounter();
-        }
-        return refCounter;
     }
     
 }

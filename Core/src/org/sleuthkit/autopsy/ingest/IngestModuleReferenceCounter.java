@@ -28,7 +28,7 @@ import java.util.HashMap;
  * 
  * An instance of this should be static in your module class.
  */
-public class ModuleReferenceCounter {
+public class IngestModuleReferenceCounter {
     // Maps a JobId to the count of instances
     private HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
 
@@ -46,10 +46,14 @@ public class ModuleReferenceCounter {
     public synchronized long decrementAndGet(long jobId) {
         if (moduleRefCount.containsKey(jobId)) {
             long count = moduleRefCount.get(jobId);
-            moduleRefCount.put(jobId, --count);
+            if (--count == 0) {
+                moduleRefCount.remove(jobId);
+            } else {
+                moduleRefCount.put(jobId, count);
+            }
             return count;
         } else {
-            return 0;
+            return -1;
         }
     }    
 }
