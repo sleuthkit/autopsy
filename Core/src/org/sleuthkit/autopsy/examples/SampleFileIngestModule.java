@@ -60,7 +60,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     private static int attrId = -1;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
-    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    private static ModuleReferenceCounter refCounter = null;
 
     SampleFileIngestModule(SampleModuleIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
