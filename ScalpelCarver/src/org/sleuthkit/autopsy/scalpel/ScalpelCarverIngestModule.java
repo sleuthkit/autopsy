@@ -100,7 +100,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         // copy the default config file to the user's home directory if one
         // is not already there
         try {
-            PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName);
+            PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName, false);
         } catch (IOException ex) {
             String message = "Could not obtain the path to the Scalpel configuration file.";
             logger.log(Level.SEVERE, message, ex);

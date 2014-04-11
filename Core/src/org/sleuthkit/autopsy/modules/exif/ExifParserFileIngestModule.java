@@ -69,7 +69,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {    
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrement(jobId);
+        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
     }
 
     

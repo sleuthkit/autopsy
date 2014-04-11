@@ -124,7 +124,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         }
 
         // if first instance of this module for this job then check 7zip init
-        if (IngestModuleAdapter.moduleRefCountIncrement(jobId) == 1) {
+        if (IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId) == 1) {
             try {
                 SevenZip.initSevenZipFromPlatformJAR();
                 String platform = SevenZip.getUsedPlatform();

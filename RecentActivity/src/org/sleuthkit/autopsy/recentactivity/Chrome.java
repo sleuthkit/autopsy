@@ -39,7 +39,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -62,27 +62,29 @@ class Chrome extends Extract {
     private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id";
     private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private Content dataSource;
+    private IngestJobContext context;
 
     Chrome() {
         moduleName = NbBundle.getMessage(Chrome.class, "Chrome.moduleName");
     }
 
     @Override
-    public void process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
         dataFound = false;
-        this.getHistory(dataSource, statusHelper);
-        this.getBookmark(dataSource, statusHelper);
-        this.getCookie(dataSource, statusHelper);
-        this.getLogin(dataSource, statusHelper);
-        this.getDownload(dataSource, statusHelper);
+        this.getHistory();
+        this.getBookmark();
+        this.getCookie();
+        this.getLogin();
+        this.getDownload();
     }
 
     /**
      * Query for history databases and add artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getHistory(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    private void getHistory() {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
         try {
@@ -126,7 +128,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -164,10 +166,8 @@ class Chrome extends Extract {
 
     /**
      * Search for bookmark files and make artifacts.
-     * @param dataSource
-     * @param controller 
      */
-    private void getBookmark(Content dataSource, DataSourceIngestModuleStatusHelper controller) {     
+    private void getBookmark() {     
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles = null;
         try {
@@ -204,7 +204,7 @@ class Chrome extends Extract {
             
             logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{moduleName, temps});
             File dbFile = new File(temps);
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -305,10 +305,8 @@ class Chrome extends Extract {
 
     /**
      * Queries for cookie files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getCookie(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    private void getCookie() {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
@@ -344,7 +342,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -383,10 +381,8 @@ class Chrome extends Extract {
 
     /**
      * Queries for download files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getDownload(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    private void getDownload() {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles = null;
         try {
@@ -420,7 +416,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -473,10 +469,8 @@ class Chrome extends Extract {
 
     /**
      * Queries for login files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getLogin(Content dataSource, DataSourceIngestModuleStatusHelper controller) {  
+    private void getLogin() {  
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> signonFiles;
         try {
@@ -511,7 +505,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }

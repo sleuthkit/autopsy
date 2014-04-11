@@ -30,7 +30,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -48,6 +48,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     private final List<Extract> extracters = new ArrayList<>();
     private final List<Extract> browserExtracters = new ArrayList<>();
     private IngestServices services = IngestServices.getInstance();
+    private IngestJobContext context;
     private StringBuilder subCompleted = new StringBuilder();
 
     RAImageIngestModule() {
@@ -55,6 +56,8 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+        
         Extract registry = new ExtractRegistry();
         Extract iexplore = new ExtractIE();
         Extract recentDocuments = new RecentDocumentsByLnk();
@@ -79,22 +82,22 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     }
     
     @Override
-    public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
 
-        controller.switchToDeterminate(extracters.size());
-        controller.progress(0);
+        progressBar.switchToDeterminate(extracters.size());
+        progressBar.progress(0);
         ArrayList<String> errors = new ArrayList<>();
 
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName());
                 break;
             }
 
             try {
-                extracter.process(dataSource, controller);
+                extracter.process(dataSource, context);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex);
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
@@ -102,7 +105,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
                 errors.add(
                         NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
             }
-            controller.progress(i + 1);
+            progressBar.progress(i + 1);
             errors.addAll(extracter.getErrorMessages());
         }
 
