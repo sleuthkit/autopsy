@@ -186,6 +186,12 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         return ProcessResult.OK;
     }
 
+    @Override
+    public void shutDown(boolean ingestJobCancelled) {
+        // We don't need the value, but for cleanliness and consistency, -- it
+        refCounter.decrementAndGet(jobId);
+    }
+        
     private void sendNewFilesEvent(AbstractFile archive, List<AbstractFile> unpackedFiles) {
         //currently sending a single event for all new files
         services.fireModuleContentEvent(new ModuleContentEvent(archive));
