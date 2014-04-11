@@ -70,7 +70,7 @@ public class XMLUtil {
      */
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
       try{
-        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile);
+        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
         File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
         SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try{

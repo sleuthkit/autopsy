@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -44,8 +45,10 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static final long MIN_FILE_SIZE = 512;
     private final FileTypeIdModuleSettings settings;
-    private long matchTime = 0;
-    private long numFiles = 0;
+    private long jobId;  
+    private static AtomicLong matchTime = new AtomicLong(0);
+    private static AtomicLong numFiles = new AtomicLong(0);
+
     // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
     // If desired in the future to be more knowledgable about weird files or rare formats, we could 
     // actually have a list of detectors which are called in order until a match is found.
@@ -55,6 +58,12 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
         this.settings = settings;
     }
 
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        jobId = context.getJobId();
+        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
+    }    
+    
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         // skip non-files
@@ -75,8 +84,8 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
         try {
             long startTime = System.currentTimeMillis();
             FileTypeDetectionInterface.FileIdInfo fileId = detector.attemptMatch(abstractFile);
-            matchTime += (System.currentTimeMillis() - startTime);
-            numFiles++;
+            matchTime.getAndAdd(System.currentTimeMillis() - startTime);
+            numFiles.getAndIncrement();
 
             if (!fileId.type.isEmpty()) {
                 // add artifact
@@ -98,22 +107,25 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        StringBuilder detailsSb = new StringBuilder();
-        detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-        detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>");
-        detailsSb.append("<tr><td>")
-                .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
-                .append("</td><td>").append(matchTime).append("</td></tr>\n");
-        detailsSb.append("<tr><td>")
-                .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
-                .append("</td><td>").append(numFiles).append("</td></tr>\n");
-        detailsSb.append("</table>");
-        IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
-                NbBundle.getMessage(this.getClass(),
-                "FileTypeIdIngestModule.complete.srvMsg.text"),
-                detailsSb.toString()));
+        // We only need to post the summary msg from the last module per job
+        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+            StringBuilder detailsSb = new StringBuilder();
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+            detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>");
+            detailsSb.append("<tr><td>")
+                    .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
+                    .append("</td><td>").append(matchTime.get()).append("</td></tr>\n");
+            detailsSb.append("<tr><td>")
+                    .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
+                    .append("</td><td>").append(numFiles.get()).append("</td></tr>\n");
+            detailsSb.append("</table>");
+            IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                    "FileTypeIdIngestModule.complete.srvMsg.text"),
+                    detailsSb.toString()));
+        }
     }
-
+    
     /**
      * Validate if a given mime type is in the detector's registry.
      *

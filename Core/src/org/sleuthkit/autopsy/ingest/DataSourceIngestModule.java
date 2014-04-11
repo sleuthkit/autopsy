@@ -35,5 +35,5 @@ public interface DataSourceIngestModule extends IngestModule {
      * detect ingest job cancellation.
      * @return A result code indicating success or failure of the processing.
      */
-    ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper);
+    ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper);
 }

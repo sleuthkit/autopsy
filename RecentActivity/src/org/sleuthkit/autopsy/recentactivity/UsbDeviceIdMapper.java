@@ -87,7 +87,7 @@ class UsbDeviceIdMapper {
      */
     private void loadDeviceMap() throws FileNotFoundException, IOException {
         devices = new HashMap<>();
-        PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile);
+        PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile, false);
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
             /* Syntax of file: 
              *

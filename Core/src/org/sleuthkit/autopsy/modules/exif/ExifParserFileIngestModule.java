@@ -32,11 +32,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -57,12 +59,20 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
-    private int filesProcessed = 0;
-    private boolean filesToFire = false;
+    private AtomicInteger filesProcessed = new AtomicInteger(0);
+    private volatile boolean filesToFire = false;
+    private long jobId;
 
     ExifParserFileIngestModule() {
     }
 
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModuleException {    
+        jobId = context.getJobId();
+        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
+    }
+
+    
     @Override
     public ProcessResult process(AbstractFile content) {
         //skip unalloc
@@ -76,8 +86,8 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
         }
 
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
-        filesProcessed++;
-        if ((filesToFire) && (filesProcessed % 1000 == 0)) {
+        final int filesProcessedValue = filesProcessed.incrementAndGet();
+        if ((filesToFire) && (filesProcessedValue % 1000 == 0)) {
             services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
             filesToFire = false;
         }
@@ -187,9 +197,12 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        if (filesToFire) {
-            //send the final new data event
-            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+        // We only need to check for this final event on the last module per job
+        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+            if (filesToFire) {
+                //send the final new data event
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            }
         }
     }
 }

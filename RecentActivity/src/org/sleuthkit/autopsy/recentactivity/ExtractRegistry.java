@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -64,6 +64,8 @@ class ExtractRegistry extends Extract {
     private boolean rrFullFound = false; // true if we found the full version of regripper
     final private static String MODULE_VERSION = "1.0";
     private ExecUtil execRR;
+    private Content dataSource;
+    private IngestJobContext context;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
@@ -77,7 +79,7 @@ class ExtractRegistry extends Extract {
         }
         
         final String rrHome = rrRoot.getAbsolutePath();
-        logger.log(Level.INFO, "RegRipper home: " + rrHome);
+        logger.log(Level.INFO, "RegRipper home: {0}", rrHome);
 
         if (PlatformUtil.isWindowsOS()) {
             RR_PATH = rrHome + File.separator + "rip.exe";
@@ -94,7 +96,7 @@ class ExtractRegistry extends Extract {
         }
         
         final String rrFullHome = rrFullRoot.getAbsolutePath();
-        logger.log(Level.INFO, "RegRipper Full home: " + rrFullHome);
+        logger.log(Level.INFO, "RegRipper Full home: {0}", rrFullHome);
 
         if (PlatformUtil.isWindowsOS()) {
             RR_FULL_PATH = rrFullHome + File.separator + "rip.exe";
@@ -105,10 +107,8 @@ class ExtractRegistry extends Extract {
     
     /**
      * Search for the registry hives on the system.
-     * @param dataSource Data source to search for hives in.
-     * @return List of registry hives 
      */
-    private List<AbstractFile> findRegistryFiles(Content dataSource) {
+    private List<AbstractFile> findRegistryFiles() {
         List<AbstractFile> allRegistryFiles = new ArrayList<>();
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         
@@ -138,12 +138,9 @@ class ExtractRegistry extends Extract {
     
     /**
      * Identifies registry files in the database by mtimeItem, runs regripper on them, and parses the output.
-     * 
-     * @param dataSource
-     * @param controller 
      */
-    private void analyzeRegistryFiles(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
-        List<AbstractFile> allRegistryFiles = findRegistryFiles(dataSource);
+    private void analyzeRegistryFiles() {        
+        List<AbstractFile> allRegistryFiles = findRegistryFiles();
         
         // open the log file
         FileWriter logFile = null;
@@ -171,7 +168,7 @@ class ExtractRegistry extends Extract {
                 continue;
             }
             
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
            
@@ -187,7 +184,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
             
-            if (controller.isIngestJobCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
             
@@ -572,8 +569,10 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
-        analyzeRegistryFiles(dataSource, controller);
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
+        analyzeRegistryFiles();
     }
 
     @Override
