@@ -470,7 +470,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                         case READY:
                         case PAUSED:
                         case STOPPED:
-                        case UNKNOWN:
                             mediaPlayer.play();
                             break;
                         default:
