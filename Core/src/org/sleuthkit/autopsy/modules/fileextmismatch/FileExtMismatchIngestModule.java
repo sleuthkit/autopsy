@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -38,7 +39,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -50,8 +50,9 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
-    private long processTime = 0;
-    private long numFiles = 0;
+    private long jobId;
+    private static AtomicLong processTime = new AtomicLong(0);
+    private static AtomicLong numFiles = new AtomicLong(0);
 
     FileExtMismatchIngestModule(FileExtMismatchDetectorModuleSettings settings) {
         this.settings = settings;
@@ -59,6 +60,8 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        jobId = context.getJobId();
+        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
     }
@@ -82,8 +85,8 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
             boolean mismatchDetected = compareSigTypeToExt(abstractFile);
 
-            processTime += (System.currentTimeMillis() - startTime);
-            numFiles++;
+            processTime.getAndAdd(System.currentTimeMillis() - startTime);
+            numFiles.getAndIncrement();
 
             if (mismatchDetected) {
                 // add artifact               
@@ -149,19 +152,22 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        StringBuilder detailsSb = new StringBuilder();
-        detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-        detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>");
-        detailsSb.append("<tr><td>").append(
-                NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
-                .append("</td><td>").append(processTime).append("</td></tr>\n");
-        detailsSb.append("<tr><td>").append(
-                NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
-                .append("</td><td>").append(numFiles).append("</td></tr>\n");
-        detailsSb.append("</table>");
-        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
-                NbBundle.getMessage(this.getClass(),
-                "FileExtMismatchIngestModule.complete.svcMsg.text"),
-                detailsSb.toString()));
+        // We only need to post the summary msg from the last module per job
+        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {       
+            StringBuilder detailsSb = new StringBuilder();
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+            detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>");
+            detailsSb.append("<tr><td>").append(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
+                    .append("</td><td>").append(processTime.get()).append("</td></tr>\n");
+            detailsSb.append("<tr><td>").append(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
+                    .append("</td><td>").append(numFiles.get()).append("</td></tr>\n");
+            detailsSb.append("</table>");
+            services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchIngestModule.complete.svcMsg.text"),
+                    detailsSb.toString()));
+        }
     }
 }

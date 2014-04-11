@@ -32,7 +32,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
 
@@ -40,7 +40,7 @@ abstract class Extract {
 
     protected Case currentCase = Case.getCurrentCase();
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-    public final Logger logger = Logger.getLogger(this.getClass().getName());
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
     String moduleName = "";
     boolean dataFound = false;
@@ -51,7 +51,7 @@ abstract class Extract {
     void init() throws IngestModuleException {
     }
 
-    abstract void process(Content dataSource, DataSourceIngestModuleStatusHelper controller);
+    abstract void process(Content dataSource, IngestJobContext context);
 
     void complete() {
     }
