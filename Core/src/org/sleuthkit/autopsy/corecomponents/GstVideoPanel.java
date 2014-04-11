@@ -803,9 +803,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     public String[] getExtensions() {
         return EXTENSIONS;
     }
-    
+
     @Override
-    public List<String> getMimeTypes(){
+    public List<String> getMimeTypes() {
         return supportedMimes;
     }
 }

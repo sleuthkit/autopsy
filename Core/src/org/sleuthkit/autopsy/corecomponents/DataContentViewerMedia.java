@@ -260,10 +260,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
         return Arrays.asList(exts).contains(ext);
     }
-     private static boolean containsMimeType(Node node, List<String> mimeTypes) {
-         if (mimeTypes.isEmpty()) return true; //GStreamer currently is empty. Signature detection for javafx currently
-         AbstractFile file = node.getLookup().lookup(AbstractFile.class);   
-            try {
+    private static boolean containsMimeType(Node node, List<String> mimeTypes) {
+        if (mimeTypes.isEmpty()) {
+            return true; //GStreamer currently is empty. Signature detection for javafx currently
+        }
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        try {
             ArrayList<BlackboardAttribute> genInfoAttributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
             if (genInfoAttributes.isEmpty() == false) {
                 for (BlackboardAttribute batt : genInfoAttributes) {
@@ -276,6 +278,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         } catch (TskCoreException ex) {
             return false;
         }
-         return false;
-     }
+        return false;
+    }
 }

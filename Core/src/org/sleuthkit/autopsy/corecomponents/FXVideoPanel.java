@@ -803,7 +803,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     }
   
     @Override
-    public List<String> getMimeTypes(){
+    public List<String> getMimeTypes() {
         return supportedMimes;
     }
 }
