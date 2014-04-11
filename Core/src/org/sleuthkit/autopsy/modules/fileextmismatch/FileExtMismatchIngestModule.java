@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -53,6 +54,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     private long jobId;
     private static AtomicLong processTime = new AtomicLong(0);
     private static AtomicLong numFiles = new AtomicLong(0);
+    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
 
     FileExtMismatchIngestModule(FileExtMismatchDetectorModuleSettings settings) {
         this.settings = settings;
@@ -61,7 +63,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
+        refCounter.incrementAndGet(jobId);
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
     }
@@ -153,7 +155,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to post the summary msg from the last module per job
-        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {       
+        if (refCounter.decrementAndGet(jobId) == 0) {       
             StringBuilder detailsSb = new StringBuilder();
             detailsSb.append("<table border='0' cellpadding='4' width='280'>");
             detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>");

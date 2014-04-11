@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
 import org.sleuthkit.datamodel.HashInfo;
 
 public class HashDbIngestModule extends IngestModuleAdapter implements FileIngestModule {
@@ -56,10 +57,11 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
     private long jobId;
-    static AtomicLong totalKnownBadCount = new AtomicLong(0);
-    static AtomicLong totalCalctime = new AtomicLong(0);
-    static AtomicLong totalLookuptime = new AtomicLong(0);
-        
+    private static AtomicLong totalKnownBadCount = new AtomicLong(0);
+    private static AtomicLong totalCalctime = new AtomicLong(0);
+    private static AtomicLong totalLookuptime = new AtomicLong(0);
+    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    
     HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;
     }
@@ -70,7 +72,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
         
-        if (IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId) == 1) {      
+        if (refCounter.incrementAndGet(jobId) == 1) {      
             // if first module for this job then post error msgs if needed
             
             if (knownBadHashSets.isEmpty()) {
@@ -303,7 +305,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+        if (refCounter.decrementAndGet(jobId) == 0) {
             if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details

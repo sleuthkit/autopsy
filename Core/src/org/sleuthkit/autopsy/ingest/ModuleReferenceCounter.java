@@ -32,14 +32,18 @@ public class ModuleReferenceCounter {
     // Maps a JobId to the count of instances
     private HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
 
-    public synchronized long moduleRefCountIncrementAndGet(long jobId) {
+    public synchronized long get(long jobId) {
+        return moduleRefCount.get(jobId);
+    }
+    
+    public synchronized long incrementAndGet(long jobId) {
         long count = moduleRefCount.containsKey(jobId) ? moduleRefCount.get(jobId) : 0;
         long nextCount = count + 1;
         moduleRefCount.put(jobId, nextCount);
         return nextCount;
     }
 
-    public synchronized long moduleRefCountDecrementAndGet(long jobId) {
+    public synchronized long decrementAndGet(long jobId) {
         if (moduleRefCount.containsKey(jobId)) {
             long count = moduleRefCount.get(jobId);
             moduleRefCount.put(jobId, --count);
