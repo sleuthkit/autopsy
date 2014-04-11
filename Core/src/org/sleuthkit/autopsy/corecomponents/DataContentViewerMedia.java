@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 
@@ -33,6 +35,8 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -50,6 +54,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final MediaViewVideoPanel videoPanel;
     private final String[] videoExtensions; // get them from the panel
     private String[] imageExtensions; // use javafx supported 
+    private final List<String> supportedMimes;
     private final MediaViewImagePanel imagePanel;
     private boolean videoPanelInited;
     private boolean imagePanelInited;
@@ -69,9 +74,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         imagePanel = new MediaViewImagePanel();
         videoPanelInited = videoPanel.isInited();
         imagePanelInited = imagePanel.isInited();
-
+    
         videoExtensions = videoPanel.getExtensions();
-
+        supportedMimes = videoPanel.getMimeTypes();
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this);
     }
@@ -141,9 +146,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 this.switchPanels(false);
 
             } else if (videoPanelInited
-                    && (containsExt(file.getName(), videoExtensions) || containsExt(file.getName(), AUDIO_EXTENSIONS))) {
+                    && containsMimeType(selectedNode,supportedMimes)&&(containsExt(file.getName(), videoExtensions) || containsExt(file.getName(), AUDIO_EXTENSIONS))) {
                 videoPanel.setupVideo(file, dims);
                 switchPanels(true);
+                
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception while setting node", e);
@@ -218,8 +224,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         } 
         
         if (videoPanelInited && videoPanel.isInited()) {
-            if (containsExt(name, AUDIO_EXTENSIONS)
-                || (containsExt(name, videoExtensions))) {
+            if ((containsExt(name, AUDIO_EXTENSIONS)
+                || containsExt(name, videoExtensions))&& containsMimeType(node,supportedMimes)) {
                 return true;
             }
         }
@@ -254,4 +260,22 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
         return Arrays.asList(exts).contains(ext);
     }
+     private static boolean containsMimeType(Node node, List<String> mimeTypes) {
+         if (mimeTypes.isEmpty()) return true; //GStreamer currently is empty. Signature detection for javafx currently
+         AbstractFile file = node.getLookup().lookup(AbstractFile.class);   
+            try {
+            ArrayList<BlackboardAttribute> genInfoAttributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            if (genInfoAttributes.isEmpty() == false) {
+                for (BlackboardAttribute batt : genInfoAttributes) {
+                    if (mimeTypes.contains(batt.getValueString())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        } catch (TskCoreException ex) {
+            return false;
+        }
+         return false;
+     }
 }
