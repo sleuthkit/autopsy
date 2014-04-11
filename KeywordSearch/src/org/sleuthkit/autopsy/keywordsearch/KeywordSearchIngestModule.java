@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -91,7 +92,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private long dataSourceId;   
     private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
-         
+    private static ModuleReferenceCounter refCounter = new ModuleReferenceCounter();
+    
     private enum IngestStatus {
 
         TEXT_INGESTED, /// Text was extracted by knowing file type and text_ingested
@@ -130,7 +132,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
-        if (IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId) == 1) {
+        if (refCounter.incrementAndGet(jobId) == 1) {
             final Server server = KeywordSearch.getServer();
             try {
                 if (!server.isRunning()) {
@@ -256,7 +258,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         SearchRunner.getInstance().endJob(jobId);
         
         // We only need to post the summary msg from the last module per job
-        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+        if (refCounter.decrementAndGet(jobId) == 0) {
             postIndexSummary();
         }
         

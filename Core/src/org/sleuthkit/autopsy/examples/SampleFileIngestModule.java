@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.ModuleReferenceCounter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -59,6 +60,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     private static int attrId = -1;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
+    private static ModuleReferenceCounter refCounter = null;
 
     SampleFileIngestModule(SampleModuleIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
@@ -167,7 +169,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     }
 
     synchronized static void initBlackboardPostCount(long ingestJobId) {
-        Long refCount = IngestModuleAdapter.moduleRefCountIncrementAndGet(ingestJobId);
+        Long refCount = getRefCounter().incrementAndGet(ingestJobId);
         if (refCount == 1) {
             artifactCountsForIngestJobs.put(ingestJobId, 0L);
         }
@@ -180,7 +182,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     }
 
     synchronized static void reportBlackboardPostCount(long ingestJobId) {
-        Long refCount = IngestModuleAdapter.moduleRefCountDecrementAndGet(ingestJobId);
+        Long refCount = getRefCounter().decrementAndGet(ingestJobId);
         if (refCount == 0) {
             Long filesCount = artifactCountsForIngestJobs.remove(ingestJobId);
             String msgText = String.format("Posted %d times to the blackboard", filesCount);
@@ -191,4 +193,11 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
             IngestServices.getInstance().postMessage(message);
         }
     }
+    
+    synchronized private static ModuleReferenceCounter getRefCounter() {
+        if (refCounter == null) {
+            refCounter = new ModuleReferenceCounter();
+        }
+        return refCounter;
+    }    
 }
