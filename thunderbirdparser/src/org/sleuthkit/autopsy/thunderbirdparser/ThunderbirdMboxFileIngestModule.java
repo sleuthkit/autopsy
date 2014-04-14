@@ -54,7 +54,6 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
-    private int messageId = 0; // RJCTODO: Not thread safe
     private FileManager fileManager;
     private IngestJobContext context;
 
@@ -122,7 +121,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
 
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
-            IngestMessage msg = IngestMessage.createErrorMessage(messageId++, EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
+            IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace",
                     abstractFile.getName()));
@@ -397,7 +396,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
     }
 
     void postErrorMessage(String subj, String details) {
-        IngestMessage ingestMessage = IngestMessage.createErrorMessage(messageId++, EmailParserModuleFactory.getModuleVersion(), subj, details);
+        IngestMessage ingestMessage = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleVersion(), subj, details);
         services.postMessage(ingestMessage);
     }
 

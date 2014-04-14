@@ -90,7 +90,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         outputStringRedirect = null;
 
         //gc process with its streams
-        proc = null;
+        //proc = null;
 
         return output;
     }
@@ -137,7 +137,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
 
         //gc process with its streams
-        proc = null;
+        //proc = null;
     }
 
     /**

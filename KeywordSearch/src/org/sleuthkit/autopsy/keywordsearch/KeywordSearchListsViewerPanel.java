@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -114,26 +115,23 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         });
 
-        if (IngestManager.getInstance().isIngestRunning()) {
-            initIngest(true);
-        } else {
-            initIngest(false);
-        }
+        ingestRunning = IngestManager.getInstance().isIngestRunning();
+        updateComponents();
 
         IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
-                Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestEvent.COMPLETED.toString())
-                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
-                    initIngest(false);
-                } else if (changed.equals(IngestEvent.STARTED.toString())
-                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
-                    initIngest(true);
-                } else if (changed.equals(IngestEvent.STOPPED.toString())
-                        && ((String) oldValue).equals(KeywordSearchModuleFactory.getModuleName())) {
-                    initIngest(false);
+                if (changed.equals(IngestEvent.INGEST_JOB_STARTED.toString())
+                        || changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
+                        || changed.equals(IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ingestRunning = IngestManager.getInstance().isIngestRunning();
+                            updateComponents();
+                        }
+                    });                                
                 }
             }
         });
@@ -141,7 +139,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         searchAddListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ingestRunning) {
+                if (ingestRunning) {                    
+                    SearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest");
                 } else {
                     searchAction(e);
@@ -152,28 +151,21 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         searchAddButton.addActionListener(searchAddListener);
     }
 
-    /**
-     * Initialize this panel depending on whether ingest is running
-     *
-     * @param running case 0: ingest running case 1: ingest not running
-     */
-    private void initIngest(boolean running) {
-        if (running) {
-            ingestRunning = true;
+    private void updateComponents() {
+        ingestRunning = IngestManager.getInstance().isIngestRunning();
+        if (ingestRunning) {
             searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestTitle"));
             searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg" ));
-            listsTableModel.resync();
             
         } else {
-            ingestRunning = false;
             searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.searchIngestTitle"));
             searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIdxSearchMsg"));
-            listsTableModel.resync();
         }
-        updateIngestIndexLabel(running);
+        listsTableModel.resync();
+        updateIngestIndexLabel();
     }
     
-    private void updateIngestIndexLabel(boolean ingestRunning) {
+    private void updateIngestIndexLabel() {
         if (ingestRunning) {
             ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.ongoingIngestMsg", filesIndexed));
         }
@@ -184,7 +176,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     
     @Override
     protected void postFilesIndexedChange() {
-         updateIngestIndexLabel(ingestRunning);
+         updateIngestIndexLabel();
     }
 
     /**

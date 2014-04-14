@@ -44,7 +44,7 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
                 if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
                     editListPanel.setCurrentKeywordList(null);
-                    editListPanel.initButtons();
+                    editListPanel.setButtonStates();
                     // RJCTODO: Move this into a deleteList method in the manager
                     KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
                     deleter.deleteList(toDelete);
@@ -152,11 +152,13 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
 
         mainSplitPane.setLeftComponent(leftPanel);
 
+        rightPanel.setPreferredSize(new java.awt.Dimension(360, 327));
+
         javax.swing.GroupLayout rightPanelLayout = new javax.swing.GroupLayout(rightPanel);
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 318, Short.MAX_VALUE)
+            .addGap(0, 385, Short.MAX_VALUE)
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -169,7 +171,7 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 665, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

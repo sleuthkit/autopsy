@@ -55,10 +55,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * create instances of a type of data source ingest module, a type of file
  * ingest module, or both.
  * <p>
- * Autopsy will generally use the factory to several instances of each type of
- * module for each ingest job it performs. Completing an ingest job entails
- * processing a single data source (e.g., a disk image) and all of the files
- * from the data source, including files extracted from archives and any
+ * Autopsy will generally use the factory to create several instances of each
+ * type of module for each ingest job it performs. Completing an ingest job
+ * entails processing a single data source (e.g., a disk image) and all of the
+ * files from the data source, including files extracted from archives and any
  * unallocated space (made to look like a series of files). The data source is
  * passed through one or more pipelines of data source ingest modules. The files
  * are passed through one or more pipelines of file ingest modules.
@@ -87,7 +87,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * extend the abstract class IngestModuleFactoryAdapter to get default
  * implementations of most of the IngestModuleFactory methods.
  */
-// @ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service = IngestModuleFactory.class) // Sample is discarded at runtime 
 public class SampleIngestModuleFactory implements IngestModuleFactory {
 
     private static final String VERSION_NUMBER = "1.0.0";

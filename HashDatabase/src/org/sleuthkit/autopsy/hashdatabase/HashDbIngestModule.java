@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -42,12 +43,12 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.HashInfo;
 
 public class HashDbIngestModule extends IngestModuleAdapter implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
-    private static int messageId = 0; // RJCTODO: This is not thread safe
     private final IngestServices services = IngestServices.getInstance();
     private final Hash hasher = new Hash();
     private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -55,9 +56,11 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
-    private int knownBadCount = 0;
-    private long calctime = 0;
-    private long lookuptime = 0;
+    private long jobId;
+    private static AtomicLong totalKnownBadCount = new AtomicLong(0);
+    private static AtomicLong totalCalctime = new AtomicLong(0);
+    private static AtomicLong totalLookuptime = new AtomicLong(0);
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     
     HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;
@@ -65,24 +68,30 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
+        jobId = context.getJobId();        
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
-        if (knownBadHashSets.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageId,
-                                HashLookupModuleFactory.getModuleName(),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.noKnownBadHashDbSetMsg"),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
-        }        
-
         getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
-        if (knownHashSets.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageId,
-                                HashLookupModuleFactory.getModuleName(),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.noKnownHashDbSetMsg"),
-                                NbBundle.getMessage(this.getClass(),
-                                                    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+        
+        if (refCounter.incrementAndGet(jobId) == 1) {      
+            // if first module for this job then post error msgs if needed
+            
+            if (knownBadHashSets.isEmpty()) {
+                services.postMessage(IngestMessage.createWarningMessage(
+                    HashLookupModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.noKnownBadHashDbSetMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
+            }        
+
+            if (knownHashSets.isEmpty()) {
+                services.postMessage(IngestMessage.createWarningMessage(
+                    HashLookupModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.noKnownHashDbSetMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                        "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+            }
         }
     }
     
@@ -121,10 +130,12 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
             try {
                 long calcstart = System.currentTimeMillis();
                 md5Hash = hasher.calculateMd5(file);
-                calctime += (System.currentTimeMillis() - calcstart);
+                long delta = (System.currentTimeMillis() - calcstart);
+                totalCalctime.addAndGet(delta);
+                
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error calculating hash of file " + name, ex);
-                services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                services.postMessage(IngestMessage.createErrorMessage(
                                       HashLookupModuleFactory.getModuleName(),
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.fileReadErrorMsg",
@@ -145,12 +156,13 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 HashInfo hashInfo = db.lookUp(file);
                 if (null != hashInfo) {
                     foundBad = true;
-                    knownBadCount += 1;
+                    totalKnownBadCount.incrementAndGet();
+                    
                     try {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
                     } catch (TskException ex) {
                         logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex);
-                        services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                        services.postMessage(IngestMessage.createErrorMessage(
                                               HashLookupModuleFactory.getModuleName(),
                                               NbBundle.getMessage(this.getClass(),
                                                                   "HashDbIngestModule.hashLookupErrorMsg",
@@ -178,10 +190,12 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
                     postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                 }
-                lookuptime += (System.currentTimeMillis() - lookupstart);
+                long delta = (System.currentTimeMillis() - lookupstart);
+                totalLookuptime.addAndGet(delta);
+
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
-                services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                services.postMessage(IngestMessage.createErrorMessage(
                                       HashLookupModuleFactory.getModuleName(),
                                       NbBundle.getMessage(this.getClass(),
                                                           "HashDbIngestModule.hashLookupErrorMsg",
@@ -209,10 +223,12 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                             ret = ProcessResult.ERROR;
                         }
                     }
-                    lookuptime += (System.currentTimeMillis() - lookupstart);
+                    long delta = (System.currentTimeMillis() - lookupstart);
+                    totalLookuptime.addAndGet(delta);
+
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex);
-                    services.postMessage(IngestMessage.createErrorMessage(++messageId,
+                    services.postMessage(IngestMessage.createErrorMessage(
                                           HashLookupModuleFactory.getModuleName(),
                                           NbBundle.getMessage(this.getClass(),
                                                               "HashDbIngestModule.hashLookupErrorMsg",
@@ -272,7 +288,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
 
                 detailsSb.append("</table>");
 
-                services.postMessage(IngestMessage.createDataMessage(++messageId, HashLookupModuleFactory.getModuleName(),
+                services.postMessage(IngestMessage.createDataMessage( HashLookupModuleFactory.getModuleName(),
                          NbBundle.getMessage(this.getClass(),
                                              "HashDbIngestModule.postToBB.knownBadMsg",
                                              abstractFile.getName()),
@@ -286,41 +302,43 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         }
     }
 
-    
+               
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
-            StringBuilder detailsSb = new StringBuilder();
-            //details
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+        if (refCounter.decrementAndGet(jobId) == 0) {
+            if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
+                StringBuilder detailsSb = new StringBuilder();
+                //details
+                detailsSb.append("<table border='0' cellpadding='4' width='280'>");
 
-            detailsSb.append("<tr><td>")
-                     .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.knownBadsFound"))
-                     .append("</td>");
-            detailsSb.append("<td>").append(knownBadCount).append("</td></tr>");
+                detailsSb.append("<tr><td>")
+                         .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.knownBadsFound"))
+                         .append("</td>");
+                detailsSb.append("<td>").append(totalKnownBadCount.get()).append("</td></tr>");
 
-            detailsSb.append("<tr><td>")
-                     .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalCalcTime"))
-                     .append("</td><td>").append(calctime).append("</td></tr>\n");
-            detailsSb.append("<tr><td>")
-                     .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalLookupTime"))
-                     .append("</td><td>").append(lookuptime).append("</td></tr>\n");
-            detailsSb.append("</table>");
+                detailsSb.append("<tr><td>")
+                         .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalCalcTime"))
+                         .append("</td><td>").append(totalCalctime.get()).append("</td></tr>\n");
+                detailsSb.append("<tr><td>")
+                         .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalLookupTime"))
+                         .append("</td><td>").append(totalLookuptime.get()).append("</td></tr>\n");
+                detailsSb.append("</table>");
 
-            detailsSb.append("<p>")
-                     .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.databasesUsed"))
-                     .append("</p>\n<ul>");
-            for (HashDb db : knownBadHashSets) {
-                detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n");
+                detailsSb.append("<p>")
+                         .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.databasesUsed"))
+                         .append("</p>\n<ul>");
+                for (HashDb db : knownBadHashSets) {
+                    detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n");
+                }
+
+                detailsSb.append("</ul>");
+                services.postMessage(IngestMessage.createMessage(
+                    IngestMessage.MessageType.INFO,
+                    HashLookupModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                                        "HashDbIngestModule.complete.hashLookupResults"),
+                    detailsSb.toString()));
             }
-
-            detailsSb.append("</ul>");
-            services.postMessage(IngestMessage.createMessage(++messageId,
-                                 IngestMessage.MessageType.INFO,
-                                 HashLookupModuleFactory.getModuleName(),
-                                 NbBundle.getMessage(this.getClass(),
-                                                     "HashDbIngestModule.complete.hashLookupResults"),
-                                 detailsSb.toString()));
         }
     }
 }
