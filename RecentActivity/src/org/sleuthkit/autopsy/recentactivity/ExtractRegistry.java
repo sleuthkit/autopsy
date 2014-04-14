@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -37,10 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
 import org.sleuthkit.autopsy.recentactivity.ExtractUSB.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -105,12 +102,6 @@ class ExtractRegistry extends Extract {
             RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl";
         }
     }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
     
     /**
      * Search for the registry hives on the system.
@@ -151,7 +142,7 @@ class ExtractRegistry extends Extract {
      * @param dataSource
      * @param controller 
      */
-    private void analyzeRegistryFiles(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void analyzeRegistryFiles(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         List<AbstractFile> allRegistryFiles = findRegistryFiles(dataSource);
         
         // open the log file
@@ -581,16 +572,8 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
         analyzeRegistryFiles(dataSource, controller);
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-    }
-
-    @Override
-    public void complete() {
     }
 
     @Override
@@ -599,20 +582,5 @@ class ExtractRegistry extends Extract {
             execRR.stop();
             execRR = null;
         }
-    }
-
-    @Override
-    public String getName() {
-        return NbBundle.getMessage(this.getClass(), "ExtractRegistry.getName");
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "ExtractRegistry.getDesc");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

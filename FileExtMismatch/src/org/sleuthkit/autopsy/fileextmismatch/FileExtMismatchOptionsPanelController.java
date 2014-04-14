@@ -16,19 +16,18 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
-    categoryName = "#OptionsCategory_Name_FileExtMismatchOptions",
-iconBase = "org/sleuthkit/autopsy/fileextmismatch/options-icon.png",
-position = 4,
-keywords = "#OptionsCategory_FileExtMismatch",
-keywordsCategory = "KeywordSearchOptions")
-// migrated to Bundle
-//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileExtMismatchOptions=File Ext Mismatch", "OptionsCategory_FileExtMismatch=File Ext Mismatch"})
+        categoryName = "#OptionsCategory_Name_FileExtMismatchOptions",
+        iconBase = "org/sleuthkit/autopsy/fileextmismatch/options-icon.png",
+        position = 4,
+        keywords = "#OptionsCategory_FileExtMismatch",
+        keywordsCategory = "KeywordSearchOptions")
 public final class FileExtMismatchOptionsPanelController extends OptionsPanelController {
 
-    private FileExtMismatchConfigPanel panel;
+    private FileExtMismatchSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     private static final Logger logger = Logger.getLogger(FileExtMismatchOptionsPanelController.class.getName());
+
     @Override
     public void update() {
         getPanel().load();
@@ -77,9 +76,9 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
         pcs.removePropertyChangeListener(l);
     }
 
-    private FileExtMismatchConfigPanel getPanel() {
+    private FileExtMismatchSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new FileExtMismatchConfigPanel();
+            panel = new FileExtMismatchSettingsPanel();
         }
         return panel;
     }
@@ -87,11 +86,10 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
     void changed() {
         if (!changed) {
             changed = true;
-            
+
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
@@ -99,16 +97,15 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
                         MessageNotifyUtil.MessageType.ERROR);
             }
         }
-        
-            try {
-                pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);      
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+
+        try {
+            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
+            MessageNotifyUtil.Notify.show(
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 }
