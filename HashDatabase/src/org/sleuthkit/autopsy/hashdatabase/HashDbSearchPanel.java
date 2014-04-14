@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
      * Check if ingest is currently running and refresh the panel accordingly.
      */
     public void refresh() {
-        boolean running = IngestManager.getDefault().isIngestRunning();
+        boolean running = IngestManager.getInstance().isIngestRunning();
         if(running) {
             titleLabel.setForeground(Color.red);
             titleLabel.setText(NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.titleText.ingestOngoing"));

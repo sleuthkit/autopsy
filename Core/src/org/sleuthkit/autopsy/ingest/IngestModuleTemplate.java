@@ -50,11 +50,11 @@ final class IngestModuleTemplate {
     }
         
     boolean hasModuleSettingsPanel() {
-        return moduleFactory.hasModuleSettingsPanel();
+        return moduleFactory.hasIngestJobSettingsPanel();
     }
 
     IngestModuleIngestJobSettingsPanel getModuleSettingsPanel() {
-        return moduleFactory.getModuleSettingsPanel(settings);
+        return moduleFactory.getIngestJobSettingsPanel(settings);
     }
 
     boolean hasGlobalSettingsPanel() {

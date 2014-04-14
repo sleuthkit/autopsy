@@ -21,13 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -42,9 +39,14 @@ final class IngestJob {
     private final boolean processUnallocatedSpace;
     private final HashMap<Long, FileIngestPipeline> fileIngestPipelines = new HashMap<>();
     private final HashMap<Long, DataSourceIngestPipeline> dataSourceIngestPipelines = new HashMap<>();
+    private final IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
     private FileIngestPipeline initialFileIngestPipeline = null;
     private DataSourceIngestPipeline initialDataSourceIngestPipeline = null;
-    private boolean cancelled;
+    private ProgressHandle dataSourceTaskProgress;
+    private ProgressHandle fileTasksProgress;
+    int totalEnqueuedFiles = 0;
+    private int processedFiles = 0;
+    private volatile boolean cancelled;
 
     IngestJob(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
         this.id = id;
@@ -66,15 +68,53 @@ final class IngestJob {
         return processUnallocatedSpace;
     }
 
-    synchronized void cancel() {
-        cancelled = true;
-    }
-
-    synchronized boolean isCancelled() {
-        return cancelled;
-    }
-
     synchronized List<IngestModuleError> startUpIngestPipelines() {
+        startDataSourceIngestProgressBar();
+        startFileIngestProgressBar();
+        return startUpInitialIngestPipelines();
+    }
+
+    private void startDataSourceIngestProgressBar() {
+        final String displayName = NbBundle
+                .getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", this.dataSource.getName());
+        dataSourceTaskProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+            @Override
+            public boolean cancel() {
+                if (dataSourceTaskProgress != null) {
+                    dataSourceTaskProgress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                            "IngestJob.progress.cancelling",
+                            displayName));
+                }
+                IngestManager.getInstance().cancelIngestJobs();
+                return true;
+            }
+        });
+        dataSourceTaskProgress.start();
+        dataSourceTaskProgress.switchToIndeterminate();
+    }
+
+    private void startFileIngestProgressBar() {
+        final String displayName = NbBundle
+                .getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", this.dataSource.getName());
+        fileTasksProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+            @Override
+            public boolean cancel() {
+                if (fileTasksProgress != null) {
+                    fileTasksProgress.setDisplayName(
+                            NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
+                            displayName));
+                }
+                IngestManager.getInstance().cancelIngestJobs();
+                return true;
+            }
+        });
+        fileTasksProgress.start();
+        fileTasksProgress.switchToIndeterminate();
+        totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+        fileTasksProgress.switchToDeterminate(totalEnqueuedFiles);
+    }
+
+    private List<IngestModuleError> startUpInitialIngestPipelines() {
         // Create a per thread instance of each pipeline type right now to make 
         // (reasonably) sure that the ingest modules can be started.
         initialDataSourceIngestPipeline = new DataSourceIngestPipeline(this, ingestModuleTemplates);
@@ -119,271 +159,69 @@ final class IngestJob {
 
     synchronized List<IngestModuleError> releaseIngestPipelinesForThread(long threadId) {
         List<IngestModuleError> errors = new ArrayList<>();
-
+        
         DataSourceIngestPipeline dataSourceIngestPipeline = dataSourceIngestPipelines.get(threadId);
         if (dataSourceIngestPipeline != null) {
             errors.addAll(dataSourceIngestPipeline.shutDown(cancelled));
+            dataSourceIngestPipelines.remove(threadId);
         }
-        this.dataSourceIngestPipelines.remove(threadId);
+        if (initialDataSourceIngestPipeline == null && dataSourceIngestPipelines.isEmpty() && dataSourceTaskProgress != null) {
+            dataSourceTaskProgress.finish();
+            dataSourceTaskProgress = null;
+        }
 
         FileIngestPipeline fileIngestPipeline = fileIngestPipelines.get(threadId);
         if (fileIngestPipeline != null) {
             errors.addAll(fileIngestPipeline.shutDown(cancelled));
+            fileIngestPipelines.remove(threadId);
         }
-        this.fileIngestPipelines.remove(threadId);
+        if (initialFileIngestPipeline == null && fileIngestPipelines.isEmpty() && fileTasksProgress != null) {
+            fileTasksProgress.finish();
+            fileTasksProgress = null;
+        }
 
         return errors;
     }
 
     synchronized boolean areIngestPipelinesShutDown() {
-        return (dataSourceIngestPipelines.isEmpty() && fileIngestPipelines.isEmpty());
+        return (initialDataSourceIngestPipeline == null
+                && dataSourceIngestPipelines.isEmpty()
+                && initialFileIngestPipeline == null
+                && fileIngestPipelines.isEmpty());
     }
 
-    /**
-     * A data source ingest pipeline composed of a sequence of data source ingest
-     * modules constructed from ingest module templates.
-     */
-    static final class DataSourceIngestPipeline {
-
-        private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
-        private final IngestJob task;
-        private final List<IngestModuleTemplate> moduleTemplates;
-        private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
-
-        private DataSourceIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
-            this.task = task;
-            this.moduleTemplates = moduleTemplates;
-        }
-
-        private List<IngestModuleError> startUp() {
-            List<IngestModuleError> errors = new ArrayList<>();
-
-            // Create an ingest module instance from each ingest module template 
-            // that has an ingest module factory capable of making data source 
-            // ingest modules. Map the module class names to the module instance 
-            // to allow the modules to be put in the sequence indicated by the
-            // ingest pipelines configuration.
-            Map<String, DataSourceIngestModuleDecorator> modulesByClass = new HashMap<>();
-            for (IngestModuleTemplate template : moduleTemplates) {
-                if (template.isDataSourceIngestModuleTemplate()) {
-                    DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
-                    IngestJobContext context = new IngestJobContext(task);
-                    try {
-                        module.startUp(context);
-                        modulesByClass.put(module.getClassName(), module);
-                        IngestManager.fireModuleEvent(IngestManager.IngestEvent.STARTED.toString(), module.getDisplayName());
-                    } catch (Exception ex) {
-                        errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                    }
-                }
-            }
-
-            // Establish the module sequence of the core ingest modules 
-            // indicated by the ingest pipeline configuration, adding any 
-            // additional modules found in the global lookup to the end of the 
-            // pipeline in arbitrary order.
-            List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getDataSourceIngestPipelineConfig();
-            for (String moduleClassName : pipelineConfig) {
-                if (modulesByClass.containsKey(moduleClassName)) {
-                    modules.add(modulesByClass.remove(moduleClassName));
-                }
-            }
-            for (DataSourceIngestModuleDecorator module : modulesByClass.values()) {
-                modules.add(module);
-            }
-
-            return errors;
-        }
-
-        List<IngestModuleError> process(SwingWorker worker, ProgressHandle progress) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            Content dataSource = this.task.getDataSource();
-            logger.log(Level.INFO, "Processing data source {0}", dataSource.getName());
-            for (DataSourceIngestModuleDecorator module : this.modules) {
-                try {
-                    String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.DataSourceIngestPipeline.displayName.text", module.getDisplayName(), dataSource.getName());
-                    progress.setDisplayName(displayName);
-                    module.process(dataSource, new DataSourceIngestModuleStatusHelper(worker, progress, dataSource));
-                } catch (Exception ex) {
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                }
-                if (task.isCancelled()) {
-                    break;
-                }
-            }
-            return errors;
-        }
-
-        private List<IngestModuleError> shutDown(boolean ingestJobCancelled) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            for (DataSourceIngestModuleDecorator module : this.modules) {
-                try {
-                    module.shutDown(ingestJobCancelled);
-                } catch (Exception ex) {
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                } finally {
-                    IngestManager.fireModuleEvent(IngestManager.IngestEvent.COMPLETED.toString(), module.getDisplayName());
-                }
-            }
-            return errors;
-        }
-
-        private static class DataSourceIngestModuleDecorator implements DataSourceIngestModule {
-
-            private final DataSourceIngestModule module;
-            private final String displayName;
-
-            DataSourceIngestModuleDecorator(DataSourceIngestModule module, String displayName) {
-                this.module = module;
-                this.displayName = displayName;
-            }
-
-            String getClassName() {
-                return module.getClass().getCanonicalName();
-            }
-
-            String getDisplayName() {
-                return displayName;
-            }
-
-            @Override
-            public void startUp(IngestJobContext context) throws IngestModuleException {
-               module.startUp(context);
-            }
-
-            @Override
-            public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
-                return module.process(dataSource, statusHelper);
-            }
-
-            @Override
-            public void shutDown(boolean ingestJobWasCancelled) {
-                module.shutDown(ingestJobWasCancelled);
-            }            
-        }
+    synchronized ProgressHandle getDataSourceTaskProgressBar() {
+        return this.dataSourceTaskProgress;
     }
 
-    /**
-     * A file ingest pipeline composed of a sequence of file ingest modules
-     * constructed from ingest module templates.
-     */
-    static final class FileIngestPipeline {
-
-        private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
-        private final IngestJob task;
-        private final List<IngestModuleTemplate> moduleTemplates;
-        private List<FileIngestModuleDecorator> modules = new ArrayList<>();
-
-        private FileIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
-            this.task = task;
-            this.moduleTemplates = moduleTemplates;
+    synchronized void updateFileTasksProgressBar(String currentFileName) {
+        int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+        if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
+            totalEnqueuedFiles = newTotalEnqueuedFiles + 1;
+            fileTasksProgress.switchToIndeterminate();
+            fileTasksProgress.switchToDeterminate(totalEnqueuedFiles);
+        }
+        if (processedFiles < totalEnqueuedFiles) {
+            ++processedFiles;
         }
 
-        private List<IngestModuleError> startUp() {
-            List<IngestModuleError> errors = new ArrayList<>();
-            
-            // Create an ingest module instance from each ingest module template 
-            // that has an ingest module factory capable of making data source 
-            // ingest modules. Map the module class names to the module instance 
-            // to allow the modules to be put in the sequence indicated by the
-            // ingest pipelines configuration.
-            Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
-            for (IngestModuleTemplate template : moduleTemplates) {
-                if (template.isFileIngestModuleTemplate()) {
-                    FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
-                    IngestJobContext context = new IngestJobContext(task);
-                    try {
-                        module.startUp(context);
-                        modulesByClass.put(module.getClassName(), module);
-                        IngestManager.fireModuleEvent(IngestManager.IngestEvent.STARTED.toString(), template.getModuleName());
-                    } catch (Exception ex) {
-                        errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                    }
-                }
-            }
-            
-            // Establish the module sequence of the core ingest modules 
-            // indicated by the ingest pipeline configuration, adding any 
-            // additional modules found in the global lookup to the end of the 
-            // pipeline in arbitrary order.
-            List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getFileIngestPipelineConfig();
-            for (String moduleClassName : pipelineConfig) {
-                if (modulesByClass.containsKey(moduleClassName)) {
-                    modules.add(modulesByClass.remove(moduleClassName));
-                }
-            }
-            for (FileIngestModuleDecorator module : modulesByClass.values()) {
-                modules.add(module);
-            }
-            
-            return errors;
+        fileTasksProgress.progress(currentFileName, processedFiles);
+    }
+
+    synchronized void cancel() {
+        if (initialDataSourceIngestPipeline != null) {
+            initialDataSourceIngestPipeline.shutDown(true);
+            initialDataSourceIngestPipeline =  null;
         }
-
-        List<IngestModuleError> process(AbstractFile file) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            Content dataSource = this.task.getDataSource();
-            logger.log(Level.INFO, String.format("Processing {0} from {1}", file.getName(), dataSource.getName()));
-            for (FileIngestModuleDecorator module : this.modules) {
-                try {
-                    module.process(file);
-                } catch (Exception ex) {
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                }
-                if (task.isCancelled()) {
-                    break;
-                }
-            }
-            file.close();
-            IngestManager.fireFileDone(file.getId());
-            return errors;
+        if (initialFileIngestPipeline != null) {
+            initialFileIngestPipeline.shutDown(true);
+            initialFileIngestPipeline = null;
         }
+       
+        cancelled = true;
+    }
 
-        private List<IngestModuleError> shutDown(boolean ingestJobCancelled) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            for (FileIngestModuleDecorator module : this.modules) {
-                try {
-                    module.shutDown(ingestJobCancelled);
-                } catch (Exception ex) {
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                } finally {
-                    IngestManager.fireModuleEvent(IngestManager.IngestEvent.COMPLETED.toString(), module.getDisplayName());
-                }
-            }
-            return errors;
-        }
-        
-        private static class FileIngestModuleDecorator implements FileIngestModule {
-
-            private final FileIngestModule module;
-            private final String displayName;
-
-            FileIngestModuleDecorator(FileIngestModule module, String displayName) {
-                this.module = module;
-                this.displayName = displayName;
-            }
-
-            String getClassName() {
-                return module.getClass().getCanonicalName();
-            }
-
-            String getDisplayName() {
-                return displayName;
-            }
-
-            @Override
-            public void startUp(IngestJobContext context) throws IngestModuleException {
-               module.startUp(context);
-            }
-
-            @Override
-            public IngestModule.ProcessResult process(AbstractFile file) {
-                return module.process(file);
-            }
-
-            @Override
-            public void shutDown(boolean ingestJobWasCancelled) {
-                module.shutDown(ingestJobWasCancelled);
-            }            
-        }
-    }    
+    boolean isCancelled() {
+        return cancelled;
+    }
 }

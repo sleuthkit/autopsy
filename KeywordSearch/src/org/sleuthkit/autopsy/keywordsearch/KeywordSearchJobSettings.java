@@ -31,9 +31,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     private final HashSet<String> namesOfEnabledKeywordLists = new HashSet<>();
 
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists) {
-        for (String keywordList : namesOfEnabledKeywordLists) {
-            this.namesOfEnabledKeywordLists.add(keywordList);
-        }
+        this.namesOfEnabledKeywordLists.addAll(namesOfEnabledKeywordLists);
     }
 
     boolean isKeywordListEnabled(String keywordListName) {

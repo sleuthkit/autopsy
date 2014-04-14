@@ -86,7 +86,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
 
     @Override
     public void search() {
-        boolean isIngestRunning = IngestManager.getDefault().isIngestRunning();
+        boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
         if (filesIndexed == 0) {
             if (isIngestRunning) {

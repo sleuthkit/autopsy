@@ -241,7 +241,8 @@ public final class ExtractAction extends AbstractAction {
             } 
             catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during file extraction", ex);
-                MessageNotifyUtil.Message.info("Error extracting files: " + ex.getMessage());
+                MessageNotifyUtil.Message.info(
+                        NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.extractErr", ex.getMessage()));
                 msgDisplayed = true;
             }  
             finally {

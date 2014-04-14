@@ -53,7 +53,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
     private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver";
     private String moduleOutputDirPath;
-    private String configFileName = "scalpel.conf";
+    private final String configFileName = "scalpel.conf";
     private String configFilePath;
     private boolean initialized = false;
     private ScalpelCarver carver;
@@ -100,7 +100,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         // copy the default config file to the user's home directory if one
         // is not already there
         try {
-            PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName);
+            PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName, false);
         } catch (IOException ex) {
             String message = "Could not obtain the path to the Scalpel configuration file.";
             logger.log(Level.SEVERE, message, ex);
@@ -201,7 +201,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         }
 
         // get the IngestServices object
-        IngestServices is = IngestServices.getDefault();
+        IngestServices is = IngestServices.getInstance();
 
         // get the parent directory of the carved files
         Content carvedFileDir = null;
@@ -221,7 +221,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         }
 
         // reschedule carved files
-        context.addFilesToPipeline(new ArrayList<AbstractFile>(carvedFiles));
+        context.addFiles(new ArrayList<AbstractFile>(carvedFiles));
 
         return ProcessResult.OK;
     }

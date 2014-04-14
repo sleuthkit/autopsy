@@ -32,7 +32,8 @@ import java.util.Collection;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.coreutils.JLnkParserException;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -48,14 +49,16 @@ import org.sleuthkit.datamodel.*;
  */
 class RecentDocumentsByLnk extends Extract  {
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services = IngestServices.getDefault();    
+    private IngestServices services = IngestServices.getInstance(); 
+    private Content dataSource;
+    private IngestJobContext context;
 
     /**
      * Find the documents that Windows stores about recent documents and make artifacts.
      * @param dataSource
      * @param controller 
      */
-    private void getRecentDocuments(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    private void getRecentDocuments() {
         
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> recentFiles;
@@ -76,14 +79,14 @@ class RecentDocumentsByLnk extends Extract  {
         
         dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
             
             if (recentFile.getSize() == 0) {
                 continue;
             }
-            JLNK lnk = null;
+            JLNK lnk;
             JLnkParser lnkParser = new JLnkParser(new ReadContentInputStream(recentFile), (int) recentFile.getSize());
             try {
                 lnk = lnkParser.parse();
@@ -100,7 +103,7 @@ class RecentDocumentsByLnk extends Extract  {
                 continue;
             }
            
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             String path = lnk.getBestPath();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
                                                      NbBundle.getMessage(this.getClass(),
@@ -122,8 +125,10 @@ class RecentDocumentsByLnk extends Extract  {
     }
     
     @Override
-    public void process(Content dataSource, DataSourceIngestModuleStatusHelper controller) {
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
         dataFound = false;
-        this.getRecentDocuments(dataSource, controller);
+        this.getRecentDocuments();
     }
 }

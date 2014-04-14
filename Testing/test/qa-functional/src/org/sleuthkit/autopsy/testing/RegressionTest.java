@@ -228,7 +228,6 @@ public class RegressionTest extends TestCase {
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
-        //setListForIngest();
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
         jbo0.pushNoBlock();
@@ -236,10 +235,6 @@ public class RegressionTest extends TestCase {
         jfco0.chooseFile(words);
         JTableOperator jto = new JTableOperator(jdo, 0);
         jto.clickOnCell(0, 0);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
-        if (!(jcbo.isSelected())) {
-            jcbo.doClick();
-        }
         new Timeout("pausing", 1000).sleep(); // give it a second to process
         if (Boolean.parseBoolean(System.getProperty("mugen_mode"))) {
             JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);
@@ -262,21 +257,12 @@ public class RegressionTest extends TestCase {
 
     public void testIngest() {
         logger.info("Ingest 3");
-        long start = System.currentTimeMillis();
-        IngestManager man = IngestManager.getDefault();
-        while (man.isEnqueueRunning()) {
-            new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
-        }
-        logger.info("Enqueue took " + (System.currentTimeMillis() - start) + "ms");
+        long startIngest = System.currentTimeMillis();
+        IngestManager man = IngestManager.getInstance();
         while (man.isIngestRunning()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
-        new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
-        while (man.areModulesRunning()) {
-           new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
-        }
-        
-        logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis() - start) + "ms");
+        logger.log(Level.INFO, "Ingest (including enqueue) took {0}ms", (System.currentTimeMillis() - startIngest));
         // allow keyword search to finish saving artifacts, just in case
         //   but randomize the timing so that we don't always get the same error
         //   consistently, making it seem like default behavior
@@ -339,10 +325,5 @@ public class RegressionTest extends TestCase {
             logger.log(Level.WARNING, "AWTException taking screenshot.", ex);
 
         }
-    }
-
-    private void setListForIngest() {
-        KeywordSearchListsXML curr = KeywordSearchListsXML.getCurrent();
-        curr.setUseForIngest("URLs", true);
     }
 }

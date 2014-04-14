@@ -29,56 +29,131 @@
  */
 package org.sleuthkit.autopsy.examples;
 
+import java.util.HashMap;
 import java.util.List;
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.datamodel.TskData;
 
 /**
- * Sample data source ingest module that doesn't do much. Note that the
- * IngestModuleAdapter abstract class could have been used as a base class to 
- * obtain default implementations of many of the DataSourceIngestModule methods.
+ * Sample data source ingest module that doesn't do much. Demonstrates per
+ * ingest job module settings, use of a subset of the available ingest services
+ * and thread-safe sharing of per ingest job data.
  */
-// RJCTODO: Remove inheritance from IngestModuleAdapter to show full implementation of interface
-// provide better documentation, and provide more extensive demonstration of how to 
-// use various ingest services.
 class SampleDataSourceIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
 
-    private static final Logger logger = Logger.getLogger(SampleDataSourceIngestModule.class);
+    private static final HashMap<Long, Long> fileCountsForIngestJobs = new HashMap<>();
+    private final boolean skipKnownFiles;
+    private IngestJobContext context = null;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+
+    SampleDataSourceIngestModule(SampleModuleIngestJobSettings settings) {
+        this.skipKnownFiles = settings.skipKnownFiles();
+    }
+    
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+
+        // This method is thread-safe with per ingest job reference counted
+        // management of shared data.
+        initFileCount(context.getJobId());
+    }
 
     @Override
-    public ProcessResult process(Content dataSource, DataSourceIngestModuleStatusHelper statusHelper) {
-        Case case1 = Case.getCurrentCase();
-        SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
-
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+        // There are two tasks to do. Set the the progress bar to determinate 
+        // and set the remaining number of work units to be completed to two.
+        progressBar.switchToDeterminate(2);
+        
+        Case autopsyCase = Case.getCurrentCase();
+        SleuthkitCase sleuthkitCase = autopsyCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
         FileManager fileManager = services.getFileManager();
         try {
+            // Get count of files with .doc extension.
+            long fileCount = 0;
             List<AbstractFile> docFiles = fileManager.findFiles(dataSource, "%.doc");
-            for (AbstractFile file : docFiles) {
-                // do something with each doc file
+            for (AbstractFile docFile : docFiles) {
+                if (!skipKnownFiles || docFile.getKnown() != TskData.FileKnown.KNOWN) {
+                    ++fileCount;
+                }                
             }
-
+            
+            progressBar.progress(1);
+            
+            // Get files by creation time.
             long currentTime = System.currentTimeMillis() / 1000;
             long minTime = currentTime - (14 * 24 * 60 * 60); // Go back two weeks.
             List<FsContent> otherFiles = sleuthkitCase.findFilesWhere("crtime > " + minTime);
-            // do something with these files...
-
+            for (FsContent otherFile : otherFiles) {
+                if (!skipKnownFiles || otherFile.getKnown() != TskData.FileKnown.KNOWN) {
+                    ++fileCount;
+                }                
+            }
+            
+            // This method is thread-safe with per ingest job reference counted
+            // management of shared data.
+            addToFileCount(context.getJobId(), fileCount);
+            
+            progressBar.progress(1);
+            return IngestModule.ProcessResult.OK;         
+            
         } catch (TskCoreException ex) {
-            logger.fatal("Error retrieving files from database:  " + ex.getLocalizedMessage());
-            return IngestModule.ProcessResult.OK;
+            IngestServices ingestServices = IngestServices.getInstance();
+            Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
+            logger.log(Level.SEVERE, "File query failed", ex);
+            return IngestModule.ProcessResult.ERROR;
         }
-        
-        return IngestModule.ProcessResult.OK;
     }
+
+    @Override
+    public void shutDown(boolean ingestJobCancelled) {
+        // This method is thread-safe with per ingest job reference counted
+        // management of shared data.
+        postFileCount(context.getJobId());
+    }
+
+    synchronized static void initFileCount(long ingestJobId) {
+        Long refCount = refCounter.incrementAndGet(ingestJobId);
+        if (refCount == 1) {
+            fileCountsForIngestJobs.put(ingestJobId, 0L);
+        }
+    }
+
+    synchronized static void addToFileCount(long ingestJobId, long countToAdd) {
+        Long fileCount = fileCountsForIngestJobs.get(ingestJobId);
+        fileCount += countToAdd;
+        fileCountsForIngestJobs.put(ingestJobId, fileCount);
+    }
+
+    synchronized static void postFileCount(long ingestJobId) {
+        Long refCount = refCounter.decrementAndGet(ingestJobId);
+        if (refCount == 0) {
+            Long filesCount = fileCountsForIngestJobs.remove(ingestJobId);
+            String msgText = String.format("Found %d files", filesCount);
+            IngestMessage message = IngestMessage.createMessage(
+                    IngestMessage.MessageType.DATA,
+                    SampleIngestModuleFactory.getModuleName(),
+                    msgText);
+            IngestServices.getInstance().postMessage(message);
+        } 
+    }
+    
 }
