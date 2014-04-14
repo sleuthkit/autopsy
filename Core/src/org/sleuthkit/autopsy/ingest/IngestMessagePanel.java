@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,10 +35,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
@@ -54,6 +52,7 @@ import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import java.util.logging.Level;
 
 /**
  * Notification window showing messages from modules to user
@@ -260,7 +259,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         
         //this should be done at the end to make it easy to initialize before events are handled
         tableModel.addTableModelListener(this);
-
     }
     
     @Override
@@ -285,15 +283,12 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
     }
 
-   
     public synchronized void addMessage(IngestMessage m) {
-        //final int origMsgUnreadUnique = tableModel.getNumberUnreadGroups();
         tableModel.addMessage(m);
 
         //update total individual messages count
         ++totalMessages;
         final int newMsgUnreadUnique = tableModel.getNumberUnreadGroups();
-
         
         try {
             messagePcs.firePropertyChange(TOTAL_NUM_MESSAGES_CHANGED, 0, newMsgUnreadUnique);
@@ -310,10 +305,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         this.totalMessagesNameVal.setText(Long.toString(totalMessages));
         final int totalMessagesUnique = tableModel.getNumberGroups();
         this.totalUniqueMessagesNameVal.setText(Integer.toString(totalMessagesUnique));
-        //this.unreadLabelVal.setText(Integer.toString(newMsgUnreadUnique));
-
-        //autoscroll
-        //messageTable.scrollRectToVisible(messageTable.getCellRect(messageTable.getRowCount() - 1, messageTable.getColumnCount(), true));
     }
 
     public synchronized void clearMessages() {
@@ -342,7 +333,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private synchronized void setVisited(int rowNumber) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.setVisited(rowNumber);
-        //renderer.setSelected(rowNumber);
         lastRowSelected = rowNumber;
         
         try {
@@ -381,9 +371,9 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.new"),
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.subject"),
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.timestamp")};
-        private List<TableEntry> messageData = new ArrayList<TableEntry>();
+        private List<TableEntry> messageData = new ArrayList<>();
         //for keeping track of messages to group, per module, by uniqness
-        private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
+        private Map<String, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<>();
         private boolean chronoSort = true; //chronological sort default
         private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per module with same uniqness
         private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
@@ -393,18 +383,11 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
 
         private void init() {
-            final IngestManager manager = IngestManager.getDefault();
-            //initialize groupings map with modules
-            for (IngestModuleAbstract module : manager.enumerateAbstractFileModules()) {
-                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
-            }
-            for (IngestModuleAbstract module : manager.enumerateDataSourceModules()) {
-                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
+            List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getInstance().getIngestModuleFactories();                       
+            for (IngestModuleFactory factory : moduleFactories) {
+                groupings.put(factory.getModuleDisplayName(), new HashMap<String, List<IngestMessageGroup>>());
             }
         }
-        
-   
-        
 
         @Override
         public int getColumnCount() {
@@ -412,18 +395,18 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
         
         @Override
-        synchronized public int getRowCount() {
+        public synchronized int getRowCount() {
             return getNumberGroups();
         }
         
-        public void markAllSeen() {
+        public synchronized void markAllSeen() {
             for (TableEntry entry : messageData) {
                 entry.hasBeenSeen(true);
             }
             fireTableChanged(new TableModelEvent(this));
         }
         
-        public int getNumberNewMessages() {
+        public synchronized int getNumberNewMessages() {
             int newMessages = 0;
             for (TableEntry entry : messageData) {
                 if (!entry.hasBeenSeen()) {
@@ -433,11 +416,11 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             return newMessages;
         }
 
-        synchronized int getNumberGroups() {
+        public synchronized int getNumberGroups() {
             return messageData.size();
         }
 
-        synchronized int getNumberMessages() {
+        public synchronized int getNumberMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
                 total += e.messageGroup.getCount();
@@ -445,7 +428,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             return total;
         }
 
-        synchronized int getNumberUnreadMessages() {
+        public synchronized int getNumberUnreadMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
                 if (!e.hasBeenVisited) {
@@ -455,7 +438,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             return total;
         }
 
-        synchronized int getNumberUnreadGroups() {
+        public synchronized int getNumberUnreadGroups() {
             int total = 0;
             for (TableEntry e : messageData) {
                 if (!e.hasBeenVisited) {
@@ -486,8 +469,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
             switch (columnIndex) {
                 case 0:
-                    Object module = entry.messageGroup.getSource();
-                    ret = module == null ? "" : entry.messageGroup.getSource().getName();
+                    ret = entry.messageGroup.getSource();
                     break;
                 case 1:
                     ret = entry.messageGroup.getCount();
@@ -502,7 +484,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                     ret = entry.messageGroup.getDatePosted();
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex);
                     break;
             }
             return ret;
@@ -531,20 +513,20 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             return ret;
         }
 
-        synchronized public void addMessage(IngestMessage m) {
+        public synchronized void addMessage(IngestMessage m) {
             //check how many messages per module with the same uniqness
             //and add to existing group or create a new group
-            IngestModuleAbstract module = m.getSource();
+            String moduleName = m.getSource();
             IngestMessageGroup messageGroup = null;
-            if (module != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
+            if (moduleName != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
                 //not a manager message, a data message, then group
-                final Map<String, List<IngestMessageGroup>> groups = groupings.get(module);
+                final Map<String, List<IngestMessageGroup>> groups = groupings.get(moduleName);
                 //groups for this uniqueness
                 final String uniqueness = m.getUniqueKey();
                 List<IngestMessageGroup> uniqGroups = groups.get(uniqueness);
                 if (uniqGroups == null) {
                     //first one with this uniqueness
-                    uniqGroups = new ArrayList<IngestMessageGroup>();
+                    uniqGroups = new ArrayList<>();
                     messageGroup = new IngestMessageGroup(m);
                     uniqGroups.add(messageGroup);
                     groups.put(uniqueness, uniqGroups);
@@ -565,7 +547,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                         uniqGroups.add(messageGroup);
 
                         //remove all rows with this uniquness, new merged row will be added to the bottom
-                        int toRemove = 0;
+                        int toRemove;
                         while ((toRemove = getTableEntryIndex(uniqueness)) != -1) {
                             messageData.remove(toRemove);
                             //remove the row, will be added to the bottom
@@ -646,15 +628,27 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         }
 
         public synchronized boolean isVisited(int rowNumber) {
-            return messageData.get(rowNumber).hasBeenVisited();
+            if (rowNumber < messageData.size()) {
+                return messageData.get(rowNumber).hasBeenVisited();
+            } else {
+                return false;
+            }
         }
 
         public synchronized MessageType getMessageType(int rowNumber) {
-            return messageData.get(rowNumber).messageGroup.getMessageType();
+            if (rowNumber < messageData.size()) {
+                return messageData.get(rowNumber).messageGroup.getMessageType();
+            } else {
+                return null;
+            }
         }
 
         public synchronized IngestMessageGroup getMessageGroup(int rowNumber) {
-            return messageData.get(rowNumber).messageGroup;
+            if (rowNumber < messageData.size()) {
+                return messageData.get(rowNumber).messageGroup;
+            } else {
+                return null;
+            }
         }
 
         public synchronized void reSort(boolean chronoLogical) {
@@ -715,30 +709,30 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         private List<IngestMessage> messages;
 
         IngestMessageGroup(IngestMessage message) {
-            messages = new ArrayList<IngestMessage>();
+            messages = new ArrayList<>();
             messages.add(message);
         }
 
-        List<IngestMessage> getMessages() {
+        private List<IngestMessage> getMessages() {
             return messages;
-        }
-
-        void add(IngestMessage message) {
+        }        
+        
+        synchronized void add(IngestMessage message) {
             messages.add(message);
         }
 
         //add all messages from another group
-        void addAll(IngestMessageGroup group) {
+        synchronized void addAll(IngestMessageGroup group) {
             for (IngestMessage m : group.getMessages()) {
                 messages.add(m);
             }
         }
 
-        int getCount() {
+        synchronized int getCount() {
             return messages.size();
         }
 
-        String getDetails() {
+       synchronized String getDetails() {
             StringBuilder b = new StringBuilder("");
             for (IngestMessage m : messages) {
                 String details = m.getDetails();
@@ -757,7 +751,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
          * return color corresp to priority
          * @return 
          */
-        Color getColor() {
+        synchronized Color getColor() {
             int count = messages.size();
             if (count == 1) {
                 return VERY_HIGH_PRI_COLOR;
@@ -768,7 +762,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             } else {
                 return LOW_PRI_COLOR;
             }
-
         }
 
         /**
@@ -776,7 +769,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
          * used for chrono sort
          * @return 
          */
-        Date getDatePosted() {
+        synchronized Date getDatePosted() {
             return messages.get(messages.size() - 1).getDatePosted();
         }
 
@@ -784,35 +777,35 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
          * get subject of the first message
          * @return 
          */
-        String getSubject() {
+        synchronized String getSubject() {
             return messages.get(0).getSubject();
         }
 
         /*
          * return unique key, should be the same for all msgs
          */
-        String getUniqueKey() {
+        synchronized String getUniqueKey() {
             return messages.get(0).getUniqueKey();
         }
 
         /*
          * return source module, should be the same for all msgs
          */
-        IngestModuleAbstract getSource() {
+        synchronized String getSource() {
             return messages.get(0).getSource();
         }
 
         /*
          * return data of the first message
          */
-        BlackboardArtifact getData() {
+        synchronized BlackboardArtifact getData() {
             return messages.get(0).getData();
         }
 
         /*
          * return message type, should be the same for all msgs
          */
-        IngestMessage.MessageType getMessageType() {
+        synchronized IngestMessage.MessageType getMessageType() {
             return messages.get(0).getMessageType();
         }
     }
@@ -877,19 +870,19 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             cell.setFont(new Font("", Font.PLAIN, 16));
             
             final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-            MessageType mt = messageGroup.getMessageType();
-            if (mt == MessageType.ERROR) {
-                cell.setBackground(ERROR_COLOR);
-            } else if (mt == MessageType.WARNING) {
-                cell.setBackground(Color.orange);
-            } else {
-                //cell.setBackground(table.getBackground());
-                cell.setBackground(messageGroup.getColor());
+            if (messageGroup != null) {
+                MessageType mt = messageGroup.getMessageType();
+                if (mt == MessageType.ERROR) {
+                    cell.setBackground(ERROR_COLOR);
+                } else if (mt == MessageType.WARNING) {
+                    cell.setBackground(Color.orange);
+                } else {
+                    //cell.setBackground(table.getBackground());
+                    cell.setBackground(messageGroup.getColor());
+                }
             }
-            
             return cell;
         }
-        
     }
 
     /**
@@ -918,16 +911,17 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             }
 
             final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-            MessageType mt = messageGroup.getMessageType();
-            if (mt == MessageType.ERROR) {
-                cell.setBackground(ERROR_COLOR);
-            } else if (mt == MessageType.WARNING) {
-                cell.setBackground(Color.orange);
-            } else {
-                //cell.setBackground(table.getBackground());
-                cell.setBackground(messageGroup.getColor());
+            if (messageGroup != null) {
+                MessageType mt = messageGroup.getMessageType();
+                if (mt == MessageType.ERROR) {
+                    cell.setBackground(ERROR_COLOR);
+                } else if (mt == MessageType.WARNING) {
+                    cell.setBackground(Color.orange);
+                } else {
+                    //cell.setBackground(table.getBackground());
+                    cell.setBackground(messageGroup.getColor());
+                }
             }
-
             return cell;
         }
     }
@@ -953,27 +947,26 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             Component cell =  super.getTableCellRendererComponent(table, aValue, isSelected, hasFocus, row, column);
             
             final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-            MessageType mt = messageGroup.getMessageType();
-            if (mt == MessageType.ERROR) {
-                cell.setBackground(ERROR_COLOR);
-            } else if (mt == MessageType.WARNING) {
-                cell.setBackground(Color.orange);
-            } else {
-                //cell.setBackground(table.getBackground());
-                cell.setBackground(messageGroup.getColor());
+            if (messageGroup != null) {
+                MessageType mt = messageGroup.getMessageType();
+                if (mt == MessageType.ERROR) {
+                    cell.setBackground(ERROR_COLOR);
+                } else if (mt == MessageType.WARNING) {
+                    cell.setBackground(Color.orange);
+                } else {
+                    //cell.setBackground(table.getBackground());
+                    cell.setBackground(messageGroup.getColor());
+                }
             }
             
             return cell;
         }
-        
     }
 
     /**
      * handle table selections / cell visitations
      */
     private class MessageVisitedSelection implements ListSelectionListener {
-
-        private Logger logger = Logger.getLogger(MessageVisitedSelection.class.getName());
 
         @Override
         public void valueChanged(ListSelectionEvent e) {
@@ -997,13 +990,14 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                 messageTable.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 //check if has details
                 IngestMessageGroup m = getMessageGroup(selected);
-                String details = m.getDetails();
-                if (details != null && !details.equals("")) {
-                    mainPanel.showDetails(selected);
+                if (m != null) {
+                    String details = m.getDetails();
+                    if (details != null && !details.equals("")) {
+                        mainPanel.showDetails(selected);
+                    }
                 }
                 messageTable.setCursor(null);
             }
-
         }
     }
 }

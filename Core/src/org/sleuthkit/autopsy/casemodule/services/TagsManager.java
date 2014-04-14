@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -198,15 +200,20 @@ public class TagsManager implements Closeable {
         
         if (beginByteOffset >= 0 && endByteOffset >= 1) {
             if (beginByteOffset > content.getSize() - 1) {
-                throw new IllegalArgumentException("beginByteOffset = " + beginByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
+                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                       "TagsManager.addContentTag.exception.beginByteOffsetOOR.msg",
+                                                                       beginByteOffset, content.getSize() - 1));
             }
 
             if (endByteOffset > content.getSize() - 1) {
-                throw new IllegalArgumentException("endByteOffset = " + endByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
+                throw new IllegalArgumentException(
+                        NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endByteOffsetOOR.msg",
+                                            endByteOffset, content.getSize() - 1));
             }
 
             if (endByteOffset < beginByteOffset) {
-                throw new IllegalArgumentException("endByteOffset < beginByteOffset");            
+                throw new IllegalArgumentException(
+                        NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endLTbegin.msg"));
             }
         }
             

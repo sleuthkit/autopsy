@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -34,12 +34,10 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -54,42 +52,35 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class Firefox extends Extract {
 
+    private static final Logger logger = Logger.getLogger(Firefox.class.getName());
     private static final String historyQuery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String cookieQuery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
     private static final String cookieQueryV3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies";
     private static final String bookmarkQuery = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) as dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
     private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads";
     private static final String downloadQueryVersion24 = "SELECT url, content as target, (lastModified/1000000) as lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3";
+    private final IngestServices services = IngestServices.getInstance();
+    private Content dataSource;
+    private IngestJobContext context;
     
-    final private static String MODULE_VERSION = "1.0";
-    private IngestServices services;
-
-    //hide public constructor to prevent from instantiation by ingest module loader
     Firefox() {
         moduleName = NbBundle.getMessage(Firefox.class, "Firefox.moduleName");
     }
 
     @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-    @Override
-    public void process(PipelineContext<IngestModuleDataSource> pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
         dataFound = false;
-        this.getHistory(dataSource, controller);
-        this.getBookmark(dataSource, controller);
-        this.getDownload(dataSource, controller);
-        this.getCookie(dataSource, controller);
+        this.getHistory();
+        this.getBookmark();
+        this.getDownload();
+        this.getCookie();
     }
 
-    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
-        //Make these seperate, this is for history
-
-        //List<FsContent> FFSqlitedb = this.extractFiles(dataSource, "select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
-        
+    private void getHistory() {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> historyFiles = null;
+        List<AbstractFile> historyFiles;
         try {
             historyFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
@@ -98,7 +89,7 @@ class Firefox extends Extract {
             this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
-        
+
         if (historyFiles.isEmpty()) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.noFilesFound");
             logger.log(Level.INFO, msg);
@@ -106,13 +97,13 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        
+
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
             if (historyFile.getSize() == 0) {
                 continue;
             }
-            
+
             String fileName = historyFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
             try {
@@ -125,14 +116,14 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, historyQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
@@ -158,7 +149,6 @@ class Firefox extends Extract {
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"), (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
-
             }
             ++j;
             dbFile.delete();
@@ -170,13 +160,11 @@ class Firefox extends Extract {
 
     /**
      * Queries for bookmark files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getBookmark() {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> bookmarkFiles = null;
+        List<AbstractFile> bookmarkFiles;
         try {
             bookmarkFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
@@ -190,9 +178,9 @@ class Firefox extends Extract {
             logger.log(Level.INFO, "Didn't find any firefox bookmark files.");
             return;
         }
-        
+
         dataFound = true;
-        
+
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
             if (bookmarkFile.getSize() == 0) {
@@ -209,15 +197,15 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, bookmarkQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting bookmarks from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
 
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
@@ -253,12 +241,10 @@ class Firefox extends Extract {
 
     /**
      * Queries for cookies file and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getCookie() {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "cookies.sqlite", "Firefox");
         } catch (TskCoreException ex) {
@@ -272,7 +258,7 @@ class Firefox extends Extract {
             logger.log(Level.INFO, "Didn't find any Firefox cookie files.");
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
@@ -291,12 +277,12 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
             boolean checkColumn = Util.checkColumn("creationTime", "moz_cookies", temps);
-            String query = null;
+            String query;
             if (checkColumn) {
                 query = cookieQuery;
             } else {
@@ -304,10 +290,10 @@ class Firefox extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
-            logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
 
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
@@ -349,29 +335,24 @@ class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
-    
+
     /**
      * Queries for downloads files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
-        getDownloadPreVersion24(dataSource, controller);
-        getDownloadVersion24(dataSource, controller);
+    private void getDownload() {
+        getDownloadPreVersion24();
+        getDownloadVersion24();
     }
 
     /**
      * Finds downloads artifacts from Firefox data from versions before 24.0.
-     * 
+     *
      * Downloads were stored in a separate downloads database.
-     * 
-     * @param dataSource
-     * @param controller 
      */
-    private void getDownloadPreVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
-        
+    private void getDownloadPreVersion24() {
+
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> downloadsFiles = null;
+        List<AbstractFile> downloadsFiles;
         try {
             downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
         } catch (TskCoreException ex) {
@@ -380,12 +361,12 @@ class Firefox extends Extract {
             this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
-        
+
         if (downloadsFiles.isEmpty()) {
             logger.log(Level.INFO, "Didn't find any pre-version-24.0 Firefox download files.");
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
@@ -404,7 +385,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -412,7 +393,7 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
             logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
             for (HashMap<String, Object> result : tempList) {
-                
+
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
@@ -426,7 +407,7 @@ class Firefox extends Extract {
                                                          (Long.valueOf(result.get("startTime").toString()))));
                 
                 String target = result.get("target").toString();
-                
+
                 if (target != null) {
                     try {
                         String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8");
@@ -456,7 +437,7 @@ class Firefox extends Extract {
                                                                              "Firefox.parentModuleName.noSpace"),
                                                          (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
-                
+
             }
             if (errors > 0) {
                 this.addErrorMessage(
@@ -471,18 +452,15 @@ class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
-    
+
     /**
      * Gets download artifacts from Firefox data from version 24.
-     * 
+     *
      * Downloads are stored in the places database.
-     * 
-     * @param dataSource
-     * @param controller 
      */
-    private void getDownloadVersion24(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getDownloadVersion24() {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> downloadsFiles = null;
+        List<AbstractFile> downloadsFiles;
         try {
             downloadsFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
@@ -491,12 +469,12 @@ class Firefox extends Extract {
             this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
-        
+
         if (downloadsFiles.isEmpty()) {
             logger.log(Level.INFO, "Didn't find any version-24.0 Firefox download files.");
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
@@ -516,17 +494,17 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
-            
+
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQueryVersion24);
-            
-            logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
+
+            logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
-                
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
@@ -535,7 +513,7 @@ class Firefox extends Extract {
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
-                
+
                 String target = result.get("target").toString();
                 if (target != null) {
                     try {
@@ -569,7 +547,7 @@ class Firefox extends Extract {
                                                                              "Firefox.parentModuleName.noSpace"),
                                                          (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
-                
+
             }
             if (errors > 0) {
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errParsingArtifacts",
@@ -579,31 +557,8 @@ class Firefox extends Extract {
             dbFile.delete();
             break;
         }
-        
+
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "Firefox.getDesc.text");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

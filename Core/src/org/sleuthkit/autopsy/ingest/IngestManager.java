@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,731 +18,241 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import java.util.prefs.Preferences;
+import javax.swing.SwingWorker;
 
 /**
- * IngestManager sets up and manages ingest modules runs them in a background
- * thread notifies modules when work is complete or should be interrupted
- * processes messages from modules via messenger proxy and posts them to GUI.
- *
- * This runs as a singleton and you can access it using the getDefault() method.
- *
+ * Manages the execution of ingest jobs.
  */
 public class IngestManager {
 
+    private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads";
+    private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
+    private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 4;
+    private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private IngestManagerStats stats;
-    private boolean processUnallocSpace = true;
-    //queues
-    private final IngestScheduler scheduler;
-    //workers
-    private IngestAbstractFileProcessor abstractFileIngester;
-    private List<IngestDataSourceThread> dataSourceIngesters;
-    private SwingWorker<Object, Void> queueWorker;
-    //modules
-    private List<IngestModuleDataSource> dataSourceModules;
-    private List<IngestModuleAbstractFile> abstractFileModules;
-    // module return values
-    private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<String, IngestModuleAbstractFile.ProcessResult>();
-    //notifications
-    private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
-    //monitor
+    private static final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
+    private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
+    private static IngestManager instance;
+    private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
-    //module loader
-    private IngestModuleLoader moduleLoader = null;
-    //property file name id for the module
-    public final static String MODULE_PROPERTIES = NbBundle.getMessage(IngestManager.class,
-                                                                       "IngestManager.moduleProperties.text");
-    private volatile int messageID = 0;
+    private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService dataSourceIngestTasksExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService fileIngestTasksExecutor = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
+    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>(); // Maps job ids to jobs        
+    private final HashMap<Long, Future<?>> ingestTasks = new HashMap<>(); // Maps task ids to task cancellation handles        
+    private AtomicLong ingestJobId = new AtomicLong(0L);
+    private AtomicLong ingestTaskId = new AtomicLong(0L);
+    private volatile IngestUI ingestMessageBox;
 
     /**
-     * Possible events about ingest modules Event listeners can get the event
-     * name by using String returned by toString() method on the specific event.
-     */
-    public enum IngestModuleEvent {
-
-        /**
-         * Event sent when an ingest module has been started. Second
-         * argument of the property change is a string form of the module name
-         * and the third argument is null.
-         */
-        STARTED,
-        
-        /**
-         * Event sent when an ingest module has completed processing by its own 
-         * means. Second
-         * argument of the property change is a string form of the module name
-         * and the third argument is null.
-         *
-         * This event is generally used by listeners to perform a final data
-         * view refresh (listeners need to query all data from the blackboard).
-         */
-        COMPLETED,
-        
-        /**
-         * Event sent when an ingest module has stopped processing, and likely
-         * not all data has been processed. Second argument of the property
-         * change is a string form of the module name and third argument is null.
-         */
-        STOPPED,
-        
-        /**
-         * Event sent when ingest module posts new data to blackboard or somewhere
-         * else. Second argument of the
-         * property change fired contains ModuleDataEvent object and third
-         * argument is null. The object can contain encapsulated new data
-         * created by the module. Listener can also query new data as needed.
-         */
-        DATA,
-        
-        /**
-         * Event send when content changed, either its attributes changed, or
-         * new content children have been added.  I.e. from ZIP files or Carved files
-         */
-        CONTENT_CHANGED,
-        
-        
-        /**
-         * Event sent when a file has finished going through a pipeline of modules.
-         * Second argument is the object ID. Third argument is null
-         */
-        FILE_DONE,
-        
-    };
-    //ui
-    //Initialized by Installer in AWT thread once the Window System is ready
-    private volatile IngestUI ui; // = null; //IngestMessageTopComponent.findInstance();
-    //singleton
-    private static volatile IngestManager instance;
-
-    private IngestManager() {
-        dataSourceIngesters = new ArrayList<IngestDataSourceThread>();
-
-        scheduler = IngestScheduler.getInstance();
-
-        //setup current modules and listeners for modules changes
-        initModules();
-
-    }
-
-    private void initModules() {
-        try {
-            moduleLoader = IngestModuleLoader.getDefault();
-            abstractFileModules = moduleLoader.getAbstractFileIngestModules();
-
-            moduleLoader.addModulesReloadedListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
-                        //TODO might need to not allow to remove modules if they are running
-                        abstractFileModules = moduleLoader.getAbstractFileIngestModules();
-                        dataSourceModules = moduleLoader.getDataSourceIngestModules();
-                    }
-                }
-            });
-            dataSourceModules = moduleLoader.getDataSourceIngestModules();
-        } catch (IngestModuleLoaderException ex) {
-            logger.log(Level.SEVERE, "Error getting module loader");
-        }
-    }
-
-    /**
-     * called by Installer in AWT thread once the Window System is ready
-     */
-    void initUI() {
-        if (this.ui == null) {
-            this.ui = IngestMessageTopComponent.findInstance();
-        }
-    }
-
-    /**
-     * Returns reference to singleton instance.
+     * Gets the IngestManager singleton, creating it if necessary.
      *
-     * @returns Instance of class.
+     * @returns The IngestManager singleton.
      */
-    public static IngestManager getDefault() {
+    public synchronized static IngestManager getInstance() {
         if (instance == null) {
-            synchronized (IngestManager.class) {
-                if (instance == null) {
-                    logger.log(Level.INFO, "creating manager instance");
-                    instance = new IngestManager();
-                }
-            }
+            instance = new IngestManager();
         }
         return instance;
     }
 
-    /**
-     * Add property change listener to listen to ingest events as defined in IngestModuleEvent. 
-     *
-     * @param l PropertyChangeListener to register
-     */
-    public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
+    private IngestManager() {
     }
 
-    static synchronized void fireModuleEvent(String eventType, String moduleName) {
-        try {
-            pcs.firePropertyChange(eventType, moduleName, null);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+    /**
+     * Finds the top component for the ingest messages in box. Called by the
+     * custom installer for this package once the window system is initialized.
+     */
+    void initIngestMessageInbox() {
+        if (this.ingestMessageBox == null) {
+            this.ingestMessageBox = IngestMessageTopComponent.findInstance();
         }
     }
-    
-    
+
+    public synchronized static int getNumberOfFileIngestThreads() {
+        return userPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, DEFAULT_NUMBER_OF_FILE_INGEST_THREADS);
+    }
+
+    public synchronized static void setNumberOfFileIngestThreads(int numberOfThreads) {
+        if (numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS
+                || numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS) {
+            numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+        }
+
+        userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
+    }
+
+    synchronized void startIngestJobs(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        if (!isIngestRunning() && ingestMessageBox != null) {
+            ingestMessageBox.clearMessages();
+        }
+
+        long taskId = ingestTaskId.incrementAndGet();
+        Future<?> task = startIngestJobsExecutor.submit(new StartIngestJobsTask(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
+        ingestTasks.put(taskId, task);
+
+        if (ingestMessageBox != null) {
+            ingestMessageBox.restoreMessages();
+        }
+    }
+
+    /**
+     * Test if any ingest jobs are in progress.
+     *
+     * @return True if any ingest jobs are in progress, false otherwise
+     */
+    public boolean isIngestRunning() {
+        return (ingestJobs.isEmpty() == false);
+    }
+
+    synchronized void addFileToIngestJob(long ingestJobId, AbstractFile file) {
+        IngestJob job = ingestJobs.get(ingestJobId);
+        if (job != null) {
+            scheduler.getFileScheduler().scheduleFile(job, file);
+        }
+    }
+
+    void cancelIngestJobs() {
+        new IngestCancellationWorker().execute();
+    }
+
+    /**
+     * Ingest events.
+     */
+    public enum IngestEvent {
+
+        /**
+         * Property change event fired when an ingest job is started. The ingest
+         * job id is in old value field of the PropertyChangeEvent object.
+         */
+        INGEST_JOB_STARTED,
+        /**
+         * Property change event fired when an ingest job is completed. The
+         * ingest job id is in old value field of the PropertyChangeEvent
+         * object.
+         */
+        INGEST_JOB_COMPLETED,
+        /**
+         * Property change event fired when an ingest job is canceled. The
+         * ingest job id is in old value field of the PropertyChangeEvent
+         * object.
+         */
+        INGEST_JOB_CANCELLED,
+        /**
+         * Event sent when an ingest module posts new data to blackboard or
+         * somewhere else. Second argument of the property change fired contains
+         * ModuleDataEvent object and third argument is null. The object can
+         * contain encapsulated new data created by the module. Listener can
+         * also query new data as needed.
+         */
+        DATA,
+        /**
+         * Event send when content changed, either its attributes changed, or
+         * new content children have been added. I.e. from ZIP files or Carved
+         * files
+         */
+        CONTENT_CHANGED,
+        /**
+         * Event sent when a file has finished going through a pipeline of
+         * modules. Second argument is the object ID. Third argument is null
+         */
+        FILE_DONE,
+    };
+
+    /**
+     * Add property change listener to listen to ingest events.
+     *
+     * @param listener PropertyChangeListener to register
+     */
+    public static void addPropertyChangeListener(final PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public static void removePropertyChangeListener(final PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
+
+    static void fireIngestJobEvent(String eventType, long jobId) {
+        try {
+            pcs.firePropertyChange(eventType, jobId, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
+    }
+
     /**
      * Fire event when file is done with a pipeline run
-     * @param objId ID of file that is done
+     *
+     * @param fileId ID of file that is done
      */
-    static synchronized void fireFileDone(long objId) {
+    static void fireFileIngestDone(long fileId) {
         try {
-            pcs.firePropertyChange(IngestModuleEvent.FILE_DONE.toString(), objId, null);
-        }
-        catch (Exception e) {
+            pcs.firePropertyChange(IngestEvent.FILE_DONE.toString(), fileId, null);
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
-    
     /**
-     * Fire event for ModuleDataEvent (when modules post data to blackboard, etc.)
-     * @param moduleDataEvent 
+     * Fire event for ModuleDataEvent (when modules post data to blackboard,
+     * etc.)
+     *
+     * @param moduleDataEvent
      */
-    static synchronized void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
+    static void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         try {
-            pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), moduleDataEvent, null);
-        }
-        catch (Exception e) {
+            pcs.firePropertyChange(IngestEvent.DATA.toString(), moduleDataEvent, null);
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
     /**
-     * Fire event for ModuleContentChanged (when  modules create new content that needs to be analyzed)
-     * @param moduleContentEvent 
+     * Fire event for ModuleContentChanged (when modules create new content that
+     * needs to be analyzed)
+     *
+     * @param moduleContentEvent
      */
-    static synchronized void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
+    static void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         try {
-            pcs.firePropertyChange(IngestModuleEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
-        }
-        catch (Exception e) {
+            pcs.firePropertyChange(IngestEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                                          NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
-
-    /**
-     * Returns the return value from a previously run module on the file being
-     * currently analyzed.
-     *
-     * @param moduleName Name of module.
-     * @returns Return value from that module if it was previously run.
-     */
-    IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
-        synchronized (abstractFileModulesRetValues) {
-            if (abstractFileModulesRetValues.containsKey(moduleName)) {
-                return abstractFileModulesRetValues.get(moduleName);
-            } else {
-                return IngestModuleAbstractFile.ProcessResult.UNKNOWN;
-            }
-        }
-    }
-
-    /**
-     * Multiple data-sources version of scheduleDataSource() method. Enqueues multiple sources inputs (Content objects) 
-     * and associated modules at once
-     *
-     * @param modules modules to scheduleDataSource on every data source
-     * @param inputs input data sources  to enqueue and scheduleDataSource the ingest modules on
-     */
-    public void scheduleDataSource(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
-        logger.log(Level.INFO, "Will enqueue number of inputs: " + inputs.size() 
-                + " to " + modules.size() + " modules.");
-
-        if (!isIngestRunning() && ui != null) {
-            ui.clearMessages();
-        }
-
-        queueWorker = new EnqueueWorker(modules, inputs);
-        queueWorker.execute();
-
-        if (ui != null) {
-            ui.restoreMessages();
-        }
-    }
-
-    /**
-     * IngestManager entry point, enqueues data to be processed and starts new ingest
-     * as needed, or just enqueues data to an existing pipeline.
-     * 
-     * Spawns
-     * background thread which enumerates all sorted files and executes chosen
-     * modules per file in a pre-determined order. Notifies modules when work is
-     * complete or should be interrupted using complete() and stop() calls. Does
-     * not block and can be called multiple times to enqueue more work to
-     * already running background ingest process.
-     *
-     * @param modules modules to scheduleDataSource on the data source input
-     * @param input input data source Content objects to scheduleDataSource the ingest modules on
-     */
-    public void scheduleDataSource(final List<IngestModuleAbstract> modules, final Content input) {
-        List<Content> inputs = new ArrayList<Content>();
-        inputs.add(input);
-        logger.log(Level.INFO, "Will enqueue input: " + input.getName());
-        scheduleDataSource(modules, inputs);
-    }
-
-    /**
-     * Schedule a file for ingest and add it to ongoing file ingest process on the same data source. 
-     * Scheduler updates the current progress.
-     *
-     * The file to be added is usually a product of a currently ran ingest. 
-     * Now we want to process this new file with the same ingest context.
-     *
-     * @param file file to be scheduled
-     * @param pipelineContext ingest context used to ingest parent of the file
-     * to be scheduled
-     */
-    void scheduleFile(AbstractFile file, PipelineContext<IngestModuleAbstractFile> pipelineContext) {
-        scheduler.getFileScheduler().schedule(file, pipelineContext);
-    }
-
-    /**
-     * Starts the File-level Ingest Module pipeline and the Data Source-level Ingest Modules
-     * for the queued up data sources and files. 
-     *
-     * if AbstractFile module is still running, do nothing and allow it to
-     * consume queue otherwise start /restart AbstractFile worker
-     *
-     * data source ingest workers run per (module,content). Checks if one for the same (module,content)
-     * is already running otherwise start/restart the worker
-     */
-    private synchronized void startAll() {
-        final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
-        final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-        boolean allInited = true;
-        IngestModuleAbstract failedModule = null;
-        String errorMessage = "";
-        logger.log(Level.INFO, "DataSource queue: " + dataSourceScheduler.toString());
-        logger.log(Level.INFO, "File queue: " + fileScheduler.toString());
-
-        if (!ingestMonitor.isRunning()) {
-            ingestMonitor.start();
-        }
-
-        /////////
-        // Start the data source-level ingest modules
-        List<IngestDataSourceThread> newThreads = new ArrayList<>();
-        
-        // cycle through each data source content in the queue
-        while (dataSourceScheduler.hasNext()) {
-            if (allInited == false) {
-                break;
-            }
-            //dequeue
-            // get next data source content and set of modules
-            final DataSourceTask<IngestModuleDataSource> dataSourceTask = dataSourceScheduler.next();
-
-            // check if each module for this data source content is already running
-            for (IngestModuleDataSource dataSourceTaskModule : dataSourceTask.getModules()) {
-                boolean alreadyRunning = false;
-                for (IngestDataSourceThread worker : dataSourceIngesters) {
-                    // ignore threads that are on different data sources
-                    if (!worker.getContent().equals(dataSourceTask.getContent())) {
-                        continue; //check next worker
-                    }
-                    //same data source, check module (by name, not id, since different instances)
-                    if (worker.getModule().getName().equals(dataSourceTaskModule.getName())) {
-                        alreadyRunning = true;
-                        logger.log(Level.INFO, "Data Source Ingester <" + dataSourceTask.getContent()
-                                + ", " + dataSourceTaskModule.getName() + "> is already running");
-                        break;
-                    }
-                }
-                //checked all workers
-                if (alreadyRunning == false) {
-                    logger.log(Level.INFO, "Starting new data source Ingester <" + dataSourceTask.getContent()
-                            + ", " + dataSourceTaskModule.getName() + ">");
-                    //data source modules are now initialized per instance
-
-                    IngestModuleInit moduleInit = new IngestModuleInit();
-                    
-                    PipelineContext<IngestModuleDataSource> dataSourcepipelineContext =
-                            dataSourceTask.getPipelineContext();
-                    
-                    final IngestDataSourceThread newDataSourceWorker = new IngestDataSourceThread(this,
-                            dataSourcepipelineContext, dataSourceTask.getContent(), dataSourceTaskModule, moduleInit);
-                    try {
-                        newDataSourceWorker.init();
-                    } catch (Exception e) {
-                        logger.log(Level.SEVERE, "DataSource ingest module failed init(): " + dataSourceTaskModule.getName(), e);
-                        allInited = false;
-                        failedModule = dataSourceTaskModule;
-                        errorMessage = e.getMessage();
-                        break;
-                    }
-                    dataSourceIngesters.add(newDataSourceWorker);
-                    // Add the worker to the list of new IngestThreads to be started
-                    // if all modules initialize.
-                    newThreads.add(newDataSourceWorker);
-                }
-            }
-        }
-        
-        // Check to make sure all modules initialized
-        if (allInited == false) {
-            displayInitError(failedModule.getName(), errorMessage);
-            dataSourceIngesters.removeAll(newThreads);
-            return;
-        }
-
-        //AbstractFile ingester
-        boolean startAbstractFileIngester = false;
-        if (fileScheduler.hasNext()) {
-            if (abstractFileIngester == null) {
-                startAbstractFileIngester = true;
-                logger.log(Level.INFO, "Starting initial AbstractFile ingester");
-            } 
-            //if worker had completed, restart it in case data is still enqueued
-            else if (abstractFileIngester.isDone()) {
-                startAbstractFileIngester = true;
-                logger.log(Level.INFO, "Restarting AbstractFile ingester");
-            }
-        } else {
-            logger.log(Level.INFO, "no new AbstractFile enqueued, no ingester needed");
-        }
-
-        if (startAbstractFileIngester) {
-            stats = new IngestManagerStats();
-            abstractFileIngester = new IngestAbstractFileProcessor();
-            //init all fs modules, everytime new worker starts
-
-            for (IngestModuleAbstractFile s : abstractFileModules) {
-                // This was added at one point to remove the message about non-configured HashDB even 
-                // when HashDB was not enabled.  However, it adds some problems if a second ingest is
-                // kicked off whiel the first is ongoing. If the 2nd ingest has a module enabled that 
-                // was not initially enabled, it will never have init called. We also need to call 
-                // complete and need a similar way of passing down data to that thread to tell it which 
-                // it shoudl call complete on (otherwise it could call complete on a module that never
-                // had init() called. 
-                //if (fileScheduler.hasModuleEnqueued(s) == false) {
-                //    continue;
-                //} 
-                IngestModuleInit moduleInit = new IngestModuleInit();
-                try {
-                    s.init(moduleInit);
-                } catch (IngestModuleException e) {
-                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName(), e);
-                    allInited = false;
-                    failedModule = s;
-                    errorMessage = e.getMessage();
-                    break;
-                }
-            }
-        }
-        
-        if (allInited) {
-            // Start DataSourceIngestModules
-            for (IngestDataSourceThread dataSourceWorker : newThreads) {
-                dataSourceWorker.execute();
-                IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), dataSourceWorker.getModule().getName());
-            }
-            // Start AbstractFileIngestModules
-            if (startAbstractFileIngester) {
-                abstractFileIngester.execute();
-            }
-        } else {
-            displayInitError(failedModule.getName(), errorMessage);
-            dataSourceIngesters.removeAll(newThreads);
-            abstractFileIngester = null;
-        }
-    }
-    
-    /**
-     * Open a dialog box to report an initialization error to the user.
-     * 
-     * @param moduleName The name of the module that failed to initialize.
-     * @param errorMessage The message gotten from the exception that was thrown.
-     */
-    private void displayInitError(String moduleName, String errorMessage) {
-        MessageNotifyUtil.Message.error(
-                NbBundle.getMessage(this.getClass(), "IngestManager.displayInitError.failedToLoad.msg", moduleName,
-                                    errorMessage));
-    }
-
-    /**
-     * stop currently running threads if any (e.g. when changing a case)
-     */
-    synchronized void stopAll() {
-        //stop queue worker
-        if (queueWorker != null) {
-            queueWorker.cancel(true);
-            queueWorker = null;
-        }
-
-        //empty queues
-        scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();
-
-        //stop module workers
-        if (abstractFileIngester != null) {
-            //send signals to all file modules
-            for (IngestModuleAbstractFile s : this.abstractFileModules) {
-                if (isModuleRunning(s)) {
-                    try {
-                        s.stop();
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Unexpected exception while stopping module: " + s.getName(), e);
-                    }
-                }
-
-            }
-            //stop fs ingester thread
-            boolean cancelled = abstractFileIngester.cancel(true);
-            if (!cancelled) {
-                logger.log(Level.INFO, "Unable to cancel file ingest worker, likely already stopped");
-            }
-
-            abstractFileIngester = null;
-
-        }
-
-        List<IngestDataSourceThread> toStop = new ArrayList<IngestDataSourceThread>();
-        toStop.addAll(dataSourceIngesters);
-
-        for (IngestDataSourceThread dataSourceWorker : toStop) {
-            IngestModuleDataSource s = dataSourceWorker.getModule();
-
-            //stop the worker thread if thread is running
-            boolean cancelled = dataSourceWorker.cancel(true);
-            if (!cancelled) {
-                logger.log(Level.INFO, "Unable to cancel data source ingest worker for module: " 
-                        + dataSourceWorker.getModule().getName() + " data source: " + dataSourceWorker.getContent().getName());
-            }
-
-            //stop notification to module to cleanup resources
-            if (isModuleRunning(s)) {
-                try {
-                    dataSourceWorker.getModule().stop();
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
-                }
-            }
-        }
-
-        logger.log(Level.INFO, "stopped all");
-    }
-
-    /**
-     * Test if any ingester modules are running
-     *
-     * @return true if any module is running, false otherwise
-     */
-    public synchronized boolean isIngestRunning() {
-        if (isEnqueueRunning()) {
-            return true;
-        } else if (isFileIngestRunning()) {
-            return true;
-        } else if (isDataSourceIngestRunning()) {
-            return true;
-        } else {
-            return false;
-        }
-
-    }
-
-    /**
-     * Test is any file ingest modules are running.
-     *
-     * @return true if any ingest modules are running, false otherwise
-     */
-    public synchronized boolean areModulesRunning() {
-        for (IngestModuleAbstract serv : abstractFileModules) {
-            if (serv.hasBackgroundJobsRunning()) {
-                return true;
-            }
-        }
-        for (IngestDataSourceThread thread : dataSourceIngesters) {
-            if (isModuleRunning(thread.getModule())) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * check if ingest is currently being enqueued
-     */
-    public synchronized boolean isEnqueueRunning() {
-        if (queueWorker != null && !queueWorker.isDone()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * check if the file-level ingest pipeline is running
-     */
-    public synchronized boolean isFileIngestRunning() {
-        if (abstractFileIngester != null && !abstractFileIngester.isDone()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * check the status of the data-source-level ingest pipeline
-     */
-    public synchronized boolean isDataSourceIngestRunning() {
-        if (dataSourceIngesters.isEmpty()) {
-            return false;
-        }
-
-        //in case there are still data source ingesters in the queue but already done
-        boolean allDone = true;
-        for (IngestDataSourceThread ii : dataSourceIngesters) {
-            if (ii.isDone() == false) {
-                allDone = false;
-                break;
-            }
-        }
-        if (allDone) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * check if the module is running (was started and not yet complete/stopped)
-     * give a complete answer, i.e. it's already consumed all files but it might
-     * have background threads running
-     *
-     */
-    public boolean isModuleRunning(final IngestModuleAbstract module) {
-
-        if (module.getType() == IngestModuleAbstract.ModuleType.AbstractFile) {
-            IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
-            if (fileScheduler.hasModuleEnqueued((IngestModuleAbstractFile) module)) {
-                //has work enqueued, so running
-                return true;
-            } else {
-                //not in the queue, but could still have bkg work running
-                return module.hasBackgroundJobsRunning();
-            }
-
-        } else {
-            //data source module
-            synchronized (this) {
-                if (dataSourceIngesters.isEmpty()) {
-                    return false;
-                }
-                IngestDataSourceThread imt = null;
-                for (IngestDataSourceThread ii : dataSourceIngesters) {
-                    if (ii.getModule().equals(module)) {
-                        imt = ii;
-                        break;
-                    }
-                }
-
-                if (imt == null) {
-                    return false;
-                }
-
-                if (imt.isDone() == false) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-    }
-    
-     /**
-     * Check if data source scheduler has files in queues
-     * @return true if more sources in queues, false otherwise
-     */
-    public boolean getDataSourceSchedulerHasNext() {
-        return this.scheduler.getDataSourceScheduler().hasNext();
-    }
-    
-    /**
-     * Check if file scheduler has files in queues
-     * @return true if more files in queues, false otherwise
-     */
-    public boolean getFileSchedulerHasNext() {
-        return scheduler.getFileScheduler().hasNext();
-    }
-    
-
-    /**
-     * returns if manager is currently configured to process unalloc space
-     *
-     * @return true if process unaloc space is set
-     */
-    boolean getProcessUnallocSpace() {
-        return processUnallocSpace;
-    }
-
-    /**
-     * Sets process unalloc space setting on the manager
-     *
-     * @param processUnallocSpace
-     */
-    public void setProcessUnallocSpace(boolean processUnallocSpace) {
-        this.processUnallocSpace = processUnallocSpace;
-    }
-
-    /**
-     * returns ingest summary report (how many files ingested, any errors, etc)
-     */
-    String getReport() {
-        return stats.toString();
-    }
-    
-   
-    
 
     /**
      * Module publishes message using InegestManager handle Does not block. The
@@ -751,16 +261,9 @@ public class IngestManager {
      * multiple times. Viewer will attempt to identify duplicate messages and
      * filter them out (slower)
      */
-    void postMessage(final IngestMessage message) {
-
-        if (stats != null) {
-            //record the error for stats, if stats are running
-            if (message.getMessageType() == MessageType.ERROR) {
-                stats.addError(message.getSource());
-            }
-        }
-        if (ui != null) {
-            ui.displayMessage(message);
+    void postIngestMessage(IngestMessage message) {
+        if (ingestMessageBox != null) {
+            ingestMessageBox.displayMessage(message);
         }
     }
 
@@ -779,555 +282,230 @@ public class IngestManager {
         }
     }
 
-    /**
-     * helper to return all loaded data-source ingest modules managed sorted in order as
-     * specified in pipeline_config XML
-     */
-    public List<IngestModuleDataSource> enumerateDataSourceModules() {
-        return moduleLoader.getDataSourceIngestModules();
-    }
+    private synchronized void startIngestTasks() {
+        if (!ingestMonitor.isRunning()) {
+            ingestMonitor.start();
+        }
 
-    /**
-     * helper to return all loaded file modules managed sorted in order as
-     * specified in pipeline_config XML
-     */
-    public List<IngestModuleAbstractFile> enumerateAbstractFileModules() {
-        return moduleLoader.getAbstractFileIngestModules();
-    }
-    
-    public List<IngestModuleAbstract> enumerateAllModules() {
-        List<IngestModuleAbstract> modules = new ArrayList<>();
-        modules.addAll(enumerateDataSourceModules());
-        modules.addAll(enumerateAbstractFileModules());
-        return modules;
-    }
+        long taskId = ingestTaskId.incrementAndGet();
+        Future<?> task = dataSourceIngestTasksExecutor.submit(new RunDataSourceIngestModulesTask(taskId));
+        ingestTasks.put(taskId, task);
 
-    //data source worker to remove itself when complete or interrupted
-    void removeDataSourceIngestWorker(IngestDataSourceThread worker) {
-        //remove worker
-        synchronized (this) {
-            dataSourceIngesters.remove(worker);
+        int numberOfFileTasksRequested = getNumberOfFileIngestThreads();
+        for (int i = 0; i < numberOfFileTasksRequested; ++i) {
+            taskId = ingestTaskId.incrementAndGet();
+            task = fileIngestTasksExecutor.submit(new RunFileSourceIngestModulesTask(taskId));
+            ingestTasks.put(taskId, task);
         }
     }
 
-    /**
-     * collects IngestManager statistics during runtime
-     */
-    private class IngestManagerStats {
-
-        private Date startTime;
-        private Date endTime;
-        private int errorsTotal;
-        private Map<String, Integer> errors;
-        private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        private final StopWatch timer = new StopWatch();
-        private IngestModuleAbstract currentModuleForTimer;
-        //file module timing stats, datasource module timers are logged in IngestDataSourceThread class
-        private final Map<String, Long> fileModuleTimers = new HashMap<String, Long>();
-
-        IngestManagerStats() {
-            errors = new HashMap<String, Integer>();
+    private synchronized void stopIngestTasks() {
+        // First mark all of the ingest jobs as cancelled. This way the 
+        // ingest modules will know they are being shut down due to 
+        // cancellation when the cancelled run ingest module tasks release 
+        // their pipelines. 
+        for (IngestJob job : ingestJobs.values()) {
+            job.cancel();
         }
 
-        /**
-         * records start time of the file process for the module must be
-         * followed by logFileModuleEndProcess for the same module
-         *
-         * @param module to record start time for processing a file
-         */
-        void logFileModuleStartProcess(IngestModuleAbstract module) {
-            timer.reset();
-            timer.start();
-            currentModuleForTimer = module;
+        // Cancel the run ingest module tasks, setting the state of the threads
+        // running them to interrupted.
+        for (Future<?> task : ingestTasks.values()) {
+            task.cancel(true);
         }
 
-        /**
-         * records stop time of the file process for the module must be preceded
-         * by logFileModuleStartProcess for the same module
-         *
-         * @param module to record stop time for processing a file
-         */
-        void logFileModuleEndProcess(IngestModuleAbstract module) {
-            timer.stop();
-            if (module != currentModuleForTimer) {
-                logger.log(Level.WARNING, "Invalid module passed in to record stop processing: " + module.getName()
-                        + ", expected: " + currentModuleForTimer.getName());
-            } else {
-                final long elapsed = timer.getElapsedTime();
-                final long current = fileModuleTimers.get(module.getName());
-                fileModuleTimers.put(module.getName(), elapsed + current);
-            }
+        // Jettision the remaining data source and file ingest tasks.
+        scheduler.getFileScheduler().empty();
+        scheduler.getDataSourceScheduler().empty();
+    }
 
-            currentModuleForTimer = null;
-        }
+    synchronized void reportStartIngestJobsTaskDone(long taskId) {
+        ingestTasks.remove(taskId);
+    }
 
-        String getFileModuleStats() {
-            StringBuilder sb = new StringBuilder();
-            for (final String moduleName : fileModuleTimers.keySet()) {
-                sb.append(NbBundle.getMessage(this.getClass(),
-                                              "IngestManager.getFileModStats.moduleInfo.text",
-                                              moduleName, fileModuleTimers.get(moduleName) / 1000));
-            }
-            return sb.toString();
-        }
+    synchronized void reportRunIngestModulesTaskDone(long taskId) {
+        ingestTasks.remove(taskId);
 
-        @Override
-        public String toString() {
-            final String EOL = System.getProperty("line.separator");
-            StringBuilder sb = new StringBuilder();
-            if (startTime != null) {
-                sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.startTime.text",
-                                              dateFormatter.format(startTime), EOL));
-            }
-            if (endTime != null) {
-                sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.endTime.text",
-                                              dateFormatter.format(endTime), EOL));
-            }
-            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.totalIngestTime.text",
-                                          getTotalTimeString(), EOL));
-            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.totalErrs.text", errorsTotal, EOL));
-            if (errorsTotal > 0) {
-                sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toString.errsPerMod.text"));
-                for (String moduleName : errors.keySet()) {
-                    sb.append("\t").append(moduleName).append(": ").append(errors.get(moduleName)).append(EOL);
-                }
-            }
-            return sb.toString();
-        }
-
-        public String toHtmlString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("<html><body>");
-            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.ingestTime.text",
-                                          getTotalTimeString()))
-              .append("<br />");
-            sb.append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.totalErrs.text", errorsTotal))
-              .append("<br />");
-            sb.append("<table><tr><th>")
-              .append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.module.text"))
-              .append("</th><th>")
-              .append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.time.text"))
-              .append("</th><th>")
-              .append(NbBundle.getMessage(this.getClass(), "IngestManager.toHtmlStr.errors.text"))
-              .append("</th></tr>\n");
-            
-            for (final String moduleName : fileModuleTimers.keySet()) {
-                sb.append("<tr><td>").append(moduleName).append("</td><td>");
-                sb.append(msToString(fileModuleTimers.get(moduleName))).append("</td><td>");
-                if (errors.get(moduleName) == null) {
-                    sb.append("0");
-                } else {
-                    sb.append(errors.get(moduleName));
-                }
-                sb.append("</td></tr>\n");
-            }
-            sb.append("</table>");
-            sb.append("</body></html>");
-            return sb.toString();
-        }
-
-        void start() {
-            startTime = new Date();
-
-            for (IngestModuleAbstractFile module : abstractFileModules) {
-                fileModuleTimers.put(module.getName(), 0L);
+        List<Long> completedJobs = new ArrayList<>();
+        for (IngestJob job : ingestJobs.values()) {
+            job.releaseIngestPipelinesForThread(taskId);
+            if (job.areIngestPipelinesShutDown() == true) {
+                completedJobs.add(job.getId());
             }
         }
 
-        void end() {
-            endTime = new Date();
-        }
-
-        long getTotalTime() {
-            if (startTime == null || endTime == null) {
-                return 0;
-            }
-            return endTime.getTime() - startTime.getTime();
-        }
-
-        String getStartTimeString() {
-            return dateFormatter.format(startTime);
-        }
-
-        String getEndTimeString() {
-            return dateFormatter.format(endTime);
-        }
-
-        /**
-         * convert time in miliseconds to printable string in XX:YY:ZZ format. 
-         * @param ms
-         * @return 
-         */
-        private String msToString(long ms) {
-            long hours = TimeUnit.MILLISECONDS.toHours(ms);
-            ms -= TimeUnit.HOURS.toMillis(hours);
-            long minutes = TimeUnit.MILLISECONDS.toMinutes(ms);
-            ms -= TimeUnit.MINUTES.toMillis(minutes);
-            long seconds = TimeUnit.MILLISECONDS.toSeconds(ms);
-            final StringBuilder sb = new StringBuilder();
-            sb.append(hours < 10 ? "0" : "").append(hours).append(':').append(minutes < 10 ? "0" : "").append(minutes).append(':').append(seconds < 10 ? "0" : "").append(seconds);
-            return sb.toString();
-        }
-        
-        String getTotalTimeString() {
-            long ms = getTotalTime();
-            return msToString(ms);
-        }
-
-        synchronized void addError(IngestModuleAbstract source) {
-            ++errorsTotal;
-            String moduleName = source.getName();
-            Integer curModuleErrorI = errors.get(moduleName);
-            if (curModuleErrorI == null) {
-                errors.put(moduleName, 1);
-            } else {
-                errors.put(moduleName, curModuleErrorI + 1);
-            }
+        for (Long jobId : completedJobs) {
+            IngestJob job = ingestJobs.remove(jobId);
+            fireIngestJobEvent(job.isCancelled() ? IngestEvent.INGEST_JOB_CANCELLED.toString() : IngestEvent.INGEST_JOB_COMPLETED.toString(), jobId);
         }
     }
 
-    /**
-     * File ingest pipeline processor. Worker thread that queries
-     * the scheduler for new files.  
-     * Modules are assumed to already be initialized. 
-     * runs until AbstractFile queue is
-     * consumed New instance is created and started when data arrives and
-     * previous pipeline completed.
-     */
-    private class IngestAbstractFileProcessor extends SwingWorker<Object, Void> {
+    private class StartIngestJobsTask implements Runnable {
 
-        private Logger logger = Logger.getLogger(IngestAbstractFileProcessor.class.getName());
-        //progress  bar
+        private final long id;
+        private final List<Content> dataSources;
+        private final List<IngestModuleTemplate> moduleTemplates;
+        private final boolean processUnallocatedSpace;
         private ProgressHandle progress;
 
-        @Override
-        protected Object doInBackground() throws Exception {
-
-            logger.log(Level.INFO, "Starting background ingest file processor");
-            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-
-            stats.start();
-
-            //notify main thread modules started
-            for (IngestModuleAbstractFile s : abstractFileModules) {
-                IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), s.getName());
-            }
-
-            final String displayName = NbBundle
-                    .getMessage(this.getClass(), "IngestManager.IngestAbstractFileProcessor.displayName");
-            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    logger.log(Level.INFO, "Filed ingest cancelled by user.");
-                    if (progress != null) {
-                        progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                                                    "IngestManager.IngestAbstractFileProcessor.process.cancelling",
-                                                                    displayName));
-                    }
-                    return IngestAbstractFileProcessor.this.cancel(true);
-                }
-            });
-
-            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-
-            //initialize the progress bar
-            progress.start();
-            progress.switchToIndeterminate();
-            //set initial totals and processed (to be updated as we process or new files are scheduled)
-            int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
-            progress.switchToDeterminate(totalEnqueuedFiles);
-            int processedFiles = 0;
-            
-            //process AbstractFiles queue
-            while (fileScheduler.hasNext()) {
-                final FileTask fileTask = fileScheduler.next();
-                final DataSourceTask<IngestModuleAbstractFile> dataSourceTask = fileTask.getDataSourceTask();
-                final PipelineContext<IngestModuleAbstractFile> filepipelineContext = dataSourceTask.getPipelineContext();
-                
-                final AbstractFile fileToProcess = fileTask.getFile();
-
-                //clear return values from modules for last file
-                synchronized (abstractFileModulesRetValues) {
-                    abstractFileModulesRetValues.clear();
-                }
-
-                //logger.log(Level.INFO, "IngestManager: Processing: {0}", fileToProcess.getName());
-                
-                for (IngestModuleAbstractFile module : dataSourceTask.getModules()) {
-                    //process the file with every file module
-                    if (isCancelled()) {
-                        logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
-                        return null;
-                    }
-                    progress.progress(fileToProcess.getName() + " (" + module.getName() + ")", processedFiles);
-
-                    try {
-                        stats.logFileModuleStartProcess(module);
-                        IngestModuleAbstractFile.ProcessResult result = module.process(filepipelineContext, fileToProcess);
-                        stats.logFileModuleEndProcess(module);
-
-                        //store the result for subsequent modules for this file
-                        synchronized (abstractFileModulesRetValues) {
-                            abstractFileModulesRetValues.put(module.getName(), result);
-                        }
-
-                    } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Error: unexpected exception from module: " + module.getName(), e);
-                        stats.addError(module);
-                    } catch (OutOfMemoryError e) {
-                        logger.log(Level.SEVERE, "Error: out of memory from module: " + module.getName(), e);
-                        stats.addError(module);
-                    }
-                
-                } //end for every module
-                
-                //free the internal file resource after done with every module
-                fileToProcess.close();
-                
-                // notify listeners thsi file is done
-                fireFileDone(fileToProcess.getId());                
-
-                int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
-                if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
-                    //update if new enqueued
-                    totalEnqueuedFiles = newTotalEnqueuedFiles + 1;// + processedFiles + 1;
-                    //processedFiles = 0;
-                    //reset
-                    progress.switchToIndeterminate();
-                    progress.switchToDeterminate(totalEnqueuedFiles);
-                }
-                if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same datasource Content enqueued twice
-                    ++processedFiles;
-                }
-                //--totalEnqueuedFiles;
-
-
-            } //end of for every AbstractFile
-            logger.log(Level.INFO, "IngestManager: Finished processing files");
-            return null;
+        StartIngestJobsTask(long taskId, List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+            this.id = taskId;
+            this.dataSources = dataSources;
+            this.moduleTemplates = moduleTemplates;
+            this.processUnallocatedSpace = processUnallocatedSpace;
         }
 
         @Override
-        protected void done() {
+        public void run() {
             try {
-                super.get(); //block and get all exceptions thrown while doInBackground()
-                //notify modules of completion
-                if (!this.isCancelled()) {
-                    for (IngestModuleAbstractFile s : abstractFileModules) {
-                        try {
-                            s.complete();
-                            IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
+                final String displayName = "Queueing ingest tasks";
+                progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                    @Override
+                    public boolean cancel() {
+                        if (progress != null) {
+                            progress.setDisplayName(displayName + " (Cancelling...)");
                         }
-                        catch (Exception ex) {   
-                            logger.log(Level.SEVERE, "Module " + s.getName() + " threw exception during call to complete()", ex);
-                        }
+                        IngestManager.getInstance().cancelIngestJobs();
+                        return true;
                     }
-                }
+                });
 
-                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-                logger.log(Level.INFO, "Freeing jvm heap resources post file pipeline run");
-                System.gc();
-                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-
-            } catch (CancellationException e) {
-                //task was cancelled
-                handleInterruption();
-            } catch (InterruptedException ex) {
-                handleInterruption();
-            } catch (ExecutionException ex) {
-                handleInterruption();
-                logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
-            } catch (Exception ex) {
-                handleInterruption();
-                logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
-            } finally {
-                stats.end();
-                progress.finish();
-
-                if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
-                    logger.log(Level.INFO, "File module timings: " + stats.getFileModuleStats());
-                    if (ui != null) {
-                        logger.log(Level.INFO, "Ingest messages count: " + ui.getMessagesCount());
+                progress.start(2 * dataSources.size());
+                int workUnitsCompleted = 0;
+                for (Content dataSource : dataSources) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
                     }
 
-                    IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete",
-                            stats.toHtmlString()));
-                }
-            }
-
-        }
-
-        private void handleInterruption() {
-            for (IngestModuleAbstractFile s : abstractFileModules) {
-                if (isModuleRunning(s)) {
-                    try {
-                        s.stop();
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
-                    }
-                }
-                IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), s.getName());
-            }
-            //empty queues
-            scheduler.getFileScheduler().empty();
-        }
-    }
-
-    /**
-     * Thread that adds content/file and module pairs to queues.  
-     * Starts pipelines when done. */
-    private class EnqueueWorker extends SwingWorker<Object, Void> {
-
-        private List<IngestModuleAbstract> modules;
-        private final List<Content> inputs;
-        private final Logger logger = Logger.getLogger(EnqueueWorker.class.getName());
-
-        EnqueueWorker(final List<IngestModuleAbstract> modules, final List<Content> inputs) {
-            this.modules = modules;
-            this.inputs = inputs;
-        }
-        private ProgressHandle progress;
-
-        @Override
-        protected Object doInBackground() throws Exception {
-
-            final String displayName = NbBundle
-                    .getMessage(this.getClass(), "IngestManager.EnqueueWorker.displayName.text");
-            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    logger.log(Level.INFO, "Queueing ingest cancelled by user.");
-                    if (progress != null) {
-                        progress.setDisplayName(
-                                NbBundle.getMessage(this.getClass(), "IngestManager.EnqueueWorker.process.cancelling",
-                                                    displayName));
-                    }
-                    return EnqueueWorker.this.cancel(true);
-                }
-            });
-
-            progress.start(2 * inputs.size());
-            //progress.switchToIndeterminate();
-            queueAll(modules, inputs);
-            return null;
-        }
-
-        /* clean up or start the worker threads */
-        @Override
-        protected void done() {
-            try {
-                super.get(); //block and get all exceptions thrown while doInBackground()      
-            } catch (CancellationException e) {
-                //task was cancelled
-                handleInterruption(e);
-            } catch (InterruptedException ex) {
-                handleInterruption(ex);
-            } catch (ExecutionException ex) {
-                handleInterruption(ex);
-
-
-            } catch (Exception ex) {
-                handleInterruption(ex);
-
-            } finally {
-                //queing end
-                if (this.isCancelled()) {
-                    //empty queues
-                    handleInterruption(new Exception());
-                } else {
-                    //start ingest workers
-                    startAll();
-                }
-                progress.finish();
-            }
-        }
-
-        /**
-         * Create modules and schedule analysis
-         * @param modules Modules to load into pipeline
-         * @param inputs List of parent data sources
-         */
-        private void queueAll(List<IngestModuleAbstract> modules, final List<Content> inputs) {
-            
-            int processed = 0;
-            for (Content input : inputs) {
-                final String inputName = input.getName();
-
-                // Create a new instance of the modules for each data source
-                final List<IngestModuleDataSource> dataSourceMods = new ArrayList<IngestModuleDataSource>();
-                final List<IngestModuleAbstractFile> fileMods = new ArrayList<IngestModuleAbstractFile>();
-
-                for (IngestModuleAbstract module : modules) {
-                    if (isCancelled()) {
-                        logger.log(Level.INFO, "Terminating ingest queueing due to cancellation.");
-                        return;
-                    }
-
-                    final String moduleName = module.getName();
-                    progress.progress(moduleName + " " + inputName, processed);
-
-                    switch (module.getType()) {
-                        case DataSource:
-                            final IngestModuleDataSource newModuleInstance =
-                                    (IngestModuleDataSource) moduleLoader.getNewIngestModuleInstance(module);
-                            if (newModuleInstance != null) {
-                                dataSourceMods.add(newModuleInstance);
-                            } else {
-                                logger.log(Level.INFO, "Error loading module and adding input " + inputName 
-                                        + " with module " + module.getName());
+                    IngestJob ingestJob = new IngestJob(IngestManager.this.ingestJobId.incrementAndGet(), dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
+                    if (!errors.isEmpty()) {
+                        StringBuilder failedModules = new StringBuilder();
+                        for (int i = 0; i < errors.size(); ++i) {
+                            IngestModuleError error = errors.get(i);
+                            String moduleName = error.getModuleDisplayName();
+                            logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError());
+                            failedModules.append(moduleName);
+                            if ((errors.size() > 1) && (i != (errors.size() - 1))) {
+                                failedModules.append(",");
                             }
-                            break;
-
-                        case AbstractFile:
-                            //enqueue the same singleton AbstractFile module
-                            logger.log(Level.INFO, "Adding input " + inputName
-                                    + " for AbstractFileModule " + module.getName());
-
-                            fileMods.add((IngestModuleAbstractFile) module);
-                            break;
-                            
-                        default:
-                            logger.log(Level.SEVERE, "Unexpected module type: " + module.getType().name());
+                        }
+                        MessageNotifyUtil.Message.error( // RJCTODO: Fix this to show all errors, probably should specify data source name
+                                "Failed to start the following ingest modules: " + failedModules.toString() + " .\n\n"
+                                + "No ingest modules will be run. Please disable the module "
+                                + "or fix the error and restart ingest by right clicking on "
+                                + "the data source and selecting Run Ingest Modules.\n\n"
+                                + "Error: " + errors.get(0).getModuleError().getMessage());
+                        ingestJob.cancel();
+                        break;
                     }
 
-                }//for modules
+                    // Save the ingest job for later cleanup of pipelines.
+                    synchronized (IngestManager.this) {
+                        ingestJobs.put(ingestJob.getId(), ingestJob);
+                    }
 
-                
-                /* Schedule the data source-level ingest modules for this data source */
-                final DataSourceTask<IngestModuleDataSource> dataSourceTask = 
-                        new DataSourceTask<IngestModuleDataSource>(input, dataSourceMods, getProcessUnallocSpace());
-                
-                
-                logger.log(Level.INFO, "Queing data source ingest task: " + dataSourceTask);
-                progress.progress(NbBundle.getMessage(this.getClass(), "IngestManager.datatSourceIngest.progress.text",
-                                                      inputName), processed);
-                final IngestScheduler.DataSourceScheduler dataSourceScheduler = scheduler.getDataSourceScheduler();
-                dataSourceScheduler.schedule(dataSourceTask);
-                progress.progress(NbBundle.getMessage(this.getClass(), "IngestManager.datatSourceIngest.progress.text",
-                                                      inputName), ++processed);
+                    // Queue the data source ingest tasks for the ingest job.
+                    final String inputName = dataSource.getName();
+                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted); // RJCTODO: Improve
+                    scheduler.getDataSourceScheduler().schedule(ingestJob);
+                    progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
-                
-                /* Schedule the file-level ingest modules for the children of the data source */
-                final DataSourceTask<IngestModuleAbstractFile> fTask = 
-                        new DataSourceTask(input, fileMods, getProcessUnallocSpace());
-                
-                logger.log(Level.INFO, "Queing file ingest task: " + fTask);
-                progress.progress(
-                        NbBundle.getMessage(this.getClass(), "IngestManager.fileIngest.progress.text", inputName), processed);
-                final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
-                fileScheduler.schedule(fTask);
-                progress.progress(
-                        NbBundle.getMessage(this.getClass(), "IngestManager.fileIngest.progress.text", inputName), ++processed);
+                    // Queue the file ingest tasks for the ingest job.
+                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
+                    scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
+                    progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
-            } //for data sources
+                    if (!Thread.currentThread().isInterrupted()) {
+                        startIngestTasks();
+                        fireIngestJobEvent(IngestEvent.INGEST_JOB_STARTED.toString(), ingestJob.getId());
+                    }
+                }
+            } catch (Exception ex) {
+                String message = String.format("StartIngestJobsTask (id=%d) caught exception", id);
+                logger.log(Level.SEVERE, message, ex);
+                MessageNotifyUtil.Message.error("An error occurred while starting ingest. Results may only be partial");
+            } finally {
+                progress.finish();
+                reportStartIngestJobsTaskDone(id);
+            }
+        }
+    }
+
+    private class RunDataSourceIngestModulesTask implements Runnable {
+
+        private final long id;
+
+        RunDataSourceIngestModulesTask(long taskId) {
+            id = taskId;
         }
 
-        private void handleInterruption(Exception ex) {
-            logger.log(Level.SEVERE, "Error while enqueing files. ", ex);
-            //empty queues
-            scheduler.getFileScheduler().empty();
-            scheduler.getDataSourceScheduler().empty();
+        @Override
+        public void run() {
+            try {
+                IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
+                while (scheduler.hasNext()) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    IngestJob job = scheduler.next();
+                    job.getDataSourceIngestPipelineForThread(id).process();
+                }
+            } catch (Exception ex) {
+                String message = String.format("RunDataSourceIngestModulesTask (id=%d) caught exception", id);
+                logger.log(Level.SEVERE, message, ex);
+            } finally {
+                reportRunIngestModulesTaskDone(id);
+            }
+        }
+    }
+
+    private class RunFileSourceIngestModulesTask implements Runnable {
+
+        private final long id;
+
+        RunFileSourceIngestModulesTask(long taskId) {
+            id = taskId;
+        }
+
+        @Override
+        public void run() {
+            try {
+                IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
+                while (fileScheduler.hasNext()) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
+                    IngestJob job = task.getJob();
+                    job.updateFileTasksProgressBar(task.getFile().getName());
+                    job.getFileIngestPipelineForThread(id).process(task.getFile());
+                }
+            } catch (Exception ex) {
+                String message = String.format("RunFileSourceIngestModulesTask (id=%d) caught exception", id);
+                logger.log(Level.SEVERE, message, ex);
+            } finally {
+                reportRunIngestModulesTaskDone(id);
+            }
+        }
+    }
+
+    class IngestCancellationWorker extends SwingWorker<Void, Void> {
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            stopIngestTasks();
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                super.get();
+            } catch (CancellationException | InterruptedException ex) {
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Error while cancelling ingest jobs", ex);
+            }
         }
     }
 }

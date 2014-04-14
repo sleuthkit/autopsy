@@ -61,8 +61,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             //"application/xml-dtd",
             );
 
-    AbstractFileHtmlExtract() {
-        this.module = KeywordSearchIngestModule.getDefault();
+    AbstractFileHtmlExtract(KeywordSearchIngestModule module) {
+        this.module = module;
         ingester = Server.getIngester();
     }
 
@@ -177,10 +177,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                             + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
-
-                //check if need invoke commit/search between chunks
-                //not to delay commit if timer has gone off
-                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);

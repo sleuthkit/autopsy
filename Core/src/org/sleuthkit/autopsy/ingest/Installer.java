@@ -46,12 +46,12 @@ public class Installer extends ModuleInstall {
 
         Logger logger = Logger.getLogger(Installer.class.getName());
         logger.log(Level.INFO, "Initializing ingest manager");
-        final IngestManager manager = IngestManager.getDefault();
+        final IngestManager manager = IngestManager.getInstance();
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 //at this point UI top component is present for sure, ensure manager has it
-                manager.initUI();
+                manager.initIngestMessageInbox();
                 //force ingest inbox closed, even if previous state was open
                 //IngestMessageTopComponent.findInstance().close();
             }

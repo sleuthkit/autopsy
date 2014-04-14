@@ -34,8 +34,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
@@ -57,7 +58,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  */
 class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
-    private static final Logger logger = Logger.getLogger(IngestModuleAbstractFile.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractFileTikaTextExtract.class.getName());
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
@@ -72,8 +73,8 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
-    AbstractFileTikaTextExtract() {
-        this.module = KeywordSearchIngestModule.getDefault();
+    AbstractFileTikaTextExtract(KeywordSearchIngestModule module) {
+        this.module = module;
         ingester = Server.getIngester();
 
         Set<MediaType> mediaTypes = new Tika().getParser().getSupportedTypes(new ParseContext());
@@ -131,12 +132,16 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
             } catch (TimeoutException te) {
-                final String msg = "Exception: Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+                final String msg = NbBundle.getMessage(this.getClass(),
+                                                       "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
+                                                       sourceFile.getId(), sourceFile.getName());
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
-                final String msg = "Exception: Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
+                final String msg = NbBundle.getMessage(this.getClass(),
+                                                       "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
+                                                       sourceFile.getId(), sourceFile.getName());
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
@@ -224,10 +229,6 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                             + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
-
-                //check if need invoke commit/search between chunks
-                //not to delay commit if timer has gone off
-                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
             final String msg = "Exception: Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();

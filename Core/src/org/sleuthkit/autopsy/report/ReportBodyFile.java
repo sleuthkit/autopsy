@@ -91,7 +91,7 @@ import org.sleuthkit.datamodel.*;
             
             // Check if ingest has finished
             String ingestwarning = "";
-            if (IngestManager.getDefault().isIngestRunning()) {
+            if (IngestManager.getInstance().isIngestRunning()) {
                 ingestwarning = NbBundle.getMessage(this.getClass(), "ReportBodyFile.ingestWarning.text");
             }
             

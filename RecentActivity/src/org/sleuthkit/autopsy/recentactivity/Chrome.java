@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * 
@@ -32,17 +32,14 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -61,45 +58,35 @@ class Chrome extends Extract {
     private static final String historyQuery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
     private static final String cookieQuery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
-    private static final String bookmarkQuery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
     private static final String downloadQuery = "select full_path, url, start_time, received_bytes from downloads";
     private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id";
     private static final String loginQuery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    private int ChromeCount = 0;
-    final private static String MODULE_VERSION = "1.0";
-    private IngestServices services;
+    private Content dataSource;
+    private IngestJobContext context;
 
-    //hide public constructor to prevent from instantiation by ingest module loader
     Chrome() {
         moduleName = NbBundle.getMessage(Chrome.class, "Chrome.moduleName");
     }
 
     @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-
-    @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
         dataFound = false;
-        this.getHistory(dataSource, controller);
-        this.getBookmark(dataSource, controller);
-        this.getCookie(dataSource, controller);
-        this.getLogin(dataSource, controller);
-        this.getDownload(dataSource, controller);
+        this.getHistory();
+        this.getBookmark();
+        this.getCookie();
+        this.getLogin();
+        this.getDownload();
     }
 
     /**
      * Query for history databases and add artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
-
+    private void getHistory() {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> historyFiles = null;
+        List<AbstractFile> historyFiles;
         try {
             historyFiles = fileManager.findFiles(dataSource, "History", "Chrome");
         } catch (TskCoreException ex) {
@@ -141,15 +128,14 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = null;
+            List<HashMap<String, Object>> tempList;
             tempList = this.dbConnect(temps, historyQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0}- Now getting history from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
-
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
@@ -170,22 +156,18 @@ class Chrome extends Extract {
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
-
             }
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     /**
      * Search for bookmark files and make artifacts.
-     * @param dataSource
-     * @param controller 
      */
-    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {
-        
+    private void getBookmark() {     
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles = null;
         try {
@@ -220,9 +202,9 @@ class Chrome extends Extract {
                 continue;
             }
             
-            logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
+            logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{moduleName, temps});
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -262,14 +244,14 @@ class Chrome extends Extract {
                     continue;
                 }
                 JsonElement urlEl = address.get("url");
-                String url = null;
+                String url;
                 if (urlEl != null) {
                     url = urlEl.getAsString();
                 }
                 else {
                     url = "";
                 }
-                String name = null;
+                String name;
                 JsonElement nameEl = address.get("name");
                 if (nameEl != null) {
                     name = nameEl.getAsString();
@@ -277,7 +259,7 @@ class Chrome extends Extract {
                 else {
                     name = "";
                 }
-                Long date = null;
+                Long date;
                 JsonElement dateEl = address.get("date_added");
                 if (dateEl != null) {
                     date = dateEl.getAsLong();
@@ -288,7 +270,7 @@ class Chrome extends Extract {
                 String domain = Util.extractDomain(url);
                 try {
                     BlackboardArtifact bbart = bookmarkFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                    Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     //TODO Revisit usage of deprecated constructor as per TSK-583
                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", (date / 10000000)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
@@ -318,18 +300,16 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
     }
 
     /**
      * Queries for cookie files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) {
+    private void getCookie() {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "Cookies", "Chrome");
         } catch (TskCoreException ex) {
@@ -362,13 +342,13 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, cookieQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
@@ -396,16 +376,13 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
     /**
      * Queries for download files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getDownload(Content dataSource, IngestDataSourceWorkerController controller) {
-        
+    private void getDownload() {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles = null;
         try {
@@ -439,12 +416,12 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = null;
+            List<HashMap<String, Object>> tempList;
             
             if (isChromePreVersion30(temps)) {
                 tempList = this.dbConnect(temps, downloadQuery);
@@ -452,7 +429,7 @@ class Chrome extends Extract {
                 tempList = this.dbConnect(temps, downloadQueryVersion30);
             }
             
-            logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
@@ -486,19 +463,16 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
 
     /**
      * Queries for login files and adds artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getLogin(Content dataSource, IngestDataSourceWorkerController controller) {
-        
+    private void getLogin() {  
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> signonFiles = null;
+        List<AbstractFile> signonFiles;
         try {
             signonFiles = fileManager.findFiles(dataSource, "signons.sqlite", "Chrome");
         } catch (TskCoreException ex) {
@@ -531,14 +505,14 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 dbFile.delete();
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, loginQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting login information from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : "")));
@@ -572,31 +546,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
-    }
-
-    @Override
-    public void stop() {
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "Chrome.getDesc.text");
-    }
-
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     private boolean isChromePreVersion30(String temps) {

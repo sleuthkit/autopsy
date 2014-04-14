@@ -385,9 +385,9 @@ public class Server {
                 logger.log(Level.INFO, "Finished starting Solr");
 
                 try {
-                    //block, give time to fully start the process
+                    //block for 10 seconds, give time to fully start the process
                     //so if it's restarted solr operations can be resumed seamlessly
-                    Thread.sleep(10000);
+                    Thread.sleep(10 * 1000);
                 } catch (InterruptedException ex) {
                     logger.log(Level.WARNING, "Timer interrupted");
                 }
@@ -398,19 +398,17 @@ public class Server {
 
                 final List<Long> pids = this.getSolrPIDs();
                 logger.log(Level.INFO, "New Solr process PID: " + pids);
-
-
             } catch (SecurityException ex) {
-                logger.log(Level.WARNING, "Could not start Solr process!", ex);
+                logger.log(Level.SEVERE, "Could not start Solr process!", ex);
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg"), ex);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not start Solr server process!", ex);
+                logger.log(Level.SEVERE, "Could not start Solr server process!", ex);
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
             }
         } else {
-            logger.log(Level.WARNING, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
+            logger.log(Level.SEVERE, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
             throw new SolrServerNoPortException(currentSolrServerPort);
         }
     }

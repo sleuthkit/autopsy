@@ -33,7 +33,7 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.ingest.IngestDialog;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
@@ -114,13 +114,13 @@ class DirectoryTreeFilterNode extends FilterNode {
             //ingest action
             actions.add(new AbstractAction(
                     NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final IngestDialog ingestDialog = new IngestDialog();
-                    ingestDialog.setContent(Collections.<Content>singletonList(content));
-                    ingestDialog.display();
-                }
-            });
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog();
+                        ingestDialog.setDataSources(Collections.<Content>singletonList(content));
+                        ingestDialog.display();
+                    }
+                });
         }
 
         //check if delete actions should be added
@@ -141,7 +141,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     }
 
     private static List<Action> getDetailActions(Content c) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         actions.addAll(ExplorerNodeActionVisitor.getActions(c));
 
