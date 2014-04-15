@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -62,14 +63,15 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     private AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
     private long jobId;
-
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+        
     ExifParserFileIngestModule() {
     }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {    
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
+        refCounter.incrementAndGet(jobId);
     }
 
     
@@ -198,7 +200,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     @Override
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to check for this final event on the last module per job
-        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+        if (refCounter.decrementAndGet(jobId) == 0) {
             if (filesToFire) {
                 //send the final new data event
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
