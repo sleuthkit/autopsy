@@ -83,7 +83,10 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
     
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(), "Started " + dataSource.getName()));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "RAImageIngestModule.process.started",
+                                                                             dataSource.getName())));
 
         progressBar.switchToDeterminate(extracters.size());
         progressBar.progress(0);
