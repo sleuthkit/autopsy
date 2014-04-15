@@ -80,7 +80,7 @@ final class IngestModuleFactoryLoader {
             add("org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory");
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory");
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory");
-            add("org.sleuthkit.autopsy.fileextmismatch.FileExtMismatchDetectorModuleFactory");
+            add("org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory");
         }};
         List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();
         for (String className : coreModuleOrdering) {
