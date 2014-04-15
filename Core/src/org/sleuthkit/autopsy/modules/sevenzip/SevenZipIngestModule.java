@@ -298,7 +298,8 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
 
-        final ProgressHandle progress = ProgressHandleFactory.createHandle("Archive Extractor");
+        final ProgressHandle progress = ProgressHandleFactory.createHandle(
+                NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.moduleName"));
         int processedItems = 0;
 
         String compressMethod = null;
