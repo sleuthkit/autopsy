@@ -207,7 +207,6 @@ class TskDbDiff(object):
                 database_log.write(' <artifact/>\n')
                 row = artifact_cursor.fetchone()
 
-            print(artifact_fail)
             if(artifact_fail > 0):
                 msg ="There were " + str(artifact_count) + " artifacts and " + str(artifact_fail) + " threw an exception while loading.\n"
         except Exception as e:
