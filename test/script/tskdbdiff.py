@@ -175,7 +175,7 @@ class TskDbDiff(object):
                     database_log.write('Error Extracting Attributes')
                     database_log.close()
                     raise TskDbDiffException(msg)
-
+                #print(str(row["artifact_id"]))
                 # Print attributes
                 if(looptry == True):
                     if (len(attributes) == 0):
@@ -195,6 +195,7 @@ class TskDbDiff(object):
                             msg = "There were inconsistent sources for artifact with id #" + str(row["artifact_id"]) + ".\n"
                         try:
                             attr_value_as_string = str(attr[attr_value_index])
+                            #print(attr_value_as_string)
                             #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
                             #    attr_value_as_string = str(attr_value_as_string)
                             patrn = re.compile("[\n\0\a\b\r\f]")
@@ -238,6 +239,7 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
+                line = remove_id(line)
                 db_log.write('%s\n' % line)
 
         # cleanup the backup
@@ -262,6 +264,17 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
+def remove_id(line):
+    """Remove the object id from a line.
+
+    Args:
+        line: a String, the line to remove the object id from.
+    """
+    index = line.find('INSERT INTO "tsk_files"')
+    if (index != -1):
+        newLine = (line[:line.find('('):] + '(' + line[line.find(',') + 1:])
+        #print(newLine)
+        return newLine
 
 def main():
     try:
