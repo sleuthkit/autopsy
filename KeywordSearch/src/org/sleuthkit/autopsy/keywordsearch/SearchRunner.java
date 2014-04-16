@@ -57,7 +57,7 @@ public final class SearchRunner {
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
-    private Ingester ingester = null;  //guarded by "ingester"    
+    private Ingester ingester = null;
     private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
@@ -173,9 +173,7 @@ public final class SearchRunner {
      * Commits index and notifies listeners of index update
      */
     private void commit() {
-        synchronized(ingester) {
-            ingester.commit();
-        }
+        ingester.commit();
 
         // Signal a potential change in number of text_ingested files
         try {
