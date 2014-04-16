@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
  * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
@@ -91,6 +92,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     private static final int ZIP_SIGNATURE_BE = 0x504B0304;
     private IngestJobContext context;
     private long jobId;
+    private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     SevenZipIngestModule() {
     }
@@ -124,7 +126,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         }
 
         // if first instance of this module for this job then check 7zip init
-        if (IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId) == 1) {
+        if (refCounter.incrementAndGet(jobId) == 1) {
             try {
                 SevenZip.initSevenZipFromPlatformJAR();
                 String platform = SevenZip.getUsedPlatform();
@@ -184,6 +186,12 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
         return ProcessResult.OK;
     }
 
+    @Override
+    public void shutDown(boolean ingestJobCancelled) {
+        // We don't need the value, but for cleanliness and consistency, -- it
+        refCounter.decrementAndGet(jobId);
+    }
+        
     private void sendNewFilesEvent(AbstractFile archive, List<AbstractFile> unpackedFiles) {
         //currently sending a single event for all new files
         services.fireModuleContentEvent(new ModuleContentEvent(archive));

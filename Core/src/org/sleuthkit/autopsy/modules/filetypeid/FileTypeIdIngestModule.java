@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
@@ -48,6 +49,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     private long jobId;  
     private static AtomicLong matchTime = new AtomicLong(0);
     private static AtomicLong numFiles = new AtomicLong(0);
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
     // If desired in the future to be more knowledgable about weird files or rare formats, we could 
@@ -61,7 +63,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        IngestModuleAdapter.moduleRefCountIncrementAndGet(jobId);
+        refCounter.incrementAndGet(jobId);
     }    
     
     @Override
@@ -108,7 +110,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     @Override
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to post the summary msg from the last module per job
-        if (IngestModuleAdapter.moduleRefCountDecrementAndGet(jobId) == 0) {
+        if (refCounter.decrementAndGet(jobId) == 0) {
             StringBuilder detailsSb = new StringBuilder();
             detailsSb.append("<table border='0' cellpadding='4' width='280'>");
             detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>");
