@@ -57,7 +57,7 @@ class KeywordSearchPanel extends javax.swing.JPanel {
     /**
      * @return the default instance KeywordSearchPanel
      */
-    public static KeywordSearchPanel getDefault() {
+    public synchronized static KeywordSearchPanel getDefault() {
         if (instance == null) {
             instance = new KeywordSearchPanel();
         }

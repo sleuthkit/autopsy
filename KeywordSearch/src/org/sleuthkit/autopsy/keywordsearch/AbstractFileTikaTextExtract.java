@@ -59,17 +59,16 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(AbstractFileTikaTextExtract.class.getName());
+    private static Ingester ingester;
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
-    static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
+    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
-    private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    //private Tika tika;
-    private KeywordSearchIngestModule module;
-    private static Ingester ingester;
-    private AbstractFile sourceFile; //currently processed file
-    private int numChunks = 0;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
+    private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
+    private KeywordSearchIngestModule module;    
+    private AbstractFile sourceFile; //currently processed file
+    private int numChunks = 0;    
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
@@ -82,7 +81,6 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             TIKA_SUPPORTED_TYPES.add(mt.getType() + "/" + mt.getSubtype());
         }
         logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES);
-
     }
 
     @Override
@@ -117,7 +115,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
     @Override
     public boolean index(AbstractFile sourceFile) throws Ingester.IngesterException {
         this.sourceFile = sourceFile;
-        this.numChunks = 0; //unknown until indexing is done
+        numChunks = 0; //unknown until indexing is done
 
         boolean success = false;
         Reader reader = null;
@@ -162,12 +160,12 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             long totalRead = 0;
             boolean eof = false;
             //we read max 1024 chars at time, this seems to max what this Reader would return
-            while (!eof && (readSize = reader.read(TEXT_CHUNK_BUF, 0, SINGLE_READ_CHARS)) != -1) {
+            while (!eof && (readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) != -1) {
                 totalRead += readSize;
 
                 //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
                 while ((totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
-                        && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, SINGLE_READ_CHARS)) != -1) {
+                        && (readSize = reader.read(textChunkBuf, (int) totalRead, SINGLE_READ_CHARS)) != -1) {
                     totalRead += readSize;
                 }
                 if (readSize == -1) {
@@ -176,8 +174,8 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 } else {
                     //try to read char-by-char until whitespace to not break words
                     while ((totalRead < MAX_EXTR_TEXT_CHARS - 1)
-                            && !Character.isWhitespace(TEXT_CHUNK_BUF[(int) totalRead - 1])
-                            && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, 1)) != -1) {
+                            && !Character.isWhitespace(textChunkBuf[(int) totalRead - 1])
+                            && (readSize = reader.read(textChunkBuf, (int) totalRead, 1)) != -1) {
                         totalRead += readSize;
                     }
                     if (readSize == -1) {
@@ -195,9 +193,9 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
                 //sb.append(UTF16BOM); disabled prepending of BOM
                 if (totalRead < MAX_EXTR_TEXT_CHARS) {
-                    sb.append(TEXT_CHUNK_BUF, 0, (int) totalRead);
+                    sb.append(textChunkBuf, 0, (int) totalRead);
                 } else {
-                    sb.append(TEXT_CHUNK_BUF);
+                    sb.append(textChunkBuf);
                 }
 
                 //reset for next chunk
@@ -217,6 +215,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
                 extracted = sb.toString();
 
+                
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);

@@ -40,17 +40,18 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  class AbstractFileHtmlExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
+    private static Ingester ingester;
     static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
-    private static final int EXTRA_CHARS = 128; //for whitespace
-    private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
+    private static final int EXTRA_CHARS = 128; //for whitespace    
     private static final int MAX_SIZE = 50000000;
-    private KeywordSearchIngestModule module;
-    private Ingester ingester;
+    //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
+    private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
+    private KeywordSearchIngestModule module;    
     private AbstractFile sourceFile;
     private int numChunks = 0;
-    //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
+    
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript",
             "application/xhtml+xml",
@@ -98,7 +99,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
     @Override
     public boolean index(AbstractFile sourceFile) throws IngesterException {
         this.sourceFile = sourceFile;
-        this.numChunks = 0; //unknown until indexing is done
+        numChunks = 0; //unknown until indexing is done
 
         boolean success = false;
         Reader reader = null;
@@ -122,12 +123,12 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             long totalRead = 0;
             boolean eof = false;
             //we read max 1024 chars at time, this seems to max what this Reader would return
-            while (!eof && (readSize = reader.read(TEXT_CHUNK_BUF, 0, SINGLE_READ_CHARS)) != -1) {
+            while (!eof && (readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) != -1) {
                 totalRead += readSize;
 
                 //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
                 while ((totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
-                        && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, SINGLE_READ_CHARS)) != -1) {
+                        && (readSize = reader.read(textChunkBuf, (int) totalRead, SINGLE_READ_CHARS)) != -1) {
                     totalRead += readSize;
                 }
                 if (readSize == -1) {
@@ -136,8 +137,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                 } else {
                     //try to read until whitespace to not break words
                     while ((totalRead < MAX_EXTR_TEXT_CHARS - 1)
-                            && !Character.isWhitespace(TEXT_CHUNK_BUF[(int) totalRead - 1])
-                            && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, 1)) != -1) {
+                            && !Character.isWhitespace(textChunkBuf[(int) totalRead - 1])
+                            && (readSize = reader.read(textChunkBuf, (int) totalRead, 1)) != -1) {
                         totalRead += readSize;
                     }
                     if (readSize == -1) {
@@ -156,9 +157,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                 //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
                 //sb.append(UTF16BOM); disabled BOM, not needing as bypassing Tika
                 if (totalRead < MAX_EXTR_TEXT_CHARS) {
-                    sb.append(TEXT_CHUNK_BUF, 0, (int) totalRead);
+                    sb.append(textChunkBuf, 0, (int) totalRead);
                 } else {
-                    sb.append(TEXT_CHUNK_BUF);
+                    sb.append(textChunkBuf);
                 }
 
                 //reset for next chunk
