@@ -42,9 +42,11 @@ import org.sleuthkit.datamodel.TskException;
     private AbstractFile content;
     private Charset outputCharset;
     //internal data
-    private long contentOffset = 0; //offset in fscontent read into curReadBuf
+    private static final Logger logger = Logger.getLogger(AbstractFileStringStream.class.getName());
+    private static final String NLS = Character.toString((char) 10); //new line
     private static final int READ_BUF_SIZE = 256;
-    private static final byte[] curReadBuf = new byte[READ_BUF_SIZE];
+    private long contentOffset = 0; //offset in fscontent read into curReadBuf    
+    private final byte[] curReadBuf = new byte[READ_BUF_SIZE];
     private int bytesInReadBuf = 0;
     private int readBufOffset = 0; //offset in read buf processed
     private StringBuilder curString = new StringBuilder();
@@ -55,10 +57,8 @@ import org.sleuthkit.datamodel.TskException;
     private boolean stringAtTempBoundary = false; //if temp has part of string that didn't make it in previous read()
     private boolean stringAtBufBoundary = false; //if read buffer has string being processed, continue as string from prev read() in next read()
     private boolean inString = false; //if current temp has min chars required
-    private static final byte[] oneCharBuf = new byte[1];
+    private final byte[] oneCharBuf = new byte[1];
     private final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
-    private static final String NLS = Character.toString((char) 10); //new line
-    private static final Logger logger = Logger.getLogger(AbstractFileStringStream.class.getName());
 
     /**
      * Construct new string stream from FsContent
