@@ -34,6 +34,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -128,12 +130,16 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
             } catch (TimeoutException te) {
-                final String msg = "Exception: Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+                final String msg = NbBundle.getMessage(this.getClass(),
+                                                       "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
+                                                       sourceFile.getId(), sourceFile.getName());
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
-                final String msg = "Exception: Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
+                final String msg = NbBundle.getMessage(this.getClass(),
+                                                       "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
+                                                       sourceFile.getId(), sourceFile.getName());
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);

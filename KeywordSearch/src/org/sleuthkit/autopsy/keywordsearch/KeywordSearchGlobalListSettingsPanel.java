@@ -56,7 +56,8 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
         editListPanel.addSaveButtonActionPerformed(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final String FEATURE_NAME = "Save Keyword List";
+                final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
+                                                                "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
                 KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();

@@ -174,15 +174,19 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
             if (writer.getList(listName).isLocked() ) {
-                boolean replace = KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.keywordListAlreadyExistMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                boolean replace = KeywordSearchUtil.displayConfirmDialog(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription", listName),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                 if (replace) {
                     shouldAdd = true;
                 }
             }
             else {
-                boolean replace = KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListAlreadyExistMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                boolean replace = KeywordSearchUtil.displayConfirmDialog(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription2", listName),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                 if (replace) {
                     shouldAdd = true;
                 }

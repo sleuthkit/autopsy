@@ -64,7 +64,7 @@ public final class SearchRunner {
     
     SearchRunner() {
         ingester = Server.getIngester();       
-        updateTimer = new Timer("SearchRunner update timer", true); // run as a daemon
+        updateTimer = new Timer(NbBundle.getMessage(this.getClass(), "SearchRunner.updateTimer.title.text"), true); // run as a daemon
     }
     
     /**
