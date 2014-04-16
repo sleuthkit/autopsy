@@ -29,6 +29,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 interface FileTypeDetectionInterface {
 
+    /**
+     * Instances of this data structure are not shared between threads
+     */
     public class FileIdInfo {
 
         public String type;
