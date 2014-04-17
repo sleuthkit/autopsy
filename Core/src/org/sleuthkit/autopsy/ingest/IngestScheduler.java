@@ -210,7 +210,6 @@ final class IngestScheduler {
             FileTask fileTask = new FileTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
                 fileTasks.addFirst(fileTask);
-                fileTasks.add(fileTask);
                 ++filesEnqueuedEst;
             }            
         }        
