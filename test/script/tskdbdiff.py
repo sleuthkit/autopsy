@@ -175,7 +175,7 @@ class TskDbDiff(object):
                     database_log.write('Error Extracting Attributes')
                     database_log.close()
                     raise TskDbDiffException(msg)
-                #print(str(row["artifact_id"]))
+                
                 # Print attributes
                 if(looptry == True):
                     if (len(attributes) == 0):
