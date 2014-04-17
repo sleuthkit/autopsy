@@ -30,6 +30,7 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.Places;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -38,7 +39,8 @@ import org.openide.util.NbBundle.Messages;
 @ActionRegistration(
         displayName = "#CTL_OpenLogFolder")
 @ActionReference(path = "Menu/Help", position = 1750)
-@Messages("CTL_OpenLogFolder=Open Log Folder")
+// Move to Bundle for I18N
+//@Messages("CTL_OpenLogFolder=Open Log Folder")
 /**
  * Action in menu to open the folder containing the log files
  */
@@ -51,8 +53,8 @@ public final class OpenLogFolderAction implements ActionListener {
             if (logDir.exists() == false) {
                 NotifyDescriptor d =
                         new NotifyDescriptor.Message(
-                        java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/actions/Bundle").getString("OpenLogFolder.error1"), new Object[]{logDir.getAbsolutePath()}),
-                        NotifyDescriptor.ERROR_MESSAGE);
+                                NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
+                                NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(d);
             } else {
                 Desktop.getDesktop().open(logDir);
