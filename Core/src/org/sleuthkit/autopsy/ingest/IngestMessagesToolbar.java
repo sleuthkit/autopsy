@@ -26,6 +26,8 @@ import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JButton;
+
+import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -89,7 +91,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
         ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25.png")));
         ingestMessagesButton.setRolloverEnabled(true);
         ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25-rollover.png")));
-        ingestMessagesButton.setToolTipText("Ingest Messages");
+        ingestMessagesButton.setToolTipText(
+                NbBundle.getMessage(this.getClass(), "IngestMessagesToolbar.customizeButton.toolTipText"));
         ingestMessagesButton.setBorder(null);
         ingestMessagesButton.setBorderPainted(false);
         ingestMessagesButton.setEnabled(false);

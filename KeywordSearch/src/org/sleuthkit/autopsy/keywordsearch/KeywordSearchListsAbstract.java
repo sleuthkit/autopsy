@@ -26,6 +26,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -286,7 +288,10 @@ abstract class KeywordSearchListsAbstract {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.addList.errMsg1.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         } else {
             theLists.put(name, new KeywordList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
@@ -296,7 +301,10 @@ abstract class KeywordSearchListsAbstract {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.addList.errMsg2.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
 

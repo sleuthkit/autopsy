@@ -73,7 +73,8 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                 messageDigest = MessageDigest.getInstance("MD5");
             } catch (NoSuchAlgorithmException ex) {
                 logger.log(Level.WARNING, "Error getting md5 algorithm", ex);
-                throw new RuntimeException("Failed to get MD5 algorithm");
+                throw new RuntimeException(
+                        NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.startUp.exception.failGetMd5"));
             }
         } else {
             messageDigest.reset();
@@ -175,11 +176,17 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     public void shutDown(boolean ingestJobCancelled) {
         logger.log(Level.INFO, "complete() {0}", EwfVerifierModuleFactory.getModuleName());
         if (skipped == false) {
-            String msg = verified ? " verified" : " not verified";
-            String extra = "<p>EWF Verification Results for " + imgName + "</p>";
-            extra += "<li>Result:" + msg + "</li>";
-            extra += "<li>Calculated hash: " + calculatedHash + "</li>";
-            extra += "<li>Stored hash: " + storedHash + "</li>";
+            String msg = "";
+            if (verified) {
+                msg = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verified");
+            } else {
+                msg = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.notVerified");
+            }
+            String extra = NbBundle
+                    .getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verifyResultsHeader", imgName);
+            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", msg);
+            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.calcHashLi", calculatedHash);
+            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.storedHashLi", storedHash);
             services.postMessage(IngestMessage.createMessage( MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), imgName + msg, extra));
             logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
         }
