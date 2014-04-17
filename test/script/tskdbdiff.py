@@ -195,7 +195,6 @@ class TskDbDiff(object):
                             msg = "There were inconsistent sources for artifact with id #" + str(row["artifact_id"]) + ".\n"
                         try:
                             attr_value_as_string = str(attr[attr_value_index])
-                            #print(attr_value_as_string)
                             #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
                             #    attr_value_as_string = str(attr_value_as_string)
                             patrn = re.compile("[\n\0\a\b\r\f]")
