@@ -39,7 +39,7 @@ final class IngestJob {
     private final boolean processUnallocatedSpace;
     private final HashMap<Long, FileIngestPipeline> fileIngestPipelines = new HashMap<>();
     private final HashMap<Long, DataSourceIngestPipeline> dataSourceIngestPipelines = new HashMap<>();
-    private final IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
+    private final IngestScheduler.FileIngestScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
     private FileIngestPipeline initialFileIngestPipeline = null;
     private DataSourceIngestPipeline initialDataSourceIngestPipeline = null;
     private ProgressHandle dataSourceTaskProgress;

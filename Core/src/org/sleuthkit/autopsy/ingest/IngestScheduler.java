@@ -22,9 +22,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileIngestScheduler.FileIngestTask;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -50,29 +50,18 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 
 /**
- * Schedules data source (images, file-sets, etc) and files with their
- * associated modules for ingest, and manage queues of the scheduled tasks.
- *
- * Currently a singleton object only (as there is one pipeline at a time)
- *
- * Contains internal schedulers for content objects into data source and and
- * file ingest pipelines.
- *
+ * Enqueues data source ingest and file ingest tasks for processing.
  */
 final class IngestScheduler {
+
     private static IngestScheduler instance;
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
-    private final DataSourceScheduler dataSourceScheduler = new DataSourceScheduler();
-    private final FileScheduler fileScheduler = new FileScheduler();
-    
+    private final DataSourceIngestScheduler dataSourceScheduler = new DataSourceIngestScheduler();
+    private final FileIngestScheduler fileScheduler = new FileIngestScheduler();
+
     private IngestScheduler() {
     }
 
-    /**
-     * Get ingest scheduler singleton instance
-     *
-     * @return
-     */
     static synchronized IngestScheduler getInstance() {
         if (instance == null) {
             instance = new IngestScheduler();
@@ -81,36 +70,19 @@ final class IngestScheduler {
         return instance;
     }
 
-    DataSourceScheduler getDataSourceScheduler() {
+    DataSourceIngestScheduler getDataSourceIngestScheduler() {
         return dataSourceScheduler;
     }
 
-    FileScheduler getFileScheduler() {
+    FileIngestScheduler getFileScheduler() {
         return fileScheduler;
     }
 
-    /**
-     * FileScheduler ingest scheduler
-     *
-     * Supports addition ScheduledTasks - tuples of (data-source, modules)
-     *
-     * Enqueues files and modules, and sorts the files by priority. Maintains
-     * only top level directories in memory (not all children files of the scheduled container content objects)
-     *
-     * getNext() will return next FileTask - tuple of (file, modules)
-     *
-     */
-    static class FileScheduler implements Iterator<FileScheduler.FileTask> {
-         //root folders enqueued
-        private TreeSet<FileTask> rootDirectoryTasks;
-        
-        //stack of current dirs to be processed recursively
-        private List<FileTask> directoryTasks;
-        
-        //list of files being processed in the currently processed directory
-        private LinkedList<FileTask> fileTasks; //need to add to start and end quickly
-        
-        //estimated total files to be enqueued for currently scheduled content objects        
+    static class FileIngestScheduler {
+
+        private TreeSet<FileIngestTask> rootDirectoryTasks;  
+        private List<FileIngestTask> directoryTasks;
+        private LinkedList<FileIngestTask> fileTasks; //need to add to start and end quickly
         private int filesEnqueuedEst = 0;
         private int filesDequeued = 0;
         private final static int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
@@ -118,34 +90,16 @@ final class IngestScheduler {
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
                 | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
 
-        private FileScheduler() {
+        private FileIngestScheduler() {
             rootDirectoryTasks = new TreeSet<>(new RootTaskComparator());
             directoryTasks = new ArrayList<>();
             fileTasks = new LinkedList<>();
-            resetCounters();            
+            resetCounters();
         }
-        
+
         private void resetCounters() {
             filesEnqueuedEst = 0;
             filesDequeued = 0;
-        }        
-        
-        @Override
-        public synchronized String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("\nRootDirs(sorted), size: ").append(rootDirectoryTasks.size());
-            for (FileTask task : rootDirectoryTasks) {
-                sb.append(task.toString()).append(" ");
-            }
-            sb.append("\nCurDirs(stack), size: ").append(directoryTasks.size());
-            for (FileTask task : directoryTasks) {
-                sb.append(task.toString()).append(" ");
-            }
-            sb.append("\nCurFiles, size: ").append(fileTasks.size());
-            for (FileTask task : fileTasks) {
-                sb.append(task.toString()).append(" ");
-            }
-            return sb.toString();
         }
 
         synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
@@ -154,9 +108,8 @@ final class IngestScheduler {
             List<AbstractFile> firstLevelFiles = new ArrayList<>();
             if (rootObjects.isEmpty() && dataSource instanceof AbstractFile) {
                 // The data source is file.
-                firstLevelFiles.add((AbstractFile)dataSource);
-            } 
-            else {
+                firstLevelFiles.add((AbstractFile) dataSource);
+            } else {
                 for (AbstractFile root : rootObjects) {
                     List<Content> children;
                     try {
@@ -164,8 +117,7 @@ final class IngestScheduler {
                         if (children.isEmpty()) {
                             //add the root itself, could be unalloc file, child of volume or image
                             firstLevelFiles.add(root);
-                        } 
-                        else {
+                        } else {
                             //root for fs root dir, schedule children dirs/files
                             for (Content child : children) {
                                 if (child instanceof AbstractFile) {
@@ -173,15 +125,14 @@ final class IngestScheduler {
                                 }
                             }
                         }
-                    } 
-                    catch (TskCoreException ex) {
+                    } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Could not get children of root to enqueue: " + root.getId() + ": " + root.getName(), ex);
                     }
                 }
             }
 
             for (AbstractFile firstLevelFile : firstLevelFiles) {
-                FileTask fileTask = new FileTask(firstLevelFile, dataSourceTask);
+                FileIngestTask fileTask = new FileIngestTask(firstLevelFile, dataSourceTask);
                 if (shouldEnqueueTask(fileTask)) {
                     rootDirectoryTasks.add(fileTask);
                 }
@@ -193,7 +144,7 @@ final class IngestScheduler {
             // Reshuffle/update the dir and file level queues if needed
             updateQueues();
         }
-        
+
         /**
          * Schedule a file to the file ingest, with associated modules. This
          * will add the file to beginning of the file queue. The method is
@@ -203,17 +154,18 @@ final class IngestScheduler {
          * as the parent origin file.
          *
          * @param file file to be scheduled
-         * @param originalContext original content schedule context that was used
-         * to schedule the parent origin content, with the modules, settings, etc.
+         * @param originalContext original content schedule context that was
+         * used to schedule the parent origin content, with the modules,
+         * settings, etc.
          */
         synchronized void scheduleFile(IngestJob ingestJob, AbstractFile file) {
-            FileTask fileTask = new FileTask(file, ingestJob);
+            FileIngestTask fileTask = new FileIngestTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
                 fileTasks.addFirst(fileTask);
                 ++filesEnqueuedEst;
-            }            
-        }        
-        
+            }
+        }
+
         float getPercentageDone() {
             if (filesEnqueuedEst == 0) {
                 return 0;
@@ -238,7 +190,7 @@ final class IngestScheduler {
                 totalFiles += content.accept(countVisitor);
             }
 
-            logger.log(Level.INFO, "Total files to queue up: " + totalFiles);
+            logger.log(Level.INFO, "Total files to queue up: {0}", totalFiles);
 
             return totalFiles;
         }
@@ -262,37 +214,21 @@ final class IngestScheduler {
         int getFilesDequeued() {
             return filesDequeued;
         }
-        
-        @Override
-        public synchronized boolean hasNext() {
-            if (fileTasks.isEmpty()) {
-                filesEnqueuedEst = 0;
-                filesDequeued = 0;
-                return false;
-            }
-            return true;
-        }
 
-        @Override
-        public synchronized FileTask next() {
-            if (!hasNext()) {
-                throw new IllegalStateException("No next ProcessTask, check hasNext() first!");
-            }
-
-            //dequeue the last in the list
-            final FileTask task = fileTasks.pollLast();
+        synchronized FileIngestTask getNextTask() {
+            final FileIngestTask task = fileTasks.pollLast();
             filesDequeued++;
             updateQueues();
-            
             return task;
         }
 
-        /** 
+        /**
          * Shuffle the queues so that there are files in the files queue.
+         *
          * @returns true if no more data in queue
          */
         private synchronized void updateQueues() {
-            
+
             // we loop because we could have a directory that has all files
             // that do not get enqueued
             while (true) {
@@ -300,20 +236,20 @@ final class IngestScheduler {
                 if (this.fileTasks.isEmpty() == false) {
                     return;
                 }
-                
+
                 // fill in the directory queue if it is empty. 
                 if (this.directoryTasks.isEmpty()) {
                     // bail out if root is also empty -- we are done
                     if (rootDirectoryTasks.isEmpty()) {
                         return;
                     }
-                    FileTask rootTask = this.rootDirectoryTasks.pollFirst();
+                    FileIngestTask rootTask = this.rootDirectoryTasks.pollFirst();
                     directoryTasks.add(rootTask);
                 }
 
                 //pop and push AbstractFile directory children if any
                 //add the popped and its leaf children onto cur file list
-                FileTask parentTask = directoryTasks.remove(directoryTasks.size() - 1);
+                FileIngestTask parentTask = directoryTasks.remove(directoryTasks.size() - 1);
                 final AbstractFile parentFile = parentTask.file;
 
                 // add itself to the file list
@@ -327,12 +263,11 @@ final class IngestScheduler {
                     for (Content c : children) {
                         if (c instanceof AbstractFile) {
                             AbstractFile childFile = (AbstractFile) c;
-                            FileTask childTask = new FileTask(childFile, parentTask.getJob());
+                            FileIngestTask childTask = new FileIngestTask(childFile, parentTask.getJob());
 
                             if (childFile.hasChildren()) {
                                 this.directoryTasks.add(childTask);
-                            } 
-                            else if (shouldEnqueueTask(childTask)) {
+                            } else if (shouldEnqueueTask(childTask)) {
                                 this.fileTasks.addLast(childTask);
                             }
                         }
@@ -344,13 +279,8 @@ final class IngestScheduler {
             }
         }
 
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
         /**
-         * Return list of content objects that are in the queue to be processed. 
+         * Return list of content objects that are in the queue to be processed.
          *
          * Helpful to determine whether ingest for particular input Content is
          * active
@@ -361,20 +291,20 @@ final class IngestScheduler {
         synchronized List<Content> getSourceContent() {
             final Set<Content> contentSet = new HashSet<>();
 
-            for (FileTask task : rootDirectoryTasks) {
+            for (FileIngestTask task : rootDirectoryTasks) {
                 contentSet.add(task.getJob().getDataSource());
             }
-            for (FileTask task : directoryTasks) {
+            for (FileIngestTask task : directoryTasks) {
                 contentSet.add(task.getJob().getDataSource());
             }
-            for (FileTask task : fileTasks) {
+            for (FileIngestTask task : fileTasks) {
                 contentSet.add(task.getJob().getDataSource());
             }
 
             return new ArrayList<>(contentSet);
         }
 
-        synchronized void empty() {
+        synchronized void emptyQueues() {
             this.rootDirectoryTasks.clear();
             this.directoryTasks.clear();
             this.fileTasks.clear();
@@ -387,7 +317,7 @@ final class IngestScheduler {
          * skipped
          * @return true if should be enqueued, false otherwise
          */
-        private static boolean shouldEnqueueTask(final FileTask processTask) {
+        private static boolean shouldEnqueueTask(final FileIngestTask processTask) {
             final AbstractFile aFile = processTask.file;
 
             //if it's unalloc file, skip if so scheduled
@@ -445,23 +375,20 @@ final class IngestScheduler {
             return true;
         }
 
-        /**
-         * Task for a specific file to process. More specific than the
-         * higher-level DataSourceTask.
-         */
-        static class FileTask {
+        static class FileIngestTask {
+
             private final AbstractFile file;
             private final IngestJob task;
 
-            public FileTask(AbstractFile file, IngestJob task) {
+            private FileIngestTask(AbstractFile file, IngestJob task) {
                 this.file = file;
                 this.task = task;
             }
-            
+
             public IngestJob getJob() {
                 return task;
             }
-            
+
             public AbstractFile getFile() {
                 return file;
             }
@@ -494,7 +421,7 @@ final class IngestScheduler {
                 if (getClass() != obj.getClass()) {
                     return false;
                 }
-                final FileTask other = (FileTask) obj;
+                final FileIngestTask other = (FileIngestTask) obj;
                 if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
                     return false;
                 }
@@ -507,17 +434,25 @@ final class IngestScheduler {
                 }
                 return true;
             }
-        }      
-                
+
+            @Override
+            public int hashCode() {
+                int hash = 5;
+                hash = 47 * hash + Objects.hashCode(this.file);
+                hash = 47 * hash + Objects.hashCode(this.task);
+                return hash;
+            }
+        }
+
         /**
          * Root dir sorter
          */
-        private static class RootTaskComparator implements Comparator<FileTask> {
+        private static class RootTaskComparator implements Comparator<FileIngestTask> {
 
             @Override
-            public int compare(FileTask q1, FileTask q2) {
-                AbstractFilePriotity.Priority p1 = AbstractFilePriotity.getPriority(q1.file);
-                AbstractFilePriotity.Priority p2 = AbstractFilePriotity.getPriority(q2.file);
+            public int compare(FileIngestTask q1, FileIngestTask q2) {
+                AbstractFilePriority.Priority p1 = AbstractFilePriority.getPriority(q1.file);
+                AbstractFilePriority.Priority p2 = AbstractFilePriority.getPriority(q2.file);
                 if (p1 == p2) {
                     return (int) (q2.file.getId() - q1.file.getId());
                 } else {
@@ -530,16 +465,16 @@ final class IngestScheduler {
              * Priority determination for sorted AbstractFile, used by
              * RootDirComparator
              */
-            private static class AbstractFilePriotity {
+            private static class AbstractFilePriority {
 
                 enum Priority {
 
                     LAST, LOW, MEDIUM, HIGH
                 };
-                static final List<Pattern> LAST_PRI_PATHS = new ArrayList<Pattern>();
-                static final List<Pattern> LOW_PRI_PATHS = new ArrayList<Pattern>();
-                static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<Pattern>();
-                static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<Pattern>();
+                static final List<Pattern> LAST_PRI_PATHS = new ArrayList<>();
+                static final List<Pattern> LOW_PRI_PATHS = new ArrayList<>();
+                static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<>();
+                static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<>();
 
                 /* prioritize root directory folders based on the assumption that we are
                  * looking for user content. Other types of investigations may want different
@@ -568,54 +503,55 @@ final class IngestScheduler {
                 }
 
                 /**
-                 * Get the scheduling priority for a given file. 
+                 * Get the scheduling priority for a given file.
+                 *
                  * @param abstractFile
-                 * @return 
+                 * @return
                  */
-                static AbstractFilePriotity.Priority getPriority(final AbstractFile abstractFile) {
+                static AbstractFilePriority.Priority getPriority(final AbstractFile abstractFile) {
                     if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
                         //quickly filter out unstructured content
                         //non-fs virtual files and dirs, such as representing unalloc space
-                        return AbstractFilePriotity.Priority.LAST;
+                        return AbstractFilePriority.Priority.LAST;
                     }
 
                     //determine the fs files priority by name
                     final String path = abstractFile.getName();
 
                     if (path == null) {
-                        return AbstractFilePriotity.Priority.MEDIUM;
+                        return AbstractFilePriority.Priority.MEDIUM;
                     }
 
                     for (Pattern p : HIGH_PRI_PATHS) {
                         Matcher m = p.matcher(path);
                         if (m.find()) {
-                            return AbstractFilePriotity.Priority.HIGH;
+                            return AbstractFilePriority.Priority.HIGH;
                         }
                     }
 
                     for (Pattern p : MEDIUM_PRI_PATHS) {
                         Matcher m = p.matcher(path);
                         if (m.find()) {
-                            return AbstractFilePriotity.Priority.MEDIUM;
+                            return AbstractFilePriority.Priority.MEDIUM;
                         }
                     }
 
                     for (Pattern p : LOW_PRI_PATHS) {
                         Matcher m = p.matcher(path);
                         if (m.find()) {
-                            return AbstractFilePriotity.Priority.LOW;
+                            return AbstractFilePriority.Priority.LOW;
                         }
                     }
 
                     for (Pattern p : LAST_PRI_PATHS) {
                         Matcher m = p.matcher(path);
                         if (m.find()) {
-                            return AbstractFilePriotity.Priority.LAST;
+                            return AbstractFilePriority.Priority.LAST;
                         }
                     }
 
                     //default is medium
-                    return AbstractFilePriotity.Priority.MEDIUM;
+                    return AbstractFilePriority.Priority.MEDIUM;
                 }
             }
         }
@@ -623,8 +559,8 @@ final class IngestScheduler {
         /**
          * Get counts of ingestable files/dirs for the content input source.
          *
-         * Note, also includes counts of all unalloc children files (for the fs, image, volume) even
-         * if ingest didn't ask for them
+         * Note, also includes counts of all unalloc children files (for the fs,
+         * image, volume) even if ingest didn't ask for them
          */
         static class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
 
@@ -649,7 +585,7 @@ final class IngestScheduler {
                 //queryB.append(")");
                 try {
                     final String query = queryB.toString();
-                    logger.log(Level.INFO, "Executing count files query: " + query);
+                    logger.log(Level.INFO, "Executing count files query: {0}", query);
                     return sc.countFilesWhere(query);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Couldn't get count of all files in FileSystem", ex);
@@ -700,7 +636,7 @@ final class IngestScheduler {
             public Collection<AbstractFile> visit(VirtualDirectory ld) {
                 //case when we hit a layout directoryor local file container, not under a real FS
                 //or when root virt dir is scheduled 
-                Collection<AbstractFile> ret = new ArrayList<AbstractFile>();
+                Collection<AbstractFile> ret = new ArrayList<>();
                 ret.add(ld);
                 return ret;
             }
@@ -708,7 +644,7 @@ final class IngestScheduler {
             @Override
             public Collection<AbstractFile> visit(LayoutFile lf) {
                 //case when we hit a layout file, not under a real FS
-                Collection<AbstractFile> ret = new ArrayList<AbstractFile>();
+                Collection<AbstractFile> ret = new ArrayList<>();
                 ret.add(lf);
                 return ret;
             }
@@ -717,7 +653,7 @@ final class IngestScheduler {
             public Collection<AbstractFile> visit(Directory drctr) {
                 //we hit a real directory, a child of real FS
 
-                Collection<AbstractFile> ret = new ArrayList<AbstractFile>();
+                Collection<AbstractFile> ret = new ArrayList<>();
 
                 ret.add(drctr);
 
@@ -752,81 +688,33 @@ final class IngestScheduler {
         }
     }
 
-    /**
-     * DataSourceScheduler ingest scheduler
-     */
-    static class DataSourceScheduler implements Iterator<IngestJob> {
+    static class DataSourceIngestScheduler {
 
-        private LinkedList<IngestJob> tasks;
+        private final LinkedList<IngestJob> tasks = new LinkedList<>();
 
-        DataSourceScheduler() {
-            tasks = new LinkedList<>();
+        private DataSourceIngestScheduler() {
         }
 
-        synchronized void schedule(IngestJob task) {
+        synchronized void queueForIngest(IngestJob job) {
             try {
-                if (task.getDataSource().getParent() != null) {
-                    //only accepting parent-less content objects (Image, parentless VirtualDirectory)
-                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: {0}", task.getDataSource());
+                if (job.getDataSource().getParent() != null) {
+                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: {0}", job.getDataSource());
                     return;
                 }
             } catch (TskCoreException e) {
-                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + task.getDataSource(), e);
+                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + job.getDataSource(), e);
                 return;
             }
 
-            tasks.addLast(task);
+            tasks.addLast(job);
         }
 
-        @Override
-        public synchronized IngestJob next() throws IllegalStateException {
-            if (!hasNext()) {
-                throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
-            }
-
-            final IngestJob ret = tasks.pollFirst();
-            return ret;
+        public synchronized IngestJob getNextTask() {
+            return tasks.pollFirst();
         }
 
-        /**
-         * get all data source that are scheduled to process
-         *
-         * @return list of data sources in the queue scheduled to process
-         */
-        synchronized List<org.sleuthkit.datamodel.Content> getContents() {
-            List<org.sleuthkit.datamodel.Content> contents = new ArrayList<org.sleuthkit.datamodel.Content>();
-            for (IngestJob task : tasks) {
-                contents.add(task.getDataSource());
-            }
-            return contents;
-        }
-
-        @Override
-        public synchronized boolean hasNext() {
-            return !tasks.isEmpty();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Removing of scheduled data source ingest tasks is not supported. ");
-        }
-
-        synchronized void empty() {
+        synchronized void emptyQueues() {
             tasks.clear();
-        }
-
-        synchronized int getCount() {
-            return tasks.size();
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("DataSourceQueue, size: ").append(getCount());
-            for (IngestJob task : tasks) {
-                sb.append(task.toString()).append(" ");
-            }
-            return sb.toString();
         }
     }
 }
