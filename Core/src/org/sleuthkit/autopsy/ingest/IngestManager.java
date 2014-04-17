@@ -122,7 +122,7 @@ public class IngestManager {
      *
      * @return True if any ingest jobs are in progress, false otherwise
      */
-    public boolean isIngestRunning() {
+    public synchronized boolean isIngestRunning() {
         return (ingestJobs.isEmpty() == false);
     }
 
