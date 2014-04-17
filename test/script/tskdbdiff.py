@@ -275,6 +275,8 @@ def remove_id(line):
         newLine = (line[:line.find('('):] + '(' + line[line.find(',') + 1:])
         #print(newLine)
         return newLine
+    else:
+        return line
 
 def main():
     try:
