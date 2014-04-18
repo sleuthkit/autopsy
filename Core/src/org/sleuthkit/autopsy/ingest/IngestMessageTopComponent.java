@@ -104,7 +104,7 @@ import org.sleuthkit.datamodel.Content;
     private void initComponents() {
 
         setDisplayName(org.openide.util.NbBundle.getMessage(IngestMessageTopComponent.class, "IngestMessageTopComponent.displayName")); // NOI18N
-        setName("Ingest Inbox"); // NOI18N
+        setName(NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.initComponents.name")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

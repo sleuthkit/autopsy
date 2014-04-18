@@ -36,34 +36,32 @@ import org.sleuthkit.datamodel.AbstractFile;
  * the original source file) up to 1MB then and indexes chunks as text with Solr
  */
 class AbstractFileStringExtract implements AbstractFileExtract {
-
-    private KeywordSearchIngestModule module;
-    private Ingester ingester;
-    private int numChunks;
+    
+    private static Ingester ingester;    
     private static final Logger logger = Logger.getLogger(AbstractFileStringExtract.class.getName());
-    static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
-    private AbstractFile sourceFile;
-    //single static buffer for all extractions.  Safe, indexing can only happen in one thread
-    private static final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
+    private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;        
     //private static final int BOM_LEN = 3; 
     private static final int BOM_LEN = 0;  //disabled prepending of BOM
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
+    private final byte[] stringChunkBuf = new byte[(int) MAX_STRING_CHUNK_SIZE];
+    private KeywordSearchIngestModule module;
+    private AbstractFile sourceFile;
+    private int numChunks = 0;
     private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
-    private Map<String, String> extractOptions = new HashMap<String, String>();
-    
+    private Map<String, String> extractOptions = new HashMap<String, String>();   
 
     //disabled prepending of BOM
     //static {
     //prepend UTF-8 BOM to start of the buffer
-    //STRING_CHUNK_BUF[0] = (byte) 0xEF;
-    //STRING_CHUNK_BUF[1] = (byte) 0xBB;
-    //STRING_CHUNK_BUF[2] = (byte) 0xBF;
+    //stringChunkBuf[0] = (byte) 0xEF;
+    //stringChunkBuf[1] = (byte) 0xBB;
+    //stringChunkBuf[2] = (byte) 0xBF;
     //}
     public AbstractFileStringExtract(KeywordSearchIngestModule module) {
         this.module = module;
-        this.ingester = Server.getIngester();
-        this.extractScripts.add(DEFAULT_SCRIPT);
+        ingester = Server.getIngester();
+        extractScripts.add(DEFAULT_SCRIPT);
     }
 
     @Override
@@ -132,14 +130,14 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             //break input stream into chunks 
 
             long readSize = 0;
-            while ((readSize = stringStream.read(STRING_CHUNK_BUF, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
+            while ((readSize = stringStream.read(stringChunkBuf, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
                 //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
-                //debug.write(STRING_CHUNK_BUF, 0, (int)readSize);
+                //debug.write(stringChunkBuf, 0, (int)readSize);
 
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
 
                 try {
-                    chunk.index(ingester, STRING_CHUNK_BUF, readSize + BOM_LEN, INDEX_CHARSET);
+                    chunk.index(ingester, stringChunkBuf, readSize + BOM_LEN, INDEX_CHARSET);
                     ++this.numChunks;
                 } catch (IngesterException ingEx) {
                     success = false;

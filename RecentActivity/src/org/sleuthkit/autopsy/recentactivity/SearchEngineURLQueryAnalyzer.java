@@ -283,10 +283,18 @@ class SearchEngineURLQueryAnalyzer extends Extract {
 
                 if (!se.equals(NullEngine) && !query.equals("NoQuery") && !query.equals("")) {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", searchEngineDomain));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "Recent Activity", query));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", browser));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", last_accessed));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), searchEngineDomain));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), query));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), browser));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
+                                                             NbBundle.getMessage(this.getClass(),
+                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
                     this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
                     se.increment();
                     ++totalQueries;
