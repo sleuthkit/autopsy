@@ -395,7 +395,7 @@ class Ingester {
         try {
             solrServer.closeCore();
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot close core while restating", ex);
+            logger.log(Level.WARNING, "Cannot close core", ex);
         }
 
         solrServer.stop();
@@ -403,7 +403,7 @@ class Ingester {
         try {
             solrServer.start();
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot start while restating", ex);
+            logger.log(Level.WARNING, "Cannot start", ex);
         } catch (SolrServerNoPortException ex) {
             logger.log(Level.WARNING, "Cannot start server with this port", ex);
         }
@@ -411,7 +411,7 @@ class Ingester {
         try {
             solrServer.openCore();
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot open core while restating", ex);
+            logger.log(Level.WARNING, "Cannot open core", ex);
         }
     }
 
