@@ -272,6 +272,9 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             postIndexSummary();
+            synchronized(ingestStatus) {
+                ingestStatus.remove(jobId);
+            }            
         }
         
         //log number of files / chunks in index
@@ -303,10 +306,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      * Common cleanup code when module stops or final searcher completes
      */
     private void cleanup() {
-        synchronized(ingestStatus) {
-            ingestStatus.remove(jobId);
-        }
-
         textExtractors.clear();
         textExtractors = null;
         stringExtractor = null;
