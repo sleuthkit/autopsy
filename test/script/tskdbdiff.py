@@ -175,7 +175,7 @@ class TskDbDiff(object):
                     database_log.write('Error Extracting Attributes')
                     database_log.close()
                     raise TskDbDiffException(msg)
-
+                
                 # Print attributes
                 if(looptry == True):
                     if (len(attributes) == 0):
@@ -207,7 +207,6 @@ class TskDbDiff(object):
                 database_log.write(' <artifact/>\n')
                 row = artifact_cursor.fetchone()
 
-            print(artifact_fail)
             if(artifact_fail > 0):
                 msg ="There were " + str(artifact_count) + " artifacts and " + str(artifact_fail) + " threw an exception while loading.\n"
         except Exception as e:
@@ -239,6 +238,7 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
+                line = remove_id(line)
                 db_log.write('%s\n' % line)
 
         # cleanup the backup
@@ -263,6 +263,19 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
+def remove_id(line):
+    """Remove the object id from a line.
+
+    Args:
+        line: a String, the line to remove the object id from.
+    """
+    index = line.find('INSERT INTO "tsk_files"')
+    if (index != -1):
+        newLine = (line[:line.find('('):] + '(' + line[line.find(',') + 1:])
+        #print(newLine)
+        return newLine
+    else:
+        return line
 
 def main():
     try:
