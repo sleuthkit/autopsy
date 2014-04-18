@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -69,14 +71,14 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         // make sure this is Windows
         String os = System.getProperty("os.name");
         if (!os.startsWith("Windows")) {
-            String message = "Scalpel carving module is not compatible with non-Windows OS's at this time.";
+            String message = NbBundle.getMessage(this.getClass(), "ScalpelCarverIngestModule.startUp.exception.msg1");
             logger.log(Level.SEVERE, message);
             throw new IngestModuleException(message);
         }
 
         carver = new ScalpelCarver();
         if (!carver.isInitialized()) {
-            String message = "Error initializing scalpel carver.";
+            String message = NbBundle.getMessage(this.getClass(), "ScalpelCarverIngestModule.startUp.exception.msg2");
             logger.log(Level.SEVERE, message);
             throw new IngestModuleException(message);
         }
@@ -87,7 +89,8 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         File moduleOutputDir = new File(moduleOutputDirPath);
         if (!moduleOutputDir.exists()) {
             if (!moduleOutputDir.mkdir()) {
-                String message = "Could not create the output directory for the Scalpel module.";
+                String message = NbBundle
+                        .getMessage(this.getClass(), "ScalpelCarverIngestModule.startUp.exception.msg3");
                 logger.log(Level.SEVERE, message);
                 throw new IngestModuleException(message);
             }
@@ -102,7 +105,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         try {
             PlatformUtil.extractResourceToUserConfigDir(this.getClass(), configFileName, false);
         } catch (IOException ex) {
-            String message = "Could not obtain the path to the Scalpel configuration file.";
+            String message = NbBundle.getMessage(this.getClass(), "ScalpelCarverIngestModule.startUp.exception.msg4");
             logger.log(Level.SEVERE, message, ex);
             throw new IngestModuleException(message);
         }
