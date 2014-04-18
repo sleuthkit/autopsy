@@ -284,6 +284,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex);
         }
+        
+        cleanup();
     }
 
     /**
@@ -302,7 +304,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      */
     private void cleanup() {
         synchronized(ingestStatus) {
-            ingestStatus.clear();            
+            ingestStatus.remove(jobId);
         }
 
         textExtractors.clear();
