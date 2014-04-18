@@ -130,7 +130,7 @@ public class IngestManager {
     synchronized void addFileToIngestJob(long ingestJobId, AbstractFile file) {
         IngestJob job = ingestJobs.get(ingestJobId);
         if (job != null) {
-            scheduler.getFileScheduler().scheduleFile(job, file);
+            scheduler.getFileIngestScheduler().scheduleFile(job, file);
         }
     }
 
@@ -316,7 +316,7 @@ public class IngestManager {
         }
 
         // Jettision the remaining data source and file ingest tasks.
-        scheduler.getFileScheduler().emptyQueues();
+        scheduler.getFileIngestScheduler().emptyQueues();
         scheduler.getDataSourceIngestScheduler().emptyQueues();
     }
 
@@ -414,7 +414,7 @@ public class IngestManager {
 
                     // Queue the file ingest tasks for the ingest job.
                     progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
-                    scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
+                    scheduler.getFileIngestScheduler().scheduleIngestOfFiles(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {
@@ -473,7 +473,7 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                IngestScheduler.FileIngestScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
+                IngestScheduler.FileIngestScheduler fileScheduler = IngestScheduler.getInstance().getFileIngestScheduler();
                 FileIngestTask task = fileScheduler.getNextTask();
                 while (task != null) {
                     if (Thread.currentThread().isInterrupted()) {

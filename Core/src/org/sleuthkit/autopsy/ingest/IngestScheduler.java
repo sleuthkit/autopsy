@@ -56,8 +56,8 @@ final class IngestScheduler {
 
     private static IngestScheduler instance;
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
-    private final DataSourceIngestScheduler dataSourceScheduler = new DataSourceIngestScheduler();
-    private final FileIngestScheduler fileScheduler = new FileIngestScheduler();
+    private final DataSourceIngestScheduler dataSourceIngestScheduler = new DataSourceIngestScheduler();
+    private final FileIngestScheduler fileIngestScheduler = new FileIngestScheduler();
 
     private IngestScheduler() {
     }
@@ -71,11 +71,11 @@ final class IngestScheduler {
     }
 
     DataSourceIngestScheduler getDataSourceIngestScheduler() {
-        return dataSourceScheduler;
+        return dataSourceIngestScheduler;
     }
 
-    FileIngestScheduler getFileScheduler() {
-        return fileScheduler;
+    FileIngestScheduler getFileIngestScheduler() {
+        return fileIngestScheduler;
     }
 
     static class FileIngestScheduler {
