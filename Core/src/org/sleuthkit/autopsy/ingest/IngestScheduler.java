@@ -31,6 +31,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.FileTask;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -133,15 +135,15 @@ final class IngestScheduler {
         @Override
         public synchronized String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("\nRootDirs(sorted), size: ").append(rootDirectoryTasks.size());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.rootDirs.text")).append(rootDirectoryTasks.size());
             for (FileTask task : rootDirectoryTasks) {
                 sb.append(task.toString()).append(" ");
             }
-            sb.append("\nCurDirs(stack), size: ").append(directoryTasks.size());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.curDirs.text")).append(directoryTasks.size());
             for (FileTask task : directoryTasks) {
                 sb.append(task.toString()).append(" ");
             }
-            sb.append("\nCurFiles, size: ").append(fileTasks.size());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.curFiles.text")).append(fileTasks.size());
             for (FileTask task : fileTasks) {
                 sb.append(task.toString()).append(" ");
             }
@@ -210,7 +212,6 @@ final class IngestScheduler {
             FileTask fileTask = new FileTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
                 fileTasks.addFirst(fileTask);
-                fileTasks.add(fileTask);
                 ++filesEnqueuedEst;
             }            
         }        
@@ -277,7 +278,8 @@ final class IngestScheduler {
         @Override
         public synchronized FileTask next() {
             if (!hasNext()) {
-                throw new IllegalStateException("No next ProcessTask, check hasNext() first!");
+                throw new IllegalStateException(
+                        NbBundle.getMessage(this.getClass(), "IngestScheduler.FileTask.next.exception.msg"));
             }
 
             //dequeue the last in the list
@@ -347,7 +349,8 @@ final class IngestScheduler {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Not supported.");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "IngestScheduler.remove.exception.notSupported.msg"));
         }
 
         /**
@@ -782,7 +785,8 @@ final class IngestScheduler {
         @Override
         public synchronized IngestJob next() throws IllegalStateException {
             if (!hasNext()) {
-                throw new IllegalStateException("There is no data source tasks in the queue, check hasNext()");
+                throw new IllegalStateException(
+                        NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.exception.next.msg"));
             }
 
             final IngestJob ret = tasks.pollFirst();
@@ -809,7 +813,8 @@ final class IngestScheduler {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Removing of scheduled data source ingest tasks is not supported. ");
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.exception.remove.msg"));
         }
 
         synchronized void empty() {
@@ -823,7 +828,8 @@ final class IngestScheduler {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("DataSourceQueue, size: ").append(getCount());
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.toString.size"))
+              .append(getCount());
             for (IngestJob task : tasks) {
                 sb.append(task.toString()).append(" ");
             }
