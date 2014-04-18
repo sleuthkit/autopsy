@@ -136,7 +136,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     public void startUp(IngestJobContext context) throws IngestModuleException {
         logger.log(Level.INFO, "Initializing instance {0}", instanceNum);
         initialized = false;       
-        jobId = context.getJobId();
+        jobId = context.getJobId();        
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
@@ -144,6 +144,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
         if (refCounter.incrementAndGet(jobId) == 1) {
+            initIngestStatus(jobId);
             final Server server = KeywordSearch.getServer();
             try {
                 if (!server.isRunning()) {
