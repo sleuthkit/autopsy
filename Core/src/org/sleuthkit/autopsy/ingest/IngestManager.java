@@ -359,12 +359,15 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                final String displayName = "Queueing ingest tasks";
+                final String displayName = NbBundle.getMessage(this.getClass(),
+                                                               "IngestManager.StartIngestJobsTask.run.displayName");
                 progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         if (progress != null) {
-                            progress.setDisplayName(displayName + " (Cancelling...)");
+                            progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                                                                        "IngestManager.StartIngestJobsTask.run.cancelling",
+                                                                        displayName));
                         }
                         IngestManager.getInstance().cancelIngestJobs();
                         return true;
@@ -425,7 +428,8 @@ public class IngestManager {
             } catch (Exception ex) {
                 String message = String.format("StartIngestJobsTask (id=%d) caught exception", id);
                 logger.log(Level.SEVERE, message, ex);
-                MessageNotifyUtil.Message.error("An error occurred while starting ingest. Results may only be partial");
+                MessageNotifyUtil.Message.error(
+                        NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.catchException.msg"));
             } finally {
                 progress.finish();
                 reportStartIngestJobsTaskDone(id);

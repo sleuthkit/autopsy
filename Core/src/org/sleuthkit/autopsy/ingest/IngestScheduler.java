@@ -31,6 +31,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileIngestScheduler.FileIngestTask;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -100,6 +102,24 @@ final class IngestScheduler {
         private void resetCounters() {
             filesEnqueuedEst = 0;
             filesDequeued = 0;
+        }        
+        
+        @Override
+        public synchronized String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.rootDirs.text")).append(rootDirectoryTasks.size());
+            for (FileIngestTask task : rootDirectoryTasks) {
+                sb.append(task.toString()).append(" ");
+            }
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.curDirs.text")).append(directoryTasks.size());
+            for (FileIngestTask task : directoryTasks) {
+                sb.append(task.toString()).append(" ");
+            }
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.FileSched.toString.curFiles.text")).append(fileTasks.size());
+            for (FileIngestTask task : fileTasks) {
+                sb.append(task.toString()).append(" ");
+            }
+            return sb.toString();
         }
 
         synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
@@ -715,6 +735,21 @@ final class IngestScheduler {
 
         synchronized void emptyQueues() {
             tasks.clear();
+        }
+
+        synchronized int getCount() {
+            return tasks.size();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(NbBundle.getMessage(this.getClass(), "IngestScheduler.DataSourceScheduler.toString.size"))
+              .append(getCount());
+            for (IngestJob task : tasks) {
+                sb.append(task.toString()).append(" ");
+            }
+            return sb.toString();
         }
     }
 }

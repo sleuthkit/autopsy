@@ -148,7 +148,9 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
         sortByLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByLabel.text")); // NOI18N
 
-        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Time", "Priority" }));
+        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.sortByComboBox.model.time"),
+                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.sortByComboBox.model.priority") })); // NOI18N
         sortByComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByComboBox.toolTipText")); // NOI18N
         sortByComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
