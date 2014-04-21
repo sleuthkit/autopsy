@@ -551,7 +551,7 @@ import org.xml.sax.SAXException;
         try {
             xformer = tfactory.newTransformer();
         } catch (TransformerConfigurationException ex) {
-            logger.log(Level.SEVERE, "Could not setup tranformer and write case file");
+            logger.log(Level.SEVERE, "Could not setup transformer and write case file");
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
@@ -563,7 +563,7 @@ import org.xml.sax.SAXException;
         try {
             xformer.transform(source, result);
         } catch (TransformerException ex) {
-            logger.log(Level.SEVERE, "Could not run tranformer and write case file");
+            logger.log(Level.SEVERE, "Could not run transformer and write case file");
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
@@ -580,7 +580,8 @@ import org.xml.sax.SAXException;
             bw.close();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error writing to case file");
-            throw new CaseActionException("Error writing to case file", ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
     }
 
