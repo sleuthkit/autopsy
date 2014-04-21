@@ -22,9 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.logging.FileHandler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import org.openide.util.Exceptions;
@@ -44,7 +42,7 @@ public class KeywordSearch {
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
-    static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
+    private static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     public enum QueryType {
         LITERAL, REGEX
@@ -100,7 +98,7 @@ public class KeywordSearch {
         changeSupport.removePropertyChangeListener(l);
     }
     
-    static void fireNumIndexedFilesChange(Integer oldNum, Integer newNum) {
+    public static void fireNumIndexedFilesChange(Integer oldNum, Integer newNum) {
         
         try {
             changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
