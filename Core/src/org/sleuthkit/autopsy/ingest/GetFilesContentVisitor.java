@@ -79,7 +79,7 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
                 all.addAll(child.accept(this));
             }
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error getting Content children", ex);
+            logger.log(Level.SEVERE, "Error getting Content children", ex); //NON-NLS
         }
 
         return all;

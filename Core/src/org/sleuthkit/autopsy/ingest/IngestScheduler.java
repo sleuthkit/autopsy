@@ -146,7 +146,7 @@ final class IngestScheduler {
                             }
                         }
                     } catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Could not get children of root to enqueue: " + root.getId() + ": " + root.getName(), ex);
+                        logger.log(Level.WARNING, "Could not get children of root to enqueue: " + root.getId() + ": " + root.getName(), ex); //NON-NLS
                     }
                 }
             }
@@ -197,7 +197,7 @@ final class IngestScheduler {
                 totalFiles += content.accept(countVisitor);
             }
 
-            logger.log(Level.INFO, "Total files to queue up: {0}", totalFiles);
+            logger.log(Level.INFO, "Total files to queue up: {0}", totalFiles); //NON-NLS
 
             return totalFiles;
         }
@@ -282,7 +282,7 @@ final class IngestScheduler {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not get children of file and update file queues: "
+                    logger.log(Level.SEVERE, "Could not get children of file and update file queues: " //NON-NLS
                             + parentFile.getName(), ex);
                 }
             }
@@ -348,7 +348,7 @@ final class IngestScheduler {
                 try {
                     fs = f.getFileSystem();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not get FileSystem for " + f, ex);
+                    logger.log(Level.SEVERE, "Could not get FileSystem for " + f, ex); //NON-NLS
                 }
                 TskData.TSK_FS_TYPE_ENUM fsType = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_UNSUPP;
                 if (fs != null) {
@@ -364,7 +364,7 @@ final class IngestScheduler {
                 try {
                     isInRootDir = f.getParentDirectory().isRoot();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not check if should enqueue the file: " + f.getName(), ex);
+                    logger.log(Level.WARNING, "Could not check if should enqueue the file: " + f.getName(), ex); //NON-NLS
                 }
 
                 if (isInRootDir && f.getMetaAddr() < 32) {
@@ -405,12 +405,12 @@ final class IngestScheduler {
             @Override
             public String toString() {
                 try {
-                    return "ProcessTask{" + "file=" + file.getId() + ": "
+                    return "ProcessTask{" + "file=" + file.getId() + ": " //NON-NLS
                             + file.getUniquePath() + "}"; // + ", dataSourceTask=" + dataSourceTask + '}';
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex);
+                    logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex); //NON-NLS
                 }
-                return "ProcessTask{" + "file=" + file.getId() + ": "
+                return "ProcessTask{" + "file=" + file.getId() + ": " //NON-NLS
                         + file.getName() + '}';
             }
 
@@ -581,12 +581,12 @@ final class IngestScheduler {
                 SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
 
                 StringBuilder queryB = new StringBuilder();
-                queryB.append("( (fs_obj_id = ").append(fs.getId());
+                queryB.append("( (fs_obj_id = ").append(fs.getId()); //NON-NLS
                 //queryB.append(") OR (fs_obj_id = NULL) )");
                 queryB.append(") )");
-                queryB.append(" AND ( (meta_type = ").append(TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue());
-                queryB.append(") OR (meta_type = ").append(TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue());
-                queryB.append(" AND (name != '.') AND (name != '..')");
+                queryB.append(" AND ( (meta_type = ").append(TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()); //NON-NLS
+                queryB.append(") OR (meta_type = ").append(TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
+                queryB.append(" AND (name != '.') AND (name != '..')"); //NON-NLS
                 queryB.append(") )");
 
                 //queryB.append( "AND (type = ");
@@ -594,10 +594,10 @@ final class IngestScheduler {
                 //queryB.append(")");
                 try {
                     final String query = queryB.toString();
-                    logger.log(Level.INFO, "Executing count files query: {0}", query);
+                    logger.log(Level.INFO, "Executing count files query: {0}", query); //NON-NLS
                     return sc.countFilesWhere(query);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Couldn't get count of all files in FileSystem", ex);
+                    logger.log(Level.SEVERE, "Couldn't get count of all files in FileSystem", ex); //NON-NLS
                     return 0L;
                 }
             }
@@ -621,7 +621,7 @@ final class IngestScheduler {
                         count = 1;
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not get count of objects from children to get num of total files to be ingested", ex);
+                    logger.log(Level.WARNING, "Could not get count of objects from children to get num of total files to be ingested", ex); //NON-NLS
                 }
                 return count;
             }
@@ -707,11 +707,11 @@ final class IngestScheduler {
         synchronized void queueForIngest(IngestJob job) {
             try {
                 if (job.getDataSource().getParent() != null) {
-                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: {0}", job.getDataSource());
+                    logger.log(Level.SEVERE, "Only parent-less Content (data sources) can be scheduled for DataSource ingest, skipping: {0}", job.getDataSource()); //NON-NLS
                     return;
                 }
             } catch (TskCoreException e) {
-                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + job.getDataSource(), e);
+                logger.log(Level.SEVERE, "Error validating data source to be scheduled for DataSource ingest" + job.getDataSource(), e); //NON-NLS
                 return;
             }
 
