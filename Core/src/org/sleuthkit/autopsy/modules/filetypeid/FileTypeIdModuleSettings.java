@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
-    private boolean skipKnownFiles = true;
+    private volatile boolean skipKnownFiles = true;
 
     FileTypeIdModuleSettings() {
     }

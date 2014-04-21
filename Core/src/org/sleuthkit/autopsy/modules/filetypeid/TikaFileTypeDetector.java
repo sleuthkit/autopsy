@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 class TikaFileTypeDetector implements FileTypeDetectionInterface {
 
-    private static Tika tikaInst = new Tika();
+    private static Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
 
     @Override
     public FileTypeDetectionInterface.FileIdInfo attemptMatch(AbstractFile abstractFile) {

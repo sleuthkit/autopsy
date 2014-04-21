@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -37,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
 
+    private static final HashSet<String> defaultDisabledKeywordListNames = new HashSet<>(Arrays.asList("Phone Numbers", "IP Addresses", "URLs"));
     private KeywordSearchJobSettingsPanel jobSettingsPanel = null;
 
     @Override
@@ -64,8 +67,9 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
         List<String> enabledKeywordLists = new ArrayList<>();
         List<KeywordList> keywordLists = listManager.getListsL();
         for (KeywordList keywordList : keywordLists) {
-            // All available keyword search lists are enabled by default.
-            enabledKeywordLists.add(keywordList.getName());
+            if (!defaultDisabledKeywordListNames.contains(keywordList.getName())) {
+                enabledKeywordLists.add(keywordList.getName());
+            }
         }
         return new KeywordSearchJobSettings(enabledKeywordLists);
     }

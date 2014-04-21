@@ -83,7 +83,7 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
                 tagNames = tagsManager.getAllTagNames();
             }
             catch (TskCoreException ex) {
-                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
                         
             // Create a "Quick Tag" sub-menu.

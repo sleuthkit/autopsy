@@ -61,7 +61,7 @@ public class DeleteContentTagAction extends TagAction {
                 Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
             }
             catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex);                
+                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                                               NbBundle.getMessage(this.getClass(),
                                                                   "DeleteContentTagAction.unableToDelTag.msg",
