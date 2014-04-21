@@ -56,16 +56,16 @@ public class Logger extends java.util.logging.Logger {
     /**
      * Main messages log file name
      */
-    public static final String messagesLog = "autopsy.log";
+    public static final String messagesLog = "autopsy.log"; //NON-NLS
     /**
      * Detailed exception trace log file name
      */
-    public static final String tracesLog = "autopsy_traces.log";
+    public static final String tracesLog = "autopsy_traces.log"; //NON-NLS
     
     /**
      * Action logger file name
      */
-    public static final String actionsLog = "autopsy_actions.log";
+    public static final String actionsLog = "autopsy_actions.log"; //NON-NLS
 
     /**
      * Static blocks to get around compile errors such as "variable might not
@@ -82,7 +82,7 @@ public class Logger extends java.util.logging.Logger {
             f.setFormatter(new SimpleFormatter());
             return f;
         } catch (IOException e) {
-            throw new RuntimeException("Error initializing traces logger", e);
+            throw new RuntimeException("Error initializing traces logger", e); //NON-NLS
         }
     }
 
@@ -93,7 +93,7 @@ public class Logger extends java.util.logging.Logger {
             f.setFormatter(new SimpleFormatter());
             return f;
         } catch (IOException e) {
-            throw new RuntimeException("Error initializing normal logger", e);
+            throw new RuntimeException("Error initializing normal logger", e); //NON-NLS
         }
     }
     
@@ -102,13 +102,13 @@ public class Logger extends java.util.logging.Logger {
             FileHandler f = new FileHandler(LOG_DIR + actionsLog, LOG_SIZE, LOG_FILE_COUNT);
             f.setEncoding(LOG_ENCODING);
             f.setFormatter(new SimpleFormatter());
-            java.util.logging.Logger _actionsLogger = java.util.logging.Logger.getLogger("Actions");
+            java.util.logging.Logger _actionsLogger = java.util.logging.Logger.getLogger("Actions"); //NON-NLS
             _actionsLogger.setUseParentHandlers(false);
             _actionsLogger.addHandler(f);
             _actionsLogger.addHandler(console);
             return _actionsLogger;
         } catch (IOException e) {
-            throw new RuntimeException("Error initializing actions logger", e);
+            throw new RuntimeException("Error initializing actions logger", e); //NON-NLS
         }
     }
 
@@ -133,7 +133,7 @@ public class Logger extends java.util.logging.Logger {
      * @param actionClass class where user triggered action occurs
      */
     public static void noteAction(Class<?> actionClass) {
-        actionsLogger.log(Level.INFO, "Action performed: {0}", actionClass.getName());
+        actionsLogger.log(Level.INFO, "Action performed: {0}", actionClass.getName()); //NON-NLS
     }
 
     /**
@@ -164,7 +164,7 @@ public class Logger extends java.util.logging.Logger {
 
     @Override
     public void log(Level level, String message, Throwable thrown) {
-        super.log(level, message + "\nException:  " + thrown.toString());
+        super.log(level, message + "\nException:  " + thrown.toString()); //NON-NLS
         removeHandler(normal);
         super.log(level, message, thrown);
         addHandler(normal);

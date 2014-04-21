@@ -47,11 +47,11 @@ public class LocalDisk {
     public String getReadableSize() {
         int unit = 1024;
         if (size < unit) {
-            return size + " B";
+            return size + " B"; //NON-NLS
         }
         int exp = (int) (Math.log(size) / Math.log(unit));
-        String pre = "KMGTPE".charAt(exp-1) + "";
-        return String.format("%.1f %sB", size / Math.pow(unit, exp), pre);
+        String pre = "KMGTPE".charAt(exp-1) + ""; //NON-NLS
+        return String.format("%.1f %sB", size / Math.pow(unit, exp), pre); //NON-NLS
     }
     
     @Override
