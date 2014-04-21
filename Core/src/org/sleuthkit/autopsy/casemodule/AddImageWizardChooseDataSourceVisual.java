@@ -118,7 +118,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType())) {
                 datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
             } else {
-                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType());
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
             }
         }
     }
@@ -250,7 +250,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 .addContainerGap())
         );
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.imgInfoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

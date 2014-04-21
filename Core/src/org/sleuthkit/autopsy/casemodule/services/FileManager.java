@@ -73,7 +73,7 @@ public class FileManager implements Closeable {
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error initializing FileManager and getting number of local file sets");
+            logger.log(Level.SEVERE, "Error initializing FileManager and getting number of local file sets"); //NON-NLS
         }
 
 

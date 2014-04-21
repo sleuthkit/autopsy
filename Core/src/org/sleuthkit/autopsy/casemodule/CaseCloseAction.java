@@ -53,7 +53,7 @@ import org.openide.util.actions.Presenter;
      * The constructor for this class
      */
     public CaseCloseAction() {
-        putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); // put the icon
+        putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); // put the icon NON-NLS
         putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); // put the action Name
 
         // set action of the toolbar button
@@ -90,7 +90,7 @@ import org.openide.util.actions.Presenter;
                 }
             });
         } catch (Exception ex) {
-            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.WARNING, "Error closing case.", ex);
+            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
         }
     }
 
@@ -128,7 +128,7 @@ import org.openide.util.actions.Presenter;
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_close_case.png"));
+        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_close_case.png")); //NON-NLS
         toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
         return toolbarButton;
