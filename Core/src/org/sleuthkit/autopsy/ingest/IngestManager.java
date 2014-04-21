@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import java.util.prefs.Preferences;
 import javax.swing.SwingWorker;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileIngestScheduler.FileIngestTask;
 
 /**
  * Manages the execution of ingest jobs.
@@ -129,7 +130,7 @@ public class IngestManager {
     synchronized void addFileToIngestJob(long ingestJobId, AbstractFile file) {
         IngestJob job = ingestJobs.get(ingestJobId);
         if (job != null) {
-            scheduler.getFileScheduler().scheduleFile(job, file);
+            scheduler.getFileIngestScheduler().queueFile(job, file);
         }
     }
 
@@ -315,8 +316,8 @@ public class IngestManager {
         }
 
         // Jettision the remaining data source and file ingest tasks.
-        scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();
+        scheduler.getFileIngestScheduler().emptyQueues();
+        scheduler.getDataSourceIngestScheduler().emptyQueues();
     }
 
     synchronized void reportStartIngestJobsTaskDone(long taskId) {
@@ -411,12 +412,12 @@ public class IngestManager {
                     // Queue the data source ingest tasks for the ingest job.
                     final String inputName = dataSource.getName();
                     progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted); // RJCTODO: Improve
-                    scheduler.getDataSourceScheduler().schedule(ingestJob);
+                    scheduler.getDataSourceIngestScheduler().queueForIngest(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     // Queue the file ingest tasks for the ingest job.
                     progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
-                    scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
+                    scheduler.getFileIngestScheduler().queueForIngest(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {
@@ -447,13 +448,14 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
-                while (scheduler.hasNext()) {
+                IngestScheduler.DataSourceIngestScheduler scheduler = IngestScheduler.getInstance().getDataSourceIngestScheduler();
+                IngestJob job = scheduler.getNextTask();
+                while (job != null) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
-                    IngestJob job = scheduler.next();
                     job.getDataSourceIngestPipelineForThread(id).process();
+                    job = scheduler.getNextTask();
                 }
             } catch (Exception ex) {
                 String message = String.format("RunDataSourceIngestModulesTask (id=%d) caught exception", id);
@@ -475,15 +477,16 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
-                while (fileScheduler.hasNext()) {
+                IngestScheduler.FileIngestScheduler fileScheduler = IngestScheduler.getInstance().getFileIngestScheduler();
+                FileIngestTask task = fileScheduler.getNextTask();
+                while (task != null) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
-                    IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
                     IngestJob job = task.getJob();
                     job.updateFileTasksProgressBar(task.getFile().getName());
                     job.getFileIngestPipelineForThread(id).process(task.getFile());
+                    task = fileScheduler.getNextTask();
                 }
             } catch (Exception ex) {
                 String message = String.format("RunFileSourceIngestModulesTask (id=%d) caught exception", id);
