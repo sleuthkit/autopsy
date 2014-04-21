@@ -410,7 +410,7 @@ public class IngestManager {
                         StringBuilder notifyMessage = new StringBuilder();
                         notifyMessage.append("Failed to start the following ingest modules: ");
                         notifyMessage.append(failedModules.toString());
-                        notifyMessage.append(" .\n\nNo ingest modules will be run. Please disable the failed modules ");
+                        notifyMessage.append(".\n\nNo ingest modules will be run. Please disable the failed modules ");
                         notifyMessage.append("or fix the error and restart ingest by right clicking on ");
                         notifyMessage.append("the data source and selecting Run Ingest Modules.\n\n");
                         notifyMessage.append("Errors\n\n: ");
