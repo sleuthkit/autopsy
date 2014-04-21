@@ -75,7 +75,7 @@ public final class ContentUtils {
     }
 
     public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
-        String time = "0000-00-00T00:00:00Z";
+        String time = "0000-00-00T00:00:00Z"; //NON-NLS
         if (epochSeconds != 0) {
             dateFormatterISO8601.setTimeZone(tzone);
             time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
@@ -259,7 +259,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting file to " + dest.getAbsolutePath(),
+                        "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -271,7 +271,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(),
+                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -283,7 +283,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(df, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Error extracting derived file to " + dest.getAbsolutePath(),
+                        "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -295,7 +295,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(lf, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Error extracting local file to " + dest.getAbsolutePath(),
+                        "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -349,7 +349,7 @@ public final class ContentUtils {
                 }
             } catch (TskException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble fetching children to extract.", ex);
+                        "Trouble fetching children to extract.", ex); //NON-NLS
             }
 
             return null;

@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ContentTagTypeNode extends DisplayableItemNode {
 
     private static final String DISPLAY_NAME = NbBundle.getMessage(ContentTagTypeNode.class, "ContentTagTypeNode.displayName.text");
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     public ContentTagTypeNode(TagName tagName) {
         super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + DISPLAY_NAME));
@@ -49,7 +49,7 @@ public class ContentTagTypeNode extends DisplayableItemNode {
         try {
             tagsCount = Case.getCurrentCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
         } catch (TskCoreException ex) {
-            Logger.getLogger(ContentTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get content tags count for " + tagName.getDisplayName() + " tag name", ex);
+            Logger.getLogger(ContentTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get content tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
         }
 
         super.setName(DISPLAY_NAME);
@@ -98,7 +98,7 @@ public class ContentTagTypeNode extends DisplayableItemNode {
             try {
                 keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName));
             } catch (TskCoreException ex) {
-                Logger.getLogger(ContentTagTypeNode.ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
+                Logger.getLogger(ContentTagTypeNode.ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
             return true;
         }

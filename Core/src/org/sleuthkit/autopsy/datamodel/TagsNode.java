@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class TagsNode extends DisplayableItemNode {
 
     private static final String DISPLAY_NAME = NbBundle.getMessage(TagsNode.class, "TagsNode.displayName.text");
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     public TagsNode() {
         super(Children.create(new TagNameNodeFactory(), true), Lookups.singleton(DISPLAY_NAME));
@@ -83,7 +83,7 @@ class TagsNode extends DisplayableItemNode {
             try {
                 keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse());
             } catch (TskCoreException ex) {
-                Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
+                Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
             return true;
         }

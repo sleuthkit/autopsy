@@ -36,7 +36,7 @@ public class ExtractedContentNode extends DisplayableItemNode {
         super(Children.create(new ExtractedContentChildren(skCase), true), Lookups.singleton(NAME));
         super.setName(NAME);
         super.setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/extracted_content.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/extracted_content.png"); //NON-NLS
     }
 
     @Override
