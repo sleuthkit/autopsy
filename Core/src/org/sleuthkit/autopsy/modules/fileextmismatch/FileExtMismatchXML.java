@@ -71,7 +71,7 @@ class FileExtMismatchXML {
      * Singleton provides default configuration from user's directory; user CAN
      * modify this file.
      */
-    public static FileExtMismatchXML getDefault() {
+    public static synchronized FileExtMismatchXML getDefault() {
         if (defaultInstance == null) {
             final String FILTER_CONFIG_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_CONFIG_FILE_NAME;
             defaultInstance = new FileExtMismatchXML(FILTER_CONFIG_FILE);
