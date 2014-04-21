@@ -350,7 +350,10 @@ abstract class KeywordSearchListsAbstract {
                     changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
-                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                    MessageNotifyUtil.Notify.show(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.saveList.errMsg1.msg"),
+                                                  MessageNotifyUtil.MessageType.ERROR);
                 }
             }
             for (KeywordList over : overwritten) {
@@ -358,7 +361,10 @@ abstract class KeywordSearchListsAbstract {
                     changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
-                    MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                    MessageNotifyUtil.Notify.show(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.saveList.errMsg2.msg"),
+                            MessageNotifyUtil.MessageType.ERROR);
                 }
             }
         }
@@ -389,8 +395,11 @@ abstract class KeywordSearchListsAbstract {
             try {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchListsAbstractr listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.writeLists.errMsg1.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
 
@@ -400,7 +409,10 @@ abstract class KeywordSearchListsAbstract {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
-                MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.writeLists.errMsg2.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
 
@@ -423,7 +435,10 @@ abstract class KeywordSearchListsAbstract {
             changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e);
-            MessageNotifyUtil.Notify.show("Module Error", "A module caused an error listening to KeywordSearchListsAbstract updates. See log to determine which module. Some data could be incomplete.", MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Notify.show(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.deleteList.errMsg1.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
         
         return true;

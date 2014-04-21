@@ -108,7 +108,7 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
         jScrollPane2.setViewportView(description);
 
         verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
-        verboseLoggingButton.setText("Activate verbose logging");
+        verboseLoggingButton.setText(NbBundle.getMessage(this.getClass(), "AboutWindowPanel.actVerboseLogging.text"));
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 activateVerboseLogging(evt);
