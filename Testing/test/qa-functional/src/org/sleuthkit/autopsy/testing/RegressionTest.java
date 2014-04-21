@@ -252,11 +252,13 @@ public class RegressionTest extends TestCase {
         if (Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
             jbco0.doClick();
         }
+        new Timeout("pausing", 10000).sleep(); // let things catch up
         wo.btNext().clickMouse();
     }
 
     public void testIngest() {
         logger.info("Ingest 3");
+        new Timeout("pausing", 10000).sleep(); // wait for ingest to actually start
         long startIngest = System.currentTimeMillis();
         IngestManager man = IngestManager.getInstance();
         while (man.isIngestRunning()) {
