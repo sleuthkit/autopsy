@@ -262,7 +262,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
     private static boolean containsMimeType(Node node, List<String> mimeTypes) {
         if (mimeTypes.isEmpty()) {
-            return true; //GStreamer currently is empty. Signature detection for javafx currently
+            //this should return true for 32 bit autopsy with the gstreamer MimeTypes list being empty,
+            //since mimetype detection is for java fx only. For 64 bit java fx, the code continues for Mimetype detection.
+            return true; 
         }
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         try {
