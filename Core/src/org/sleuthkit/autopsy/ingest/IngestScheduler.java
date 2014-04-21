@@ -165,20 +165,7 @@ final class IngestScheduler {
             updateQueues();
         }
 
-        /**
-         * Schedule a file to the file ingest, with associated modules. This
-         * will add the file to beginning of the file queue. The method is
-         * intended for rescheduling a file that is a derivative of another
-         * content object that has already ingested and produced this file. As a
-         * result, the derivative file will be scheduled with the same priority
-         * as the parent origin file.
-         *
-         * @param file file to be scheduled
-         * @param originalContext original content schedule context that was
-         * used to schedule the parent origin content, with the modules,
-         * settings, etc.
-         */
-        synchronized void scheduleFile(IngestJob ingestJob, AbstractFile file) {
+        synchronized void queueFile(IngestJob ingestJob, AbstractFile file) {
             FileIngestTask fileTask = new FileIngestTask(file, ingestJob);
             if (shouldEnqueueTask(fileTask)) {
                 fileTasks.addFirst(fileTask);
