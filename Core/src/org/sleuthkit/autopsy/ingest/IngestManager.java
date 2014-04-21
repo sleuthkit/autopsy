@@ -417,7 +417,7 @@ public class IngestManager {
 
                     // Queue the file ingest tasks for the ingest job.
                     progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
-                    scheduler.getFileIngestScheduler().scheduleIngestOfFiles(ingestJob);
+                    scheduler.getFileIngestScheduler().queueForIngest(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {

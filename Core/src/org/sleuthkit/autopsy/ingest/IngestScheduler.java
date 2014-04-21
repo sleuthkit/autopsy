@@ -122,7 +122,7 @@ final class IngestScheduler {
             return sb.toString();
         }
 
-        synchronized void scheduleIngestOfFiles(IngestJob dataSourceTask) {
+        synchronized void queueForIngest(IngestJob dataSourceTask) {
             Content dataSource = dataSourceTask.getDataSource();
             Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirVisitor());
             List<AbstractFile> firstLevelFiles = new ArrayList<>();
