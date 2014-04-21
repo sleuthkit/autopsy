@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 })
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final String[] AUDIO_EXTENSIONS = new String[]{".mp3", ".wav", ".wma"};
+    private static final String[] AUDIO_EXTENSIONS = new String[]{".mp3", ".wav", ".wma"}; //NON-NLS
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private AbstractFile lastFile;
     //UI
@@ -53,8 +53,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final MediaViewImagePanel imagePanel;
     private boolean videoPanelInited;
     private boolean imagePanelInited;
-    private static final String IMAGE_VIEWER_LAYER = "IMAGE";
-    private static final String VIDEO_VIEWER_LAYER = "VIDEO";
+    private static final String IMAGE_VIEWER_LAYER = "IMAGE"; //NON-NLS
+    private static final String VIDEO_VIEWER_LAYER = "VIDEO"; //NON-NLS
 
     /**
      * Creates new form DataContentViewerVideo
@@ -73,7 +73,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         videoExtensions = videoPanel.getExtensions();
 
         customizeComponents();
-        logger.log(Level.INFO, "Created MediaView instance: " + this);
+        logger.log(Level.INFO, "Created MediaView instance: " + this); //NON-NLS
     }
 
     private void customizeComponents() {
@@ -131,7 +131,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             lastFile = file;
 
             final Dimension dims = DataContentViewerMedia.this.getSize();
-            logger.info("setting node on media viewer");
+            logger.info("setting node on media viewer"); //NON-NLS
             if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
@@ -146,7 +146,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 switchPanels(true);
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Exception while setting node", e);
+            logger.log(Level.SEVERE, "Exception while setting node", e); //NON-NLS
         }
     }
 
