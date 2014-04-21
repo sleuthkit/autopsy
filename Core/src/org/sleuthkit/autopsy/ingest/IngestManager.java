@@ -389,7 +389,7 @@ public class IngestManager {
 
                     // Start at least one instance of each kind of ingest 
                     // pipeline for this ingest job. This allows for an early out 
-                    // if the full ingest module lineup specified by the user is 
+                    // if the full ingest module lineup specified by the user  
                     // cannot be started up.
                     List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                     if (!errors.isEmpty()) {
