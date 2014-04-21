@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -57,10 +58,18 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDb> knownHashSets = new ArrayList<>();
     private long jobId;
-    private static AtomicLong totalKnownBadCount = new AtomicLong(0);
-    private static AtomicLong totalCalctime = new AtomicLong(0);
-    private static AtomicLong totalLookuptime = new AtomicLong(0);
+    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();    
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    
+    private static class IngestJobTotals {
+        private AtomicLong totalKnownBadCount = new AtomicLong(0);
+        private AtomicLong totalCalctime = new AtomicLong(0);
+        private AtomicLong totalLookuptime = new AtomicLong(0);
+    }    
+    
+    private static synchronized void initTotals(long ingestJobId) {
+        totalsForIngestJobs.put(ingestJobId, new HashDbIngestModule.IngestJobTotals());
+    }    
     
     HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;
@@ -68,7 +77,8 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
         
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
-        jobId = context.getJobId();        
+        jobId = context.getJobId();  
+        initTotals(jobId);
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
         
@@ -131,7 +141,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 long calcstart = System.currentTimeMillis();
                 md5Hash = hasher.calculateMd5(file);
                 long delta = (System.currentTimeMillis() - calcstart);
-                totalCalctime.addAndGet(delta);
+                totalsForIngestJobs.get(jobId).totalCalctime.addAndGet(delta);
                 
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error calculating hash of file " + name, ex);
@@ -156,7 +166,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 HashInfo hashInfo = db.lookUp(file);
                 if (null != hashInfo) {
                     foundBad = true;
-                    totalKnownBadCount.incrementAndGet();
+                    totalsForIngestJobs.get(jobId).totalKnownBadCount.incrementAndGet();
                     
                     try {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
@@ -191,7 +201,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                     postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                 }
                 long delta = (System.currentTimeMillis() - lookupstart);
-                totalLookuptime.addAndGet(delta);
+                totalsForIngestJobs.get(jobId).totalLookuptime.addAndGet(delta);
 
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex);
@@ -224,7 +234,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                         }
                     }
                     long delta = (System.currentTimeMillis() - lookupstart);
-                    totalLookuptime.addAndGet(delta);
+                    totalsForIngestJobs.get(jobId).totalLookuptime.addAndGet(delta);
 
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex);
@@ -306,6 +316,8 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     @Override
     public void shutDown(boolean ingestJobCancelled) {
         if (refCounter.decrementAndGet(jobId) == 0) {
+            IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
+
             if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details
@@ -314,14 +326,14 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 detailsSb.append("<tr><td>")
                          .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.knownBadsFound"))
                          .append("</td>");
-                detailsSb.append("<td>").append(totalKnownBadCount.get()).append("</td></tr>");
+                detailsSb.append("<td>").append(jobTotals.totalKnownBadCount.get()).append("</td></tr>");
 
                 detailsSb.append("<tr><td>")
                          .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalCalcTime"))
-                         .append("</td><td>").append(totalCalctime.get()).append("</td></tr>\n");
+                         .append("</td><td>").append(jobTotals.totalCalctime.get()).append("</td></tr>\n");
                 detailsSb.append("<tr><td>")
                          .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalLookupTime"))
-                         .append("</td><td>").append(totalLookuptime.get()).append("</td></tr>\n");
+                         .append("</td><td>").append(jobTotals.totalLookuptime.get()).append("</td></tr>\n");
                 detailsSb.append("</table>");
 
                 detailsSb.append("<p>")
