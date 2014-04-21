@@ -187,7 +187,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        // We don't need the value, but for cleanliness and consistency, -- it
+        // We don't need the value, but for cleanliness and consistency
         refCounter.decrementAndGet(jobId);
     }
         
