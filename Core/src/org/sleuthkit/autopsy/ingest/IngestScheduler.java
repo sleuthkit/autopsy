@@ -224,8 +224,10 @@ final class IngestScheduler {
 
         synchronized FileIngestTask getNextTask() {
             final FileIngestTask task = fileTasks.pollLast();
-            filesDequeued++;
-            updateQueues();
+            if (task != null) {
+                filesDequeued++;
+                updateQueues();
+            }
             return task;
         }
 
