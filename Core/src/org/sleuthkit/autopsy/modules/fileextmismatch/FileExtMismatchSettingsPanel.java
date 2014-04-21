@@ -154,7 +154,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSetttingsPane
         extRemoveErrLabel = new javax.swing.JLabel();
         saveMsgLabel = new javax.swing.JLabel();
 
-        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/fileextmismatch/save16.png"))); // NOI18N
+        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/fileextmismatch/save16.png"))); // NOI18N NON-NLS
         saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.saveButton.text")); // NOI18N
         saveButton.setEnabled(false);
         saveButton.addActionListener(new java.awt.event.ActionListener() {
@@ -399,7 +399,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSetttingsPane
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.empty"));
             return;
         }
-        if (newMime.equals("application/octet-stream")) {
+        if (newMime.equals("application/octet-stream")) { //NON-NLS
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotSupported"));
@@ -645,7 +645,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSetttingsPane
                     ret = (Object) word;
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex); //NON-NLS
                     break;
             }
             return ret;
@@ -710,7 +710,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSetttingsPane
                     ret = (Object) word;
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex); //NON-NLS
                     break;
             }
             return ret;

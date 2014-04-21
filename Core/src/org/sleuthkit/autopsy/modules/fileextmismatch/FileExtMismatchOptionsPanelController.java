@@ -90,7 +90,7 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
+                logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr.msg"),
@@ -101,7 +101,7 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
         try {
             pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e);
+            logger.log(Level.SEVERE, "FileExtMismatchOptionsPanelController listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchOptionsPanelController.moduleErr.msg"),
