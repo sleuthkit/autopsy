@@ -78,11 +78,12 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();  
-        initTotals(jobId);
         getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
         
-        if (refCounter.incrementAndGet(jobId) == 1) {      
+        if (refCounter.incrementAndGet(jobId) == 1) {                  
+            initTotals(jobId);
+
             // if first module for this job then post error msgs if needed
             
             if (knownBadHashSets.isEmpty()) {
