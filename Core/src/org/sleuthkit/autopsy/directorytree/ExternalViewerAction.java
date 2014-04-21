@@ -39,7 +39,7 @@ public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
     private org.sleuthkit.datamodel.AbstractFile fileObject;
-    final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr"};
+    final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr"}; //NON-NLS
 
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
@@ -86,14 +86,14 @@ public class ExternalViewerAction extends AbstractAction {
             ContentUtils.writeToFile(fileObject, tempFile);
         } catch (IOException ex) {
             // throw an error here
-            logger.log(Level.WARNING, "Can't save to temporary file.", ex);
+            logger.log(Level.WARNING, "Can't save to temporary file.", ex); //NON-NLS
         }
 
         try {
             Desktop.getDesktop().open(tempFile);
         } catch (IOException ex) {
             // if can't open the file, throw the error saying: "File type not supported."
-            logger.log(Level.WARNING, "File type not supported.", ex);
+            logger.log(Level.WARNING, "File type not supported.", ex); //NON-NLS
         }
 
         // delete the file on exit

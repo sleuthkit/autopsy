@@ -60,7 +60,7 @@ class ImageDetailsPanel extends javax.swing.JPanel {
         imgHashLabel = new javax.swing.JLabel();
         imgHashValue = new javax.swing.JLabel();
 
-        imageInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        imageInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N NON-NLS
         imageInfoLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imageInfoLabel.text")); // NOI18N
 
         imgNameLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imgNameLabel.text")); // NOI18N
