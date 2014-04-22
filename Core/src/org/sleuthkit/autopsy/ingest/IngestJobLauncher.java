@@ -132,16 +132,16 @@ public final class IngestJobLauncher {
             for (String name : settingNames) {
                 // Map some old core module names to the current core module names.
                 switch (name) {
-                    case "Thunderbird Parser":
-                    case "MBox Parser":
-                        moduleNames.add("Email Parser");
+                    case "Thunderbird Parser": //NON-NLS
+                    case "MBox Parser": //NON-NLS
+                        moduleNames.add("Email Parser"); //NON-NLS
                         break;
-                    case "File Extension Mismatch Detection":
-                        moduleNames.add("Extension Mismatch Detector");
+                    case "File Extension Mismatch Detection": //NON-NLS
+                        moduleNames.add("Extension Mismatch Detector"); //NON-NLS
                         break;
-                    case "EWF Verify":
-                    case "E01 Verify":
-                        moduleNames.add("E01 Verifier");
+                    case "EWF Verify": //NON-NLS
+                    case "E01 Verify": //NON-NLS
+                        moduleNames.add("E01 Verifier"); //NON-NLS
                         break;
                     default:
                         moduleNames.add(name);
