@@ -104,19 +104,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         SKIPPED_ERROR_IO    ///< File was skipped because of IO issues reading it
     };
     private static final Map<Long, Map<Long, IngestStatus>> ingestStatus = new HashMap<>(); //guarded by itself
-
-    private static void initIngestStatus(long ingestJobId) {
-        synchronized(ingestStatus) {                   
-            if (ingestStatus.get(ingestJobId) == null) {
-               Map<Long, IngestStatus> ingestStatusForJob = new HashMap<>();
-               ingestStatus.put(ingestJobId, ingestStatusForJob);
-            }
-        }
-    }    
-    
+   
     private static void putIngestStatus(long ingestJobId, long fileId, IngestStatus status) {
         synchronized(ingestStatus) {            
-            Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(ingestJobId);           
+            Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(ingestJobId);                       
+            if (ingestStatusForJob == null) {
+                ingestStatusForJob = new HashMap<>();
+            }
+            
             ingestStatusForJob.put(fileId, status);
             ingestStatus.put(ingestJobId, ingestStatusForJob);
         }
@@ -144,7 +139,6 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
         if (refCounter.incrementAndGet(jobId) == 1) {
-            initIngestStatus(jobId);
             final Server server = KeywordSearch.getServer();
             try {
                 if (!server.isRunning()) {
