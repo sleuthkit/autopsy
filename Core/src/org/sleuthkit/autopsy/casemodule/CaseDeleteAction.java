@@ -95,7 +95,7 @@ import org.openide.util.actions.CallableSystemAction;
         if(!caseFolder.exists()){
             // throw an error
             
-            logger.log(Level.WARNING, "Couldn't delete case.", new Exception("The case directory doesn't exist."));
+            logger.log(Level.WARNING, "Couldn't delete case.", new Exception("The case directory doesn't exist.")); //NON-NLS
         }
         else{
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -114,7 +114,7 @@ import org.openide.util.actions.CallableSystemAction;
                     Case.getCurrentCase().deleteCase(caseFolder); // delete the current case
                     success = true;
                 } catch (CaseActionException ex) {
-                    logger.log(Level.WARNING, "Could not delete the case folder: " + caseFolder);
+                    logger.log(Level.WARNING, "Could not delete the case folder: " + caseFolder); //NON-NLS
                 }
 
                 // show notification whether the case has been deleted or it failed to delete...

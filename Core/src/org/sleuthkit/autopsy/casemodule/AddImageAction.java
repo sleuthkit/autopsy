@@ -57,21 +57,21 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     // Keys into the WizardDescriptor properties that pass information between stages of the wizard
     // <TYPE>: <DESCRIPTION>
     // String: time zone that the image is from
-    static final String TIMEZONE_PROP = "timeZone";
+    static final String TIMEZONE_PROP = "timeZone"; //NON-NLS
     // String[]: array of paths to each data source selected
-    static final String DATASOURCEPATH_PROP = "dataSrcPath";
+    static final String DATASOURCEPATH_PROP = "dataSrcPath"; //NON-NLS
     // String data source type selected
-    static final String DATASOURCETYPE_PROP = "dataSrcType";
+    static final String DATASOURCETYPE_PROP = "dataSrcType"; //NON-NLS
     // CleanupTask: task to clean up the database file if wizard errors/is cancelled after it is created
-    static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup";
+    static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup"; //NON-NLS
     // int: the next availble id for a new image
-    static final String IMAGEID_PROP = "imageId";
+    static final String IMAGEID_PROP = "imageId"; //NON-NLS
     // AddImageProcess: the next availble id for a new image
-    static final String PROCESS_PROP = "process";
+    static final String PROCESS_PROP = "process"; //NON-NLS
     // boolean: whether or not to lookup files in the hashDB
-    static final String LOOKUPFILES_PROP = "lookupFiles";
+    static final String LOOKUPFILES_PROP = "lookupFiles"; //NON-NLS
     // boolean: whether or not to skip processing orphan files on FAT filesystems
-    static final String NOFATORPHANS_PROP = "nofatorphans";
+    static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
     
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
@@ -194,7 +194,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_add_image.png"));
+        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_add_image.png")); //NON-NLS
         toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
         return toolbarButton;
@@ -261,7 +261,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
                 cleanup();
             } catch (Exception ex) {
                 Logger logger = Logger.getLogger(this.getClass().getName());
-                logger.log(Level.WARNING, "Error cleaning up from wizard.", ex);
+                logger.log(Level.WARNING, "Error cleaning up from wizard.", ex); //NON-NLS
             } finally {
                 disable(); // cleanup tasks should only run once.
             }

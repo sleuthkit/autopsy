@@ -214,7 +214,7 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addContainerGap(62, Short.MAX_VALUE))
         );
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(102, 102, 102));
@@ -256,7 +256,7 @@ class MissingImageDialog extends javax.swing.JDialog {
             //TODO handle local files
             db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error setting image paths", ex);
+            logger.log(Level.WARNING, "Error setting image paths", ex); //NON-NLS
         }
         this.dispose();
     }//GEN-LAST:event_selectButtonActionPerformed
