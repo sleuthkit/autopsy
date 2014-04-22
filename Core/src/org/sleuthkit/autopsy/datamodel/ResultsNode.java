@@ -40,7 +40,7 @@ public class ResultsNode extends DisplayableItemNode {
                 new TagsNodeKey())), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png"); //NON-NLS
     }
 
     @Override

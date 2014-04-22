@@ -39,8 +39,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class TagNameNode extends DisplayableItemNode {
 
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
-    private static final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
+    private static final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png"; //NON-NLS
     private final TagName tagName;
     private static final String CONTENT_TAG_TYPE_NODE_KEY = NbBundle.getMessage(TagNameNode.class,
             "TagNameNode.contentTagTypeNodeKey.text");
@@ -57,7 +57,7 @@ public class TagNameNode extends DisplayableItemNode {
             tagsCount = Case.getCurrentCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
             tagsCount += Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
         } catch (TskCoreException ex) {
-            Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex);
+            Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
         }
 
         super.setName(tagName.getDisplayName());
@@ -130,7 +130,7 @@ public class TagNameNode extends DisplayableItemNode {
             } else if (BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY.equals(key)) {
                 return new BlackboardArtifactTagTypeNode(tagName);
             } else {
-                Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "{0} not a recognized key", key);
+                Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "{0} not a recognized key", key); //NON-NLS
                 return null;
             }
         }

@@ -84,7 +84,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                 artifactStates.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage());
+            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
         }
     }
 

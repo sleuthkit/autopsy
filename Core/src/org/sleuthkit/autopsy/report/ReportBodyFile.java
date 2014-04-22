@@ -75,7 +75,7 @@ import org.sleuthkit.datamodel.*;
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
-        reportPath = path + "BodyFile.txt";
+        reportPath = path + "BodyFile.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
         
@@ -83,8 +83,8 @@ import org.sleuthkit.datamodel.*;
         
         try {
             // exclude non-fs files/dirs and . and .. files
-            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() 
-                               + " AND name != '.' AND name != '..'";
+            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()  //NON-NLS
+                               + " AND name != '.' AND name != '..'"; //NON-NLS
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
             List<FsContent> fs = skCase.findFilesWhere(query);
@@ -148,18 +148,18 @@ import org.sleuthkit.datamodel.*;
                     out.write("\n");
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
+                logger.log(Level.WARNING, "Could not write the temp body file report.", ex); //NON-NLS
             } finally {
                 try {
                     out.flush();
                     out.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
+                    logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
                 }
             }
             progressPanel.complete();
         }  catch(TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get the unique path.", ex);
+            logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         } 
     }
 
@@ -176,7 +176,7 @@ import org.sleuthkit.datamodel.*;
 
     @Override
     public String getExtension() {
-        String ext = ".txt";
+        String ext = ".txt"; //NON-NLS
         return ext;
     }
 

@@ -48,7 +48,7 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
                 + prevDay.get(Calendar.DATE) + ", "
                 + prevDay.get(Calendar.YEAR);
         this.setShortDescription(tooltip);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png"); //NON-NLS
 
         //get count of children without preloading all children nodes
         final long count = new RecentFilesFilterChildren(filter, skCase, lastDay).calculateItems();

@@ -32,9 +32,9 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJobLauncher {
 
-    private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules";
-    private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules";
-    private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space";
+    private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
+    private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
+    private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS
     private final String launcherContext;
     private final List<String> warnings = new ArrayList<>();
     private IngestJobConfigurationPanel ingestConfigPanel;
@@ -78,7 +78,7 @@ public final class IngestJobLauncher {
         for (String moduleName : missingModuleNames) {
             enabledModuleNames.remove(moduleName);
             disabledModuleNames.remove(moduleName);
-            warnings.add(String.format("Previously loaded %s module could not be found", moduleName));
+            warnings.add(String.format("Previously loaded %s module could not be found", moduleName)); //NON-NLS
         }
 
         // Create ingest module templates.
@@ -111,7 +111,7 @@ public final class IngestJobLauncher {
         // Get the process unallocated space flag setting. If the setting does
         // not exist yet, default it to false.
         if (ModuleSettings.settingExists(launcherContext, PARSE_UNALLOC_SPACE_KEY) == false) {
-            ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, "false");
+            ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, "false"); //NON-NLS
         }
         boolean processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY));
 

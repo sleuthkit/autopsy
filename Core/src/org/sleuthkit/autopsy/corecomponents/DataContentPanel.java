@@ -132,7 +132,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                     try {
                         path = content.getUniquePath();
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content);
+                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content); //NON-NLS
                     }
                     setName(path);
                 } else {
@@ -164,7 +164,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                 
         // get the preference for the preferred viewer
         Preferences pref = NbPreferences.forModule(GeneralPanel.class);
-        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
+        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false); //NON-NLS
 
         int currTabIndex = jTabbedPane1.getSelectedIndex();
         int totalTabs = jTabbedPane1.getTabCount();

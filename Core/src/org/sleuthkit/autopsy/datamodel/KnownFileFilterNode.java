@@ -40,8 +40,8 @@ import org.sleuthkit.datamodel.TskData;
 public class KnownFileFilterNode extends FilterNode {
     
     /** Preference key values. */
-    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
-    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true
+    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false NON-NLS
+    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true NON-NLS
     
     /** True if Nodes selected from the Views Node should filter Known Files. */
     private static boolean filterFromViews = true;
@@ -128,7 +128,7 @@ public class KnownFileFilterNode extends FilterNode {
     }
     
     private void addPreferenceListener() {
-        Preferences prefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
+        Preferences prefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core"); //NON-NLS
         // Initialize with values stored in preferences
         filterFromViews = prefs.getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
         filterFromDataSources = prefs.getBoolean(DS_HIDE_KNOWN, filterFromDataSources);

@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.ingest;
  */
 public final class NoIngestModuleIngestJobSettings implements IngestModuleIngestJobSettings {
 
-    private final String setting = "None";
+    private final String setting = "None"; //NON-NLS
 
     /**
      * Gets the string used as an ingest options placeholder for serialization

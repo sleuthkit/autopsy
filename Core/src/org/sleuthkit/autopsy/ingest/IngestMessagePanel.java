@@ -70,9 +70,9 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private volatile long totalMessages = 0;
     private static final Logger logger = Logger.getLogger(IngestMessagePanel.class.getName());
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
-    static final String TOTAL_NUM_MESSAGES_CHANGED = "TOTAL_NUM_MESSAGES_CHANGED"; // total number of messages changed
-    static final String MESSAGES_BOX_CLEARED = "MESSAGES_BOX_CLEARED"; // all messaged in inbox were cleared
-    static final String TOTAL_NUM_NEW_MESSAGES_CHANGED = "TOTAL_NUM_NEW_MESSAGES_CHANGED"; // total number of new messages changed
+    static final String TOTAL_NUM_MESSAGES_CHANGED = "TOTAL_NUM_MESSAGES_CHANGED"; // total number of messages changed NON-NLS
+    static final String MESSAGES_BOX_CLEARED = "MESSAGES_BOX_CLEARED"; // all messaged in inbox were cleared NON-NLS
+    static final String TOTAL_NUM_NEW_MESSAGES_CHANGED = "TOTAL_NUM_NEW_MESSAGES_CHANGED"; // total number of new messages changed NON-NLS
 
     /** Creates new form IngestMessagePanel */
     public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
@@ -296,7 +296,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             messagePcs.firePropertyChange(TOTAL_NUM_MESSAGES_CHANGED, 0, newMsgUnreadUnique);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(),
                                                               "IngestMessagePanel.moduleErr.errListenUpdates.text"),
@@ -320,7 +320,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             messagePcs.firePropertyChange(MESSAGES_BOX_CLEARED, origMsgGroups, 0);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(),
                                                               "IngestMessagePanel.moduleErr.errListenUpdates.text"),
@@ -341,7 +341,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e);
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(),
                                                               "IngestMessagePanel.moduleErr.errListenUpdates.text"),
@@ -357,7 +357,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             messagePcs.firePropertyChange(new PropertyChangeEvent(tableModel, TOTAL_NUM_NEW_MESSAGES_CHANGED, -1, newMessages));
         }
         catch (Exception ee) {
-            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", ee);
+            logger.log(Level.SEVERE, "IngestMessagePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "IngestMessagePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(),
                                                               "IngestMessagePanel.moduleErr.errListenUpdates.text"),
@@ -464,7 +464,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                     columnIndex > columnNames.length - 1) {
                 //temporary check if the rare case still occurrs
                 //#messages is now lower after last regrouping, and gui event thinks it's not
-                logger.log(Level.WARNING, "Requested inbox message at" + rowIndex, ", only have " + numMessages);
+                logger.log(Level.WARNING, "Requested inbox message at" + rowIndex, ", only have " + numMessages); //NON-NLS
                 return "";
             }
             TableEntry entry = messageData.get(rowIndex);
@@ -486,7 +486,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                     ret = entry.messageGroup.getDatePosted();
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
                     break;
             }
             return ret;
@@ -742,8 +742,8 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
                     continue;
                 }
                 b.append(details);
-                b.append("<br />");
-                b.append("<hr />");
+                b.append("<br />"); //NON-NLS
+                b.append("<hr />"); //NON-NLS
             }
 
             return b.toString();

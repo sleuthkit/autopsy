@@ -43,8 +43,8 @@ class TikaFileTypeDetector implements FileTypeDetectionInterface {
                 // for files that are not complete
                 try {
                     String tagHeader = new String(buffer, 0, 5);
-                    if (tagHeader.equals("<?xml")) {
-                        ret.type = "text/xml";
+                    if (tagHeader.equals("<?xml")) { //NON-NLS
+                        ret.type = "text/xml"; //NON-NLS
                         found = true;
                     }
                 }
@@ -55,7 +55,7 @@ class TikaFileTypeDetector implements FileTypeDetectionInterface {
                 if (found == false) {
                     String mimetype = tikaInst.detect(buffer);
                     // Remove tika's name out of the general types like msoffice and ooxml
-                    ret.type = mimetype.replace("tika-", "");
+                    ret.type = mimetype.replace("tika-", ""); //NON-NLS
                 }
             } catch (Exception ex) {
                 //do nothing

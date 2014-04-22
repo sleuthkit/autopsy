@@ -345,7 +345,7 @@ public class DataResultFilterNode extends FilterNode {
                     }
                 }
             } catch (TskException ex) {
-                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex);
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex); //NON-NLS
             }
             return c;
         }
@@ -555,7 +555,7 @@ public class DataResultFilterNode extends FilterNode {
                             sourceEm.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
                         } catch (PropertyVetoException ex) {
                             Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex);
+                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
                         }
                     }
                 }
@@ -580,7 +580,7 @@ public class DataResultFilterNode extends FilterNode {
                         sourceEm.setSelectedNodes(new Node[]{parentNode});
                     } catch (PropertyVetoException ex) {
                         Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                        logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
+                        logger.log(Level.WARNING, "Error: can't open the parent directory.", ex); //NON-NLS
                     }
                 }
             };

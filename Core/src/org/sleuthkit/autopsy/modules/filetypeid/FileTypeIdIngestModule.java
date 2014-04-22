@@ -121,10 +121,10 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
             }
             return ProcessResult.OK;
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error matching file signature", ex);
+            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error matching file signature", e);
+            logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
             return ProcessResult.ERROR;
         }
     }
@@ -136,15 +136,15 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
             IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
             
             StringBuilder detailsSb = new StringBuilder();
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-            detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>");
-            detailsSb.append("<tr><td>")
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+            detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
+            detailsSb.append("<tr><td>") //NON-NLS
                     .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
-                    .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n");
-            detailsSb.append("<tr><td>")
+                    .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n"); //NON-NLS
+            detailsSb.append("<tr><td>") //NON-NLS
                     .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
-                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n");
-            detailsSb.append("</table>");
+                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
+            detailsSb.append("</table>"); //NON-NLS
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "FileTypeIdIngestModule.complete.srvMsg.text"),
