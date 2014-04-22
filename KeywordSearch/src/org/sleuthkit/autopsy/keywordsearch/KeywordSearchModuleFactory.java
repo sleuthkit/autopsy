@@ -83,7 +83,8 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof KeywordSearchJobSettings;
         if (!(settings instanceof KeywordSearchJobSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof KeywordSearchJobSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "KeywordSearchModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
 
         if (jobSettingsPanel == null) {
@@ -115,7 +116,8 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof KeywordSearchJobSettings;
         if (!(settings instanceof KeywordSearchJobSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof KeywordSearchJobSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "KeywordSearchModuleFactory.createFileIngestModule.exception.msg"));
         }
         return new KeywordSearchIngestModule((KeywordSearchJobSettings) settings);
     }

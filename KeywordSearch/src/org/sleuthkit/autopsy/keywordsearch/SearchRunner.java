@@ -627,7 +627,9 @@ public final class SearchRunner {
                 get();
             } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(),
+                                                                      NbBundle.getMessage(this.getClass(),
+                                                                                          "SearchRunner.Searcher.done.err.msg"), e.getMessage()));
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }
