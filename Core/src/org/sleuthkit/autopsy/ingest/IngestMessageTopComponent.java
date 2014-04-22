@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.Content;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
     private IngestMessageMainPanel messagePanel;
     private IngestManager manager;
-    private static String PREFERRED_ID = "IngestMessageTopComponent";
+    private static String PREFERRED_ID = "IngestMessageTopComponent"; //NON-NLS
     private ActionListener showIngestInboxAction;
     private static final Pattern tagRemove = Pattern.compile("<.+?>");
 
@@ -146,7 +146,7 @@ import org.sleuthkit.datamodel.Content;
         //logger.log(Level.INFO, "SHOWING");
         super.componentShowing();
 
-        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
+        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom"); //NON-NLS
         if (mode != null) {
             TopComponent[] tcs = mode.getTopComponents();
             for (int i = 0; i < tcs.length; ++i) {
@@ -193,7 +193,7 @@ import org.sleuthkit.datamodel.Content;
     @Override
     public java.awt.Image getIcon() {
         return ImageUtilities.loadImage(
-                "org/sleuthkit/autopsy/ingest/eye-icon.png");
+                "org/sleuthkit/autopsy/ingest/eye-icon.png"); //NON-NLS
     }
 
     void writeProperties(java.util.Properties p) {
@@ -261,12 +261,12 @@ import org.sleuthkit.datamodel.Content;
                 options,
                 options[0]);
 
-        final String reportActionName = "org.sleuthkit.autopsy.report.ReportAction";
+        final String reportActionName = "org.sleuthkit.autopsy.report.ReportAction"; //NON-NLS
         Action reportAction = null;
 
         //find action by name from action lookup, without introducing cyclic dependency
         if (choice == JOptionPane.NO_OPTION) {
-            List<? extends Action> actions = Utilities.actionsForPath("Toolbars/File");
+            List<? extends Action> actions = Utilities.actionsForPath("Toolbars/File"); //NON-NLS
             for (Action a : actions) {
                 //separators are null actions
                 if (a != null) {
@@ -278,7 +278,7 @@ import org.sleuthkit.datamodel.Content;
             }
 
             if (reportAction == null) {
-                logger.log(Level.SEVERE, "Could not locate Action: " + reportActionName);
+                logger.log(Level.SEVERE, "Could not locate Action: " + reportActionName); //NON-NLS
             } else {
                 reportAction.actionPerformed(null);
             }

@@ -76,7 +76,7 @@ final class ReportVisualPanel2 extends JPanel {
         try {
             tagNamesInUse = Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             return;
         }
 
@@ -123,7 +123,7 @@ final class ReportVisualPanel2 extends JPanel {
                 artifactStates.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage(), ex);
+            Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage(), ex); //NON-NLS
         }
     }
 

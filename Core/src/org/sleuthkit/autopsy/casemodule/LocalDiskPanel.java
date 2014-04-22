@@ -269,7 +269,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             int offset = zone.getRawOffset() / 1000;
             int hour = offset / 3600;
             int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
 
             /*
              * DateFormat dfm = new SimpleDateFormat("z");
@@ -287,7 +287,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         int thisOffset = thisTimeZone.getRawOffset() / 1000;
         int thisHour = thisOffset / 3600;
         int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
+        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID()); //NON-NLS
 
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
@@ -337,7 +337,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                     pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
                 }
                 catch (Exception e) {
-                    logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e);
+                    logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
                                                   NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
                                                   MessageNotifyUtil.MessageType.ERROR);
@@ -439,11 +439,11 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                 try {
                     super.get(); //block and get all exceptions thrown while doInBackground()
                 } catch (CancellationException ex) {
-                    logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible.");
+                    logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
                 } catch (InterruptedException ex) {
-                    logger.log(Level.INFO, "Loading local disks was interrupted.");
+                    logger.log(Level.INFO, "Loading local disks was interrupted."); //NON-NLS
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Fatal error when loading local disks", ex);
+                    logger.log(Level.SEVERE, "Fatal error when loading local disks", ex); //NON-NLS
                 } finally {
                     if (!this.isCancelled()) {
                         enableNext = false;
@@ -460,7 +460,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                             diskComboBox.setSelectedIndex(0);
                         }
                     } else {
-                        logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible.");
+                        logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
                     }
                 }
             }

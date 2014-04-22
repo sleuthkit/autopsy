@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.HashMap;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -47,8 +47,8 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     private static final long MIN_FILE_SIZE = 512;
     private final FileTypeIdModuleSettings settings;
     private long jobId;  
-    private static AtomicLong matchTime = new AtomicLong(0);
-    private static AtomicLong numFiles = new AtomicLong(0);
+
+    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
@@ -56,6 +56,27 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     // actually have a list of detectors which are called in order until a match is found.
     private FileTypeDetectionInterface detector = new TikaFileTypeDetector();
 
+    private static class IngestJobTotals {
+        long matchTime = 0;
+        long numFiles = 0;
+    }
+    
+    private static synchronized void initTotals(long ingestJobId) {
+        totalsForIngestJobs.put(ingestJobId, new IngestJobTotals());
+    }
+ 
+    /**
+     * Update the match time total and increment num of files for this job
+     * @param ingestJobId  
+     * @param matchTimeInc amount of time to add
+     */
+    private static synchronized void addToTotals(long ingestJobId, long matchTimeInc) {
+        IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(ingestJobId);
+        ingestJobTotals.matchTime += matchTimeInc;
+        ingestJobTotals.numFiles++;
+        totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
+    }
+    
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
     }
@@ -63,7 +84,9 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        refCounter.incrementAndGet(jobId);
+        if (refCounter.incrementAndGet(jobId) == 1) {
+            initTotals(jobId);
+        }        
     }    
     
     @Override
@@ -86,8 +109,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
         try {
             long startTime = System.currentTimeMillis();
             FileTypeDetectionInterface.FileIdInfo fileId = detector.attemptMatch(abstractFile);
-            matchTime.getAndAdd(System.currentTimeMillis() - startTime);
-            numFiles.getAndIncrement();
+            addToTotals(jobId, (System.currentTimeMillis() - startTime)); //add match time
 
             if (!fileId.type.isEmpty()) {
                 // add artifact
@@ -99,10 +121,10 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
             }
             return ProcessResult.OK;
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error matching file signature", ex);
+            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error matching file signature", e);
+            logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
             return ProcessResult.ERROR;
         }
     }
@@ -111,16 +133,18 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
+            IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
+            
             StringBuilder detailsSb = new StringBuilder();
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-            detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>");
-            detailsSb.append("<tr><td>")
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+            detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
+            detailsSb.append("<tr><td>") //NON-NLS
                     .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
-                    .append("</td><td>").append(matchTime.get()).append("</td></tr>\n");
-            detailsSb.append("<tr><td>")
+                    .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n"); //NON-NLS
+            detailsSb.append("<tr><td>") //NON-NLS
                     .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
-                    .append("</td><td>").append(numFiles.get()).append("</td></tr>\n");
-            detailsSb.append("</table>");
+                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
+            detailsSb.append("</table>"); //NON-NLS
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "FileTypeIdIngestModule.complete.srvMsg.text"),

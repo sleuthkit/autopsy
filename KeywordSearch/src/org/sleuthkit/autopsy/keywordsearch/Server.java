@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.common.SolrException;
 
 /**
  * Handles for keeping track of a Solr server and its cores
@@ -540,12 +541,16 @@ public class Server {
             // probably caused by starting a connection as the server finishes
             // shutting down)
             if (cause instanceof ConnectException || cause instanceof SocketException) { //|| cause instanceof NoHttpResponseException) {
-                logger.log(Level.INFO, "Solr server is not running, cause: " + cause.getMessage());
+                logger.log(Level.INFO, "Solr server is not running, cause: {0}", cause.getMessage());
                 return false;
             } else {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.isRunning.exception.errCheckSolrRunning.msg"), ex);
             }
+        } catch (SolrException ex) { 
+                // Just log 404 errors for now...
+                logger.log(Level.INFO, "Solr server is not running", ex);
+                return false;
         } catch (IOException ex) {
             throw new KeywordSearchModuleException(
                     NbBundle.getMessage(this.getClass(), "Server.isRunning.exception.errCheckSolrRunning.msg2"), ex);

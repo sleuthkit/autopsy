@@ -39,14 +39,16 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileIngestScheduler.FileIngestTask;
 
 /**
  * Manages the execution of ingest jobs.
  */
 public class IngestManager {
 
-    private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads";
+    private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads"; //NON-NLS
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 4;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
@@ -129,7 +131,7 @@ public class IngestManager {
     synchronized void addFileToIngestJob(long ingestJobId, AbstractFile file) {
         IngestJob job = ingestJobs.get(ingestJobId);
         if (job != null) {
-            scheduler.getFileScheduler().scheduleFile(job, file);
+            scheduler.getFileIngestScheduler().queueFile(job, file);
         }
     }
 
@@ -197,7 +199,7 @@ public class IngestManager {
         try {
             pcs.firePropertyChange(eventType, jobId, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
@@ -213,7 +215,7 @@ public class IngestManager {
         try {
             pcs.firePropertyChange(IngestEvent.FILE_DONE.toString(), fileId, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
@@ -230,7 +232,7 @@ public class IngestManager {
         try {
             pcs.firePropertyChange(IngestEvent.DATA.toString(), moduleDataEvent, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
@@ -247,7 +249,7 @@ public class IngestManager {
         try {
             pcs.firePropertyChange(IngestEvent.CONTENT_CHANGED.toString(), moduleContentEvent, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e);
+            logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
@@ -315,8 +317,8 @@ public class IngestManager {
         }
 
         // Jettision the remaining data source and file ingest tasks.
-        scheduler.getFileScheduler().empty();
-        scheduler.getDataSourceScheduler().empty();
+        scheduler.getFileIngestScheduler().emptyQueues();
+        scheduler.getDataSourceIngestScheduler().emptyQueues();
     }
 
     synchronized void reportStartIngestJobsTaskDone(long taskId) {
@@ -359,14 +361,14 @@ public class IngestManager {
         public void run() {
             try {
                 final String displayName = NbBundle.getMessage(this.getClass(),
-                                                               "IngestManager.StartIngestJobsTask.run.displayName");
+                        "IngestManager.StartIngestJobsTask.run.displayName");
                 progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         if (progress != null) {
                             progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                                                        "IngestManager.StartIngestJobsTask.run.cancelling",
-                                                                        displayName));
+                                    "IngestManager.StartIngestJobsTask.run.cancelling",
+                                    displayName));
                         }
                         IngestManager.getInstance().cancelIngestJobs();
                         return true;
@@ -380,43 +382,54 @@ public class IngestManager {
                         break;
                     }
 
+                    // Create an ingest job.
                     IngestJob ingestJob = new IngestJob(IngestManager.this.ingestJobId.incrementAndGet(), dataSource, moduleTemplates, processUnallocatedSpace);
-                    List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
-                    if (!errors.isEmpty()) {
-                        StringBuilder failedModules = new StringBuilder();
-                        for (int i = 0; i < errors.size(); ++i) {
-                            IngestModuleError error = errors.get(i);
-                            String moduleName = error.getModuleDisplayName();
-                            logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError());
-                            failedModules.append(moduleName);
-                            if ((errors.size() > 1) && (i != (errors.size() - 1))) {
-                                failedModules.append(",");
-                            }
-                        }
-                        MessageNotifyUtil.Message.error( // RJCTODO: Fix this to show all errors, probably should specify data source name
-                                "Failed to start the following ingest modules: " + failedModules.toString() + " .\n\n"
-                                + "No ingest modules will be run. Please disable the module "
-                                + "or fix the error and restart ingest by right clicking on "
-                                + "the data source and selecting Run Ingest Modules.\n\n"
-                                + "Error: " + errors.get(0).getModuleError().getMessage());
-                        ingestJob.cancel();
-                        break;
-                    }
-
-                    // Save the ingest job for later cleanup of pipelines.
                     synchronized (IngestManager.this) {
                         ingestJobs.put(ingestJob.getId(), ingestJob);
                     }
 
+                    // Start at least one instance of each kind of ingest 
+                    // pipeline for this ingest job. This allows for an early out 
+                    // if the full ingest module lineup specified by the user  
+                    // cannot be started up.
+                    List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
+                    if (!errors.isEmpty()) {
+                        // Report the error to the user.
+                        StringBuilder moduleStartUpErrors = new StringBuilder();
+                        for (IngestModuleError error : errors) {
+                            String moduleName = error.getModuleDisplayName();
+                            logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError()); //NON-NLS
+                            moduleStartUpErrors.append(moduleName);
+                            moduleStartUpErrors.append(": ");
+                            moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
+                            moduleStartUpErrors.append("\n");
+                        }
+                        StringBuilder notifyMessage = new StringBuilder();
+                        notifyMessage.append("Unable to start up one or more ingest modules, ingest job cancelled.\n");
+                        notifyMessage.append("Please disable the failed modules or fix the errors and then restart ingest\n");
+                        notifyMessage.append("by right clicking on the data source and selecting Run Ingest Modules.\n");
+                        notifyMessage.append("Errors:\n\n");
+                        notifyMessage.append(moduleStartUpErrors.toString());
+                        notifyMessage.append("\n\n");
+                        JOptionPane.showMessageDialog(null, notifyMessage.toString(), "Ingest Failure", JOptionPane.ERROR_MESSAGE);
+
+                        // Jettison the ingest job and move on to the next one.
+                        synchronized (IngestManager.this) {
+                            ingestJob.cancel();
+                            ingestJobs.remove(ingestJob.getId());
+                        }
+                        break;
+                    }
+
                     // Queue the data source ingest tasks for the ingest job.
                     final String inputName = dataSource.getName();
-                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted); // RJCTODO: Improve
-                    scheduler.getDataSourceScheduler().schedule(ingestJob);
+                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
+                    scheduler.getDataSourceIngestScheduler().queueForIngest(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     // Queue the file ingest tasks for the ingest job.
                     progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
-                    scheduler.getFileScheduler().scheduleIngestOfFiles(ingestJob);
+                    scheduler.getFileIngestScheduler().queueForIngest(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {
@@ -425,7 +438,7 @@ public class IngestManager {
                     }
                 }
             } catch (Exception ex) {
-                String message = String.format("StartIngestJobsTask (id=%d) caught exception", id);
+                String message = String.format("StartIngestJobsTask (id=%d) caught exception", id); //NON-NLS
                 logger.log(Level.SEVERE, message, ex);
                 MessageNotifyUtil.Message.error(
                         NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.catchException.msg"));
@@ -447,16 +460,17 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                IngestScheduler.DataSourceScheduler scheduler = IngestScheduler.getInstance().getDataSourceScheduler();
-                while (scheduler.hasNext()) {
+                IngestScheduler.DataSourceIngestScheduler scheduler = IngestScheduler.getInstance().getDataSourceIngestScheduler();
+                IngestJob job = scheduler.getNextTask();
+                while (job != null) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
-                    IngestJob job = scheduler.next();
                     job.getDataSourceIngestPipelineForThread(id).process();
+                    job = scheduler.getNextTask();
                 }
             } catch (Exception ex) {
-                String message = String.format("RunDataSourceIngestModulesTask (id=%d) caught exception", id);
+                String message = String.format("RunDataSourceIngestModulesTask (id=%d) caught exception", id); //NON-NLS
                 logger.log(Level.SEVERE, message, ex);
             } finally {
                 reportRunIngestModulesTaskDone(id);
@@ -475,18 +489,19 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                IngestScheduler.FileScheduler fileScheduler = IngestScheduler.getInstance().getFileScheduler();
-                while (fileScheduler.hasNext()) {
+                IngestScheduler.FileIngestScheduler fileScheduler = IngestScheduler.getInstance().getFileIngestScheduler();
+                FileIngestTask task = fileScheduler.getNextTask();
+                while (task != null) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
-                    IngestScheduler.FileScheduler.FileTask task = fileScheduler.next();
                     IngestJob job = task.getJob();
                     job.updateFileTasksProgressBar(task.getFile().getName());
                     job.getFileIngestPipelineForThread(id).process(task.getFile());
+                    task = fileScheduler.getNextTask();
                 }
             } catch (Exception ex) {
-                String message = String.format("RunFileSourceIngestModulesTask (id=%d) caught exception", id);
+                String message = String.format("RunFileSourceIngestModulesTask (id=%d) caught exception", id); //NON-NLS
                 logger.log(Level.SEVERE, message, ex);
             } finally {
                 reportRunIngestModulesTaskDone(id);
@@ -508,7 +523,7 @@ public class IngestManager {
                 super.get();
             } catch (CancellationException | InterruptedException ex) {
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Error while cancelling ingest jobs", ex);
+                logger.log(Level.SEVERE, "Error while cancelling ingest jobs", ex); //NON-NLS
             }
         }
     }

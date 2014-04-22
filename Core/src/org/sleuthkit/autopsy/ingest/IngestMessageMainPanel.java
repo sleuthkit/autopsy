@@ -31,8 +31,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     private IngestMessageDetailsPanel detailsPanel;
     private Logger logger = Logger.getLogger(IngestMessageMainPanel.class.getName());
     //the 2 layer names
-    private static final String MESSAGES_VIEWER_LAYER = "MESSAGES";
-    private static final String DETAILS_VIEWER_LAYER = "DETAILS";
+    private static final String MESSAGES_VIEWER_LAYER = "MESSAGES"; //NON-NLS
+    private static final String DETAILS_VIEWER_LAYER = "DETAILS"; //NON-NLS
 
     /**
      * Creates new form IngestMessageMainPanel

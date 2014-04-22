@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
@@ -81,7 +82,9 @@ import org.sleuthkit.autopsy.core.Installer;
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
 
-    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"};
+    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"}; //NON-NLS
+    static private final List<String> supportedMimes = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4","audio/x-m4a","video/x-m4v","audio/x-wav"); //NON-NLS
+
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean fxInited = false;
     // FX Components
@@ -149,7 +152,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         try {
             path = file.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Cannot get unique path of video file");
+            logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
         }
         mediaPane.setInfoLabelText(path);
         mediaPane.setInfoLabelToolTipText(path);
@@ -257,9 +260,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             try {
                 extractedBytes = ContentUtils.writeToFile(sFile, jFile, progress, this, true);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error buffering file", ex);
+                logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
             }
-            logger.log(Level.INFO, "Done buffering: " + jFile.getName());
+            logger.log(Level.INFO, "Done buffering: " + jFile.getName()); //NON-NLS
             success = true;
             return null;
         }
@@ -270,15 +273,15 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             try {
                 super.get(); //block and get all exceptions thrown while doInBackground()
             } catch (CancellationException ex) {
-                logger.log(Level.INFO, "Media buffering was canceled.");
+                logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
             } catch (InterruptedException ex) {
-                logger.log(Level.INFO, "Media buffering was interrupted.");
+                logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex);
+                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
             } finally {
                 progress.finish();
                 if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "ExtractMedia in done: " + jFile.getName());
+                    logger.log(Level.INFO, "ExtractMedia in done: " + jFile.getName()); //NON-NLS
                     try {
                         Platform.runLater(new Runnable() {
                             @Override
@@ -287,7 +290,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                             }
                         });
                     } catch(MediaException e) {
-                        logger.log(Level.WARNING, "something went wrong with javafx", e);
+                        logger.log(Level.WARNING, "something went wrong with javafx", e); //NON-NLS
                         reset();
                         mediaPane.setInfoLabelText(e.getMessage());
                         return;
@@ -323,7 +326,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         private int totalHours;
         private int totalMinutes;
         private int totalSeconds;
-        private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
+        private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
         
         /** The EventHandler for MediaPlayer.onReady(). **/
         private final ReadyListener READY_LISTENER = new ReadyListener();
@@ -344,12 +347,12 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         
         private static final String PAUSE_TEXT = "||";
         
-        private static final String STOP_TEXT = "X";
+        private static final String STOP_TEXT = "X"; //NON-NLS
         
         public MediaPane() {
             // Video Display
             mediaViewPane = new HBox();
-            mediaViewPane.setStyle("-fx-background-color: black");
+            mediaViewPane.setStyle("-fx-background-color: black"); //NON-NLS
             mediaViewPane.setAlignment(Pos.CENTER);
             mediaView = new MediaView();
             mediaViewPane.getChildren().add(mediaView);
@@ -378,7 +381,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             mediaTools.getChildren().add(progressLabel);
             
             controlPanel.getChildren().add(mediaTools);
-            controlPanel.setStyle("-fx-background-color: white");
+            controlPanel.setStyle("-fx-background-color: white"); //NON-NLS
             infoLabel = new Label("");
             controlPanel.getChildren().add(infoLabel);
             setBottom(controlPanel);
@@ -423,7 +426,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param text
          */
         public void setInfoLabelText(final String text) {
-            logger.log(Level.INFO, "Setting Info Label Text: " + text);
+            logger.log(Level.INFO, "Setting Info Label Text: " + text); //NON-NLS
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -470,7 +473,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                             mediaPlayer.play();
                             break;
                         default:
-                            logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString());
+                            logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString()); //NON-NLS
                             // If the MediaPlayer is in an unexpected state, stop playback.
                             mediaPlayer.stop();
                             setInfoLabelText(NbBundle.getMessage(this.getClass(),
@@ -797,5 +800,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     @Override
     public String[] getExtensions() {
         return EXTENSIONS;
+    }
+  
+    @Override
+    public List<String> getMimeTypes() {
+        return supportedMimes;
     }
 }

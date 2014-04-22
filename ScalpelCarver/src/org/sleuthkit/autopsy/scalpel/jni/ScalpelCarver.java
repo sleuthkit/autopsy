@@ -39,7 +39,7 @@ public class ScalpelCarver {
 
     private static final String SCALPEL_JNI_LIB = "libscalpel_jni";
     private static final String SCALPEL_OUTPUT_FILE_NAME = "audit.txt";
-    private static boolean initialized = false;
+    private static volatile boolean initialized = false;
     private static final Logger logger = Logger.getLogger(ScalpelCarver.class.getName());
 
     private static native void carveNat(String carverInputId, ReadContentInputStream input, String configFilePath, String outputFolderPath) throws ScalpelException;
@@ -48,7 +48,7 @@ public class ScalpelCarver {
         
     }
 
-    public static boolean init() {
+    public static synchronized boolean init() {
         if (initialized) {
             return true;
         }

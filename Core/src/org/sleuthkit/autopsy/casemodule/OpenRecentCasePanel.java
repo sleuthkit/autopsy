@@ -184,7 +184,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
     // Open the selected case
     private void openCase() {
         if (casePaths.length < 1) {
-            logger.log(Level.INFO, "No Case paths exist, cannot open the case");
+            logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
             return;
         }
         String casePath = casePaths[imagesTable.getSelectedRow()];
@@ -195,7 +195,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 StartupWindowProvider.getInstance().close();
                 CueBannerPanel.closeOpenRecentCasesWindow();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex);
+                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
             }
             // Open the recent cases
             try {
@@ -218,7 +218,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     Case.open(casePath); // open the case
                 }
             } catch (CaseActionException ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex);
+                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
             }
         }
     }
@@ -289,7 +289,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     ret = shortenPath(casePaths[rowIndex]);
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex); //NON-NLS
                     break;
             }
             return ret;

@@ -70,7 +70,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"};
+    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
     private String unpackDir; //relative to the case, to store in db
     private String unpackDirPath; //absolute, to extract to
     private FileManager fileManager;
@@ -114,7 +114,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             try {
                 unpackDirPathFile.mkdirs();
             } catch (SecurityException e) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e);
+                logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e); //NON-NLS
                 String msg = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.init.errInitModule.msg", ArchiveFileExtractorModuleFactory.getModuleName());
                 String details = NbBundle.getMessage(this.getClass(),
@@ -129,9 +129,9 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             try {
                 SevenZip.initSevenZipFromPlatformJAR();
                 String platform = SevenZip.getUsedPlatform();
-                logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: {0}", platform);
+                logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: {0}", platform); //NON-NLS
             } catch (SevenZipNativeInitializationException e) {
-                logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e);
+                logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e); //NON-NLS
                 String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errInitModule.msg",
                         ArchiveFileExtractorModuleFactory.getModuleName());
                 String details = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.init.errCantInitLib",
@@ -165,16 +165,16 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 final String uniqueFileName = getUniqueName(abstractFile);
                 final String localRootAbsPath = getLocalRootAbsPath(uniqueFileName);
                 if (new File(localRootAbsPath).exists()) {
-                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName());
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
                     return ProcessResult.OK;
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", abstractFile.getName());
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", abstractFile.getName()); //NON-NLS
             return ProcessResult.OK;
         }
 
-        logger.log(Level.INFO, "Processing with archive extractor: {0}", abstractFile.getName());
+        logger.log(Level.INFO, "Processing with archive extractor: {0}", abstractFile.getName()); //NON-NLS
 
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
@@ -187,7 +187,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        // We don't need the value, but for cleanliness and consistency, -- it
+        // We don't need the value, but for cleanliness and consistency
         refCounter.decrementAndGet(jobId);
     }
         
@@ -239,7 +239,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             final long archiveItemPackedSize = archiveFileItem.getPackedSize();
 
             if (archiveItemPackedSize <= 0) {
-                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveName, archiveFileItem.getPath()});
+                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveName, archiveFileItem.getPath()}); //NON-NLS
                 return false;
             }
 
@@ -247,7 +247,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
             if (cRatio >= MAX_COMPRESSION_RATIO) {
                 String itemName = archiveFileItem.getPath();
-                logger.log(Level.INFO, "Possible zip bomb detected, compression ration: {0} for in archive item: {1}", new Object[]{cRatio, itemName});
+                logger.log(Level.INFO, "Possible zip bomb detected, compression ration: {0} for in archive item: {1}", new Object[]{cRatio, itemName}); //NON-NLS
                 String msg = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.isZipBombCheck.warnMsg", archiveName, itemName);
                 String details = NbBundle.getMessage(this.getClass(),
@@ -260,7 +260,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex);
+            logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
             return false;
         }
     }
@@ -309,7 +309,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                     stream);
 
             int numItems = inArchive.getNumberOfItems();
-            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFile.getName(), numItems});
+            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFile.getName(), numItems}); //NON-NLS
             progress.start(numItems);
             progressStarted = true;
 
@@ -323,7 +323,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 try {
                     localRoot.mkdirs();
                 } catch (SecurityException e) {
-                    logger.log(Level.SEVERE, "Error setting up output path for archive root: {0}", localRootAbsPath);
+                    logger.log(Level.SEVERE, "Error setting up output path for archive root: {0}", localRootAbsPath); //NON-NLS
                     //bail
                     return unpackedFiles;
                 }
@@ -351,11 +351,11 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                         String base = archName.substring(0, dotI);
                         String ext = archName.substring(dotI);
                         switch (ext) {
-                            case ".gz":
+                            case ".gz": //NON-NLS
                                 useName = base;
                                 break;
-                            case ".tgz":
-                                useName = base + ".tar";
+                            case ".tgz": //NON-NLS
+                                useName = base + ".tar"; //NON-NLS
                                 break;
                         }
                     }
@@ -372,7 +372,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
                 }
                 ++itemNumber;
-                logger.log(Level.INFO, "Extracted item path: {0}", extractedPath);
+                logger.log(Level.INFO, "Extracted item path: {0}", extractedPath); //NON-NLS
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile.getName(), item)) {
@@ -395,7 +395,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 final boolean isDir = item.isFolder();
 
                 if (isEncrypted) {
-                    logger.log(Level.WARNING, "Skipping encrypted file in archive: {0}", extractedPath);
+                    logger.log(Level.WARNING, "Skipping encrypted file in archive: {0}", extractedPath); //NON-NLS
                     hasEncrypted = true;
                     continue;
                 } else {
@@ -416,7 +416,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                                 "SevenZipIngestModule.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
-                        logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: {0}, {1}", new Object[]{archiveFile.getName(), fileName});
+                        logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: {0}, {1}", new Object[]{archiveFile.getName(), fileName}); //NON-NLS
                         continue; //skip this file
                     } else {
                         //update est. disk space during this archive, so we don't need to poll for every file extracted
@@ -440,11 +440,11 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                             try {
                                 localFile.createNewFile();
                             } catch (IOException ex) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), ex);
+                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), ex); //NON-NLS
                             }
                         }
                     } catch (SecurityException e) {
-                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", extractedPath);
+                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", extractedPath); //NON-NLS
                         //TODO consider bail out / msg to the user
                     }
                 }
@@ -468,7 +468,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                         item.extractSlow(unpackStream);
                     } catch (Exception e) {
                         //could be something unexpected with this file, move on
-                        logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e);
+                        logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
                     } finally {
                         if (unpackStream != null) {
                             unpackStream.close();
@@ -492,12 +492,12 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 }
 
             } catch (TskCoreException e) {
-                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure");
+                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure"); //NON-NLS
                 //TODO decide if anything to cleanup, for now bailing
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex);
+            logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
             String fullName;
             try {
@@ -520,7 +520,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 try {
                     inArchive.close();
                 } catch (SevenZipException e) {
-                    logger.log(Level.SEVERE, "Error closing archive: " + archiveFile, e);
+                    logger.log(Level.SEVERE, "Error closing archive: " + archiveFile, e); //NON-NLS
                 }
             }
 
@@ -528,7 +528,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 try {
                     stream.close();
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error closing stream after unpacking archive: " + archiveFile, ex);
+                    logger.log(Level.SEVERE, "Error closing stream after unpacking archive: " + archiveFile, ex); //NON-NLS
                 }
             }
 
@@ -546,7 +546,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                 artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), ArchiveFileExtractorModuleFactory.getModuleName(), encryptionType));
                 services.fireModuleDataEvent(new ModuleDataEvent(ArchiveFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex);
+                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex); //NON-NLS
             }
 
             String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.unpack.encrFileDetected.msg");
@@ -575,7 +575,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             for (BlackboardAttribute attribute : attributes) {
                 attributeFound = true;
                 String fileType = attribute.getValueString();
-                if (!fileType.isEmpty() && fileType.equals("application/zip")) {
+                if (!fileType.isEmpty() && fileType.equals("application/zip")) { //NON-NLS
                     return true;
                 }
             }
@@ -629,7 +629,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
             try {
                 output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
             } catch (FileNotFoundException ex) {
-                logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex);
+                logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex); //NON-NLS
             }
 
         }
@@ -652,7 +652,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
                     output.flush();
                     output.close();
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", localAbsPath);
+                    logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
                 }
             }
         }
@@ -780,7 +780,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
 
 
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error adding a derived file to db:" + fileName, ex);
+                logger.log(Level.SEVERE, "Error adding a derived file to db:" + fileName, ex); //NON-NLS
                 throw new TskCoreException(
                         NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.UnpackedTree.exception.msg",
                         fileName), ex);

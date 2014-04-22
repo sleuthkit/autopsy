@@ -113,7 +113,7 @@ public class AddContentTagAction extends AddTagAction {
                 Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);            
             }
             catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
+                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                                               NbBundle.getMessage(this.getClass(),
                                                                   "AddContentTagAction.unableToTag.msg2",

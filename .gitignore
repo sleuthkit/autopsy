@@ -53,6 +53,8 @@ genfiles.properties
 !/test/output/gold
 /test/output/gold/tmp
 /test/script/ScriptLog.txt
+/test/script/__pycache__/
+/test/script/*.pyc
 /test/build/
 /test/dist/
 /test/nbproject/*

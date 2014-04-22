@@ -93,7 +93,7 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
         jScrollPane3.setBorder(null);
 
         copyright.setBorder(null);
-        copyright.setContentType("text/html"); // NOI18N
+        copyright.setContentType("text/html"); // NOI18N NON-NLS
         copyright.setEditable(false);
         copyright.setText(org.openide.util.NbBundle.getBundle(AboutWindowPanel.class).getString("LBL_Copyright")); // NOI18N
         copyright.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -103,12 +103,12 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
         });
         jScrollPane3.setViewportView(copyright);
 
-        description.setContentType("text/html"); // NOI18N
+        description.setContentType("text/html"); // NOI18N NON-NLS
         description.setEditable(false);
         jScrollPane2.setViewportView(description);
 
         verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
-        verboseLoggingButton.setText("Activate verbose logging");
+        verboseLoggingButton.setText(NbBundle.getMessage(this.getClass(), "AboutWindowPanel.actVerboseLogging.text"));
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 activateVerboseLogging(evt);
@@ -208,7 +208,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     private void showUrl() {
         if (url != null) {
             org.openide.awt.StatusDisplayer.getDefault().setStatusText(
-                    NbBundle.getBundle(HTMLViewAction.class).getString("CTL_OpeningBrowser"));
+                    NbBundle.getBundle(HTMLViewAction.class).getString("CTL_OpeningBrowser")); //NON-NLS
             HtmlBrowser.URLDisplayer.getDefault().showURL(url);
         }
     }
@@ -219,25 +219,25 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
 
     private static String getProductVersionValue() {
         return MessageFormat.format(
-                NbBundle.getBundle("org.netbeans.core.startup.Bundle").getString("currentVersion"),
+                NbBundle.getBundle("org.netbeans.core.startup.Bundle").getString("currentVersion"), //NON-NLS
                 new Object[]{System.getProperty("netbeans.buildnumber")});
     }
 
     private static String getOperatingSystemValue() {
         return NbBundle.getMessage(AboutWindowPanel.class, "Format_OperatingSystem_Value",
-                                   System.getProperty("os.name",
+                                   System.getProperty("os.name", //NON-NLS
                                                       NbBundle.getMessage(AboutWindowPanel.class,
                                                                           "ProductInformationPanel.propertyUnknown.text")),
-                                   System.getProperty("os.version",
+                                   System.getProperty("os.version", //NON-NLS
                                                       NbBundle.getMessage(AboutWindowPanel.class,
                                                                           "ProductInformationPanel.propertyUnknown.text")),
-                                   System.getProperty("os.arch",
+                                   System.getProperty("os.arch", //NON-NLS
                                                       NbBundle.getMessage(AboutWindowPanel.class,
                                                                           "ProductInformationPanel.propertyUnknown.text")));
     }
 
     private static String getJavaValue() {
-        return System.getProperty("java.version",
+        return System.getProperty("java.version", //NON-NLS
                                   NbBundle.getMessage(AboutWindowPanel.class,
                                                       "ProductInformationPanel.propertyUnknown.text"));
     }
@@ -245,10 +245,10 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     private static String getVMValue() {
         return NbBundle.getMessage(AboutWindowPanel.class,
                                    "ProductInformationPanel.getVMValue.text",
-                                   System.getProperty("java.vm.name",
+                                   System.getProperty("java.vm.name", //NON-NLS
                                                       NbBundle.getMessage(AboutWindowPanel.class,
                                                                           "ProductInformationPanel.propertyUnknown.text")),
-                                   System.getProperty("java.vm.version", ""));
+                                   System.getProperty("java.vm.version", "")); //NON-NLS
     }
 
     private static String getSystemLocaleValue() {
@@ -261,7 +261,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     }
 
     private static String getEncodingValue() {
-        return System.getProperty("file.encoding",
+        return System.getProperty("file.encoding", //NON-NLS
                                   NbBundle.getMessage(AboutWindowPanel.class, "ProductInformationPanel.propertyUnknown.text"));
     }
     
@@ -283,7 +283,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
      */
     public void startVerboseLogging() {
         verboseLogging = true;
-        String logPath = PlatformUtil.getUserDirectory() + File.separator + "sleuthkit.txt";
+        String logPath = PlatformUtil.getUserDirectory() + File.separator + "sleuthkit.txt"; //NON-NLS
         
         SleuthkitJNI.startVerboseLogging(logPath);
     }

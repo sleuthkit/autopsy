@@ -71,7 +71,7 @@ import org.openide.util.NbBundle;
 
         examinerLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.examinerLabel.text")); // NOI18N
 
-        optionalLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        optionalLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
         optionalLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.optionalLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

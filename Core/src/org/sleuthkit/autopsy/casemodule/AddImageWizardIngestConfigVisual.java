@@ -75,7 +75,7 @@ import javax.swing.JPanel;
 
         setPreferredSize(new java.awt.Dimension(569, 300));
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
         titleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.titleLabel.text")); // NOI18N
 
         subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.subtitleLabel.text")); // NOI18N
