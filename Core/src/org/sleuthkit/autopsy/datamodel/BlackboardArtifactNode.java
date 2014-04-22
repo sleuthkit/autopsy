@@ -93,7 +93,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(associated.getName());
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID())));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID()))); //NON-NLS
 
     }
 
@@ -154,7 +154,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     }                
                 }
                 if (actualMimeType.isEmpty()) {
-                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute.");
+                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
                 } else {
                     ss.put(new NodeProperty<>(
                             NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
@@ -163,7 +163,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                             actualMimeType));
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex);
+                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex); //NON-NLS
             }            
         }        
         
@@ -172,7 +172,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             try {
                 sourcePath = associated.getUniquePath();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName());
+                logger.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName()); //NON-NLS
             }
 
             if (sourcePath.isEmpty() == false) {
@@ -192,7 +192,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     dataSource = getRootParentName();
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName());
+                logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
             }
             
             if (dataSource.isEmpty() == false) {
@@ -215,7 +215,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 parentName = parent.getName();
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName());
+            logger.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName()); //NON-NLS
             return "";
         }
         return parentName;
@@ -285,7 +285,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 }
             }
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Getting attributes failed", ex);
+            logger.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
         }
     }
 
@@ -313,7 +313,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Getting file failed", ex);
+            logger.log(Level.WARNING, "Getting file failed", ex); //NON-NLS
         }
         throw new IllegalArgumentException(
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
@@ -348,7 +348,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return highlightFactory.createInstance(content, keyword, isRegexp, origQuery);
             }
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex);
+            logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
         }
         return null;
     }
@@ -357,54 +357,54 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                return "bookmarks.png";
+                return "bookmarks.png"; //NON-NLS
             case TSK_WEB_COOKIE:
-                return "cookies.png";
+                return "cookies.png"; //NON-NLS
             case TSK_WEB_HISTORY:
-                return "history.png";
+                return "history.png"; //NON-NLS
             case TSK_WEB_DOWNLOAD:
-                return "downloads.png";
+                return "downloads.png"; //NON-NLS
             case TSK_INSTALLED_PROG:
-                return "programs.png";
+                return "programs.png"; //NON-NLS
             case TSK_RECENT_OBJECT:
-                return "recent_docs.png";
+                return "recent_docs.png"; //NON-NLS
             case TSK_DEVICE_ATTACHED:
-                return "usb_devices.png";
+                return "usb_devices.png"; //NON-NLS
             case TSK_WEB_SEARCH_QUERY:
-                return "searchquery.png";
+                return "searchquery.png"; //NON-NLS
             case TSK_TAG_FILE:
-                return "blue-tag-icon-16.png";
+                return "blue-tag-icon-16.png"; //NON-NLS
             case TSK_TAG_ARTIFACT:
-                return "green-tag-icon-16.png";
+                return "green-tag-icon-16.png"; //NON-NLS
             case TSK_METADATA_EXIF:
-                return "camera-icon-16.png";
+                return "camera-icon-16.png"; //NON-NLS
             case TSK_CONTACT:
-                return "contact.png";
+                return "contact.png"; //NON-NLS
             case TSK_MESSAGE:
-                return "message.png";
+                return "message.png"; //NON-NLS
             case TSK_CALLLOG:
-                return "calllog.png";
+                return "calllog.png"; //NON-NLS
             case TSK_CALENDAR_ENTRY:
-                return "calendar.png";
+                return "calendar.png"; //NON-NLS
             case TSK_SPEED_DIAL_ENTRY:
-                return "speeddialentry.png";
+                return "speeddialentry.png"; //NON-NLS
             case TSK_BLUETOOTH_PAIRING:
-                return "bluetooth.png";
+                return "bluetooth.png"; //NON-NLS
             case TSK_GPS_BOOKMARK:
-                return "gpsfav.png";
+                return "gpsfav.png"; //NON-NLS
             case TSK_GPS_LAST_KNOWN_LOCATION:
-                return "gps-lastlocation.png";
+                return "gps-lastlocation.png"; //NON-NLS
             case TSK_GPS_SEARCH:
-                return "gps-search.png";
+                return "gps-search.png"; //NON-NLS
             case TSK_SERVICE_ACCOUNT:
-                return "account-icon-16.png";
+                return "account-icon-16.png"; //NON-NLS
             case TSK_ENCRYPTION_DETECTED:
-                return "encrypted-file.png";
+                return "encrypted-file.png"; //NON-NLS
             case TSK_EXT_MISMATCH_DETECTED:
-                return "mismatch-16.png";
+                return "mismatch-16.png"; //NON-NLS
                 
         }
-        return "artifact-icon.png";
+        return "artifact-icon.png"; //NON-NLS
     }
 
     @Override

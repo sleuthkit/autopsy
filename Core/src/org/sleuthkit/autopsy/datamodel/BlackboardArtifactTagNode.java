@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class BlackboardArtifactTagNode extends DisplayableItemNode {
 
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png"; //NON-NLS
     private final BlackboardArtifactTag tag;
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
@@ -68,7 +68,7 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
         try {
             contentPath = tag.getContent().getUniquePath();
         } catch (TskCoreException ex) {
-            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex); //NON-NLS
             contentPath = NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.unavail.text");
         }
         properties.put(new NodeProperty<>(

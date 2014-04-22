@@ -67,16 +67,16 @@ import org.sleuthkit.datamodel.TskData;
 
     private String createQuery() {
         Calendar prevDayQuery = (Calendar) prevDay.clone();
-        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-        + " AND (known IS NULL OR known != 1) AND (";
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")" //NON-NLS
+        + " AND (known IS NULL OR known != 1) AND ("; //NON-NLS
         long lowerLimit = prevDayQuery.getTimeInMillis() / 1000;
         prevDayQuery.add(Calendar.DATE, 1);
         prevDayQuery.add(Calendar.MILLISECOND, -1);
         long upperLimit = prevDayQuery.getTimeInMillis() / 1000;
-        query += "(crtime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
-        query += "(ctime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
+        query += "(crtime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR "; //NON-NLS
+        query += "(ctime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR "; //NON-NLS
         //query += "(atime BETWEEN " + lowerLimit + " AND " + upperLimit + ") OR ";
-        query += "(mtime BETWEEN " + lowerLimit + " AND " + upperLimit + "))";
+        query += "(mtime BETWEEN " + lowerLimit + " AND " + upperLimit + "))"; //NON-NLS
         //query += " LIMIT " + MAX_OBJECTS;
         return query;
     }
@@ -90,7 +90,7 @@ import org.sleuthkit.datamodel.TskData;
             }
 
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get search results", ex);
+            logger.log(Level.WARNING, "Couldn't get search results", ex); //NON-NLS
         } 
         return ret;
 
@@ -104,7 +104,7 @@ import org.sleuthkit.datamodel.TskData;
         try {
             return skCase.countFilesWhere(createQuery());
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting recent files search view count", ex);
+            logger.log(Level.SEVERE, "Error getting recent files search view count", ex); //NON-NLS
             return 0;
         }
     }

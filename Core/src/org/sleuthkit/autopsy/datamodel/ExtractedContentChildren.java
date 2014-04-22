@@ -71,7 +71,7 @@ class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_
                     });
             list.addAll(inUse);
         } catch (TskCoreException ex) {
-            Logger.getLogger(ExtractedContentChildren.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage());
+            Logger.getLogger(ExtractedContentChildren.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
             return false;
         }
         return true;

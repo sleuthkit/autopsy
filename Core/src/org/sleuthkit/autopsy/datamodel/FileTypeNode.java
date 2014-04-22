@@ -45,7 +45,7 @@ public class FileTypeNode extends DisplayableItemNode {
         //final long count = getChildren().getNodesCount(true);
         super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
 
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
     }
 
     @Override

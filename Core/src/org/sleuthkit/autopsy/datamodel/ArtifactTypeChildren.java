@@ -49,7 +49,7 @@ class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
             list.addAll(arts);
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeChildren.class.getName())
-                    .log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex);
+                    .log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
         }
         return true;
     }

@@ -41,7 +41,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      * @return short name for the Volume
      */
     static String nameForVolume(Volume vol) {
-        return "vol" + Long.toString(vol.getAddr());
+        return "vol" + Long.toString(vol.getAddr()); //NON-NLS
     }
 
     /**
@@ -58,7 +58,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
         this.setDisplayName(tempVolName);
 
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
     }
 
     /**
