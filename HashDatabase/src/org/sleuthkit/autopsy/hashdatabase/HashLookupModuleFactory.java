@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
  * A factory that creates file ingest modules that do hash database lookups.
@@ -98,7 +98,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         HashLookupSettingsPanel globalSettingsPanel = new HashLookupSettingsPanel();
         globalSettingsPanel.load();
         return globalSettingsPanel;

@@ -325,7 +325,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
     static private class IngestModuleModel {
 
         private final IngestModuleTemplate moduleTemplate;
-        private IngestModuleGlobalSetttingsPanel globalSettingsPanel = null;
+        private IngestModuleGlobalSettingsPanel globalSettingsPanel = null;
         private IngestModuleIngestJobSettingsPanel moduleSettingsPanel = null;
 
         IngestModuleModel(IngestModuleTemplate moduleTemplate) {
@@ -370,7 +370,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             return moduleTemplate.hasGlobalSettingsPanel();
         }
 
-        IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+        IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
             return globalSettingsPanel;
         }
 

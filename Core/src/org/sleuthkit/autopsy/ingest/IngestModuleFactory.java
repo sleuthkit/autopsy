@@ -113,7 +113,7 @@ public interface IngestModuleFactory {
      *
      * @return A global settings panel.
      */
-    IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel();
+    IngestModuleGlobalSettingsPanel getGlobalSettingsPanel();
 
     /**
      * Gets the default per ingest job settings for instances of the family of
