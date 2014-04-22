@@ -20,12 +20,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
  * Global options panel for keyword searching.
  */
-final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
+final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private KeywordSearchGlobalListSettingsPanel listsPanel;
     private KeywordSearchGlobalLanguageSettingsPanel languagesPanel;

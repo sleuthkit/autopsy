@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -52,10 +51,35 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     private final FileExtMismatchDetectorModuleSettings settings;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     private long jobId;
-    private static AtomicLong processTime = new AtomicLong(0);
-    private static AtomicLong numFiles = new AtomicLong(0);
+    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();    
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
+    private static class IngestJobTotals {
+        private long processTime = 0;
+        private long numFiles = 0;
+    }
+    
+    private static synchronized void initTotals(long ingestJobId) {
+        totalsForIngestJobs.put(ingestJobId, new IngestJobTotals());
+    }
+ 
+    /**
+     * Update the match time total and increment num of files for this job
+     * @param ingestJobId  
+     * @param matchTimeInc amount of time to add
+     */
+    private static synchronized void addToTotals(long ingestJobId, long processTimeInc) {
+        IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(ingestJobId);
+        if (ingestJobTotals == null) {
+            ingestJobTotals = new IngestJobTotals();
+            totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
+        }
+        
+        ingestJobTotals.processTime += processTimeInc;
+        ingestJobTotals.numFiles++;
+        totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
+    }    
+    
     FileExtMismatchIngestModule(FileExtMismatchDetectorModuleSettings settings) {
         this.settings = settings;
     }
@@ -64,6 +88,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
+
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
     }
@@ -87,8 +112,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
 
             boolean mismatchDetected = compareSigTypeToExt(abstractFile);
 
-            processTime.getAndAdd(System.currentTimeMillis() - startTime);
-            numFiles.getAndIncrement();
+            addToTotals(jobId, System.currentTimeMillis() - startTime);
 
             if (mismatchDetected) {
                 // add artifact               
@@ -155,17 +179,20 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to post the summary msg from the last module per job
-        if (refCounter.decrementAndGet(jobId) == 0) {       
+        if (refCounter.decrementAndGet(jobId) == 0) {    
+            IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
+
             StringBuilder detailsSb = new StringBuilder();
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
             detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
             detailsSb.append("<tr><td>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
-                    .append("</td><td>").append(processTime.get()).append("</td></tr>\n"); //NON-NLS
+                    .append("</td><td>").append(jobTotals.processTime).append("</td></tr>\n"); //NON-NLS
             detailsSb.append("<tr><td>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
-                    .append("</td><td>").append(numFiles.get()).append("</td></tr>\n"); //NON-NLS
+                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
             detailsSb.append("</table>"); //NON-NLS
+
             services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "FileExtMismatchIngestModule.complete.svcMsg.text"),

@@ -61,10 +61,6 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
         long numFiles = 0;
     }
     
-    private static synchronized void initTotals(long ingestJobId) {
-        totalsForIngestJobs.put(ingestJobId, new IngestJobTotals());
-    }
- 
     /**
      * Update the match time total and increment num of files for this job
      * @param ingestJobId  
@@ -72,6 +68,11 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
      */
     private static synchronized void addToTotals(long ingestJobId, long matchTimeInc) {
         IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(ingestJobId);
+        if (ingestJobTotals == null) {
+            ingestJobTotals = new IngestJobTotals();
+            totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
+        }        
+        
         ingestJobTotals.matchTime += matchTimeInc;
         ingestJobTotals.numFiles++;
         totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
@@ -84,9 +85,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        if (refCounter.incrementAndGet(jobId) == 1) {
-            initTotals(jobId);
-        }        
+        refCounter.incrementAndGet(jobId);
     }    
     
     @Override
