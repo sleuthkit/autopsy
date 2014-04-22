@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -88,7 +89,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
     private Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
-
+    static private final List<String> supportedMimes = Arrays.asList();
     /**
      * Creates new form MediaViewVideoPanel
      */
@@ -801,5 +802,10 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     @Override
     public String[] getExtensions() {
         return EXTENSIONS;
+    }
+
+    @Override
+    public List<String> getMimeTypes() {
+        return supportedMimes;
     }
 }

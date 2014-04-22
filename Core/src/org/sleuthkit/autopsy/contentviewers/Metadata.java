@@ -100,23 +100,23 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
     }
     
     private void setText(String str) {
-        jTextPane1.setText("<html><body>" + str + "</body></html>");
+        jTextPane1.setText("<html><body>" + str + "</body></html>"); //NON-NLS
     }
     
     private void startTable(StringBuilder sb) {
-        sb.append("<table>");
+        sb.append("<table>"); //NON-NLS
     }
     
     private void endTable(StringBuilder sb) {
-        sb.append("</table>");
+        sb.append("</table>"); //NON-NLS
     }
     
     private void addRow(StringBuilder sb, String key, String value) {
-        sb.append("<tr><td>");
+        sb.append("<tr><td>"); //NON-NLS
         sb.append(key);
-        sb.append("</td><td>");
+        sb.append("</td><td>"); //NON-NLS
         sb.append(value);
-        sb.append("</td></tr>");
+        sb.append("</td></tr>"); //NON-NLS
     }
     
     @Override

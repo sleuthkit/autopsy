@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 public final class CaseOpenAction implements ActionListener {
 
     private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
-    private static final String PROP_BASECASE = "LBL_BaseCase_PATH";
+    private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private final JFileChooser fc = new JFileChooser();
     private FileFilter autFilter;
 
@@ -59,7 +59,7 @@ public final class CaseOpenAction implements ActionListener {
         fc.setFileFilter(autFilter);
         try {
             if (ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE) != null) {
-                fc.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE)));
+                fc.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
             }
         } catch (Exception e) {
         }
@@ -96,7 +96,7 @@ public final class CaseOpenAction implements ActionListener {
                     StartupWindowProvider.getInstance().close();
                 } catch (Exception ex) {
                     // no need to show the error message to the user.
-                    logger.log(Level.WARNING, "Error closing startup window.", ex);
+                    logger.log(Level.WARNING, "Error closing startup window.", ex); //NON-NLS
                 }
                 try {
                     Case.open(path); // open the case
@@ -108,7 +108,7 @@ public final class CaseOpenAction implements ActionListener {
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "CaseOpenAction.msgDlg.cantOpenCase.title"),
                                                   JOptionPane.ERROR_MESSAGE);
-                    logger.log(Level.WARNING, "Error opening case in folder " + path, ex);
+                    logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS
 
                     StartupWindowProvider.getInstance().open();
                 }

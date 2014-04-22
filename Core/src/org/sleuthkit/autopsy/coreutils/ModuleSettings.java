@@ -38,8 +38,8 @@ public class ModuleSettings {
 
     // The directory where the properties file is located
     private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
-    public static final String DEFAULT_CONTEXT = "GeneralContext";
-    public static final String MAIN_SETTINGS = "Case";
+    public static final String DEFAULT_CONTEXT = "GeneralContext"; //NON-NLS
+    public static final String MAIN_SETTINGS = "Case"; //NON-NLS
 
     /** the constructor */
     private ModuleSettings() {}
@@ -64,7 +64,7 @@ public class ModuleSettings {
             fos.close();
             }
             catch(IOException e){
-                Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Was not able to create a new properties file.", e);
+                Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Was not able to create a new properties file.", e); //NON-NLS
                 return false;
             }
             return true;
@@ -104,7 +104,7 @@ public class ModuleSettings {
      */
     private static String getPropertyPath(String moduleName){
         if(configExists(moduleName)){
-            return moduleDirPath + File.separator + moduleName + ".properties";
+            return moduleDirPath + File.separator + moduleName + ".properties"; //NON-NLS
         }
         
         return null;
@@ -120,7 +120,7 @@ public class ModuleSettings {
     public static String getConfigSetting(String moduleName, String settingName) {
         if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]"); //NON-NLS NON-NLS
         }
 
         try {
@@ -128,7 +128,7 @@ public class ModuleSettings {
 
             return props.getProperty(settingName);
         } catch (IOException e) {
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e); //NON-NLS
             return null;
         }
 
@@ -145,7 +145,7 @@ public class ModuleSettings {
 
         if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]"); //NON-NLS NON-NLS
         }
         try {
             Properties props = fetchProperties(moduleName);
@@ -159,7 +159,7 @@ public class ModuleSettings {
 
             return map;
         } catch (IOException e) {
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e); //NON-NLS
             return null;
         }
     }
@@ -172,7 +172,7 @@ public class ModuleSettings {
     public static synchronized void setConfigSettings(String moduleName, Map<String, String> settings) {
         if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]"); //NON-NLS NON-NLS
         }
         try {
             Properties props = fetchProperties(moduleName);
@@ -183,10 +183,10 @@ public class ModuleSettings {
 
             File path = new File(getPropertyPath(moduleName));
             FileOutputStream fos = new FileOutputStream(path);
-            props.store(fos, "Changed config settings(batch)");
+            props.store(fos, "Changed config settings(batch)"); //NON-NLS
             fos.close();
         } catch (IOException e) {
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e); //NON-NLS NON-NLS NON-NLS
         }
     }
     
@@ -199,7 +199,7 @@ public class ModuleSettings {
     public static synchronized void setConfigSetting(String moduleName, String settingName, String settingVal) {
         if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]"); //NON-NLS NON-NLS
         }
 
         try {
@@ -209,10 +209,10 @@ public class ModuleSettings {
 
             File path = new File(getPropertyPath(moduleName));
             FileOutputStream fos = new FileOutputStream(path);
-            props.store(fos, "Changed config settings(single)");
+            props.store(fos, "Changed config settings(single)"); //NON-NLS
             fos.close();
         } catch (IOException e) {
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e); //NON-NLS NON-NLS NON-NLS
         }
     }
 
@@ -229,12 +229,12 @@ public class ModuleSettings {
             props.remove(key);
             File path = new File(getPropertyPath(moduleName));
             FileOutputStream fos = new FileOutputStream(path);
-            props.store(fos, "Removed " + key);
+            props.store(fos, "Removed " + key); //NON-NLS
             fos.close();
             }
         }
         catch(IOException e ){
-            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not remove property from file, file not found", e);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not remove property from file, file not found", e); //NON-NLS
         }
     }
     

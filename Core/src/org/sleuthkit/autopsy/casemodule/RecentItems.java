@@ -82,7 +82,7 @@ class RecentItems implements ActionListener {
             try {
                 Case.open(casePath); // open the case
             } catch (CaseActionException ex) {
-                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex);
+                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
             }
         }
     }

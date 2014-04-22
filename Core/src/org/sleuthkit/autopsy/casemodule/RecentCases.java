@@ -47,8 +47,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  final class RecentCases extends CallableSystemAction implements Presenter.Menu {
 
     static final int LENGTH = 5;
-    static final String NAME_PROP_KEY = "LBL_RecentCase_Name";
-    static final String PATH_PROP_KEY = "LBL_RecentCase_Path";
+    static final String NAME_PROP_KEY = "LBL_RecentCase_Name"; //NON-NLS
+    static final String PATH_PROP_KEY = "LBL_RecentCase_Path"; //NON-NLS
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
 
     private final static RecentCases INSTANCE = new RecentCases();
@@ -263,7 +263,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             // clear the properties file
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not clear the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not clear the properties file.", ex); //NON-NLS
         }
     }
 
@@ -295,7 +295,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex); //NON-NLS
         }
     }
 
@@ -322,7 +322,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex); //NON-NLS
         }
     }
 
@@ -354,7 +354,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex); //NON-NLS
         }
     }
 

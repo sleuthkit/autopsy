@@ -64,14 +64,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
+        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
         //stderr redirect
-        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
+        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
         //stdout redirect
-        outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT");
+        outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT"); //NON-NLS
 
         //start redurectors
         errorStringRedirect.start();
@@ -79,7 +79,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
         //wait for process to complete and capture error core
         final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
+        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
 
         errorStringRedirect.stopRun();
         errorStringRedirect = null;
@@ -119,12 +119,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
+        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
         //stderr redirect
-        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
+        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
         //stdout redirect
         outputWriterRedirect = new ExecUtil.StreamToWriterRedirect(proc.getInputStream(), stdoutWriter);
 
@@ -134,7 +134,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
         //wait for process to complete and capture error core
         final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
+        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
 
         //gc process with its streams
         //proc = null;
@@ -144,7 +144,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      * Interrupt the running process and stop its stream redirect threads
      */
     public synchronized void stop() {
-        logger.log(Level.INFO, "Stopping Execution of: " + command);
+        logger.log(Level.INFO, "Stopping Execution of: " + command); //NON-NLS
 
         if (errorStringRedirect != null) {
             errorStringRedirect.stopRun();
@@ -204,13 +204,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     this.output.append(line).append(SEP);
                 }
             } catch (final IOException ex) {
-                logger.log(Level.WARNING, "Error redirecting stream to string buffer", ex);
+                logger.log(Level.WARNING, "Error redirecting stream to string buffer", ex); //NON-NLS
             } finally {
                 if (br != null) {
                     try {
                         br.close();
                     } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Error closing stream reader", ex);
+                        logger.log(Level.SEVERE, "Error closing stream reader", ex); //NON-NLS
                     }
                 }
             }
@@ -275,7 +275,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     writer.append(line).append(SEP);
                 }
             } catch (final IOException ex) {
-                logger.log(Level.SEVERE, "Error reading output and writing to file writer", ex);
+                logger.log(Level.SEVERE, "Error reading output and writing to file writer", ex); //NON-NLS
             } finally {
                 try {
                     if (doRun) {
@@ -286,7 +286,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     }
 
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error flushing file writer", ex);
+                    logger.log(Level.SEVERE, "Error flushing file writer", ex); //NON-NLS
                 }
             }
         }
