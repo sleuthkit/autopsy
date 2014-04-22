@@ -75,7 +75,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                     final int numChildren = file.getChildrenCount();
                     name = name + " (" + numChildren + ")";
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex);
+                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
                 }
 
             }

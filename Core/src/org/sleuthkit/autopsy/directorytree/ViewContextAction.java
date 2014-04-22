@@ -122,7 +122,7 @@ public class ViewContextAction extends AbstractAction {
                         dirTreeExplorerManager.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
                     }
                 } catch (PropertyVetoException ex) {
-                    logger.log(Level.WARNING, "Couldn't set selected node", ex);
+                    logger.log(Level.WARNING, "Couldn't set selected node", ex); //NON-NLS
                 }
 
                 
@@ -173,7 +173,7 @@ public class ViewContextAction extends AbstractAction {
             try {
                 nodesDisplayedInDataResultViewer = get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Failed to get nodes in selection worker.", ex);
+                logger.log(Level.WARNING, "Failed to get nodes in selection worker.", ex); //NON-NLS
                 return;
             } 
             // catch and ignore if we were cancelled
@@ -224,7 +224,7 @@ public class ViewContextAction extends AbstractAction {
             try {
                 parent = content.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content);
+                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content); //NON-NLS
             }
             return parent == null ? ret : parent.accept(this);
         }
@@ -236,7 +236,7 @@ public class ViewContextAction extends AbstractAction {
             try {
                 parent = content.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content);
+                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content); //NON-NLS
             }
             return parent == null ? ret : parent.accept(this);
         }

@@ -90,7 +90,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * path to the icon used by the component and its open action
      */
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "DirectoryTreeTopComponent";
+    private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private PropertyChangeSupport pcs;
     // for error handling
     private JPanel caller;
@@ -161,32 +161,32 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         jScrollPane1.setBorder(null);
 
-        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back.png"))); // NOI18N
+        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(backButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.backButton.text")); // NOI18N
         backButton.setBorderPainted(false);
         backButton.setContentAreaFilled(false);
-        backButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled.png"))); // NOI18N
+        backButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled.png"))); // NOI18N NON-NLS
         backButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         backButton.setMaximumSize(new java.awt.Dimension(55, 100));
         backButton.setMinimumSize(new java.awt.Dimension(5, 5));
         backButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_hover.png"))); // NOI18N
+        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_hover.png"))); // NOI18N NON-NLS
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 backButtonActionPerformed(evt);
             }
         });
 
-        forwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward.png"))); // NOI18N
+        forwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(forwardButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.forwardButton.text")); // NOI18N
         forwardButton.setBorderPainted(false);
         forwardButton.setContentAreaFilled(false);
-        forwardButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled.png"))); // NOI18N
+        forwardButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled.png"))); // NOI18N NON-NLS
         forwardButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         forwardButton.setMaximumSize(new java.awt.Dimension(55, 100));
         forwardButton.setMinimumSize(new java.awt.Dimension(5, 5));
         forwardButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        forwardButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover.png"))); // NOI18N
+        forwardButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover.png"))); // NOI18N NON-NLS
         forwardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 forwardButtonActionPerformed(evt);
@@ -295,15 +295,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         TopComponent win = winManager.findTopComponent(PREFERRED_ID);
         if (win == null) {
             logger.warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
+                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system."); //NON-NLS
             return getDefault();
         }
         if (win instanceof DirectoryTreeTopComponent) {
             return (DirectoryTreeTopComponent) win;
         }
         logger.warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
+                "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
+                + "' ID. That is a potential source of errors and unexpected behavior."); //NON-NLS
         return getDefault();
     }
 
@@ -412,7 +412,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         try {
                             em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
                         } catch (Exception ex) {
-                            logger.log(Level.SEVERE, "Error setting default selected node.", ex);
+                            logger.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
                         }
                     }
 
@@ -667,7 +667,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             try {
                                 displayName = content.getUniquePath();
                             } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode);
+                                logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode); //NON-NLS
                             }
                         } else if (originNode.getLookup().lookup(String.class) != null) {
                             displayName = originNode.getLookup().lookup(String.class);
@@ -783,13 +783,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children rootChildren = em.getRootContext().getChildren();
         Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
         if (dataSourcesFilterNode == null) {
-            logger.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree");
+            logger.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
             return;
         }
         OriginalNode imagesNodeOrig = dataSourcesFilterNode.getLookup().lookup(OriginalNode.class);
 
         if (imagesNodeOrig == null) {
-            logger.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree");
+            logger.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree"); //NON-NLS
             return;
         }
 
@@ -822,7 +822,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Node results = dirChilds.findChild(ResultsNode.NAME);
 
         if (results == null) {
-            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree");
+            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree"); //NON-NLS
             return;
         }
         OriginalNode original = results.getLookup().lookup(OriginalNode.class);
@@ -888,7 +888,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                                 for (int i = 0; i < previouslySelectedNodePath.length; ++i) {
                                     nodePath.append(previouslySelectedNodePath[i]).append("/");
                                 }
-                                logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex);
+                                logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex); //NON-NLS
                                 break;
                             }
                         }
@@ -903,7 +903,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         try {
                             em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
                         } catch (PropertyVetoException ex) {
-                            logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex);
+                            logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex); //NON-NLS
                         }
                     }
                 }
@@ -942,7 +942,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
                 treeNode = hashsetRootChilds.findChild(setName);
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+                logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
             Node keywordRootNode = resultsChilds.findChild(type.getLabel());
@@ -963,7 +963,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Children listChildren = listNode.getChildren();
                 treeNode = listChildren.findChild(keywordName);
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+                logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
                 || type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT)) {
@@ -980,7 +980,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
                 treeNode = interestingItemsRootChildren.findChild(setName);
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+                logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
             Node extractedContent = resultsChilds.findChild(ExtractedContentNode.NAME);
@@ -990,7 +990,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         try {
             em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
-            logger.log(Level.WARNING, "Property Veto: ", ex);
+            logger.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
         }
 
         // Another thread is needed because we have to wait for dataResult to populate
@@ -1029,7 +1029,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         try {
             firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e);
+            logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
                     NbBundle.getMessage(this.getClass(),
                     "DirectoryTreeTopComponent.moduleErr.msg"),

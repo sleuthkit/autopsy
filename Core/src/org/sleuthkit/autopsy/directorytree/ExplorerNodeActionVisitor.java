@@ -331,15 +331,15 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             popUpWindow.setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
             String[] columnNames = new String[]{
-                "fs_id",
-                "img_offset",
-                "par_id",
-                "fs_type",
-                "block_size",
-                "block_count",
-                "root_inum",
-                "first_inum",
-                "last_inum"
+                "fs_id", //NON-NLS
+                "img_offset", //NON-NLS
+                "par_id", //NON-NLS
+                "fs_type", //NON-NLS
+                "block_size", //NON-NLS
+                "block_count", //NON-NLS
+                "root_inum", //NON-NLS
+                "first_inum", //NON-NLS
+                "last_inum" //NON-NLS
             };
 
             Object[][] rowValues = new Object[1][9];
@@ -394,7 +394,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
                 popUpWindow.add(fsdPanel);
             } catch (Exception ex) {
-                Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex);
+                Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex); //NON-NLS
             }
 
             popUpWindow.pack();
