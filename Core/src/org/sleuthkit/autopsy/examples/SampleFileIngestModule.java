@@ -97,10 +97,6 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
                 }
             }
         }
-
-        // This method is thread-safe with per ingest job reference counted
-        // management of shared data.
-        initBlackboardPostCount(context.getJobId());
     }
 
     @Override
@@ -168,15 +164,15 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
         reportBlackboardPostCount(context.getJobId());
     }
 
-    synchronized static void initBlackboardPostCount(long ingestJobId) {
-        Long refCount = refCounter.incrementAndGet(ingestJobId);
-        if (refCount == 1) {
-            artifactCountsForIngestJobs.put(ingestJobId, 0L);
-        }
-    }
-
     synchronized static void addToBlackboardPostCount(long ingestJobId, long countToAdd) {
         Long fileCount = artifactCountsForIngestJobs.get(ingestJobId);
+        
+        // Ensures that this job has an entry
+        if (fileCount == null) {
+            fileCount = 0L;
+            artifactCountsForIngestJobs.put(ingestJobId, fileCount);
+        }
+        
         fileCount += countToAdd;
         artifactCountsForIngestJobs.put(ingestJobId, fileCount);
     }
