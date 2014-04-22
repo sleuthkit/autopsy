@@ -112,7 +112,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
+        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" })); //NON-NLS
 
         sizeTextField.setValue(0);
         sizeTextField.addMouseListener(new java.awt.event.MouseAdapter() {

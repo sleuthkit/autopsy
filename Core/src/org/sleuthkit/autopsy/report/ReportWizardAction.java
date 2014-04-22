@@ -71,11 +71,11 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             @SuppressWarnings("unchecked")
-            ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"), 
-                    (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"),
-                    (Map<FileReportModule, Boolean>)wiz.getProperty("fileModuleStates"));
-            generator.generateTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates"));
-            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>)wiz.getProperty("fileReportOptions"));
+            ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"),  //NON-NLS
+                    (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"), //NON-NLS
+                    (Map<FileReportModule, Boolean>)wiz.getProperty("fileModuleStates")); //NON-NLS
+            generator.generateTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates")); //NON-NLS
+            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>)wiz.getProperty("fileReportOptions")); //NON-NLS
             generator.generateGeneralReports();
             generator.displayProgressPanels();
         }        
@@ -96,7 +96,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
                         if (!exists) {
                             boolean reportCreate = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).mkdirs();
                             if (!reportCreate) {
-                                logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
+                                logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist."); //NON-NLS
                             }
                         }
                     }
@@ -140,7 +140,7 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("images/btn_icon_generate_report.png"));
+        ImageIcon icon = new ImageIcon(getClass().getResource("images/btn_icon_generate_report.png")); //NON-NLS
         toolbarButton.setIcon(icon);
         toolbarButton.setText(NbBundle.getMessage(this.getClass(), "ReportWizardAction.toolBarButton.text"));
         return toolbarButton;

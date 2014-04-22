@@ -54,7 +54,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         // set name, display name, and icon
         String imgName = nameForImage(img);
         this.setDisplayName(imgName);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg"); //NON-NLS
     }
 
     /**

@@ -150,14 +150,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex);
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
             hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
 
         try {
             indexPathLabel.setText(shortenPath(db.getIndexPath()));
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex);
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
             indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
 
@@ -195,7 +195,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 indexButton.setEnabled(true);
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex);
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex); //NON-NLS
             hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
             hashDbIndexStatusLabel.setForeground(Color.red);
             indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
@@ -246,7 +246,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     unindexed.add(hashSet);
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
             }
         }
 
@@ -393,7 +393,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 return hashSets.get(rowIndex).hasIndex();
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex);
+                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
                 return false;
             }
         }
@@ -483,13 +483,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel6.text")); // NOI18N
 
-        jButton3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jButton3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton3.text")); // NOI18N
 
         setMinimumSize(new java.awt.Dimension(700, 500));
         setPreferredSize(new java.awt.Dimension(700, 500));
 
-        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/warning16.png"))); // NOI18N
+        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/warning16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.ingestWarningLabel.text")); // NOI18N
 
         hashSetTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -509,7 +509,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         });
         jScrollPane1.setViewportView(hashSetTable);
 
-        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/delete16.png"))); // NOI18N
+        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/delete16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.deleteDatabaseButton.text")); // NOI18N
         deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         deleteDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
@@ -520,7 +520,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        importDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/import16.png"))); // NOI18N
+        importDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/import16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(importDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.importDatabaseButton.text")); // NOI18N
         importDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         importDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
@@ -568,7 +568,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.optionsLabel.text")); // NOI18N
 
-        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N
+        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/new16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(createDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.text")); // NOI18N
         createDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         createDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));

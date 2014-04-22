@@ -44,7 +44,7 @@ public class Version {
 
         versionProperties = new Properties();
         try {
-            InputStream inputStream = Version.class.getResourceAsStream("Version.properties");
+            InputStream inputStream = Version.class.getResourceAsStream("Version.properties"); //NON-NLS
             versionProperties.load(inputStream);
         } catch (IOException e) {
             versionProperties = null;

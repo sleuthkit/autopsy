@@ -122,7 +122,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
             }
             return ProcessResult.OK;
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error matching file signature", ex);
+            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
     }
@@ -148,7 +148,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
             for (BlackboardAttribute attribute : attributes) {
                 String currActualSigType = attribute.getValueString();
                 if (settings.skipFilesWithTextPlainMimeType()) {
-                    if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) {
+                    if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
                         return false;
                     }
                 }
@@ -170,7 +170,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex);
+            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
         }
 
         return false;
@@ -183,15 +183,16 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
             IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
 
             StringBuilder detailsSb = new StringBuilder();
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-            detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>");
-            detailsSb.append("<tr><td>").append(
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+            detailsSb.append("<tr><td>").append(FileExtMismatchDetectorModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
+            detailsSb.append("<tr><td>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalProcTime"))
-                    .append("</td><td>").append(jobTotals.processTime).append("</td></tr>\n");
-            detailsSb.append("<tr><td>").append(
+                    .append("</td><td>").append(jobTotals.processTime).append("</td></tr>\n"); //NON-NLS
+            detailsSb.append("<tr><td>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchIngestModule.complete.totalFiles"))
-                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n");
-            detailsSb.append("</table>");
+                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
+            detailsSb.append("</table>"); //NON-NLS
+
             services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "FileExtMismatchIngestModule.complete.svcMsg.text"),

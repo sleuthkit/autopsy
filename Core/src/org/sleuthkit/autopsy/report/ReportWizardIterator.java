@@ -134,8 +134,8 @@ import org.openide.util.NbPreferences;
             // Update path through configuration panels
             boolean generalModule, tableModule;
             // These preferences are set in ReportWizardPanel1.storeSettings()
-            generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true);
-            tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true);
+            generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true); //NON-NLS
+            tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true); //NON-NLS
             enableConfigPanels(generalModule, tableModule);
         }
         

@@ -70,29 +70,29 @@ public class InterestingHits implements AutopsyVisitableItem {
         try {
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = artType.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + setNameId
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId;
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
             rs = skCase.runQuery(query);
             while (rs.next()) {
-                String value = rs.getString("value_text");
-                long artifactId = rs.getLong("artifact_id");
+                String value = rs.getString("value_text"); //NON-NLS
+                long artifactId = rs.getLong("artifact_id"); //NON-NLS
                 if (!interestingItemsMap.containsKey(value)) {
                     interestingItemsMap.put(value, new HashSet<Long>());
                 }
                 interestingItemsMap.get(value).add(artifactId);
             }
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
         }
         finally {
             if (rs != null) {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                   logger.log(Level.WARNING, "Error closing result set after getting artifacts", ex);
+                   logger.log(Level.WARNING, "Error closing result set after getting artifacts", ex); //NON-NLS
                 }
             }
         }
@@ -112,7 +112,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super(Children.create(new InterestingHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(INTERESTING_ITEMS);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
             initArtifacts();
         }
 
@@ -164,7 +164,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super(Children.create(new InterestingHitsSetChildren(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
         }
 
         @Override
@@ -210,7 +210,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                 try {
                     list.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
-                    logger.log(Level.WARNING, "TSK Exception occurred", ex);
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
                 }
             }
             return true;

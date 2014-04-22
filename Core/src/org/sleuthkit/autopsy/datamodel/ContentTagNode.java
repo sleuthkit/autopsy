@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class ContentTagNode extends DisplayableItemNode {
 
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png"; //NON-NLS
     private final ContentTag tag;
 
     public ContentTagNode(ContentTag tag) {
@@ -66,7 +66,7 @@ class ContentTagNode extends DisplayableItemNode {
         try {
             contentPath = tag.getContent().getUniquePath();
         } catch (TskCoreException ex) {
-            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex); //NON-NLS
             contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
         }
         properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.name"),

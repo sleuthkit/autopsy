@@ -151,9 +151,9 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        caseName = (String) settings.getProperty("caseName");
-        caseDir = (String) settings.getProperty("caseParentDir");
-        createdDirectory = (String) settings.getProperty("createdDirectory");
+        caseName = (String) settings.getProperty("caseName"); //NON-NLS
+        caseDir = (String) settings.getProperty("caseParentDir"); //NON-NLS
+        createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
     }
 
     /**

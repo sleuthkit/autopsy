@@ -72,7 +72,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"};
+        String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
         fileChooser.setFileFilter(filter);
@@ -254,13 +254,13 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 selectedFilePath = databaseFile.getCanonicalPath();
                 databasePathTextField.setText(shortenPath(selectedFilePath));
                 hashSetNameTextField.setText(FilenameUtils.removeExtension(databaseFile.getName()));
-                if (hashSetNameTextField.getText().toLowerCase().contains("nsrl")) {
+                if (hashSetNameTextField.getText().toLowerCase().contains("nsrl")) { //NON-NLS
                     knownRadioButton.setSelected(true);
                     knownRadioButtonActionPerformed(null);
                 }                
             } 
             catch (IOException ex) {
-                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex);
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(this,
                                               NbBundle.getMessage(this.getClass(),
                                                                         "HashDbImportDatabaseDialog.failedToGetDbPathMsg"));

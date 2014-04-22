@@ -50,7 +50,7 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
 
     @Override
     protected Object doInBackground() throws Exception {
-        logger.log(Level.INFO, "Starting background processing for file search by MD5 hash.");
+        logger.log(Level.INFO, "Starting background processing for file search by MD5 hash."); //NON-NLS
             
         // Setup progress bar
         final String displayName = NbBundle.getMessage(this.getClass(), "HashDbSearchThread.name.searching");
@@ -70,7 +70,7 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
         
         // Do the querying
         map = HashDbSearcher.findFilesBymd5(hashes, progress, this);
-        logger.log(Level.INFO, "Done background processing");
+        logger.log(Level.INFO, "Done background processing"); //NON-NLS
         
         return null;
     }
@@ -80,15 +80,15 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
         try {
             super.get(); //block and get all exceptions thrown while doInBackground()
         } catch (CancellationException ex) {
-            logger.log(Level.INFO, "File search by MD5 hash was canceled.");
+            logger.log(Level.INFO, "File search by MD5 hash was canceled."); //NON-NLS
         } catch (InterruptedException ex) {
-            logger.log(Level.INFO, "File search by MD5 hash was interrupted.");
+            logger.log(Level.INFO, "File search by MD5 hash was interrupted."); //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Fatal error during file search by MD5 hash.", ex);
+            logger.log(Level.SEVERE, "Fatal error during file search by MD5 hash.", ex); //NON-NLS
         } finally {
             progress.finish();
             if (!this.isCancelled()) {
-                logger.log(Level.INFO, "File search by MD5 hash completed without cancellation.");
+                logger.log(Level.INFO, "File search by MD5 hash completed without cancellation."); //NON-NLS
                 // If its a right click action, we are given an FsContent which
                 // is the file right clicked, so we can remove that from the search
                 if(file!=null) {
@@ -109,7 +109,7 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
                 HashDbSearchManager man = new HashDbSearchManager(map);
                 man.execute();
             } else {
-                logger.log(Level.INFO, "File search by MD5 hash was canceled.");
+                logger.log(Level.INFO, "File search by MD5 hash was canceled."); //NON-NLS
             }
         }
     }

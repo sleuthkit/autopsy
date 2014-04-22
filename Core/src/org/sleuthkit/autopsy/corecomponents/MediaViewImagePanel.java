@@ -150,7 +150,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                     //original input stream
                     BufferedImage bi = ImageIO.read(inputStream);
                     if (bi == null) {
-                        logger.log(Level.WARNING, "Could image reader not found for file: " + fileName);
+                        logger.log(Level.WARNING, "Could image reader not found for file: " + fileName); //NON-NLS
                         return;
                     }
                     //scale image using Scalr
@@ -158,10 +158,10 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                     //convert from awt imageto fx image
                     fxImage = SwingFXUtils.toFXImage(biScaled, null);
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex);
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex); //NON-NLS
                     return;
                 } catch (OutOfMemoryError ex) {
-                    logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex);
+                    logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex); //NON-NLS
                     MessageNotifyUtil.Notify.warn(
                             NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
                             ex.getMessage());
@@ -170,12 +170,12 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                     try {
                         inputStream.close();
                     } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not close input stream after loading image in media view: " + fileName, ex);
+                        logger.log(Level.WARNING, "Could not close input stream after loading image in media view: " + fileName, ex); //NON-NLS
                     }
                 }
 
                 if (fxImage == null || fxImage.isError()) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName);
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName); //NON-NLS
                     return;
                 }
 
