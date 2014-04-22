@@ -41,12 +41,12 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public final class ReportBranding implements ReportBrandingProviderI {
 
     //property names
-    private static final String GENERATOR_LOGO_PATH_PROP = "GeneratorLogoPath";
-    private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath";
-    private static final String REPORT_TITLE_PROP = "ReportTitle";
-    private static final String REPORT_FOOTER_PROP = "ReportFooter";
+    private static final String GENERATOR_LOGO_PATH_PROP = "GeneratorLogoPath"; //NON-NLS
+    private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
+    private static final String REPORT_TITLE_PROP = "ReportTitle"; //NON-NLS
+    private static final String REPORT_FOOTER_PROP = "ReportFooter"; //NON-NLS
     //default settings
-    private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png";
+    private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png"; //NON-NLS
     private static final String DEFAULT_REPORT_TITLE = NbBundle
             .getMessage(ReportBranding.class, "ReportBranding.defaultReportTitle.text");
     private static final String DEFAULT_REPORT_FOOTER = NbBundle
@@ -61,11 +61,11 @@ public final class ReportBranding implements ReportBrandingProviderI {
         synchronized (ReportBranding.class) {
 
             reportsBrandingDir = PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
-                    + "branding";
+                    + "branding"; //NON-NLS
             File brandingDir = new File(reportsBrandingDir);
             if (!brandingDir.exists()) {
                 if (!brandingDir.mkdirs()) {
-                    logger.log(Level.SEVERE, "Error creating report branding dir for the case, will use defaults");
+                    logger.log(Level.SEVERE, "Error creating report branding dir for the case, will use defaults"); //NON-NLS
                     //TODO use defaults
                 }
             }
@@ -86,15 +86,15 @@ public final class ReportBranding implements ReportBrandingProviderI {
             curPath = ModuleSettings.getConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP);
             if (curPath == null || (!curPath.isEmpty() && !new File(curPath).canRead() ) ) {
                 //use default
-                logger.log(Level.INFO, "Using default report branding for generator logo");
-                curPath = reportsBrandingDir + File.separator + "logo.png";
+                logger.log(Level.INFO, "Using default report branding for generator logo"); //NON-NLS
+                curPath = reportsBrandingDir + File.separator + "logo.png"; //NON-NLS
                 InputStream in = getClass().getResourceAsStream(DEFAULT_GENERATOR_LOGO);
                 OutputStream output = new FileOutputStream(new File(curPath));
                 FileUtil.copy(in, output);
                 ModuleSettings.setConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP, curPath);
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error extracting report branding resources for generator logo", e);
+            logger.log(Level.SEVERE, "Error extracting report branding resources for generator logo", e); //NON-NLS
         }
 
         return curPath;
@@ -113,7 +113,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         //if has been set, validate it's correct, if not set, return null
         if (curPath != null && new File(curPath).canRead() == false) {
             //use default
-            logger.log(Level.INFO, "Custom report branding for agency logo is not valid: " + curPath);
+            logger.log(Level.INFO, "Custom report branding for agency logo is not valid: " + curPath); //NON-NLS
             curPath = null;
         }
 
@@ -132,7 +132,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         curTitle = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_TITLE_PROP);
         if (curTitle == null || curTitle.isEmpty()) {
             //use default
-            logger.log(Level.INFO, "Using default report branding for report title");
+            logger.log(Level.INFO, "Using default report branding for report title"); //NON-NLS
             curTitle = DEFAULT_REPORT_TITLE;
             ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_TITLE_PROP, curTitle);
         }
@@ -152,7 +152,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         curFooter = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP);
         if (curFooter == null) {
             //use default
-            logger.log(Level.INFO, "Using default report branding for report footer");
+            logger.log(Level.INFO, "Using default report branding for report footer"); //NON-NLS
             curFooter = DEFAULT_REPORT_FOOTER;
             ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP, curFooter);
         }
