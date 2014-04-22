@@ -275,7 +275,7 @@ def replace_id(line, table):
     if (index != -1):
         # take the portion of the string between the open parenthesis and the comma (ie, the object id)
         obj_id = line[line.find('(') + 1 : line.find(',')]
-        # taks everything from the beginning of the string up to the opening
+        # takes everything from the beginning of the string up to the opening
         # parenthesis, the path associated with the object id, and everything after 
         # the first comma, and concactenate it
         newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
