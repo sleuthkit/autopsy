@@ -39,9 +39,9 @@ public class EscapeUtil {
      */
     public static String decodeURL(String url) {
         try {
-            return URLDecoder.decode(url, "UTF-8");
+            return URLDecoder.decode(url, "UTF-8"); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Could not decode URL " + url, ex);
+            logger.log(Level.SEVERE, "Could not decode URL " + url, ex); //NON-NLS
             //should not happen
             return "";
         }
@@ -55,9 +55,9 @@ public class EscapeUtil {
      */
     public static String encodeURL(String url) {
         try {
-            return URLEncoder.encode(url, "UTF-8");
+            return URLEncoder.encode(url, "UTF-8"); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Could not encode URL " + url, ex);
+            logger.log(Level.SEVERE, "Could not encode URL " + url, ex); //NON-NLS
             //should not happen
             return "";
         }

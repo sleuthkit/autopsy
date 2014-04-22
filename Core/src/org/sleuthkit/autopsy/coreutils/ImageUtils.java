@@ -53,7 +53,7 @@ public class ImageUtils {
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
-    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
+    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
     private static final List<String> SUPP_MIME_TYPES = Arrays.asList(ImageIO.getReaderMIMETypes());
     /**
@@ -90,7 +90,7 @@ public class ImageUtils {
             }
         } 
         catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex);
+            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
         }
         
         final String extension = f.getNameExtension();
@@ -130,7 +130,7 @@ public class ImageUtils {
                     icon = bicon;    
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error while reading image.", ex);
+                logger.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
                 icon = DEFAULT_ICON;
             }
         } else { // Make a new icon
@@ -208,10 +208,10 @@ public class ImageUtils {
                 if (f.exists()) {
                     f.delete();
                 }
-                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId()));
+                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId())); //NON-NLS
             }         
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
+            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
         }   
         return icon;        
     }
@@ -226,24 +226,24 @@ public class ImageUtils {
             inputStream = new ReadContentInputStream(content);
             BufferedImage bi = ImageIO.read(inputStream);
             if (bi == null) {
-                logger.log(Level.WARNING, "No image reader for file: " + content.getName());
+                logger.log(Level.WARNING, "No image reader for file: " + content.getName()); //NON-NLS
                 return null;
             }
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
 
             return biScaled;
         } catch (OutOfMemoryError e) {
-            logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e);
+            logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e); //NON-NLS
             return null;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e);
+            logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e); //NON-NLS
             return null;
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex);
+                    logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex); //NON-NLS
                 }
             }
 

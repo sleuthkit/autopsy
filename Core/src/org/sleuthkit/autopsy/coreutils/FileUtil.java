@@ -64,13 +64,13 @@ import org.openide.filesystems.FileObject;
         if (path.isFile()) { // If it's a file
             if (!path.delete()) {
                 sucess = false;
-                logger.log(Level.WARNING, "Failed to delete file {0}", path.getPath());
+                logger.log(Level.WARNING, "Failed to delete file {0}", path.getPath()); //NON-NLS
             }
         } else { // If it's a directory
             if (path.list().length == 0) { // If the dir is empty
                 if (!path.delete()) {
                     sucess = false;
-                    logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath());
+                    logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath()); //NON-NLS
                 }
             } else {
                 String files[] = path.list();
@@ -81,11 +81,11 @@ import org.openide.filesystems.FileObject;
                 if (path.list().length == 0) { // Delete the newly-empty dir
                     if (!path.delete()) {
                         sucess = false;
-                        logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath());
+                        logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath()); //NON-NLS
                     }
                 } else {
                     sucess = false;
-                    logger.log(Level.WARNING, "Directory {0} did not recursivly delete sucessfully.", path.getPath());
+                    logger.log(Level.WARNING, "Directory {0} did not recursivly delete sucessfully.", path.getPath()); //NON-NLS
                 }
             }
         }
