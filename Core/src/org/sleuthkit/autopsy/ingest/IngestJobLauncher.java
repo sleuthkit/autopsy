@@ -84,10 +84,8 @@ public final class IngestJobLauncher {
         // Create ingest module templates.
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
-            // NOTE: In the future, this code will be modified to get the 
-            // module settings for the current context, if available, from 
-            // storage; for now always use the defaults.
-            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultIngestJobSettings());
+            String name = moduleFactory.getClass().getCanonicalName();
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, deserializeJobSettings(moduleFactory, launcherContext));
             String moduleName = moduleTemplate.getModuleName();
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);
@@ -151,6 +149,13 @@ public final class IngestJobLauncher {
         return moduleNames;
     }
         
+    private IngestModuleIngestJobSettings deserializeJobSettings(IngestModuleFactory moduleFactory, String context) {
+        return moduleFactory.getDefaultIngestJobSettings();
+    }
+
+    private void serializeJobSettings(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings settings) {
+    }
+        
     /**
      * Gets any warnings generated when the persisted ingest job configuration
      * for the specified context is retrieved and loaded.
@@ -187,7 +192,7 @@ public final class IngestJobLauncher {
                 enabledModuleNames.add(moduleName);
             } else {
                 disabledModuleNames.add(moduleName);
-            }
+            }            
         }
         ModuleSettings.setConfigSetting(launcherContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
         ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
@@ -195,9 +200,6 @@ public final class IngestJobLauncher {
         // Save the process unallocated space setting for the current context.
         String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
         ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
-
-        // NOTE: In the future, this code will be modified to persist the ingest 
-        // options for each ingest module for the current launch context.        
     }
 
     private static String makeCommaSeparatedList(HashSet<String> input) {
