@@ -28,6 +28,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -48,9 +50,9 @@ public final class IngestJobLauncher {
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger logger = Logger.getLogger(IngestJobLauncher.class.getName());
     private final String launcherContext;
-    private String moduleSettingsFolderForContext;
+    private String moduleSettingsFolderForContext = null;
     private final List<String> warnings = new ArrayList<>();
-    private IngestJobConfigurationPanel ingestConfigPanel;
+    private IngestJobConfigurationPanel ingestConfigPanel = null;
 
     /**
      * Constructs an ingest job launcher that creates and persists an ingest job
@@ -131,18 +133,21 @@ public final class IngestJobLauncher {
         ingestConfigPanel = new IngestJobConfigurationPanel(moduleTemplates, processUnallocatedSpace);
     }
 
-    private boolean createModuleSettingsFolderForContext() {
-        StringBuilder folderPath = new StringBuilder(MODULE_SETTINGS_FOLDER_PATH);
-        folderPath.append(File.separator);
-        folderPath.append(launcherContext);
-        folderPath.append(File.separator);
-        File folder = new File(folderPath.toString());
-        if (!folder.exists()) {
-            folder.mkdirs();
-            // RJCTODO:
+    private void createModuleSettingsFolderForContext() {
+        try {
+            StringBuilder folderPath = new StringBuilder(MODULE_SETTINGS_FOLDER_PATH);
+            folderPath.append(File.separator);
+            folderPath.append(launcherContext);
+            folderPath.append(File.separator);
+            File folder = new File(folderPath.toString());
+            if (!folder.exists()) {
+                Files.createDirectories(folder.toPath());
+            }
+            moduleSettingsFolderForContext = folder.getAbsolutePath();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed to create ingest module settings directory", ex);
+            JOptionPane.showMessageDialog(null, "Failed to create ingest module settings folder, cannot save settings.", "Ingest Job Initialization Failure", JOptionPane.ERROR_MESSAGE);
         }
-        moduleSettingsFolderForContext = folder.getAbsolutePath();
-        return true;
     }
 
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
@@ -184,7 +189,10 @@ public final class IngestJobLauncher {
             try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch (IOException | ClassNotFoundException ex) {
-                // RJCTODO
+                String logMessage = String.format("Error loading ingest job settings for %s module for %s context, using defaults", factory.getModuleDisplayName(), launcherContext);
+                logger.log(Level.SEVERE, logMessage, ex);
+                String userMessage = String.format("Failed to load saved ingest job settings for %s module, using defaults.", factory.getModuleDisplayName());
+                JOptionPane.showMessageDialog(null, userMessage, "Ingest Job Settings", JOptionPane.WARNING_MESSAGE);
             }
         }
         if (settings == null) {
@@ -193,17 +201,18 @@ public final class IngestJobLauncher {
         return settings;
     }
 
-    private void saveJobSettings(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings settings) {
-        File settingsFile = new File(getModuleSettingsFilePath(moduleFactory));
+    private void saveJobSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
         try {
+            File settingsFile = new File(getModuleSettingsFilePath(factory));
             Files.deleteIfExists(settingsFile.toPath());
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(settingsFile.getAbsolutePath()))) {
+                out.writeObject(settings);
+            }
         } catch (IOException ex) {
-            // RJCTODO
-        }
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(settingsFile.getAbsolutePath()))) {
-            out.writeObject(settings);
-        } catch (IOException ex) {
-            // RJCTODO
+            String logMessage = String.format("Error saving ingest job settings for %s module for %s context", factory.getModuleDisplayName(), launcherContext);
+            logger.log(Level.SEVERE, logMessage, ex);
+            String userMessage = String.format("Failed to save ingest job settings for %s module.", factory.getModuleDisplayName());
+            JOptionPane.showMessageDialog(null, userMessage, "Ingest Job Settings", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -246,7 +255,7 @@ public final class IngestJobLauncher {
         HashSet<String> enabledModuleNames = new HashSet<>();
         HashSet<String> disabledModuleNames = new HashSet<>();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            saveJobSettings(moduleTemplate.getModuleFactory(), moduleTemplate.getModuleSettings());            
+            saveJobSettings(moduleTemplate.getModuleFactory(), moduleTemplate.getModuleSettings());
             String moduleName = moduleTemplate.getModuleName();
             if (moduleTemplate.isEnabled()) {
                 enabledModuleNames.add(moduleName);
