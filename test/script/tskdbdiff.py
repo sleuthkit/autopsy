@@ -289,7 +289,8 @@ def build_id_table(artifact_cursor):
     Args:
         artifact_cursor: the database cursor
     """
-
+    # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
+    # with the object id as the key and the full file path (parent + name) as the value
     mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
     return mapping
 
