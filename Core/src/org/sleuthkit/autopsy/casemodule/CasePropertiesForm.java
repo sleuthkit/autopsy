@@ -90,7 +90,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
         int totalImages = imgPaths.size();
        
         // create the headers and add all the rows
-        String[] headers = {"Path"};
+        String[] headers = {"Path"}; //NON-NLS
         String[][] rows = new String[totalImages][];
         
         int i = 0;
@@ -191,7 +191,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePropLabel.setFont(new java.awt.Font("Tahoma", 1, 24));
+        casePropLabel.setFont(new java.awt.Font("Tahoma", 1, 24)); //NON-NLS
         casePropLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         casePropLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.casePropLabel.text")); // NOI18N
 
@@ -213,10 +213,10 @@ class CasePropertiesForm extends javax.swing.JPanel{
             }
         });
 
-        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); //NON-NLS
         genInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); //NON-NLS
         imgInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imgInfoLabel.text")); // NOI18N
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N
@@ -226,7 +226,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
 
             },
             new String [] {
-                "Path", "Remove"
+                "Path", "Remove" //NON-NLS
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -404,7 +404,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
                         try {
                             current.updateCaseName(oldCaseName, oldPath , newCaseName, oldPath);
                         } catch (Exception ex) {
-                            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex);
+                            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
                         }
                     }
                 }

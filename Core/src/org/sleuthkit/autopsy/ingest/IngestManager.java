@@ -360,14 +360,14 @@ public class IngestManager {
         public void run() {
             try {
                 final String displayName = NbBundle.getMessage(this.getClass(),
-                                                               "IngestManager.StartIngestJobsTask.run.displayName");
+                        "IngestManager.StartIngestJobsTask.run.displayName");
                 progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         if (progress != null) {
                             progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                                                        "IngestManager.StartIngestJobsTask.run.cancelling",
-                                                                        displayName));
+                                    "IngestManager.StartIngestJobsTask.run.cancelling",
+                                    displayName));
                         }
                         IngestManager.getInstance().cancelIngestJobs();
                         return true;
@@ -381,37 +381,53 @@ public class IngestManager {
                         break;
                     }
 
+                    // Create an ingest job.
                     IngestJob ingestJob = new IngestJob(IngestManager.this.ingestJobId.incrementAndGet(), dataSource, moduleTemplates, processUnallocatedSpace);
+                    synchronized (IngestManager.this) {
+                        ingestJobs.put(ingestJob.getId(), ingestJob);
+                    }
+
+                    // Start at least one instance of each kind of ingest 
+                    // pipeline for this ingest job. This allows for an early out 
+                    // if the full ingest module lineup specified by the user  
+                    // cannot be started up.
                     List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                     if (!errors.isEmpty()) {
+                        // Report the error to the user.
                         StringBuilder failedModules = new StringBuilder();
+                        StringBuilder errorMessages = new StringBuilder();
                         for (int i = 0; i < errors.size(); ++i) {
                             IngestModuleError error = errors.get(i);
                             String moduleName = error.getModuleDisplayName();
                             logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError());
                             failedModules.append(moduleName);
+                            errorMessages.append(error.getModuleError().getMessage());
                             if ((errors.size() > 1) && (i != (errors.size() - 1))) {
                                 failedModules.append(",");
+                                errorMessages.append("\n\n");
                             }
                         }
-                        MessageNotifyUtil.Message.error( // RJCTODO: Fix this to show all errors, probably should specify data source name
-                                "Failed to start the following ingest modules: " + failedModules.toString() + " .\n\n"
-                                + "No ingest modules will be run. Please disable the module "
-                                + "or fix the error and restart ingest by right clicking on "
-                                + "the data source and selecting Run Ingest Modules.\n\n"
-                                + "Error: " + errors.get(0).getModuleError().getMessage());
-                        ingestJob.cancel();
-                        break;
-                    }
+                        StringBuilder notifyMessage = new StringBuilder();
+                        notifyMessage.append("Failed to start the following ingest modules: ");
+                        notifyMessage.append(failedModules.toString());
+                        notifyMessage.append(".\n\nNo ingest modules will be run. Please disable the failed modules ");
+                        notifyMessage.append("or fix the error and restart ingest by right clicking on ");
+                        notifyMessage.append("the data source and selecting Run Ingest Modules.\n\n");
+                        notifyMessage.append("Errors\n\n: ");
+                        notifyMessage.append(errorMessages.toString());
+                        MessageNotifyUtil.Message.error(notifyMessage.toString());
 
-                    // Save the ingest job for later cleanup of pipelines.
-                    synchronized (IngestManager.this) {
-                        ingestJobs.put(ingestJob.getId(), ingestJob);
+                        // Jettison the ingest job and move on to the next one.
+                        synchronized (IngestManager.this) {
+                            ingestJob.cancel();
+                            ingestJobs.remove(ingestJob.getId());
+                        }
+                        break;
                     }
 
                     // Queue the data source ingest tasks for the ingest job.
                     final String inputName = dataSource.getName();
-                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted); // RJCTODO: Improve
+                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
                     scheduler.getDataSourceIngestScheduler().queueForIngest(ingestJob);
                     progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
 

@@ -102,7 +102,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
             popUpWindow.setVisible(true);
         } catch (Exception ex) {
-            Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex);
+            Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex); //NON-NLS
         }
     }
 

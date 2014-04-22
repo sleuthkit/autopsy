@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
@@ -82,6 +83,8 @@ import org.sleuthkit.autopsy.core.Installer;
 public class FXVideoPanel extends MediaViewVideoPanel {
 
     private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"}; //NON-NLS
+    static private final List<String> supportedMimes = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4","audio/x-m4a","video/x-m4v","audio/x-wav"); //NON-NLS
+
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     private boolean fxInited = false;
     // FX Components
@@ -797,5 +800,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     @Override
     public String[] getExtensions() {
         return EXTENSIONS;
+    }
+  
+    @Override
+    public List<String> getMimeTypes() {
+        return supportedMimes;
     }
 }
