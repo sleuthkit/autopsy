@@ -18,11 +18,20 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -35,7 +44,11 @@ public final class IngestJobLauncher {
     private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS
+    private static final String MODULE_SETTINGS_FOLDER_PATH = new StringBuilder(PlatformUtil.getUserConfigDirectory()).append(File.separator).append("IngestModuleSettings").toString(); //NON-NLS            
+    private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
+    private static final Logger logger = Logger.getLogger(IngestJobLauncher.class.getName());
     private final String launcherContext;
+    private String moduleSettingsFolderForContext;
     private final List<String> warnings = new ArrayList<>();
     private IngestJobConfigurationPanel ingestConfigPanel;
 
@@ -48,6 +61,8 @@ public final class IngestJobLauncher {
      */
     public IngestJobLauncher(String launcherContext) {
         this.launcherContext = launcherContext;
+
+        createModuleSettingsFolderForContext(); // RJCTODO: Need failure case
 
         // Get the ingest module factories discovered by the ingest module 
         // loader.
@@ -84,7 +99,7 @@ public final class IngestJobLauncher {
         // Create ingest module templates.
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
-            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, deserializeJobSettings(moduleFactory, launcherContext));
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, loadJobSettings(moduleFactory));
             String moduleName = moduleTemplate.getModuleName();
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);
@@ -114,6 +129,20 @@ public final class IngestJobLauncher {
 
         // Make the configuration panel for the context.
         ingestConfigPanel = new IngestJobConfigurationPanel(moduleTemplates, processUnallocatedSpace);
+    }
+
+    private boolean createModuleSettingsFolderForContext() {
+        StringBuilder folderPath = new StringBuilder(MODULE_SETTINGS_FOLDER_PATH);
+        folderPath.append(File.separator);
+        folderPath.append(launcherContext);
+        folderPath.append(File.separator);
+        File folder = new File(folderPath.toString());
+        if (!folder.exists()) {
+            folder.mkdirs();
+            // RJCTODO:
+        }
+        moduleSettingsFolderForContext = folder.getAbsolutePath();
+        return true;
     }
 
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
@@ -147,14 +176,45 @@ public final class IngestJobLauncher {
         }
         return moduleNames;
     }
-        
-    private IngestModuleIngestJobSettings deserializeJobSettings(IngestModuleFactory moduleFactory, String context) {
-        return moduleFactory.getDefaultIngestJobSettings();
+
+    private IngestModuleIngestJobSettings loadJobSettings(IngestModuleFactory factory) {
+        IngestModuleIngestJobSettings settings = null;
+        File settingsFile = new File(getModuleSettingsFilePath(factory));
+        if (settingsFile.exists()) {
+            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                settings = (IngestModuleIngestJobSettings) in.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                // RJCTODO
+            }
+        }
+        if (settings == null) {
+            settings = factory.getDefaultIngestJobSettings();
+        }
+        return settings;
     }
 
-    private void serializeJobSettings(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings settings) {
+    private void saveJobSettings(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings settings) {
+        File settingsFile = new File(getModuleSettingsFilePath(moduleFactory));
+        try {
+            Files.deleteIfExists(settingsFile.toPath());
+        } catch (IOException ex) {
+            // RJCTODO
+        }
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(settingsFile.getAbsolutePath()))) {
+            out.writeObject(settings);
+        } catch (IOException ex) {
+            // RJCTODO
+        }
     }
-        
+
+    private String getModuleSettingsFilePath(IngestModuleFactory factory) {
+        StringBuilder filePath = new StringBuilder(this.moduleSettingsFolderForContext);
+        filePath.append(File.separator);
+        filePath.append(factory.getClass().getCanonicalName());
+        filePath.append(MODULE_SETTINGS_FILE_EXT);
+        return filePath.toString();
+    }
+
     /**
      * Gets any warnings generated when the persisted ingest job configuration
      * for the specified context is retrieved and loaded.
@@ -186,12 +246,13 @@ public final class IngestJobLauncher {
         HashSet<String> enabledModuleNames = new HashSet<>();
         HashSet<String> disabledModuleNames = new HashSet<>();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            saveJobSettings(moduleTemplate.getModuleFactory(), moduleTemplate.getModuleSettings());            
             String moduleName = moduleTemplate.getModuleName();
             if (moduleTemplate.isEnabled()) {
                 enabledModuleNames.add(moduleName);
             } else {
                 disabledModuleNames.add(moduleName);
-            }            
+            }
         }
         ModuleSettings.setConfigSetting(launcherContext, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
         ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
@@ -215,7 +276,7 @@ public final class IngestJobLauncher {
         csvList.append(list.get(list.size() - 1));
         return csvList.toString();
     }
-        
+
     /**
      * Launches ingest jobs for one or more data sources using the ingest job
      * configuration for the selected context.

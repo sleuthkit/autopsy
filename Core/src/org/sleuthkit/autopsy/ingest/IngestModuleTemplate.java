@@ -33,6 +33,10 @@ final class IngestModuleTemplate {
         this.settings = settings;
     }
 
+    IngestModuleFactory getModuleFactory() {
+        return moduleFactory;
+    }
+        
     String getModuleName() {
         return moduleFactory.getModuleDisplayName();
     }
