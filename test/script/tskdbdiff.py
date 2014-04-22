@@ -230,6 +230,7 @@ class TskDbDiff(object):
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
         conn = sqlite3.connect(backup_db_file)
+        id_path_table = build_id_table(conn.cursor())
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
         # Delete the blackboard tables
         conn.execute("DROP TABLE blackboard_artifacts")
@@ -238,7 +239,7 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
-                line = remove_id(line)
+                line = replace_id(line, id_path_table)
                 db_log.write('%s\n' % line)
 
         # cleanup the backup
@@ -263,20 +264,37 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
-def remove_id(line):
+def replace_id(line, table):
     """Remove the object id from a line.
 
     Args:
         line: a String, the line to remove the object id from.
+        table: a map from object ids to file paths.
     """
     index = line.find('INSERT INTO "tsk_files"')
     if (index != -1):
-        newLine = (line[:line.find('('):] + '(' + line[line.find(',') + 1:])
-        #print(newLine)
+        # take the portion of the string between the open parenthesis and the comma (ie, the object id)
+        obj_id = line[line.find('(') + 1 : line.find(',')]
+        # takes everything from the beginning of the string up to the opening
+        # parenthesis, the path associated with the object id, and everything after 
+        # the first comma, and concactenate it
+        newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
         return newLine
     else:
         return line
 
+def build_id_table(artifact_cursor):
+    """Build the map of object ids to file paths.
+
+    Args:
+        artifact_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
+    # with the object id as the key and the full file path (parent + name) as the value
+    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
+    return mapping
+
+     
 def main():
     try:
         sys.argv.pop(0)
