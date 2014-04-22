@@ -85,7 +85,7 @@ public class Installer extends ModuleInstall {
         //UIManager.put("nimbusBlueGrey", new Color());
         //UIManager.put("control", new Color());
         
-        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+        if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setupMacOsXLAF();
         }
         
@@ -101,10 +101,10 @@ public class Installer extends ModuleInstall {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException 
                 | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            logger.log(Level.WARNING, "Unable to set theme. ", ex);
+            logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
         }
         
-        final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI",
+        final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI", //NON-NLS
                                                         };
                 
         Map<Object, Object> uiEntries = new TreeMap<>();
@@ -117,12 +117,12 @@ public class Installer extends ModuleInstall {
         
         //use Metal if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-            if ("Nimbus".equals(info.getName())) {
+            if ("Nimbus".equals(info.getName())) { //NON-NLS
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
                 } catch (ClassNotFoundException | InstantiationException | 
                         IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
                 }
                 break;
             }
