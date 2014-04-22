@@ -110,6 +110,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(ingestJobId);                       
             if (ingestStatusForJob == null) {
                 ingestStatusForJob = new HashMap<>();
+                ingestStatus.put(ingestJobId, ingestStatusForJob);
             }
             
             ingestStatusForJob.put(fileId, status);
