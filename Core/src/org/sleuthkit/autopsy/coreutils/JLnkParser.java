@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         try {
             is.read(content);
         } catch (IOException ex) {
-            Logger.getLogger(JLnkParser.class.getName()).log(Level.WARNING, "Error reading input stream", ex);
+            Logger.getLogger(JLnkParser.class.getName()).log(Level.WARNING, "Error reading input stream", ex); //NON-NLS
         }
     }
     
@@ -226,7 +226,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         try {
             return new String(theString, "UTF-16LE");
         } catch (UnsupportedEncodingException ex) {
-            logger.info("Shouldn't happen");
+            logger.info("Shouldn't happen"); //NON-NLS
             return null;
         }
     }

@@ -115,14 +115,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         final long artId = art.getArtifactID();
         try {
-            ResultSet rs = skCase.runQuery("DELETE from blackboard_attributes where artifact_id = " + Long.toString(artId));
+            ResultSet rs = skCase.runQuery("DELETE from blackboard_attributes where artifact_id = " + Long.toString(artId)); //NON-NLS
             skCase.closeRunQuery(rs);
 
-            rs = skCase.runQuery("DELETE from blackboard_artifacts where artifact_id = " + Long.toString(artId));
+            rs = skCase.runQuery("DELETE from blackboard_artifacts where artifact_id = " + Long.toString(artId)); //NON-NLS
             skCase.closeRunQuery(rs);
 
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Could not delete artifact by id: " + artId, ex);
+            logger.log(Level.WARNING, "Could not delete artifact by id: " + artId, ex); //NON-NLS
         }
 
     }
@@ -138,14 +138,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
             //first to select to get artifact ids to delete
             //then join delete attrs
             //then delete arts by id
-                    rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN "
-                    + "(SELECT blackboard_artifacts.artifact_id FROM blackboard_artifacts "
-                    + "INNER JOIN blackboard_attributes ON (blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id) "
-                    + "WHERE blackboard_artifacts.artifact_type_id = "
+                    rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN " //NON-NLS
+                    + "(SELECT blackboard_artifacts.artifact_id FROM blackboard_artifacts " //NON-NLS
+                    + "INNER JOIN blackboard_attributes ON (blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id) " //NON-NLS
+                    + "WHERE blackboard_artifacts.artifact_type_id = " //NON-NLS
                     + Integer.toString(artType.getTypeID())
-                    + " AND blackboard_attributes.attribute_type_id = " + Integer.toString(attrType.getTypeID())
-                    + " AND blackboard_attributes.value_type = " + BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING.getType()
-                    + " AND blackboard_attributes.value_text = '" + value + "'"
+                    + " AND blackboard_attributes.attribute_type_id = " + Integer.toString(attrType.getTypeID()) //NON-NLS
+                    + " AND blackboard_attributes.value_type = " + BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING.getType() //NON-NLS
+                    + " AND blackboard_attributes.value_text = '" + value + "'" //NON-NLS
                     + ")");
         
 
@@ -154,14 +154,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
             //skCase.closeRunQuery(rs);
 
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Could not delete artifacts by type id: " + artType.getTypeID(), ex);
+            logger.log(Level.WARNING, "Could not delete artifacts by type id: " + artType.getTypeID(), ex); //NON-NLS
         }
         finally {
             if (rs != null) {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after deleting", ex);
+                    logger.log(Level.WARNING, "Error closing result set after deleting", ex); //NON-NLS
                 }
             }
         }
@@ -174,20 +174,20 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         // SELECT * from blackboard_attributes INNER JOIN blackboard_artifacts ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_ID AND blackboard_artifacts.artifact_type_id = 9;
         final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
-            ResultSet rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN "
-                    + "(SELECT blackboard_artifacts.artifact_id FROM blackboard_artifacts "
-                    + "INNER JOIN blackboard_attributes ON (blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id) "
-                    + "WHERE blackboard_artifacts.artifact_type_id = "
+            ResultSet rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN " //NON-NLS
+                    + "(SELECT blackboard_artifacts.artifact_id FROM blackboard_artifacts " //NON-NLS
+                    + "INNER JOIN blackboard_attributes ON (blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id) " //NON-NLS
+                    + "WHERE blackboard_artifacts.artifact_type_id = " //NON-NLS
                     + Integer.toString(artType.getTypeID())
                     + ")");
             skCase.closeRunQuery(rs);
 
-            rs = skCase.runQuery("DELETE from blackboard_artifacts where artifact_type_id = "
+            rs = skCase.runQuery("DELETE from blackboard_artifacts where artifact_type_id = " //NON-NLS
                     + Integer.toString(artType.getTypeID()));
             skCase.closeRunQuery(rs);
 
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Could not delete artifacts by type id: " + artType.getTypeID(), ex);
+            logger.log(Level.WARNING, "Could not delete artifacts by type id: " + artType.getTypeID(), ex); //NON-NLS
         }
     }
 }

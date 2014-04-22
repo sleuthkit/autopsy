@@ -56,9 +56,9 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     private void setIcon(AbstractFile dir) {
         // set name, display name, and icon
         if (dir.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png"); //NON-NLS
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
         }
     }
 

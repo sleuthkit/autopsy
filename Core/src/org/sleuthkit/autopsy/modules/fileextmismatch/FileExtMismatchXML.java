@@ -45,15 +45,15 @@ class FileExtMismatchXML {
     private static final Logger logger = Logger.getLogger(FileExtMismatchXML.class.getName());    
     private static FileExtMismatchXML defaultInstance = null;
             
-    private static final String ENCODING = "UTF-8";
-    private static final String XSDFILE = "MismatchConfigSchema.xsd";
+    private static final String ENCODING = "UTF-8"; //NON-NLS
+    private static final String XSDFILE = "MismatchConfigSchema.xsd"; //NON-NLS
     
-    private static final String ROOT_EL = "mismatch_config";
-    private static final String SIG_EL = "signature";
-    private static final String EXT_EL = "ext";    
-    private static final String SIG_MIMETYPE_ATTR = "mimetype";
+    private static final String ROOT_EL = "mismatch_config"; //NON-NLS
+    private static final String SIG_EL = "signature"; //NON-NLS
+    private static final String EXT_EL = "ext";     //NON-NLS
+    private static final String SIG_MIMETYPE_ATTR = "mimetype"; //NON-NLS
     
-    private static final String DEFAULT_CONFIG_FILE_NAME = "mismatch_config.xml";  
+    private static final String DEFAULT_CONFIG_FILE_NAME = "mismatch_config.xml";   //NON-NLS
         
     protected String filePath;
     
@@ -63,7 +63,7 @@ class FileExtMismatchXML {
         try {
             boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchXML.class, DEFAULT_CONFIG_FILE_NAME, false);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error copying default mismatch configuration to user dir ", ex);
+            logger.log(Level.SEVERE, "Error copying default mismatch configuration to user dir ", ex); //NON-NLS
         }        
     }
 
@@ -96,7 +96,7 @@ class FileExtMismatchXML {
             
             Element root = doc.getDocumentElement();
             if (root == null) {
-                logger.log(Level.SEVERE, "Error loading config file: invalid file format (bad root).");
+                logger.log(Level.SEVERE, "Error loading config file: invalid file format (bad root)."); //NON-NLS
                 return null;
             }            
             
@@ -128,7 +128,7 @@ class FileExtMismatchXML {
             }
             
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error loading config file.", e);
+            logger.log(Level.SEVERE, "Error loading config file.", e); //NON-NLS
             return null;
         }        
         return sigTypeToExtMap;
@@ -176,7 +176,7 @@ class FileExtMismatchXML {
             success = XMLUtil.saveDoc(FileExtMismatchXML.class, filePath, ENCODING, doc);
             
         } catch (ParserConfigurationException e) {
-            logger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e);
+            logger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e); //NON-NLS
             success = false;
         }
         return success;        

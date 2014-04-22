@@ -48,7 +48,7 @@ public class FileTypesNode extends DisplayableItemNode {
             super.setName(filter.getName());
             super.setDisplayName(filter.getDisplayName());
         }
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
     }
 
     @Override

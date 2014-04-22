@@ -67,15 +67,15 @@ public class EmailExtracted implements AutopsyVisitableItem {
         try {
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
             int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + pathAttrId
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId;
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + pathAttrId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
             ResultSet rs = skCase.runQuery(query);
             while (rs.next()) {
-                final String path = rs.getString("value_text");
-                final long artifactId = rs.getLong("artifact_id");
+                final String path = rs.getString("value_text"); //NON-NLS
+                final long artifactId = rs.getLong("artifact_id"); //NON-NLS
                 final Map<String, String> parsedPath = parsePath(path);
                 final String account = parsedPath.get(MAIL_ACCOUNT);
                 final String folder = parsedPath.get(MAIL_FOLDER);
@@ -95,7 +95,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             skCase.closeRunQuery(rs);
 
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Cannot initialize email extraction", ex);
+            logger.log(Level.WARNING, "Cannot initialize email extraction", ex); //NON-NLS
         }
     }
 
@@ -103,7 +103,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         Map<String, String> parsed = new HashMap<>();
         String[] split = path.split(MAIL_PATH_SEPARATOR);
         if (split.length < 4) {
-            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: {0}, will use defaults", split.length);
+            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: {0}, will use defaults", split.length); //NON-NLS
             parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
             parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
             return parsed;
@@ -128,7 +128,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super(Children.create(new EmailExtractedRootChildrenFlat(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
             initArtifacts();
         }
 
@@ -182,7 +182,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                             //TODO: bulk artifact gettings
                             tempList.add(skCase.getBlackboardArtifact(l));
                         } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
+                            logger.log(Level.WARNING, "Error creating mail messages nodes", ex); //NON-NLS
                         }
                     }
                 }
@@ -208,7 +208,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super(Children.create(new EmailExtractedRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
             initArtifacts();
         }
 
@@ -267,7 +267,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super(Children.create(new EmailExtractedAccountChildrenNode(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png"); //NON-NLS
         }
 
         @Override
@@ -332,7 +332,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super(Children.create(new EmailExtractedFolderChildrenNode(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png"); //NON-NLS
         }
 
         @Override
@@ -383,7 +383,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     //TODO: bulk artifact gettings
                     tempList.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
+                    logger.log(Level.WARNING, "Error creating mail messages nodes", ex); //NON-NLS
                 }
             }
             list.addAll(tempList);

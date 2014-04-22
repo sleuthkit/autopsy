@@ -49,11 +49,11 @@ public class ArtifactTypeNode extends DisplayableItemNode {
             this.childCount = skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeNode.class.getName())
-                    .log(Level.WARNING, "Error getting child count", ex);
+                    .log(Level.WARNING, "Error getting child count", ex); //NON-NLS
         }
         super.setDisplayName(type.getDisplayName() + " (" + childCount + ")");
         this.type = type;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(type));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(type)); //NON-NLS
 
     }
 
@@ -88,49 +88,49 @@ public class ArtifactTypeNode extends DisplayableItemNode {
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                return "bookmarks.png";
+                return "bookmarks.png"; //NON-NLS
             case TSK_WEB_COOKIE:
-                return "cookies.png";
+                return "cookies.png"; //NON-NLS
             case TSK_WEB_HISTORY:
-                return "history.png";
+                return "history.png"; //NON-NLS
             case TSK_WEB_DOWNLOAD:
-                return "downloads.png";
+                return "downloads.png"; //NON-NLS
             case TSK_INSTALLED_PROG:
-                return "programs.png";
+                return "programs.png"; //NON-NLS
             case TSK_RECENT_OBJECT:
-                return "recent_docs.png";
+                return "recent_docs.png"; //NON-NLS
             case TSK_DEVICE_ATTACHED:
-                return "usb_devices.png";
+                return "usb_devices.png"; //NON-NLS
             case TSK_WEB_SEARCH_QUERY:
-                return "searchquery.png";
+                return "searchquery.png"; //NON-NLS
             case TSK_METADATA_EXIF:
-                return "camera-icon-16.png";
+                return "camera-icon-16.png"; //NON-NLS
             case TSK_CONTACT:
-                return "contact.png";
+                return "contact.png"; //NON-NLS
             case TSK_MESSAGE:
-                return "message.png";
+                return "message.png"; //NON-NLS
             case TSK_CALLLOG:
-                return "calllog.png";
+                return "calllog.png"; //NON-NLS
             case TSK_CALENDAR_ENTRY:
-                return "calendar.png";
+                return "calendar.png"; //NON-NLS
             case TSK_SPEED_DIAL_ENTRY:
-                return "speeddialentry.png";
+                return "speeddialentry.png"; //NON-NLS
             case TSK_BLUETOOTH_PAIRING:
-                return "bluetooth.png";
+                return "bluetooth.png"; //NON-NLS
             case TSK_GPS_BOOKMARK:
-                return "gpsfav.png";
+                return "gpsfav.png"; //NON-NLS
             case TSK_GPS_LAST_KNOWN_LOCATION:
-                return "gps-lastlocation.png";
+                return "gps-lastlocation.png"; //NON-NLS
             case TSK_GPS_SEARCH:
-                return "gps-search.png";
+                return "gps-search.png"; //NON-NLS
             case TSK_SERVICE_ACCOUNT:
-                return "account-icon-16.png";
+                return "account-icon-16.png"; //NON-NLS
             case TSK_ENCRYPTION_DETECTED:
-                return "encrypted-file.png";
+                return "encrypted-file.png"; //NON-NLS
             case TSK_EXT_MISMATCH_DETECTED:
-                return "mismatch-16.png";
+                return "mismatch-16.png"; //NON-NLS
         }
-        return "artifact-icon.png";
+        return "artifact-icon.png"; //NON-NLS
     }
 
     @Override

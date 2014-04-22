@@ -58,7 +58,7 @@ public class KeyValueNode extends AbstractNode {
         if (af != null) {
             // set name, display name, and icon
             if (af.isDir()) {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
             } else {
                 this.setIconBaseWithExtension(FileNode.getIconForFileType(af));
             }

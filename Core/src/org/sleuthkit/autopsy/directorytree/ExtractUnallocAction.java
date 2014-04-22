@@ -149,7 +149,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                             uw.execute();
                         }
                     } else {
-                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID but " + u.VolumeId + u.llf == null ? "its list of unallocated files was null" : "the volume is locked" );
+                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID but " + u.VolumeId + u.llf == null ? "its list of unallocated files was null" : "the volume is locked" ); //NON-NLS
                     }
                 }
                 if (isImage && !copyList.isEmpty()) {
@@ -176,7 +176,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 return unallocFiles.get(0).accept(uv); //Launching it on the root directory
             }
         } catch (TskCoreException tce) {
-            logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at sending out the visitor ", tce);
+            logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at sending out the visitor ", tce); //NON-NLS
         }
         return null;
     }
@@ -233,7 +233,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.progress.extractUnalloc.title"), new Cancellable() {
                     @Override
                     public boolean cancel() {
-                        logger.log(Level.INFO, "Canceling extraction of unallocated space");
+                        logger.log(Level.INFO, "Canceling extraction of unallocated space"); //NON-NLS
                         canceled = true;
                         if (progress != null) {
                             progress.setDisplayName(NbBundle.getMessage(this.getClass(),
@@ -252,7 +252,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 int mbs = 0; //Increments every 128th tick of  kbs
                 for (UnallocStruct u : this.lus) {
                     currentlyProcessing = u.getFile();
-                    logger.log(Level.INFO, "Writing Unalloc file to " + currentlyProcessing.getPath());
+                    logger.log(Level.INFO, "Writing Unalloc file to " + currentlyProcessing.getPath()); //NON-NLS
                     OutputStream dos = new FileOutputStream(currentlyProcessing);
                     long bytes = 0;
                     int i = 0;
@@ -279,19 +279,19 @@ import org.sleuthkit.datamodel.VolumeSystem;
 
                     if (canceled) {
                         u.getFile().delete();
-                        logger.log(Level.INFO, "Canceled extraction of " + u.getFileName() + " and deleted file");
+                        logger.log(Level.INFO, "Canceled extraction of " + u.getFileName() + " and deleted file"); //NON-NLS
                     } else {
-                        logger.log(Level.INFO, "Finished writing unalloc file " + u.getFile().getPath());
+                        logger.log(Level.INFO, "Finished writing unalloc file " + u.getFile().getPath()); //NON-NLS
                     }
                 }
                 progress.finish();
 
 
             } catch (IOException ioe) {
-                logger.log(Level.WARNING, "Could not create Unalloc File; error writing file", ioe);
+                logger.log(Level.WARNING, "Could not create Unalloc File; error writing file", ioe); //NON-NLS
                 return -1;
             } catch (TskCoreException tce) {
-                logger.log(Level.WARNING, "Could not create Unalloc File; error getting image info", tce);
+                logger.log(Level.WARNING, "Could not create Unalloc File; error getting image info", tce); //NON-NLS
                 return -1;
             }
             return 1;
@@ -335,7 +335,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
         try {
             return (img.getChildren().get(0) instanceof VolumeSystem);
         } catch (TskCoreException tce) {
-            logger.log(Level.WARNING, "Unable to determine if image has a volume system, extraction may be incomplete", tce);
+            logger.log(Level.WARNING, "Unable to determine if image has a volume system, extraction may be incomplete", tce); //NON-NLS
             return false;
         }
     }
@@ -356,7 +356,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 }
             }
         } catch (TskCoreException tce) {
-            logger.log(Level.WARNING, "Could not get volume information from image. Extraction may be incomplete", tce);
+            logger.log(Level.WARNING, "Could not get volume information from image. Extraction may be incomplete", tce); //NON-NLS
         }
         return lstVol;
     }
@@ -400,7 +400,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                     }
                 }
             } catch (TskCoreException tce) {
-                logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting FileSystem " + fs.getId(), tce);
+                logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting FileSystem " + fs.getId(), tce); //NON-NLS
             }
             return null;
         }
@@ -421,7 +421,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 }
                 return lflst;
             } catch (TskCoreException tce) {
-                logger.log(Level.WARNING, "Could not get list of Layout Files, failed at visiting Layout Directory", tce);
+                logger.log(Level.WARNING, "Could not get list of Layout Files, failed at visiting Layout Directory", tce); //NON-NLS
             }
             return null;
         }
@@ -443,7 +443,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                     }
                 }
             } catch (TskCoreException tce) {
-                logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting Directory " + dir.getId(), tce);
+                logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting Directory " + dir.getId(), tce); //NON-NLS
             }
             return null;
         }
@@ -499,7 +499,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
             this.VolumeId = 0;
             this.ImageId = img.getId();
             this.ImageName = img.getName();
-            this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + 0 + ".dat";
+            this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + 0 + ".dat"; //NON-NLS
             this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
             this.SizeInBytes = calcSizeInBytes();
         }
@@ -515,11 +515,11 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 this.ImageId = volu.getImage().getId();
                 this.VolumeId = volu.getId();
             } catch (TskCoreException tce) {
-                logger.log(Level.WARNING, "Unable to properly create ExtractUnallocAction, extraction may be incomplete", tce);
+                logger.log(Level.WARNING, "Unable to properly create ExtractUnallocAction, extraction may be incomplete", tce); //NON-NLS
                 this.ImageName = "";
                 this.ImageId = 0;
             }
-            this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + VolumeId + ".dat";
+            this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + VolumeId + ".dat"; //NON-NLS
             this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
             this.llf = getUnallocFiles(volu);
             Collections.sort(llf, new SortObjId());

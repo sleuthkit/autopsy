@@ -80,8 +80,8 @@ class ReportKML implements GeneralReportModule {
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
-        reportPath = path + "ReportKML.kml";
-        String reportPath2 = path + "ReportKML.txt";
+        reportPath = path + "ReportKML.kml"; //NON-NLS
+        String reportPath2 = path + "ReportKML.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
 
@@ -151,18 +151,18 @@ class ReportKML implements GeneralReportModule {
                 /*
                  * Step 1: generate XML stub
                  */
-                Namespace ns = Namespace.getNamespace("", "http://earth.google.com/kml/2.2");
+                Namespace ns = Namespace.getNamespace("", "http://earth.google.com/kml/2.2"); //NON-NLS
                 // kml
-                Element kml = new Element("kml", ns);
+                Element kml = new Element("kml", ns); //NON-NLS
                 Document kmlDocument = new Document(kml);
 
                 // Document
-                Element document = new Element("Document", ns);
+                Element document = new Element("Document", ns); //NON-NLS
                 kml.addContent(document);
 
                 // name
-                Element name = new Element("name", ns);
-                name.setText("Java Generated KML Document");
+                Element name = new Element("name", ns); //NON-NLS
+                name.setText("Java Generated KML Document"); //NON-NLS
                 document.addContent(name);
 
                 /*
@@ -170,26 +170,26 @@ class ReportKML implements GeneralReportModule {
                  */
 
                 // Style
-                Element style = new Element("Style", ns);
-                style.setAttribute("id", "redIcon");
+                Element style = new Element("Style", ns); //NON-NLS
+                style.setAttribute("id", "redIcon"); //NON-NLS
                 document.addContent(style);
 
                 // IconStyle
-                Element iconStyle = new Element("IconStyle", ns);
+                Element iconStyle = new Element("IconStyle", ns); //NON-NLS
                 style.addContent(iconStyle);
 
                 // color
-                Element color = new Element("color", ns);
-                color.setText("990000ff");
+                Element color = new Element("color", ns); //NON-NLS
+                color.setText("990000ff"); //NON-NLS
                 iconStyle.addContent(color);
 
                 // Icon
-                Element icon = new Element("Icon", ns);
+                Element icon = new Element("Icon", ns); //NON-NLS
                 iconStyle.addContent(icon);
 
                 // href
-                Element href = new Element("href", ns);
-                href.setText("http://www.cs.mun.ca/~hoeber/teaching/cs4767/notes/02.1-kml/circle.png");
+                Element href = new Element("href", ns); //NON-NLS
+                href.setText("http://www.cs.mun.ca/~hoeber/teaching/cs4767/notes/02.1-kml/circle.png"); //NON-NLS
                 icon.addContent(href);
                 progressPanel.increment();
                 /*
@@ -208,37 +208,37 @@ class ReportKML implements GeneralReportModule {
                     if (lineParts.length == 4) {
                         String coordinates = lineParts[1].trim() + "," + lineParts[0].trim(); //lat,lon
                         // Placemark
-                        Element placemark = new Element("Placemark", ns);
+                        Element placemark = new Element("Placemark", ns); //NON-NLS
                         document.addContent(placemark);
 
                         // name
-                        Element pmName = new Element("name", ns);
+                        Element pmName = new Element("name", ns); //NON-NLS
                         pmName.setText(lineParts[3].trim());
                         placemark.addContent(pmName);
 
                         // Path
-                        Element pmPath = new Element("Path", ns);
+                        Element pmPath = new Element("Path", ns); //NON-NLS
                         pmPath.setText(lineParts[2].trim());
                         placemark.addContent(pmPath);
 
                         // description
-                        Element pmDescription = new Element("description", ns);
-                        String xml = "<![CDATA[  \n" + " <img src='file:///" + lineParts[2].trim() + "' width='400' /><br/&gt;  \n";
+                        Element pmDescription = new Element("description", ns); //NON-NLS
+                        String xml = "<![CDATA[  \n" + " <img src='file:///" + lineParts[2].trim() + "' width='400' /><br/&gt;  \n"; //NON-NLS
                         StringEscapeUtils.unescapeXml(xml);
                         pmDescription.setText(xml);
                         placemark.addContent(pmDescription);
 
                         // styleUrl
-                        Element pmStyleUrl = new Element("styleUrl", ns);
-                        pmStyleUrl.setText("#redIcon");
+                        Element pmStyleUrl = new Element("styleUrl", ns); //NON-NLS
+                        pmStyleUrl.setText("#redIcon"); //NON-NLS
                         placemark.addContent(pmStyleUrl);
 
                         // Point
-                        Element pmPoint = new Element("Point", ns);
+                        Element pmPoint = new Element("Point", ns); //NON-NLS
                         placemark.addContent(pmPoint);
 
                         // coordinates
-                        Element pmCoordinates = new Element("coordinates", ns);
+                        Element pmCoordinates = new Element("coordinates", ns); //NON-NLS
 
                         pmCoordinates.setText(coordinates);
                         pmPoint.addContent(pmCoordinates);
@@ -257,16 +257,16 @@ class ReportKML implements GeneralReportModule {
                     outputter.output(kmlDocument, writer);
                     writer.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not write the KML file.", ex);
+                    logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
                 }
 
 
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write the KML report.", ex);
+                logger.log(Level.WARNING, "Could not write the KML report.", ex); //NON-NLS
             }
             progressPanel.complete();
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get the unique path.", ex);
+            logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         }
         progressPanel.increment();
         progressPanel.complete();
@@ -301,7 +301,7 @@ class ReportKML implements GeneralReportModule {
 
     @Override
     public String getExtension() {
-        String ext = ".txt";
+        String ext = ".txt"; //NON-NLS
         return ext;
     }
 

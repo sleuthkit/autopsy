@@ -162,13 +162,13 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
 
             return ProcessResult.OK;
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage());
+            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
             return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()});
+            logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()}); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex);
+            logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex); //NON-NLS
             return ProcessResult.ERROR;
         } finally {
             try {
@@ -179,7 +179,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
                     bin.close();
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to close InputStream.", ex);
+                logger.log(Level.WARNING, "Failed to close InputStream.", ex); //NON-NLS
                 return ProcessResult.ERROR;
             }
         }
