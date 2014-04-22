@@ -190,7 +190,7 @@ import org.openide.util.NbBundle;
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.titleLabel.text")); // NOI18N
 
         progressBar.setIndeterminate(true);

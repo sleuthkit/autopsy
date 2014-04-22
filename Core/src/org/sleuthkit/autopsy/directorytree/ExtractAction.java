@@ -115,7 +115,7 @@ public final class ExtractAction extends AbstractAction {
                 catch (Exception ex) {
                     JOptionPane.showMessageDialog((Component) e.getSource(), NbBundle.getMessage(this.getClass(),
                                                                                                  "ExtractAction.extractFiles.cantCreateFolderErr.msg"));
-                    logger.log(Level.INFO, "Unable to create folder(s) for user " + destinationFolder.getAbsolutePath(), ex);
+                    logger.log(Level.INFO, "Unable to create folder(s) for user " + destinationFolder.getAbsolutePath(), ex); //NON-NLS
                     return;
                 }
             }
@@ -168,7 +168,7 @@ public final class ExtractAction extends AbstractAction {
                 extracter.execute();
             } 
             catch (Exception ex) {
-                logger.log(Level.WARNING, "Unable to start background file extraction thread", ex);
+                logger.log(Level.WARNING, "Unable to start background file extraction thread", ex); //NON-NLS
             }                                    
         }
         else {
@@ -240,7 +240,7 @@ public final class ExtractAction extends AbstractAction {
                 super.get();
             } 
             catch (Exception ex) {
-                logger.log(Level.SEVERE, "Fatal error during file extraction", ex);
+                logger.log(Level.SEVERE, "Fatal error during file extraction", ex); //NON-NLS
                 MessageNotifyUtil.Message.info(
                         NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.extractErr", ex.getMessage()));
                 msgDisplayed = true;
@@ -268,7 +268,7 @@ public final class ExtractAction extends AbstractAction {
                     }
                 }
                 catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not get children of content", ex);                
+                    logger.log(Level.SEVERE, "Could not get children of content", ex); //NON-NLS
                 }
             }
             return workUnits;            

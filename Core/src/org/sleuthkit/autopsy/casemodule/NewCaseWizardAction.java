@@ -67,7 +67,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     Case.getCurrentCase().closeCase(); // close the current case
                     newCaseAction(); // start the new case creation process
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex);
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
             }
         } else {
@@ -101,9 +101,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
         // if Cancel button is pressed
         if (isCancelled) {
-            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory");
+            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
             if(createdDirectory != null) {
-                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory);
+                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
                 Case.deleteCaseDirectory(new File(createdDirectory));
             }
             // if there's case opened, close the case

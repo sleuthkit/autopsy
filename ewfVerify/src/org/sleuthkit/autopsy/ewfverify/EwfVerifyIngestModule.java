@@ -70,9 +70,9 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
         if (messageDigest == null) {
             try {
-                messageDigest = MessageDigest.getInstance("MD5");
+                messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
             } catch (NoSuchAlgorithmException ex) {
-                logger.log(Level.WARNING, "Error getting md5 algorithm", ex);
+                logger.log(Level.WARNING, "Error getting md5 algorithm", ex); //NON-NLS
                 throw new RuntimeException(
                         NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.startUp.exception.failGetMd5"));
             }
@@ -88,7 +88,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             img = dataSource.getImage();
         } catch (TskCoreException ex) {
             img = null;
-            logger.log(Level.SEVERE, "Failed to get image from Content.", ex);
+            logger.log(Level.SEVERE, "Failed to get image from Content.", ex); //NON-NLS
             services.postMessage(IngestMessage.createMessage( MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "EwfVerifyIngestModule.process.errProcImg",
@@ -99,7 +99,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         // Skip images that are not E01
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
-            logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName);
+            logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage( MessageType.INFO, EwfVerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "EwfVerifyIngestModule.process.skipNonEwf",
@@ -110,7 +110,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
         if ((img.getMd5() != null) && !img.getMd5().isEmpty()) {
             storedHash = img.getMd5().toLowerCase();
-            logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash});
+            logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash}); //NON-NLS
         } else {
             services.postMessage(IngestMessage.createMessage( MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
@@ -119,7 +119,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
             return ProcessResult.ERROR;
         }
 
-        logger.log(Level.INFO, "Starting hash verification of {0}", img.getName());
+        logger.log(Level.INFO, "Starting hash verification of {0}", img.getName()); //NON-NLS
         services.postMessage(IngestMessage.createMessage( MessageType.INFO, EwfVerifierModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                 "EwfVerifyIngestModule.process.startingImg",
@@ -127,7 +127,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
 
         long size = img.getSize();
         if (size == 0) {
-            logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName);
+            logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage( MessageType.ERROR, EwfVerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "EwfVerifyIngestModule.process.errGetSizeOfImg",
@@ -140,7 +140,7 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         chunkSize = (chunkSize == 0) ? DEFAULT_CHUNK_SIZE : chunkSize;
 
         int totalChunks = (int) Math.ceil(size / chunkSize);
-        logger.log(Level.INFO, "Total chunks = {0}", totalChunks);
+        logger.log(Level.INFO, "Total chunks = {0}", totalChunks); //NON-NLS
         int read;
 
         byte[] data;
@@ -168,13 +168,13 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         // Finish generating the hash and get it as a string value
         calculatedHash = DatatypeConverter.printHexBinary(messageDigest.digest()).toLowerCase();
         verified = calculatedHash.equals(storedHash);
-        logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, calculatedHash});
+        logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, calculatedHash}); //NON-NLS
         return ProcessResult.OK;
     }
 
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        logger.log(Level.INFO, "complete() {0}", EwfVerifierModuleFactory.getModuleName());
+        logger.log(Level.INFO, "complete() {0}", EwfVerifierModuleFactory.getModuleName()); //NON-NLS
         if (skipped == false) {
             String msg = "";
             if (verified) {

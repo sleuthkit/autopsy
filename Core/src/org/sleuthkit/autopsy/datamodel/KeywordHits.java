@@ -118,18 +118,18 @@ public class KeywordHits implements AutopsyVisitableItem {
             int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
             int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
-            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.artifact_id,"
-                    + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND "
-                    + "blackboard_artifacts.artifact_type_id=" + artId
-                    + ") AND (attribute_type_id=" + setId + " OR "
-                    + "attribute_type_id=" + wordId + " OR "
-                    + "attribute_type_id=" + regexId + ")";
+            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.artifact_id," //NON-NLS
+                    + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND " //NON-NLS
+                    + "blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
+                    + ") AND (attribute_type_id=" + setId + " OR " //NON-NLS
+                    + "attribute_type_id=" + wordId + " OR " //NON-NLS
+                    + "attribute_type_id=" + regexId + ")"; //NON-NLS
             rs = skCase.runQuery(query);
             while (rs.next()) {
-                String value = rs.getString("value_text");
-                long artifactId = rs.getLong("artifact_id");
-                long typeId = rs.getLong("attribute_type_id");
+                String value = rs.getString("value_text"); //NON-NLS
+                long artifactId = rs.getLong("artifact_id"); //NON-NLS
+                long typeId = rs.getLong("attribute_type_id"); //NON-NLS
                 if (!artifacts.containsKey(artifactId)) {
                     artifacts.put(artifactId, new LinkedHashMap<Long, String>());
                 }
@@ -140,13 +140,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
         } finally {
             if (rs != null) {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after getting keyword hits", ex);
+                    logger.log(Level.WARNING, "Error closing result set after getting keyword hits", ex); //NON-NLS
                 }
             }
         }
@@ -163,7 +163,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super(Children.create(new KeywordHitsRootChildren(), true), Lookups.singleton(KEYWORD_HITS));
             super.setName(NAME);
             super.setDisplayName(KEYWORD_HITS);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             initArtifacts();
             initMaps();
         }
@@ -223,7 +223,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 totalDescendants += grandChildren.size();
             }
             super.setDisplayName(name + " (" + totalDescendants + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.name = name;
             this.children = children;
         }
@@ -291,7 +291,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super(Children.create(new KeywordHitsKeywordChildren(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.children = children;
         }
 
@@ -345,7 +345,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     //TODO: bulk artifact gettings
                     tempList.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
-                    logger.log(Level.WARNING, "TSK Exception occurred", ex);
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
                 }
             }
             list.addAll(tempList);
@@ -359,7 +359,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             try {
                 file = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren");
+                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
                 return n;
             }
 

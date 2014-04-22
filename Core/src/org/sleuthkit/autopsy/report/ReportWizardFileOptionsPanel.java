@@ -79,7 +79,7 @@ import org.openide.util.NbBundle;
 
     @Override
     public void storeSettings(WizardDescriptor data) {
-        data.putProperty("fileReportOptions", getComponent().getFileReportOptions());
+        data.putProperty("fileReportOptions", getComponent().getFileReportOptions()); //NON-NLS
     }
 
     @Override

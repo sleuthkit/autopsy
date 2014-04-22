@@ -189,7 +189,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content);
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
         }
         
         map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
@@ -252,23 +252,23 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 //                }
 //            }
             
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + setNameId
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId
-                    + " AND blackboard_artifacts.obj_id=" + objId;
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
+                    + " AND blackboard_artifacts.obj_id=" + objId; //NON-NLS
             rs = skCase.runQuery(query);
             int i = 0;
             while (rs.next()) {
                 if (i++ > 0) {
                     strList += ", ";
                 }
-                strList += rs.getString("value_text");
+                strList += rs.getString("value_text"); //NON-NLS
             }
         }
         catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
         }
 //      catch (TskCoreException ex) {
 //          logger.log(Level.WARNING, "TskCore Exception occurred: ", ex);
@@ -278,7 +278,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
+                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex); //NON-NLS
                 }
             }
         }

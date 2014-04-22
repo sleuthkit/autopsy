@@ -81,12 +81,12 @@ public class XMLUtil {
         return true;
         }
         catch(SAXException e){
-            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to validate XML file.", e);
+            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to validate XML file.", e); //NON-NLS
             return false;
         }
       }
       catch(IOException e){
-           Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+schemaFile+"]", e);
+           Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+schemaFile+"]", e); //NON-NLS
             return false;
         }
     }
@@ -128,18 +128,18 @@ public class XMLUtil {
             ret = builder.parse(
                     new FileInputStream(xmlPath));
         } catch (ParserConfigurationException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't initialize parser.", e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't initialize parser.", e); //NON-NLS
 
         } catch (SAXException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't parse XML.", e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't parse XML.", e); //NON-NLS
 
         } catch (IOException e) {
             //error reading file
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't read file.", e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't read file.", e); //NON-NLS
 
         }
         if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: could not validate against [" + xsdPath + "], results may not be accurate");
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: could not validate against [" + xsdPath + "], results may not be accurate"); //NON-NLS
         }
 
         return ret;
@@ -156,14 +156,14 @@ public class XMLUtil {
      */
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
-        xf.setAttribute("indent-number", new Integer(1));
+        xf.setAttribute("indent-number", new Integer(1)); //NON-NLS
         boolean success = false;
         try {
             Transformer xformer = xf.newTransformer();
-            xformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            xformer.setOutputProperty(OutputKeys.METHOD, "xml"); //NON-NLS
+            xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
             xformer.setOutputProperty(OutputKeys.ENCODING, encoding);
-            xformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
+            xformer.setOutputProperty(OutputKeys.STANDALONE, "yes"); //NON-NLS
             xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
             File file = new File(xmlPath);
             FileOutputStream stream = new FileOutputStream(file);
@@ -174,15 +174,15 @@ public class XMLUtil {
             success = true;
 
         } catch (UnsupportedEncodingException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Should not happen", e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Should not happen", e); //NON-NLS
         } catch (TransformerConfigurationException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file", e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file", e); //NON-NLS
         } catch (TransformerException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file", e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file", e); //NON-NLS
         } catch (FileNotFoundException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file: cannot write to file: " + xmlPath, e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file: cannot write to file: " + xmlPath, e); //NON-NLS
         } catch (IOException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file: cannot write to file: " + xmlPath, e);
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file: cannot write to file: " + xmlPath, e); //NON-NLS
         }
         return success;
     }

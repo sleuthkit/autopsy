@@ -114,7 +114,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             }
         } catch (TskException ex) {
             Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
-                    .log(Level.WARNING, "Error getting directory children", ex);
+                    .log(Level.WARNING, "Error getting directory children", ex); //NON-NLS
             return false;
         }
         return ret;
@@ -138,7 +138,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         } catch (TskException ex) {
             Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
-                    .log(Level.WARNING, "Error getting volume children", ex);
+                    .log(Level.WARNING, "Error getting volume children", ex); //NON-NLS
             return false;
         }
         return ret;
@@ -198,7 +198,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                             return false;
                         }
                     } catch (TskCoreException e) {
-                        logger.log(Level.SEVERE, "Error checking if file node is leaf.", e);
+                        logger.log(Level.SEVERE, "Error checking if file node is leaf.", e); //NON-NLS
                     }
                 }
             }

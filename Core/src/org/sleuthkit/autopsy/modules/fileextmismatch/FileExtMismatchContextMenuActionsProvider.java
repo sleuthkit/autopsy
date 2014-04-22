@@ -60,7 +60,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                 for (BlackboardArtifact nodeArt : selectedArts) {    
                 
                     // Only for mismatch results
-                    if (nodeArt.getArtifactTypeName().equals("TSK_EXT_MISMATCH_DETECTED")) {
+                    if (nodeArt.getArtifactTypeName().equals("TSK_EXT_MISMATCH_DETECTED")) { //NON-NLS
                         String mimeTypeStr = "";                    
                         String extStr = "";
           
@@ -68,7 +68,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                         try {
                             af = nodeArt.getSleuthkitCase().getAbstractFileById(nodeArt.getObjectID());
                         } catch (TskCoreException ex) {
-                            Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error getting file by id", ex);
+                            Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error getting file by id", ex); //NON-NLS
                         }
                             
                         if (af != null) {
@@ -92,7 +92,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                     }
                                 }
                             } catch (TskCoreException ex) {
-                                Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error looking up blackboard attributes", ex);
+                                Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error looking up blackboard attributes", ex); //NON-NLS
                             }
 
                             if (!extStr.isEmpty() && !mimeTypeStr.isEmpty()) {

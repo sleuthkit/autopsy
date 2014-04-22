@@ -25,10 +25,10 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 
 final class GeneralPanel extends javax.swing.JPanel {
 
-    private static final String KEEP_PREFERRED_VIEWER = "keepPreferredViewer";
-    private static final String USE_LOCAL_TIME = "useLocalTime";
-    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
-    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true
+    private static final String KEEP_PREFERRED_VIEWER = "keepPreferredViewer"; //NON-NLS
+    private static final String USE_LOCAL_TIME = "useLocalTime"; //NON-NLS
+    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false NON-NLS
+    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true NON-NLS
     private final Preferences prefs = NbPreferences.forModule(this.getClass());
 
     GeneralPanel(GeneralOptionsPanelController controller) {

@@ -59,9 +59,9 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             if (file.getType().equals(TSK_DB_FILES_TYPE_ENUM.CARVED)) {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png");
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png"); //NON-NLS
             } else {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
             }
         } else {
             this.setIconBaseWithExtension(getIconForFileType(file));
@@ -112,66 +112,66 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         String name = file.getName();
         int dotIndex = name.lastIndexOf(".");
         if (dotIndex == -1) {
-            return "org/sleuthkit/autopsy/images/file-icon.png";
+            return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
         }
         String ext = name.substring(dotIndex).toLowerCase();
 
         // Images
         for (String s : FileTypeExtensions.getImageExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/image-file.png";
+                return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
             }
         }
         // Videos
         for (String s : FileTypeExtensions.getVideoExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/video-file.png";
+                return "org/sleuthkit/autopsy/images/video-file.png"; //NON-NLS
             }
         }
         // Audio Files
         for (String s : FileTypeExtensions.getAudioExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/audio-file.png";
+                return "org/sleuthkit/autopsy/images/audio-file.png"; //NON-NLS
             }
         }
         // Documents
         for (String s : FileTypeExtensions.getDocumentExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/doc-file.png";
+                return "org/sleuthkit/autopsy/images/doc-file.png"; //NON-NLS
             }
         }
         // Executables / System Files
         for (String s : FileTypeExtensions.getExecutableExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/exe-file.png";
+                return "org/sleuthkit/autopsy/images/exe-file.png"; //NON-NLS
             }
         }
         // Text Files
         for (String s : FileTypeExtensions.getTextExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/text-file.png";
+                return "org/sleuthkit/autopsy/images/text-file.png"; //NON-NLS
             }
         }
         // Web Files
         for (String s : FileTypeExtensions.getWebExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/web-file.png";
+                return "org/sleuthkit/autopsy/images/web-file.png"; //NON-NLS
             }
         }
         // PDFs
         for (String s : FileTypeExtensions.getPDFExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/pdf-file.png";
+                return "org/sleuthkit/autopsy/images/pdf-file.png"; //NON-NLS
             }
         }
         // Archives
         for (String s : FileTypeExtensions.getArchiveExtensions()) {
             if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/archive-file.png";
+                return "org/sleuthkit/autopsy/images/archive-file.png"; //NON-NLS
             }
         }
         // Else return the default
-        return "org/sleuthkit/autopsy/images/file-icon.png";
+        return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
 
     }
 

@@ -68,11 +68,11 @@ public class Installer extends ModuleInstall {
             } else if (skVersion.length() == 0) {
                 throw new Exception(NbBundle.getMessage(this.getClass(), "Installer.exception.taskVerStringBang.msg"));
             } else {
-                logger.log(Level.CONFIG, "Sleuth Kit Version: {0}", skVersion);
+                logger.log(Level.CONFIG, "Sleuth Kit Version: {0}", skVersion); //NON-NLS
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error calling Sleuth Kit library (test call failed)", e);
+            logger.log(Level.SEVERE, "Error calling Sleuth Kit library (test call failed)", e); //NON-NLS
 
 
             // Normal error box log handler won't be loaded yet, so show error here.

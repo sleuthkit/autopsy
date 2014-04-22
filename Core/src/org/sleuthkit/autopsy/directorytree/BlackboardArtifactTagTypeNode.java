@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
     private static final String DISPLAY_NAME = NbBundle.getMessage(BlackboardArtifactTagTypeNode.class,
                                                                    "BlackboardArtifactTagTypeNode.displayName.text");
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     public BlackboardArtifactTagTypeNode(TagName tagName) {
         super(Children.create(new BlackboardArtifactTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + DISPLAY_NAME));
@@ -55,7 +55,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
             tagsCount = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
         }
         catch (TskCoreException ex) {
-            Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex);
+            Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
         }
         
         super.setName(DISPLAY_NAME);
@@ -105,7 +105,7 @@ public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
                 keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));            
             }
             catch (TskCoreException ex) {
-                Logger.getLogger(BlackboardArtifactTagTypeNode.BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+                Logger.getLogger(BlackboardArtifactTagTypeNode.BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                     //NON-NLS
             }                                    
             return true;
         }

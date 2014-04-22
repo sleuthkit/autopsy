@@ -62,15 +62,15 @@ public class HashsetHits implements AutopsyVisitableItem {
         try {
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + setNameId
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId;
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
             rs = skCase.runQuery(query);
             while (rs.next()) {
-                String value = rs.getString("value_text");
-                long artifactId = rs.getLong("artifact_id");
+                String value = rs.getString("value_text"); //NON-NLS
+                long artifactId = rs.getLong("artifact_id"); //NON-NLS
                 if (!hashSetHitsMap.containsKey(value)) {
                     hashSetHitsMap.put(value, new HashSet<Long>());
                 }
@@ -79,13 +79,13 @@ public class HashsetHits implements AutopsyVisitableItem {
             }
 
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
         } finally {
             if (rs != null) {
                 try {
                     skCase.closeRunQuery(rs);
                 } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
+                    logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex); //NON-NLS
                 }
             }
         }
@@ -105,7 +105,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             super(Children.create(new HashsetHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(HASHSET_HITS);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
             initArtifacts();
         }
 
@@ -157,7 +157,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             super(Children.create(new HashsetHitsSetChildren(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
         }
 
         @Override
@@ -204,7 +204,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                     //TODO: bulk artifact gettings
                     list.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
-                    logger.log(Level.WARNING, "TSK Exception occurred", ex);
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
                 }
             }
             return true;

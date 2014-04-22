@@ -182,7 +182,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         descriptionLabel.setEditable(false);
         descriptionLabel.setBackground(new java.awt.Color(240, 240, 240));
         descriptionLabel.setColumns(20);
-        descriptionLabel.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        descriptionLabel.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N NON-NLS
         descriptionLabel.setLineWrap(true);
         descriptionLabel.setRows(5);
         descriptionLabel.setWrapStyleWord(true);
