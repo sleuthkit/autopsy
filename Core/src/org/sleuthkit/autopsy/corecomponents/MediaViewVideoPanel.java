@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Dimension;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
@@ -108,4 +109,8 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * Return the extensions supported by this video panel.
      */
     abstract public String[] getExtensions();
+    /**
+     * Return the MimeTypes supported by this video panel.
+     */
+    abstract public List<String> getMimeTypes();
 }
