@@ -168,7 +168,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         try {
             indexed = hashDb.hasIndex();
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting indexed status info for hash set (name = " + hashDb.getHashSetName() + ")", ex);
+            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting indexed status info for hash set (name = " + hashDb.getHashSetName() + ")", ex); //NON-NLS
         }
         return indexed;
     }
