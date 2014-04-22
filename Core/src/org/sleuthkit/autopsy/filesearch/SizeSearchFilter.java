@@ -50,7 +50,7 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
         int unit = this.getComponent().getSizeUnitComboBox().getSelectedIndex();
         int divider = (int) Math.pow(2, (unit * 10));
         size = size * divider;
-        return "size " + operator + " " + size;
+        return "size " + operator + " " + size; //NON-NLS
     }
 
     private String compareComboBoxToOperator(JComboBox<String> compare) {
