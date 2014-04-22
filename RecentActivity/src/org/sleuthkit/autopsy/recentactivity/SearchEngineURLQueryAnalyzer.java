@@ -338,7 +338,8 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE, false);
             init2();
         } catch (IOException e) {
-            String message = "Unable to find " + XMLFILE;
+            String message = NbBundle
+                    .getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.init.exception.msg", XMLFILE);
             logger.log(Level.SEVERE, message, e);
             throw new IngestModuleException(message);
         }
