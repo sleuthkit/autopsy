@@ -84,7 +84,6 @@ public final class IngestJobLauncher {
         // Create ingest module templates.
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
-            String name = moduleFactory.getClass().getCanonicalName();
             IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, deserializeJobSettings(moduleFactory, launcherContext));
             String moduleName = moduleTemplate.getModuleName();
             if (enabledModuleNames.contains(moduleName)) {

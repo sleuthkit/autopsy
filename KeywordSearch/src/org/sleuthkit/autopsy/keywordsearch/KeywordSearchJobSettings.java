@@ -34,6 +34,11 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
         this.namesOfEnabledKeywordLists.addAll(namesOfEnabledKeywordLists);
     }
 
+    @Override
+    public String getVersionNumber() {
+        return "1.0"; //NON-NLS
+    }    
+        
     boolean isKeywordListEnabled(String keywordListName) {
         return namesOfEnabledKeywordLists.contains(keywordListName);
     }

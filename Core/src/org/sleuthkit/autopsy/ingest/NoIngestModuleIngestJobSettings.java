@@ -26,6 +26,11 @@ public final class NoIngestModuleIngestJobSettings implements IngestModuleIngest
 
     private final String setting = "None"; //NON-NLS
 
+    @Override
+    public String getVersionNumber() {
+        return "1.0"; //NON-NLS
+    }    
+        
     /**
      * Gets the string used as an ingest options placeholder for serialization
      * purposes.

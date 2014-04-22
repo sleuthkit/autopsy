@@ -33,7 +33,12 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
     FileTypeIdModuleSettings(boolean skipKnownFiles) {
         this.skipKnownFiles = skipKnownFiles;
     }
-
+    
+    @Override
+    public String getVersionNumber() {
+        return "1.0"; //NON-NLS
+    }    
+    
     void setSkipKnownFiles(boolean enabled) {
         skipKnownFiles = enabled;
     }

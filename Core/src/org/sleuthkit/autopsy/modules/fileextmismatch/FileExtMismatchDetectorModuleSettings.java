@@ -36,6 +36,11 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
     }
 
+    @Override
+    public String getVersionNumber() {
+        return "1.0"; //NON-NLS
+    }    
+        
     void setSkipFilesWithNoExtension(boolean enabled) {
         skipFilesWithNoExtension = enabled;
     }
