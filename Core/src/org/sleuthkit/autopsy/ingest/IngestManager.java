@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.FileIngestScheduler.FileIngestTask;
 
@@ -415,7 +416,7 @@ public class IngestManager {
                         notifyMessage.append("the data source and selecting Run Ingest Modules.\n\n");
                         notifyMessage.append("Errors\n\n: ");
                         notifyMessage.append(errorMessages.toString());
-                        MessageNotifyUtil.Message.error(notifyMessage.toString());
+                        JOptionPane.showMessageDialog(null, notifyMessage.toString(), "Ingest Module Start Up Failed", JOptionPane.ERROR_MESSAGE);
 
                         // Jettison the ingest job and move on to the next one.
                         synchronized (IngestManager.this) {
