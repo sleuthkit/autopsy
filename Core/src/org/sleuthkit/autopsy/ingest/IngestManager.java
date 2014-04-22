@@ -395,28 +395,23 @@ public class IngestManager {
                     List<IngestModuleError> errors = ingestJob.startUpIngestPipelines();
                     if (!errors.isEmpty()) {
                         // Report the error to the user.
-                        StringBuilder failedModules = new StringBuilder();
-                        StringBuilder errorMessages = new StringBuilder();
-                        for (int i = 0; i < errors.size(); ++i) {
-                            IngestModuleError error = errors.get(i);
+                        StringBuilder moduleStartUpErrors = new StringBuilder();
+                        for (IngestModuleError error : errors) {
                             String moduleName = error.getModuleDisplayName();
                             logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError()); //NON-NLS
-                            failedModules.append(moduleName);
-                            errorMessages.append(error.getModuleError().getMessage());
-                            if ((errors.size() > 1) && (i != (errors.size() - 1))) {
-                                failedModules.append(",");
-                                errorMessages.append("\n\n");
-                            }
+                            moduleStartUpErrors.append(moduleName);
+                            moduleStartUpErrors.append(": ");
+                            moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
+                            moduleStartUpErrors.append("\n");
                         }
                         StringBuilder notifyMessage = new StringBuilder();
-                        notifyMessage.append("Failed to start the following ingest modules: ");
-                        notifyMessage.append(failedModules.toString());
-                        notifyMessage.append(".\n\nNo ingest modules will be run. Please disable the failed modules ");
-                        notifyMessage.append("or fix the error and restart ingest by right clicking on ");
-                        notifyMessage.append("the data source and selecting Run Ingest Modules.\n\n");
-                        notifyMessage.append("Errors\n\n: ");
-                        notifyMessage.append(errorMessages.toString());
-                        JOptionPane.showMessageDialog(null, notifyMessage.toString(), "Ingest Module Start Up Failed", JOptionPane.ERROR_MESSAGE);
+                        notifyMessage.append("Unable to start up one or more ingest modules, ingest job cancelled.\n");
+                        notifyMessage.append("Please disable the failed modules or fix the errors and then restart ingest\n");
+                        notifyMessage.append("by right clicking on the data source and selecting Run Ingest Modules.\n");
+                        notifyMessage.append("Errors:\n\n");
+                        notifyMessage.append(moduleStartUpErrors.toString());
+                        notifyMessage.append("\n\n");
+                        JOptionPane.showMessageDialog(null, notifyMessage.toString(), "Ingest Failure", JOptionPane.ERROR_MESSAGE);
 
                         // Jettison the ingest job and move on to the next one.
                         synchronized (IngestManager.this) {
