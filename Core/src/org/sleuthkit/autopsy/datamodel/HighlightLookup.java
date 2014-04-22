@@ -21,14 +21,20 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.Content;
 
 
+
 /**
- * Lookup interface to get instance of a HighlightedMatchesSource
- * 
- * @param c content for which to get highlights
- * @param keywordHitQuery keyword hit that needs to be highlighted
- * @param isRegex whether the original query was a regex query
- * @param originalQuery (regex or literal) that may need to be performed again to get all ContentHit results
+ * BC debugging notes: This seems to represent a combination of the content, query, isRegexp and origialQuery that can
+ * be passed around. It is used by BlackboardArtifactNode.getHighlightLookup and getLookups to add the markup concept to the node. 
  */
  public interface HighlightLookup {
+    /**
+     * Lookup interface to get instance of a HighlightedMatchesSource
+     *
+     * @param c content for which to get highlights
+     * @param keywordHitQuery keyword hit that needs to be highlighted
+     * @param isRegex whether the original query was a regex query
+     * @param originalQuery (regex or literal) that may need to be performed
+     * again to get all ContentHit results
+     */
     public HighlightLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery);
 }

@@ -18,20 +18,17 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Represents result of keyword search query containing the Content it hit
- * and chunk information, if the result hit is a content chunk
+ * Stores the fact that the given file had a keyword hit with a single snippet
+ * at a given chunk. 
  */
 class ContentHit {
 
     private AbstractFile content;
     private int chunkID = 0;
-    private String snippet = "";
+    private String snippet = "";    // single snippet for chunk (chunk could have more hits)
     private boolean snippetSet = false;
 
     ContentHit(AbstractFile content) {
@@ -96,38 +93,5 @@ class ContentHit {
         hash = 41 * hash + (this.content != null ? this.content.hashCode() : 0);
         hash = 41 * hash + this.chunkID;
         return hash;
-    }
-
-    /**
-     * Identify the list of files with the first chunk that has a hit
-     * @param hits
-     * @return 
-     */
-    static Map<AbstractFile, Integer> flattenResults(List<ContentHit> hits) {
-        Map<AbstractFile, Integer> ret = new LinkedHashMap<AbstractFile, Integer>();
-        for (ContentHit h : hits) {
-            AbstractFile f = h.getContent();
-            if (!ret.containsKey(f)) {
-                ret.put(f, h.getChunkId());
-            }
-        }
-
-        return ret;
-    }
-    
-    //flatten results to get unique AbstractFile per hit, with first chunk id encountered
-    static LinkedHashMap<AbstractFile, Integer> flattenResults(Map<String, List<ContentHit>> results) {
-        LinkedHashMap<AbstractFile, Integer> flattened = new LinkedHashMap<AbstractFile, Integer>();
-
-        for (String key : results.keySet()) {
-            for (ContentHit hit : results.get(key)) {
-                AbstractFile abstractFile = hit.getContent();
-                //flatten, record first chunk encountered
-                if (!flattened.containsKey(abstractFile)) {
-                    flattened.put(abstractFile, hit.getChunkId());
-                }
-            }
-        }
-        return flattened;
     }
 }

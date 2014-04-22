@@ -44,7 +44,7 @@ interface KeywordSearchQuery {
      * @throws NoOpenCoreException if query failed due to server error, this could be a notification to stop processing
      * @return 
      */
-    public Map<String,List<ContentHit>> performQuery() throws NoOpenCoreException;
+    public QueryResults performQuery() throws NoOpenCoreException;
     
     
     /**

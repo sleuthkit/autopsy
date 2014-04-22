@@ -439,7 +439,7 @@ public final class SearchRunner {
                     final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
                     del.addFilter(dataSourceFilter);
 
-                    Map<String, List<ContentHit>> queryResult;
+                    QueryResults queryResult;
 
                     try {
                         queryResult = del.performQuery();
@@ -458,10 +458,11 @@ public final class SearchRunner {
                     }
 
                     // calculate new results by substracting results already obtained in this ingest
-                    // this creates a map of each keyword to the list of unique files that have that hit.  
-                    Map<Keyword, List<ContentHit>> newResults = filterResults(queryResult, isRegex);
+                    // this creates a map of each keyword to the list of unique files that have that hit. 
+                    // @@@ NOTE THIS IS saving the keywords as Keyword, not String.  use the K methods
+                    QueryResults newResults = filterResults(queryResult, isRegex);
 
-                    if (!newResults.isEmpty()) {
+                    if (!newResults.getKeywordsK().isEmpty()) {
 
                         //write results to BB
 
@@ -469,7 +470,7 @@ public final class SearchRunner {
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
                         //scale progress bar more more granular, per result sub-progress, within per keyword
-                        int totalUnits = newResults.size();
+                        int totalUnits = newResults.getKeywordsK().size();
                         subProgresses[keywordsSearched].start(totalUnits);
                         int unitProgress = 0;
                         String queryDisplayStr = keywordQuery.getQuery();
@@ -479,7 +480,7 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
 
                         // cycle through the keywords returned -- only one unless it was a regexp
-                        for (final Keyword hitTerm : newResults.keySet()) {
+                        for (final Keyword hitTerm : newResults.getKeywordsK()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
                                 logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery());
@@ -494,7 +495,7 @@ public final class SearchRunner {
                             subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
 
                             // this returns the unique files in the set with the first chunk that has a hit
-                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(newResults.get(hitTerm));
+                            Map<AbstractFile, Integer> contentHitsFlattened = newResults.getUniqueFiles(hitTerm);
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
 
                                 // get the snippet for the first hit in the file
@@ -668,11 +669,11 @@ public final class SearchRunner {
 
         //calculate new results but substracting results already obtained in this ingest
         //update currentResults map with the new results
-        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult, boolean isRegex) {
-            Map<Keyword, List<ContentHit>> newResults = new HashMap<>();
+        private QueryResults filterResults(QueryResults queryResult, boolean isRegex) {
+            QueryResults newResults = new QueryResults();
 
-            for (String termResult : queryResult.keySet()) {
-                List<ContentHit> queryTermResults = queryResult.get(termResult);
+            for (String termResult : queryResult.getKeywords()) {
+                List<ContentHit> queryTermResults = queryResult.getResults(termResult);
 
                 //translate to list of IDs that we keep track of
                 List<Long> queryTermResultsIDs = new ArrayList<>();
@@ -684,16 +685,16 @@ public final class SearchRunner {
                 List<Long> curTermResults = job.currentKeywordResults(termResultK);
                 if (curTermResults == null) {
                     job.addKeywordResults(termResultK, queryTermResultsIDs);
-                    newResults.put(termResultK, queryTermResults);
+                    newResults.addResult(termResultK, queryTermResults);
                 } else {
                     //some AbstractFile hits already exist for this keyword
                     for (ContentHit res : queryTermResults) {
                         if (!curTermResults.contains(res.getId())) {
                             //add to new results
-                            List<ContentHit> newResultsFs = newResults.get(termResultK);
+                            List<ContentHit> newResultsFs = newResults.getResults(termResultK);
                             if (newResultsFs == null) {
                                 newResultsFs = new ArrayList<>();
-                                newResults.put(termResultK, newResultsFs);
+                                newResults.addResult(termResultK, newResultsFs);
                             }
                             newResultsFs.add(res);
                             curTermResults.add(res.getId());

@@ -211,8 +211,8 @@ class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
-        Map<String, List<ContentHit>> results = new HashMap<>();
+    public QueryResults performQuery() throws NoOpenCoreException {
+        QueryResults results = new QueryResults();
 
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
@@ -234,14 +234,14 @@ class TermComponentQuery implements KeywordSearchQuery {
                 filesQuery.addFilter(filter);
             }
             try {
-                Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
+                QueryResults subResults = filesQuery.performQuery();
                 Set<ContentHit> filesResults = new HashSet<>();
-                for (String key : subResults.keySet()) {
-                    List<ContentHit> keyRes = subResults.get(key);
+                for (String key : subResults.getKeywords()) {
+                    List<ContentHit> keyRes = subResults.getResults(key);
                     resultSize += keyRes.size();
                     filesResults.addAll(keyRes);
                 }
-                results.put(term.getTerm(), new ArrayList<>(filesResults));
+                results.addResult(term.getTerm(), new ArrayList<>(filesResults));
             } catch (NoOpenCoreException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e);
                 throw e;

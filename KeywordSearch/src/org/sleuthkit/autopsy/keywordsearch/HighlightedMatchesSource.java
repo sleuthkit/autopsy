@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +30,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
@@ -62,7 +60,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     //stored page num -> current hit number mapping
     private HashMap<Integer, Integer> pagesToHits;
     private List<Integer> pages;
-    private Map<String, List<ContentHit>> hits = null; //original hits that may get passed in
+    private QueryResults hits = null; //original hits that may get passed in
     private String originalQuery = null; //or original query if hits are not available
     private boolean inited = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
@@ -89,12 +87,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         this.originalQuery = originalQuery;
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, Map<String, List<ContentHit>> hits) {
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, QueryResults hits) {
         this(content, solrQuery, isRegex);
         this.hits = hits;
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group, Map<String, List<ContentHit>> hits) {
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
         this(content, solrQuery, isRegex, hits);
         this.group = group;
     }
@@ -153,9 +151,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             }
 
             //organize the hits by page, filter as needed
-            TreeSet<Integer> pagesSorted = new TreeSet<Integer>();
-            for (Collection<ContentHit> hitCol : hits.values()) {
-                for (ContentHit hit : hitCol) {
+            TreeSet<Integer> pagesSorted = new TreeSet<>();
+            for (String k : hits.getKeywords()) {
+                for (ContentHit hit : hits.getResults(k)) {
                     int chunkID = hit.getChunkId();
                     if (chunkID != 0 && contentId == hit.getId()) {
                         pagesSorted.add(chunkID);
