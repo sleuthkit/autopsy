@@ -25,6 +25,8 @@ import java.awt.event.FocusListener;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -120,7 +122,8 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
 
     @Override
     public List<Keyword> getQueryList() {
-        throw new UnsupportedOperationException("No list for single-keyword search");
+        throw new UnsupportedOperationException(
+                NbBundle.getMessage(this.getClass(), "DropdownSearchPanelgetQueryList.exception.msg"));
     }    
 
     @Override
