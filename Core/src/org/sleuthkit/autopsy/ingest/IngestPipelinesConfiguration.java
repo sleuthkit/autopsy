@@ -40,17 +40,17 @@ import org.w3c.dom.NodeList;
 final class IngestPipelinesConfiguration {
 
     private static final Logger logger = Logger.getLogger(IngestPipelinesConfiguration.class.getName());
-    private static final String PIPELINE_CONFIG_FILE_VERSION_KEY = "PipelineConfigFileVersion";
+    private static final String PIPELINE_CONFIG_FILE_VERSION_KEY = "PipelineConfigFileVersion"; //NON-NLS
     private static final String PIPELINE_CONFIG_FILE_VERSION_NO_STRING = "1";
     private static final int PIPELINE_CONFIG_FILE_VERSION_NO = 1;
-    private static final String PIPELINES_CONFIG_FILE = "pipeline_config.xml";
-    private static final String PIPELINES_CONFIG_FILE_XSD = "PipelineConfigSchema.xsd";
-    private static final String XML_PIPELINE_ELEM = "PIPELINE";
-    private static final String XML_PIPELINE_TYPE_ATTR = "type";
-    private static final String DATA_SOURCE_INGEST_PIPELINE_TYPE = "ImageAnalysis";
-    private static final String FILE_INGEST_PIPELINE_TYPE = "FileAnalysis";
-    private static final String XML_MODULE_ELEM = "MODULE";
-    private static final String XML_MODULE_CLASS_NAME_ATTR = "location";
+    private static final String PIPELINES_CONFIG_FILE = "pipeline_config.xml"; //NON-NLS
+    private static final String PIPELINES_CONFIG_FILE_XSD = "PipelineConfigSchema.xsd"; //NON-NLS
+    private static final String XML_PIPELINE_ELEM = "PIPELINE"; //NON-NLS
+    private static final String XML_PIPELINE_TYPE_ATTR = "type"; //NON-NLS
+    private static final String DATA_SOURCE_INGEST_PIPELINE_TYPE = "ImageAnalysis"; //NON-NLS
+    private static final String FILE_INGEST_PIPELINE_TYPE = "FileAnalysis"; //NON-NLS
+    private static final String XML_MODULE_ELEM = "MODULE"; //NON-NLS
+    private static final String XML_MODULE_CLASS_NAME_ATTR = "location"; //NON-NLS
     private static IngestPipelinesConfiguration instance;
     private final List<String> dataSourceIngestPipelineConfig = new ArrayList<>();
     private final List<String> fileIngestPipelineConfig = new ArrayList<>();
@@ -61,7 +61,7 @@ final class IngestPipelinesConfiguration {
 
     synchronized static IngestPipelinesConfiguration getInstance() {
         if (instance == null) {
-            Logger.getLogger(IngestPipelinesConfiguration.class.getName()).log(Level.INFO, "Creating ingest module loader instance");
+            Logger.getLogger(IngestPipelinesConfiguration.class.getName()).log(Level.INFO, "Creating ingest module loader instance"); //NON-NLS
             instance = new IngestPipelinesConfiguration();
         }
         return instance;
@@ -96,14 +96,14 @@ final class IngestPipelinesConfiguration {
 
             Element rootElement = doc.getDocumentElement();
             if (rootElement == null) {
-                logger.log(Level.SEVERE, "Invalid pipelines config file");
+                logger.log(Level.SEVERE, "Invalid pipelines config file"); //NON-NLS
                 return;
             }
 
             NodeList pipelineElements = rootElement.getElementsByTagName(XML_PIPELINE_ELEM);
             int numPipelines = pipelineElements.getLength();
             if (numPipelines < 1 || numPipelines > 2) {
-                logger.log(Level.SEVERE, "Invalid pipelines config file");
+                logger.log(Level.SEVERE, "Invalid pipelines config file"); //NON-NLS
                 return;
             }
 
@@ -120,7 +120,7 @@ final class IngestPipelinesConfiguration {
                             pipelineConfig = fileIngestPipelineConfig;
                             break;
                         default:
-                            logger.log(Level.SEVERE, "Invalid pipelines config file");
+                            logger.log(Level.SEVERE, "Invalid pipelines config file"); //NON-NLS
                             return;
                     }
                 }
@@ -143,7 +143,7 @@ final class IngestPipelinesConfiguration {
                 }
             }
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error copying default pipeline configuration to user dir", ex);
+            logger.log(Level.SEVERE, "Error copying default pipeline configuration to user dir", ex); //NON-NLS
         }
     }
 }
