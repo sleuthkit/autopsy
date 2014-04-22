@@ -56,8 +56,8 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     private static class IngestJobTotals {
-        long processTime = 0;
-        long numFiles = 0;
+        private long processTime = 0;
+        private long numFiles = 0;
     }
     
     private static synchronized void initTotals(long ingestJobId) {
@@ -71,6 +71,11 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
      */
     private static synchronized void addToTotals(long ingestJobId, long processTimeInc) {
         IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(ingestJobId);
+        if (ingestJobTotals == null) {
+            ingestJobTotals = new IngestJobTotals();
+            totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
+        }
+        
         ingestJobTotals.processTime += processTimeInc;
         ingestJobTotals.numFiles++;
         totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
@@ -83,9 +88,8 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        if (refCounter.incrementAndGet(jobId) == 1) {
-            initTotals(jobId);
-        }  
+        refCounter.incrementAndGet(jobId);
+
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
     }
