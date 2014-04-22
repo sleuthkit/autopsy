@@ -50,7 +50,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     private static final String NONE_SELECTED_MESSAGE = NbBundle.getMessage(DateSearchFilter.class, "DateSearchFilter.noneSelectedMsg.text");
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
-    private static final String SEPARATOR = "SEPARATOR";
+    private static final String SEPARATOR = "SEPARATOR"; //NON-NLS
 
     /**
      * New DateSearchFilter with the default panel
@@ -88,7 +88,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             sdf.setTimeZone(selectedTZ); // get the time in the selected timezone
             Date temp = sdf.parse(startDateValue);
 
-            startDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT"));
+            startDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
             startDate.setTime(temp); // convert to GMT
         } catch (ParseException ex) {
             // for now, no need to show the error message to the user her
@@ -107,7 +107,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             sdf.setTimeZone(selectedTZ); // get the time in the selected timezone
             Date temp2 = sdf.parse(endDateValue);
 
-            endDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT"));
+            endDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
             endDate.setTime(temp2); // convert to GMT
             endDate.set(Calendar.HOUR, endDate.get(Calendar.HOUR) + 24); // get the next 24 hours
         } catch (ParseException ex) {
@@ -130,22 +130,22 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             String subQuery = "0";
 
             if (modifiedChecked) {
-                subQuery += " or mtime between " + fromDate + " and " + toDate;
+                subQuery += " or mtime between " + fromDate + " and " + toDate; //NON-NLS
             }
 
             if (changedChecked) {
-                subQuery += " or ctime between " + fromDate + " and " + toDate;
+                subQuery += " or ctime between " + fromDate + " and " + toDate; //NON-NLS
             }
 
             if (accessedChecked) {
-                subQuery += " or atime between " + fromDate + " and " + toDate;
+                subQuery += " or atime between " + fromDate + " and " + toDate; //NON-NLS
             }
 
             if (createdChecked) {
-                subQuery += " or crtime between " + fromDate + " and " + toDate;
+                subQuery += " or crtime between " + fromDate + " and " + toDate; //NON-NLS
             }
 
-            addQuery += " and (" + subQuery + ")";
+            addQuery += " and (" + subQuery + ")"; //NON-NLS
         } else {
             throw new FilterValidationException(NONE_SELECTED_MESSAGE);
         }
@@ -173,7 +173,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 int offset = zone.getRawOffset() / 1000;
                 int hour = offset / 3600;
                 int minutes = (offset % 3600) / 60;
-                String item = String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID());
+                String item = String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID()); //NON-NLS
                 timeZones.add(item);
             }
 
@@ -188,7 +188,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 int offset = zone.getRawOffset() / 1000;
                 int hour = offset / 3600;
                 int minutes = (offset % 3600) / 60;
-                String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+                String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
                 timeZones.add(item);
             }
         }
