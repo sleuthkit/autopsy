@@ -60,7 +60,7 @@ import org.openide.windows.WindowManager;
         setName(NbBundle.getMessage(this.getClass(), "TimelineProgressDialog.setName.text"));
 
         // Close the dialog when Esc is pressed
-        String cancelName = "cancel";
+        String cancelName = "cancel"; //NON-NLS
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
