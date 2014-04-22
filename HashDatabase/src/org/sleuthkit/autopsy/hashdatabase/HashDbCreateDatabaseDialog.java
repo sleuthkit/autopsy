@@ -288,7 +288,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             }
         }
         catch (IOException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex);
+            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex); //NON-NLS
         }        
     }//GEN-LAST:event_saveAsButtonActionPerformed
 

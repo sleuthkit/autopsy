@@ -107,7 +107,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
             }
             catch (Exception e) {
-                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e);
+                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
@@ -119,7 +119,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
                 pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
             }
             catch (Exception e) {
-                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e);
+                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
