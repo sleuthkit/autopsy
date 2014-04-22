@@ -58,7 +58,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         STATUS = ReportStatus.QUEUING;
         
         if (reportPath != null) {
-            pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>");
+            pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
             pathLabel.setToolTipText(reportPath);
 
         // Add the "link" effect to the pathLabel
@@ -137,7 +137,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png")));
+                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png"))); //NON-NLS
                 cancelButton.setToolTipText(
                         NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.cancelButton.text"));
                 processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
@@ -241,7 +241,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                     processingLabel.setText(
                             NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
                     reportProgressBar.setValue(reportProgressBar.getMaximum());
-                    cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png")));
+                    cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
                     cancelButton.setToolTipText(
                             NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
                 }
@@ -268,7 +268,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         setMinimumSize(new java.awt.Dimension(486, 68));
 
-        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); // NOI18N
+        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.cancelButton.text")); // NOI18N
         cancelButton.setToolTipText(org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.cancelButton.toolTipText")); // NOI18N
         cancelButton.setBorder(null);
@@ -289,12 +289,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
 
-        reportLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        reportLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(new java.awt.Font("Tahoma", 2, 10)); // NOI18N
+        processingLabel.setFont(new java.awt.Font("Tahoma", 2, 10)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
@@ -374,7 +374,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 break;
             default:
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel_hover.png")));
+                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel_hover.png"))); //NON-NLS
                 break;
         }
     }//GEN-LAST:event_cancelButtonMouseEntered
@@ -387,11 +387,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 break;
             case QUEUING:
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png")));
+                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); //NON-NLS
                 break;
             case RUNNING:
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png")));
+                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png"))); //NON-NLS
                 break;
         }
     }//GEN-LAST:event_cancelButtonMouseExited

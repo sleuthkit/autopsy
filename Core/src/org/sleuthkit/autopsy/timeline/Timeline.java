@@ -117,7 +117,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class Timeline extends CallableSystemAction implements Presenter.Toolbar, PropertyChangeListener {
  
     private static final Logger logger = Logger.getLogger(Timeline.class.getName());
-    private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Timeline.class.getPackage().getName(), false);
+    private final java.io.File macRoot = InstalledFileLocator.getDefault().locate("mactime", Timeline.class.getPackage().getName(), false); //NON-NLS
     private TimelineFrame mainFrame;          //frame for holding all the elements
     private Group fxGroupCharts; //Orders the charts
     private Scene fxSceneCharts; //Displays the charts
@@ -198,7 +198,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 dataResultPanel.setContentViewer(dataContentPanel);
                 //dataResultPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 //dataResultPanel.setPreferredSize(new Dimension((int)(FRAME_WIDTH * 0.5), (int) (FRAME_HEIGHT * 0.5)));
-                logger.log(Level.INFO, "Successfully created viewers");
+                logger.log(Level.INFO, "Successfully created viewers"); //NON-NLS
 
                 mainFrame.setBottomLeftPanel(dataResultPanel);
                 mainFrame.setBottomRightPanel(dataContentPanel);
@@ -247,12 +247,12 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     java.io.File mactimeFile = new java.io.File(moduleDir, mactimeFileName);
                     if (!mactimeFile.exists()) {
                         progressDialog.setProgressTotal(3); //total 3 units
-                        logger.log(Level.INFO, "Creating body file");
+                        logger.log(Level.INFO, "Creating body file"); //NON-NLS
                         progressDialog.updateProgressBar(
                                 NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.genBodyFile"));
                         String bodyFilePath = makeBodyFile();
                         progressDialog.updateProgressBar(++currentProgress);
-                        logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath());
+                        logger.log(Level.INFO, "Creating mactime file: " + mactimeFile.getAbsolutePath()); //NON-NLS
                         progressDialog.updateProgressBar(
                                 NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.genMacTime"));
                         makeMacTime(bodyFilePath);
@@ -260,14 +260,14 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                         data = null;
                     } else {
                         progressDialog.setProgressTotal(1); //total 1 units
-                        logger.log(Level.INFO, "Mactime file already exists; parsing that: " + mactimeFile.getAbsolutePath());
+                        logger.log(Level.INFO, "Mactime file already exists; parsing that: " + mactimeFile.getAbsolutePath()); //NON-NLS
                     }
 
 
                     progressDialog.updateProgressBar(
                             NbBundle.getMessage(this.getClass(), "Timeline.runJavaFxThread.progress.parseMacTime"));
                     if (data == null) {
-                        logger.log(Level.INFO, "Parsing mactime file: " + mactimeFile.getAbsolutePath());
+                        logger.log(Level.INFO, "Parsing mactime file: " + mactimeFile.getAbsolutePath()); //NON-NLS
                         data = parseMacTime(mactimeFile); //The sum total of the mactime parsing.  YearEpochs contain everything you need to make a timeline.
                     }
                     progressDialog.updateProgressBar(++currentProgress);
@@ -357,7 +357,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         final CategoryAxis xAxis = new CategoryAxis(); //Axes are very specific types. Categorys are strings.
         final NumberAxis yAxis = new NumberAxis();
         final Label l = new Label("");
-        l.setStyle("-fx-font: 24 arial;");
+        l.setStyle("-fx-font: 24 arial;"); //NON-NLS
         l.setTextFill(Color.AZURE);
         xAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.yearBarChart.x.years"));
         yAxis.setLabel(NbBundle.getMessage(this.getClass(), "Timeline.yearBarChart.y.numEvents"));
@@ -532,7 +532,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     if (de != null) {
                         afs = de.getEvents();
                     } else {
-                        logger.log(Level.SEVERE, "There were no events for the clicked-on day: " + day);
+                        logger.log(Level.SEVERE, "There were no events for the clicked-on day: " + day); //NON-NLS
                         return;
                     }
 
@@ -592,7 +592,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             cal.setTime(date);
             return cal.get(Calendar.MONTH);
         } catch (ParseException ex) {
-            logger.log(Level.WARNING, "Unable to convert string " + mon + " to integer", ex);
+            logger.log(Level.WARNING, "Unable to convert string " + mon + " to integer", ex); //NON-NLS
             return -1;
         }
     }
@@ -886,7 +886,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             try {
                 af = skCase.getAbstractFileById(fileId);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting file by id and creating a node in Timeline: " + fileId, ex);
+                logger.log(Level.SEVERE, "Error getting file by id and creating a node in Timeline: " + fileId, ex); //NON-NLS
                 //no node will be shown for this object
                 return null;
             }
@@ -932,7 +932,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         try {
             scan = new Scanner(new FileInputStream(f));
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error: could not find mactime file.", ex);
+            logger.log(Level.SEVERE, "Error: could not find mactime file.", ex); //NON-NLS
             return years;
         }
         scan.useDelimiter(",");
@@ -945,7 +945,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             String[] s = scan.nextLine().split(","); //1999-02-08T11:08:08Z, 78706, m..b, rrwxrwxrwx, 0, 0, 8355, /img...
             
             // break the date into year,month,day,hour,minute, and second: Note that the ISO times are in GMT
-            String delims = "[T:Z\\-]+"; //split by the delimiters
+            String delims = "[T:Z\\-]+"; //split by the delimiters NON-NLS
             String[] date = s[0].split(delims); //{1999,02,08,11,08,08,...}
    
             int year = Integer.valueOf(date[0]);
@@ -1004,15 +1004,15 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         // Get report path
         String bodyFilePath = moduleDir.getAbsolutePath()
-                + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt";
+                + java.io.File.separator + currentCase.getName() + "-" + datenotime + ".txt"; //NON-NLS
         // Run query to get all files
-        final String filesAndDirs = "name != '.' "
-                + "AND name != '..'";
+        final String filesAndDirs = "name != '.' " //NON-NLS
+                + "AND name != '..'"; //NON-NLS
         List<Long> fileIds = null;
         try {
             fileIds = skCase.findAllFileIdsWhere(filesAndDirs);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex);
+            logger.log(Level.SEVERE, "Error querying image files to make a body file: " + bodyFilePath, ex); //NON-NLS
             return null;
         }
 
@@ -1021,7 +1021,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         try {
             fileWriter = new FileWriter(bodyFilePath, true);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating output stream to write body file to: " + bodyFilePath, ex);
+            logger.log(Level.SEVERE, "Error creating output stream to write body file to: " + bodyFilePath, ex); //NON-NLS
             return null;
         }
 
@@ -1040,7 +1040,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 try {
                     path = file.getUniquePath();
                 } catch (TskCoreException e) {
-                    logger.log(Level.SEVERE, "Failed to get the unique path of: " + file + " and writing body file.", e);
+                    logger.log(Level.SEVERE, "Failed to get the unique path of: " + file + " and writing body file.", e); //NON-NLS
                     return null;
                 }
 
@@ -1070,11 +1070,11 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 out.write("\n");
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error querying file by id", ex);
+            logger.log(Level.SEVERE, "Error querying file by id", ex); //NON-NLS
             return null;
 
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error while trying to write data to the body file.", ex);
+            logger.log(Level.WARNING, "Error while trying to write data to the body file.", ex); //NON-NLS
             return null;
         } finally {
             if (out != null) {
@@ -1082,7 +1082,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     out.flush();
                     out.close();
                 } catch (IOException ex1) {
-                    logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1);
+                    logger.log(Level.WARNING, "Could not flush and/or close body file.", ex1); //NON-NLS
                 }
             }
         }
@@ -1103,13 +1103,13 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         final String machome = macRoot.getAbsolutePath();
         pathToBodyFile = PlatformUtil.getOSFilePath(pathToBodyFile);
         if (PlatformUtil.isWindowsOS()) {
-            macpath = machome + java.io.File.separator + "mactime.exe";
+            macpath = machome + java.io.File.separator + "mactime.exe"; //NON-NLS
             cmdpath = PlatformUtil.getOSFilePath(macpath);
-            mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"};
+            mactimeArgs = new String[]{"-b", pathToBodyFile, "-d", "-y"}; //NON-NLS
         } else {
-            cmdpath = "perl";
-            macpath = machome + java.io.File.separator + "mactime.pl";
-            mactimeArgs = new String[]{macpath, "-b", pathToBodyFile, "-d", "-y"};
+            cmdpath = "perl"; //NON-NLS
+            macpath = machome + java.io.File.separator + "mactime.pl"; //NON-NLS
+            mactimeArgs = new String[]{macpath, "-b", pathToBodyFile, "-d", "-y"}; //NON-NLS
         }
 
         String macfile = moduleDir.getAbsolutePath() + java.io.File.separator + mactimeFileName;
@@ -1123,17 +1123,17 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
             writer = new FileWriter(macfile);
             execUtil.execute(writer, cmdpath, mactimeArgs);
         } catch (InterruptedException ie) {
-            logger.log(Level.WARNING, "Mactime process was interrupted by user", ie);
+            logger.log(Level.WARNING, "Mactime process was interrupted by user", ie); //NON-NLS
             return null;
         } catch (IOException ioe) {
-            logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe);
+            logger.log(Level.SEVERE, "Could not create mactime file, encountered error ", ioe); //NON-NLS
             return null;
         } finally {
             if (writer != null) {
                 try {
                     writer.close();
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Could not clsoe writer after creating mactime file, encountered error ", ex);
+                    logger.log(Level.SEVERE, "Could not clsoe writer after creating mactime file, encountered error ", ex); //NON-NLS
                 }
             }
         }
@@ -1161,7 +1161,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
 
         try {
             if (currentCase.getRootObjectsCount() == 0) {
-                logger.log(Level.INFO, "Error creating timeline, there are no data sources. ");
+                logger.log(Level.INFO, "Error creating timeline, there are no data sources. "); //NON-NLS
             } else {
 
                 if (IngestManager.getInstance().isIngestRunning()) {
@@ -1176,7 +1176,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     }
                 }
 
-                logger.log(Level.INFO, "Beginning generation of timeline");
+                logger.log(Level.INFO, "Beginning generation of timeline"); //NON-NLS
 
                 // if the timeline window is already open, bring to front and do nothing
                 if (mainFrame != null && mainFrame.isVisible()) {
@@ -1200,7 +1200,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 });
 
                 // initialize mactimeFileName
-                mactimeFileName = currentCase.getName() + "-MACTIME.txt";
+                mactimeFileName = currentCase.getName() + "-MACTIME.txt"; //NON-NLS
 
                 // see if barData has been added to the database since the last
                 // time timeline ran
@@ -1213,9 +1213,9 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                 customize();
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error when generating timeline, ", ex);
+            logger.log(Level.SEVERE, "Error when generating timeline, ", ex); //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex);
+            logger.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); //NON-NLS
         }
     }
 

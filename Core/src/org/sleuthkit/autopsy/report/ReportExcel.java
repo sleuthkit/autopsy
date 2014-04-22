@@ -111,7 +111,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             out = new FileOutputStream(reportPath);
             wb.write(out);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write Excel report.", ex);
+            logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
         } finally {
             if (out != null) {
                 try {
@@ -288,7 +288,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public String getExtension() {
-        return ".xlsx";
+        return ".xlsx"; //NON-NLS
     }
 
     @Override

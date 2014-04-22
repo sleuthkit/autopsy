@@ -109,15 +109,15 @@ import org.openide.util.NbPreferences;
     public void storeSettings(WizardDescriptor wiz) {
         Map<TableReportModule, Boolean> tables = getComponent().getTableModuleStates();
         Map<GeneralReportModule, Boolean> generals = getComponent().getGeneralModuleStates();
-        wiz.putProperty("tableModuleStates", tables);
-        wiz.putProperty("generalModuleStates", generals);
-        wiz.putProperty("fileModuleStates", getComponent().getFileModuleStates());
+        wiz.putProperty("tableModuleStates", tables); //NON-NLS
+        wiz.putProperty("generalModuleStates", generals); //NON-NLS
+        wiz.putProperty("fileModuleStates", getComponent().getFileModuleStates()); //NON-NLS
         
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
-        prefs.putBoolean("tableModule", any(tables.values()));
-        prefs.putBoolean("generalModule", any(generals.values()));
+        prefs.putBoolean("tableModule", any(tables.values())); //NON-NLS
+        prefs.putBoolean("generalModule", any(generals.values())); //NON-NLS
     }
     
     /**
