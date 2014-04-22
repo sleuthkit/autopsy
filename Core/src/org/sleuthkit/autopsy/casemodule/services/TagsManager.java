@@ -443,9 +443,10 @@ public class TagsManager implements Closeable {
     }
 
     private void getPredefinedTagNames() {
-        if (!uniqueTagNames.containsKey("Bookmark")) {
+        if (!uniqueTagNames.containsKey(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"))) {
             try {
-                TagName tagName = tskCase.addTagName("Bookmark", "", TagName.HTML_COLOR.NONE);
+                TagName tagName = tskCase.addTagName(
+                        NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), "", TagName.HTML_COLOR.NONE);
                 uniqueTagNames.put(tagName.getDisplayName(), tagName);
             }
             catch (TskCoreException ex) {
