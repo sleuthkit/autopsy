@@ -291,13 +291,13 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         listOptionsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.listOptionsLabel.text")); // NOI18N
 
-        deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
+        deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N NON-NLS
         deleteListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.deleteListButton.text")); // NOI18N
 
-        saveListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N
+        saveListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N NON-NLS
         saveListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.saveListButton.text")); // NOI18N
 
-        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N
+        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N NON-NLS
         exportButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.exportButton.text")); // NOI18N
         exportButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -442,7 +442,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                                                         "KeywordSearchEditListPanel.exportButtonAction.featureName.text");
 
         JFileChooser chooser = new JFileChooser();
-        final String EXTENSION = "xml";
+        final String EXTENSION = "xml"; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileFilterLabel"), EXTENSION);
         chooser.setFileFilter(filter);
@@ -608,7 +608,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                     ret = (Object) !word.isLiteral();
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex);
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
                     break;
             }
             return ret;

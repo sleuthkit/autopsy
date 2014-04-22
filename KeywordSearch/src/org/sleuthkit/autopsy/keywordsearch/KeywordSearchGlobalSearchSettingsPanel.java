@@ -267,7 +267,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
             chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
+            logger.log(Level.WARNING, "Could not get number of indexed files/chunks"); //NON-NLS
         }
 
         KeywordSearch.addNumIndexedFilesChangeListener(
@@ -283,7 +283,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                     try {
                         chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
                     } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Could not get number of indexed chunks");
+                        logger.log(Level.WARNING, "Could not get number of indexed chunks"); //NON-NLS
 
                     }
                 }

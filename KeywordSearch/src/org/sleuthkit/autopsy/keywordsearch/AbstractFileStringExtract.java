@@ -141,7 +141,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
                     ++this.numChunks;
                 } catch (IngesterException ingEx) {
                     success = false;
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
+                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx); //NON-NLS
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
 
@@ -153,13 +153,13 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             ingester.ingest(this);
 
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex);
+            logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex); //NON-NLS
             success = false;
         } finally {
             try {
                 stringStream.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error closing input stream stream, file: " + sourceFile.getName(), ex);
+                logger.log(Level.WARNING, "Error closing input stream stream, file: " + sourceFile.getName(), ex); //NON-NLS
             }
         }
 
