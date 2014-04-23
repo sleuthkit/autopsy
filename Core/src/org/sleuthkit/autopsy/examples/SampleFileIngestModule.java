@@ -69,6 +69,7 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+        refCounter.incrementAndGet(context.getJobId());
 
         synchronized (SampleFileIngestModule.class) {
             if (attrId == -1) {
