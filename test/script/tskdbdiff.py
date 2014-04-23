@@ -213,6 +213,9 @@ class TskDbDiff(object):
             raise TskDbDiffException("Unexpected error while dumping blackboard database: " + str(e))
         finally:
             database_log.close()
+            attribute_cursor.close()
+            artifact_cursor.close()
+            conn.close()
         
         # Now sort the file
         srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
@@ -242,6 +245,7 @@ class TskDbDiff(object):
                 line = replace_id(line, id_path_table)
                 db_log.write('%s\n' % line)
 
+        conn.close()
         # cleanup the backup
         os.remove(backup_db_file)
 
