@@ -86,14 +86,14 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private void displayLanguages() {
         List<SCRIPT> scripts = KeywordSearchSettings.getStringExtractScripts();
         StringBuilder langs = new StringBuilder();
-        langs.append("<html>");
+        langs.append("<html>"); //NON-NLS
         for (int i = 0; i < scripts.size(); i++) {
             langs.append(scripts.get(i).toString());
             if (i + 1 < scripts.size()) {
                 langs.append(", ");
             }
         }
-        langs.append("</html>");
+        langs.append("</html>"); //NON-NLS
         String langsS = langs.toString();
         this.languagesValLabel.setText(langsS);
         this.languagesValLabel.setToolTipText(langsS);
@@ -107,7 +107,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             encodingsList.add("UTF8");
         }
         if (utf16 == null || Boolean.parseBoolean(utf16)) {
-            encodingsList.add("UTF16");
+            encodingsList.add("UTF16"); //NON-NLS
         }
         String encodings = encodingsList.toString();
         encodings = encodings.substring(1, encodings.length() - 1);

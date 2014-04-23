@@ -120,7 +120,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         File file = new File(fileName);
 
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
-            logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
+            logger.log(Level.WARNING, "Not enough disk space to write file to disk."); //NON-NLS
             IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                     "ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace",
@@ -132,7 +132,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         try {
             ContentUtils.writeToFile(abstractFile, file);
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed writing pst file to disk.", ex);
+            logger.log(Level.WARNING, "Failed writing pst file to disk.", ex); //NON-NLS
             return ProcessResult.OK;
         }
 
@@ -150,7 +150,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
                         EmailParserModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
             } catch (TskCoreException ex) {
-                logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName());
+                logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
             }
         } else {
             // parsing error: log message
@@ -159,12 +159,12 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
                     abstractFile.getName()),
                     NbBundle.getMessage(this.getClass(),
                     "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
-            logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName());
+            logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
             return ProcessResult.ERROR;
         }
 
         if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName());
+            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
         }
 
         String errors = parser.getErrors();
@@ -190,20 +190,20 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         // use the local path to determine the e-mail folder structure
         String emailFolder = "";
         // email folder is everything after "Mail" or ImapMail
-        if (mboxParentDir.contains("/Mail/")) {
-            emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/Mail/") + 5);
-        } else if (mboxParentDir.contains("/ImapMail/")) {
-            emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/ImapMail/") + 9);
+        if (mboxParentDir.contains("/Mail/")) { //NON-NLS
+            emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/Mail/") + 5); //NON-NLS
+        } else if (mboxParentDir.contains("/ImapMail/")) { //NON-NLS
+            emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/ImapMail/") + 9); //NON-NLS
         }
         emailFolder = emailFolder + mboxFileName;
-        emailFolder = emailFolder.replaceAll(".sbd", "");
+        emailFolder = emailFolder.replaceAll(".sbd", ""); //NON-NLS
 
         String fileName = getTempPath() + File.separator + abstractFile.getName()
                 + "-" + String.valueOf(abstractFile.getId());
         File file = new File(fileName);
 
         if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
-            logger.log(Level.WARNING, "Not enough disk space to write file to disk.");
+            logger.log(Level.WARNING, "Not enough disk space to write file to disk."); //NON-NLS
             postErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg",
                     abstractFile.getName()),
@@ -215,7 +215,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         try {
             ContentUtils.writeToFile(abstractFile, file);
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex);
+            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
             return ProcessResult.OK;
         }
 
@@ -225,7 +225,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         processEmails(emails, abstractFile);
 
         if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName());
+            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
         }
 
         String errors = parser.getErrors();
@@ -245,7 +245,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
      */
     public static String getTempPath() {
         String tmpDir = Case.getCurrentCase().getTempDirectory() + File.separator
-                + "EmailParser";
+                + "EmailParser"; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -383,7 +383,7 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
         if (localPath.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), EmailParserModuleFactory.getModuleName(), localPath));
         } else {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), EmailParserModuleFactory.getModuleName(), "/foo/bar"));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), EmailParserModuleFactory.getModuleName(), "/foo/bar")); //NON-NLS
         }
 
         try {

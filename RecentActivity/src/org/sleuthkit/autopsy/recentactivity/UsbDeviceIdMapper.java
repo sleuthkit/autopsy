@@ -42,16 +42,16 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 class UsbDeviceIdMapper {
     private static final Logger logger = Logger.getLogger(UsbDeviceIdMapper.class.getName());
     private HashMap<String, USBInfo> devices;
-    private static final String DataFile = "USB_DATA.txt";
+    private static final String DataFile = "USB_DATA.txt"; //NON-NLS
 
     public UsbDeviceIdMapper() {
         try {
             loadDeviceMap();
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find file " + DataFile + ".", ex);
+            logger.log(Level.SEVERE, "Could not find file " + DataFile + ".", ex); //NON-NLS
             devices = null;
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unknown IO error occurred in method devices.", ex);
+            logger.log(Level.SEVERE, "Unknown IO error occurred in method devices.", ex); //NON-NLS
         }
     }
     
@@ -105,12 +105,12 @@ class UsbDeviceIdMapper {
                 }
                 
                 // stop once we've hitten the part of the file that starts to talk about class types
-                if (line.startsWith("C 00")) {
+                if (line.startsWith("C 00")) { //NON-NLS
                     return;
                 }
                 
                 String dvc = "";
-                String[] tokens = line.split("[\\t\\s]+");
+                String[] tokens = line.split("[\\t\\s]+"); //NON-NLS
                 String vID = tokens[0];
                 for (int n = 1; n < tokens.length; n++) {
                     dvc += tokens[n] + " ";
@@ -126,7 +126,7 @@ class UsbDeviceIdMapper {
                 line = dat.nextLine();
                 if (line.startsWith("\t")) {
                     while (dat.hasNext() && line.startsWith("\t")) {
-                        tokens = line.split("[\\t\\s]+");
+                        tokens = line.split("[\\t\\s]+"); //NON-NLS
 
                         // make key based on upper case version of vendor and product IDs
                         pID = vID + tokens[1];
