@@ -130,7 +130,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
     @Override
     public boolean load() {
         try {
-            BufferedReader readBuffer = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-16"));
+            BufferedReader readBuffer = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-16")); //NON-NLS
             String structLine;
             String metaLine;
             entriesUnsorted = new ArrayList<>();
@@ -161,9 +161,9 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
             return true;
             
         } catch (FileNotFoundException ex) {
-            logger.log(Level.INFO, "File at " + filePath + " does not exist!", ex);
+            logger.log(Level.INFO, "File at " + filePath + " does not exist!", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.INFO, "Failed to read file at " + filePath, ex);
+            logger.log(Level.INFO, "Failed to read file at " + filePath, ex); //NON-NLS
         }
         return false;
     }
