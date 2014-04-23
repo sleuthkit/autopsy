@@ -1658,6 +1658,12 @@ import org.sleuthkit.datamodel.TskData;
         }
     }
     
+    /**
+     * Get any tags associated with an artifact 
+     * @param artifactId
+     * @return hash set of tag display names
+     * @throws SQLException 
+     */    
     private HashSet<String> getUniqueTagNames(long artifactId) throws SQLException {
         HashSet<String> uniqueTagNames = new HashSet<>();
         ResultSet tagNameRows = skCase.runQuery("SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
