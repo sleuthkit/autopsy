@@ -137,6 +137,9 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
             return ProcessResult.OK;
         }
 
+        // Safely get a reference to the totalsForIngestJobs object
+        IngestJobTotals totals = getTotalsForIngestJobs(jobId);
+        
         // calc hash value
         String name = file.getName();
         String md5Hash = file.getMd5Hash();
@@ -145,7 +148,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 long calcstart = System.currentTimeMillis();
                 md5Hash = hasher.calculateMd5(file);
                 long delta = (System.currentTimeMillis() - calcstart);
-                getTotalsForIngestJobs(jobId).totalCalctime.addAndGet(delta);
+                totals.totalCalctime.addAndGet(delta);
                 
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error calculating hash of file " + name, ex); //NON-NLS
@@ -170,7 +173,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                 HashInfo hashInfo = db.lookUp(file);
                 if (null != hashInfo) {
                     foundBad = true;
-                    getTotalsForIngestJobs(jobId).totalKnownBadCount.incrementAndGet();
+                    totals.totalKnownBadCount.incrementAndGet();
                     
                     try {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
@@ -205,7 +208,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                     postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                 }
                 long delta = (System.currentTimeMillis() - lookupstart);
-                getTotalsForIngestJobs(jobId).totalLookuptime.addAndGet(delta);
+                totals.totalLookuptime.addAndGet(delta);
 
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
@@ -238,7 +241,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
                         }
                     }
                     long delta = (System.currentTimeMillis() - lookupstart);
-                    getTotalsForIngestJobs(jobId).totalLookuptime.addAndGet(delta);
+                    totals.totalLookuptime.addAndGet(delta);
 
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
