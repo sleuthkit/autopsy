@@ -131,8 +131,7 @@ public class IngestManager {
     }
 
     void addFileToIngestJob(long ingestJobId, AbstractFile file) {
-        IngestJob job;
-        job = ingestJobs.get(ingestJobId);
+        IngestJob job = ingestJobs.get(ingestJobId);
         if (job != null) {
             scheduler.getFileIngestScheduler().queueFile(job, file);
         }
