@@ -23,7 +23,7 @@ import javax.swing.JPanel;
 /**
  * Base class for ingest module global settings panels.
  */
-public abstract class IngestModuleGlobalSetttingsPanel extends JPanel {
+public abstract class IngestModuleGlobalSettingsPanel extends JPanel {
 
     public abstract void saveSettings();
 }

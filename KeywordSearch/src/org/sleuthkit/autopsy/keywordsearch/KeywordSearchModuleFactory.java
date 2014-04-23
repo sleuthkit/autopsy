@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
  * An ingest module factory that creates file ingest modules that do keyword
@@ -101,7 +101,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         KeywordSearchGlobalSettingsPanel globalSettingsPanel = new KeywordSearchGlobalSettingsPanel();
         globalSettingsPanel.load();
         return globalSettingsPanel;
