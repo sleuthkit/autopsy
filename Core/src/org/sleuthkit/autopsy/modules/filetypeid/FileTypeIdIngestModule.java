@@ -132,22 +132,26 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
-            IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
-            
-            StringBuilder detailsSb = new StringBuilder();
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-            detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
-            detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
-                    .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n"); //NON-NLS
-            detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
-                    .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
-            detailsSb.append("</table>"); //NON-NLS
-            IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(),
-                    "FileTypeIdIngestModule.complete.srvMsg.text"),
-                    detailsSb.toString()));
+            IngestJobTotals jobTotals = null;
+            synchronized(this) {
+                jobTotals = totalsForIngestJobs.remove(jobId);
+            }
+            if (jobTotals != null) {
+                StringBuilder detailsSb = new StringBuilder();
+                detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+                detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
+                detailsSb.append("<tr><td>") //NON-NLS
+                        .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
+                        .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n"); //NON-NLS
+                detailsSb.append("<tr><td>") //NON-NLS
+                        .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
+                        .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
+                detailsSb.append("</table>"); //NON-NLS
+                IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
+                        NbBundle.getMessage(this.getClass(),
+                        "FileTypeIdIngestModule.complete.srvMsg.text"),
+                        detailsSb.toString()));
+            }
         }
     }
     
