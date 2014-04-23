@@ -132,7 +132,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     public void shutDown(boolean ingestJobCancelled) {
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
-            IngestJobTotals jobTotals = null;
+            IngestJobTotals jobTotals;
             synchronized(this) {
                 jobTotals = totalsForIngestJobs.remove(jobId);
             }
