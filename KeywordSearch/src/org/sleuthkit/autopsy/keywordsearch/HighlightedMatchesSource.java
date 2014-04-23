@@ -44,8 +44,8 @@ import org.sleuthkit.datamodel.Content;
 class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
-    private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
-    private static final String HIGHLIGHT_POST = "</span>";
+    private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
+    private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
 
     private Content content;
@@ -105,10 +105,10 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         try {
             this.numberPages = solrServer.queryNumFileChunks(content.getId());
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
+            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId()); //NON-NLS
             return;
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
+            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId()); //NON-NLS
             return;
         }
 
@@ -146,7 +146,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
-                    logger.log(Level.INFO, "Could not get chunk info and get highlights", ex);
+                    logger.log(Level.INFO, "Could not get chunk info and get highlights", ex); //NON-NLS
                     return;
                 }
             }
@@ -355,13 +355,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
         //tune the highlighter
-        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
-        q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only
-        q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only
-        q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+        q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+        q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+        q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
 
         //docs says makes sense for the original Highlighter only, but not really
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -381,13 +381,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 highlightedContent = insertAnchors(highlightedContent);
 
 
-                return "<html><pre>" + highlightedContent + "</pre></html>";
+                return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
             }
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't query markup for page: " + currentPage, ex);
+            logger.log(Level.WARNING, "Couldn't query markup for page: " + currentPage, ex); //NON-NLS
             return "";
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not query markup for page: " + currentPage, ex);
+            logger.log(Level.WARNING, "Could not query markup for page: " + currentPage, ex); //NON-NLS
             return "";
         }
     }
@@ -423,8 +423,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         final String searchToken = HIGHLIGHT_PRE;
         final int indexSearchTokLen = searchToken.length();
-        final String insertPre = "<a name='" + ANCHOR_PREFIX;
-        final String insertPost = "'></a>";
+        final String insertPre = "<a name='" + ANCHOR_PREFIX; //NON-NLS
+        final String insertPost = "'></a>"; //NON-NLS
         int count = 0;
         while ((index = buf.indexOf(searchToken, searchOffset)) >= 0) {
             String insertString = insertPre + Integer.toString(count + 1) + insertPost;

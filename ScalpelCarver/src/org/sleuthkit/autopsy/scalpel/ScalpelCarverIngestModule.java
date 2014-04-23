@@ -53,9 +53,9 @@ import org.sleuthkit.datamodel.Volume;
 class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
-    private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver";
+    private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver"; //NON-NLS
     private String moduleOutputDirPath;
-    private final String configFileName = "scalpel.conf";
+    private final String configFileName = "scalpel.conf"; //NON-NLS
     private String configFilePath;
     private boolean initialized = false;
     private ScalpelCarver carver;
@@ -69,8 +69,8 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         this.context = context;
 
         // make sure this is Windows
-        String os = System.getProperty("os.name");
-        if (!os.startsWith("Windows")) {
+        String os = System.getProperty("os.name"); //NON-NLS
+        if (!os.startsWith("Windows")) { //NON-NLS
             String message = NbBundle.getMessage(this.getClass(), "ScalpelCarverIngestModule.startUp.exception.msg1");
             logger.log(Level.SEVERE, message);
             throw new IngestModuleException(message);
@@ -132,7 +132,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         File scalpelOutputDir = new File(scalpelOutputDirPath);
         if (!scalpelOutputDir.exists()) {
             if (!scalpelOutputDir.mkdir()) {
-                logger.log(Level.SEVERE, "Could not create Scalpel output directory: {0}", scalpelOutputDirPath);
+                logger.log(Level.SEVERE, "Could not create Scalpel output directory: {0}", scalpelOutputDirPath); //NON-NLS
                 return ProcessResult.OK;
             }
         }
@@ -143,7 +143,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         try {
             parent = abstractFile.getParent();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Exception while trying to get parent of AbstractFile.", ex);
+            logger.log(Level.SEVERE, "Exception while trying to get parent of AbstractFile.", ex); //NON-NLS
         }
         while (parent != null) {
             if (parent instanceof FileSystem
@@ -155,13 +155,13 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
             try {
                 parent = parent.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Exception while trying to get parent of Content object.", ex);
+                logger.log(Level.SEVERE, "Exception while trying to get parent of Content object.", ex); //NON-NLS
             }
         }
 
         // make sure we have a valid systemID
         if (id == -1) {
-            logger.log(Level.SEVERE, "Could not get an ID for a FileSystem, Volume or Image for the given AbstractFile.");
+            logger.log(Level.SEVERE, "Could not get an ID for a FileSystem, Volume or Image for the given AbstractFile."); //NON-NLS
             return ProcessResult.OK;
         }
 
@@ -170,7 +170,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         try {
             output = carver.carve(abstractFile, configFilePath, scalpelOutputDirPath);
         } catch (ScalpelException ex) {
-            logger.log(Level.SEVERE, "Error when attempting to carved data from AbstractFile with ID {0}", abstractFile.getId());
+            logger.log(Level.SEVERE, "Error when attempting to carved data from AbstractFile with ID {0}", abstractFile.getId()); //NON-NLS
             return ProcessResult.OK;
         }
 
@@ -184,7 +184,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
             try {
                 byteOffset = abstractFile.convertToImgOffset(carvedFileMeta.getByteStart());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not calculate the image byte offset of AbstractFile ({0})", abstractFile.getName());
+                logger.log(Level.SEVERE, "Could not calculate the image byte offset of AbstractFile ({0})", abstractFile.getName()); //NON-NLS
                 break;
             }
 
@@ -199,7 +199,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
             try {
                 carvedFiles.add(db.addCarvedFile(carvedFileMeta.getFileName(), size, id, data));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "There was a problem while trying to add a carved file to the database.", ex);
+                logger.log(Level.SEVERE, "There was a problem while trying to add a carved file to the database.", ex); //NON-NLS
             }
         }
 
@@ -212,7 +212,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
             try {
                 carvedFileDir = carvedFiles.get(0).getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "There was a problem while trying to obtain the carved files directory.", ex);
+                logger.log(Level.SEVERE, "There was a problem while trying to obtain the carved files directory.", ex); //NON-NLS
             }
         }
 
@@ -220,7 +220,7 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         if (carvedFileDir != null) {
             is.fireModuleContentEvent(new ModuleContentEvent(carvedFileDir));
         } else {
-            logger.log(Level.SEVERE, "Could not obtain the carved files directory.");
+            logger.log(Level.SEVERE, "Could not obtain the carved files directory."); //NON-NLS
         }
 
         // reschedule carved files

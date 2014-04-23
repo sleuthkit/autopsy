@@ -141,7 +141,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             public void actionPerformed(ActionEvent e) {
                 if (ingestRunning) {                    
                     SearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
-                    logger.log(Level.INFO, "Submitted enqueued lists to ingest");
+                    logger.log(Level.INFO, "Submitted enqueued lists to ingest"); //NON-NLS
                 } else {
                     searchAction(e);
                 }
@@ -233,7 +233,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         searchAddButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
 
-        ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N NON-NLS
         ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

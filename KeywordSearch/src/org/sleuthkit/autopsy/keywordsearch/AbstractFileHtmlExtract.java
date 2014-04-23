@@ -53,12 +53,13 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
     private int numChunks = 0;
     
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
-            "application/javascript",
-            "application/xhtml+xml",
-            "application/json",
-            "text/css",
-            "text/html",
-            "text/javascript" //"application/xml",
+            "application/javascript", //NON-NLS
+            "application/xhtml+xml", //NON-NLS
+            "application/json", //NON-NLS
+            "text/css", //NON-NLS
+            "text/html", //NON-NLS NON-NLS
+            "text/javascript" //NON-NLS
+            //"application/xml",
             //"application/xml-dtd",
             );
 
@@ -114,7 +115,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 
             // In case there is an exception or parse() isn't called
             if (reader == null) {
-                logger.log(Level.WARNING, "No reader available from HTML parser");
+                logger.log(Level.WARNING, "No reader available from HTML parser"); //NON-NLS
                 return false;
             }
 
@@ -174,29 +175,29 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                     ++this.numChunks;
                 } catch (Ingester.IngesterException ingEx) {
                     success = false;
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted HTML from file '"
-                            + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
+                    logger.log(Level.WARNING, "Ingester had a problem with extracted HTML from file '" //NON-NLS
+                            + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx); //NON-NLS
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex); //NON-NLS
             success = false;
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex); //NON-NLS
             success = false;
         } finally {
             try {
                 stream.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to close content stream from " + sourceFile.getId(), ex);
+                logger.log(Level.WARNING, "Unable to close content stream from " + sourceFile.getId(), ex); //NON-NLS
             }
             try {
                 if (reader != null) {
                     reader.close();
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex);
+                logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex); //NON-NLS
             }
         }
 
