@@ -70,7 +70,8 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "FileExtMismatchDetectorModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
         FileExtMismatchModuleSettingsPanel settingsPanel = new FileExtMismatchModuleSettingsPanel((FileExtMismatchDetectorModuleSettings) settings);
         return settingsPanel;
@@ -97,7 +98,8 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "FileExtMismatchDetectorModuleFactory.createFileIngestModule.exception.msg"));
         }
         return new FileExtMismatchIngestModule((FileExtMismatchDetectorModuleSettings) settings);
     }

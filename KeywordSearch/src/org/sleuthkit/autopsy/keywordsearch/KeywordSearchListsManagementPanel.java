@@ -113,7 +113,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
         });
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N NON-NLS
         newListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -121,7 +121,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
             }
         });
 
-        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
+        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N NON-NLS
         importButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -208,7 +208,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
 
         JFileChooser chooser = new JFileChooser();
-        final String[] EXTENSION = new String[]{"xml", "txt"};
+        final String[] EXTENSION = new String[]{"xml", "txt"}; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.fileExtensionFilterLbl"), EXTENSION);
         chooser.setFileFilter(filter);

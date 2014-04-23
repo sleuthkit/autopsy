@@ -44,37 +44,37 @@ interface AbstractFileExtract {
     static final List<String> ARCHIVE_MIME_TYPES =
             Arrays.asList(
             //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
-            "application/x-7z-compressed",
-            "application/x-ace-compressed",
-            "application/x-alz-compressed",
-            "application/x-arj",
-            "application/vnd.ms-cab-compressed",
-            "application/x-cfs-compressed",
-            "application/x-dgc-compressed",
-            "application/x-apple-diskimage",
-            "application/x-gca-compressed",
-            "application/x-dar",
-            "application/x-lzx",
-            "application/x-lzh",
-            "application/x-rar-compressed",
-            "application/x-stuffit",
-            "application/x-stuffitx",
-            "application/x-gtar",
-            "application/x-archive",
-            "application/x-executable",
-            "application/x-gzip",
-            "application/zip",
-            "application/x-zoo",
-            "application/x-cpio",
-            "application/x-shar",
-            "application/x-tar",
-            "application/x-bzip",
-            "application/x-bzip2",
-            "application/x-lzip",
-            "application/x-lzma",
-            "application/x-lzop",
-            "application/x-z",
-            "application/x-compress");
+            "application/x-7z-compressed", //NON-NLS
+            "application/x-ace-compressed", //NON-NLS
+            "application/x-alz-compressed", //NON-NLS
+            "application/x-arj", //NON-NLS
+            "application/vnd.ms-cab-compressed", //NON-NLS
+            "application/x-cfs-compressed", //NON-NLS
+            "application/x-dgc-compressed", //NON-NLS
+            "application/x-apple-diskimage", //NON-NLS
+            "application/x-gca-compressed", //NON-NLS
+            "application/x-dar", //NON-NLS
+            "application/x-lzx", //NON-NLS
+            "application/x-lzh", //NON-NLS
+            "application/x-rar-compressed", //NON-NLS
+            "application/x-stuffit", //NON-NLS
+            "application/x-stuffitx", //NON-NLS
+            "application/x-gtar", //NON-NLS
+            "application/x-archive", //NON-NLS
+            "application/x-executable", //NON-NLS
+            "application/x-gzip", //NON-NLS
+            "application/zip", //NON-NLS
+            "application/x-zoo", //NON-NLS
+            "application/x-cpio", //NON-NLS
+            "application/x-shar", //NON-NLS
+            "application/x-tar", //NON-NLS
+            "application/x-bzip", //NON-NLS
+            "application/x-bzip2", //NON-NLS
+            "application/x-lzip", //NON-NLS
+            "application/x-lzma", //NON-NLS
+            "application/x-lzop", //NON-NLS
+            "application/x-z", //NON-NLS
+            "application/x-compress"); //NON-NLS
 
     /**
      * Get number of chunks resulted from extracting this AbstractFile

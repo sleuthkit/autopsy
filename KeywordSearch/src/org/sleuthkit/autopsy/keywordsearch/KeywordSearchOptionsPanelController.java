@@ -103,7 +103,7 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg1"),
@@ -113,7 +113,7 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
         try {
             pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e);
+            logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
                     NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg2"),

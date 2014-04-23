@@ -247,7 +247,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             try {
                 tcqRes = tcq.performQuery();
             } catch (NoOpenCoreException ex) {
-                logger.log(Level.WARNING, "Could not perform the query. ", ex);
+                logger.log(Level.WARNING, "Could not perform the query. ", ex); //NON-NLS
                 return false;
             }
 
@@ -425,7 +425,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 try {
                     matchesRes = filesQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
-                    logger.log(Level.WARNING, "Could not perform the query. ", ex);
+                    logger.log(Level.WARNING, "Could not perform the query. ", ex); //NON-NLS
                     return false;
                 }
 
@@ -580,11 +580,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                         try {
                             snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
                         } catch (NoOpenCoreException e) {
-                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                             //no reason to continie
                             return null;
                         } catch (Exception e) {
-                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                             continue;
                         }
                         if (snippet != null) {
@@ -608,7 +608,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 // test if any exceptions were thrown
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error querying ", ex);
+                logger.log(Level.SEVERE, "Error querying ", ex); //NON-NLS
             }
             // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex ) { }
