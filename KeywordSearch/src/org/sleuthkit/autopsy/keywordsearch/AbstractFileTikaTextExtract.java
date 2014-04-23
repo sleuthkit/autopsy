@@ -80,7 +80,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
         for (MediaType mt : mediaTypes) {
             TIKA_SUPPORTED_TYPES.add(mt.getType() + "/" + mt.getSubtype());
         }
-        logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES);
+        logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES); //NON-NLS
     }
 
     @Override
@@ -149,7 +149,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             reader = parseTask.getReader();
             if (reader == null) {
                 //likely due to exception in parse()
-                logger.log(Level.WARNING, "No reader available from Tika parse");
+                logger.log(Level.WARNING, "No reader available from Tika parse"); //NON-NLS
                 return false;
             }
 
@@ -206,7 +206,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                     //sort meta data keys
                     List<String> sortedKeyList = Arrays.asList(meta.names());
                     Collections.sort(sortedKeyList);
-                    sb.append("\n\n------------------------------METADATA------------------------------\n\n");
+                    sb.append("\n\n------------------------------METADATA------------------------------\n\n"); //NON-NLS
                     for (String key : sortedKeyList) {
                         String value = meta.get(key);
                         sb.append(key).append(": ").append(value).append("\n");
@@ -224,18 +224,18 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                     ++this.numChunks;
                 } catch (Ingester.IngesterException ingEx) {
                     success = false;
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '"
-                            + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
+                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" //NON-NLS
+                            + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx); //NON-NLS
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
             }
         } catch (IOException ex) {
-            final String msg = "Exception: Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            final String msg = "Exception: Unable to read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName(); //NON-NLS
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
             logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
-            final String msg = "Exception: Unexpected error, can't read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            final String msg = "Exception: Unexpected error, can't read Tika content stream from " + sourceFile.getId() + ": " + sourceFile.getName(); //NON-NLS
             KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
             logger.log(Level.WARNING, msg);
             success = false;
@@ -243,14 +243,14 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 stream.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to close Tika content stream from " + sourceFile.getId(), ex);
+                logger.log(Level.WARNING, "Unable to close Tika content stream from " + sourceFile.getId(), ex); //NON-NLS
             }
             try {
                 if (reader != null) {
                     reader.close();
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex);
+                logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex); //NON-NLS
             }
         }
 
@@ -269,17 +269,17 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
     public boolean isSupported(AbstractFile file, String detectedFormat) {
         if (detectedFormat == null) {
             return false;
-        } else if (detectedFormat.equals("application/octet-stream")
-                || detectedFormat.equals("application/x-msdownload")) {
+        } else if (detectedFormat.equals("application/octet-stream") //NON-NLS
+                || detectedFormat.equals("application/x-msdownload")) { //NON-NLS
             //any binary unstructured blobs (string extraction will be used)
             return false;
         } else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
             return false;
         } //skip video other than flv (tika supports flv only)
-        else if (detectedFormat.contains("video/")
-                && !detectedFormat.equals("video/x-flv")) {
+        else if (detectedFormat.contains("video/") //NON-NLS
+                && !detectedFormat.equals("video/x-flv")) { //NON-NLS
             return false;
-        } else if (detectedFormat.contains("application/x-font-ttf")) {
+        } else if (detectedFormat.contains("application/x-font-ttf")) { //NON-NLS
             // Tika currently has a bug in the ttf parser in fontbox.
             // It will throw an out of memory exception
             return false;
@@ -319,11 +319,11 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 reader = tika.parse(stream, meta);
             } catch (IOException ex) {
-                KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex); //NON-NLS
                 tika = null;
                 reader = null;
             } catch (Exception ex) {
-                KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex); //NON-NLS
                 tika = null;
                 reader = null;
             }

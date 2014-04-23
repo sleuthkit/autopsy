@@ -65,7 +65,7 @@ class ByteContentStream implements ContentStream {
 
     @Override
     public String getContentType() {
-        return "text/plain;charset=" + charset.name();
+        return "text/plain;charset=" + charset.name(); //NON-NLS
     }
 
     @Override

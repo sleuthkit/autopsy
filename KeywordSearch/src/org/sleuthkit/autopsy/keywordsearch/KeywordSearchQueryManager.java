@@ -192,7 +192,7 @@ class KeywordSearchQueryManager {
         boolean allValid = true;
         for (KeywordSearchQuery tcq : queryDelegates) {
             if (!tcq.validate()) {
-                logger.log(Level.WARNING, "Query has invalid syntax: {0}", tcq.getQueryString());
+                logger.log(Level.WARNING, "Query has invalid syntax: {0}", tcq.getQueryString()); //NON-NLS
                 allValid = false;
                 break;
             }

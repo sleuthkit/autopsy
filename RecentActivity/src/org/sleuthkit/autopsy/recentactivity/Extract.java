@@ -92,7 +92,7 @@ abstract class Extract {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error while trying to add an artifact: {0}", ex);
+            logger.log(Level.SEVERE, "Error while trying to add an artifact: {0}", ex); //NON-NLS
         }
     }
 
@@ -109,14 +109,14 @@ abstract class Extract {
     protected List<HashMap<String, Object>> dbConnect(String path, String query) {
         ResultSet temprs;
         List<HashMap<String, Object>> list;
-        String connectionString = "jdbc:sqlite:" + path;
+        String connectionString = "jdbc:sqlite:" + path; //NON-NLS
         try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
             temprs = tempdbconnect.executeQry(query);
             list = this.resultSetToArrayList(temprs);
             tempdbconnect.closeConnection();
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex);
+            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
             errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
             return Collections.<HashMap<String,Object>>emptyList();
         }

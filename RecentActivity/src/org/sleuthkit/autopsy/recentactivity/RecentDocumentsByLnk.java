@@ -63,9 +63,9 @@ class RecentDocumentsByLnk extends Extract  {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> recentFiles;
         try {
-            recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent");
+            recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent"); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error searching for .lnk files.");
+            logger.log(Level.WARNING, "Error searching for .lnk files."); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errGetLnkFiles",
                                         this.getName()));
@@ -73,7 +73,7 @@ class RecentDocumentsByLnk extends Extract  {
         }
 
         if (recentFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any recent files.");
+            logger.log(Level.INFO, "Didn't find any recent files."); //NON-NLS
             return;
         }
         
@@ -95,7 +95,7 @@ class RecentDocumentsByLnk extends Extract  {
                 boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
                         || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
-                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e);
+                    logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e); //NON-NLS
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errParsingFile",
                                                 this.getName(), recentFile.getName()));

@@ -62,7 +62,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private int curContentChunk;
 
     public ExtractedContentViewer() {
-        logger.log(Level.INFO, "Created TextView instance: " + this);
+        logger.log(Level.INFO, "Created TextView instance: " + this); //NON-NLS
     }
 
     @Override
@@ -186,7 +186,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 try {
                     return getSolrContent(selectedNode, currentPage, hasChunks);
                 } catch (SolrServerException ex) {
-                    logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
+                    logger.log(Level.WARNING, "Couldn't get extracted content.", ex); //NON-NLS
                     return "";
                 }
             }
@@ -234,10 +234,10 @@ public class ExtractedContentViewer implements DataContentViewer {
                     }
                     inited = true;
                 } catch (KeywordSearchModuleException ex) {
-                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
+                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
 
                 } catch (NoOpenCoreException ex) {
-                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
+                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
                 }
                 return numPages;
             }
@@ -395,10 +395,10 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             return solrServer.queryIsIndexed(contentID);
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
         }
     }
@@ -456,12 +456,12 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             curContent = EscapeUtil.escapeHtml(solrServer.getSolrContent(contentObj, chunkId)).trim();
             StringBuilder sb = new StringBuilder(curContent.length() + 20);
-            sb.append("<pre>").append(curContent).append("</pre>");
+            sb.append("<pre>").append(curContent).append("</pre>"); //NON-NLS
             curContent = sb.toString();
             curContentId = contentId;
             curContentChunk = chunkId;
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get text content.", ex);
+            logger.log(Level.WARNING, "Couldn't get text content.", ex); //NON-NLS
             return "";
         }
         return curContent;

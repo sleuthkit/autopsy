@@ -130,7 +130,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        logger.log(Level.INFO, "Initializing instance {0}", instanceNum);
+        logger.log(Level.INFO, "Initializing instance {0}", instanceNum); //NON-NLS
         initialized = false;       
         jobId = context.getJobId();        
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
@@ -150,7 +150,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     throw new IngestModuleException(msg);
                 }
             } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+                logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex); //NON-NLS
                 //this means Solr is not properly initialized
                 String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                 String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
@@ -192,7 +192,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
             sbScripts.append(s.name()).append(" ");
         }
-        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString());
+        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString()); //NON-NLS
 
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
@@ -207,7 +207,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     public ProcessResult process(AbstractFile abstractFile) {
         if (initialized == false) //error initializing indexing/Solr
         {
-            logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());
+            logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());  //NON-NLS
             putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
             return ProcessResult.OK;
         }
@@ -216,7 +216,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             dataSourceId = caseHandle.getFileDataSource(abstractFile);
 
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex);
+            logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex); //NON-NLS
         }
 
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
@@ -249,14 +249,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      */
     @Override
     public void shutDown(boolean ingestJobCancelled) {
-        logger.log(Level.INFO, "Instance {0}", instanceNum);
+        logger.log(Level.INFO, "Instance {0}", instanceNum); //NON-NLS
        
         if (initialized == false) {
             return;
         }
 
         if (ingestJobCancelled) {
-            logger.log(Level.INFO, "Ingest job cancelled");
+            logger.log(Level.INFO, "Ingest job cancelled"); //NON-NLS
             stop();
             return;
         }
@@ -277,10 +277,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
-            logger.log(Level.INFO, "Indexed files count: {0}", numIndexedFiles);
-            logger.log(Level.INFO, "Indexed file chunks count: {0}", numIndexedChunks);
+            logger.log(Level.INFO, "Indexed files count: {0}", numIndexedFiles); //NON-NLS
+            logger.log(Level.INFO, "Indexed file chunks count: {0}", numIndexedChunks); //NON-NLS
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex);
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex); //NON-NLS
         }
         
         cleanup();
@@ -290,7 +290,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      * Handle stop event (ingest interrupted) Cleanup resources, threads, timers
      */
     private void stop() {
-        logger.log(Level.INFO, "stop()");
+        logger.log(Level.INFO, "stop()"); //NON-NLS
 
         SearchRunner.getInstance().stopJob(jobId);
     
@@ -350,15 +350,15 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
         
         StringBuilder msg = new StringBuilder();
-        msg.append("<table border=0><tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl")).append("</td><td>").append(text_ingested).append("</td></tr>");
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead")).append("</td><td>").append(strings_ingested).append("</td></tr>");
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl")).append("</td><td>").append(metadata_ingested).append("</td></tr>");
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrLbl")).append("</td><td>").append(error_index).append("</td></tr>");
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errTxtLbl")).append("</td><td>").append(error_text).append("</td></tr>");
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errIoLbl")).append("</td><td>").append(error_io).append("</td></tr>");
-        msg.append("</table>");
+        msg.append("<table border=0><tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl")).append("</td><td>").append(text_ingested).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead")).append("</td><td>").append(strings_ingested).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl")).append("</td><td>").append(metadata_ingested).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrLbl")).append("</td><td>").append(error_index).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errTxtLbl")).append("</td><td>").append(error_text).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errIoLbl")).append("</td><td>").append(error_io).append("</td></tr>"); //NON-NLS
+        msg.append("</table>"); //NON-NLS
         String indexStats = msg.toString();
-        logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats);
+        logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats); //NON-NLS
         services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
         if (error_index > 0) {
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
@@ -400,7 +400,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             }
 
             if (fileExtract == null) {
-                logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat});
+                logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
                 return false;
             }
 
@@ -423,12 +423,12 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
-                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()});
+                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()});  //NON-NLS
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
             } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;
             }
@@ -478,7 +478,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
+                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
                 }
                 return;
             }
@@ -490,13 +490,13 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 is = new ReadContentInputStream(aFile);
                 detectedFormat = tikaFormatDetector.detect(is, aFile.getName());
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile, e);
+                logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile, e); //NON-NLS
             } finally {
                 if (is != null) {
                     try {
                         is.close();
                     } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not close stream after detecting format using tika for file: "
+                        logger.log(Level.WARNING, "Could not close stream after detecting format using tika for file: " //NON-NLS
                                 + aFile, ex);
                     }
                 }
@@ -514,7 +514,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex);
+                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
                 }
                 return;
             }
@@ -525,7 +525,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                 try {
                     //logger.log(Level.INFO, "indexing: " + aFile.getName());
                     if (!extractTextAndIndex(aFile, detectedFormat)) {
-                        logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()});
+                        logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     } else {
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
@@ -533,11 +533,11 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
                     }
 
                 } catch (IngesterException e) {
-                    logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", "
+                    logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", " //NON-NLS
                             + aFile.getName(), e);
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", "
+                    logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", " //NON-NLS
                             + aFile.getName(), e);
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 }
