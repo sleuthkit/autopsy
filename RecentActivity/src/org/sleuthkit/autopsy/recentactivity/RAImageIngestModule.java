@@ -95,14 +95,14 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
             if (context.isJobCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName());
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
             }
 
             try {
                 extracter.process(dataSource, context);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex);
+                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
                                                         extracter.getName()));
                 errors.add(
@@ -121,9 +121,9 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             errorMessage.append(
                     NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.errsEncountered"));
             for (String msg : errors) {
-                errorMessage.append("<li>").append(msg).append("</li>\n");
+                errorMessage.append("<li>").append(msg).append("</li>\n"); //NON-NLS
             }
-            errorMessage.append("</ul>\n");
+            errorMessage.append("</ul>\n"); //NON-NLS
 
             if (errors.size() == 1) {
                 errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.oneErr");
@@ -146,13 +146,13 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
         for (Extract module : browserExtracters) {
-            historyMsg.append("<li>").append(module.getName());
+            historyMsg.append("<li>").append(module.getName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.notFnd"));
-            historyMsg.append("</li>");
+            historyMsg.append("</li>"); //NON-NLS
         }
-        historyMsg.append("</ul>");
+        historyMsg.append("</ul>"); //NON-NLS
         final IngestMessage inboxMsg = IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
                                                                    NbBundle.getMessage(this.getClass(),
                                                                                        "RAImageIngestModule.process.ingestMsg.results",
@@ -175,7 +175,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             try {
                 extracter.complete();
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex);
+                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
                                                         extracter.getName()));
             }
@@ -187,10 +187,10 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
             try {
                 extracter.stop();
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception during stop() of " + extracter.getName(), ex);
+                logger.log(Level.SEVERE, "Exception during stop() of " + extracter.getName(), ex); //NON-NLS
             }
         }
-        logger.log(Level.INFO, "Recent Activity processes has been shutdown.");
+        logger.log(Level.INFO, "Recent Activity processes has been shutdown."); //NON-NLS
     }
 
     /**
@@ -203,7 +203,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
      * @return Path to directory
      */
     protected static String getRATempPath(Case a_case, String mod) {
-        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod;
+        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -221,7 +221,7 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
      * @return Path to directory
      */
     protected static String getRAOutputPath(Case a_case, String mod) {
-        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod;
+        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();
