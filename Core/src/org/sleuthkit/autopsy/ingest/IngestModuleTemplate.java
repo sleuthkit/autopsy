@@ -65,7 +65,7 @@ final class IngestModuleTemplate {
         return moduleFactory.hasGlobalSettingsPanel();
     }
 
-    IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         return moduleFactory.getGlobalSettingsPanel();
     }
 

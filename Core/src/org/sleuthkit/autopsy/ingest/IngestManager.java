@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.ingest;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -61,8 +63,8 @@ public class IngestManager {
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestTasksExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService fileIngestTasksExecutor = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
-    private final HashMap<Long, IngestJob> ingestJobs = new HashMap<>(); // Maps job ids to jobs        
-    private final HashMap<Long, Future<?>> ingestTasks = new HashMap<>(); // Maps task ids to task cancellation handles        
+    private final ConcurrentHashMap<Long, IngestJob> ingestJobs = new ConcurrentHashMap<>(1, 0.9f, 4); // Maps job ids to jobs.
+    private final HashMap<Long, Future<?>> ingestTasks = new HashMap<>(); // Maps task ids to task cancellation handles. Guarded by this.
     private AtomicLong ingestJobId = new AtomicLong(0L);
     private AtomicLong ingestTaskId = new AtomicLong(0L);
     private volatile IngestUI ingestMessageBox;
@@ -124,11 +126,11 @@ public class IngestManager {
      *
      * @return True if any ingest jobs are in progress, false otherwise
      */
-    public synchronized boolean isIngestRunning() {
+    public boolean isIngestRunning() {
         return (ingestJobs.isEmpty() == false);
     }
 
-    synchronized void addFileToIngestJob(long ingestJobId, AbstractFile file) {
+    void addFileToIngestJob(long ingestJobId, AbstractFile file) {
         IngestJob job = ingestJobs.get(ingestJobId);
         if (job != null) {
             scheduler.getFileIngestScheduler().queueFile(job, file);
@@ -301,7 +303,7 @@ public class IngestManager {
         }
     }
 
-    private synchronized void stopIngestTasks() {
+    private void stopIngestTasks() {
         // First mark all of the ingest jobs as cancelled. This way the 
         // ingest modules will know they are being shut down due to 
         // cancellation when the cancelled run ingest module tasks release 
@@ -312,21 +314,25 @@ public class IngestManager {
 
         // Cancel the run ingest module tasks, setting the state of the threads
         // running them to interrupted.
-        for (Future<?> task : ingestTasks.values()) {
-            task.cancel(true);
+        synchronized(this) {
+            for (Future<?> task : ingestTasks.values()) {
+                task.cancel(true);
+            }
         }
-
+        
         // Jettision the remaining data source and file ingest tasks.
         scheduler.getFileIngestScheduler().emptyQueues();
         scheduler.getDataSourceIngestScheduler().emptyQueues();
     }
 
-    synchronized void reportStartIngestJobsTaskDone(long taskId) {
+    private synchronized void reportStartIngestJobsTaskDone(long taskId) {
         ingestTasks.remove(taskId);
     }
 
-    synchronized void reportRunIngestModulesTaskDone(long taskId) {
-        ingestTasks.remove(taskId);
+    private void reportRunIngestModulesTaskDone(long taskId) {
+        synchronized(this) {
+            ingestTasks.remove(taskId);
+        }
 
         List<Long> completedJobs = new ArrayList<>();
         for (IngestJob job : ingestJobs.values()) {
@@ -384,9 +390,7 @@ public class IngestManager {
 
                     // Create an ingest job.
                     IngestJob ingestJob = new IngestJob(IngestManager.this.ingestJobId.incrementAndGet(), dataSource, moduleTemplates, processUnallocatedSpace);
-                    synchronized (IngestManager.this) {
-                        ingestJobs.put(ingestJob.getId(), ingestJob);
-                    }
+                    ingestJobs.put(ingestJob.getId(), ingestJob);
 
                     // Start at least one instance of each kind of ingest 
                     // pipeline for this ingest job. This allows for an early out 
@@ -420,10 +424,8 @@ public class IngestManager {
                                                                           "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
 
                         // Jettison the ingest job and move on to the next one.
-                        synchronized (IngestManager.this) {
-                            ingestJob.cancel();
-                            ingestJobs.remove(ingestJob.getId());
-                        }
+                        ingestJob.cancel();
+                        ingestJobs.remove(ingestJob.getId());
                         break;
                     }
 

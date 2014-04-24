@@ -211,16 +211,24 @@
  </signature>
  <signature mimetype="image/gif">
   <ext>gif</ext>
+  <ext>jpeg</ext>
+  <ext>jpg</ext>
+  <ext>png</ext>
  </signature>
  <signature mimetype="image/jpeg">
+  <ext>gif</ext>
   <ext>jfi</ext>
   <ext>jfif</ext>
   <ext>jif</ext>
   <ext>jpe</ext>
   <ext>jpeg</ext>
   <ext>jpg</ext>
+  <ext>png</ext>
  </signature>
  <signature mimetype="image/png">
+  <ext>gif</ext>
+  <ext>jpeg</ext>
+  <ext>jpg</ext>
   <ext>png</ext>
  </signature>
  <signature mimetype="image/tiff">

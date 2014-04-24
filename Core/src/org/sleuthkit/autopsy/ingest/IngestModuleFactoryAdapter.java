@@ -39,7 +39,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         throw new UnsupportedOperationException();
     }
 

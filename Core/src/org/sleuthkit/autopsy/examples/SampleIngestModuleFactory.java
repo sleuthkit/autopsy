@@ -43,7 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -167,7 +167,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      * @return A global settings panel.
      */
     @Override
-    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         throw new UnsupportedOperationException();
     }
 

@@ -29,7 +29,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdIngestModule;
@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
  * Container panel for File Extension Mismatch Ingest Module advanced
  * configuration options
  */
-final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSetttingsPanel implements OptionsPanel {
+final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static Logger logger = Logger.getLogger(FileExtMismatchSettingsPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
