@@ -59,11 +59,11 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
-        // All available hash sets are enabled by default.
+        // All available hash sets are enabled and always calculatye hashes is true by default.
         HashDbManager hashDbManager = HashDbManager.getInstance();
         List<String> knownHashSetNames = getHashSetNames(hashDbManager.getKnownFileHashSets());
         List<String> knownBadHashSetNames = getHashSetNames(hashDbManager.getKnownBadFileHashSets());
-        return new HashLookupModuleSettings(hashDbManager.getAlwaysCalculateHashes(), knownHashSetNames, knownBadHashSetNames);
+        return new HashLookupModuleSettings(true, knownHashSetNames, knownBadHashSetNames);
     }
 
     private List<String> getHashSetNames(List<HashDbManager.HashDb> hashDbs) {

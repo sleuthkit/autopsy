@@ -74,8 +74,6 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String XSD_FILE_NAME = "HashsetsSchema.xsd"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
-    private static final String ALWAYS_CALCULATE_HASHES_ELEMENT = "hash_calculate"; //NON-NLS
-    private static final String VALUE_ATTRIBUTE = "value"; //NON-NLS
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
@@ -83,7 +81,6 @@ public class HashDbManager implements PropertyChangeListener {
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
-    private boolean alwaysCalculateHashes = true;
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
 
@@ -466,22 +463,6 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     /**
-     * Sets the value for the flag that indicates whether hashes should be
-     * calculated for content even if no hash databases are configured.
-     */
-    synchronized void setAlwaysCalculateHashes(boolean alwaysCalculateHashes) {
-        this.alwaysCalculateHashes = alwaysCalculateHashes;
-    }
-
-    /**
-     * Gets the flag that indicates whether hashes should be calculated for
-     * content even if no hash databases are configured.
-     */
-    synchronized boolean getAlwaysCalculateHashes() {
-        return alwaysCalculateHashes;
-    }
-
-    /**
      * Saves the hash sets configuration. Note that the configuration is only
      * saved on demand to support cancellation of configuration panels.
      *
@@ -528,11 +509,6 @@ public class HashDbManager implements PropertyChangeListener {
 
             writeHashDbsToDisk(doc, rootEl, knownHashSets);
             writeHashDbsToDisk(doc, rootEl, knownBadHashSets);
-
-            String calcValue = Boolean.toString(alwaysCalculateHashes);
-            Element setCalc = doc.createElement(ALWAYS_CALCULATE_HASHES_ELEMENT);
-            setCalc.setAttribute(VALUE_ATTRIBUTE, calcValue);
-            rootEl.appendChild(setCalc);
 
             success = XMLUtil.saveDoc(HashDbManager.class, configFilePath, ENCODING, doc);
         } catch (ParserConfigurationException ex) {
@@ -689,17 +665,6 @@ public class HashDbManager implements PropertyChangeListener {
             } else {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i); //NON-NLS
             }
-        }
-
-        // Get the element that stores the always calculate hashes flag.
-        NodeList calcList = root.getElementsByTagName(ALWAYS_CALCULATE_HASHES_ELEMENT);
-        if (calcList.getLength() > 0) {
-            Element calcEl = (Element) calcList.item(0); // Shouldn't be more than one.
-            final String value = calcEl.getAttribute(VALUE_ATTRIBUTE);
-            alwaysCalculateHashes = Boolean.parseBoolean(value);
-        } else {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, " element "); //NON-NLS
-            alwaysCalculateHashes = true;
         }
 
         if (updatedSchema) {

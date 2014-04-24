@@ -280,11 +280,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownHashDbsLabel.text")); // NOI18N
 
         alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
-        alwaysCalcHashesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                alwaysCalcHashesCheckboxActionPerformed(evt);
-            }
-        });
 
         jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -336,9 +331,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void alwaysCalcHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCalcHashesCheckboxActionPerformed
-        hashDbManager.setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
-    }//GEN-LAST:event_alwaysCalcHashesCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
     private javax.swing.JScrollPane jScrollPane1;
