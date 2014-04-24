@@ -49,7 +49,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     HashLookupModuleSettingsPanel(HashLookupModuleSettings settings) {
         initializeHashSetModels(settings);
         initComponents();
-        customizeComponents();
+        customizeComponents(settings);
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
@@ -65,10 +65,10 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
     }
 
-    private void customizeComponents() {
+    private void customizeComponents(HashLookupModuleSettings settings) {
         customizeHashSetsTable(jScrollPane1, knownHashTable, knownHashSetsTableModel);
         customizeHashSetsTable(jScrollPane2, knownBadHashTable, knownBadHashSetsTableModel);
-        alwaysCalcHashesCheckbox.setSelected(hashDbManager.getAlwaysCalculateHashes());
+        alwaysCalcHashesCheckbox.setSelected(settings.shouldCalculateHashes());
         hashDbManager.addPropertyChangeListener(this);
     }
 
