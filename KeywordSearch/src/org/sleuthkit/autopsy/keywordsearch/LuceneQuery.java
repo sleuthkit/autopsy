@@ -163,7 +163,7 @@ class LuceneQuery implements KeywordSearchQuery {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordWriteResult(bba);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e);
+            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
         }
 
@@ -193,7 +193,7 @@ class LuceneQuery implements KeywordSearchQuery {
             writeResult.add(attributes);
             return writeResult;
         } catch (TskException e) {
-            logger.log(Level.WARNING, "Error adding bb attributes to artifact", e);
+            logger.log(Level.WARNING, "Error adding bb attributes to artifact", e); //NON-NLS
         }
         return null;
     }
@@ -245,10 +245,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 }
                 
             } catch (NoOpenCoreException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
                 throw ex;
             } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
             }
 
         }
@@ -293,17 +293,17 @@ class LuceneQuery implements KeywordSearchQuery {
             q.setHighlightFragsize(SNIPPET_LENGTH);
 
             //tune the highlighter
-            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
-            q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only
-            q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only
-            q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
+            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+            q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only NON-NLS
+            q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only NON-NLS
+            q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only NON-NLS
 
              //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
-            q.setParam("hl.fragCharSize", Integer.toString(theQueryStr.length())); //makes sense for FastVectorHighlighter only
+            q.setParam("hl.fragCharSize", Integer.toString(theQueryStr.length())); //makes sense for FastVectorHighlighter only NON-NLS
 
             //docs says makes sense for the original Highlighter only, but not really
             //analyze all content SLOW! consider lowering
-            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);
+            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
         }
         
         return q;
@@ -357,7 +357,7 @@ class LuceneQuery implements KeywordSearchQuery {
                     contentHit.setSnippet(snippet);
                 }
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
+                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex); //NON-NLS
                 //something wrong with case/db
                 throw ex;
             }
@@ -372,7 +372,7 @@ class LuceneQuery implements KeywordSearchQuery {
                     contentHit.setSnippet(snippet);
                 }
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
+                logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex); //NON-NLS
                 //something wrong with case/db
                 throw ex;
             }
@@ -455,17 +455,17 @@ class LuceneQuery implements KeywordSearchQuery {
         
         
         //tune the highlighter
-        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one
-        q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only
-        q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only
-        q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+        q.setParam("hl.tag.pre", "&laquo;"); //makes sense for FastVectorHighlighter only NON-NLS
+        q.setParam("hl.tag.post", "&laquo;"); //makes sense for FastVectorHighlighter only NON-NLS
+        q.setParam("hl.fragListBuilder", "simple"); //makes sense for FastVectorHighlighter only NON-NLS
         
          //Solr bug if fragCharSize is smaller than Query string, StringIndexOutOfBoundsException is thrown.
-        q.setParam("hl.fragCharSize", Integer.toString(queryStr.length())); //makes sense for FastVectorHighlighter only
+        q.setParam("hl.fragCharSize", Integer.toString(queryStr.length())); //makes sense for FastVectorHighlighter only NON-NLS
         
         //docs says makes sense for the original Highlighter only, but not really
         //analyze all content SLOW! consider lowering
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); 
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);  //NON-NLS
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -482,10 +482,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
+            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
             throw ex;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
+            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
             return "";
         }
     }

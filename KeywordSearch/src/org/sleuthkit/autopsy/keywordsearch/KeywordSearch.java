@@ -42,12 +42,12 @@ public class KeywordSearch {
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
-    private static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
+    private static final Logger TIKA_LOGGER = Logger.getLogger("Tika"); //NON-NLS
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     public enum QueryType {
         LITERAL, REGEX
     };
-    public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT";
+    public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT"; //NON-NLS
     private static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
 
     /**
@@ -66,7 +66,7 @@ public class KeywordSearch {
     static {
         try {
             final int MAX_TIKA_LOG_FILES = 3;
-            FileHandler tikaLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/tika.log",
+            FileHandler tikaLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/tika.log", //NON-NLS
                     0, MAX_TIKA_LOG_FILES);
             tikaLogHandler.setFormatter(new SimpleFormatter());
             tikaLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
@@ -104,7 +104,7 @@ public class KeywordSearch {
             changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "KeywordSearch listener threw exception", e);
+            logger.log(Level.SEVERE, "KeywordSearch listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.moduleErr"),
                                           NbBundle.getMessage(KeywordSearch.class,
                                                               "KeywordSearch.fireNumIdxFileChg.moduleErr.msg"),
@@ -133,7 +133,7 @@ public class KeywordSearch {
                     try {
                         server.openCore();
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Could not open core.");
+                        logger.log(Level.WARNING, "Could not open core."); //NON-NLS
                     }
                 } else if (oldValue != null) {
                     // a case was closed
@@ -142,7 +142,7 @@ public class KeywordSearch {
                         Thread.sleep(2000);
                         server.closeCore();
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Could not close core.");
+                        logger.log(Level.WARNING, "Could not close core."); //NON-NLS
                     }
                 }
             }

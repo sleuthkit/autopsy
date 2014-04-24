@@ -126,7 +126,7 @@ class RawMarkupSource implements MarkupSource {
         try {
             return getSolrContent(currentPage, hasChunks);
         } catch (SolrServerException ex) {
-            logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
+            logger.log(Level.WARNING, "Couldn't get extracted content.", ex); //NON-NLS
             return "";
         }
     }
@@ -178,10 +178,10 @@ class RawMarkupSource implements MarkupSource {
                 hasChunks = true;
             }
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
 
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
         }
     }
 
@@ -237,11 +237,11 @@ class RawMarkupSource implements MarkupSource {
             }
             cachedString = EscapeUtil.escapeHtml(content).trim();
             StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-            sb.append("<pre>").append(cachedString).append("</pre>");
+            sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
             cachedString = sb.toString();
             cachedChunk = chunkId;
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get text content.", ex);
+            logger.log(Level.WARNING, "Couldn't get text content.", ex); //NON-NLS
             return "";
         }
         return cachedString;

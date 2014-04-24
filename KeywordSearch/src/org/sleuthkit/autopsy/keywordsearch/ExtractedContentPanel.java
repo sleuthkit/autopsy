@@ -122,7 +122,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         // set font size manually in an effort to get fonts in this panel to look
         // similar to what is in the 'String View' content viewer.
         StyleSheet ss = editorKit.getStyleSheet();
-        ss.addRule("body {font-size: 8.5px;}");
+        ss.addRule("body {font-size: 8.5px;}"); //NON-NLS
         
         extractedTextPane.setEditorKit(editorKit);
 
@@ -226,43 +226,43 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
             hitButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitButtonsLabel.text")); // NOI18N
 
-            hitPreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
+            hitPreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N NON-NLS
             hitPreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitPreviousButton.text")); // NOI18N
             hitPreviousButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
             hitPreviousButton.setBorderPainted(false);
             hitPreviousButton.setContentAreaFilled(false);
-            hitPreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N
+            hitPreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N NON-NLS
             hitPreviousButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             hitPreviousButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            hitPreviousButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_hover.png"))); // NOI18N
+            hitPreviousButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_hover.png"))); // NOI18N NON-NLS
 
-            hitNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N
+            hitNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N NON-NLS
             hitNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitNextButton.text")); // NOI18N
             hitNextButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
             hitNextButton.setBorderPainted(false);
             hitNextButton.setContentAreaFilled(false);
-            hitNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N
+            hitNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N NON-NLS
             hitNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             hitNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            hitNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_hover.png"))); // NOI18N
+            hitNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_hover.png"))); // NOI18N NON-NLS
 
             pageButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageButtonsLabel.text")); // NOI18N
 
-            pagePreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
+            pagePreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N NON-NLS
             pagePreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.text")); // NOI18N
             pagePreviousButton.setActionCommand(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.actionCommand")); // NOI18N
             pagePreviousButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
             pagePreviousButton.setBorderPainted(false);
             pagePreviousButton.setContentAreaFilled(false);
-            pagePreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N
+            pagePreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N NON-NLS
             pagePreviousButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
 
-            pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N
+            pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N NON-NLS
             pageNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageNextButton.text")); // NOI18N
             pageNextButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
             pageNextButton.setBorderPainted(false);
             pageNextButton.setContentAreaFilled(false);
-            pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N
+            pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N NON-NLS
             pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             pageNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
 
@@ -416,7 +416,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             //detect text direction using first 1024 chars and set it
             //get first up to 1024 chars, strip <pre> tag and unescape html to get the string on which to detect
             final int len = text.length();
-            final int prefixLen = "<pre>".length();
+            final int prefixLen = "<pre>".length(); //NON-NLS
             if (len > prefixLen) {
                 final int maxOrientChars = Math.min(len, 1024);
                 final String orientDetectText = EscapeUtil.unEscapeHtml(text.substring(prefixLen, maxOrientChars));
@@ -709,7 +709,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error getting marked up text" );               
+                logger.log(Level.SEVERE, "Error getting marked up text" ); //NON-NLS
             }
             // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex ) { }

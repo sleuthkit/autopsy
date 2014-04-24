@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,24 +24,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * Displays marked-up (HTML) content for a Node. The sources are all the
@@ -59,7 +54,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
 
     public ExtractedContentViewer() {
-        logger.log(Level.INFO, "Created TextView instance: " + this);
+        logger.log(Level.INFO, "Created TextView instance: " + this); //NON-NLS
     }
 
     @Override
@@ -258,15 +253,14 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             return solrServer.queryIsIndexed(contentID);
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
         }
     }
 
-    
 
     private class NextFindActionListener implements ActionListener {
 

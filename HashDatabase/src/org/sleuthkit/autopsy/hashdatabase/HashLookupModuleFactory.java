@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
  * A factory that creates file ingest modules that do hash database lookups.
@@ -82,7 +82,8 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof HashLookupModuleSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "HashLookupModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
         if (moduleSettingsPanel == null) {
             moduleSettingsPanel = new HashLookupModuleSettingsPanel((HashLookupModuleSettings) settings);
@@ -98,7 +99,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         HashLookupSettingsPanel globalSettingsPanel = new HashLookupSettingsPanel();
         globalSettingsPanel.load();
         return globalSettingsPanel;
@@ -112,7 +113,8 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof HashLookupModuleSettings");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "HashLookupModuleFactory.createFileIngestModule.exception.msg"));
         }
         return new HashDbIngestModule((HashLookupModuleSettings) settings);
     }

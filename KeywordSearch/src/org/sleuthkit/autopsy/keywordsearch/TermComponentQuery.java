@@ -49,7 +49,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     private static final int TERMS_UNLIMITED = -1;
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
     private static final String TERMS_SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
-    private static final String TERMS_HANDLER = "/terms";
+    private static final String TERMS_HANDLER = "/terms"; //NON-NLS
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
     private static Logger logger = Logger.getLogger(TermComponentQuery.class.getName());
     private String termsQuery;
@@ -126,7 +126,7 @@ class TermComponentQuery implements KeywordSearchQuery {
         q.setRequestHandler(TERMS_HANDLER);
         q.setTerms(true);
         q.setTermsLimit(TERMS_UNLIMITED);
-        q.setTermsRegexFlag("case_insensitive");
+        q.setTermsRegexFlag("case_insensitive"); //NON-NLS
         //q.setTermsLimit(200);
         //q.setTermsRegexFlag(regexFlag);
         //q.setTermsRaw(true);
@@ -148,7 +148,7 @@ class TermComponentQuery implements KeywordSearchQuery {
             List<Term> termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex);
+            logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex); //NON-NLS
             return null;  //no need to create result view, just display error dialog
         }
     }
@@ -180,7 +180,7 @@ class TermComponentQuery implements KeywordSearchQuery {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordWriteResult(bba);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e);
+            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
         }
 
@@ -204,7 +204,7 @@ class TermComponentQuery implements KeywordSearchQuery {
             writeResult.add(attributes);
             return writeResult;
         } catch (TskException e) {
-            logger.log(Level.WARNING, "Error adding bb attributes for terms search artifact", e);
+            logger.log(Level.WARNING, "Error adding bb attributes for terms search artifact", e); //NON-NLS
         }
 
         return null;
@@ -217,7 +217,7 @@ class TermComponentQuery implements KeywordSearchQuery {
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
         q.setTermsLimit(MAX_TERMS_RESULTS); 
-        logger.log(Level.INFO, "Query: {0}", q.toString());
+        logger.log(Level.INFO, "Query: {0}", q.toString()); //NON-NLS
         terms = executeQuery(q);
 
         int resultSize = 0;
@@ -243,16 +243,16 @@ class TermComponentQuery implements KeywordSearchQuery {
                 }
                 results.addResult(term.getTerm(), new ArrayList<>(filesResults));
             } catch (NoOpenCoreException e) {
-                logger.log(Level.WARNING, "Error executing Solr query,", e);
+                logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
                 throw e;
             } catch (RuntimeException e) {
-                logger.log(Level.WARNING, "Error executing Solr query,", e);
+                logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
             }
 
         }
         
         //TODO limit how many results we store, not to hit memory limits
-        logger.log(Level.INFO, "Regex # results: {0}", resultSize);
+        logger.log(Level.INFO, "Regex # results: {0}", resultSize); //NON-NLS
 
         return results;
     }

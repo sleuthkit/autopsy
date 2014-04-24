@@ -53,12 +53,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 class Firefox extends Extract {
 
     private static final Logger logger = Logger.getLogger(Firefox.class.getName());
-    private static final String historyQuery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
-    private static final String cookieQuery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
-    private static final String cookieQueryV3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies";
-    private static final String bookmarkQuery = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) as dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
-    private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads";
-    private static final String downloadQueryVersion24 = "SELECT url, content as target, (lastModified/1000000) as lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3";
+    private static final String historyQuery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0"; //NON-NLS
+    private static final String cookieQuery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies"; //NON-NLS
+    private static final String cookieQueryV3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies"; //NON-NLS
+    private static final String bookmarkQuery = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) as dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id"; //NON-NLS
+    private static final String downloadQuery = "SELECT target, source,(startTime/1000000) as startTime, maxBytes  FROM moz_downloads"; //NON-NLS
+    private static final String downloadQueryVersion24 = "SELECT url, content as target, (lastModified/1000000) as lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3"; //NON-NLS
     private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
@@ -82,7 +82,7 @@ class Firefox extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
         try {
-            historyFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+            historyFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox"); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errFetchingFiles");
             logger.log(Level.WARNING, msg);
@@ -105,11 +105,11 @@ class Firefox extends Extract {
             }
 
             String fileName = historyFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps));
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox web history artifacts.{0}", ex);
+                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox web history artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
                                             fileName));
@@ -121,33 +121,33 @@ class Firefox extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, historyQuery);
-            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
+            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         (Long.valueOf(result.get("visit_date").toString()))));
+                                                         (Long.valueOf(result.get("visit_date").toString())))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("ref").toString() != null) ? result.get("ref").toString() : "")));
+                                                         ((result.get("ref").toString() != null) ? result.get("ref").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
+                                                         ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
                                                          NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
-                                                                             "Firefox.parentModuleName.noSpace"), (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
+                                                                             "Firefox.parentModuleName.noSpace"), (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
             }
             ++j;
@@ -166,7 +166,7 @@ class Firefox extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
         try {
-            bookmarkFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+            bookmarkFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox"); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errFetchFiles");
             logger.log(Level.WARNING, msg);
@@ -175,7 +175,7 @@ class Firefox extends Extract {
         }
 
         if (bookmarkFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any firefox bookmark files.");
+            logger.log(Level.INFO, "Didn't find any firefox bookmark files."); //NON-NLS
             return;
         }
 
@@ -187,11 +187,11 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = bookmarkFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps));
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex);
+                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errAnalyzeFile",
                                                          this.getName(), fileName));
                 continue;
@@ -202,23 +202,23 @@ class Firefox extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, bookmarkQuery);
-            logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
+            logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
-                if (Long.valueOf(result.get("dateAdded").toString()) > 0) {
+                                                         ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
+                if (Long.valueOf(result.get("dateAdded").toString()) > 0) { //NON-NLS
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
                                                                                  "Firefox.parentModuleName.noSpace"),
-                                                             (Long.valueOf(result.get("dateAdded").toString()))));
+                                                             (Long.valueOf(result.get("dateAdded").toString())))); //NON-NLS
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
@@ -227,7 +227,7 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
+                                                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
 
             }
@@ -246,7 +246,7 @@ class Firefox extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         try {
-            cookiesFiles = fileManager.findFiles(dataSource, "cookies.sqlite", "Firefox");
+            cookiesFiles = fileManager.findFiles(dataSource, "cookies.sqlite", "Firefox"); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errFetchFile");
             logger.log(Level.WARNING, msg);
@@ -255,7 +255,7 @@ class Firefox extends Extract {
         }
 
         if (cookiesFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any Firefox cookie files.");
+            logger.log(Level.INFO, "Didn't find any Firefox cookie files."); //NON-NLS
             return;
         }
 
@@ -266,11 +266,11 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = cookiesFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps));
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex);
+                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errAnalyzeFile", this.getName(),
                                             fileName));
@@ -281,7 +281,7 @@ class Firefox extends Extract {
                 dbFile.delete();
                 break;
             }
-            boolean checkColumn = Util.checkColumn("creationTime", "moz_cookies", temps);
+            boolean checkColumn = Util.checkColumn("creationTime", "moz_cookies", temps); //NON-NLS
             String query;
             if (checkColumn) {
                 query = cookieQuery;
@@ -290,26 +290,26 @@ class Firefox extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
-            logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
+            logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("host").toString() != null) ? result.get("host").toString() : "")));
+                                                         ((result.get("host").toString() != null) ? result.get("host").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         (Long.valueOf(result.get("lastAccessed").toString()))));
+                                                         (Long.valueOf(result.get("lastAccessed").toString())))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
+                                                         ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("value").toString() != null) ? result.get("value").toString() : "")));
+                                                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
@@ -319,9 +319,9 @@ class Firefox extends Extract {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
                                                                                  "Firefox.parentModuleName.noSpace"),
-                                                             (Long.valueOf(result.get("creationTime").toString()))));
+                                                             (Long.valueOf(result.get("creationTime").toString())))); //NON-NLS
                 }
-                String domain = Util.extractDomain(result.get("host").toString());
+                String domain = Util.extractDomain(result.get("host").toString()); //NON-NLS
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
@@ -354,7 +354,7 @@ class Firefox extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadsFiles;
         try {
-            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox");
+            downloadsFiles = fileManager.findFiles(dataSource, "downloads.sqlite", "Firefox"); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errFetchFiles");
             logger.log(Level.WARNING, msg);
@@ -363,7 +363,7 @@ class Firefox extends Extract {
         }
 
         if (downloadsFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any pre-version-24.0 Firefox download files.");
+            logger.log(Level.INFO, "Didn't find any pre-version-24.0 Firefox download files."); //NON-NLS
             return;
         }
 
@@ -374,12 +374,12 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = downloadsFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps));
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex);
+                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errAnalyzeFiles",
                                                          this.getName(), fileName));
                 continue;
@@ -391,7 +391,7 @@ class Firefox extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
+            logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified."); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -399,18 +399,18 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("source").toString() != null) ? result.get("source").toString() : "")));
+                                                         ((result.get("source").toString() != null) ? result.get("source").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         (Long.valueOf(result.get("startTime").toString()))));
+                                                         (Long.valueOf(result.get("startTime").toString())))); //NON-NLS
                 
-                String target = result.get("target").toString();
+                String target = result.get("target").toString(); //NON-NLS
 
                 if (target != null) {
                     try {
-                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8");
+                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
                                                                  NbBundle.getMessage(this.getClass(),
                                                                                      "Firefox.parentModuleName.noSpace"),
@@ -423,7 +423,7 @@ class Firefox extends Extract {
                                                                      pathID));
                         }
                     } catch (UnsupportedEncodingException ex) {
-                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex);
+                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex); //NON-NLS
                         errors++;
                     }
                 }
@@ -435,7 +435,7 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));
+                                                         (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : "")))); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
 
             }
@@ -462,7 +462,7 @@ class Firefox extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadsFiles;
         try {
-            downloadsFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox");
+            downloadsFiles = fileManager.findFiles(dataSource, "places.sqlite", "Firefox"); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errFetchFiles");
             logger.log(Level.WARNING, msg);
@@ -471,7 +471,7 @@ class Firefox extends Extract {
         }
 
         if (downloadsFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any version-24.0 Firefox download files.");
+            logger.log(Level.INFO, "Didn't find any version-24.0 Firefox download files."); //NON-NLS
             return;
         }
 
@@ -482,12 +482,12 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = downloadsFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + "-downloads" + j + ".db";
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + "-downloads" + j + ".db"; //NON-NLS
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps));
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex);
+                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errAnalyzeFile", this.getName(),
                                             fileName));
@@ -501,7 +501,7 @@ class Firefox extends Extract {
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQueryVersion24);
 
-            logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()});
+            logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -509,15 +509,15 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
 
-                String target = result.get("target").toString();
+                String target = result.get("target").toString(); //NON-NLS
                 if (target != null) {
                     try {
-                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8");
+                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
                                                                  NbBundle.getMessage(this.getClass(),
                                                                                      "Firefox.parentModuleName.noSpace"),
@@ -530,14 +530,14 @@ class Firefox extends Extract {
                                                                      pathID));
                         }
                     } catch (UnsupportedEncodingException ex) {
-                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex);
+                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex); //NON-NLS
                         errors++;
                     }
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         Long.valueOf(result.get("lastModified").toString())));
+                                                         Long.valueOf(result.get("lastModified").toString()))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
@@ -545,7 +545,7 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "Firefox.parentModuleName.noSpace"),
-                                                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
+                                                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
 
             }

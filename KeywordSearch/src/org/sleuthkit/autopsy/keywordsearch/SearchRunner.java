@@ -86,7 +86,7 @@ public final class SearchRunner {
      */
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
         if (!jobs.containsKey(jobId)) {
-            logger.log(Level.INFO, "Adding job {0}", jobId);
+            logger.log(Level.INFO, "Adding job {0}", jobId); //NON-NLS
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
             jobs.put(jobId, jobData);         
         }
@@ -136,7 +136,7 @@ public final class SearchRunner {
      * @param jobId
      */
     public void stopJob(long jobId) {
-        logger.log(Level.INFO, "Stopping job {0}", jobId);
+        logger.log(Level.INFO, "Stopping job {0}", jobId); //NON-NLS
         commit(); 
 
         SearchJobInfo job;
@@ -162,7 +162,7 @@ public final class SearchRunner {
      */
     public synchronized void addKeywordListsToAllJobs(List<String> keywordListNames) {
         for(String listName : keywordListNames) {
-            logger.log(Level.INFO, "Adding keyword list {0} to all jobs", listName);
+            logger.log(Level.INFO, "Adding keyword list {0} to all jobs", listName); //NON-NLS
             for(SearchJobInfo j : jobs.values()) {
                 j.addKeywordListName(listName);
             }
@@ -180,7 +180,7 @@ public final class SearchRunner {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex); //NON-NLS
         }
     }    
     
@@ -191,7 +191,7 @@ public final class SearchRunner {
      */
     private void doFinalSearch(SearchJobInfo job) {
         // Run one last search as there are probably some new files committed
-        logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());        
+        logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());         //NON-NLS
         if (!job.getKeywordListNames().isEmpty()) {
             try {
                 // In case this job still has a worker running, wait for it to finish
@@ -205,7 +205,7 @@ public final class SearchRunner {
                 finalSearcher.get();
                 
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Job {1} final search thread failed: {2}", new Object[]{job.getJobId(), ex});
+                logger.log(Level.WARNING, "Job {1} final search thread failed: {2}", new Object[]{job.getJobId(), ex}); //NON-NLS
             }
         }
     }
@@ -381,7 +381,7 @@ public final class SearchRunner {
             progressGroup = AggregateProgressFactory.createSystemHandle(pgDisplayName, null, new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    logger.log(Level.INFO, "Cancelling the searcher by user.");
+                    logger.log(Level.INFO, "Cancelling the searcher by user."); //NON-NLS
                     if (progressGroup != null) {
                         progressGroup.setDisplayName(displayName + " (" + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg") + "...)");
                     }
@@ -410,7 +410,7 @@ public final class SearchRunner {
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
-                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keywordQuery.getQuery());
+                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keywordQuery.getQuery()); //NON-NLS
                         return null;
                     }
 
@@ -444,16 +444,16 @@ public final class SearchRunner {
                     try {
                         queryResult = del.performQuery();
                     } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex);
+                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
                         return null;
                     } catch (CancellationException e) {
-                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getQuery());
+                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getQuery()); //NON-NLS
                         return null;
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
+                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e); //NON-NLS
                         continue;
                     }
 
@@ -483,7 +483,7 @@ public final class SearchRunner {
                         for (final Keyword hitTerm : newResults.getKeywordsK()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
-                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery());
+                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery()); //NON-NLS
                                 return null;
                             }
 
@@ -505,18 +505,18 @@ public final class SearchRunner {
                                 try {
                                     snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
                                 } catch (NoOpenCoreException e) {
-                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                                     //no reason to continue
                                     return null;
                                 } catch (Exception e) {
-                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                                     continue;
                                 }
 
                                 // write the blackboard artifact for this keyword in this file
                                 KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
                                 if (written == null) {
-                                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()});
+                                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()}); //NON-NLS
                                     continue;
                                 }
 
@@ -541,46 +541,46 @@ public final class SearchRunner {
                                     }
 
                                     //details
-                                    detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+                                    detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
                                     //hit
-                                    detailsSb.append("<tr>");
+                                    detailsSb.append("<tr>"); //NON-NLS
                                     detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
-                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
-                                    detailsSb.append("</tr>");
+                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+                                    detailsSb.append("</tr>"); //NON-NLS
 
                                     //preview
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                                     if (attr != null) {
-                                        detailsSb.append("<tr>");
+                                        detailsSb.append("<tr>"); //NON-NLS
                                         detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
-                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
-                                        detailsSb.append("</tr>");
+                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+                                        detailsSb.append("</tr>"); //NON-NLS
                                     }
 
                                     //file
-                                    detailsSb.append("<tr>");
+                                    detailsSb.append("<tr>"); //NON-NLS
                                     detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
-                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
-                                    detailsSb.append("</tr>");
+                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
+                                    detailsSb.append("</tr>"); //NON-NLS
 
                                     //list
                                     attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-                                    detailsSb.append("<tr>");
+                                    detailsSb.append("<tr>"); //NON-NLS
                                     detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
-                                    detailsSb.append("</tr>");
+                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+                                    detailsSb.append("</tr>"); //NON-NLS
 
                                     //regex
                                     if (!keywordQuery.isLiteral()) {
                                         attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                         if (attr != null) {
-                                            detailsSb.append("<tr>");
+                                            detailsSb.append("<tr>"); //NON-NLS
                                             detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
-                                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
-                                            detailsSb.append("</tr>");
+                                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+                                            detailsSb.append("</tr>"); //NON-NLS
                                         }
                                     }
-                                    detailsSb.append("</table>");
+                                    detailsSb.append("</table>"); //NON-NLS
 
                                     services.postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
@@ -605,13 +605,13 @@ public final class SearchRunner {
 
             } //end try block
             catch (Exception ex) {
-                logger.log(Level.WARNING, "searcher exception occurred", ex);
+                logger.log(Level.WARNING, "searcher exception occurred", ex); //NON-NLS
             } finally {
                 try {
                     finalizeSearcher();
                     stopWatch.stop();                   
                     
-                    logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs());
+                    logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs()); //NON-NLS
                 } finally {
                     // In case a thread is waiting on this worker to be done
                     job.searchNotify();
@@ -627,8 +627,10 @@ public final class SearchRunner {
             try {
                 get();
             } catch (InterruptedException | ExecutionException e) {
-                logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), "Error performing keyword search", e.getMessage()));
+                logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage()); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(),
+                                                                      NbBundle.getMessage(this.getClass(),
+                                                                                          "SearchRunner.Searcher.done.err.msg"), e.getMessage()));
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }

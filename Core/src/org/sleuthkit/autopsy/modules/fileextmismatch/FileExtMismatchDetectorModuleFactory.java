@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
  * An factory that creates file ingest modules that detect mismatches between
@@ -70,7 +70,8 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "FileExtMismatchDetectorModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
         FileExtMismatchModuleSettingsPanel settingsPanel = new FileExtMismatchModuleSettingsPanel((FileExtMismatchDetectorModuleSettings) settings);
         return settingsPanel;
@@ -82,7 +83,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     }
 
     @Override
-    public IngestModuleGlobalSetttingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         FileExtMismatchSettingsPanel globalOptionsPanel = new FileExtMismatchSettingsPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
@@ -97,7 +98,8 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileExtMismatchDetectorModuleSettings;
         if (!(settings instanceof FileExtMismatchDetectorModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileExtMismatchDetectorModuleSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "FileExtMismatchDetectorModuleFactory.createFileIngestModule.exception.msg"));
         }
         return new FileExtMismatchIngestModule((FileExtMismatchDetectorModuleSettings) settings);
     }

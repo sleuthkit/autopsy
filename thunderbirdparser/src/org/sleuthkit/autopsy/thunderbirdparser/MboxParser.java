@@ -71,7 +71,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
     /**
      * The mime type string for html text.
      */
-    private static final String HTML_TYPE = "text/html";
+    private static final String HTML_TYPE = "text/html"; //NON-NLS
     
     /**
      * The local path of the mbox file.
@@ -89,7 +89,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
     }
     
     static boolean isValidMimeTypeMbox(byte[] buffer) {
-        return (new String(buffer)).startsWith("From ");
+        return (new String(buffer)).startsWith("From "); //NON-NLS
     }
     
     /**
@@ -115,7 +115,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             } catch (IllegalArgumentException ex) {
                 // Not the right encoder
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "couldn't find mbox file.", ex);
+                logger.log(Level.WARNING, "couldn't find mbox file.", ex); //NON-NLS
                 addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToReadFile"));
                 return new ArrayList<>();
             }
@@ -136,7 +136,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 Message msg = messageBuilder.parseMessage(message.asInputStream(theEncoder.charset()));
                 emails.add(extractEmail(msg));
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to get message from mbox: {0}", ex.getMessage());
+                logger.log(Level.WARNING, "Failed to get message from mbox: {0}", ex.getMessage()); //NON-NLS
                 failCount++;
             }
         }
@@ -236,7 +236,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                     break;
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error getting text body of mbox message", ex);
+            logger.log(Level.WARNING, "Error getting text body of mbox message", ex); //NON-NLS
         }
     }
     
@@ -259,7 +259,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             addErrorMessage(
                     NbBundle.getMessage(this.getClass(),
                                         "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", filename));
-            logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex);
+            logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
             return;
         }
         
@@ -272,14 +272,14 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 // This could potentially be other types. Only seen this once.
             }
         } catch (IOException ex) {
-            logger.log(Level.INFO, "Failed to write mbox email attachment to disk.", ex);
+            logger.log(Level.INFO, "Failed to write mbox email attachment to disk.", ex); //NON-NLS
             addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.handleAttch.failedWriteToDisk", filename));
             return;
         } finally {
             try {
                 fos.close();
             } catch (IOException ex) {
-                logger.log(Level.INFO, "Failed to close file output stream", ex);
+                logger.log(Level.INFO, "Failed to close file output stream", ex); //NON-NLS
             }
         }
         
@@ -338,7 +338,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         try {
             is = new BufferedInputStream(new FileInputStream(mboxFile));
         } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, "Failed to find mbox file while detecting charset");
+            logger.log(Level.WARNING, "Failed to find mbox file while detecting charset"); //NON-NLS
             return possibleEncoders;
         }
         
@@ -355,18 +355,18 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             }
             return possibleEncoders;
         } catch (IOException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, "Failed to detect charset of mbox file.", ex);
+            logger.log(Level.WARNING, "Failed to detect charset of mbox file.", ex); //NON-NLS
             return possibleEncoders;
         } finally {
             try {
                 is.close();
             } catch (IOException ex) {
-                logger.log(Level.INFO, "Failed to close input stream");
+                logger.log(Level.INFO, "Failed to close input stream"); //NON-NLS
             }
         }
     }
     
     private void addErrorMessage(String msg) {
-        errors.append("<li>").append(msg).append("</li>");
+        errors.append("<li>").append(msg).append("</li>"); //NON-NLS
     }
 }

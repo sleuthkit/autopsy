@@ -47,6 +47,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -909,16 +910,12 @@ import org.sleuthkit.datamodel.TskData;
                     }
                 }
  
-               // Get any tags that associated with this artifact and apply the tag filter.
-               HashSet<String> uniqueTagNames = new HashSet<>();
-               ResultSet tagNameRows = skCase.runQuery("SELECT display_name FROM tag_names WHERE artifact_id = " + rs.getLong("artifact_id")); //NON-NLS
-               while (tagNameRows.next()) {
-                   uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
-               }
-               if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
-                   continue;
-               }                    
-               String tagsList = makeCommaSeparatedList(uniqueTagNames);
+                // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id"));
+                if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                    continue;
+                }                    
+                String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                         
                 Long objId = rs.getLong("obj_id"); //NON-NLS
                 String keyword = rs.getString("keyword"); //NON-NLS
@@ -1050,11 +1047,7 @@ import org.sleuthkit.datamodel.TskData;
                 }
                 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = new HashSet<>();
-                ResultSet tagNameRows = skCase.runQuery("SELECT display_name FROM tag_names WHERE artifact_id = " + rs.getLong("artifact_id")); //NON-NLS
-                while (tagNameRows.next()) {
-                    uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
-                }
+                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id"));
                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
@@ -1664,6 +1657,22 @@ import org.sleuthkit.datamodel.TskData;
             return ReportGenerator.this.getMappedAttributes(attributes);
         }
     }
+    
+    /**
+     * Get any tags associated with an artifact 
+     * @param artifactId
+     * @return hash set of tag display names
+     * @throws SQLException 
+     */    
+    private HashSet<String> getUniqueTagNames(long artifactId) throws SQLException {
+        HashSet<String> uniqueTagNames = new HashSet<>();
+        ResultSet tagNameRows = skCase.runQuery("SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
+            "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId); //NON-NLS
+        while (tagNameRows.next()) {
+            uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
+        }
+        return uniqueTagNames;
+    }    
+    
 }
-
 

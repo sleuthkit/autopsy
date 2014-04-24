@@ -72,20 +72,20 @@ public class Server {
         ID {
             @Override
             public String toString() {
-                return "id";
+                return "id"; //NON-NLS
             }
         },
         IMAGE_ID {
             @Override
             public String toString() {
-                return "image_id";
+                return "image_id"; //NON-NLS
             }
         },
         // This is not stored or index . it is copied to Text and Content_Ws
         CONTENT {
             @Override
             public String toString() {
-                return "content";
+                return "content"; //NON-NLS
             }
         },
         TEXT {
@@ -97,47 +97,47 @@ public class Server {
         CONTENT_WS {
             @Override
             public String toString() {
-                return "content_ws";
+                return "content_ws"; //NON-NLS
             }
         },
         FILE_NAME {
             @Override
             public String toString() {
-                return "file_name";
+                return "file_name"; //NON-NLS
             }
         },
         // note that we no longer index this field
         CTIME {
             @Override
             public String toString() {
-                return "ctime";
+                return "ctime"; //NON-NLS
             }
         },
         // note that we no longer index this field
         ATIME {
             @Override
             public String toString() {
-                return "atime";
+                return "atime"; //NON-NLS
             }
         },
         // note that we no longer index this field
         MTIME {
             @Override
             public String toString() {
-                return "mtime";
+                return "mtime"; //NON-NLS
             }
         },
         // note that we no longer index this field
         CRTIME {
             @Override
             public String toString() {
-                return "crtime";
+                return "crtime"; //NON-NLS
             }
         },
         NUM_CHUNKS {
             @Override
             public String toString() {
-                return "num_chunks";
+                return "num_chunks"; //NON-NLS
             }
         },
     };
@@ -145,19 +145,19 @@ public class Server {
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private static final String DEFAULT_CORE_NAME = "coreCase";
+    private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
-    public static final String CORE_EVT = "CORE_EVT";
+    public static final String CORE_EVT = "CORE_EVT"; //NON-NLS
     public static final char ID_CHUNK_SEP = '_';
-    private String javaPath = "java";
+    private String javaPath = "java"; //NON-NLS
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     private static Ingester ingester = null;
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
-    static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort";
-    static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort";
-    private static final String KEY = "jjk#09s";
+    static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
+    private static final String KEY = "jjk#09s"; //NON-NLS
     static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int currentSolrServerPort = 0;
@@ -183,14 +183,14 @@ public class Server {
     Server() {
         initSettings();
 
-        this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr";
+        this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr"; //NON-NLS
         this.solrServer = new HttpSolrServer(solrUrl);
         serverAction = new ServerAction();
-        solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
-        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
+        solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
 
-        logger.log(Level.INFO, "Created Server instance");
+        logger.log(Level.INFO, "Created Server instance"); //NON-NLS
     }
 
     private void initSettings() {
@@ -198,7 +198,7 @@ public class Server {
             try {
                 currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
             } catch (NumberFormatException nfe) {
-                logger.log(Level.WARNING, "Could not decode indexing server port, value was not a valid port number, using the default. ", nfe);
+                logger.log(Level.WARNING, "Could not decode indexing server port, value was not a valid port number, using the default. ", nfe); //NON-NLS
                 currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
             }
         } else {
@@ -210,7 +210,7 @@ public class Server {
             try {
                 currentSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
             } catch (NumberFormatException nfe) {
-                logger.log(Level.WARNING, "Could not decode indexing server stop port, value was not a valid port number, using default", nfe);
+                logger.log(Level.WARNING, "Could not decode indexing server stop port, value was not a valid port number, using default", nfe); //NON-NLS
                 currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
             }
         } else {
@@ -250,8 +250,8 @@ public class Server {
             this.stream = stream;
             try {
                 final String log = Places.getUserDirectory().getAbsolutePath()
-                        + File.separator + "var" + File.separator + "log"
-                        + File.separator + "solr.log." + type;
+                        + File.separator + "var" + File.separator + "log" //NON-NLS
+                        + File.separator + "solr.log." + type; //NON-NLS
                 File outputFile = new File(log.concat(".0"));
                 File first = new File(log.concat(".1"));
                 File second = new File(log.concat(".2"));
@@ -269,7 +269,7 @@ public class Server {
                 out = new FileOutputStream(outputFile);
 
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Failed to create solr log file", ex);
+                logger.log(Level.WARNING, "Failed to create solr log file", ex); //NON-NLS
             }
         }
 
@@ -297,20 +297,20 @@ public class Server {
                 }
                 bw.flush();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error redirecting Solr output stream");
+                logger.log(Level.WARNING, "Error redirecting Solr output stream"); //NON-NLS
             } finally {
                 if (bw != null) {
                     try {
                         bw.close();
                     } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Error closing Solr output stream writer");
+                        logger.log(Level.WARNING, "Error closing Solr output stream writer"); //NON-NLS
                     }
                 }
                  if (br != null) {
                     try {
                         br.close();
                     } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Error closing Solr output stream reader");
+                        logger.log(Level.WARNING, "Error closing Solr output stream reader"); //NON-NLS
                     }
                 }
             }
@@ -326,7 +326,7 @@ public class Server {
         List<Long> pids = new ArrayList<Long>();
 
         //NOTE: these needs to be in sync with process start string in start()
-        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.7.eq=start.jar";
+        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.7.eq=start.jar"; //NON-NLS
 
         long[] pidsArr = PlatformUtil.getJavaPIDs(pidsQuery);
         if (pidsArr != null) {
@@ -345,7 +345,7 @@ public class Server {
     void killSolr() {
         List<Long> solrPids = getSolrPIDs();
         for (long pid : solrPids) {
-            logger.log(Level.INFO, "Trying to kill old Solr process, PID: " + pid);
+            logger.log(Level.INFO, "Trying to kill old Solr process, PID: " + pid); //NON-NLS
             PlatformUtil.killProcess(pid);
         }
     }
@@ -356,19 +356,19 @@ public class Server {
      * successful.
      */
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
-        logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
+        logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
         if (isPortAvailable(currentSolrServerPort)) {
-            logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr");
+            logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr"); //NON-NLS
             try {
-                final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
+                final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; //NON-NLS
 
-                String loggingPropertiesOpt = "-Djava.util.logging.config.file=";
-                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator;
+                String loggingPropertiesOpt = "-Djava.util.logging.config.file="; //NON-NLS
+                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator; //NON-NLS
 
                 if (DEBUG) {
-                    loggingPropertiesFilePath += "logging-development.properties";
+                    loggingPropertiesFilePath += "logging-development.properties"; //NON-NLS
                 } else {
-                    loggingPropertiesFilePath += "logging-release.properties";
+                    loggingPropertiesFilePath += "logging-release.properties"; //NON-NLS
                 }
 
                 final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
@@ -376,47 +376,47 @@ public class Server {
                 final String [] SOLR_START_CMD = {
                     javaPath,
                     MAX_SOLR_MEM_MB_PAR,
-                    "-DSTOP.PORT=" + currentSolrStopPort,
-                    "-Djetty.port=" + currentSolrServerPort,
-                    "-DSTOP.KEY=" + KEY,
+                    "-DSTOP.PORT=" + currentSolrStopPort, //NON-NLS
+                    "-Djetty.port=" + currentSolrServerPort, //NON-NLS
+                    "-DSTOP.KEY=" + KEY, //NON-NLS
                     loggingProperties,
-                    "-jar",
-                    "start.jar"};
+                    "-jar", //NON-NLS
+                    "start.jar"}; //NON-NLS
                 
                 StringBuilder cmdSb = new StringBuilder();
                 for (int i = 0; i<SOLR_START_CMD.length; ++i ) {
                     cmdSb.append(SOLR_START_CMD[i]).append(" ");
                 }
                 
-                logger.log(Level.INFO, "Starting Solr using: " + cmdSb.toString());
+                logger.log(Level.INFO, "Starting Solr using: " + cmdSb.toString()); //NON-NLS
                 curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
-                logger.log(Level.INFO, "Finished starting Solr");
+                logger.log(Level.INFO, "Finished starting Solr"); //NON-NLS
 
                 try {
                     //block for 10 seconds, give time to fully start the process
                     //so if it's restarted solr operations can be resumed seamlessly
                     Thread.sleep(10 * 1000);
                 } catch (InterruptedException ex) {
-                    logger.log(Level.WARNING, "Timer interrupted");
+                    logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
                 }
                 // Handle output to prevent process from blocking
 
-                errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr");
+                errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr"); //NON-NLS
                 errorRedirectThread.start();
 
                 final List<Long> pids = this.getSolrPIDs();
-                logger.log(Level.INFO, "New Solr process PID: " + pids);
+                logger.log(Level.INFO, "New Solr process PID: " + pids); //NON-NLS
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Could not start Solr process!", ex);
+                logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg"), ex);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not start Solr server process!", ex);
+                logger.log(Level.SEVERE, "Could not start Solr server process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
             }
         } else {
-            logger.log(Level.SEVERE, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
+            logger.log(Level.SEVERE, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!"); //NON-NLS
             throw new SolrServerNoPortException(currentSolrServerPort);
         }
     }
@@ -430,7 +430,7 @@ public class Server {
         ServerSocket ss = null;
         try {
 
-            ss = new ServerSocket(port, 0, java.net.Inet4Address.getByName("localhost"));
+            ss = new ServerSocket(port, 0, java.net.Inet4Address.getByName("localhost")); //NON-NLS
             if (ss.isBound()) {
                 ss.setReuseAddress(true);
                 ss.close();
@@ -477,18 +477,18 @@ public class Server {
      */
     synchronized void stop() {
         try {
-            logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
+            logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
             //try graceful shutdown
             final String [] SOLR_STOP_CMD = {
               javaPath,
-              "-DSTOP.PORT=" + currentSolrStopPort,
-              "-DSTOP.KEY=" + KEY,
-              "-jar",
-              "start.jar",
-              "--stop",
+              "-DSTOP.PORT=" + currentSolrStopPort, //NON-NLS
+              "-DSTOP.KEY=" + KEY, //NON-NLS
+              "-jar", //NON-NLS
+              "start.jar", //NON-NLS
+              "--stop", //NON-NLS
             };
             Process stop = Runtime.getRuntime().exec(SOLR_STOP_CMD, null, solrFolder);
-            logger.log(Level.INFO, "Waiting for stopping Solr server");
+            logger.log(Level.INFO, "Waiting for stopping Solr server"); //NON-NLS
             stop.waitFor();
 
             //if still running, forcefully stop it
@@ -511,7 +511,7 @@ public class Server {
                 killSolr();
             }
 
-            logger.log(Level.INFO, "Finished stopping Solr server");
+            logger.log(Level.INFO, "Finished stopping Solr server"); //NON-NLS
         }
     }
 
@@ -532,7 +532,7 @@ public class Server {
             //TODO handle timeout in cases when some other type of server on that port
             CoreAdminRequest.getStatus(null, solrServer);
             
-            logger.log(Level.INFO, "Solr server is running");
+            logger.log(Level.INFO, "Solr server is running"); //NON-NLS
         } catch (SolrServerException ex) {
 
             Throwable cause = ex.getRootCause();
@@ -541,7 +541,7 @@ public class Server {
             // probably caused by starting a connection as the server finishes
             // shutting down)
             if (cause instanceof ConnectException || cause instanceof SocketException) { //|| cause instanceof NoHttpResponseException) {
-                logger.log(Level.INFO, "Solr server is not running, cause: {0}", cause.getMessage());
+                logger.log(Level.INFO, "Solr server is not running, cause: {0}", cause.getMessage()); //NON-NLS
                 return false;
             } else {
                 throw new KeywordSearchModuleException(
@@ -549,7 +549,7 @@ public class Server {
             }
         } catch (SolrException ex) { 
                 // Just log 404 errors for now...
-                logger.log(Level.INFO, "Solr server is not running", ex);
+                logger.log(Level.INFO, "Solr server is not running", ex); //NON-NLS
                 return false;
         } catch (IOException ex) {
             throw new KeywordSearchModuleException(
@@ -582,25 +582,25 @@ public class Server {
      * backwards compatibility with older cases)
      */
     private void validateIndexLocation(Case theCase) {
-        logger.log(Level.INFO, "Validating keyword search index location");
+        logger.log(Level.INFO, "Validating keyword search index location"); //NON-NLS
         String properIndexPath = getIndexDirPath(theCase);
 
         String legacyIndexPath = theCase.getCaseDirectory()
-                + File.separator + "keywordsearch" + File.separator + "data";
+                + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
 
 
         File properIndexDir = new File(properIndexPath);
         File legacyIndexDir = new File(legacyIndexPath);
         if (!properIndexDir.exists()
                 && legacyIndexDir.exists() && legacyIndexDir.isDirectory()) {
-            logger.log(Level.INFO, "Moving keyword search index location from: "
-                    + legacyIndexPath + " to: " + properIndexPath);
+            logger.log(Level.INFO, "Moving keyword search index location from: " //NON-NLS
+                    + legacyIndexPath + " to: " + properIndexPath); //NON-NLS
             try {
                 Files.move(Paths.get(legacyIndexDir.getParent()), Paths.get(properIndexDir.getParent()));
             } catch (IOException | SecurityException ex) {
-                logger.log(Level.WARNING, "Error moving keyword search index folder from: "
-                        + legacyIndexPath + " to: " + properIndexPath
-                        + " will recreate a new index.", ex);
+                logger.log(Level.WARNING, "Error moving keyword search index folder from: " //NON-NLS
+                        + legacyIndexPath + " to: " + properIndexPath //NON-NLS
+                        + " will recreate a new index.", ex); //NON-NLS
             }
         }
     }
@@ -626,7 +626,7 @@ public class Server {
      */
     String getIndexDirPath(Case theCase) {
         String indexDir = theCase.getModulesOutputDirAbsPath()
-                + File.separator + "keywordsearch" + File.separator + "data";
+                + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         return indexDir;
     }
 
@@ -894,7 +894,7 @@ public class Server {
 
             //handle a possible scenario when server process might not be fully started
             if (!this.isRunning()) {
-                logger.log(Level.WARNING, "Core open requested, but server not yet running");
+                logger.log(Level.WARNING, "Core open requested, but server not yet running"); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
@@ -955,7 +955,7 @@ public class Server {
             try {
                 return solrCore.request(request);
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Could not issue Solr request. ", e);
+                logger.log(Level.WARNING, "Could not issue Solr request. ", e); //NON-NLS
                 throw new SolrServerException(
                         NbBundle.getMessage(this.getClass(), "Server.request.exception.exception.msg"), e);
             }
@@ -976,7 +976,7 @@ public class Server {
                 //commit and block
                 solrCore.commit(true, true);
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Could not commit index. ", e);
+                logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
             }
         }
@@ -985,13 +985,13 @@ public class Server {
             try {
                 solrCore.add(doc);
             } catch (SolrServerException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
+                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
                 throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex);
+                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex); //NON-NLS
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex);
+                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
                 throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg2", doc.getField("id")), ex);
+                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg2", doc.getField("id")), ex); //NON-NLS
             }
         }
 
@@ -1015,7 +1015,7 @@ public class Server {
                 ArrayList<String> values = (ArrayList<String>)solrCore.query(q).getResults().get(0).getFieldValue(Schema.TEXT.toString());
                 return values.get(1);
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error getting content from Solr", ex);
+                logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
                 return null;
             }
         }

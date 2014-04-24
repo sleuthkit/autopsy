@@ -69,7 +69,8 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                   "FileTypeIdModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }        
         return new FileTypeIdModuleSettingsPanel((FileTypeIdModuleSettings) settings);
     }
@@ -83,7 +84,8 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof FileTypeIdModuleSettings");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "FileTypeIdModuleFactory.createFileIngestModule.exception.msg"));
         }        
         return new FileTypeIdIngestModule((FileTypeIdModuleSettings) settings);
     }

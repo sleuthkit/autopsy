@@ -44,21 +44,21 @@ import org.w3c.dom.NodeList;
 final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
     private static final Logger xmlListslogger = Logger.getLogger(KeywordSearchListsXML.class.getName());
-    private static final String CUR_LISTS_FILE_NAME = "keywords.xml";    
+    private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;   
-    private static final String XSDFILE = "KeywordsSchema.xsd";
-    private static final String ROOT_EL = "keyword_lists";
-    private static final String LIST_EL = "keyword_list";
-    private static final String LIST_NAME_ATTR = "name";
-    private static final String LIST_CREATE_ATTR = "created";
-    private static final String LIST_MOD_ATTR = "modified";
-    private static final String LIST_USE_FOR_INGEST = "use_for_ingest";
-    private static final String LIST_INGEST_MSGS = "ingest_messages";
-    private static final String KEYWORD_EL = "keyword";
-    private static final String KEYWORD_LITERAL_ATTR = "literal";
-    private static final String KEYWORD_SELECTOR_ATTR = "selector";
-    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    private static final String ENCODING = "UTF-8";
+    private static final String XSDFILE = "KeywordsSchema.xsd"; //NON-NLS
+    private static final String ROOT_EL = "keyword_lists"; //NON-NLS
+    private static final String LIST_EL = "keyword_list"; //NON-NLS
+    private static final String LIST_NAME_ATTR = "name"; //NON-NLS
+    private static final String LIST_CREATE_ATTR = "created"; //NON-NLS
+    private static final String LIST_MOD_ATTR = "modified"; //NON-NLS
+    private static final String LIST_USE_FOR_INGEST = "use_for_ingest"; //NON-NLS
+    private static final String LIST_INGEST_MSGS = "ingest_messages"; //NON-NLS
+    private static final String KEYWORD_EL = "keyword"; //NON-NLS
+    private static final String KEYWORD_LITERAL_ATTR = "literal"; //NON-NLS
+    private static final String KEYWORD_SELECTOR_ATTR = "selector"; //NON-NLS
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"; //NON-NLS
+    private static final String ENCODING = "UTF-8"; //NON-NLS
     private static KeywordSearchListsXML currentInstance = null; 
     private DateFormat dateFormatter;
 
@@ -127,7 +127,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String literal = keyword.isLiteral()?"true":"false";
+                    String literal = keyword.isLiteral()?"true":"false"; //NON-NLS
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
                     BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
                     if (selectorType != null) {
@@ -141,7 +141,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
             success = XMLUtil.saveDoc(KeywordSearchListsXML.class, filePath, ENCODING, doc);
         } catch (ParserConfigurationException e) {
-            xmlListslogger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e);
+            xmlListslogger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e); //NON-NLS
         }
         return success;
     }
@@ -158,7 +158,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
 
         Element root = doc.getDocumentElement();
         if (root == null) {
-            xmlListslogger.log(Level.SEVERE, "Error loading keyword list: invalid file format.");
+            xmlListslogger.log(Level.SEVERE, "Error loading keyword list: invalid file format."); //NON-NLS
             return false;
         }
         try {
@@ -200,7 +200,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
                 for (int j = 0; j < numKeywords; ++j) {
                     Element wordEl = (Element) wordsNList.item(j);
                     String literal = wordEl.getAttribute(KEYWORD_LITERAL_ATTR);
-                    boolean isLiteral = literal.equals("true");
+                    boolean isLiteral = literal.equals("true"); //NON-NLS
                     Keyword keyword = new Keyword(wordEl.getTextContent(), isLiteral);
                     String selector = wordEl.getAttribute(KEYWORD_SELECTOR_ATTR);
                     if (! selector.equals("")) {
@@ -214,7 +214,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
             }
         } catch (ParseException e) {
             //error parsing dates
-            xmlListslogger.log(Level.SEVERE, "Error loading keyword list: can't parse dates.", e);
+            xmlListslogger.log(Level.SEVERE, "Error loading keyword list: can't parse dates.", e); //NON-NLS
             return false;
         }
         return true;

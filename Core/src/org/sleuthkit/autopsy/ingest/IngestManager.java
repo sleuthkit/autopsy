@@ -405,13 +405,19 @@ public class IngestManager {
                             moduleStartUpErrors.append("\n");
                         }
                         StringBuilder notifyMessage = new StringBuilder();
-                        notifyMessage.append("Unable to start up one or more ingest modules, ingest job cancelled.\n");
-                        notifyMessage.append("Please disable the failed modules or fix the errors and then restart ingest\n");
-                        notifyMessage.append("by right clicking on the data source and selecting Run Ingest Modules.\n");
-                        notifyMessage.append("Errors:\n\n");
-                        notifyMessage.append(moduleStartUpErrors.toString());
+                        notifyMessage.append(NbBundle.getMessage(this.getClass(),
+                                                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg"));
+                        notifyMessage.append("\n");
+                        notifyMessage.append(NbBundle.getMessage(this.getClass(),
+                                                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution"));
+                        notifyMessage.append("\n");
+                        notifyMessage.append(NbBundle.getMessage(this.getClass(),
+                                                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList",
+                                                                 moduleStartUpErrors.toString()));
                         notifyMessage.append("\n\n");
-                        JOptionPane.showMessageDialog(null, notifyMessage.toString(), "Ingest Failure", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null, notifyMessage.toString(),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
 
                         // Jettison the ingest job and move on to the next one.
                         synchronized (IngestManager.this) {
@@ -423,14 +429,22 @@ public class IngestManager {
 
                     // Queue the data source ingest tasks for the ingest job.
                     final String inputName = dataSource.getName();
-                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
+                    progress.progress(
+                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg1",
+                                                inputName), workUnitsCompleted);
                     scheduler.getDataSourceIngestScheduler().queueForIngest(ingestJob);
-                    progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
+                    progress.progress(
+                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg2",
+                                                inputName), ++workUnitsCompleted);
 
                     // Queue the file ingest tasks for the ingest job.
-                    progress.progress("Data source ingest tasks for " + inputName, workUnitsCompleted);
+                    progress.progress(
+                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg3",
+                                                inputName), workUnitsCompleted);
                     scheduler.getFileIngestScheduler().queueForIngest(ingestJob);
-                    progress.progress("Data source ingest tasks for " + inputName, ++workUnitsCompleted);
+                    progress.progress(
+                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg4",
+                                                inputName), ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {
                         startIngestTasks();

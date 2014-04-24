@@ -74,7 +74,7 @@ class Ingester {
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
     private static final int MAX_DOC_CHUNK_SIZE = 1024*1024;
-    private static final String docContentEncoding = "UTF-8";
+    private static final String docContentEncoding = "UTF-8"; //NON-NLS
 
 
     private Ingester() {
@@ -94,7 +94,7 @@ class Ingester {
 
         // Warn if files might have been left uncommited.
         if (uncommitedIngests) {
-            logger.warning("Ingester was used to add files that it never committed.");
+            logger.warning("Ingester was used to add files that it never committed."); //NON-NLS
         }
     }
 
@@ -249,7 +249,7 @@ class Ingester {
                 dataSourceId = curCase.getFileDataSource(af);
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId());
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId()); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
 
@@ -309,7 +309,7 @@ class Ingester {
                 try {
                     is.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex);
+                    logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex); //NON-NLS
                 }
             }
 
@@ -356,34 +356,34 @@ class Ingester {
      * content, but the Solr server is probably fine.
      */
     private void ingestExtract(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
-        final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
+        final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract"); //NON-NLS
         up.addContentStream(cs);
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
 
         final String contentType = cs.getContentType();
         if (contentType != null && !contentType.trim().equals("")) {
-            up.setParam("stream.contentType", contentType);
+            up.setParam("stream.contentType", contentType); //NON-NLS
         }
 
         //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
-        up.setParam("commit", "false");
+        up.setParam("commit", "false"); //NON-NLS
 
         final Future<?> f = upRequestExecutor.submit(new UpRequestTask(up));
 
         try {
             f.get(getTimeout(size), TimeUnit.SECONDS);
         } catch (TimeoutException te) {
-            logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
+            logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr"); //NON-NLS
             //restart may be needed to recover from some error conditions
             hardSolrRestart();
             throw new IngesterException(
                     NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.solrTimeout.msg",
-                                        fields.get("id"), fields.get("file_name")));
+                                        fields.get("id"), fields.get("file_name"))); //NON-NLS
         } catch (Exception e) {
             throw new IngesterException(
                     NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.probPostToSolr.msg",
-                                        fields.get("id"), fields.get("file_name")), e);
+                                        fields.get("id"), fields.get("file_name")), e); //NON-NLS
         }
         uncommitedIngests = true;
     }
@@ -395,7 +395,7 @@ class Ingester {
         try {
             solrServer.closeCore();
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot close core", ex);
+            logger.log(Level.WARNING, "Cannot close core", ex); //NON-NLS
         }
 
         solrServer.stop();
@@ -403,15 +403,15 @@ class Ingester {
         try {
             solrServer.start();
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot start", ex);
+            logger.log(Level.WARNING, "Cannot start", ex); //NON-NLS
         } catch (SolrServerNoPortException ex) {
-            logger.log(Level.WARNING, "Cannot start server with this port", ex);
+            logger.log(Level.WARNING, "Cannot start server with this port", ex); //NON-NLS
         }
 
         try {
             solrServer.openCore();
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot open core", ex);
+            logger.log(Level.WARNING, "Cannot open core", ex); //NON-NLS
         }
     }
 
@@ -491,9 +491,9 @@ class Ingester {
             solrServer.commit();
             uncommitedIngests = false;
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Error commiting index", ex);
+            logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
         } catch (SolrServerException ex) {
-            logger.log(Level.WARNING, "Error commiting index", ex);
+            logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
         }
     }
 
@@ -505,7 +505,7 @@ class Ingester {
      */
     private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {
         for (Entry<String, String> field : fields.entrySet()) {
-            up.setParam("literal." + field.getKey(), field.getValue());
+            up.setParam("literal." + field.getKey(), field.getValue()); //NON-NLS
         }
     }
 
