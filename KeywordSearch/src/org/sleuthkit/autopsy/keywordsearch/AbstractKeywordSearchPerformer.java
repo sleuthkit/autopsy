@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.openide.util.NbBundle;
 
 /**
@@ -119,7 +118,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(keywords, isWholeword, Presentation.FLAT);
+            man = new KeywordSearchQueryManager(keywords, isWholeword);
         } else {
             QueryType userQueryType = null;
             if (isRegExQuerySelected()) {
@@ -133,7 +132,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         "AbstractKeywordSearchPerformer.search.pleaseEnterKeywordBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            man = new KeywordSearchQueryManager(getQueryText(), userQueryType, isWholeword, Presentation.FLAT);
+            man = new KeywordSearchQueryManager(getQueryText(), userQueryType, isWholeword);
         }
 
         if (man.validate()) {

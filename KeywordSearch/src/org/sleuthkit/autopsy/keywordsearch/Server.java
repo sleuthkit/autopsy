@@ -81,10 +81,17 @@ public class Server {
                 return "image_id"; //NON-NLS
             }
         },
+        // This is not stored or index . it is copied to Text and Content_Ws
         CONTENT {
             @Override
             public String toString() {
                 return "content"; //NON-NLS
+            }
+        },
+        TEXT {
+            @Override
+            public String toString() {
+                return "text";
             }
         },
         CONTENT_WS {
@@ -1002,9 +1009,11 @@ public class Server {
                 filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
             }
             q.addFilterQuery(filterQuery);
-            q.setFields(Schema.CONTENT.toString());
+            q.setFields(Schema.TEXT.toString());
             try {
-                return (String) solrCore.query(q).getResults().get(0).getFieldValue(Schema.CONTENT.toString());
+                // @@@ BC Make this more robust -> using get(1) bcause 0 is the file name in the multivalued output. 
+                ArrayList<String> values = (ArrayList<String>)solrCore.query(q).getResults().get(0).getFieldValue(Schema.TEXT.toString());
+                return values.get(1);
             } catch (SolrServerException ex) {
                 logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
                 return null;
