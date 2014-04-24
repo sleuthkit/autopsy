@@ -264,17 +264,17 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
-                String term = queryResults.getKeywords().iterator().next();
-                highlightQuery.append(term);
+                Keyword term = queryResults.getKeywords().iterator().next();
+                highlightQuery.append(term.toString());
             } else {
                 //find terms for this file hit
                 List<String> hitTerms = new ArrayList<>();
-                for (String term : queryResults.getKeywords()) {
+                for (Keyword term : queryResults.getKeywords()) {
                     List<ContentHit> hitList = queryResults.getResults(term);
 
                     for (ContentHit h : hitList) {
                         if (h.getContent().equals(f)) {
-                            hitTerms.add(term);
+                            hitTerms.add(term.toString());
                             break; //go to next term
                         }
                     }
@@ -427,15 +427,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
                 progress.start(hits.getKeywords().size());
                 int processedFiles = 0;
-                for (final String hit : hits.getKeywords()) {
-                    progress.progress(hit, ++processedFiles);
+                for (final Keyword hit : hits.getKeywords()) {
+                    progress.progress(hit.toString(), ++processedFiles);
                     if (this.isCancelled()) {
                         break;
                     }
                     Map<AbstractFile, Integer> flattened = hits.getUniqueFiles(hit);
                     for (AbstractFile f : flattened.keySet()) {
                         int chunkId = flattened.get(f);
-                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
+                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit.toString());
                         String snippet;
                         try {
                             snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
@@ -448,7 +448,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                             continue;
                         }
                         if (snippet != null) {
-                            KeywordWriteResult written = query.writeToBlackBoard(hit, f, snippet, listName);
+                            KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), f, snippet, listName);
                             if (written != null) {
                                 na.add(written.getArtifact());
                             }

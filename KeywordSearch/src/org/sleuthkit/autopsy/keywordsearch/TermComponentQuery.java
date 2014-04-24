@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+//
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -236,12 +236,12 @@ class TermComponentQuery implements KeywordSearchQuery {
             try {
                 QueryResults subResults = filesQuery.performQuery();
                 Set<ContentHit> filesResults = new HashSet<>();
-                for (String key : subResults.getKeywords()) {
+                for (Keyword key : subResults.getKeywords()) {
                     List<ContentHit> keyRes = subResults.getResults(key);
                     resultSize += keyRes.size();
                     filesResults.addAll(keyRes);
                 }
-                results.addResult(term.getTerm(), new ArrayList<>(filesResults));
+                results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(filesResults));
             } catch (NoOpenCoreException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
                 throw e;

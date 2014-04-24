@@ -152,7 +152,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
             //organize the hits by page, filter as needed
             TreeSet<Integer> pagesSorted = new TreeSet<>();
-            for (String k : hits.getKeywords()) {
+            for (Keyword k : hits.getKeywords()) {
                 for (ContentHit hit : hits.getResults(k)) {
                     int chunkID = hit.getChunkId();
                     if (chunkID != 0 && contentId == hit.getId()) {

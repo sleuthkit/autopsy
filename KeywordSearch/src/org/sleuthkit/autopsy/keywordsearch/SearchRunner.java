@@ -462,7 +462,7 @@ public final class SearchRunner {
                     // @@@ NOTE THIS IS saving the keywords as Keyword, not String.  use the K methods
                     QueryResults newResults = filterResults(queryResult, isRegex);
 
-                    if (!newResults.getKeywordsK().isEmpty()) {
+                    if (!newResults.getKeywords().isEmpty()) {
 
                         //write results to BB
 
@@ -470,7 +470,7 @@ public final class SearchRunner {
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
                         //scale progress bar more more granular, per result sub-progress, within per keyword
-                        int totalUnits = newResults.getKeywordsK().size();
+                        int totalUnits = newResults.getKeywords().size();
                         subProgresses[keywordsSearched].start(totalUnits);
                         int unitProgress = 0;
                         String queryDisplayStr = keywordQuery.getQuery();
@@ -480,7 +480,7 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
 
                         // cycle through the keywords returned -- only one unless it was a regexp
-                        for (final Keyword hitTerm : newResults.getKeywordsK()) {
+                        for (final Keyword hitTerm : newResults.getKeywords()) {
                             //checking for cancellation between results
                             if (this.isCancelled()) {
                                 logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery()); //NON-NLS
@@ -674,7 +674,7 @@ public final class SearchRunner {
         private QueryResults filterResults(QueryResults queryResult, boolean isRegex) {
             QueryResults newResults = new QueryResults();
 
-            for (String termResult : queryResult.getKeywords()) {
+            for (Keyword termResult : queryResult.getKeywords()) {
                 List<ContentHit> queryTermResults = queryResult.getResults(termResult);
 
                 //translate to list of IDs that we keep track of
@@ -683,7 +683,7 @@ public final class SearchRunner {
                     queryTermResultsIDs.add(ch.getId());
                 }
 
-                Keyword termResultK = new Keyword(termResult, !isRegex);
+                Keyword termResultK = new Keyword(termResult.toString(), !isRegex);
                 List<Long> curTermResults = job.currentKeywordResults(termResultK);
                 if (curTermResults == null) {
                     job.addKeywordResults(termResultK, queryTermResultsIDs);

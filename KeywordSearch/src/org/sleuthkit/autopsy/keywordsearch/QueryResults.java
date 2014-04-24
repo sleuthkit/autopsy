@@ -30,37 +30,18 @@ import org.sleuthkit.datamodel.AbstractFile;
  * 
  */
 class QueryResults {
-    // maps keyword string to its hits -> This is here until we move all code to use Keyword instead
-    private Map<String, List<ContentHit>> results = new HashMap<>();
-    
     // maps Keyword object to its hits -> This is the long-term idea
     private Map<Keyword, List<ContentHit>> resultsK = new HashMap<>();
     
-   
-    @Deprecated
-    void addResult(String query, List<ContentHit> hits) {
-        results.put(query, hits);
-    }
-    
     void addResult(Keyword keyword, List<ContentHit> hits) {
         resultsK.put(keyword, hits);
-    }
-    
-    @Deprecated
-    List<ContentHit> getResults(String query) {
-        return results.get(query);
     }
     
     List<ContentHit> getResults(Keyword keyword) {
         return resultsK.get(keyword);
     }
     
-    @Deprecated
-    Set<String> getKeywords() {
-        return results.keySet();        
-    }
-    
-    Set<Keyword> getKeywordsK() {
+    Set<Keyword> getKeywords() {
         return resultsK.keySet();        
     }
     
@@ -72,7 +53,7 @@ class QueryResults {
     LinkedHashMap<AbstractFile, ContentHit> getUniqueFiles() {
         LinkedHashMap<AbstractFile, ContentHit> flattened = new LinkedHashMap<>();
 
-        for (String keyWord : getKeywords()) {
+        for (Keyword keyWord : getKeywords()) {
             for (ContentHit hit : getResults(keyWord)) {
                 AbstractFile abstractFile = hit.getContent();
                 //flatten, record first chunk encountered
@@ -101,21 +82,5 @@ class QueryResults {
 
         return ret;
     }
-    
-    /**
-     * Get the unique set of files for a specific keyword
-     * @param keyword
-     * @return 
-     */
-    Map<AbstractFile, Integer> getUniqueFiles(String keyword) {
-        Map<AbstractFile, Integer> ret = new LinkedHashMap<>();
-        for (ContentHit h : getResults(keyword)) {
-            AbstractFile f = h.getContent();
-            if (!ret.containsKey(f)) {
-                ret.put(f, h.getChunkId());
-            }
-        }
-
-        return ret;
-    }   
+     
 }

@@ -142,7 +142,7 @@ class LuceneQuery implements KeywordSearchQuery {
         QueryResults results = new QueryResults();
         //in case of single term literal query there is only 1 term
         boolean showSnippets = KeywordSearchSettings.getShowSnippets();
-        results.addResult(keywordString, performLuceneQuery(showSnippets));
+        results.addResult(new Keyword(keywordString, true), performLuceneQuery(showSnippets));
 
         return results;
     }
