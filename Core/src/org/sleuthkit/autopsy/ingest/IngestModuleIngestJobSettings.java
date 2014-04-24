@@ -26,4 +26,11 @@ import java.io.Serializable;
  * between invocations of the application.
  */
 public interface IngestModuleIngestJobSettings extends Serializable {
+
+    /**
+     * Returns the version number of the settings object.
+     *
+     * @return A version number string.
+     */
+    String getVersionNumber();
 }

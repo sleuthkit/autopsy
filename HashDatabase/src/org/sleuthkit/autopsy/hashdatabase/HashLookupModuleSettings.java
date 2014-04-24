@@ -38,6 +38,11 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         this.namesOfEnabledKnownBadHashSets.addAll(namesOfEnabledKnownBadHashSets);
     }
 
+    @Override
+    public String getVersionNumber() {
+        return "1.0"; //NON-NLS
+    }    
+        
     boolean shouldCalculateHashes() {
         return shouldCalculateHashes;
     }

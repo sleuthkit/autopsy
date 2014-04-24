@@ -46,6 +46,11 @@ public class SampleModuleIngestJobSettings implements IngestModuleIngestJobSetti
         this.skipKnownFiles = skipKnownFiles;
     }
 
+    @Override
+    public String getVersionNumber() {
+        return "1.0"; //NON-NLS
+    }    
+    
     void setSkipKnownFiles(boolean enabled) {
         skipKnownFiles = enabled;
     }

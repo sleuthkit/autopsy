@@ -18,11 +18,22 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.openide.util.io.NbObjectInputStream;
+import org.openide.util.io.NbObjectOutputStream;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -35,9 +46,13 @@ public final class IngestJobLauncher {
     private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS
+    private static final String MODULE_SETTINGS_FOLDER_PATH = new StringBuilder(PlatformUtil.getUserConfigDirectory()).append(File.separator).append("IngestModuleSettings").toString(); //NON-NLS            
+    private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
+    private static final Logger logger = Logger.getLogger(IngestJobLauncher.class.getName());
     private final String launcherContext;
+    private String moduleSettingsFolderForContext = null;
     private final List<String> warnings = new ArrayList<>();
-    private IngestJobConfigurationPanel ingestConfigPanel;
+    private IngestJobConfigurationPanel ingestConfigPanel = null;
 
     /**
      * Constructs an ingest job launcher that creates and persists an ingest job
@@ -48,6 +63,8 @@ public final class IngestJobLauncher {
      */
     public IngestJobLauncher(String launcherContext) {
         this.launcherContext = launcherContext;
+
+        createModuleSettingsFolderForContext();
 
         // Get the ingest module factories discovered by the ingest module 
         // loader.
@@ -84,10 +101,7 @@ public final class IngestJobLauncher {
         // Create ingest module templates.
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
-            // NOTE: In the future, this code will be modified to get the 
-            // module settings for the current context, if available, from 
-            // storage; for now always use the defaults.
-            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, moduleFactory.getDefaultIngestJobSettings());
+            IngestModuleTemplate moduleTemplate = new IngestModuleTemplate(moduleFactory, loadJobSettings(moduleFactory));
             String moduleName = moduleTemplate.getModuleName();
             if (enabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(true);
@@ -117,6 +131,23 @@ public final class IngestJobLauncher {
 
         // Make the configuration panel for the context.
         ingestConfigPanel = new IngestJobConfigurationPanel(moduleTemplates, processUnallocatedSpace);
+    }
+
+    private void createModuleSettingsFolderForContext() {
+        try {
+            StringBuilder folderPath = new StringBuilder(MODULE_SETTINGS_FOLDER_PATH);
+            folderPath.append(File.separator);
+            folderPath.append(launcherContext);
+            folderPath.append(File.separator);
+            File folder = new File(folderPath.toString());
+            if (!folder.exists()) {
+                Files.createDirectories(folder.toPath());
+            }
+            moduleSettingsFolderForContext = folder.getAbsolutePath();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed to create ingest module settings directory", ex);
+            JOptionPane.showMessageDialog(null, "Failed to create ingest module settings folder, cannot save settings.", "Ingest Job Initialization Failure", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
@@ -150,7 +181,47 @@ public final class IngestJobLauncher {
         }
         return moduleNames;
     }
-        
+
+    private IngestModuleIngestJobSettings loadJobSettings(IngestModuleFactory factory) {
+        IngestModuleIngestJobSettings settings = null;
+        File settingsFile = new File(getModuleSettingsFilePath(factory));
+        if (settingsFile.exists()) {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                settings = (IngestModuleIngestJobSettings) in.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                String logMessage = String.format("Error loading ingest job settings for %s module for %s context, using defaults", factory.getModuleDisplayName(), launcherContext);
+                logger.log(Level.SEVERE, logMessage, ex);
+                String userMessage = String.format("Failed to load saved ingest job settings for %s module, using defaults.", factory.getModuleDisplayName());
+                JOptionPane.showMessageDialog(null, userMessage, "Ingest Job Settings", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+        if (settings == null) {
+            settings = factory.getDefaultIngestJobSettings();
+        }
+        return settings;
+    }
+
+    private void saveJobSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
+        try {
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getModuleSettingsFilePath(factory)))) {
+                out.writeObject(settings);
+            }
+        } catch (IOException ex) {
+            String logMessage = String.format("Error saving ingest job settings for %s module for %s context", factory.getModuleDisplayName(), launcherContext);
+            logger.log(Level.SEVERE, logMessage, ex);
+            String userMessage = String.format("Failed to save ingest job settings for %s module.", factory.getModuleDisplayName());
+            JOptionPane.showMessageDialog(null, userMessage, "Ingest Job Settings", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private String getModuleSettingsFilePath(IngestModuleFactory factory) {
+        StringBuilder filePath = new StringBuilder(this.moduleSettingsFolderForContext);
+        filePath.append(File.separator);
+        filePath.append(factory.getClass().getCanonicalName());
+        filePath.append(MODULE_SETTINGS_FILE_EXT);
+        return filePath.toString();
+    }
+
     /**
      * Gets any warnings generated when the persisted ingest job configuration
      * for the specified context is retrieved and loaded.
@@ -182,6 +253,7 @@ public final class IngestJobLauncher {
         HashSet<String> enabledModuleNames = new HashSet<>();
         HashSet<String> disabledModuleNames = new HashSet<>();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
+            saveJobSettings(moduleTemplate.getModuleFactory(), moduleTemplate.getModuleSettings());
             String moduleName = moduleTemplate.getModuleName();
             if (moduleTemplate.isEnabled()) {
                 enabledModuleNames.add(moduleName);
@@ -195,9 +267,6 @@ public final class IngestJobLauncher {
         // Save the process unallocated space setting for the current context.
         String processUnalloc = Boolean.toString(ingestConfigPanel.getProcessUnallocSpace());
         ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
-
-        // NOTE: In the future, this code will be modified to persist the ingest 
-        // options for each ingest module for the current launch context.        
     }
 
     private static String makeCommaSeparatedList(HashSet<String> input) {
@@ -214,7 +283,7 @@ public final class IngestJobLauncher {
         csvList.append(list.get(list.size() - 1));
         return csvList.toString();
     }
-        
+
     /**
      * Launches ingest jobs for one or more data sources using the ingest job
      * configuration for the selected context.

@@ -49,7 +49,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     HashLookupModuleSettingsPanel(HashLookupModuleSettings settings) {
         initializeHashSetModels(settings);
         initComponents();
-        customizeComponents();
+        customizeComponents(settings);
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
@@ -65,10 +65,10 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
     }
 
-    private void customizeComponents() {
+    private void customizeComponents(HashLookupModuleSettings settings) {
         customizeHashSetsTable(jScrollPane1, knownHashTable, knownHashSetsTableModel);
         customizeHashSetsTable(jScrollPane2, knownBadHashTable, knownBadHashSetsTableModel);
-        alwaysCalcHashesCheckbox.setSelected(hashDbManager.getAlwaysCalculateHashes());
+        alwaysCalcHashesCheckbox.setSelected(settings.shouldCalculateHashes());
         hashDbManager.addPropertyChangeListener(this);
     }
 
@@ -280,11 +280,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownHashDbsLabel.text")); // NOI18N
 
         alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
-        alwaysCalcHashesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                alwaysCalcHashesCheckboxActionPerformed(evt);
-            }
-        });
 
         jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -336,9 +331,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void alwaysCalcHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCalcHashesCheckboxActionPerformed
-        hashDbManager.setAlwaysCalculateHashes(alwaysCalcHashesCheckbox.isSelected());
-    }//GEN-LAST:event_alwaysCalcHashesCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
     private javax.swing.JScrollPane jScrollPane1;
