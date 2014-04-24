@@ -64,7 +64,7 @@ public final class IngestJobLauncher {
     public IngestJobLauncher(String launcherContext) {
         this.launcherContext = launcherContext;
 
-        createModuleSettingsFolderForContext(); // RJCTODO: Need failure case
+        createModuleSettingsFolderForContext();
 
         // Get the ingest module factories discovered by the ingest module 
         // loader.
