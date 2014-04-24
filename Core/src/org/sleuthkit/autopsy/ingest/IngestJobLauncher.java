@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,6 +29,8 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.openide.util.io.NbObjectInputStream;
+import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -186,7 +186,7 @@ public final class IngestJobLauncher {
         IngestModuleIngestJobSettings settings = null;
         File settingsFile = new File(getModuleSettingsFilePath(factory));
         if (settingsFile.exists()) {
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch (IOException | ClassNotFoundException ex) {
                 String logMessage = String.format("Error loading ingest job settings for %s module for %s context, using defaults", factory.getModuleDisplayName(), launcherContext);
@@ -203,9 +203,7 @@ public final class IngestJobLauncher {
 
     private void saveJobSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
         try {
-            File settingsFile = new File(getModuleSettingsFilePath(factory));
-            Files.deleteIfExists(settingsFile.toPath());
-            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(settingsFile.getAbsolutePath()))) {
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getModuleSettingsFilePath(factory)))) {
                 out.writeObject(settings);
             }
         } catch (IOException ex) {
