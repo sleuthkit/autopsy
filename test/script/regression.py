@@ -151,9 +151,9 @@ class TestRunner(object):
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
-        
-        if test_config.jenkins:
-            setupAttachments(Errors.errors_out, test_config)
+            if test_config.jenkins:
+                setupAttachments(Errors.errors_out, test_config)
+            sys.exit(1)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
