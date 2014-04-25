@@ -118,7 +118,7 @@ class TskDbDiff(object):
 
         if (not(gold_data == output_data)):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", output_file, gold_file]
+            dffcmdlst = ["diff", gold_file, output_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             return False
         else:
