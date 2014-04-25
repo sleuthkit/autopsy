@@ -62,10 +62,6 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
     private static KeywordSearchListsXML currentInstance = null; 
     private DateFormat dateFormatter;
 
-    /**
-     * RJCTODO: Move this one to the manager
-     * @return 
-     */
     static synchronized KeywordSearchListsXML getCurrent() {
         if (currentInstance == null) {
             currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);

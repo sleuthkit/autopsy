@@ -45,7 +45,6 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
                     editListPanel.setCurrentKeywordList(null);
                     editListPanel.setButtonStates();
-                    // RJCTODO: Move this into a deleteList method in the manager
                     KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
                     deleter.deleteList(toDelete);
                     listsManagementPanel.resync();
@@ -79,7 +78,6 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
                     return;
                 }
 
-                // RJCTODO: Move chunks of this into manager
                 KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
                 if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
