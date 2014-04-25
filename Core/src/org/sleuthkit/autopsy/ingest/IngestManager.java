@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.ingest;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,27 +55,25 @@ public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
-    private static IngestManager instance;
+    private static final IngestManager instance = new IngestManager();
     private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestTasksExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService fileIngestTasksExecutor = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
+    private final ExecutorService fireEventTasksExecutor = Executors.newSingleThreadExecutor();
     private final ConcurrentHashMap<Long, IngestJob> ingestJobs = new ConcurrentHashMap<>(1, 0.9f, 4); // Maps job ids to jobs.
-    private final HashMap<Long, Future<?>> ingestTasks = new HashMap<>(); // Maps task ids to task cancellation handles. Guarded by this.
-    private AtomicLong ingestJobId = new AtomicLong(0L);
-    private AtomicLong ingestTaskId = new AtomicLong(0L);
-    private volatile IngestUI ingestMessageBox;
+    private final ConcurrentHashMap<Long, Future<?>> ingestTasks = new ConcurrentHashMap<>(); // Maps task ids to task cancellation handles. Guarded by this.
+    private final AtomicLong ingestJobId = new AtomicLong(0L);
+    private final AtomicLong ingestTaskId = new AtomicLong(0L);
+    private volatile IngestMessageTopComponent ingestMessageBox;
 
     /**
      * Gets the IngestManager singleton, creating it if necessary.
      *
      * @returns The IngestManager singleton.
      */
-    public synchronized static IngestManager getInstance() {
-        if (instance == null) {
-            instance = new IngestManager();
-        }
+    public static IngestManager getInstance() {
         return instance;
     }
 
@@ -85,8 +81,9 @@ public class IngestManager {
     }
 
     /**
-     * Finds the top component for the ingest messages in box. Called by the
-     * custom installer for this package once the window system is initialized.
+     * Signals to the ingest manager that it can go find the top component for
+     * the ingest messages in box. Called by the custom installer for this
+     * package once the window system is initialized.
      */
     void initIngestMessageInbox() {
         if (this.ingestMessageBox == null) {
@@ -258,13 +255,6 @@ public class IngestManager {
         }
     }
 
-    /**
-     * Module publishes message using InegestManager handle Does not block. The
-     * message gets enqueued in the GUI thread and displayed in a widget
-     * IngestModule should make an attempt not to publish the same message
-     * multiple times. Viewer will attempt to identify duplicate messages and
-     * filter them out (slower)
-     */
     void postIngestMessage(IngestMessage message) {
         if (ingestMessageBox != null) {
             ingestMessageBox.displayMessage(message);
@@ -286,53 +276,8 @@ public class IngestManager {
         }
     }
 
-    private synchronized void startIngestTasks() {
-        if (!ingestMonitor.isRunning()) {
-            ingestMonitor.start();
-        }
-
-        long taskId = ingestTaskId.incrementAndGet();
-        Future<?> task = dataSourceIngestTasksExecutor.submit(new RunDataSourceIngestModulesTask(taskId));
-        ingestTasks.put(taskId, task);
-
-        int numberOfFileTasksRequested = getNumberOfFileIngestThreads();
-        for (int i = 0; i < numberOfFileTasksRequested; ++i) {
-            taskId = ingestTaskId.incrementAndGet();
-            task = fileIngestTasksExecutor.submit(new RunFileSourceIngestModulesTask(taskId));
-            ingestTasks.put(taskId, task);
-        }
-    }
-
-    private void stopIngestTasks() {
-        // First mark all of the ingest jobs as cancelled. This way the 
-        // ingest modules will know they are being shut down due to 
-        // cancellation when the cancelled run ingest module tasks release 
-        // their pipelines. 
-        for (IngestJob job : ingestJobs.values()) {
-            job.cancel();
-        }
-
-        // Cancel the run ingest module tasks, setting the state of the threads
-        // running them to interrupted.
-        synchronized(this) {
-            for (Future<?> task : ingestTasks.values()) {
-                task.cancel(true);
-            }
-        }
-        
-        // Jettision the remaining data source and file ingest tasks.
-        scheduler.getFileIngestScheduler().emptyQueues();
-        scheduler.getDataSourceIngestScheduler().emptyQueues();
-    }
-
-    private synchronized void reportStartIngestJobsTaskDone(long taskId) {
-        ingestTasks.remove(taskId);
-    }
-
     private void reportRunIngestModulesTaskDone(long taskId) {
-        synchronized(this) {
-            ingestTasks.remove(taskId);
-        }
+        ingestTasks.remove(taskId);
 
         List<Long> completedJobs = new ArrayList<>();
         for (IngestJob job : ingestJobs.values()) {
@@ -344,7 +289,7 @@ public class IngestManager {
 
         for (Long jobId : completedJobs) {
             IngestJob job = ingestJobs.remove(jobId);
-            fireIngestJobEvent(job.isCancelled() ? IngestEvent.INGEST_JOB_CANCELLED.toString() : IngestEvent.INGEST_JOB_COMPLETED.toString(), jobId);
+            fireEventTasksExecutor.submit(new FireIngestJobEventTask(jobId, job.isCancelled() ? IngestEvent.INGEST_JOB_CANCELLED : IngestEvent.INGEST_JOB_COMPLETED));
         }
     }
 
@@ -410,18 +355,18 @@ public class IngestManager {
                         }
                         StringBuilder notifyMessage = new StringBuilder();
                         notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg"));
+                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg"));
                         notifyMessage.append("\n");
                         notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution"));
+                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution"));
                         notifyMessage.append("\n");
                         notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList",
-                                                                 moduleStartUpErrors.toString()));
+                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList",
+                                moduleStartUpErrors.toString()));
                         notifyMessage.append("\n\n");
                         JOptionPane.showMessageDialog(null, notifyMessage.toString(),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
+                                NbBundle.getMessage(this.getClass(),
+                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
 
                         // Jettison the ingest job and move on to the next one.
                         ingestJob.cancel();
@@ -433,24 +378,38 @@ public class IngestManager {
                     final String inputName = dataSource.getName();
                     progress.progress(
                             NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg1",
-                                                inputName), workUnitsCompleted);
+                            inputName), workUnitsCompleted);
                     scheduler.getDataSourceIngestScheduler().queueForIngest(ingestJob);
                     progress.progress(
                             NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg2",
-                                                inputName), ++workUnitsCompleted);
+                            inputName), ++workUnitsCompleted);
 
                     // Queue the file ingest tasks for the ingest job.
                     progress.progress(
                             NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg3",
-                                                inputName), workUnitsCompleted);
+                            inputName), workUnitsCompleted);
                     scheduler.getFileIngestScheduler().queueForIngest(ingestJob);
                     progress.progress(
                             NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.progress.msg4",
-                                                inputName), ++workUnitsCompleted);
+                            inputName), ++workUnitsCompleted);
 
                     if (!Thread.currentThread().isInterrupted()) {
-                        startIngestTasks();
-                        fireIngestJobEvent(IngestEvent.INGEST_JOB_STARTED.toString(), ingestJob.getId());
+                        if (!ingestMonitor.isRunning()) {
+                            ingestMonitor.start();
+                        }
+
+                        long taskId = ingestTaskId.incrementAndGet();
+                        Future<?> task = dataSourceIngestTasksExecutor.submit(new RunDataSourceIngestModulesTask(taskId));
+                        ingestTasks.put(taskId, task);
+
+                        int numberOfFileTasksRequested = getNumberOfFileIngestThreads();
+                        for (int i = 0; i < numberOfFileTasksRequested; ++i) {
+                            taskId = ingestTaskId.incrementAndGet();
+                            task = fileIngestTasksExecutor.submit(new RunFileSourceIngestModulesTask(taskId));
+                            ingestTasks.put(taskId, task);
+                        }
+
+                        fireEventTasksExecutor.submit(new FireIngestJobEventTask(ingestJob.getId(), IngestEvent.INGEST_JOB_STARTED));
                     }
                 }
             } catch (Exception ex) {
@@ -460,7 +419,7 @@ public class IngestManager {
                         NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.catchException.msg"));
             } finally {
                 progress.finish();
-                reportStartIngestJobsTaskDone(id);
+                ingestTasks.remove(id);
             }
         }
     }
@@ -525,11 +484,42 @@ public class IngestManager {
         }
     }
 
-    class IngestCancellationWorker extends SwingWorker<Void, Void> {
+    private class FireIngestJobEventTask implements Runnable {
+
+        private final long ingestJobId;
+        private final IngestEvent event;
+
+        FireIngestJobEventTask(long ingestJobId, IngestEvent event) {
+            this.ingestJobId = ingestJobId;
+            this.event = event;
+        }
+
+        @Override
+        public void run() {
+            fireIngestJobEvent(event.toString(), ingestJobId);
+        }
+    }
+
+    private class IngestCancellationWorker extends SwingWorker<Void, Void> {
 
         @Override
         protected Void doInBackground() throws Exception {
-            stopIngestTasks();
+            // First mark all of the ingest jobs as cancelled. This way the 
+            // ingest modules will know they are being shut down due to 
+            // cancellation when the cancelled run ingest module tasks release 
+            // their pipelines. 
+            for (IngestJob job : ingestJobs.values()) {
+                job.cancel();
+            }
+
+            for (Future<?> task : ingestTasks.values()) {
+                task.cancel(true);
+            }
+
+            // Jettision the remaining data source and file ingest tasks.
+            scheduler.getFileIngestScheduler().emptyQueues();
+            scheduler.getDataSourceIngestScheduler().emptyQueues();
+
             return null;
         }
 

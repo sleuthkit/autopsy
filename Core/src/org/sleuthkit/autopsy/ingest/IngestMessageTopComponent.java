@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Top component which displays something.
  */
- final class IngestMessageTopComponent extends TopComponent implements IngestUI {
+ final class IngestMessageTopComponent extends TopComponent {
 
     private static IngestMessageTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
@@ -246,7 +246,6 @@ import org.sleuthkit.datamodel.Content;
     /**
      * Display ingest summary report in some dialog
      */
-    @Override
     public void displayReport(String ingestReport) {
 
         Object[] options = {NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.displayReport.option.OK"),
@@ -290,7 +289,6 @@ import org.sleuthkit.datamodel.Content;
     /**
      * Display IngestMessage from module (forwarded by IngestManager)
      */
-    @Override
     public void displayMessage(IngestMessage ingestMessage) {
         messagePanel.addMessage(ingestMessage);
 
@@ -317,17 +315,14 @@ import org.sleuthkit.datamodel.Content;
         }
     }
 
-    @Override
     public int getMessagesCount() {
         return messagePanel.getMessagesCount();
     }
 
-    @Override
     public void clearMessages() {
         messagePanel.clearMessages();
     }
 
-    @Override
     public void displayIngestDialog(final Content ingestDataSource) {
         /*
          final IngestDialog ingestDialog = new IngestDialog();
@@ -336,12 +331,10 @@ import org.sleuthkit.datamodel.Content;
          */
     }
 
-    @Override
     public void restoreMessages() {
         //componentShowing();
     }
 
-    @Override
     public Action[] getActions() {
         //disable TC toolbar actions
         return new Action[0];
