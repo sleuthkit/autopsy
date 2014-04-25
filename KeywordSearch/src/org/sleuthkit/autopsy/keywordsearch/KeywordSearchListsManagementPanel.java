@@ -307,7 +307,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
     @Override
     public void store() {
         // Implemented by parent panel
-        // RJCTODO: The parent panel calls save on the XML doc thing, does this still work?
     }
 
     @Override
