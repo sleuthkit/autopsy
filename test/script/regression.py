@@ -144,16 +144,17 @@ class TestRunner(object):
             time.sleep(10)
 
         Reports.write_html_foot(test_config.html_log)
-        # TODO: possibly worth putting this in a sub method
+        
+        if test_config.jenkins:
+            setupAttachments(Errors.errors_out, test_config)
+
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
         else:
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
-        
-        if test_config.jenkins:
-            setupAttachments(Errors.errors_out, test_config)
+            sys.exit(1)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
