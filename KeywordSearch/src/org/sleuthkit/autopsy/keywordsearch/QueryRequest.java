@@ -47,8 +47,6 @@ class QueryRequest  {
         this.query = query;
     }
     
-
-    
     public String getQueryString() {
         return queryString;
     }

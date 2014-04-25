@@ -31,7 +31,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 
 /**
@@ -154,10 +153,10 @@ class KeywordSearchQueryManager {
         final String windowTitle = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.execute.exeWinTitle", ++resultWindowCount, queryStrShort);
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
         if (queryRequests.size() > 0) {
-            Children childThingNodes =
+            Children childNodes =
                     Children.create(new KeywordSearchResultFactory(keywords, queryRequests, searchResultWin), true);
 
-            rootNode = new AbstractNode(childThingNodes);
+            rootNode = new AbstractNode(childNodes);
         } else {
             rootNode = Node.EMPTY;
         }

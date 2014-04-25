@@ -424,25 +424,25 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched - 1].finish();
                     }
 
-                    KeywordSearchQuery del = null;
+                    KeywordSearchQuery keywordSearchQuery = null;
 
                     boolean isRegex = !keywordQuery.isLiteral();
                     if (isRegex) {
-                        del = new TermComponentQuery(keywordQuery);
+                        keywordSearchQuery = new TermComponentQuery(keywordQuery);
                     } else {
-                        del = new LuceneQuery(keywordQuery);
-                        del.escape();
+                        keywordSearchQuery = new LuceneQuery(keywordQuery);
+                        keywordSearchQuery.escape();
                     }
 
                     //limit search to currently ingested data sources
                     //set up a filter with 1 or more image ids OR'ed
                     final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
-                    del.addFilter(dataSourceFilter);
+                    keywordSearchQuery.addFilter(dataSourceFilter);
 
                     QueryResults queryResult;
 
                     try {
-                        queryResult = del.performQuery();
+                        queryResult = keywordSearchQuery.performQuery();
                     } catch (NoOpenCoreException ex) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
                         //no reason to continue with next query if recovery failed
@@ -514,7 +514,7 @@ public final class SearchRunner {
                                 }
 
                                 // write the blackboard artifact for this keyword in this file
-                                KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
+                                KeywordWriteResult written = keywordSearchQuery.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
                                 if (written == null) {
                                     logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()}); //NON-NLS
                                     continue;
@@ -649,8 +649,8 @@ public final class SearchRunner {
             for (String name : keywordListNames) {
                 KeywordList list = loader.getList(name);
                 for (Keyword k : list.getKeywords()) {
-                    this.keywords.add(k);
-                    this.keywordToList.put(k.getQuery(), list);
+                    keywords.add(k);
+                    keywordToList.put(k.getQuery(), list);
                 }
             }
         }
@@ -683,20 +683,19 @@ public final class SearchRunner {
                     queryTermResultsIDs.add(ch.getId());
                 }
 
-                Keyword termResultK = new Keyword(termResult.toString(), !isRegex);
-                List<Long> curTermResults = job.currentKeywordResults(termResultK);
+                List<Long> curTermResults = job.currentKeywordResults(termResult);
                 if (curTermResults == null) {
-                    job.addKeywordResults(termResultK, queryTermResultsIDs);
-                    newResults.addResult(termResultK, queryTermResults);
+                    job.addKeywordResults(termResult, queryTermResultsIDs);
+                    newResults.addResult(termResult, queryTermResults);
                 } else {
                     //some AbstractFile hits already exist for this keyword
                     for (ContentHit res : queryTermResults) {
                         if (!curTermResults.contains(res.getId())) {
                             //add to new results
-                            List<ContentHit> newResultsFs = newResults.getResults(termResultK);
+                            List<ContentHit> newResultsFs = newResults.getResults(termResult);
                             if (newResultsFs == null) {
                                 newResultsFs = new ArrayList<>();
-                                newResults.addResult(termResultK, newResultsFs);
+                                newResults.addResult(termResult, newResultsFs);
                             }
                             newResultsFs.add(res);
                             curTermResults.add(res.getId());

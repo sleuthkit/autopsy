@@ -441,7 +441,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                             snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
                         } catch (NoOpenCoreException e) {
                             logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                            //no reason to continie
+                            //no reason to continue
                             return null;
                         } catch (Exception e) {
                             logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
