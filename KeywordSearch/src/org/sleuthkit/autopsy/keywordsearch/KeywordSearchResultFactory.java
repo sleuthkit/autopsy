@@ -384,8 +384,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         private KeywordSearchQuery query;
         private String listName;
         private QueryResults hits;
-        final Collection<BlackboardArtifact> na = new ArrayList<>();
-        private static final int QUERY_DISPLAY_LEN = 40;
+        private Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
+        private static final int QUERY_DISPLAY_LEN = 40;   
 
         BlackboardResultWriter(QueryResults hits, KeywordSearchQuery query, String listName) {
             this.hits = hits;
@@ -403,58 +403,29 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 }
             });
 
-            if (!this.isCancelled() && !na.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+            if (!this.isCancelled() && !newArtifacts.isEmpty()) {
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
             }
         }
 
         @Override
         protected Object doInBackground() throws Exception {
             registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
-
+            final String queryStr = query.getQueryString();
+            final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             //block until previous writer is done
             //writerLock.lock();
-            try {
-                final String queryStr = query.getQueryString();
-                final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
-                progress = ProgressHandleFactory.createHandle(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
-                    @Override
-                    public boolean cancel() {
-                        return BlackboardResultWriter.this.cancel(true);
-                    }
-                });
 
-                progress.start(hits.getKeywords().size());
-                int processedFiles = 0;
-                for (final Keyword hit : hits.getKeywords()) {
-                    progress.progress(hit.toString(), ++processedFiles);
-                    if (this.isCancelled()) {
-                        break;
-                    }
-                    Map<AbstractFile, Integer> flattened = hits.getUniqueFiles(hit);
-                    for (AbstractFile f : flattened.keySet()) {
-                        int chunkId = flattened.get(f);
-                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit.toString());
-                        String snippet;
-                        try {
-                            snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
-                        } catch (NoOpenCoreException e) {
-                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                            //no reason to continue
-                            return null;
-                        } catch (Exception e) {
-                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                            continue;
+            try {
+                progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
+                        @Override
+                        public boolean cancel() {
+                            return BlackboardResultWriter.this.cancel(true);
                         }
-                        if (snippet != null) {
-                            KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), f, snippet, listName);
-                            if (written != null) {
-                                na.add(written.getArtifact());
-                            }
-                        }
-                    }
-                }
+                    });                
+                
+                newArtifacts = QueryRequest.writeAllHitsToBlackBoard(hits, query, listName, progress);
             } finally {
                 finalizeWorker();
             }

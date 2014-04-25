@@ -112,6 +112,6 @@ interface KeywordSearchQuery {
      * @return collection of results (with cached bb artifacts/attributes) created and written
      */
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName);
-       
+
 }
 
