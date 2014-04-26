@@ -26,7 +26,6 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.modules.exif.ExifParserFileIngestModule;
 
 /**
  *
@@ -40,14 +39,14 @@ public class ExternalResultsModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return NbBundle.getMessage(ExifParserFileIngestModule.class,
+        return NbBundle.getMessage(ExternalResultsIngestModule.class,
                 "ExternalResultsIngestModule.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(ExternalResultsIngestModule.class,
-                "ExternalResultsIngestModule.getDesc.text");
+                "ExternalResultsIngestModule.moduleDesc.text");
     }
 
     @Override
@@ -56,7 +55,7 @@ public class ExternalResultsModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public boolean isFileIngestModuleFactory() {
+    public boolean isDataSourceIngestModuleFactory() {
         return true;
     }
 
