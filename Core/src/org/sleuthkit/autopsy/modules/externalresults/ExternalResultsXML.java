@@ -124,25 +124,98 @@ public class ExternalResultsXML implements ExternalResultsParser {
      */
     private void parseArtifacts(Element root ) {
         NodeList nodeList = root.getElementsByTagName(ARTLIST_EL);
-        final int numNodes = nodeList.getLength();
 
-        if (numNodes == 0) {
-            return;
-        }
-
-        for(int index = 0; index < numNodes; ++index) {                
+        // for each artifacts list (normally there should be just 1)
+        for(int index = 0; index < nodeList.getLength(); ++index) {             
             Element el = (Element)nodeList.item(index);
-
+            NodeList subNodeList = el.getElementsByTagName(ART_EL);
+            
+            // for each artifact
+            for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
+                Element subEl = (Element)subNodeList.item(subIndex);
+                final String type = subEl.getAttribute(TYPE_ATTR);
+                final int artResultsIndex = resultsData.addArtifact(type);
+                parseAttributes(subEl, artResultsIndex);
+                //parseFiles(subEl, artResultsIndex);
+            }
         }
     }
     
+    /**
+     * 
+     * @param root  Should be an artifact element
+     * @param artResultsIndex 
+     */
+    private void parseAttributes(Element root, int artResultsIndex) {
+        NodeList nodeList = root.getElementsByTagName(ATTR_EL);
+
+        for(int index = 0; index < nodeList.getLength(); ++index) {                
+            Element el = (Element)nodeList.item(index);
+            final String type = el.getAttribute(TYPE_ATTR);
+            final int attrResultsIndex = resultsData.addAttribute(artResultsIndex, type);
+
+            // add values, if any
+            NodeList valueNodeList = el.getElementsByTagName(VALUE_EL);
+            for(int subindex = 0; subindex < valueNodeList.getLength(); ++subindex) { 
+                Element subEl = (Element)valueNodeList.item(subindex);
+                final String valueStr = subEl.getTextContent();
+                final String valueType = subEl.getAttribute(TYPE_ATTR); //empty string is ok
+                resultsData.addAttributeValue(artResultsIndex, attrResultsIndex, valueStr, valueType);
+            }               
+
+            // add source, if any
+            NodeList srcNodeList = el.getElementsByTagName(SRC_EL);
+            if (srcNodeList.getLength() > 0) {
+                // we only use the first occurence
+                Element subEl = (Element)srcNodeList.item(0);
+                final String srcStr = subEl.getTextContent();
+                resultsData.addAttributeSource(artResultsIndex, attrResultsIndex, srcStr);
+            }
+
+            // add context, if any
+            NodeList contextNodeList = el.getElementsByTagName(CONTEXT_EL);
+            if (contextNodeList.getLength() > 0) {
+                // we only use the first occurence
+                Element subEl = (Element)contextNodeList.item(0);
+                final String contextStr = subEl.getTextContent();
+                resultsData.addAttributeContext(artResultsIndex, attrResultsIndex, contextStr);
+            }            
+        }
+    }        
+    
+    /**
+     * 
+     * @param root  Should be an artifact element
+     * @param artResultsIndex 
+     */
+    private void parseFiles(Element root, int artResultsIndex) throws Exception {
+        NodeList nodeList = root.getElementsByTagName(FILE_EL);
+
+        if (nodeList.getLength() > 0) {
+            // we only use the first occurence
+            Element el = (Element)nodeList.item(0);
+
+            // add path 
+            NodeList subNodeList = el.getElementsByTagName(PATH_EL);
+            if (nodeList.getLength() > 0) {
+                // we only use the first occurence
+                Element subEl = (Element)subNodeList.item(0);
+                final String path = subEl.getTextContent();
+                resultsData.addArtifactFile(artResultsIndex, path);
+            } else {
+                // error to have a file element without a path element
+                throw new Exception("File element is missing path element.");
+            }
+        }
+    }            
+    
+    /**
+     * 
+     * @param root 
+     */
     private void parseReports(Element root ) {
         NodeList nodeList = root.getElementsByTagName(REPORTLIST_EL);
         final int numNodes = nodeList.getLength();
-
-        if (numNodes == 0) {
-            return;
-        }
 
         for(int index = 0; index < numNodes; ++index) {                
             Element el = (Element)nodeList.item(index);
@@ -150,13 +223,13 @@ public class ExternalResultsXML implements ExternalResultsParser {
         }
     }    
     
+    /**
+     * 
+     * @param root 
+     */
     private void parseDerivedFiles(Element root ) {
         NodeList nodeList = root.getElementsByTagName(DERIVEDLIST_EL);
         final int numNodes = nodeList.getLength();
-
-        if (numNodes == 0) {
-            return;
-        }
 
         for(int index = 0; index < numNodes; ++index) {                
             Element el = (Element)nodeList.item(index);

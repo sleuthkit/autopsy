@@ -62,21 +62,21 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        refCounter.incrementAndGet(jobId);
-
-        // By default, we create the import path and provide it to the third party executable as an argument
-        importPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + MODULE_DIR + File.separator + IMPORT_DIR;
         
-        // make sure module output directory and import path exist else create them
-        File importPathDir = new File(importPath);
-        if (!importPathDir.exists()) {
-            if (!importPathDir.mkdirs()) {
-                String message = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.startUp.exception.importdir");
-                logger.log(Level.SEVERE, message);
-                throw new IngestModuleException(message);
+        if (refCounter.incrementAndGet(jobId) == 1) {
+            // By default, we create the import path and provide it to the third party executable as an argument
+            importPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + MODULE_DIR + jobId + File.separator + IMPORT_DIR;
+
+            // make sure module output directory and import path exist else create them
+            File importPathDir = new File(importPath);
+            if (!importPathDir.exists()) {
+                if (!importPathDir.mkdirs()) {
+                    String message = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.startUp.exception.importdir");
+                    logger.log(Level.SEVERE, message);
+                    throw new IngestModuleException(message);
+                }
             }
         }
-        
     }        
     
     /**
@@ -100,18 +100,20 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
         }
         
         ///@todo get cmdName and cmdPath
-        cmdName = "cmd /c start xmltest.bat";
+        cmdName = "";
         cmdPath = "";
         
         // Run
         if (refCounter.get(jobId) == 1) {
             try {
-                runAndImportResults();
-            } catch (Exception ex) {
-                String msgstr = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.process.exception.run");
+                runProgram(); 
+            } catch(Exception ex) {
+                String msgstr = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.process.exception.run") + ex.getLocalizedMessage();
                 logger.log(Level.SEVERE, msgstr);
-                return ProcessResult.ERROR;   
+                return ProcessResult.ERROR;            
             }
+            
+            importResults();
         }
 
         return ProcessResult.OK;
@@ -134,32 +136,26 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     /**
      *  Launch the third-party process and import the results
      */
-    private void runAndImportResults() throws IOException, InterruptedException {
-        
+    private void runProgram() throws IOException, InterruptedException {
         final String[] cmdArgs = { 
             cmdName,
-            dataSourcePath,
-            importPath };
-
-        StringBuilder cmdSb = new StringBuilder();
-        for (int i = 0; i < cmdArgs.length; ++i ) {
-            cmdSb.append(cmdArgs[i]).append(" ");
-        }      
+            importPath,
+            dataSourcePath };
         
         //File workingDirFile = new File(cmdPath);
+        
         //run exe, passing the data source path and the import (results) path
-        logger.log(Level.INFO, "Starting external command using: " + cmdSb.toString()); //NON-NLS
         ExecUtil executor = new ExecUtil();
-        executor.execute(cmdArgs[0], cmdArgs[1], cmdArgs[2]);
-        logger.log(Level.INFO, "Finished running external command."); //NON-NLS
-
+        executor.execute("cmd.exe", "/C", "xmltest.bat"); ///@temp dev testing
         
         progressBar.progress(1);
-
+    }
+    
+    private void importResults() {
         // execution is done, look for results to import
-        //ExternalResultsXML parser = new ExternalResultsXML(importPath);
-        //ExternalResultsUtility.importResults(parser);
-        progressBar.progress(1);
+        ExternalResultsXML parser = new ExternalResultsXML(importPath);
+        ExternalResultsUtility.importResults(parser);
+        progressBar.progress(1);        
     }
 
 }
