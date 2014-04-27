@@ -92,13 +92,16 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
         
         try {
             dataSourcePath = dataSource.getUniquePath();
+            String foo[] = dataSource.getImage().getPaths();
         } catch (TskCoreException ex) {
             String msgstr = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.process.exception.datasourcepath");
             logger.log(Level.SEVERE, msgstr);
             return ProcessResult.ERROR;
         }
         
-        ///@todo get cmdName
+        ///@todo get cmdName and cmdPath
+        cmdName = "cmd /c start xmltest.bat";
+        cmdPath = "";
         
         // Run
         if (refCounter.get(jobId) == 1) {
@@ -107,7 +110,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
             } catch (Exception ex) {
                 String msgstr = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.process.exception.run");
                 logger.log(Level.SEVERE, msgstr);
-                return ProcessResult.ERROR;                
+                return ProcessResult.ERROR;   
             }
         }
 
@@ -143,18 +146,19 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
             cmdSb.append(cmdArgs[i]).append(" ");
         }      
         
-        File workingDir = new File(cmdPath);
+        //File workingDirFile = new File(cmdPath);
         //run exe, passing the data source path and the import (results) path
         logger.log(Level.INFO, "Starting external command using: " + cmdSb.toString()); //NON-NLS
         ExecUtil executor = new ExecUtil();
         executor.execute(cmdArgs[0], cmdArgs[1], cmdArgs[2]);
         logger.log(Level.INFO, "Finished running external command."); //NON-NLS
+
         
         progressBar.progress(1);
 
         // execution is done, look for results to import
-        ExternalResultsXML parser = new ExternalResultsXML(importPath);
-        ExternalResultsUtility.importResults(parser);
+        //ExternalResultsXML parser = new ExternalResultsXML(importPath);
+        //ExternalResultsUtility.importResults(parser);
         progressBar.progress(1);
     }
 

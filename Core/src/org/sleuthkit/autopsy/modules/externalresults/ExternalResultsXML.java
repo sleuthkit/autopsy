@@ -20,6 +20,7 @@
 
 package org.sleuthkit.autopsy.modules.externalresults;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -58,7 +59,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
     private static final String TYPE_ATTR = "type"; //NON-NLS
     private static final String NAME_ATTR = "name"; //NON-NLS
 
-    private String reportPath;
+    private String reportFilePath;
     private ResultsData resultsData = null;
     
     /**
@@ -66,7 +67,8 @@ public class ExternalResultsXML implements ExternalResultsParser {
      * @param reportPath 
      */
     ExternalResultsXML(String reportPath) {
-        this.reportPath = reportPath;          
+        ///@todo find an xml file to parse
+        reportFilePath = reportPath + File.separator + "ext-test1.xml";
     }
     
     /**
@@ -78,7 +80,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
         resultsData = new ResultsData();
         try
         {
-            final Document doc = XMLUtil.loadDoc(ExternalResultsXML.class, reportPath, XSDFILE);
+            final Document doc = XMLUtil.loadDoc(ExternalResultsXML.class, reportFilePath, XSDFILE);
             if (doc == null) {
                 return null;
             }
