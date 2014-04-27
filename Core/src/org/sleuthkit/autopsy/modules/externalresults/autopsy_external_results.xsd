@@ -3,7 +3,7 @@
 	<xs:element name="autopsy_results">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="data_source" type="xs:string" />
+				<xs:element minOccurs="0" name="data_source" type="xs:string" />
 				<xs:element name="artifacts">
 					<xs:complexType>
 						<xs:sequence>

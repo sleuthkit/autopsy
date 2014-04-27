@@ -103,20 +103,25 @@ public class ExternalResultsXML implements ExternalResultsParser {
         return resultsData;
     }
 
+    /**
+     * 
+     * @param root
+     * @throws Exception 
+     */
      private void parseDataSource(Element root ) throws Exception {
         NodeList nodeList = root.getElementsByTagName(DATASRC_EL);
         final int numNodes = nodeList.getLength();
 
-        if (numNodes == 0) {
-            throw new Exception("Error: No data source specified in XML file.");
-        }
-
         for(int index = 0; index < numNodes; ++index) {                
             Element el = (Element)nodeList.item(index);
-
+            resultsData.addDataSource(el.getTextContent());
         }
     }   
     
+    /**
+     * 
+     * @param root 
+     */
     private void parseArtifacts(Element root ) {
         NodeList nodeList = root.getElementsByTagName(ARTLIST_EL);
         final int numNodes = nodeList.getLength();
