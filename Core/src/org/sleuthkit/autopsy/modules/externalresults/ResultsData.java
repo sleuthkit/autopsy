@@ -27,10 +27,26 @@ import java.util.List;
  *
  */
 public class ResultsData {
-    private List<String> dataSources = new ArrayList<>();
-    private List<ArtifactData> artifacts = new ArrayList<>();
-    private List<ReportData> reports = new ArrayList<>();
-    private List<DerivedFileData> derivedFiles = new ArrayList<>();
+    private final List<String> dataSources = new ArrayList<>();
+    private final List<ArtifactData> artifacts = new ArrayList<>();
+    private final List<ReportData> reports = new ArrayList<>();
+    private final List<DerivedFileData> derivedFiles = new ArrayList<>();
+    
+    public List<String> getDataSources() {
+        return dataSources;
+    }
+    
+    public List<ArtifactData> getArtifacts() {
+        return artifacts;
+    }
+    
+    public List<ReportData> getReports() {
+        return reports;
+    }
+   
+    public List<DerivedFileData> getDerivedFiles() {
+        return derivedFiles;
+    }    
     
     public void addDataSource(String dataSrc) {
         dataSources.add(dataSrc);
@@ -80,15 +96,28 @@ public class ResultsData {
         return art.files.size() - 1;      
     }
     
-    // Internal data structures
+    public void addReport(String displayName, String localPath) {
+        ReportData d = new ReportData();
+        d.displayName = displayName;
+        d.localPath = localPath;
+        reports.add(d);
+    }
     
-    private static class ArtifactData {
+    public void addDerivedFile(String localPath) {
+        DerivedFileData d = new DerivedFileData();
+        d.localPath = localPath;
+        derivedFiles.add(d);
+    }    
+    
+    // Data structures
+    
+    public static class ArtifactData {
         private String typeStr;
         private List<AttributeData> attributes = new ArrayList<>();
         private List<FileData> files = new ArrayList<>();
     }
     
-    private static class AttributeData {
+    public static class AttributeData {
         private String typeStr;
         private String valueType = "text"; //default if not specified
         private String valueStr; //valueType determines how to interpret it
@@ -96,16 +125,16 @@ public class ResultsData {
         private String context;        
     }    
     
-    private static class FileData {
+    public static class FileData {
         private String path;   
     }
     
-    private static class ReportData {
+    public static class ReportData {
         private String displayName;
         private String localPath;
     }
         
-    private static class DerivedFileData {
+    public static class DerivedFileData {
         private String localPath;
     }        
 }

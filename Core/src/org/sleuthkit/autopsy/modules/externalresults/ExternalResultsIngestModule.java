@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -48,10 +47,10 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     private static final String IMPORT_DIR = "import";
     private long jobId;
     private String importPath;
+    private String importFilePath;
     private String cmdPath;
     private String cmdName;
-    String dataSourcePath;
-    private Process thirdPartyProc = null;
+    String dataSourceLocalPath;
     DataSourceIngestModuleProgress progressBar;
 
     /**
@@ -76,6 +75,9 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
                     throw new IngestModuleException(message);
                 }
             }
+            
+            ///@todo use a standard name or search for an XML file
+            importFilePath = importPath + File.separator + "ext-test3.xml";
         }
     }        
     
@@ -91,10 +93,9 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
         progressBar.switchToDeterminate(2);
         
         try {
-            dataSourcePath = dataSource.getUniquePath();
-            String foo[] = dataSource.getImage().getPaths();
+            dataSourceLocalPath = dataSource.getImage().getPaths()[0];
         } catch (TskCoreException ex) {
-            String msgstr = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.process.exception.datasourcepath");
+            String msgstr = NbBundle.getMessage(this.getClass(), "ExternalResultsIngestModule.process.exception.dataSourceLocalPath");
             logger.log(Level.SEVERE, msgstr);
             return ProcessResult.ERROR;
         }
@@ -140,7 +141,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
         final String[] cmdArgs = { 
             cmdName,
             importPath,
-            dataSourcePath };
+            dataSourceLocalPath };
         
         //File workingDirFile = new File(cmdPath);
         
@@ -153,7 +154,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     
     private void importResults() {
         // execution is done, look for results to import
-        ExternalResultsXML parser = new ExternalResultsXML(importPath);
+        ExternalResultsXML parser = new ExternalResultsXML(importFilePath);
         ExternalResultsUtility.importResults(parser);
         progressBar.progress(1);        
     }

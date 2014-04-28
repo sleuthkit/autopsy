@@ -34,7 +34,6 @@ import org.w3c.dom.NodeList;
 public class ExternalResultsXML implements ExternalResultsParser {
     private static final Logger logger = Logger.getLogger(ExternalResultsXML.class.getName());    
             
-    private static final String ENCODING = "UTF-8"; //NON-NLS
     private static final String XSDFILE = "autopsy_external_results.xsd"; //NON-NLS
     
     private static final String ROOT_EL = "autopsy_results"; //NON-NLS
@@ -56,16 +55,15 @@ public class ExternalResultsXML implements ExternalResultsParser {
     private static final String TYPE_ATTR = "type"; //NON-NLS
     private static final String NAME_ATTR = "name"; //NON-NLS
 
-    private String reportFilePath;
+    private String importFilePath;
     private ResultsData resultsData = null;
     
     /**
      * 
-     * @param reportPath 
+     * @param importFilePath 
      */
-    ExternalResultsXML(String reportPath) {
-        ///@todo find an xml file to parse
-        reportFilePath = reportPath + File.separator + "ext-test2.xml";
+    ExternalResultsXML(String importFilePath) {
+        this.importFilePath = importFilePath;
     }
     
     /**
@@ -77,7 +75,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
         resultsData = new ResultsData();
         try
         {
-            final Document doc = XMLUtil.loadDoc(ExternalResultsXML.class, reportFilePath, XSDFILE);
+            final Document doc = XMLUtil.loadDoc(ExternalResultsXML.class, importFilePath, XSDFILE);
             if (doc == null) {
                 return null;
             }
@@ -214,13 +212,38 @@ public class ExternalResultsXML implements ExternalResultsParser {
      * 
      * @param root 
      */
-    private void parseReports(Element root ) {
+    private void parseReports(Element root ) throws Exception {
         NodeList nodeList = root.getElementsByTagName(REPORTLIST_EL);
-        final int numNodes = nodeList.getLength();
 
-        for(int index = 0; index < numNodes; ++index) {                
+        // for each reports list (normally there should be just 1)
+        for(int index = 0; index < nodeList.getLength(); ++index) {             
             Element el = (Element)nodeList.item(index);
-
+            NodeList subNodeList = el.getElementsByTagName(REPORT_EL);
+            
+            // for each report
+            for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
+                Element subEl = (Element)subNodeList.item(subIndex);                
+                String displayName = "";
+                String localPath = "";
+                NodeList nameNodeList = subEl.getElementsByTagName(DISPLAYNAME_EL);
+                if (nameNodeList.getLength() > 0) {
+                    // we only use the first occurence
+                    Element nameEl = (Element)nameNodeList.item(0);
+                    displayName = nameEl.getTextContent();
+                }
+                NodeList pathNodeList = subEl.getElementsByTagName(LOCALPATH_EL);
+                if (pathNodeList.getLength() > 0) {
+                    // we only use the first occurence
+                    Element pathEl = (Element)pathNodeList.item(0);
+                    localPath = pathEl.getTextContent();
+                }                
+                if ((!displayName.isEmpty()) && (!localPath.isEmpty())) {
+                    resultsData.addReport(displayName, localPath);
+                } else {
+                    // error to have a file element without a path element
+                    throw new Exception("report element is missing display_name or local_path.");
+                }
+            }
         }
     }    
     
@@ -228,13 +251,31 @@ public class ExternalResultsXML implements ExternalResultsParser {
      * 
      * @param root 
      */
-    private void parseDerivedFiles(Element root ) {
+    private void parseDerivedFiles(Element root ) throws Exception {
         NodeList nodeList = root.getElementsByTagName(DERIVEDLIST_EL);
-        final int numNodes = nodeList.getLength();
-
-        for(int index = 0; index < numNodes; ++index) {                
+        
+        // for each derived files list (normally there should be just 1)
+        for(int index = 0; index < nodeList.getLength(); ++index) {             
             Element el = (Element)nodeList.item(index);
-
+            NodeList subNodeList = el.getElementsByTagName(DERIVED_EL);
+            
+            // for each derived file
+            for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
+                Element subEl = (Element)subNodeList.item(subIndex);                
+                String localPath = "";
+                NodeList pathNodeList = subEl.getElementsByTagName(LOCALPATH_EL);
+                if (pathNodeList.getLength() > 0) {
+                    // we only use the first occurence
+                    Element pathEl = (Element)pathNodeList.item(0);
+                    localPath = pathEl.getTextContent();
+                }                
+                if (!localPath.isEmpty()) {
+                    resultsData.addDerivedFile(localPath);
+                } else {
+                    // error to have a file element without a path element
+                    throw new Exception("derived_files element is missing local_path.");
+                }
+            }
         }
     }    
 }
