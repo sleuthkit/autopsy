@@ -21,12 +21,9 @@
 package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.datamodel.TskException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -68,7 +65,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
      */
     ExternalResultsXML(String reportPath) {
         ///@todo find an xml file to parse
-        reportFilePath = reportPath + File.separator + "ext-test1.xml";
+        reportFilePath = reportPath + File.separator + "ext-test2.xml";
     }
     
     /**
@@ -90,6 +87,10 @@ public class ExternalResultsXML implements ExternalResultsParser {
                 logger.log(Level.SEVERE, "Error loading XML file: invalid file format (bad root)."); //NON-NLS
                 return null;
             }            
+            if (!root.getNodeName().equals(ROOT_EL)) {
+                logger.log(Level.SEVERE, "Error loading XML file: root element must be " + ROOT_EL + ")."); //NON-NLS
+                return null;                
+            }
 
             parseDataSource(root);
             parseArtifacts(root);
@@ -122,7 +123,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
      * 
      * @param root 
      */
-    private void parseArtifacts(Element root ) {
+    private void parseArtifacts(Element root ) throws Exception {
         NodeList nodeList = root.getElementsByTagName(ARTLIST_EL);
 
         // for each artifacts list (normally there should be just 1)
@@ -136,7 +137,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
                 final String type = subEl.getAttribute(TYPE_ATTR);
                 final int artResultsIndex = resultsData.addArtifact(type);
                 parseAttributes(subEl, artResultsIndex);
-                //parseFiles(subEl, artResultsIndex);
+                parseFiles(subEl, artResultsIndex);
             }
         }
     }
