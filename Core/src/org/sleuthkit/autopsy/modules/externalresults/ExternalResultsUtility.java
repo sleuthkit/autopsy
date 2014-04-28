@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ExternalResultsUtility {
     private static final Logger logger = Logger.getLogger(ExternalResultsUtility.class.getName());
 
-    static public void importResults(ExternalResultsParser parser, Content defaultDataSource) {
+    public static void importResults(ExternalResultsParser parser, Content defaultDataSource) {
         // Create temporary data object
         ResultsData resultsData = parser.parse();
         
@@ -48,33 +48,32 @@ public class ExternalResultsUtility {
         generateBlackboardItems(resultsData, defaultDataSource);
     }
     
-    static private void generateBlackboardItems(ResultsData resultsData, Content defaultDataSource) {
+    private static void generateBlackboardItems(ResultsData resultsData, Content defaultDataSource) {
         for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {
             Content currContent = defaultDataSource;
             ///@todo get associated file (if any) to use as the content
             try {
                 int bbArtTypeId;
-                BlackboardArtifact.ARTIFACT_TYPE standardArtType = null;
-                try {
-                    standardArtType = BlackboardArtifact.ARTIFACT_TYPE.fromLabel(art.typeStr);
-                    bbArtTypeId = standardArtType.getTypeID();
-                } catch (IllegalArgumentException ex) {
+                BlackboardArtifact.ARTIFACT_TYPE stdArtType = isStandardArtifactType(art.typeStr);
+                if (stdArtType != null) {
+                    bbArtTypeId = stdArtType.getTypeID();
+                } else {
                     // assume it's user defined
                     bbArtTypeId = Case.getCurrentCase().getSleuthkitCase().addArtifactType(art.typeStr, art.typeStr);
-                }
+                }                    
 
                 Collection<BlackboardAttribute> bbAttributes = new ArrayList<>();
                 for (ResultsData.AttributeData attr : art.attributes) {
                     BlackboardAttribute bbAttr = null;
                     int bbAttrTypeId;
-                    try {
-                        BlackboardAttribute.ATTRIBUTE_TYPE bbAttrType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.typeStr);
-                        bbAttrTypeId = bbAttrType.getTypeID();                        
-                    } catch (IllegalArgumentException ex) {
+                    BlackboardAttribute.ATTRIBUTE_TYPE stdAttrType = isStandardAttributeType(attr.typeStr);
+                    if (stdAttrType != null) {
+                        bbAttrTypeId = stdAttrType.getTypeID();
+                    } else {
                         // assume it's user defined
                         bbAttrTypeId = Case.getCurrentCase().getSleuthkitCase().addAttrType(attr.typeStr, attr.typeStr);
                     }                    
-                    
+
                     switch (attr.valueType) {
                         case "text": //NON-NLS
                             bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, attr.valueStr);
@@ -101,15 +100,43 @@ public class ExternalResultsUtility {
                 }        
                 BlackboardArtifact bbArt = currContent.newArtifact(bbArtTypeId);
                 bbArt.addAttributes(bbAttributes);
-                if (standardArtType != null) {
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results", standardArtType)); //NON-NLS
-                    
+                if (stdArtType != null) {
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results", stdArtType)); //NON-NLS
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, ex.getLocalizedMessage());
             }            
         }
-
     }
 
+    /**
+     * 
+     * @param artTypeStr
+     * @return valid artifact type or null if the type is not a standard TSK one
+     */
+    private static BlackboardArtifact.ARTIFACT_TYPE isStandardArtifactType(String artTypeStr) {
+        BlackboardArtifact.ARTIFACT_TYPE[] stdArts = BlackboardArtifact.ARTIFACT_TYPE.values();
+        for (BlackboardArtifact.ARTIFACT_TYPE art : stdArts) {
+            if (art.getLabel().equals(artTypeStr)) {
+                return art;
+            }
+        }
+        return null;
+    }
+    
+   /**
+     * 
+     * @param attrTypeStr
+     * @return valid attribute type or null if the type is not a standard TSK one
+     */
+    private static BlackboardAttribute.ATTRIBUTE_TYPE isStandardAttributeType(String attrTypeStr) {
+        BlackboardAttribute.ATTRIBUTE_TYPE[] stdAttrs = BlackboardAttribute.ATTRIBUTE_TYPE.values();
+        for (BlackboardAttribute.ATTRIBUTE_TYPE attr : stdAttrs) {
+            if (attr.getLabel().equals(attrTypeStr)) {
+                return attr;
+            }
+        }
+        return null;
+    }    
+    
 }
