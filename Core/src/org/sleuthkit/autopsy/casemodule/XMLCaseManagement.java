@@ -580,7 +580,8 @@ import org.xml.sax.SAXException;
             bw.close();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error writing to case file"); //NON-NLS
-            throw new CaseActionException("Error writing to case file", ex);
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
     }
 
