@@ -22,7 +22,9 @@ package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.logging.Level;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -50,39 +52,61 @@ public class ExternalResultsUtility {
         for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {
             Content currContent = defaultDataSource;
             ///@todo get associated file (if any) to use as the content
-            
-            BlackboardArtifact.ARTIFACT_TYPE bbArtType = BlackboardArtifact.ARTIFACT_TYPE.fromLabel(art.typeStr);
             try {
+                int bbArtTypeId;
+                BlackboardArtifact.ARTIFACT_TYPE standardArtType = null;
+                try {
+                    standardArtType = BlackboardArtifact.ARTIFACT_TYPE.fromLabel(art.typeStr);
+                    bbArtTypeId = standardArtType.getTypeID();
+                } catch (IllegalArgumentException ex) {
+                    // assume it's user defined
+                    bbArtTypeId = Case.getCurrentCase().getSleuthkitCase().addArtifactType(art.typeStr, art.typeStr);
+                }
+
                 Collection<BlackboardAttribute> bbAttributes = new ArrayList<>();
                 for (ResultsData.AttributeData attr : art.attributes) {
-                    BlackboardAttribute.ATTRIBUTE_TYPE bbAttrType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.typeStr);
                     BlackboardAttribute bbAttr = null;
+                    int bbAttrTypeId;
+                    try {
+                        BlackboardAttribute.ATTRIBUTE_TYPE bbAttrType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.typeStr);
+                        bbAttrTypeId = bbAttrType.getTypeID();                        
+                    } catch (IllegalArgumentException ex) {
+                        // assume it's user defined
+                        bbAttrTypeId = Case.getCurrentCase().getSleuthkitCase().addAttrType(attr.typeStr, attr.typeStr);
+                    }                    
+                    
                     switch (attr.valueType) {
                         case "text": //NON-NLS
-                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, attr.valueStr);
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, attr.valueStr);
                             break;
                         case "int32": //NON-NLS
                             int intValue = Integer.parseInt(attr.valueStr);
-                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, intValue);
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, intValue);
                             break;
                         case "int64": //NON-NLS
                             long longValue = Long.parseLong(attr.valueStr);
-                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, longValue);
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, longValue);
                             break;
                         case "double": //NON-NLS
                             double doubleValue = Double.parseDouble(attr.valueStr);
-                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, doubleValue);
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, doubleValue);
+                            break;
+                        default:
+                            logger.log(Level.WARNING, "Ignoring invalid attribute value type " + attr.valueType);
                             break;
                     }
                     if (bbAttr != null) {
                         bbAttributes.add(bbAttr);
                     }
                 }        
-                BlackboardArtifact bbArt = currContent.newArtifact(bbArtType);
+                BlackboardArtifact bbArt = currContent.newArtifact(bbArtTypeId);
                 bbArt.addAttributes(bbAttributes);
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results", bbArtType)); //NON-NLS
+                if (standardArtType != null) {
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results", standardArtType)); //NON-NLS
+                    
+                }
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, ex.getLocalizedMessage());
             }            
         }
 
