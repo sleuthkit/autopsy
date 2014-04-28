@@ -268,6 +268,7 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
+
 def replace_id(line, table):
     """Remove the object id from a line.
 
@@ -275,13 +276,17 @@ def replace_id(line, table):
         line: a String, the line to remove the object id from.
         table: a map from object ids to file paths.
     """
-    index = line.find('INSERT INTO "tsk_files"')
-    if (index != -1):
-        # take the portion of the string between the open parenthesis and the comma (ie, the object id)
-        obj_id = line[line.find('(') + 1 : line.find(',')]
+    files_index = line.find('INSERT INTO "tsk_files"')
+    path_index = line.find('INSERT INTO "tsk_files_path"')
+    # take the portion of the string between the open parenthesis and the comma (ie, the object id)
+    obj_id = line[line.find('(') + 1 : line.find(',')]
+    if files_index != -1:
         # takes everything from the beginning of the string up to the opening
         # parenthesis, the path associated with the object id, and everything after 
         # the first comma, and concactenate it
+        newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
+        return newLine
+    elif path_index != -1:
         newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
         return newLine
     else:
