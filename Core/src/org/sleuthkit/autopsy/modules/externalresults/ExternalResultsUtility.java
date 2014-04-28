@@ -57,8 +57,26 @@ public class ExternalResultsUtility {
                 for (ResultsData.AttributeData attr : art.attributes) {
                     BlackboardAttribute.ATTRIBUTE_TYPE bbAttrType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.typeStr);
                     BlackboardAttribute bbAttr = null;
-                    if (attr.valueType.equals("text")) {
-                         bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, attr.valueStr);
+                    switch (attr.valueType) {
+                        case "text":
+                            //NON-NLS
+                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, attr.valueStr);
+                            break;
+                        case "int32":
+                            //NON-NLS
+                            int intValue = Integer.parseInt(attr.valueStr);
+                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, intValue);
+                            break;
+                        case "int64":
+                            //NON-NLS
+                            long longValue = Long.parseLong(attr.valueStr);
+                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, longValue);
+                            break;
+                        case "double":
+                            //NON-NLS
+                            double doubleValue = Double.parseDouble(attr.valueStr);
+                            bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, doubleValue);
+                            break;
                     }
                     if (bbAttr != null) {
                         bbAttributes.add(bbAttr);
