@@ -3,14 +3,14 @@
     <xs:element name="autopsy_results">
         <xs:complexType>
             <xs:sequence>
-                <xs:element use="optional" minOccurs="0" name="data_source" type="xs:string" />
-                <xs:element use="optional" minOccurs="0" name="artifacts">
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="data_source" type="xs:string" />
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="artifacts">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element maxOccurs="unbounded" name="artifact">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element use="optional" minOccurs="0" name="file">
+                                        <xs:element minOccurs="0" name="file">
                                             <xs:complexType>
                                                 <xs:sequence>
                                                     <xs:element name="path" type="xs:string" />
@@ -29,8 +29,8 @@
                                                             </xs:simpleContent>
                                                         </xs:complexType>
                                                     </xs:element>
-                                                    <xs:element use="optional" minOccurs="0" name="source" type="xs:string" />
-                                                    <xs:element use="optional" minOccurs="0" name="context" type="xs:string" />
+                                                    <xs:element minOccurs="0" name="source" type="xs:string" />
+                                                    <xs:element minOccurs="0" name="context" type="xs:string" />
                                                 </xs:sequence>
                                                 <xs:attribute name="type" type="xs:string" use="required" />
                                             </xs:complexType>
@@ -42,7 +42,7 @@
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-                <xs:element use="optional" minOccurs="0" name="reports">
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="reports">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element maxOccurs="unbounded" name="report">
@@ -57,7 +57,7 @@
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-                <xs:element use="optional" minOccurs="0" name="derived_files">
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="derived_files">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element maxOccurs="unbounded" name="derived_file">
