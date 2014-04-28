@@ -22,12 +22,14 @@ package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -49,9 +51,7 @@ public class ExternalResultsUtility {
     }
     
     private static void generateBlackboardItems(ResultsData resultsData, Content defaultDataSource) {
-        for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {
-            Content currContent = defaultDataSource;
-            ///@todo get associated file (if any) to use as the content
+        for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {           
             try {
                 int bbArtTypeId;
                 BlackboardArtifact.ARTIFACT_TYPE stdArtType = isStandardArtifactType(art.typeStr);
@@ -98,6 +98,27 @@ public class ExternalResultsUtility {
                         bbAttributes.add(bbAttr);
                     }
                 }        
+                
+                // get associated file (if any) to use as the content
+                Content currContent = null;
+
+                //for (String filePath : art.files) {
+                if (art.files.size() > 0) {
+                    String filePath = art.files.get(0).path;
+                    List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(defaultDataSource, filePath);
+                    if (files.size() > 0) {
+                        currContent = files.get(0);
+                        if (files.size() > 1) {
+                            logger.log(Level.WARNING, "Ignoring extra files found for path " + filePath);
+                        }                         
+                    }
+                }
+
+                // If no associated file, use current data source itself
+                if (currContent == null) {
+                    currContent = defaultDataSource;
+                }
+
                 BlackboardArtifact bbArt = currContent.newArtifact(bbArtTypeId);
                 bbArt.addAttributes(bbAttributes);
                 if (stdArtType != null) {
