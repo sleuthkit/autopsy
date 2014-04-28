@@ -20,7 +20,6 @@
 
 package org.sleuthkit.autopsy.modules.externalresults;
 
-import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -223,6 +222,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
             // for each report
             for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
                 Element subEl = (Element)subNodeList.item(subIndex);                
+                String name = subEl.getAttribute(NAME_ATTR);
                 String displayName = "";
                 String localPath = "";
                 NodeList nameNodeList = subEl.getElementsByTagName(DISPLAYNAME_EL);
@@ -238,7 +238,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
                     localPath = pathEl.getTextContent();
                 }                
                 if ((!displayName.isEmpty()) && (!localPath.isEmpty())) {
-                    resultsData.addReport(displayName, localPath);
+                    resultsData.addReport(name, displayName, localPath);
                 } else {
                     // error to have a file element without a path element
                     throw new Exception("report element is missing display_name or local_path.");

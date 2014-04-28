@@ -96,8 +96,9 @@ public class ResultsData {
         return art.files.size() - 1;      
     }
     
-    public void addReport(String displayName, String localPath) {
+    public void addReport(String name, String displayName, String localPath) {
         ReportData d = new ReportData();
+        d.name = name;
         d.displayName = displayName;
         d.localPath = localPath;
         reports.add(d);
@@ -130,6 +131,7 @@ public class ResultsData {
     }
     
     public static class ReportData {
+        private String name;
         private String displayName;
         private String localPath;
     }
