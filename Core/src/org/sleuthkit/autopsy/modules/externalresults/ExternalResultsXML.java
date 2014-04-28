@@ -112,7 +112,11 @@ public class ExternalResultsXML implements ExternalResultsParser {
 
         for(int index = 0; index < numNodes; ++index) {                
             Element el = (Element)nodeList.item(index);
-            resultsData.addDataSource(el.getTextContent());
+            String dataSourceStr = el.getTextContent();
+            // We allow an empty data source element...we just ignore it
+            if (!dataSourceStr.isEmpty()) {
+                resultsData.addDataSource(dataSourceStr);
+            }
         }
     }   
     
@@ -132,6 +136,10 @@ public class ExternalResultsXML implements ExternalResultsParser {
             for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
                 Element subEl = (Element)subNodeList.item(subIndex);
                 final String type = subEl.getAttribute(TYPE_ATTR);
+                if (type.isEmpty()) {
+                    logger.log(Level.WARNING, "Ignoring invalid attribute: no type specified.");
+                    return;
+                }                
                 final int artResultsIndex = resultsData.addArtifact(type);
                 parseAttributes(subEl, artResultsIndex);
                 parseFiles(subEl, artResultsIndex);
@@ -150,6 +158,10 @@ public class ExternalResultsXML implements ExternalResultsParser {
         for(int index = 0; index < nodeList.getLength(); ++index) {                
             Element el = (Element)nodeList.item(index);
             final String type = el.getAttribute(TYPE_ATTR);
+            if (type.isEmpty()) {
+                logger.log(Level.WARNING, "Ignoring invalid attribute: no type specified.");
+                return;
+            }
             final int attrResultsIndex = resultsData.addAttribute(artResultsIndex, type);
 
             // add values, if any
