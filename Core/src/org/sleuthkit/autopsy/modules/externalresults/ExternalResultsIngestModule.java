@@ -51,6 +51,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     private String cmdPath;
     private String cmdName;
     String dataSourceLocalPath;
+    Content dataSource;
     DataSourceIngestModuleProgress progressBar;
 
     /**
@@ -77,7 +78,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
             }
             
             ///@todo use a standard name or search for an XML file
-            importFilePath = importPath + File.separator + "ext-test3.xml";
+            importFilePath = importPath + File.separator + "ext-test4.xml";
         }
     }        
     
@@ -91,6 +92,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         progressBar = statusHelper;
         progressBar.switchToDeterminate(2);
+        this.dataSource = dataSource;
         
         try {
             dataSourceLocalPath = dataSource.getImage().getPaths()[0];
@@ -155,7 +157,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     private void importResults() {
         // execution is done, look for results to import
         ExternalResultsXML parser = new ExternalResultsXML(importFilePath);
-        ExternalResultsUtility.importResults(parser);
+        ExternalResultsUtility.importResults(parser, dataSource);
         progressBar.progress(1);        
     }
 

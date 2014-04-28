@@ -113,30 +113,30 @@ public class ResultsData {
     // Data structures
     
     public static class ArtifactData {
-        private String typeStr;
-        private List<AttributeData> attributes = new ArrayList<>();
-        private List<FileData> files = new ArrayList<>();
+        public String typeStr;
+        public List<AttributeData> attributes = new ArrayList<>();
+        public List<FileData> files = new ArrayList<>();
     }
     
     public static class AttributeData {
-        private String typeStr;
-        private String valueType = "text"; //default if not specified
-        private String valueStr; //valueType determines how to interpret it
-        private String source;
-        private String context;        
+        public String typeStr;
+        public String valueType = "text"; //default if not specified
+        public String valueStr; //valueType determines how to interpret it
+        public String source;
+        public String context;        
     }    
     
     public static class FileData {
-        private String path;   
+        public String path;   
     }
     
     public static class ReportData {
-        private String name;
-        private String displayName;
-        private String localPath;
+        public String name;
+        public String displayName;
+        public String localPath;
     }
         
     public static class DerivedFileData {
-        private String localPath;
+        public String localPath;
     }        
 }

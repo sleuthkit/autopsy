@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="autopsy_results">
         <xs:complexType>
-            <xs:sequence>
+            <xs:sequence minOccurs="0" maxOccurs="unbounded">
                 <xs:element minOccurs="0" maxOccurs="unbounded" name="data_source" type="xs:string" />
                 <xs:element minOccurs="0" maxOccurs="unbounded" name="artifacts">
                     <xs:complexType>

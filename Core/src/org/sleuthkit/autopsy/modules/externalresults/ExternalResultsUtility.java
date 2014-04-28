@@ -20,15 +20,58 @@
 
 package org.sleuthkit.autopsy.modules.externalresults;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
  *
  */
 public class ExternalResultsUtility {
-    static public void importResults(ExternalResultsParser parser) {
+    private static final Logger logger = Logger.getLogger(ExternalResultsUtility.class.getName());
+
+    static public void importResults(ExternalResultsParser parser, Content defaultDataSource) {
+        // Create temporary data object
         ResultsData resultsData = parser.parse();
+        
+        // Use that data object to import the externally-generated information into the case
+        generateBlackboardItems(resultsData, defaultDataSource);
     }
     
+    static private void generateBlackboardItems(ResultsData resultsData, Content defaultDataSource) {
+        for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {
+            Content currContent = defaultDataSource;
+            ///@todo get associated file (if any) to use as the content
+            
+            BlackboardArtifact.ARTIFACT_TYPE bbArtType = BlackboardArtifact.ARTIFACT_TYPE.fromLabel(art.typeStr);
+            try {
+                Collection<BlackboardAttribute> bbAttributes = new ArrayList<>();
+                for (ResultsData.AttributeData attr : art.attributes) {
+                    BlackboardAttribute.ATTRIBUTE_TYPE bbAttrType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.typeStr);
+                    BlackboardAttribute bbAttr = null;
+                    if (attr.valueType.equals("text")) {
+                         bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, attr.valueStr);
+                    }
+                    if (bbAttr != null) {
+                        bbAttributes.add(bbAttr);
+                    }
+                }        
+                BlackboardArtifact bbArt = currContent.newArtifact(bbArtType);
+                bbArt.addAttributes(bbAttributes);
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results Importer", bbArtType));
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }            
+        }
+
+    }
 
 }
