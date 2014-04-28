@@ -58,22 +58,18 @@ public class ExternalResultsUtility {
                     BlackboardAttribute.ATTRIBUTE_TYPE bbAttrType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.typeStr);
                     BlackboardAttribute bbAttr = null;
                     switch (attr.valueType) {
-                        case "text":
-                            //NON-NLS
+                        case "text": //NON-NLS
                             bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, attr.valueStr);
                             break;
-                        case "int32":
-                            //NON-NLS
+                        case "int32": //NON-NLS
                             int intValue = Integer.parseInt(attr.valueStr);
                             bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, intValue);
                             break;
-                        case "int64":
-                            //NON-NLS
+                        case "int64": //NON-NLS
                             long longValue = Long.parseLong(attr.valueStr);
                             bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, longValue);
                             break;
-                        case "double":
-                            //NON-NLS
+                        case "double": //NON-NLS
                             double doubleValue = Double.parseDouble(attr.valueStr);
                             bbAttr = new BlackboardAttribute(bbAttrType.getTypeID(), attr.source, attr.context, doubleValue);
                             break;
@@ -84,7 +80,7 @@ public class ExternalResultsUtility {
                 }        
                 BlackboardArtifact bbArt = currContent.newArtifact(bbArtType);
                 bbArt.addAttributes(bbAttributes);
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results Importer", bbArtType));
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results", bbArtType)); //NON-NLS
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }            

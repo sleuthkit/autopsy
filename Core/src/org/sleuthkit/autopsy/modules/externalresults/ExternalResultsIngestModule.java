@@ -78,7 +78,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
             }
             
             ///@todo use a standard name or search for an XML file
-            importFilePath = importPath + File.separator + "ext-test4.xml";
+            importFilePath = importPath + File.separator + "ext-test4b.xml";
         }
     }        
     
