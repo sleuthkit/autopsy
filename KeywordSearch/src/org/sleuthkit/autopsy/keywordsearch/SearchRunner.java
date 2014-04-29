@@ -434,6 +434,7 @@ public final class SearchRunner {
                         keywordSearchQuery.escape();
                     }
 
+                    // Filtering
                     //limit search to currently ingested data sources
                     //set up a filter with 1 or more image ids OR'ed
                     final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
@@ -441,6 +442,7 @@ public final class SearchRunner {
 
                     QueryResults queryResult;
 
+                    // Do the actual search
                     try {
                         queryResult = keywordSearchQuery.performQuery();
                     } catch (NoOpenCoreException ex) {
@@ -464,7 +466,7 @@ public final class SearchRunner {
 
                     if (!newResults.getKeywords().isEmpty()) {
 
-                        //write results to BB
+                        // Write results to BB
 
                         //new artifacts created, to report to listeners
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
@@ -521,69 +523,10 @@ public final class SearchRunner {
                                 }
 
                                 newArtifacts.add(written.getArtifact());
+    
+                                // inbox
+                                newResults.writeInboxMessage(keywordSearchQuery, list, written, hitFile);
 
-                                //generate an ingest inbox message for this keyword in this file
-                                if (list.getIngestMessages()) {
-                                    StringBuilder subjectSb = new StringBuilder();
-                                    StringBuilder detailsSb = new StringBuilder();
-
-                                    if (!keywordQuery.isLiteral()) {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
-                                    } else {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
-                                    }
-                                    String uniqueKey = null;
-                                    BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
-                                    if (attr != null) {
-                                        final String keyword = attr.getValueString();
-                                        subjectSb.append(keyword);
-                                        uniqueKey = keyword.toLowerCase();
-                                    }
-
-                                    //details
-                                    detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-                                    //hit
-                                    detailsSb.append("<tr>"); //NON-NLS
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
-                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
-                                    detailsSb.append("</tr>"); //NON-NLS
-
-                                    //preview
-                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
-                                    if (attr != null) {
-                                        detailsSb.append("<tr>"); //NON-NLS
-                                        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
-                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
-                                        detailsSb.append("</tr>"); //NON-NLS
-                                    }
-
-                                    //file
-                                    detailsSb.append("<tr>"); //NON-NLS
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
-                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
-                                    detailsSb.append("</tr>"); //NON-NLS
-
-                                    //list
-                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-                                    detailsSb.append("<tr>"); //NON-NLS
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-                                    detailsSb.append("</tr>"); //NON-NLS
-
-                                    //regex
-                                    if (!keywordQuery.isLiteral()) {
-                                        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
-                                        if (attr != null) {
-                                            detailsSb.append("<tr>"); //NON-NLS
-                                            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
-                                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-                                            detailsSb.append("</tr>"); //NON-NLS
-                                        }
-                                    }
-                                    detailsSb.append("</table>"); //NON-NLS
-
-                                    services.postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
-                                }
                             } //for each file hit
 
                             ++unitProgress;

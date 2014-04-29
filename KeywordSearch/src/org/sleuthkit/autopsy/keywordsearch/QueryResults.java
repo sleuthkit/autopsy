@@ -26,10 +26,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Stores the results from running a SOLR query. 
@@ -109,12 +113,12 @@ class QueryResults {
 //                break;
 //            }
             Map<AbstractFile, Integer> flattened = getUniqueFiles(hit);
-            for (AbstractFile f : flattened.keySet()) {
-                int chunkId = flattened.get(f);
+            for (AbstractFile hitFile : flattened.keySet()) {
+                int chunkId = flattened.get(hitFile);
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit.toString());
                 String snippet;
                 try {
-                    snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
+                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, !query.isLiteral(), true);
                 } catch (NoOpenCoreException e) {
                     //logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                     //no reason to continue
@@ -124,7 +128,7 @@ class QueryResults {
                     continue;
                 }
                 if (snippet != null) {
-                    KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), f, snippet, listName);
+                    KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), hitFile, snippet, listName);
                     if (written != null) {
                         newArtifacts.add(written.getArtifact());
                     }
@@ -139,5 +143,72 @@ class QueryResults {
         
         return newArtifacts;
     }    
+    
+    /**
+     * Generate an ingest inbox message for this keyword in this file
+     */
+    public void writeInboxMessage(KeywordSearchQuery query, KeywordList list, KeywordWriteResult written, AbstractFile hitFile) {
+        if (list.getIngestMessages()) {
+            StringBuilder subjectSb = new StringBuilder();
+            StringBuilder detailsSb = new StringBuilder();
+
+            if (!query.isLiteral()) {
+                subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
+            } else {
+                subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
+            }
+            String uniqueKey = null;
+            BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+            if (attr != null) {
+                final String keyword = attr.getValueString();
+                subjectSb.append(keyword);
+                uniqueKey = keyword.toLowerCase();
+            }
+
+            //details
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+            //hit
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
+            detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+            detailsSb.append("</tr>"); //NON-NLS
+
+            //preview
+            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+            if (attr != null) {
+                detailsSb.append("<tr>"); //NON-NLS
+                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
+                detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+                detailsSb.append("</tr>"); //NON-NLS
+            }
+
+            //file
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
+            detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
+            detailsSb.append("</tr>"); //NON-NLS
+
+            //list
+            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
+            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+            detailsSb.append("</tr>"); //NON-NLS
+
+            //regex
+            if (!query.isLiteral()) {
+                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                if (attr != null) {
+                    detailsSb.append("<tr>"); //NON-NLS
+                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
+                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+                    detailsSb.append("</tr>"); //NON-NLS
+                }
+            }
+            detailsSb.append("</table>"); //NON-NLS
+
+            IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+        }
+    }
     
 }
