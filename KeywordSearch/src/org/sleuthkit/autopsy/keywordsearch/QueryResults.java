@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Stores the results from running a SOLR query. 
@@ -83,4 +87,42 @@ class QueryResults {
         return ret;
     }
      
+    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress) {
+        final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
+
+        progress.start(getKeywords().size());
+        int processedFiles = 0;
+        for (final Keyword hit : getKeywords()) {
+            progress.progress(hit.toString(), ++processedFiles);
+            
+            ///@todo we need a way to cancel this loop
+//            if (this.isCancelled()) {
+//                break;
+//            }
+            Map<AbstractFile, Integer> flattened = getUniqueFiles(hit);
+            for (AbstractFile f : flattened.keySet()) {
+                int chunkId = flattened.get(f);
+                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit.toString());
+                String snippet;
+                try {
+                    snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
+                } catch (NoOpenCoreException e) {
+                    //logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                    //no reason to continue
+                    break;
+                } catch (Exception e) {
+                    //logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                    continue;
+                }
+                if (snippet != null) {
+                    KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), f, snippet, listName);
+                    if (written != null) {
+                        newArtifacts.add(written.getArtifact());
+                    }
+                }
+            }
+        }        
+        return newArtifacts;
+    }    
+    
 }

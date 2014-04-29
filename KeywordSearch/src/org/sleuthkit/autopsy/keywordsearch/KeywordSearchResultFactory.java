@@ -425,7 +425,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                         }
                     });                
                 
-                newArtifacts = QueryRequest.writeAllHitsToBlackBoard(hits, query, listName, progress);
+                newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress);
             } finally {
                 finalizeWorker();
             }
