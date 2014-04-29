@@ -43,12 +43,9 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQueryContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
@@ -58,9 +55,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * Node factory that performs the keyword search and creates children nodes for
  * each file.
  *
- *
- * responsible for assembling nodes and columns in the right way and performing
- * lazy queries as needed
+ * Responsible for assembling nodes and columns in the right way and performing
+ * lazy queries as needed.
  */
 class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
@@ -421,8 +417,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                         }
                     });                
                 
-                // Create blackboard artifacts
-                newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress);
+                // Create blackboard artifacts                
+                newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress, false); // notifyInbox == false
             } finally {
                 finalizeWorker();
             }

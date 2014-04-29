@@ -25,9 +25,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -40,6 +42,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * 
  */
 class QueryResults {
+    private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
+   
     // maps Keyword object to its hits -> This is the long-term idea
     private Map<Keyword, List<ContentHit>> resultsK = new HashMap<>();
     
@@ -106,35 +110,37 @@ class QueryResults {
 
         progress.start(getKeywords().size());
         int processedFiles = 0;
-        for (final Keyword hit : getKeywords()) {
-            progress.progress(hit.toString(), ++processedFiles);
+        for (final Keyword hitTerm : getKeywords()) {
+            progress.progress(hitTerm.toString(), ++processedFiles);
             
             ///@todo we need a way to cancel this loop
 //            if (this.isCancelled()) {
 //                break;
 //            }
-            Map<AbstractFile, Integer> flattened = getUniqueFiles(hit);
+            Map<AbstractFile, Integer> flattened = getUniqueFiles(hitTerm);
             for (AbstractFile hitFile : flattened.keySet()) {
                 int chunkId = flattened.get(hitFile);
-                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit.toString());
+                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.toString());
                 String snippet;
                 try {
                     snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, !query.isLiteral(), true);
                 } catch (NoOpenCoreException e) {
-                    //logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                     //no reason to continue
                     break;
                 } catch (Exception e) {
-                    //logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                     continue;
                 }
                 if (snippet != null) {
-                    KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), hitFile, snippet, listName);
+                    KeywordWriteResult written = query.writeToBlackBoard(hitTerm.toString(), hitFile, snippet, listName);
                     if (written != null) {
                         newArtifacts.add(written.getArtifact());
                         if (notifyInbox) {
                             writeInboxMessage(query, written, hitFile);
                         }
+                    } else {
+                        logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()}); //NON-NLS
                     }
                 }
             }

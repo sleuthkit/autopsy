@@ -525,8 +525,7 @@ public final class SearchRunner {
                                 newArtifacts.add(written.getArtifact());
     
                                 // Inbox messages
-                                boolean notifyInbox = list.getIngestMessages();
-                                if (notifyInbox) {
+                                if (list.getIngestMessages()) {
                                     newResults.writeInboxMessage(keywordSearchQuery, written, hitFile);
                                 }
 
