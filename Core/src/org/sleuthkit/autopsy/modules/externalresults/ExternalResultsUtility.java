@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -99,13 +98,19 @@ public class ExternalResultsUtility {
                     }
                 }        
                 
-                // get associated file (if any) to use as the content
+                // Get associated file (if any) to use as the content obj to attach the artifact to
                 Content currContent = null;
-
-                //for (String filePath : art.files) {
                 if (art.files.size() > 0) {
                     String filePath = art.files.get(0).path;
-                    List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(defaultDataSource, filePath);
+                    String fileName = filePath;
+                    String parentPath = "";              
+                    int charPos = filePath.lastIndexOf("/");
+                    if (charPos > 0) {
+                        fileName = filePath.substring(charPos + 1);
+                        parentPath = filePath.substring(0, charPos + 1);
+                    }
+                    String whereQuery = "name='" + fileName + "' AND parent_path='" + parentPath + "'"; //NON-NLS
+                    List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(whereQuery);
                     if (files.size() > 0) {
                         currContent = files.get(0);
                         if (files.size() > 1) {
