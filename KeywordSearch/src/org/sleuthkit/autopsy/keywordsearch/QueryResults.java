@@ -98,9 +98,10 @@ class QueryResults {
      * @param query
      * @param listName
      * @param progress
+     * @param notifyInbox flag indicating whether or not to call writeInboxMessage() for each hit
      * @return list of new artifacts
      */
-    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress) {
+    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
         progress.start(getKeywords().size());
@@ -131,6 +132,9 @@ class QueryResults {
                     KeywordWriteResult written = query.writeToBlackBoard(hit.toString(), hitFile, snippet, listName);
                     if (written != null) {
                         newArtifacts.add(written.getArtifact());
+                        if (notifyInbox) {
+                            writeInboxMessage(query, written, hitFile);
+                        }
                     }
                 }
             }
@@ -147,68 +151,66 @@ class QueryResults {
     /**
      * Generate an ingest inbox message for this keyword in this file
      */
-    public void writeInboxMessage(KeywordSearchQuery query, KeywordList list, KeywordWriteResult written, AbstractFile hitFile) {
-        if (list.getIngestMessages()) {
-            StringBuilder subjectSb = new StringBuilder();
-            StringBuilder detailsSb = new StringBuilder();
+    public void writeInboxMessage(KeywordSearchQuery query, KeywordWriteResult written, AbstractFile hitFile) {
+        StringBuilder subjectSb = new StringBuilder();
+        StringBuilder detailsSb = new StringBuilder();
 
-            if (!query.isLiteral()) {
-                subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
-            } else {
-                subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
-            }
-            String uniqueKey = null;
-            BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
-            if (attr != null) {
-                final String keyword = attr.getValueString();
-                subjectSb.append(keyword);
-                uniqueKey = keyword.toLowerCase();
-            }
+        if (!query.isLiteral()) {
+            subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
+        } else {
+            subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
+        }
+        String uniqueKey = null;
+        BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+        if (attr != null) {
+            final String keyword = attr.getValueString();
+            subjectSb.append(keyword);
+            uniqueKey = keyword.toLowerCase();
+        }
 
-            //details
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-            //hit
+        //details
+        detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+        //hit
+        detailsSb.append("<tr>"); //NON-NLS
+        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
+        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+        detailsSb.append("</tr>"); //NON-NLS
+
+        //preview
+        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+        if (attr != null) {
             detailsSb.append("<tr>"); //NON-NLS
-            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
             detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
             detailsSb.append("</tr>"); //NON-NLS
+        }
 
-            //preview
-            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+        //file
+        detailsSb.append("<tr>"); //NON-NLS
+        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
+        detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
+        detailsSb.append("</tr>"); //NON-NLS
+
+        //list
+        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+        detailsSb.append("<tr>"); //NON-NLS
+        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
+        detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+        detailsSb.append("</tr>"); //NON-NLS
+
+        //regex
+        if (!query.isLiteral()) {
+            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
             if (attr != null) {
                 detailsSb.append("<tr>"); //NON-NLS
-                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
-                detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
+                detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
                 detailsSb.append("</tr>"); //NON-NLS
             }
-
-            //file
-            detailsSb.append("<tr>"); //NON-NLS
-            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
-            detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
-            detailsSb.append("</tr>"); //NON-NLS
-
-            //list
-            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-            detailsSb.append("<tr>"); //NON-NLS
-            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-            detailsSb.append("</tr>"); //NON-NLS
-
-            //regex
-            if (!query.isLiteral()) {
-                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
-                if (attr != null) {
-                    detailsSb.append("<tr>"); //NON-NLS
-                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
-                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-                    detailsSb.append("</tr>"); //NON-NLS
-                }
-            }
-            detailsSb.append("</table>"); //NON-NLS
-
-            IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
         }
+        detailsSb.append("</table>"); //NON-NLS
+
+        IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
     }
     
 }

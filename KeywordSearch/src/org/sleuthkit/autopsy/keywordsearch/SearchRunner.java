@@ -524,8 +524,11 @@ public final class SearchRunner {
 
                                 newArtifacts.add(written.getArtifact());
     
-                                // inbox
-                                newResults.writeInboxMessage(keywordSearchQuery, list, written, hitFile);
+                                // Inbox messages
+                                boolean notifyInbox = list.getIngestMessages();
+                                if (notifyInbox) {
+                                    newResults.writeInboxMessage(keywordSearchQuery, written, hitFile);
+                                }
 
                             } //for each file hit
 
