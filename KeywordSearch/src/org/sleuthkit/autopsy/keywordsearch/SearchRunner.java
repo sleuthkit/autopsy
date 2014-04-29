@@ -461,7 +461,6 @@ public final class SearchRunner {
 
                     // calculate new results by substracting results already obtained in this ingest
                     // this creates a map of each keyword to the list of unique files that have that hit. 
-                    // @@@ NOTE THIS IS saving the keywords as Keyword, not String.  use the K methods
                     QueryResults newResults = filterResults(queryResult, isRegex);
 
                     if (!newResults.getKeywords().isEmpty()) {

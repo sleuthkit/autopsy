@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -105,7 +106,7 @@ class QueryResults {
      * @param notifyInbox flag indicating whether or not to call writeInboxMessage() for each hit
      * @return list of new artifacts
      */
-    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, boolean notifyInbox) {
+    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
         progress.start(getKeywords().size());
@@ -113,10 +114,11 @@ class QueryResults {
         for (final Keyword hitTerm : getKeywords()) {
             progress.progress(hitTerm.toString(), ++processedFiles);
             
-            ///@todo we need a way to cancel this loop
-//            if (this.isCancelled()) {
-//                break;
-//            }
+            if (worker.isCancelled()) {
+                logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", hitTerm.getQuery()); //NON-NLS
+                break;
+            }
+            
             Map<AbstractFile, Integer> flattened = getUniqueFiles(hitTerm);
             for (AbstractFile hitFile : flattened.keySet()) {
                 int chunkId = flattened.get(hitFile);
