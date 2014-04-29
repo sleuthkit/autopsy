@@ -818,7 +818,7 @@ class TestResultsDiffer(object):
             logging.critical(traceback.format_exc())
             return False
 
-    def _compare_report_files(a_path, b_path):
+    def _compare_report_files(gold_path, output_path):
         """Compares the two specified report html files.
 
         Args:
@@ -830,17 +830,18 @@ class TestResultsDiffer(object):
             unordered list in the html report files, or (0, 0) if the
             lenghts are the same.
         """
-        a_file = open(a_path)
-        b_file = open(b_path)
-        a = a_file.read()
-        b = b_file.read()
-        a = a[a.find("<ul>"):]
-        b = b[b.find("<ul>"):]
+        gold_file = open(gold_path)
+        output_file = open(output_path)
+        goldHtml = gold_file.read()
+        outputHtml = output_file.read()
+        goldHtml = goldHtml[goldHtml.find("<ul>"):]
+        outputHtml = outputHtml[outputHtml.find("<ul>"):]
 
-        a_list = TestResultsDiffer._split(a, 50)
-        b_list = TestResultsDiffer._split(b, 50)
-        if not len(a_list) == len(b_list):
-            ex = (len(a_list), len(b_list))
+        g_list = TestResultsDiffer._split(goldHtml, 50)
+        o_list = TestResultsDiffer._split(outputHtml, 50)
+        if not len(g_list) == len(o_list):
+            ex = (len(g_list), len(o_list))
+            print("846 ex is " + str(ex))
             return ex
         else:
             return (0, 0)
