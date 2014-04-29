@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.netbeans.api.progress.ProgressHandle;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -87,6 +89,13 @@ class QueryResults {
         return ret;
     }
      
+    /**
+     * Creates a blackboard artifact for each keyword hit
+     * @param query
+     * @param listName
+     * @param progress
+     * @return list of new artifacts
+     */
     public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
@@ -121,7 +130,13 @@ class QueryResults {
                     }
                 }
             }
+        }
+        
+        // Update artifact browser
+        if (!newArtifacts.isEmpty()) {
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
         }        
+        
         return newArtifacts;
     }    
     

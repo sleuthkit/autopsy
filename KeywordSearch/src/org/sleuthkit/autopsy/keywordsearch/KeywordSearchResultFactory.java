@@ -402,10 +402,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                     progress.finish();
                 }
             });
-
-            if (!this.isCancelled() && !newArtifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
-            }
         }
 
         @Override
@@ -425,6 +421,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                         }
                     });                
                 
+                // Create blackboard artifacts
                 newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress);
             } finally {
                 finalizeWorker();
