@@ -108,7 +108,7 @@ class QueryResults {
      * @param notifyInbox flag indicating whether or not to call writeInboxMessage() for each hit
      * @return list of new artifacts
      */
-    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
+    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox, boolean fullHitInfo) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
         if (progress != null) {
             progress.start(getKeywords().size());
@@ -138,7 +138,7 @@ class QueryResults {
             Map<AbstractFile, Integer> flattened = getUniqueFiles(hitTerm);
             
             for (AbstractFile hitFile : flattened.keySet()) {
-                String termHit = notifyInbox ? hitTerm.getQuery() : hitTerm.toString();
+                String termHit = fullHitInfo ? hitTerm.toString() : hitTerm.getQuery();
                 int chunkId = flattened.get(hitFile);
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termHit);
                 String snippet;

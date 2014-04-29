@@ -418,7 +418,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                     });                
                 
                 // Create blackboard artifacts                
-                newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress, null, this, false); // notifyInbox == false
+                // notifyInbox == false, fullHitInfo == true
+                newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress, null, this, false, true);
             } finally {
                 finalizeWorker();
             }
