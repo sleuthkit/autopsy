@@ -34,8 +34,8 @@ final class DataSourceIngestPipeline {
     private final List<IngestModuleTemplate> moduleTemplates;
     private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
-    DataSourceIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = task;
+    DataSourceIngestPipeline(IngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+        this.job = job;
         this.moduleTemplates = moduleTemplates;
     }
 
