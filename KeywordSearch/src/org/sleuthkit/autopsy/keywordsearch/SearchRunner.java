@@ -440,11 +440,11 @@ public final class SearchRunner {
                     final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
                     keywordSearchQuery.addFilter(dataSourceFilter);
 
-                    QueryResults queryResult;
+                    QueryResults queryResults;
 
                     // Do the actual search
                     try {
-                        queryResult = keywordSearchQuery.performQuery();
+                        queryResults = keywordSearchQuery.performQuery();
                     } catch (NoOpenCoreException ex) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
                         //no reason to continue with next query if recovery failed
@@ -461,7 +461,7 @@ public final class SearchRunner {
 
                     // calculate new results by substracting results already obtained in this ingest
                     // this creates a map of each keyword to the list of unique files that have that hit. 
-                    QueryResults newResults = filterResults(queryResult, isRegex);
+                    QueryResults newResults = filterResults(queryResults, isRegex);
 
                     if (!newResults.getKeywords().isEmpty()) {
 
@@ -479,65 +479,10 @@ public final class SearchRunner {
                             queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
                         }
                         subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
-
-                        // cycle through the keywords returned -- only one unless it was a regexp
-                        for (final Keyword hitTerm : newResults.getKeywords()) {
-                            //checking for cancellation between results
-                            if (this.isCancelled()) {
-                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery()); //NON-NLS
-                                return null;
-                            }
-
-                            // update progress display
-                            String hitDisplayStr = hitTerm.getQuery();
-                            if (hitDisplayStr.length() > 50) {
-                                hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
-                            }
-                            subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
-
-                            // this returns the unique files in the set with the first chunk that has a hit
-                            Map<AbstractFile, Integer> contentHitsFlattened = newResults.getUniqueFiles(hitTerm);
-                            for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
-
-                                // get the snippet for the first hit in the file
-                                String snippet;
-                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
-                                int chunkId = contentHitsFlattened.get(hitFile);
-                                try {
-                                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
-                                } catch (NoOpenCoreException e) {
-                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                                    //no reason to continue
-                                    return null;
-                                } catch (Exception e) {
-                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                                    continue;
-                                }
-
-                                // write the blackboard artifact for this keyword in this file
-                                KeywordWriteResult written = keywordSearchQuery.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
-                                if (written == null) {
-                                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()}); //NON-NLS
-                                    continue;
-                                }
-
-                                newArtifacts.add(written.getArtifact());
-    
-                                // Inbox messages
-                                if (list.getIngestMessages()) {
-                                    newResults.writeInboxMessage(keywordSearchQuery, written, hitFile);
-                                }
-
-                            } //for each file hit
-
-                            ++unitProgress;
-
-                        }//for each hit term
-
-                        //update artifact browser
-                        if (!newArtifacts.isEmpty()) {
-                            services.fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
-                        }
+        
+                        // Create blackboard artifacts                
+                        newArtifacts = queryResults.writeAllHitsToBlackBoard(keywordSearchQuery, listName, null, subProgresses[keywordsSearched], this, list.getIngestMessages());
+                        
                     } //if has results
 
                     //reset the status text before it goes away

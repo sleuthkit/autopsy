@@ -103,17 +103,22 @@ class QueryResults {
      * Creates a blackboard artifact for each keyword hit
      * @param query
      * @param listName
-     * @param progress
+     * @param progress    can be null
+     * @param subProgress can be null
      * @param notifyInbox flag indicating whether or not to call writeInboxMessage() for each hit
      * @return list of new artifacts
      */
     public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
-        progress.start(getKeywords().size());
+        if (progress != null) {
+            progress.start(getKeywords().size());
+        }
         int unitProgress = 0;
         
         for (final Keyword hitTerm : getKeywords()) {
-            progress.progress(hitTerm.toString(), unitProgress);
+            if (progress != null) {
+                progress.progress(hitTerm.toString(), unitProgress);
+            }
             
             if (worker.isCancelled()) {
                 logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", hitTerm.getQuery()); //NON-NLS
@@ -133,8 +138,9 @@ class QueryResults {
             Map<AbstractFile, Integer> flattened = getUniqueFiles(hitTerm);
             
             for (AbstractFile hitFile : flattened.keySet()) {
+                String termHit = notifyInbox ? hitTerm.getQuery() : hitTerm.toString();
                 int chunkId = flattened.get(hitFile);
-                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.toString());
+                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termHit);
                 String snippet;
                 try {
                     snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, !query.isLiteral(), true);
@@ -147,7 +153,8 @@ class QueryResults {
                     continue;
                 }
                 if (snippet != null) {
-                    KeywordWriteResult written = query.writeToBlackBoard(hitTerm.toString(), hitFile, snippet, listName);
+                    KeywordWriteResult written = query.writeToBlackBoard(termHit, hitFile, snippet, listName);
+                    
                     if (written != null) {
                         newArtifacts.add(written.getArtifact());
                         if (notifyInbox) {
