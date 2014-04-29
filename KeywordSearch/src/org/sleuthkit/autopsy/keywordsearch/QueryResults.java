@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -106,20 +107,31 @@ class QueryResults {
      * @param notifyInbox flag indicating whether or not to call writeInboxMessage() for each hit
      * @return list of new artifacts
      */
-    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
+    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
-
         progress.start(getKeywords().size());
-        int processedFiles = 0;
+        int unitProgress = 0;
+        
         for (final Keyword hitTerm : getKeywords()) {
-            progress.progress(hitTerm.toString(), ++processedFiles);
+            progress.progress(hitTerm.toString(), unitProgress);
             
             if (worker.isCancelled()) {
                 logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", hitTerm.getQuery()); //NON-NLS
                 break;
             }
             
+            // update fine-grained progress display
+            if (subProgress != null) {
+                String hitDisplayStr = hitTerm.getQuery();
+                if (hitDisplayStr.length() > 50) {
+                    hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
+                }
+                subProgress.progress(listName + ": " + hitDisplayStr, unitProgress);
+            }
+            
+            // this returns the unique files in the set with the first chunk that has a hit
             Map<AbstractFile, Integer> flattened = getUniqueFiles(hitTerm);
+            
             for (AbstractFile hitFile : flattened.keySet()) {
                 int chunkId = flattened.get(hitFile);
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.toString());
@@ -146,6 +158,7 @@ class QueryResults {
                     }
                 }
             }
+            ++unitProgress;
         }
         
         // Update artifact browser
@@ -157,7 +170,10 @@ class QueryResults {
     }    
     
     /**
-     * Generate an ingest inbox message for this keyword in this file
+     * Generate an ingest inbox message for given keyword in given file
+     * @param query
+     * @param written
+     * @param hitFile 
      */
     public void writeInboxMessage(KeywordSearchQuery query, KeywordWriteResult written, AbstractFile hitFile) {
         StringBuilder subjectSb = new StringBuilder();
