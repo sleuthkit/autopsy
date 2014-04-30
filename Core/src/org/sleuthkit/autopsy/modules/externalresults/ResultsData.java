@@ -21,6 +21,7 @@
 package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -69,11 +70,11 @@ public class ResultsData {
     
     public void addAttributeValue(int artIndex, int attrIndex, String valueStr, String valueType) {
         ArtifactData art = artifacts.get(artIndex);
-        AttributeData attr = art.attributes.get(attrIndex);
-        attr.valueStr = valueStr;
-        if (!valueType.isEmpty()) {
-            attr.valueType = valueType;
+        AttributeData attr = art.attributes.get(attrIndex);        
+        if (valueType.isEmpty()) {
+            valueType = AttributeData.DEFAULT_VALUE_TYPE;
         }
+        attr.valueStr.put(valueType, valueStr);
     }    
     
     public void addAttributeSource(int artIndex, int attrIndex, String source) {
@@ -119,9 +120,9 @@ public class ResultsData {
     }
     
     public static class AttributeData {
-        public String typeStr;
-        public String valueType = "text"; //default if not specified
-        public String valueStr; //valueType determines how to interpret it
+        public static final String DEFAULT_VALUE_TYPE = "text";
+        public String typeStr;        
+        public HashMap<String, String> valueStr = new HashMap<>(); //valueType determines how to interpret valueStr
         public String source;
         public String context;        
     }    

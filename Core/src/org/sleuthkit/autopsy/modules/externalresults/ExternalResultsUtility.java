@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.modules.externalresults;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -63,7 +64,6 @@ public class ExternalResultsUtility {
 
                 Collection<BlackboardAttribute> bbAttributes = new ArrayList<>();
                 for (ResultsData.AttributeData attr : art.attributes) {
-                    BlackboardAttribute bbAttr = null;
                     int bbAttrTypeId;
                     BlackboardAttribute.ATTRIBUTE_TYPE stdAttrType = isStandardAttributeType(attr.typeStr);
                     if (stdAttrType != null) {
@@ -73,28 +73,34 @@ public class ExternalResultsUtility {
                         bbAttrTypeId = Case.getCurrentCase().getSleuthkitCase().addAttrType(attr.typeStr, attr.typeStr);
                     }                    
 
-                    switch (attr.valueType) {
-                        case "text": //NON-NLS
-                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, attr.valueStr);
-                            break;
-                        case "int32": //NON-NLS
-                            int intValue = Integer.parseInt(attr.valueStr);
-                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, intValue);
-                            break;
-                        case "int64": //NON-NLS
-                            long longValue = Long.parseLong(attr.valueStr);
-                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, longValue);
-                            break;
-                        case "double": //NON-NLS
-                            double doubleValue = Double.parseDouble(attr.valueStr);
-                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, doubleValue);
-                            break;
-                        default:
-                            logger.log(Level.WARNING, "Ignoring invalid attribute value type " + attr.valueType);
-                            break;
-                    }
-                    if (bbAttr != null) {
-                        bbAttributes.add(bbAttr);
+                    // Add all attribute values
+                    Set<String> valueTypes = attr.valueStr.keySet();
+                    for (String valueType : valueTypes) {                        
+                        String valueString = attr.valueStr.get(valueType);
+                        BlackboardAttribute bbAttr = null;
+                        switch (valueType) {
+                            case "text": //NON-NLS
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, valueString);
+                                break;
+                            case "int32": //NON-NLS
+                                int intValue = Integer.parseInt(valueString);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, intValue);
+                                break;
+                            case "int64": //NON-NLS
+                                long longValue = Long.parseLong(valueString);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, longValue);
+                                break;
+                            case "double": //NON-NLS
+                                double doubleValue = Double.parseDouble(valueString);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, doubleValue);
+                                break;
+                            default:
+                                logger.log(Level.WARNING, "Ignoring invalid attribute value type " + valueType);
+                                break;
+                        }
+                        if (bbAttr != null) {
+                            bbAttributes.add(bbAttr);
+                        }
                     }
                 }        
                 
