@@ -838,10 +838,10 @@ class TestResultsDiffer(object):
         goldHtml = goldHtml[goldHtml.find("<ul>"):]
         outputHtml = outputHtml[outputHtml.find("<ul>"):]
 
-        g_list = TestResultsDiffer._split(goldHtml, 50)
-        o_list = TestResultsDiffer._split(outputHtml, 50)
-        if not len(g_list) == len(o_list):
-            ex = (len(g_list), len(o_list))
+        gold_list = TestResultsDiffer._split(goldHtml, 50)
+        output_list = TestResultsDiffer._split(outputHtml, 50)
+        if not len(gold_list) == len(output_list):
+            ex = (len(gold_list), len(output_list))
             print("846 ex is " + str(ex))
             return ex
         else:
