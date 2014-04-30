@@ -84,20 +84,21 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     }        
 
     private void updateConfiguration() {
-        importFilename = ModuleSettings.getConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILENAME);
+        final String cfgModuleName = NbBundle.getMessage(ExternalResultsIngestModule.class, "ExternalResultsIngestModule.properties.text");
+        importFilename = ModuleSettings.getConfigSetting(cfgModuleName, CFG_XML_FILENAME);
         if (importFilename == null) {
             importFilename = CFG_XML_FILENAME_DEFAULT;
-            ModuleSettings.setConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILENAME, importFilename);        
+            ModuleSettings.setConfigSetting(cfgModuleName, CFG_XML_FILENAME, importFilename);        
         }
-        importPath = ModuleSettings.getConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILEPATH);
+        importPath = ModuleSettings.getConfigSetting(cfgModuleName, CFG_XML_FILEPATH);
         if (importPath == null) {
             // By default, we create the import path and provide it to the third party executable as an argument
             importPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + MODULE_DIR + jobId + File.separator + IMPORT_DIR;
-            ModuleSettings.setConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILEPATH, importPath);
+            ModuleSettings.setConfigSetting(cfgModuleName, CFG_XML_FILEPATH, importPath);
         }
-        cmdStr = ModuleSettings.getConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_CMD_STR);
+        cmdStr = ModuleSettings.getConfigSetting(cfgModuleName, CFG_CMD_STR);
         if (cmdStr == null) {
-            ModuleSettings.setConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_CMD_STR, "");  //NON-NLS      
+            ModuleSettings.setConfigSetting(cfgModuleName, CFG_CMD_STR, "");  //NON-NLS      
         }        
     }
     
