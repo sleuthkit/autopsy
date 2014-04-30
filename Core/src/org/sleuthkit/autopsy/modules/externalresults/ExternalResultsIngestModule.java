@@ -27,6 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -45,11 +46,15 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final String MODULE_DIR = "ExternalResults";
     private static final String IMPORT_DIR = "import";
+    private static final String CFG_XML_FILENAME = "xml_filename";
+    private static final String CFG_XML_FILENAME_DEFAULT = "results.xml";
+    private static final String CFG_XML_FILEPATH = "xml_filepath";
+    private static final String CFG_CMD_STR = "cmd_str";
+    
     private long jobId;
     private String importPath;
-    private String importFilePath;
-    private String cmdPath;
-    private String cmdName;
+    private String importFilename;
+    private String cmdStr;
     String dataSourceLocalPath;
     Content dataSource;
     DataSourceIngestModuleProgress progressBar;
@@ -64,8 +69,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
         jobId = context.getJobId();
         
         if (refCounter.incrementAndGet(jobId) == 1) {
-            // By default, we create the import path and provide it to the third party executable as an argument
-            importPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + MODULE_DIR + jobId + File.separator + IMPORT_DIR;
+            updateConfiguration();           
 
             // make sure module output directory and import path exist else create them
             File importPathDir = new File(importPath);
@@ -76,11 +80,26 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
                     throw new IngestModuleException(message);
                 }
             }
-            
-            ///@todo use a standard name or search for an XML file
-            importFilePath = importPath + File.separator + "ext-test5multi.xml";
         }
     }        
+
+    private void updateConfiguration() {
+        importFilename = ModuleSettings.getConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILENAME);
+        if (importFilename == null) {
+            importFilename = CFG_XML_FILENAME_DEFAULT;
+            ModuleSettings.setConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILENAME, importFilename);        
+        }
+        importPath = ModuleSettings.getConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILEPATH);
+        if (importPath == null) {
+            // By default, we create the import path and provide it to the third party executable as an argument
+            importPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + MODULE_DIR + jobId + File.separator + IMPORT_DIR;
+            ModuleSettings.setConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_XML_FILEPATH, importPath);
+        }
+        cmdStr = ModuleSettings.getConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_CMD_STR);
+        if (cmdStr == null) {
+            ModuleSettings.setConfigSetting(ExternalResultsModuleFactory.getModuleName(), CFG_CMD_STR, "");  //NON-NLS      
+        }        
+    }
     
     /**
      * 
@@ -101,10 +120,6 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
             logger.log(Level.SEVERE, msgstr);
             return ProcessResult.ERROR;
         }
-        
-        ///@todo get cmdName and cmdPath
-        cmdName = "";
-        cmdPath = "";
         
         // Run
         if (refCounter.get(jobId) == 1) {
@@ -140,24 +155,26 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
      *  Launch the third-party process and import the results
      */
     private void runProgram() throws IOException, InterruptedException {
-        final String[] cmdArgs = { 
-            cmdName,
-            importPath,
-            dataSourceLocalPath };
-        
-        //File workingDirFile = new File(cmdPath);
-        
         //run exe, passing the data source path and the import (results) path
         ExecUtil executor = new ExecUtil();
-        executor.execute("cmd.exe", "/C", "xmltest.bat"); ///@temp dev testing
+        executor.execute(cmdStr, importPath, dataSourceLocalPath);
         
         progressBar.progress(1);
     }
     
+    /**
+     * Interface with ExternalResultsUtility
+     */
     private void importResults() {
         // execution is done, look for results to import
+        String importFilePath = importPath + File.separator + importFilename;
+        
+        // First make a parser object to hand to ExternalResultsUtility
         ExternalResultsXML parser = new ExternalResultsXML(importFilePath);
+        
+        // This will tell the parser to do its thing and will then import that data
         ExternalResultsUtility.importResults(parser, dataSource);
+        
         progressBar.progress(1);        
     }
 
