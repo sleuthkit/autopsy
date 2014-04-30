@@ -268,7 +268,6 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
-
 def replace_id(line, table):
     """Remove the object id from a line.
 
@@ -276,24 +275,25 @@ def replace_id(line, table):
         line: a String, the line to remove the object id from.
         table: a map from object ids to file paths.
     """
+
     files_index = line.find('INSERT INTO "tsk_files"')
     path_index = line.find('INSERT INTO "tsk_files_path"')
     object_index = line.find('INSERT INTO "tsk_objects"')
+    
     if (files_index != -1 or path_index != -1):
-    # take the portion of the string between the open parenthesis and the comma (ie, the object id)
-    obj_id = line[line.find('(') + 1 : line.find(',')]
-    if files_index != -1:
+        # take the portion of the string between the open parenthesis and the first comma (ie, the object id)
+        obj_id = int(line[line.find('(') + 1 : line.find(',')])
         # takes everything from the beginning of the string up to the opening
         # parenthesis, the path associated with the object id, and everything after 
         # the first comma, and concactenate it
-        newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
+        newLine = (line[:line.find('('):] + '(' + table[obj_id] + line[line.find(','):])
         return newLine
-    elif path_index != -1:
-        newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
-        return newLine
+    
     elif (object_index != -1):
+        # take the portion of the string between the open parenthesis and the first comma (ie, the object id)
         obj_id = line[line.find('(') + 1 : line.find(',')]
         parent_id = line[line.find(',') + 2 : line.find(',', line.find(',') + 1)]
+    
         try:
             path = table[int(obj_id)]
             parent_path = table[int(parent_id)]
@@ -303,6 +303,7 @@ def replace_id(line, table):
         except Exception as e: 
             # objects table has things that aren't files. if lookup fails, don't replace the object id.
             return line
+    
     else:
         return line
 
