@@ -94,7 +94,7 @@ public class ExternalResultsIngestModule extends IngestModuleAdapter implements 
         if (importPath == null) {
             // By default, we create the import path and provide it to the third party executable as an argument
             importPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + MODULE_DIR + jobId + File.separator + IMPORT_DIR;
-            ModuleSettings.setConfigSetting(cfgModuleName, CFG_XML_FILEPATH, importPath);
+            // Do not store the default import path to module settings, since it changes for each new case
         }
         cmdStr = ModuleSettings.getConfigSetting(cfgModuleName, CFG_CMD_STR);
         if (cmdStr == null) {
