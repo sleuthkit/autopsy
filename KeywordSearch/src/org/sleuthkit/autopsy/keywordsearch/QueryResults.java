@@ -115,17 +115,16 @@ class QueryResults {
         }
         int unitProgress = 0;
         
-        for (final Keyword hitTerm : getKeywords()) {
-            if (progress != null) {
-                progress.progress(hitTerm.toString(), unitProgress);
-            }
-            
+        for (final Keyword hitTerm : getKeywords()) {           
             if (worker.isCancelled()) {
                 logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", hitTerm.getQuery()); //NON-NLS
                 break;
             }
             
-            // update fine-grained progress display
+            // Update progress object(s), if any
+            if (progress != null) {
+                progress.progress(hitTerm.toString(), unitProgress);
+            }                                  
             if (subProgress != null) {
                 String hitDisplayStr = hitTerm.getQuery();
                 if (hitDisplayStr.length() > 50) {
