@@ -20,19 +20,25 @@
 
 package org.sleuthkit.autopsy.modules.externalresults;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 
@@ -42,6 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class ExternalResultsUtility {
     private static final Logger logger = Logger.getLogger(ExternalResultsUtility.class.getName());
+    private static final String EVENT_STRING = "External Results";
 
     /**
      * Tell the parser to get data, and then import that data into Autopsy.
@@ -53,7 +60,45 @@ public class ExternalResultsUtility {
         ResultsData resultsData = parser.parse();
         
         // Use that data object to import the externally-generated information into the case
+        generateDerivedFiles(resultsData, defaultDataSource);
         generateBlackboardItems(resultsData, defaultDataSource);
+    }
+
+    /**
+     * 
+     * @param resultsData
+     * @param defaultDataSource 
+     */
+    private static void generateDerivedFiles(ResultsData resultsData, Content defaultDataSource) {
+        try {    
+            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();            
+            for (ResultsData.DerivedFileData derf : resultsData.getDerivedFiles()) {           
+                String derp = derf.localPath;
+                File fileObj = new File(derp);
+                if (fileObj.exists()) {
+                    String fileName = derp;
+                    int charPos = derp.lastIndexOf(File.separator);
+                    if (charPos > 0) {
+                        fileName = derp.substring(charPos + 1);
+                    }
+                    
+                    List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(defaultDataSource, "");
+                    AbstractFile parentFile = files.get(0);
+ 
+                    if (parentFile != null) {
+                        DerivedFile df = fileManager.addDerivedFile(fileName, derp, fileObj.length(),
+                                0, 0, 0, fileObj.lastModified(),
+                                true, parentFile, "", EVENT_STRING, "", "");
+
+                        if (df != null) {                 
+                            IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(df));
+                        }
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, ex.getLocalizedMessage());
+        }            
     }
     
     /**
@@ -144,7 +189,7 @@ public class ExternalResultsUtility {
                 BlackboardArtifact bbArt = currContent.newArtifact(bbArtTypeId);
                 bbArt.addAttributes(bbAttributes);
                 if (stdArtType != null) {
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("External Results", stdArtType)); //NON-NLS
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(EVENT_STRING, stdArtType)); //NON-NLS
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, ex.getLocalizedMessage());
@@ -181,5 +226,5 @@ public class ExternalResultsUtility {
         }
         return null;
     }    
-    
+
 }
