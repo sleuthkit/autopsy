@@ -105,9 +105,10 @@ public class ResultsData {
         reports.add(d);
     }
     
-    public void addDerivedFile(String localPath) {
+    public void addDerivedFile(String localPath, String parentPath) {
         DerivedFileData d = new DerivedFileData();
         d.localPath = localPath;
+        d.parentPath = parentPath;
         derivedFiles.add(d);
     }    
     
@@ -139,5 +140,6 @@ public class ResultsData {
         
     public static class DerivedFileData {
         public String localPath;
+        public String parentPath;
     }        
 }

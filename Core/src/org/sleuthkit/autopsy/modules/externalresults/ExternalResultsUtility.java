@@ -65,7 +65,8 @@ public class ExternalResultsUtility {
     }
 
     /**
-     * 
+     * Add derived files. This should be called before generateBlackboardItems() in case 
+     * any of the new blackboard artifacts refer to expected derived files.
      * @param resultsData
      * @param defaultDataSource 
      */
@@ -80,11 +81,18 @@ public class ExternalResultsUtility {
                     int charPos = derp.lastIndexOf(File.separator);
                     if (charPos > 0) {
                         fileName = derp.substring(charPos + 1);
+                    }                   
+                    
+                    // Get a parent object for the new derived object
+                    AbstractFile parentFile = null;
+                    
+                    if (!derf.parentPath.isEmpty()) {
+                        parentFile = findFileInDatabase(derf.parentPath);                        
+                    } else { //if no parent specified, try to use the root directory (//)                        
+                        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(defaultDataSource, "");
+                        parentFile = files.get(0);
                     }
                     
-                    List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(defaultDataSource, "");
-                    AbstractFile parentFile = files.get(0);
- 
                     if (parentFile != null) {
                         DerivedFile df = fileManager.addDerivedFile(fileName, derp, fileObj.length(),
                                 0, 0, 0, fileObj.lastModified(),
@@ -165,8 +173,8 @@ public class ExternalResultsUtility {
                 if (art.files.size() > 0) {
                     String filePath = art.files.get(0).path;
                     String fileName = filePath;
-                    String parentPath = "";              
-                    int charPos = filePath.lastIndexOf("/");
+                    String parentPath = ""; //NON-NLS              
+                    int charPos = filePath.lastIndexOf("/"); //NON-NLS
                     if (charPos > 0) {
                         fileName = filePath.substring(charPos + 1);
                         parentPath = filePath.substring(0, charPos + 1);
@@ -227,4 +235,29 @@ public class ExternalResultsUtility {
         return null;
     }    
 
+    /**
+     * util function
+     * @param filePath full path including file or dir name
+     * @return AbstractFile
+     * @throws TskCoreException 
+     */
+    private static AbstractFile findFileInDatabase(String filePath) throws TskCoreException {
+        AbstractFile currContent = null;
+        String fileName = filePath;
+        String parentPath = "";              
+        int charPos = filePath.lastIndexOf("/");
+        if (charPos >= 0) {
+            fileName = filePath.substring(charPos + 1);
+            parentPath = filePath.substring(0, charPos + 1);
+        }
+        String whereQuery = "name='" + fileName + "' AND parent_path='" + parentPath + "'"; //NON-NLS
+        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(whereQuery);
+        if (files.size() > 0) {
+            currContent = files.get(0);
+            if (files.size() > 1) {
+                logger.log(Level.WARNING, "Ignoring extra files found for path " + filePath);
+            }                         
+        }
+        return currContent;
+    }
 }

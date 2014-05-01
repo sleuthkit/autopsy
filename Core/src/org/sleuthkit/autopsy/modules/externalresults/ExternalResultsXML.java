@@ -51,6 +51,7 @@ public class ExternalResultsXML implements ExternalResultsParser {
     private static final String DERIVEDLIST_EL = "derived_files"; //NON-NLS
     private static final String DERIVED_EL = "derived_file"; //NON-NLS
     private static final String LOCALPATH_EL = "local_path"; //NON-NLS
+    private static final String PARENTPATH_EL = "parent_path"; //NON-NLS
     private static final String TYPE_ATTR = "type"; //NON-NLS
     private static final String NAME_ATTR = "name"; //NON-NLS
 
@@ -281,8 +282,16 @@ public class ExternalResultsXML implements ExternalResultsParser {
                     Element pathEl = (Element)pathNodeList.item(0);
                     localPath = pathEl.getTextContent();
                 }                
+                String parentPath = "";
+                NodeList parPathNodeList = subEl.getElementsByTagName(PARENTPATH_EL);
+                if (parPathNodeList.getLength() > 0) {
+                    // we only use the first occurence
+                    Element pathEl = (Element)parPathNodeList.item(0);
+                    parentPath = pathEl.getTextContent();
+                }                
+                
                 if (!localPath.isEmpty()) {
-                    resultsData.addDerivedFile(localPath);
+                    resultsData.addDerivedFile(localPath, parentPath);
                 } else {
                     // error to have a file element without a path element
                     throw new Exception("derived_files element is missing local_path.");

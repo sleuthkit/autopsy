@@ -64,6 +64,7 @@
                                 <xs:complexType>
                                     <xs:sequence>
                                         <xs:element name="local_path" type="xs:string" />
+                                        <xs:element minOccurs="0" name="parent_path" type="xs:string" />
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>
