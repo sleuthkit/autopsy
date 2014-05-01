@@ -86,7 +86,8 @@ final class FileIngestTaskScheduler {
         for (AbstractFile firstLevelFile : firstLevelFiles) {
             FileIngestTask fileTask = new FileIngestTask(job, firstLevelFile);
             if (shouldEnqueueTask(fileTask)) {
-                addTaskToRootDirectoryQueue(fileTask);
+                rootDirectoryTasks.add(fileTask);
+                fileTask.getIngestJob().notifyTaskAdded();
             }
         }
 
@@ -96,7 +97,7 @@ final class FileIngestTaskScheduler {
 
     synchronized void addTask(FileIngestTask task) {
         if (shouldEnqueueTask(task)) {
-            addTaskToFileQueue(task);
+            addTaskToFileQueue(task, true);
         }
     }
 
@@ -120,7 +121,8 @@ final class FileIngestTaskScheduler {
                 if (rootDirectoryTasks.isEmpty()) {
                     return;
                 }
-                addTaskToDirectoryQueue(rootDirectoryTasks.pollFirst(), false);
+                FileIngestTask rootTask = rootDirectoryTasks.pollFirst();
+                directoryTasks.add(rootTask);
             }
             //pop and push AbstractFile directory children if any
             //add the popped and its leaf children onto cur file list
@@ -128,7 +130,7 @@ final class FileIngestTaskScheduler {
             final AbstractFile parentFile = parentTask.getFile();
             // add itself to the file list
             if (shouldEnqueueTask(parentTask)) {
-                addTaskToFileQueue(parentTask);
+                addTaskToFileQueue(parentTask, false);
             }
             // add its children to the file and directory lists
             try {
@@ -138,9 +140,10 @@ final class FileIngestTaskScheduler {
                         AbstractFile childFile = (AbstractFile) c;
                         FileIngestTask childTask = new FileIngestTask(parentTask.getIngestJob(), childFile);
                         if (childFile.hasChildren()) {
-                            addTaskToDirectoryQueue(childTask, true);
+                            directoryTasks.add(childTask);
+                            childTask.getIngestJob().notifyTaskAdded();
                         } else if (shouldEnqueueTask(childTask)) {
-                            addTaskToFileQueue(childTask);
+                            addTaskToFileQueue(childTask, true);
                         }
                     }
                 }
@@ -150,25 +153,14 @@ final class FileIngestTaskScheduler {
         }
     }
 
-    private void addTaskToRootDirectoryQueue(FileIngestTask task) {
-        directoryTasks.add(task);
-        task.getIngestJob().notifyTaskAdded();
-    }
-
-    private void addTaskToDirectoryQueue(FileIngestTask task, boolean isNewTask) {
+    private void addTaskToFileQueue(FileIngestTask task, boolean isNewTask) {
         if (isNewTask) {
-            directoryTasks.add(task);
+            // The capacity of the file tasks queue is not bounded, so the call 
+            // to put() should not block except for normal synchronized access. 
+            // Still, notify the job that the task has been added first so that 
+            // the take() of the task cannot occur before the notification.
+            task.getIngestJob().notifyTaskAdded();
         }
-        task.getIngestJob().notifyTaskAdded();
-    }
-
-    private void addTaskToFileQueue(FileIngestTask task) {
-        // The capacity of the file tasks queue is not bounded, so the call 
-        // to put() should not block except for normal synchronized access. 
-        // Still, notify the job that the task has been added first so that 
-        // the take() of the task cannot occur before the notification.
-        task.getIngestJob().notifyTaskAdded();
-
         // If the thread executing this code is ever interrupted, it is 
         // because the number of ingest threads has been decreased while
         // ingest jobs are running. This thread will exit in an orderly fashion,

@@ -235,7 +235,7 @@ final class IngestJob {
         if (!isCancelled()) {
             List<IngestModuleError> errors = new ArrayList<>();
             FileIngestPipeline pipeline = fileIngestPipelines.take();
-//            fileTasksProgress.progress(file.getName(), (int) processedFiles.incrementAndGet()); RJCTODO
+            fileTasksProgress.progress(file.getName(), (int) processedFiles.incrementAndGet());
             errors.addAll(pipeline.process(file));
             fileIngestPipelines.put(pipeline);
             if (!errors.isEmpty()) {

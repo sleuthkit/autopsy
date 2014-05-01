@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.Objects;
 import org.sleuthkit.datamodel.AbstractFile;
 
-final class FileIngestTask {
+final class FileIngestTask implements IngestTask {
 
     private final IngestJob ingestJob;
     private final AbstractFile file;
@@ -31,7 +31,7 @@ final class FileIngestTask {
         this.file = file;
     }
 
-    public IngestJob getIngestJob() {
+    public IngestJob getIngestJob() { // RJCTODO: Maybe add to interface
         return ingestJob;
     }
 
@@ -39,7 +39,8 @@ final class FileIngestTask {
         return file;
     }
 
-    void execute() throws InterruptedException {
+    @Override
+    public void execute() throws InterruptedException {
         ingestJob.process(file);
     }
 
