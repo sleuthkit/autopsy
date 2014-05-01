@@ -62,6 +62,7 @@ public class ExternalResultsUtility {
         // Use that data object to import the externally-generated information into the case
         generateDerivedFiles(resultsData, defaultDataSource);
         generateBlackboardItems(resultsData, defaultDataSource);
+        generateReportRecords(resultsData, defaultDataSource);
     }
 
     /**
@@ -124,7 +125,7 @@ public class ExternalResultsUtility {
     }
     
     /**
-     * 
+     * Create and add new blackboard artifacts, attributes, and types
      * @param resultsData
      * @param defaultDataSource 
      */
@@ -204,6 +205,40 @@ public class ExternalResultsUtility {
         }
     }
 
+    /**
+     * Add report info to the database
+     * @param resultsData
+     * @param defaultDataSource 
+     */
+    private static void generateReportRecords(ResultsData resultsData, Content defaultDataSource) {
+        try {   
+            for (ResultsData.ReportData report : resultsData.getReports()) {
+                String repp = report.localPath;
+                File fileObj = new File(repp);
+                if (fileObj.exists()) {
+                    // Try to get a relative local path
+                    String relPath = repp;                    
+                    Path pathTo = Paths.get(repp);
+                    if (pathTo.isAbsolute()) {
+                        Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
+                        try {
+                            Path pathRelative = pathBase.relativize(pathTo);
+                            relPath = pathRelative.toString();
+                        } catch(IllegalArgumentException ex) {
+                            logger.log(Level.WARNING, "Report file " + repp + " path may be incorrect. The report record will still be added to the database.");
+                        }
+                    }                    
+
+                    if (!relPath.isEmpty()) {
+                        Case.getCurrentCase().getSleuthkitCase().addReport(relPath, report.displayName);
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, ex.getLocalizedMessage());
+        }    
+    }
+    
     /**
      * 
      * @param artTypeStr
