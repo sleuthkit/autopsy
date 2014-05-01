@@ -244,6 +244,10 @@ class TskDbDiff(object):
             for line in conn.iterdump():
                 line = replace_id(line, id_path_table)
                 db_log.write('%s\n' % line)
+            # Now sort the file    
+            
+        srtcmdlst = ["sort", dump_file, "-o", dump_file]
+        subprocess.call(srtcmdlst)
 
         conn.close()
         # cleanup the backup
