@@ -21,6 +21,8 @@
 package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,13 +34,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 
@@ -94,7 +94,21 @@ public class ExternalResultsUtility {
                     }
                     
                     if (parentFile != null) {
-                        DerivedFile df = fileManager.addDerivedFile(fileName, derp, fileObj.length(),
+                        // Try to get a relative local path
+                        String relPath = derp;                    
+                        Path pathTo = Paths.get(derp);
+                        if (pathTo.isAbsolute()) {
+                            Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
+                            try {
+                                Path pathRelative = pathBase.relativize(pathTo);
+                                relPath = pathRelative.toString();
+                            } catch(IllegalArgumentException ex) {
+                                // We weren't given a path that is a child of the case dir
+                            }
+                        }
+                        
+                        // Make a new derived file object in the database
+                        DerivedFile df = fileManager.addDerivedFile(fileName, relPath, fileObj.length(),
                                 0, 0, 0, fileObj.lastModified(),
                                 true, parentFile, "", EVENT_STRING, "", "");
 
