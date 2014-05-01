@@ -38,7 +38,7 @@ final class DataSourceIngestTask {
         return dataSource;
     }    
     
-    void execute() {
-        ingestJob.process();
+    void execute() throws InterruptedException {
+        ingestJob.process(dataSource);
     }
 }

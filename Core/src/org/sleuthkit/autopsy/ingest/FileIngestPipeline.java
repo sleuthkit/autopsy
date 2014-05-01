@@ -30,12 +30,12 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 final class FileIngestPipeline {
 
-    private final IngestJob job;
+    private final IngestJobContext context;
     private final List<IngestModuleTemplate> moduleTemplates;
     private List<FileIngestModuleDecorator> modules = new ArrayList<>();
 
-    FileIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = task;
+    FileIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
+        this.context = context;
         this.moduleTemplates = moduleTemplates;
     }
 
@@ -50,7 +50,6 @@ final class FileIngestPipeline {
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
                 FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
-                IngestJobContext context = new IngestJobContext(job);
                 try {
                     module.startUp(context);
                     modulesByClass.put(module.getClassName(), module);
@@ -83,22 +82,22 @@ final class FileIngestPipeline {
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (job.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
         }
         file.close();
-        if (!job.isCancelled()) {
-            IngestManager.fireFileIngestDone(file.getId());
+        if (!context.isJobCancelled()) {
+            IngestManager.getInstance().fireFileIngestDone(file.getId());
         }
         return errors;
     }
 
-    List<IngestModuleError> shutDown(boolean ingestJobCancelled) {
+    List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
         for (FileIngestModuleDecorator module : this.modules) {
             try {
-                module.shutDown(ingestJobCancelled);
+                module.shutDown(context.isJobCancelled());
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }

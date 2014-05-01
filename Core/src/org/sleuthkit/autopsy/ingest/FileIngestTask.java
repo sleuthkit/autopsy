@@ -19,17 +19,16 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Objects;
-import java.util.logging.Level;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 final class FileIngestTask {
-    final AbstractFile file;
-    private final IngestJob ingestJob;
 
-    FileIngestTask(AbstractFile file, IngestJob task) {
-        this.file = file;
+    private final IngestJob ingestJob;
+    private final AbstractFile file;
+
+    FileIngestTask(IngestJob task, AbstractFile file) {
         this.ingestJob = task;
+        this.file = file;
     }
 
     public IngestJob getIngestJob() {
@@ -39,30 +38,11 @@ final class FileIngestTask {
     public AbstractFile getFile() {
         return file;
     }
-    
-    void execute(long threadId) {
+
+    void execute() throws InterruptedException {
         ingestJob.process(file);
     }
 
-    @Override
-    public String toString() { //RJCTODO: May not keep this
-        try {
-            return "ProcessTask{" + "file=" + file.getId() + ": " + file.getUniquePath() + "}"; // + ", dataSourceTask=" + dataSourceTask + '}';
-        } catch (TskCoreException ex) {
-            // RJCTODO
-//            FileIngestTaskScheduler.logger.log(Level.SEVERE, "Cound not get unique path of file in queue, ", ex); //NON-NLS
-        }
-        return "ProcessTask{" + "file=" + file.getId() + ": " + file.getName() + '}';
-    }
-
-    /**
-     * two process tasks are equal when the file/dir and modules are the
-     * same this enables are not to queue up the same file/dir, modules
-     * tuples into the root dir set
-     *
-     * @param obj
-     * @return
-     */
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -71,13 +51,11 @@ final class FileIngestTask {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileIngestTask other = (FileIngestTask) obj;
-        if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
+        FileIngestTask other = (FileIngestTask) obj;
+        if (this.ingestJob != other.ingestJob && (this.ingestJob == null || !this.ingestJob.equals(other.ingestJob))) {
             return false;
         }
-        IngestJob thisTask = this.getIngestJob();
-        IngestJob otherTask = other.getIngestJob();
-        if (thisTask != otherTask && (thisTask == null || !thisTask.equals(otherTask))) {
+        if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
             return false;
         }
         return true;
@@ -86,8 +64,8 @@ final class FileIngestTask {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(this.file);
         hash = 47 * hash + Objects.hashCode(this.ingestJob);
+        hash = 47 * hash + Objects.hashCode(this.file);
         return hash;
-    }    
+    }
 }

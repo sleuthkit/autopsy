@@ -131,7 +131,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void setListener() {
         Case.addPropertyChangeListener(this);// add this class to listen to any changes in the Case.java class
         this.em.addPropertyChangeListener(this);
-        IngestManager.addPropertyChangeListener(this);
+        IngestManager.getInstance().addIngestJobEventListener(this);
+        IngestManager.getInstance().addIngestModuleEventListener(this);
     }
 
     public void setDirectoryListingActive() {

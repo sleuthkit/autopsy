@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,14 +53,15 @@ public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
     private static final IngestManager instance = new IngestManager();
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
+    private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
+    private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
-    private final ConcurrentHashMap<Long, Future<?>> startIngestJobThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
-    private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ExecutorService fileIngestThreadPool = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
-    private final ExecutorService fireIngestJobEventsThreadPool = Executors.newSingleThreadExecutor();
+    private final ExecutorService fireIngestEventsThreadPool = Executors.newSingleThreadExecutor();
+    private final ConcurrentHashMap<Long, Future<Void>> startIngestJobThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
+    private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final AtomicLong nextThreadId = new AtomicLong(0L);
     private volatile IngestMessageTopComponent ingestMessageBox;
@@ -154,7 +157,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = dataSourceIngestThreadPool.submit(new DataSourceIngestThread(threadId));
+        Future<?> handle = dataSourceIngestThreadPool.submit(new DataSourceIngestThread());
         dataSourceIngestThreads.put(threadId, handle);
     }
 
@@ -164,7 +167,7 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = fileIngestThreadPool.submit(new FileIngestThread(threadId));
+        Future<?> handle = fileIngestThreadPool.submit(new FileIngestThread());
         fileIngestThreads.put(threadId, handle);
     }
 
@@ -200,35 +203,48 @@ public class IngestManager {
     }
 
     public void cancelAllIngestJobs() {
-        cancelStartIngestJobsTasks();
-        IngestJob.cancelAllIngestJobs();
-    }
-
-    private void cancelStartIngestJobsTasks() {
-        for (Future<?> future : startIngestJobThreads.values()) {
-            future.cancel(true);
+        // Stop creating new ingest jobs.
+        for (Future<Void> handle : startIngestJobThreads.values()) {
+            handle.cancel(true);
+            try {
+                // Blocks until the job starting thread responds. The thread
+                // removes itself from this collection, which does not disrupt
+                // this loop since the collection is a ConcurrentHashMap.
+                handle.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                // This should never happen, something is awry, but everything
+                // should be o.k. anyway.
+                logger.log(Level.SEVERE, "Unexpected thread interrupt", ex);
+            }
         }
-        startIngestJobThreads.clear();
+        startIngestJobThreads.clear(); // Make sure.
+
+        // Cancel all the jobs already created. This will make the the ingest
+        // threads flush out any lingering ingest tasks without processing them.
+        IngestJob.cancelAllJobs();
     }
 
     /**
      * Ingest events.
      */
-    public enum IngestEvent { // RJCTODO: Update comments if time permits
+    public enum IngestEvent {
 
         /**
          * Property change event fired when an ingest job is started. The old
-         * and new values of the PropertyChangeEvent object are set to null.
+         * value of the PropertyChangeEvent object is set to the ingest job id,
+         * and the new value is set to null.
          */
         INGEST_JOB_STARTED,
         /**
          * Property change event fired when an ingest job is completed. The old
-         * and new values of the PropertyChangeEvent object are set to null.
+         * value of the PropertyChangeEvent object is set to the ingest job id,
+         * and the new value is set to null.
          */
         INGEST_JOB_COMPLETED,
         /**
          * Property change event fired when an ingest job is canceled. The old
-         * and new values of the PropertyChangeEvent object are set to null.
+         * value of the PropertyChangeEvent object is set to the ingest job id,
+         * and the new value is set to null.
          */
         INGEST_JOB_CANCELLED,
         /**
@@ -253,21 +269,59 @@ public class IngestManager {
     };
 
     /**
-     * Add an ingest event property change listener.
+     * Add an ingest job event property change listener.
      *
      * @param listener The PropertyChangeListener to register.
      */
-    public void addPropertyChangeListener(final PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(listener);
+    public void addIngestJobEventListener(final PropertyChangeListener listener) {
+        ingestJobEventPublisher.addPropertyChangeListener(listener);
     }
 
     /**
-     * Remove an ingest event property change listener.
+     * Remove an ingest job event property change listener.
      *
      * @param listener The PropertyChangeListener to unregister.
      */
-    public void removePropertyChangeListener(final PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(listener);
+    public void removeIngestJobEventListener(final PropertyChangeListener listener) {
+        ingestJobEventPublisher.removePropertyChangeListener(listener);
+    }
+
+    /**
+     * Add an ingest module event property change listener.
+     *
+     * @param listener The PropertyChangeListener to register.
+     */
+    public void addIngestModuleEventListener(final PropertyChangeListener listener) {
+        ingestModuleEventPublisher.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Remove an ingest module event property change listener.
+     *
+     * @param listener The PropertyChangeListener to unregister.
+     */
+    public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
+        ingestModuleEventPublisher.removePropertyChangeListener(listener);
+    }
+
+    /**
+     * Add an ingest module event property change listener.
+     *
+     * @deprecated
+     * @param listener The PropertyChangeListener to register.
+     */
+    public static void addPropertyChangeListener(final PropertyChangeListener listener) {
+        instance.ingestModuleEventPublisher.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Remove an ingest module event property change listener.
+     *
+     * @deprecated
+     * @param listener The PropertyChangeListener to unregister.
+     */
+    public static void removePropertyChangeListener(final PropertyChangeListener listener) {
+        instance.ingestModuleEventPublisher.removePropertyChangeListener(listener);
     }
 
     /**
@@ -276,7 +330,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.INGEST_JOB_STARTED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_STARTED, ingestJobId, null));
     }
 
     /**
@@ -285,7 +339,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.INGEST_JOB_COMPLETED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_COMPLETED, ingestJobId, null));
     }
 
     /**
@@ -294,7 +348,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.INGEST_JOB_CANCELLED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_CANCELLED, ingestJobId, null));
     }
 
     /**
@@ -303,7 +357,7 @@ public class IngestManager {
      * @param fileId The object id of file.
      */
     void fireFileIngestDone(long fileId) {
-        fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.FILE_DONE, fileId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.FILE_DONE, fileId, null));
     }
 
     /**
@@ -312,7 +366,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.DATA, moduleDataEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.DATA, moduleDataEvent, null));
     }
 
     /**
@@ -323,7 +377,7 @@ public class IngestManager {
      * content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.CONTENT_CHANGED, moduleContentEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.CONTENT_CHANGED, moduleContentEvent, null));
     }
 
     /**
@@ -341,7 +395,7 @@ public class IngestManager {
      * Get the free disk space of the drive where to which ingest data is being
      * written, as reported by the ingest monitor.
      *
-     * @return Free disk space, -1 if unknown // RJCTODO: What units?
+     * @return Free disk space, -1 if unknown
      */
     long getFreeDiskSpace() {
         if (ingestMonitor != null) {
@@ -352,10 +406,10 @@ public class IngestManager {
     }
 
     /**
-     * A Runnable that creates ingest jobs and submits the initial data source
+     * A Callable that creates ingest jobs and submits the initial data source
      * and file ingest tasks to the task schedulers.
      */
-    private class StartIngestJobsThread implements Runnable {
+    private class StartIngestJobsThread implements Callable<Void> {
 
         private final long threadId;
         private final List<Content> dataSources;
@@ -371,7 +425,7 @@ public class IngestManager {
         }
 
         @Override
-        public void run() {
+        public Void call() {
             try {
                 final String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestManager.StartIngestJobsTask.run.displayName");
@@ -387,26 +441,25 @@ public class IngestManager {
                         return true;
                     }
                 });
-                progress.start(dataSources.size() * 2);
+                progress.start(dataSources.size());
 
                 if (!ingestMonitor.isRunning()) {
                     ingestMonitor.start();
                 }
 
-                int workUnitsCompleted = 0;
+                int dataSourceProcessed = 0;
                 for (Content dataSource : dataSources) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
 
-                    // Create an ingest job.
-                    List<IngestModuleError> errors = IngestJob.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
+                    // Start an ingest job for the data source.
+                    List<IngestModuleError> errors = IngestJob.startJob(dataSource, moduleTemplates, processUnallocatedSpace);
                     if (!errors.isEmpty()) {
-                        // Report the error to the user.
+                        // Report the errors to the user. They have already been logged.
                         StringBuilder moduleStartUpErrors = new StringBuilder();
                         for (IngestModuleError error : errors) {
                             String moduleName = error.getModuleDisplayName();
-                            logger.log(Level.SEVERE, "The " + moduleName + " module failed to start up", error.getModuleError()); //NON-NLS
                             moduleStartUpErrors.append(moduleName);
                             moduleStartUpErrors.append(": ");
                             moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
@@ -427,40 +480,16 @@ public class IngestManager {
                                 NbBundle.getMessage(this.getClass(),
                                 "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
                     }
-
-                    fireIngestJobEventsThreadPool.submit(new FireIngestEventThread(IngestEvent.INGEST_JOB_STARTED));
-
-                    // Queue a data source ingest task for the ingest job.
-                    final String inputName = dataSource.getName();
-                    progress.progress(
-                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsThread.run.progress.msg1",
-                            inputName), workUnitsCompleted);
-                    DataSourceIngestTaskScheduler.getInstance().addTask(new DataSourceIngestTask(ingestJob, ingestJob.getDataSource()));
-                    progress.progress(
-                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsThread.run.progress.msg2",
-                            inputName), ++workUnitsCompleted);
-
-                    // Queue the file ingest tasks for the ingest job.
-                    progress.progress(
-                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsThread.run.progress.msg3",
-                            inputName), workUnitsCompleted);
-                    FileIngestTaskScheduler.getInstance().addTasks(ingestJob, ingestJob.getDataSource());
-                    progress.progress(
-                            NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsThread.run.progress.msg4",
-                            inputName), ++workUnitsCompleted);
+                    progress.progress(++dataSourceProcessed);
 
                     if (!Thread.currentThread().isInterrupted()) {
                         break;
                     }
                 }
-            } catch (Exception ex) {
-                String message = String.format("StartIngestJobsTask (id=%d) caught exception", threadId); //NON-NLS
-                logger.log(Level.SEVERE, message, ex);
-                MessageNotifyUtil.Message.error(
-                        NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.catchException.msg"));
             } finally {
                 progress.finish();
                 startIngestJobThreads.remove(threadId);
+                return null;
             }
         }
     }
@@ -512,16 +541,18 @@ public class IngestManager {
     }
 
     /**
-     * A Runnable that fire ingest events to ingest manager property change
+     * A Runnable that fires ingest events to ingest manager property change
      * listeners.
      */
-    private class FireIngestEventThread implements Runnable {
+    private static class FireIngestEventThread implements Runnable {
 
+        private final PropertyChangeSupport publisher;
         private final IngestEvent event;
         private final Object oldValue;
         private final Object newValue;
 
-        FireIngestEventThread(IngestEvent event, Object oldValue, Object newValue) {
+        FireIngestEventThread(PropertyChangeSupport publisher, IngestEvent event, Object oldValue, Object newValue) {
+            this.publisher = publisher;
             this.event = event;
             this.oldValue = oldValue;
             this.newValue = newValue;
@@ -530,10 +561,10 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                pcs.firePropertyChange(event.toString(), oldValue, newValue);
+                publisher.firePropertyChange(event.toString(), oldValue, newValue);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"), // RJCTODO: Oddly named strings
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
                         NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
                         MessageNotifyUtil.MessageType.ERROR);
             }

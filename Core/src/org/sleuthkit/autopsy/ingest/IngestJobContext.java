@@ -39,7 +39,7 @@ public final class IngestJobContext {
      * @return The ingest job identifier.
      */
     public long getJobId() {
-        return this.ingestJob.getJobId();
+        return this.ingestJob.getId();
     }
 
     /**
@@ -60,7 +60,7 @@ public final class IngestJobContext {
      */
     public void addFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            IngestJob.addFileToIngestJob(ingestJob.getJobId(), file);
+                IngestJob.addFileToJob(ingestJob.getId(), file);
         }
     }
 }
