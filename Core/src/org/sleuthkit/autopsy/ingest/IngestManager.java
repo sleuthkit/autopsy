@@ -55,6 +55,7 @@ public class IngestManager {
     private static final IngestManager instance = new IngestManager();
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
+    private final IngestJobScheduler scheduler = IngestJobScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
@@ -157,7 +158,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = dataSourceIngestThreadPool.submit(new DataSourceIngestThread());
+        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(scheduler.getDataSourceIngestTaskQueue()));
         dataSourceIngestThreads.put(threadId, handle);
     }
 
@@ -167,7 +168,7 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = fileIngestThreadPool.submit(new FileIngestThread());
+        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(scheduler.getFileIngestTaskQueue()));
         fileIngestThreads.put(threadId, handle);
     }
 
@@ -199,7 +200,7 @@ public class IngestManager {
      * @return True if any ingest jobs are in progress, false otherwise.
      */
     public boolean isIngestRunning() {
-        return IngestJob.jobsAreRunning();
+        return scheduler.ingestJobsAreRunning();
     }
 
     public void cancelAllIngestJobs() {
@@ -221,7 +222,7 @@ public class IngestManager {
 
         // Cancel all the jobs already created. This will make the the ingest
         // threads flush out any lingering ingest tasks without processing them.
-        IngestJob.cancelAllJobs();
+        scheduler.cancelAllIngestJobs();
     }
 
     /**
@@ -406,8 +407,7 @@ public class IngestManager {
     }
 
     /**
-     * A Callable that creates ingest jobs and submits the initial data source
-     * and file ingest tasks to the task schedulers.
+     * Creates ingest jobs.
      */
     private class StartIngestJobsThread implements Callable<Void> {
 
@@ -454,7 +454,7 @@ public class IngestManager {
                     }
 
                     // Start an ingest job for the data source.
-                    List<IngestModuleError> errors = IngestJob.startJob(dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = scheduler.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
                     if (!errors.isEmpty()) {
                         // Report the errors to the user. They have already been logged.
                         StringBuilder moduleStartUpErrors = new StringBuilder();
@@ -495,17 +495,21 @@ public class IngestManager {
     }
 
     /**
-     * A Runnable that acts as a consumer for the data ingest task scheduler's
-     * task queue.
+     * A consumer for an ingest task queue.
      */
-    private class DataSourceIngestThread implements Runnable {
+    private class ExecuteIngestTasksThread implements Runnable {
+
+        private IngestTaskQueue tasks;
+
+        ExecuteIngestTasksThread(IngestTaskQueue tasks) {
+            this.tasks = tasks;
+        }
 
         @Override
         public void run() {
-            DataSourceIngestTaskScheduler scheduler = DataSourceIngestTaskScheduler.getInstance();
             while (true) {
                 try {
-                    DataSourceIngestTask task = scheduler.getNextTask(); // Blocks.
+                    IngestTask task = tasks.getNextTask(); // Blocks.
                     task.execute();
                 } catch (InterruptedException ex) {
                     break;
@@ -518,31 +522,7 @@ public class IngestManager {
     }
 
     /**
-     * A Runnable that acts as a consumer for the file task scheduler's task
-     * queue.
-     */
-    private static class FileIngestThread implements Runnable {
-
-        @Override
-        public void run() {
-            FileIngestTaskScheduler scheduler = FileIngestTaskScheduler.getInstance();
-            while (true) {
-                try {
-                    FileIngestTask task = scheduler.getNextTask(); // Blocks.
-                    task.execute();
-                } catch (InterruptedException ex) {
-                    break;
-                }
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * A Runnable that fires ingest events to ingest manager property change
-     * listeners.
+     * Fires ingest events to ingest manager property change listeners.
      */
     private static class FireIngestEventThread implements Runnable {
 

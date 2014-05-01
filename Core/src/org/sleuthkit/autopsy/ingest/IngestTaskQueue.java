@@ -18,28 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.Content;
-
-final class DataSourceIngestTask implements IngestTask {
-    
-    private final IngestJob ingestJob;
-    private final Content dataSource;
-    
-    DataSourceIngestTask(IngestJob ingestJob, Content dataSource) {
-        this.ingestJob = ingestJob;
-        this.dataSource = dataSource;                        
-    }
-    
-    IngestJob getIngestJob() {
-        return ingestJob;
-    }
-    
-    Content getDataSource() {
-        return dataSource;
-    }    
-    
-    @Override
-    public void execute() throws InterruptedException {
-        ingestJob.process(dataSource);
-    }
+interface IngestTaskQueue {
+    IngestTask getNextTask() throws InterruptedException;
 }

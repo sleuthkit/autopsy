@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 final class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
 
-    private static final Logger logger = Logger.getLogger(FileIngestTaskScheduler.class.getName());
+    private static final Logger logger = Logger.getLogger(GetFilesCountVisitor.class.getName());
 
     @Override
     public Long visit(FileSystem fs) {
