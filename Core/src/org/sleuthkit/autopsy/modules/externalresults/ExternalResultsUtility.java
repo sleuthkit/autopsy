@@ -37,11 +37,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
- *
+ * Mechanism to import blackboard items, derived files, etc.
+ * It is decoupled from the actual parsing/interfacing with external data.
  */
 public class ExternalResultsUtility {
     private static final Logger logger = Logger.getLogger(ExternalResultsUtility.class.getName());
 
+    /**
+     * Tell the parser to get data, and then import that data into Autopsy.
+     * @param parser An initialized instance of an ExternalResultsParser derivative
+     * @param defaultDataSource Typically the current data source for the caller
+     */
     public static void importResults(ExternalResultsParser parser, Content defaultDataSource) {
         // Create temporary data object
         ResultsData resultsData = parser.parse();
@@ -50,6 +56,11 @@ public class ExternalResultsUtility {
         generateBlackboardItems(resultsData, defaultDataSource);
     }
     
+    /**
+     * 
+     * @param resultsData
+     * @param defaultDataSource 
+     */
     private static void generateBlackboardItems(ResultsData resultsData, Content defaultDataSource) {
         for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {           
             try {
