@@ -185,22 +185,7 @@ public class ExternalResultsUtility {
                 // Get associated file (if any) to use as the content obj to attach the artifact to
                 Content currContent = null;
                 if (art.files.size() > 0) {
-                    String filePath = art.files.get(0).path;
-                    String fileName = filePath;
-                    String parentPath = ""; //NON-NLS              
-                    int charPos = filePath.lastIndexOf("/"); //NON-NLS
-                    if (charPos > 0) {
-                        fileName = filePath.substring(charPos + 1);
-                        parentPath = filePath.substring(0, charPos + 1);
-                    }
-                    String whereQuery = "name='" + fileName + "' AND parent_path='" + parentPath + "'"; //NON-NLS
-                    List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(whereQuery);
-                    if (files.size() > 0) {
-                        currContent = files.get(0);
-                        if (files.size() > 1) {
-                            logger.log(Level.WARNING, "Ignoring extra files found for path " + filePath);
-                        }                         
-                    }
+                    currContent = findFileInDatabase(art.files.get(0).path);
                 }
 
                 // If no associated file, use current data source itself
@@ -256,7 +241,7 @@ public class ExternalResultsUtility {
      * @throws TskCoreException 
      */
     private static AbstractFile findFileInDatabase(String filePath) throws TskCoreException {
-        AbstractFile currContent = null;
+        AbstractFile abstractFile = null;
         String fileName = filePath;
         String parentPath = "";              
         int charPos = filePath.lastIndexOf("/");
@@ -267,11 +252,11 @@ public class ExternalResultsUtility {
         String whereQuery = "name='" + fileName + "' AND parent_path='" + parentPath + "'"; //NON-NLS
         List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(whereQuery);
         if (files.size() > 0) {
-            currContent = files.get(0);
+            abstractFile = files.get(0);
             if (files.size() > 1) {
                 logger.log(Level.WARNING, "Ignoring extra files found for path " + filePath);
             }                         
         }
-        return currContent;
+        return abstractFile;
     }
 }
