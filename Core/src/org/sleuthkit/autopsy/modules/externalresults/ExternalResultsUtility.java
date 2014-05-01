@@ -103,7 +103,7 @@ public class ExternalResultsUtility {
                                 Path pathRelative = pathBase.relativize(pathTo);
                                 relPath = pathRelative.toString();
                             } catch(IllegalArgumentException ex) {
-                                // We weren't given a path that is a child of the case dir
+                                logger.log(Level.WARNING, "Derived file " + fileName + " path may be incorrect. The derived file object will still be added to the database.");
                             }
                         }
                         
