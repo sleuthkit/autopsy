@@ -43,8 +43,8 @@ class TskDbDiff(object):
         self.output_dir = output_dir
         self.gold_bb_dump = gold_bb_dump
         self.gold_dump = gold_dump
-        self._generate_gold_dump = gold_dump is None
-        self._generate_gold_bb_dump = gold_bb_dump is None
+        self._generate_gold_dump = True
+        self._generate_gold_bb_dump = True
         self._bb_dump_diff = ""
         self._dump_diff = ""
         self._bb_dump = ""
@@ -275,15 +275,35 @@ def replace_id(line, table):
         line: a String, the line to remove the object id from.
         table: a map from object ids to file paths.
     """
-    index = line.find('INSERT INTO "tsk_files"')
-    if (index != -1):
-        # take the portion of the string between the open parenthesis and the comma (ie, the object id)
-        obj_id = line[line.find('(') + 1 : line.find(',')]
+
+    files_index = line.find('INSERT INTO "tsk_files"')
+    path_index = line.find('INSERT INTO "tsk_files_path"')
+    object_index = line.find('INSERT INTO "tsk_objects"')
+    
+    if (files_index != -1 or path_index != -1):
+        # take the portion of the string between the open parenthesis and the first comma (ie, the object id)
+        obj_id = int(line[line.find('(') + 1 : line.find(',')])
         # takes everything from the beginning of the string up to the opening
         # parenthesis, the path associated with the object id, and everything after 
         # the first comma, and concactenate it
-        newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
+        newLine = (line[:line.find('('):] + '(' + table[obj_id] + line[line.find(','):])
         return newLine
+    
+    elif (object_index != -1):
+        # take the portion of the string between the open parenthesis and the first comma (ie, the object id)
+        obj_id = line[line.find('(') + 1 : line.find(',')]
+        parent_id = line[line.find(',') + 2 : line.find(',', line.find(',') + 1)]
+    
+        try:
+            path = table[int(obj_id)]
+            parent_path = table[int(parent_id)]
+            no_ID = (line[:line.find('('):] + '(' + path + line[line.find(','):])
+            newLine = (no_ID[:no_ID.find(',') + 1] + " " + parent_path + no_ID[no_ID.find(parent_id) + 1:])
+            return newLine
+        except Exception as e: 
+            # objects table has things that aren't files. if lookup fails, don't replace the object id.
+            return line
+    
     else:
         return line
 
@@ -308,7 +328,7 @@ def main():
         print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
         sys.exit()
 
-    db_diff = TskDbDiff(output_db, gold_db, output_dir=".")
+    db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
     dump_passed, bb_dump_passed = db_diff.run_diff()
 
     if dump_passed and bb_dump_passed:

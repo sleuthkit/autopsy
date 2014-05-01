@@ -911,7 +911,7 @@ import org.sleuthkit.datamodel.TskData;
                 }
  
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id"));
+                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id")); //NON-NLS
                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
@@ -1047,7 +1047,7 @@ import org.sleuthkit.datamodel.TskData;
                 }
                 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id"));
+                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id")); //NON-NLS
                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
