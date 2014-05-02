@@ -31,7 +31,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 
 /**
@@ -39,16 +38,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
  * the results. 
  */
 class KeywordSearchQueryManager {
-
-    // how to display the results
-    public enum Presentation {
-        FLAT,   // all results are in a single level (even if multiple keywords and reg-exps are used).  We made this because we were having problems with multiple-levels of nodes and the thumbnail and table view sharing an ExplorerManager. IconView seemed to change EM so that it did not allow lower levels to be selected.
-        COLLAPSE, // two levels. Keywords on top, files on bottom.
-        DETAIL // not currently used, but seems like it has three levels of nodes
-    };
-    
     private List<Keyword> keywords;
-    private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
     private QueryType queryType;
     private boolean queryWholeword;
@@ -58,12 +48,10 @@ class KeywordSearchQueryManager {
     /**
      * 
      * @param queries Keywords to search for
-     * @param presentation Presentation layout
      */
-    public KeywordSearchQueryManager(List<Keyword> queries, boolean wholeword, Presentation presentation) {
+    public KeywordSearchQueryManager(List<Keyword> queries, boolean wholeword) {
         queryType = QueryType.REGEX;
         queryWholeword = wholeword;
-        this.presentation = presentation;        
         keywords = queries;
         init();
     }
@@ -72,12 +60,10 @@ class KeywordSearchQueryManager {
      * KeywordSearchQueryManager will change a literal keyword to regex unless wholeword is set
      * @param query Keyword to search for
      * @param qt Query type
-     * @param presentation Presentation Layout
      */
-    public KeywordSearchQueryManager(String query, QueryType qt, boolean wholeword, Presentation presentation) {
+    public KeywordSearchQueryManager(String query, QueryType qt, boolean wholeword) {
         queryType = qt;
-        queryWholeword = wholeword;        
-        this.presentation = presentation;
+        queryWholeword = wholeword;
         keywords = new ArrayList<>();
         keywords.add(new Keyword(query, ((queryType == QueryType.LITERAL) && queryWholeword) ? true : false));
         init();
@@ -89,12 +75,11 @@ class KeywordSearchQueryManager {
      * @param isLiteral false if reg-exp
      * @param presentation Presentation layout
      */
-    public KeywordSearchQueryManager(String query, boolean isLiteral, boolean wholeword, Presentation presentation) {
+    public KeywordSearchQueryManager(String query, boolean isLiteral, boolean wholeword) {
         queryType = isLiteral ? QueryType.LITERAL : QueryType.REGEX;
         queryWholeword = wholeword;
         keywords = new ArrayList<>();
         keywords.add(new Keyword(query, isLiteral));
-        this.presentation = presentation;
         init();
     }
 
@@ -150,7 +135,7 @@ class KeywordSearchQueryManager {
         // } else {
         
         //Collapsed view
-        Collection<KeyValueQuery> things = new ArrayList<>();
+        Collection<QueryRequest> queryRequests = new ArrayList<>();
         int queryID = 0;
         StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
         for (KeywordSearchQuery q : queryDelegates) {
@@ -158,7 +143,7 @@ class KeywordSearchQueryManager {
             final String queryStr = q.getQueryString();
             final String escQueryStr = q.getEscapedQueryString();
             queryConcat.append(queryStr).append(" ");
-            things.add(new KeyValueQuery(escQueryStr, kvs, ++queryID, q));
+            queryRequests.add(new QueryRequest(escQueryStr, kvs, ++queryID, q));
         }
 
         Node rootNode;
@@ -167,18 +152,18 @@ class KeywordSearchQueryManager {
         final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
         final String windowTitle = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.execute.exeWinTitle", ++resultWindowCount, queryStrShort);
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
-        if (things.size() > 0) {
-            Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(keywords, things, presentation, searchResultWin), true);
+        if (queryRequests.size() > 0) {
+            Children childNodes =
+                    Children.create(new KeywordSearchResultFactory(keywords, queryRequests, searchResultWin), true);
 
-            rootNode = new AbstractNode(childThingNodes);
+            rootNode = new AbstractNode(childNodes);
         } else {
             rootNode = Node.EMPTY;
         }
 
         final String pathText = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.pathText.text");
 
-        DataResultTopComponent.initInstance(pathText, rootNode, things.size(), searchResultWin);
+        DataResultTopComponent.initInstance(pathText, rootNode, queryRequests.size(), searchResultWin);
 
         searchResultWin.requestActive();
         // }
@@ -198,22 +183,5 @@ class KeywordSearchQueryManager {
             }
         }
         return allValid;
-    }
-}
-
-/**
- * custom KeyValue that also stores query object to execute
- */
-class KeyValueQuery extends KeyValue {
-
-    private KeywordSearchQuery query;
-
-    KeywordSearchQuery getQuery() {
-        return query;
-    }
-
-    public KeyValueQuery(String name, Map<String, Object> map, int id, KeywordSearchQuery query) {
-        super(name, map, id);
-        this.query = query;
     }
 }
