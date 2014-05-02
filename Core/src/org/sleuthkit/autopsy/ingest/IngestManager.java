@@ -311,6 +311,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to register.
      */
     public static void addPropertyChangeListener(final PropertyChangeListener listener) {
+        instance.ingestJobEventPublisher.addPropertyChangeListener(listener);
         instance.ingestModuleEventPublisher.addPropertyChangeListener(listener);
     }
 
@@ -321,6 +322,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to unregister.
      */
     public static void removePropertyChangeListener(final PropertyChangeListener listener) {
+        instance.ingestJobEventPublisher.removePropertyChangeListener(listener);
         instance.ingestModuleEventPublisher.removePropertyChangeListener(listener);
     }
 
