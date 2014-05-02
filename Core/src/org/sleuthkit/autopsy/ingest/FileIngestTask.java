@@ -21,27 +21,22 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.Objects;
 import org.sleuthkit.datamodel.AbstractFile;
 
-final class FileIngestTask implements IngestTask {
+final class FileIngestTask extends IngestTask {
 
-    private final IngestJob ingestJob;
     private final AbstractFile file;
 
-    FileIngestTask(IngestJob task, AbstractFile file) {
-        this.ingestJob = task;
+    FileIngestTask(IngestJob job, AbstractFile file) {
+        super(job);
         this.file = file;
     }
 
-    public IngestJob getIngestJob() { // RJCTODO: Maybe add to interface
-        return ingestJob;
-    }
-
-    public AbstractFile getFile() {
+    AbstractFile getFile() {
         return file;
     }
 
     @Override
-    public void execute() throws InterruptedException {
-        ingestJob.process(file);
+    void execute() throws InterruptedException {
+        getIngestJob().process(file);
     }
 
     @Override
@@ -53,7 +48,9 @@ final class FileIngestTask implements IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        if (this.ingestJob != other.ingestJob && (this.ingestJob == null || !this.ingestJob.equals(other.ingestJob))) {
+        IngestJob job = getIngestJob();
+        IngestJob otherJob = other.getIngestJob();
+        if (job != otherJob && (job == null || !job.equals(otherJob))) {
             return false;
         }
         if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
@@ -65,7 +62,7 @@ final class FileIngestTask implements IngestTask {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(this.ingestJob);
+        hash = 47 * hash + Objects.hashCode(getIngestJob());
         hash = 47 * hash + Objects.hashCode(this.file);
         return hash;
     }

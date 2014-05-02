@@ -48,23 +48,23 @@ public class IngestManager {
     private static final int MAX_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
     private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads"; //NON-NLS
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
-    private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 4;
+    private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
     private static final IngestManager instance = new IngestManager();
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
-    private final IngestJobScheduler scheduler = IngestJobScheduler.getInstance();
+    private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService fileIngestThreadPool = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
     private final ExecutorService fireIngestEventsThreadPool = Executors.newSingleThreadExecutor();
+    private final AtomicLong nextThreadId = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, Future<Void>> startIngestJobThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
-    private final AtomicLong nextThreadId = new AtomicLong(0L);
     private volatile IngestMessageTopComponent ingestMessageBox;
 
     /**
@@ -186,8 +186,8 @@ public class IngestManager {
         }
 
         long taskId = nextThreadId.incrementAndGet();
-        Future<?> task = startIngestJobsThreadPool.submit(new StartIngestJobsThread(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
-        fileIngestThreads.put(taskId, task);
+        Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobsThread(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
+        startIngestJobThreads.put(taskId, task);
 
         if (ingestMessageBox != null) {
             ingestMessageBox.restoreMessages();
@@ -218,7 +218,6 @@ public class IngestManager {
                 logger.log(Level.SEVERE, "Unexpected thread interrupt", ex);
             }
         }
-        startIngestJobThreads.clear(); // Make sure.
 
         // Cancel all the jobs already created. This will make the the ingest
         // threads flush out any lingering ingest tasks without processing them.
@@ -511,6 +510,7 @@ public class IngestManager {
                 try {
                     IngestTask task = tasks.getNextTask(); // Blocks.
                     task.execute();
+                    scheduler.ingestTaskIsCompleted(task);
                 } catch (InterruptedException ex) {
                     break;
                 }

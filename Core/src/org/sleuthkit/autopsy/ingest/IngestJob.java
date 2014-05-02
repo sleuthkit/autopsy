@@ -20,10 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -33,33 +30,26 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
-/**
- * Encapsulates a data source and the ingest module pipelines to be used to
- * ingest the data source.
- */
 final class IngestJob {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private static final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
     private final long id;
     private final Content rootDataSource;
     private final List<IngestModuleTemplate> ingestModuleTemplates;
     private final boolean processUnallocatedSpace;
     private final LinkedBlockingQueue<DataSourceIngestPipeline> dataSourceIngestPipelines = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines = new LinkedBlockingQueue<>();
-    private final AtomicInteger tasksInProgress = new AtomicInteger(0);
-    private final AtomicLong processedFiles = new AtomicLong(0L);
-    private final AtomicLong filesToIngestEstimate = new AtomicLong(0L);
+    private long estimatedFilesToProcess = 0L; // Guarded by this
+    private long processedFiles = 0L; // Guarded by this
     private ProgressHandle dataSourceTasksProgress;
     private ProgressHandle fileTasksProgress;
-    private volatile boolean cancelled;
+    private volatile boolean cancelled = false;
 
     IngestJob(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
         this.id = id;
         this.rootDataSource = dataSource;
         this.ingestModuleTemplates = ingestModuleTemplates;
         this.processUnallocatedSpace = processUnallocatedSpace;
-        this.cancelled = false;
     }
 
     long getId() {
@@ -73,8 +63,8 @@ final class IngestJob {
     List<IngestModuleError> startUp() throws InterruptedException {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
-            startDataSourceIngestProgressBar();
             startFileIngestProgressBar();
+            startDataSourceIngestProgressBar();
         }
         return errors;
     }
@@ -105,7 +95,8 @@ final class IngestJob {
             }
         }
 
-        return errors;
+        logIngestModuleErrors(errors);
+        return errors; // Returned so UI can report to user.
     }
 
     private void startDataSourceIngestProgressBar() {
@@ -145,18 +136,9 @@ final class IngestJob {
                 return true;
             }
         });
-        long initialFilesCount = rootDataSource.accept(new GetFilesCountVisitor());
-        filesToIngestEstimate.getAndAdd(initialFilesCount);
+        estimatedFilesToProcess = rootDataSource.accept(new GetFilesCountVisitor());
         fileTasksProgress.start();
-        fileTasksProgress.switchToDeterminate((int) initialFilesCount); // RJCTODO: This cast is troublesome, can use intValue
-    }
-
-    /**
-     * Called by the ingest task schedulers when an ingest task is added to this
-     * ingest job.
-     */
-    void notifyTaskAdded() {
-        tasksInProgress.incrementAndGet();
+        fileTasksProgress.switchToDeterminate((int) estimatedFilesToProcess);
     }
 
     void process(Content dataSource) throws InterruptedException {
@@ -172,7 +154,6 @@ final class IngestJob {
             }
             dataSourceIngestPipelines.put(pipeline);
         }
-        shutDownIfAllTasksCompleted();
     }
 
     void process(AbstractFile file) throws InterruptedException {
@@ -181,35 +162,37 @@ final class IngestJob {
         // shut down check needs to occur.
         if (!isCancelled()) {
             List<IngestModuleError> errors = new ArrayList<>();
+            synchronized (this) {
+                ++processedFiles;
+                if (processedFiles <= estimatedFilesToProcess) {
+                    fileTasksProgress.progress(file.getName(), (int) processedFiles);
+                } else {
+                    fileTasksProgress.progress(file.getName(), (int) estimatedFilesToProcess);
+                }
+            }
             FileIngestPipeline pipeline = fileIngestPipelines.take();
-            fileTasksProgress.progress(file.getName(), (int) processedFiles.incrementAndGet());
             errors.addAll(pipeline.process(file));
             fileIngestPipelines.put(pipeline);
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
         }
-        shutDownIfAllTasksCompleted();
     }
 
-    private void shutDownIfAllTasksCompleted() {
-        if (tasksInProgress.decrementAndGet() == 0) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            while (!dataSourceIngestPipelines.isEmpty()) {
-                DataSourceIngestPipeline pipeline = dataSourceIngestPipelines.poll();
-                errors.addAll(pipeline.shutDown());
-            }
-            while (!fileIngestPipelines.isEmpty()) {
-                FileIngestPipeline pipeline = fileIngestPipelines.poll();
-                errors.addAll(pipeline.shutDown());
-            }
-            fileTasksProgress.finish();
-            dataSourceTasksProgress.finish();
-            ingestJobsById.remove(id);
-            if (!errors.isEmpty()) {
-                logIngestModuleErrors(errors);
-            }
-            IngestManager.getInstance().fireIngestJobCompleted(id);
+    void shutDown() {
+        List<IngestModuleError> errors = new ArrayList<>();
+        while (!dataSourceIngestPipelines.isEmpty()) {
+            DataSourceIngestPipeline pipeline = dataSourceIngestPipelines.poll();
+            errors.addAll(pipeline.shutDown());
+        }
+        while (!fileIngestPipelines.isEmpty()) {
+            FileIngestPipeline pipeline = fileIngestPipelines.poll();
+            errors.addAll(pipeline.shutDown());
+        }
+        fileTasksProgress.finish();
+        dataSourceTasksProgress.finish();
+        if (!errors.isEmpty()) {
+            logIngestModuleErrors(errors);
         }
     }
 
@@ -225,7 +208,8 @@ final class IngestJob {
 
     void cancel() {
         cancelled = true;
-        fileTasksProgress.finish(); // RJCTODO: What about the other progress bar?
+        fileTasksProgress.finish(); 
+        dataSourceTasksProgress.finish();
         IngestManager.getInstance().fireIngestJobCancelled(id);
     }
 }

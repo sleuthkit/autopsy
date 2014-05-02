@@ -18,6 +18,17 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-interface IngestTask {
-    void execute() throws InterruptedException;    
+abstract class IngestTask {
+    
+    private final IngestJob job;
+
+    IngestTask(IngestJob job) {
+        this.job = job;
+    }
+
+    IngestJob getIngestJob() {
+        return job;
+    }
+        
+    abstract void execute() throws InterruptedException;    
 }

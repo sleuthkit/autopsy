@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,26 +20,21 @@ package org.sleuthkit.autopsy.ingest;
 
 import org.sleuthkit.datamodel.Content;
 
-final class DataSourceIngestTask implements IngestTask {
+final class DataSourceIngestTask extends IngestTask {
     
-    private final IngestJob ingestJob;
     private final Content dataSource;
     
     DataSourceIngestTask(IngestJob ingestJob, Content dataSource) {
-        this.ingestJob = ingestJob;
+        super(ingestJob);
         this.dataSource = dataSource;                        
     }
-    
-    IngestJob getIngestJob() {
-        return ingestJob;
-    }
-    
+        
     Content getDataSource() {
         return dataSource;
     }    
     
     @Override
-    public void execute() throws InterruptedException {
-        ingestJob.process(dataSource);
+    void execute() throws InterruptedException {
+        getIngestJob().process(dataSource);
     }
 }
