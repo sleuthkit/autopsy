@@ -642,7 +642,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Scroll to current (first) hit after SetMarkup worker completed
+     * Scroll to current (first) hit after SetMarkupWorker worker completed
      *
      * @param source
      */
@@ -668,21 +668,21 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      */
     private void setMarkup(MarkupSource source) {
         setPanelText(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.setMarkup.panelTxt"), false);
-        new SetMarkup(source).execute();
+        new SetMarkupWorker(source).execute();
     }
 
     /**
-     * Swingworker to get makrup source content String from Solr in background
+     * Swingworker to get markup source content String from Solr in background
      * thread and then set the panel text in the EDT Helps not to block the UI
      * while content from Solr is retrieved.
      */
-    private final class SetMarkup extends SwingWorker<Object, Void> {
+    private final class SetMarkupWorker extends SwingWorker<Object, Void> {
 
         private MarkupSource source;
         private String markup;
         private ProgressHandle progress;
 
-        SetMarkup(MarkupSource source) {
+        SetMarkupWorker(MarkupSource source) {
             this.source = source;
         }
 
@@ -705,6 +705,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             progress.finish();
             
             // see if there are any errors
+            // @@@ BC: Display the errors to the user somehow
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
