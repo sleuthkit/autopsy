@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.prefs.Preferences;
+import javax.swing.DefaultComboBoxModel;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -33,8 +34,33 @@ final class GeneralPanel extends javax.swing.JPanel {
 
     GeneralPanel(GeneralOptionsPanelController controller) {
         initComponents();
+        numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(new Integer[]{1, 2, 4, 8, 16}));
         ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
         // TODO listen to changes in form fields and call controller.changed()
+    }
+
+    void load() {
+        boolean keepPreferredViewer = prefs.getBoolean(KEEP_PREFERRED_VIEWER, false);
+        keepCurrentViewerRB.setSelected(keepPreferredViewer);
+        useBestViewerRB.setSelected(!keepPreferredViewer);
+        boolean useLocalTime = prefs.getBoolean(USE_LOCAL_TIME, true);
+        useLocalTimeRB.setSelected(useLocalTime);
+        useGMTTimeRB.setSelected(!useLocalTime);
+        dataSourcesHideKnownCB.setSelected(prefs.getBoolean(DS_HIDE_KNOWN, false));
+        viewsHideKnownCB.setSelected(prefs.getBoolean(VIEWS_HIDE_KNOWN, true));
+        numberOfFileIngestThreadsComboBox.setSelectedItem(IngestManager.getNumberOfFileIngestThreads());
+    }
+
+    void store() {
+        prefs.putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
+        prefs.putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
+        prefs.putBoolean(DS_HIDE_KNOWN, dataSourcesHideKnownCB.isSelected());
+        prefs.putBoolean(VIEWS_HIDE_KNOWN, viewsHideKnownCB.isSelected());
+        IngestManager.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
+    }
+
+    boolean valid() {
+        return true;
     }
 
     /**
@@ -57,7 +83,7 @@ final class GeneralPanel extends javax.swing.JPanel {
         dataSourcesHideKnownCB = new javax.swing.JCheckBox();
         viewsHideKnownCB = new javax.swing.JCheckBox();
         jLabel4 = new javax.swing.JLabel();
-        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox();
+        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<Integer>();
 
         buttonGroup1.add(useBestViewerRB);
         useBestViewerRB.setSelected(true);
@@ -96,9 +122,6 @@ final class GeneralPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(viewsHideKnownCB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.viewsHideKnownCB.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel4.text")); // NOI18N
-
-        numberOfFileIngestThreadsComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4" }));
-        numberOfFileIngestThreadsComboBox.setSelectedIndex(1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -163,33 +186,8 @@ final class GeneralPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_useBestViewerRBActionPerformed
 
     private void useGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useGMTTimeRBActionPerformed
-         ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
+        ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
     }//GEN-LAST:event_useGMTTimeRBActionPerformed
-
-    void load() {
-        boolean keepPreferredViewer = prefs.getBoolean(KEEP_PREFERRED_VIEWER, false);
-        keepCurrentViewerRB.setSelected(keepPreferredViewer);
-        useBestViewerRB.setSelected(!keepPreferredViewer);
-        boolean useLocalTime = prefs.getBoolean(USE_LOCAL_TIME, true);
-        useLocalTimeRB.setSelected(useLocalTime);
-        useGMTTimeRB.setSelected(!useLocalTime);
-        dataSourcesHideKnownCB.setSelected(prefs.getBoolean(DS_HIDE_KNOWN, false));
-        viewsHideKnownCB.setSelected(prefs.getBoolean(VIEWS_HIDE_KNOWN, true));
-        numberOfFileIngestThreadsComboBox.setSelectedItem(IngestManager.getInstance().getNumberOfFileIngestThreads());
-    }
-
-    void store() {
-        prefs.putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
-        prefs.putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
-        prefs.putBoolean(DS_HIDE_KNOWN, dataSourcesHideKnownCB.isSelected());
-        prefs.putBoolean(VIEWS_HIDE_KNOWN, viewsHideKnownCB.isSelected());
-        IngestManager.getInstance().setNumberOfFileIngestThreads(Integer.valueOf(numberOfFileIngestThreadsComboBox.getSelectedItem().toString()));
-    }
-
-    boolean valid() {
-        // TODO check whether form is consistent and complete
-        return true;
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
@@ -199,7 +197,7 @@ final class GeneralPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JRadioButton keepCurrentViewerRB;
-    private javax.swing.JComboBox numberOfFileIngestThreadsComboBox;
+    private javax.swing.JComboBox<Integer> numberOfFileIngestThreadsComboBox;
     private javax.swing.JRadioButton useBestViewerRB;
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;

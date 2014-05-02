@@ -18,16 +18,18 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import org.netbeans.api.progress.ProgressHandle;
+
 /**
  * Used by data source ingest modules to report progress.
  */
 public class DataSourceIngestModuleProgress {
 
-    private final IngestJob ingestJob;
+    private final ProgressHandle progress;
     private final String moduleDisplayName;
 
-    DataSourceIngestModuleProgress(IngestJob ingestJob, String moduleDisplayName) {
-        this.ingestJob = ingestJob;
+    DataSourceIngestModuleProgress(ProgressHandle progress, String moduleDisplayName) {
+        this.progress = progress;
         this.moduleDisplayName = moduleDisplayName;
     }
 
@@ -40,7 +42,7 @@ public class DataSourceIngestModuleProgress {
      * data source.
      */
     public void switchToDeterminate(int workUnits) {
-        ingestJob.getDataSourceTaskProgressBar().switchToDeterminate(workUnits);
+        progress.switchToDeterminate(workUnits);
     }
 
     /**
@@ -48,7 +50,7 @@ public class DataSourceIngestModuleProgress {
      * the total work units to process the data source is unknown.
      */
     public void switchToIndeterminate() {
-        ingestJob.getDataSourceTaskProgressBar().switchToIndeterminate();
+        progress.switchToIndeterminate();
     }
 
     /**
@@ -58,6 +60,6 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        ingestJob.getDataSourceTaskProgressBar().progress(this.moduleDisplayName, workUnits);
+        progress.progress(this.moduleDisplayName, workUnits);
     }
 }

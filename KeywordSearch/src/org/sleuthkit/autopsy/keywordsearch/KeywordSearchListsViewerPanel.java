@@ -118,7 +118,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         ingestRunning = IngestManager.getInstance().isIngestRunning();
         updateComponents();
 
-        IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
+        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();

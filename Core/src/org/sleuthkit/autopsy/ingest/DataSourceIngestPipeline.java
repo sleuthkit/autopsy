@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -30,12 +31,12 @@ import org.sleuthkit.datamodel.Content;
  */
 final class DataSourceIngestPipeline {
 
-    private final IngestJob job;
+    private final IngestJobContext context;
     private final List<IngestModuleTemplate> moduleTemplates;
     private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
-    DataSourceIngestPipeline(IngestJob task, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = task;
+    DataSourceIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
+        this.context = context;
         this.moduleTemplates = moduleTemplates;
     }
 
@@ -50,7 +51,6 @@ final class DataSourceIngestPipeline {
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
                 DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
-                IngestJobContext context = new IngestJobContext(job);
                 try {
                     module.startUp(context);
                     modulesByClass.put(module.getClassName(), module);
@@ -75,26 +75,26 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process() {
+    List<IngestModuleError> process(Content dataSource, ProgressHandle progress) {
         List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModuleDecorator module : this.modules) {
             try {
-                module.process(job.getDataSource(), new DataSourceIngestModuleProgress(job, module.getDisplayName()));
+                module.process(dataSource, new DataSourceIngestModuleProgress(progress, module.getDisplayName()));
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (job.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
         }
         return errors;
     }
 
-    List<IngestModuleError> shutDown(boolean ingestJobCancelled) {
+    List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModuleDecorator module : this.modules) {
             try {
-                module.shutDown(ingestJobCancelled);
+                module.shutDown(context.isJobCancelled());
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }

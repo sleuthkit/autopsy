@@ -41,14 +41,14 @@ import org.sleuthkit.datamodel.Content;
  * for a particular context and for launching ingest jobs that process one or
  * more data sources using the ingest job configuration.
  */
-public final class IngestJobLauncher {
+public final class IngestJobConfigurator {
 
     private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = new StringBuilder(PlatformUtil.getUserConfigDirectory()).append(File.separator).append("IngestModuleSettings").toString(); //NON-NLS            
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
-    private static final Logger logger = Logger.getLogger(IngestJobLauncher.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestJobConfigurator.class.getName());
     private final String launcherContext;
     private String moduleSettingsFolderForContext = null;
     private final List<String> warnings = new ArrayList<>();
@@ -61,7 +61,7 @@ public final class IngestJobLauncher {
      *
      * @param launcherContext The context identifier.
      */
-    public IngestJobLauncher(String launcherContext) {
+    public IngestJobConfigurator(String launcherContext) {
         this.launcherContext = launcherContext;
 
         createModuleSettingsFolderForContext();
