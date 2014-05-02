@@ -110,7 +110,7 @@ public class ExternalResultsUtility {
                         
                         // Make a new derived file object in the database
                         DerivedFile df = fileManager.addDerivedFile(fileName, relPath, fileObj.length(),
-                                0, 0, 0, fileObj.lastModified(),
+                                0, 0, 0, fileObj.lastModified() / 1000,
                                 true, parentFile, "", EVENT_STRING, "", "");
 
                         if (df != null) {                 
