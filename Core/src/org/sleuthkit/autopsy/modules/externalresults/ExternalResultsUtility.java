@@ -21,13 +21,17 @@
 package org.sleuthkit.autopsy.modules.externalresults;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -108,9 +112,23 @@ public class ExternalResultsUtility {
                             }
                         }
                         
+                        // Get file times
+                        long ctime = 0;
+                        long crtime = 0;
+                        long atime = 0;
+                        long mtime = 0;
+                        try {
+                            BasicFileAttributes fileAttrs = Files.readAttributes(pathTo, BasicFileAttributes.class);
+                            crtime = fileAttrs.creationTime().toMillis() / 1000;
+                            atime = fileAttrs.lastAccessTime().toMillis() / 1000;
+                            mtime = fileAttrs.lastModifiedTime().toMillis() / 1000;
+                        } catch (IOException ex) {
+                            logger.log(Level.WARNING, "Exception getting file attributes for derived file " + fileName);
+                        }
+                        
                         // Make a new derived file object in the database
                         DerivedFile df = fileManager.addDerivedFile(fileName, relPath, fileObj.length(),
-                                0, 0, 0, fileObj.lastModified() / 1000,
+                                ctime, crtime, atime, mtime,
                                 true, parentFile, "", EVENT_STRING, "", "");
 
                         if (df != null) {                 
