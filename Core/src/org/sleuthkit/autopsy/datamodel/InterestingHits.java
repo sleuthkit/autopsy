@@ -106,10 +106,10 @@ public class InterestingHits implements AutopsyVisitableItem {
      /**
      * Node for the interesting items
      */
-    public class InterestingHitsRootNode extends DisplayableItemNode {
+    public class RootNode extends DisplayableItemNode {
 
-        public InterestingHitsRootNode() {
-            super(Children.create(new InterestingHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
+        public RootNode() {
+            super(Children.create(new SetNameFactory(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(INTERESTING_ITEMS);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
@@ -144,7 +144,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
     
-     private class InterestingHitsRootChildren extends ChildFactory<String> {
+     private class SetNameFactory extends ChildFactory<String> {
 
         @Override
         protected boolean createKeys(List<String> list) {
@@ -154,14 +154,14 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new InterestingHitsSetNode(key, interestingItemsMap.get(key));
+            return new SetNameNode(key, interestingItemsMap.get(key));
         }
     }
      
-    public class InterestingHitsSetNode extends DisplayableItemNode {
+    public class SetNameNode extends DisplayableItemNode {
 
-        public InterestingHitsSetNode(String name, Set<Long> children) {
-            super(Children.create(new InterestingHitsSetChildren(children), true), Lookups.singleton(name));
+        public SetNameNode(String name, Set<Long> children) {
+            super(Children.create(new HitFactory(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
@@ -195,11 +195,11 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
      
-    private class InterestingHitsSetChildren extends ChildFactory<BlackboardArtifact> {
+    private class HitFactory extends ChildFactory<BlackboardArtifact> {
 
         private Set<Long> children;
 
-        private InterestingHitsSetChildren(Set<Long> children) {
+        private HitFactory(Set<Long> children) {
             super();
             this.children = children;
         }

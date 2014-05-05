@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -28,6 +30,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -76,8 +81,36 @@ class TagsNode extends DisplayableItemNode {
         return propertySheet;
     }
 
-    private static class TagNameNodeFactory extends ChildFactory<TagName> {
+    private static class TagNameNodeFactory extends ChildFactory.Detachable<TagName> {
 
+        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                
+                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                    if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT) ||
+                       ((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
+                        refresh(true);
+                    }
+                }
+                else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                    refresh(true);
+                }
+            }
+        };
+
+        @Override
+        protected void addNotify() {
+            IngestManager.addPropertyChangeListener(pcl);
+        }
+
+        @Override
+        protected void removeNotify() {
+            IngestManager.removePropertyChangeListener(pcl);
+        }
+        
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {

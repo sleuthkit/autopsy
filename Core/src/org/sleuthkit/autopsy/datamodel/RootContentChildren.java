@@ -65,6 +65,8 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
     //TODO this will be removed, Children should be listening for interesting 
     //events from datamodel and calling refresh / refreshKey() themselves
     public void refreshKeys(BlackboardArtifact.ARTIFACT_TYPE... types) {
+        // find the corresponding top-level node and refresh its children.
+        // should be more effeciently stored than a list.
         for (Object o : contentKeys) {
             for (BlackboardArtifact.ARTIFACT_TYPE type : types) {
                 switch (type) {
@@ -91,8 +93,10 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
                             this.refreshKey(o);
                         break;       
                     default:
-                        if (o instanceof ExtractedContent)
+                        if (o instanceof ExtractedContent) {
+                            
                             this.refreshKey(o);
+                        }
                         break;
                 }
             }

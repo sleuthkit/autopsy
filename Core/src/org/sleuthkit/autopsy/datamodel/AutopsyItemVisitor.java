@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- *
- * @author dfickling
  */
  interface AutopsyItemVisitor<T> {
 

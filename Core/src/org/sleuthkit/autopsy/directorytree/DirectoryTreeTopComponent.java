@@ -53,7 +53,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.RootNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
@@ -73,6 +73,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 
 /**
  * Top component which displays something.
@@ -387,7 +388,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                     Children resultsChilds = results.getChildren();
                     tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
-                    tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
+                    tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
 
 
                     Node views = childNodes.findChild(ViewsNode.NAME);
@@ -587,7 +588,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
-        } else if (changed.equals(IngestEvent.DATA.toString())) {
+        } 
+        else if (changed.equals(IngestEvent.DATA.toString())) {
             final ModuleDataEvent event = (ModuleDataEvent) oldValue;
             if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
                 return;
@@ -595,7 +597,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    refreshTree(event.getArtifactType());
+                    // @@@ refreshResultsTree(event.getArtifactType());
                 }
             });
         } else if (changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
@@ -603,15 +605,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    refreshContentTree();
-                    refreshTree();
+                    refreshDataSourceTree();
+                    refreshResultsTree();
                 }
             });
         } else if (changed.equals(IngestEvent.CONTENT_CHANGED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    refreshContentTree();
+                    refreshDataSourceTree();
                 }
             });
         }
@@ -768,7 +770,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                refreshContentTree();
+                refreshDataSourceTree();
             }
         });
     }
@@ -776,7 +778,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     /**
      * Refreshes changed content nodes
      */
-    void refreshContentTree() {
+    private void refreshDataSourceTree() {
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
 
@@ -809,7 +811,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
      */
-    public void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+    public void refreshResultsTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
         //save current selection
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
@@ -820,44 +822,40 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children dirChilds = em.getRootContext().getChildren();
 
         Node results = dirChilds.findChild(ResultsNode.NAME);
-
         if (results == null) {
             logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree"); //NON-NLS
             return;
         }
+        
         OriginalNode original = results.getLookup().lookup(OriginalNode.class);
         ResultsNode resultsNode = (ResultsNode) original.getNode();
         RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
         resultsNodeChilds.refreshKeys(types);
 
+        
         final TreeView tree = getTree();
-
-        tree.expandNode(results);
+        // @@@ tree.expandNode(results);
 
         Children resultsChilds = results.getChildren();
-
-        if (resultsChilds == null) //intermediate state check
-        {
+        if (resultsChilds == null) { 
             return;
         }
 
         Node childNode = resultsChilds.findChild(KeywordHits.NAME);
-        if (childNode == null) //intermediate state check
-        {
+        if (childNode == null) { 
             return;
         }
-        tree.expandNode(childNode);
+        // @@@tree.expandNode(childNode);
 
-        childNode = resultsChilds.findChild(ExtractedContentNode.NAME);
-        if (childNode == null) //intermediate state check
-        {
+        childNode = resultsChilds.findChild(ExtractedContent.NAME);
+        if (childNode == null) {
             return;
         }
         tree.expandNode(childNode);
 
         //restores selection if it was under the Results node
-        setSelectedNode(selectedPath, ResultsNode.NAME);
-
+        //@@@ setSelectedNode(selectedPath, ResultsNode.NAME);
+        
     }
 
     /**
@@ -983,7 +981,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
-            Node extractedContent = resultsChilds.findChild(ExtractedContentNode.NAME);
+            Node extractedContent = resultsChilds.findChild(ExtractedContent.NAME);
             Children extractedChilds = extractedContent.getChildren();
             treeNode = extractedChilds.findChild(type.getLabel());
         }

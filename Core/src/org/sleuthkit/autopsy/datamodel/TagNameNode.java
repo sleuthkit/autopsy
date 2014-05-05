@@ -27,6 +27,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
 import org.sleuthkit.datamodel.TagName;
@@ -52,21 +53,25 @@ public class TagNameNode extends DisplayableItemNode {
                 NbBundle.getMessage(TagNameNode.class, "TagNameNode.namePlusTags.text", tagName.getDisplayName())));
         this.tagName = tagName;
 
-        long tagsCount = 0;
-        try {
-            tagsCount = Case.getCurrentCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
-            tagsCount += Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
-        } catch (TskCoreException ex) {
-            Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
-        }
-
-        super.setName(tagName.getDisplayName());
-        super.setDisplayName(tagName.getDisplayName() + " (" + tagsCount + ")");
+        setName(tagName.getDisplayName());
+        updateDisplayName();
         if (tagName.getDisplayName().equals(NbBundle.getMessage(this.getClass(), "TagNameNode.bookmark.text"))) {
             setIconBaseWithExtension(BOOKMARK_TAG_ICON_PATH);
         } else {
             setIconBaseWithExtension(ICON_PATH);
         }
+    }
+    
+    private void updateDisplayName() {
+        long tagsCount = 0;
+        try {
+            TagsManager tm = Case.getCurrentCase().getServices().getTagsManager();
+            tagsCount = tm.getContentTagsCountByTagName(tagName);
+            tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
+        } catch (TskCoreException ex) {
+            Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
+        }
+        setDisplayName(tagName.getDisplayName() + " (" + tagsCount + ")");
     }
 
     @Override
