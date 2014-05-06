@@ -163,8 +163,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
-        public AbstractNode visit(TagsNodeKey tagsNodeKey) {
-            return new TagsNode();
+        public AbstractNode visit(Tags tagsNodeKey) {
+            return tagsNodeKey.new RootNode();
         }
 
         @Override

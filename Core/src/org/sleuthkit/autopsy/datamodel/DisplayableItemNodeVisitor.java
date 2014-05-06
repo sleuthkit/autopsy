@@ -22,7 +22,6 @@ import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.De
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
 
 /**
  * Visitor pattern implementation for DisplayableItemNodes
@@ -75,19 +74,19 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(EmailExtracted.FolderNode eefn);
 
-    T visit(TagsNode node);
+    T visit(Tags.RootNode node);
     
     T visit(InterestingHits.RootNode ihrn);
 
     T visit(InterestingHits.SetNameNode ihsn);
     
-    T visit(TagNameNode node);
+    T visit(Tags.TagNameNode node);
 
-    T visit(ContentTagTypeNode node);    
+    T visit(Tags.ContentTagTypeNode node);    
 
     T visit(ContentTagNode node);
         
-    T visit(BlackboardArtifactTagTypeNode node);
+    T visit(Tags.BlackboardArtifactTagTypeNode node);
 
     T visit(BlackboardArtifactTagNode node);    
 
@@ -275,17 +274,17 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(TagsNode node) {
+        public T visit(Tags.RootNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(TagNameNode node) {
+        public T visit(Tags.TagNameNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(ContentTagTypeNode node) {
+        public T visit(Tags.ContentTagTypeNode node) {
             return defaultVisit(node);
         }
 
@@ -295,7 +294,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(BlackboardArtifactTagTypeNode node) {
+        public T visit(Tags.BlackboardArtifactTagTypeNode node) {
             return defaultVisit(node);
         }
 
