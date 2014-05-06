@@ -283,29 +283,32 @@ def replace_id(line, table):
     files_index = line.find('INSERT INTO "tsk_files"')
     path_index = line.find('INSERT INTO "tsk_files_path"')
     object_index = line.find('INSERT INTO "tsk_objects"')
+    parens = line[line.find('(') + 1 : line.find(')')]
+    fields_list = parens.replace(" ", "").split(',')
     
-    if (files_index != -1 or path_index != -1):
-        # take the portion of the string between the open parenthesis and the first comma (ie, the object id)
-        obj_id = int(line[line.find('(') + 1 : line.find(',')])
-        # takes everything from the beginning of the string up to the opening
-        # parenthesis, the path associated with the object id, and everything after 
-        # the first comma, and concactenate it
-        newLine = (line[:line.find('('):] + '(' + table[obj_id] + line[line.find(','):])
+    if (files_index != -1):
+        obj_id = fields_list[0]
+        path = table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_files" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    
+    elif (path_index != -1):
+        obj_id = fields_list[0]
+        path = table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
         return newLine
     
     elif (object_index != -1):
-        # take the portion of the string between the open parenthesis and the first comma (ie, the object id)
-        obj_id = line[line.find('(') + 1 : line.find(',')]
-        parent_id = line[line.find(',') + 2 : line.find(',', line.find(',') + 1)]
+        obj_id = fields_list[0]
+        parent_id = fields_list[1]
     
         try:
-            path = table[int(obj_id)]
-            parent_path = table[int(parent_id)]
-            no_ID = (line[:line.find('('):] + '(' + path + line[line.find(','):])
-            newLine = (no_ID[:no_ID.find(',') + 1] + " " + parent_path + no_ID[no_ID.find(parent_id) + 1:])
-            return newLine
+             path = table[int(obj_id)]
+             parent_path = table[int(parent_id)]
+             newLine = ('INSERT INTO "tsk_objects" VALUES(' + path + ', ' + parent_path + ', '.join(fields_list[2:]) + ');') 
+             return newLine
         except Exception as e: 
-            # objects table has things that aren't files. if lookup fails, don't replace the object id.
+            # objects table has things that aren't files. if lookup fails, don't replace anything.
             return line
     
     else:
