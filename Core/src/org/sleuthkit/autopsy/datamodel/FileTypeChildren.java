@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,14 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -40,50 +38,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Children factory for a specific file type - does the database query. 
+ * Child node factory for a specific file type - does the database query. 
  */
-class FileTypeChildren extends ChildFactory<Content> {
-
+public class FileTypeChildren extends ChildFactory<Content> {
+ 
     private SleuthkitCase skCase;
     private FileTypeExtensionFilters.SearchFilterInterface filter;
     private static final Logger logger = Logger.getLogger(FileTypeChildren.class.getName());
-    //private final static int MAX_OBJECTS = 2000;
-
-    public FileTypeChildren(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
+        
+    FileTypeChildren(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         this.filter = filter;
         this.skCase = skCase;
     }
 
-    @Override
-    protected boolean createKeys(List<Content> list) {
-        list.addAll(runQuery());
-        return true;
-    }
-    
-    private String createQuery(){
-        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")" //NON-NLS
-                + " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") AND (0"; //NON-NLS
-        for(String s : filter.getFilter()){
-            query += " OR name LIKE '%" + s + "'"; //NON-NLS
-        }
-        query += ')';
-//        query += " LIMIT " + MAX_OBJECTS;
-        return query;
-    }
-
-    
-    private List<AbstractFile> runQuery(){
-        List<AbstractFile> list = new ArrayList<>();
-        try {
-            list = skCase.findAllFilesWhere(createQuery());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
-        }
-
-        return list;
-        
-    }
-    
     /**
      * Get children count without actually loading all nodes
      * @return 
@@ -96,7 +63,31 @@ class FileTypeChildren extends ChildFactory<Content> {
             return 0;
         }
     }
-
+    
+    @Override
+    protected boolean createKeys(List<Content> list) {
+        try {
+            list.addAll(skCase.findAllFilesWhere(createQuery()));
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
+        }
+        return true;
+    }
+    
+    private String createQuery(){
+        StringBuilder query = new StringBuilder();
+        query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
+        if (UserPreferences.hideKnownFilesInViewsTree()) {
+            query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
+        }
+        query.append(" AND (0");
+        for(String s : filter.getFilter()){
+            query.append(" OR name LIKE '%").append(s).append("'"); //NON-NLS
+        }
+        query.append(')');
+        return query.toString();
+    }
+            
     @Override
     protected Node createNodeForKey(Content key) {
         return key.accept(new ContentVisitor.Default<AbstractNode>() {

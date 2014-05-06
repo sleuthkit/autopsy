@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.JPanel;
@@ -49,6 +51,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -111,25 +114,37 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         setName(NbBundle.getMessage(DirectoryTreeTopComponent.class, "CTL_DirectoryTreeTopComponent"));
         setToolTipText(NbBundle.getMessage(DirectoryTreeTopComponent.class, "HINT_DirectoryTreeTopComponent"));
 
-        setListener();
+        subscribeToChangeEvents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
 
 
         this.pcs = new PropertyChangeSupport(this);
 
         // set the back & forward list and also disable the back & forward button
-        this.backList = new LinkedList<String[]>();
-        this.forwardList = new LinkedList<String[]>();
+        this.backList = new LinkedList<>();
+        this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
     }
 
     /**
-     * Set the FileBrowserTopComponent as the listener to any property changes
-     * in the Case.java class
+     * Make this TopComponent a listener to various change events.
      */
-    private void setListener() {
-        Case.addPropertyChangeListener(this);// add this class to listen to any changes in the Case.java class
+    private void subscribeToChangeEvents() {
+        UserPreferences.addChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                switch (evt.getKey()) {
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE:
+                        refreshContentTreeSafe();
+                        break;
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
+                        // RJCTODO: There does not appear to be a way to refresh the Views subtree
+                        break;
+                }
+            }
+        });
+        Case.addPropertyChangeListener(this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
         IngestManager.getInstance().addIngestModuleEventListener(this);
