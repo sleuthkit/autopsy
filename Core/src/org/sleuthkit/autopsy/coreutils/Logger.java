@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.logging.*;
-import org.openide.modules.Places;
 
 /**
  * Custom Autopsy logger wrapper over java.util.logging.Logger with default file
@@ -125,9 +123,6 @@ public class Logger extends java.util.logging.Logger {
         addHandler(traces);
     }
 
-
-       
-    
     /**
      * Log an action to autopsy_actions.log
      * @param actionClass class where user triggered action occurs
@@ -164,7 +159,7 @@ public class Logger extends java.util.logging.Logger {
 
     @Override
     public void log(Level level, String message, Throwable thrown) {
-        super.log(level, message + "\nException:  " + thrown.toString()); //NON-NLS
+        super.log(level, "{0}\nException:  {1}", new Object[]{message, thrown.toString()}); //NON-NLS
         removeHandler(normal);
         super.log(level, message, thrown);
         addHandler(normal);
