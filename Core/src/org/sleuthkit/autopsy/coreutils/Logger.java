@@ -24,11 +24,12 @@ import java.util.logging.*;
 /**
  * Custom Autopsy logger wrapper over java.util.logging.Logger with default file
  * streams logging to autopsy.log (general high level messages),
- * autopsy_traces.log (also including exception traces).
- * In development build, those are also redirected to console / messages log.
+ * autopsy_traces.log (also including exception traces). In development build,
+ * those are also redirected to console / messages log.
  *
- * Contains a utility method to log user actions to autopsy_actions.log via noteAction()
- * 
+ * Contains a utility method to log user actions to autopsy_actions.log via
+ * noteAction()
+ *
  * Use like java.util.logging.Logger API, get a
  * org.sleuthkit.autopsy.coreutils.Logger handle using factory method
  * org.sleuthkit.autopsy.coreutils.Logger.getLogger(String name) passing
@@ -43,14 +44,11 @@ public class Logger extends java.util.logging.Logger {
     private static final String LOG_DIR = PlatformUtil.getLogDirectory();
     static final int LOG_SIZE = 0; // in bytes, zero is unlimited
     static final int LOG_FILE_COUNT = 10;
-    
     //File Handlers which point to the output logs
-    private static  final FileHandler traces = initTraces();
-    private static  final FileHandler normal = initNormal();
+    private static final FileHandler traces = initTraces();
+    private static final FileHandler normal = initNormal();
     private static final Handler console = new java.util.logging.ConsoleHandler();
     private static final java.util.logging.Logger actionsLogger = initActionsLogger();
-   
-
     /**
      * Main messages log file name
      */
@@ -59,7 +57,6 @@ public class Logger extends java.util.logging.Logger {
      * Detailed exception trace log file name
      */
     public static final String tracesLog = "autopsy_traces.log"; //NON-NLS
-    
     /**
      * Action logger file name
      */
@@ -68,7 +65,7 @@ public class Logger extends java.util.logging.Logger {
     /**
      * Static blocks to get around compile errors such as "variable might not
      * have been initialized
-   *
+     *
      */
     //<editor-fold defaultstate="visible" desc="static block initializers">
     private static FileHandler initTraces() {
@@ -94,7 +91,7 @@ public class Logger extends java.util.logging.Logger {
             throw new RuntimeException("Error initializing normal logger", e); //NON-NLS
         }
     }
-    
+
     private static java.util.logging.Logger initActionsLogger() {
         try {
             FileHandler f = new FileHandler(LOG_DIR + actionsLog, LOG_SIZE, LOG_FILE_COUNT);
@@ -125,6 +122,7 @@ public class Logger extends java.util.logging.Logger {
 
     /**
      * Log an action to autopsy_actions.log
+     *
      * @param actionClass class where user triggered action occurs
      */
     public static void noteAction(Class<?> actionClass) {
