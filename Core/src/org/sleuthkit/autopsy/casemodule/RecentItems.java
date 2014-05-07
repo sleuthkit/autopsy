@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -53,8 +52,6 @@ class RecentItems implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-        
         // check if the file exists
         if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){
             // throw an error here

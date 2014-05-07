@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -72,9 +71,6 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
-
         int retval = fc.showOpenDialog((Component) e.getSource());
 
         if (retval == JFileChooser.APPROVE_OPTION) {
