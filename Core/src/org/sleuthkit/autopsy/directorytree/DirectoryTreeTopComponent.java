@@ -139,7 +139,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
-                        // RJCTODO: There does not appear to be a way to refresh the Views subtree
+                        // TODO: Need a way to refresh the Views subtree
                         break;
                 }
             }

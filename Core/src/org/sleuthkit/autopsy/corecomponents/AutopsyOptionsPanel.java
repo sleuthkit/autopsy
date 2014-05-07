@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import javax.swing.DefaultComboBoxModel;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
+/**
+ * Options panel that allow users to set application preferences.
+ */
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
-    
+
     AutopsyOptionsPanel(AutopsyOptionsPanelController controller) {
         initComponents();
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(new Integer[]{1, 2, 4, 8, 16}));
@@ -39,7 +41,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
-        numberOfFileIngestThreadsComboBox.setSelectedItem(IngestManager.getNumberOfFileIngestThreads());
+        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
     }
 
     void store() {
@@ -47,7 +49,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideKnownFilesInDataSourcesTree(dataSourcesHideKnownCB.isSelected());
         UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
-        IngestManager.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
+        UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
     }
 
     boolean valid() {
@@ -161,7 +163,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
