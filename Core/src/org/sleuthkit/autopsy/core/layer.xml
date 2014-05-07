@@ -18,6 +18,13 @@
         <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
+        <file name="org-sleuthkit-autopsy-corecomponents-AutopsyOptionsPanelController.instance">
+            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox.png"/>
+            <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
+            <attr name="keywordsCategory" stringvalue="General"/>
+            <attr name="position" intvalue="1"/>
+        </file>
+        <file name="org-sleuthkit-autopsy-corecomponents-GeneralOptionsPanelController.instance_hidden"/>
     </folder>
     <file name="OptionsExport_hidden"/> <!-- Hide import/export in Options -->
     

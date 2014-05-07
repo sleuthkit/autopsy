@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +24,13 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.logging.Level;
-import java.util.prefs.Preferences;
-
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -50,9 +50,21 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public final class ContentUtils {
 
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
+    private static boolean displayTimesInLocalTime = UserPreferences.displayTimesInLocalTime();
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-    private static boolean displayInLocalTime;
+
+    static {
+        UserPreferences.addChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                if (evt.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
+                    displayTimesInLocalTime = UserPreferences.displayTimesInLocalTime();
+                }
+            }
+        });
+    }
+        
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -110,7 +122,7 @@ public final class ContentUtils {
     public static TimeZone getTimeZone(Content c) {
         
         try {
-            if (!getDisplayInLocalTime()) {
+            if (!shouldDisplayTimesInLocalTime()) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
@@ -362,18 +374,13 @@ public final class ContentUtils {
                                                                         cntnt.getClass().getSimpleName()));
         }
     }
-    /**sets displayInlocalTime value based on button in GeneralPanel.java
+
+    /**
+     * Indicates whether or not times should be displayed using local time.
      * 
-     * @param flag 
+     * @return True or false.
      */
-    public static void setDisplayInLocalTime(boolean flag) {
-    displayInLocalTime = flag;
-    }
-    /** get global timezone setting for displaying time values 
-     *  
-     * @return 
-     */
-    public static boolean getDisplayInLocalTime(){
-        return displayInLocalTime;
+    public static boolean shouldDisplayTimesInLocalTime(){
+        return displayTimesInLocalTime;
     }
 }

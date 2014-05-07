@@ -29,16 +29,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
-import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Manages the execution of ingest jobs.
@@ -46,12 +47,10 @@ import javax.swing.JOptionPane;
 public class IngestManager {
 
     private static final int MAX_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
-    private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads"; //NON-NLS
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
     private static final IngestManager instance = new IngestManager();
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
@@ -82,10 +81,23 @@ public class IngestManager {
      */
     private IngestManager() {
         startDataSourceIngestThread();
-        int numberOfFileIngestThreads = getNumberOfFileIngestThreads();
+        int numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
+        if ((numberOfFileIngestThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
+            numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+            UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
+        }
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
+
+        UserPreferences.addChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                if (evt.getKey().equals(UserPreferences.NUMBER_OF_FILE_INGEST_THREADS)) {
+                    setNumberOfFileIngestThreads();
+                }
+            }
+        });
     }
 
     /**
@@ -116,13 +128,6 @@ public class IngestManager {
     }
 
     /**
-     * Gets the number of file ingest threads the ingest manager will use.
-     */
-    public synchronized static int getNumberOfFileIngestThreads() {
-        return userPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, DEFAULT_NUMBER_OF_FILE_INGEST_THREADS);
-    }
-
-    /**
      * Changes the number of file ingest threads the ingest manager will use to
      * no more than MAX_NUMBER_OF_FILE_INGEST_THREADS and no less than
      * MIN_NUMBER_OF_FILE_INGEST_THREADS. Out of range requests are converted to
@@ -130,12 +135,12 @@ public class IngestManager {
      *
      * @param numberOfThreads The desired number of file ingest threads.
      */
-    public synchronized static void setNumberOfFileIngestThreads(int numberOfThreads) {
+    public synchronized static void setNumberOfFileIngestThreads() {
+        int numberOfThreads = UserPreferences.numberOfFileIngestThreads();
         if ((numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
             numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+            UserPreferences.setNumberOfFileIngestThreads(numberOfThreads);
         }
-        userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
-
         if (instance.fileIngestThreads.size() != numberOfThreads) {
             if (instance.fileIngestThreads.size() > numberOfThreads) {
                 Long[] threadIds = instance.fileIngestThreads.keySet().toArray(new Long[instance.fileIngestThreads.size()]);
