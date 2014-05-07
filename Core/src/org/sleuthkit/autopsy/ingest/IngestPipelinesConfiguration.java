@@ -89,7 +89,7 @@ final class IngestPipelinesConfiguration {
             PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, overWrite);
 
             String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINES_CONFIG_FILE;
-            Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath, PIPELINES_CONFIG_FILE_XSD);
+            Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath);
             if (doc == null) {
                 return;
             }
