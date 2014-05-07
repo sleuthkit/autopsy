@@ -220,7 +220,7 @@ public class IngestManager {
             } catch (InterruptedException | ExecutionException ex) {
                 // This should never happen, something is awry, but everything
                 // should be o.k. anyway.
-                logger.log(Level.SEVERE, "Unexpected thread interrupt", ex);
+                logger.log(Level.SEVERE, "Unexpected thread interrupt", ex); //NON-NLS
             }
         }
 

@@ -198,7 +198,7 @@ final class IngestJob {
 
     private void logIngestModuleErrors(List<IngestModuleError> errors) {
         for (IngestModuleError error : errors) {
-            logger.log(Level.SEVERE, error.getModuleDisplayName() + " experienced an error", error.getModuleError());
+            logger.log(Level.SEVERE, error.getModuleDisplayName() + " experienced an error", error.getModuleError()); //NON-NLS
         }
     }
 
