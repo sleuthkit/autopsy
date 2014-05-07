@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,7 @@ class FileExtMismatchXML {
         
         try
         {
-            final Document doc = XMLUtil.loadDoc(FileExtMismatchXML.class, filePath, XSDFILE);
+            final Document doc = XMLUtil.loadDoc(FileExtMismatchXML.class, filePath);
             if (doc == null) {
                 return null;
             }

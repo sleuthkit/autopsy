@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,114 +45,120 @@ import javax.xml.validation.Validator;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-/** 
+/**
  * XML Utilities
- * 
+ *
  * This class provides basic utilities for working with XML files, such as
- *  -Validating XML files against a given schema
- *  -Saving documents to disk
- *  -Loading documents from disk
- * 
+ * -Validating XML files against a given schema -Saving documents to disk
+ * -Loading documents from disk
  */
-
 public class XMLUtil {
+
     /**
      * Utility to validate XML files against pre-defined schema files.
-     * 
-     *  The schema files are extracted automatically when this function is called, the XML being validated is not.
-     *  Be sure the XML file is already extracted otherwise it will return false.
+     *
+     * The schema files are extracted automatically when this function is
+     * called, the XML being validated is not. Be sure the XML file is already
+     * extracted otherwise it will return false.
+     *
      * @param xmlfile The XML file to validate, in DOMSource format
      * @param clazz class frm package to extract schema file from
-     * @param schemaFile The file name of the schema to validate against, must exist as a resource in the same package as where this function is being called.
-     * 
-     * For example usages, please see KeywordSearchListsXML, HashDbXML, or IngestModuleLoader.
-     * 
+     * @param schemaFile The file name of the schema to validate against, must
+     * exist as a resource in the same package as where this function is being
+     * called.
+     *
+     * For example usages, please see KeywordSearchListsXML, HashDbXML, or
+     * IngestModuleLoader.
+     *
      */
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
-      try{
-        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
-        File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
-        SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        try{
-        Schema schema = schm.newSchema(schemaLoc);
-        Validator validator = schema.newValidator();
-        DOMResult result = new DOMResult();
-        validator.validate(xmlfile, result);
-        return true;
-        }
-        catch(SAXException e){
-            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to validate XML file.", e); //NON-NLS
-            return false;
-        }
-      }
-      catch(IOException e){
-           Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+schemaFile+"]", e); //NON-NLS
+        try {
+            PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
+            File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
+            SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            try {
+                Schema schema = schm.newSchema(schemaLoc);
+                Validator validator = schema.newValidator();
+                DOMResult result = new DOMResult();
+                validator.validate(xmlfile, result);
+                return true;
+            } catch (SAXException e) {
+                Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to validate XML file.", e); //NON-NLS
+                return false;
+            }
+        } catch (IOException e) {
+            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type [" + schemaFile + "]", e); //NON-NLS
             return false;
         }
     }
-    
+
     /**
      * Evaluates XML files against an XSD.
-     * 
-     *  The schema files are extracted automatically when this function is called, the XML being validated is not.
-     *  Be sure the XML file is already extracted otherwise it will return false.
+     *
+     * The schema files are extracted automatically when this function is
+     * called, the XML being validated is not. Be sure the XML file is already
+     * extracted otherwise it will return false.
+     *
      * @param doc The XML DOM to validate
      * @param clazz class from package to extract schema from
-     * @param type The file name of the schema to validate against, must exist as a resource in the same package as where this function is being called
-     * 
-     * For example usages, please see KeywordSearchListsXML, HashDbXML, or IngestModuleLoader.
-     * 
+     * @param type The file name of the schema to validate against, must exist
+     * as a resource in the same package as where this function is being called
+     *
+     * For example usages, please see KeywordSearchListsXML, HashDbXML, or
+     * IngestModuleLoader.
+     *
      */
-    public static <T> boolean xmlIsValid(Document doc, Class<T> clazz, String type){
-           DOMSource dms = new DOMSource(doc);
-           return xmlIsValid(dms, clazz, type);
+    public static <T> boolean xmlIsValid(Document doc, Class<T> clazz, String type) {
+        DOMSource dms = new DOMSource(doc);
+        return xmlIsValid(dms, clazz, type);
     }
-    
-    
-    
-    /** 
+
+    /**
      * Loads XML files from disk
-     * 
+     *
      * @param clazz the class this method is invoked from
      * @param xmlPath the full path to the file to load
-     * @param xsdPath the full path to the file to validate against
-     * 
      */
-    public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
-        DocumentBuilderFactory builderFactory =
-                DocumentBuilderFactory.newInstance();
+    public static <T> Document loadDoc(Class<T> clazz, String xmlPath) {
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = null;
-
         try {
             DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            ret = builder.parse(
-                    new FileInputStream(xmlPath));
+            ret = builder.parse(new FileInputStream(xmlPath));
         } catch (ParserConfigurationException e) {
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't initialize parser.", e); //NON-NLS
-
         } catch (SAXException e) {
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't parse XML.", e); //NON-NLS
-
         } catch (IOException e) {
             //error reading file
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't read file.", e); //NON-NLS
-
         }
-        if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: could not validate against [" + xsdPath + "], results may not be accurate"); //NON-NLS
-        }
-
         return ret;
     }
-    
-    /** 
+
+    /**
+     * Loads XML files from disk
+     *
+     * @param clazz the class this method is invoked from
+     * @param xmlPath the full path to the file to load
+     * @param xsdPath the full path to the file to validate against
+     */
+    public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        Document ret = loadDoc(clazz, xmlPath);
+        if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
+            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Error loading XML file: could not validate against [{0}], results may not be accurate", xsdPath); //NON-NLS
+        }
+        return ret;
+    }
+
+    /**
      * Saves XML files to disk
-     * 
+     *
      * @param clazz the class this method is invoked from
      * @param xmlPath the full path to save the XML to
      * @param encoding to encoding, such as "UTF-8", to encode the file with
      * @param doc the document to save
-     * 
      */
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
@@ -166,11 +172,11 @@ public class XMLUtil {
             xformer.setOutputProperty(OutputKeys.STANDALONE, "yes"); //NON-NLS
             xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
             File file = new File(xmlPath);
-            FileOutputStream stream = new FileOutputStream(file);
-            Result out = new StreamResult(new OutputStreamWriter(stream, encoding));
-            xformer.transform(new DOMSource(doc), out);
-            stream.flush();
-            stream.close();
+            try (FileOutputStream stream = new FileOutputStream(file)) {
+                Result out = new StreamResult(new OutputStreamWriter(stream, encoding));
+                xformer.transform(new DOMSource(doc), out);
+                stream.flush();
+            }
             success = true;
 
         } catch (UnsupportedEncodingException e) {
@@ -186,5 +192,4 @@ public class XMLUtil {
         }
         return success;
     }
-    
 }
