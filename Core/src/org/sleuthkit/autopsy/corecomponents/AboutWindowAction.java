@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import org.openide.util.NbBundle;
 import org.netbeans.core.actions.AboutAction;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Action to open custom implementation of the "About" window from the Help menu.
@@ -32,8 +31,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public void performAction() {
-        Logger.noteAction(this.getClass());
-
         AboutWindowPanel pip = new AboutWindowPanel();
         DialogDescriptor descriptor = new DialogDescriptor(
                 pip,

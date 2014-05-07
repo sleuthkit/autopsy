@@ -22,151 +22,104 @@ import java.io.IOException;
 import java.util.logging.*;
 
 /**
- * Custom Autopsy logger wrapper over java.util.logging.Logger with default file
- * streams logging to autopsy.log (general high level messages),
- * autopsy_traces.log (also including exception traces). In development build,
- * those are also redirected to console / messages log.
- *
- * Contains a utility method to log user actions to autopsy_actions.log via
- * noteAction()
- *
- * Use like java.util.logging.Logger API, get a
- * org.sleuthkit.autopsy.coreutils.Logger handle using factory method
- * org.sleuthkit.autopsy.coreutils.Logger.getLogger(String name) passing
- * component/module/class name.
- *
- * If logging behavior is to be customized, you can add or remove handlers or
- * filters from the provided Logger object.
+ * Autopsy specialization of the Java Logger class with custom file handlers.
  */
-public class Logger extends java.util.logging.Logger {
+public final class Logger extends java.util.logging.Logger {
 
     private static final String LOG_ENCODING = PlatformUtil.getLogFileEncoding();
     private static final String LOG_DIR = PlatformUtil.getLogDirectory();
-    static final int LOG_SIZE = 0; // in bytes, zero is unlimited
-    static final int LOG_FILE_COUNT = 10;
-    //File Handlers which point to the output logs
-    private static final FileHandler traces = initTraces();
-    private static final FileHandler normal = initNormal();
+    private static final int LOG_SIZE = 0; // In bytes, zero is unlimited
+    private static final int LOG_FILE_COUNT = 10;
+    private static final String LOG_WITHOUT_STACK_TRACES = "autopsy.log"; //NON-NLS
+    private static final String LOG_WITH_STACK_TRACES = "autopsy_traces.log"; //NON-NLS
+    private static final FileHandler userFriendlyLogFile = createFileHandler(LOG_WITHOUT_STACK_TRACES);
+    private static final FileHandler developersLogFile = createFileHandler(LOG_WITH_STACK_TRACES);
     private static final Handler console = new java.util.logging.ConsoleHandler();
-    private static final java.util.logging.Logger actionsLogger = initActionsLogger();
-    /**
-     * Main messages log file name
-     */
-    public static final String messagesLog = "autopsy.log"; //NON-NLS
-    /**
-     * Detailed exception trace log file name
-     */
-    public static final String tracesLog = "autopsy_traces.log"; //NON-NLS
-    /**
-     * Action logger file name
-     */
-    public static final String actionsLog = "autopsy_actions.log"; //NON-NLS
 
-    /**
-     * Static blocks to get around compile errors such as "variable might not
-     * have been initialized
-     *
-     */
-    //<editor-fold defaultstate="visible" desc="static block initializers">
-    private static FileHandler initTraces() {
-
+    private static FileHandler createFileHandler(String fileName) {
         try {
-
-            FileHandler f = new FileHandler(LOG_DIR + tracesLog, LOG_SIZE, LOG_FILE_COUNT);
+            FileHandler f = new FileHandler(LOG_DIR + fileName, LOG_SIZE, LOG_FILE_COUNT);
             f.setEncoding(LOG_ENCODING);
             f.setFormatter(new SimpleFormatter());
             return f;
         } catch (IOException e) {
-            throw new RuntimeException("Error initializing traces logger", e); //NON-NLS
+            throw new RuntimeException("Error initializing " + fileName + " file handler", e); //NON-NLS
         }
-    }
-
-    private static FileHandler initNormal() {
-        try {
-            FileHandler f = new FileHandler(LOG_DIR + messagesLog, LOG_SIZE, LOG_FILE_COUNT);
-            f.setEncoding(LOG_ENCODING);
-            f.setFormatter(new SimpleFormatter());
-            return f;
-        } catch (IOException e) {
-            throw new RuntimeException("Error initializing normal logger", e); //NON-NLS
-        }
-    }
-
-    private static java.util.logging.Logger initActionsLogger() {
-        try {
-            FileHandler f = new FileHandler(LOG_DIR + actionsLog, LOG_SIZE, LOG_FILE_COUNT);
-            f.setEncoding(LOG_ENCODING);
-            f.setFormatter(new SimpleFormatter());
-            java.util.logging.Logger _actionsLogger = java.util.logging.Logger.getLogger("Actions"); //NON-NLS
-            _actionsLogger.setUseParentHandlers(false);
-            _actionsLogger.addHandler(f);
-            _actionsLogger.addHandler(console);
-            return _actionsLogger;
-        } catch (IOException e) {
-            throw new RuntimeException("Error initializing actions logger", e); //NON-NLS
-        }
-    }
-
-    //</editor-fold>
-    private Logger(java.util.logging.Logger log) {
-        super(log.getName(), log.getResourceBundleName());
-        //do forward to messages, so that IDE window shows them
-        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
-            addHandler(console);
-        }
-        setUseParentHandlers(false); //do not forward to parent logger, sharing static handlers anyway
-        //addHandler(new AutopsyExceptionHandler());
-        addHandler(normal);
-        addHandler(traces);
-    }
-
-    /**
-     * Log an action to autopsy_actions.log
-     *
-     * @param actionClass class where user triggered action occurs
-     */
-    public static void noteAction(Class<?> actionClass) {
-        actionsLogger.log(Level.INFO, "Action performed: {0}", actionClass.getName()); //NON-NLS
     }
 
     /**
      * Factory method to retrieve a org.sleuthkit.autopsy.coreutils.Logger
-     * instance The logger logs by default to autopsy.log and
-     * autopsy_traces.log. Add/remove handlers if the desired behavior should be
-     * different.
+     * instance derived from java.util.logging.Logger. Hides the base class
+     * factory method.
      *
-     * @param name ID for the logger or empty string for a root logger
+     * @param name A name for the logger. This should be a dot-separated name
+     * and should normally be based on the package name or class name.
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name) {
-        Logger l = new Logger(java.util.logging.Logger.getLogger(name));
-        return l;
+        return new Logger(java.util.logging.Logger.getLogger(name));
     }
 
     /**
      * Factory method to retrieve a org.sleuthkit.autopsy.coreutils.Logger
-     * instance
+     * instance derived from java.util.logging.Logger. Hides the base class
+     * factory method.
      *
-     * @param name ID for the logger or empty string for a root logger
-     * @param resourceBundleName bundle name associated with the logger
+     * @param name A name for the logger. This should be a dot-separated name
+     * and should normally be based on the package name or class name.
+     * @param resourceBundleName - name of ResourceBundle to be used for
+     * localizing messages for this logger. May be null if none of the messages
+     * require localization.
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name, String resourceBundleName) {
-        return new Logger(Logger.getLogger(name, resourceBundleName));
+        return new Logger(java.util.logging.Logger.getLogger(name));
+    }
+
+    private Logger(java.util.logging.Logger log) {
+        super(log.getName(), log.getResourceBundleName());
+        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            addHandler(console);
+        }
+        setUseParentHandlers(false);
+        addHandler(userFriendlyLogFile);
+        addHandler(developersLogFile);
     }
 
     @Override
     public void log(Level level, String message, Throwable thrown) {
-        super.log(level, "{0}\nException:  {1}", new Object[]{message, thrown.toString()}); //NON-NLS
-        removeHandler(normal);
+        logUserFriendlyOnly(level, message, thrown);
+        removeHandler(userFriendlyLogFile);
         super.log(level, message, thrown);
-        addHandler(normal);
+        addHandler(userFriendlyLogFile);
     }
 
     @Override
+    public void logp(Level level, String sourceClass, String sourceMethod, String message, Throwable thrown) {
+        logUserFriendlyOnly(level, message, thrown);
+        removeHandler(userFriendlyLogFile);
+        super.logp(level, sourceClass, sourceMethod, message, thrown);
+        addHandler(userFriendlyLogFile);
+    }
+
+    @Override
+    public void logrb(Level level, String sourceClass, String sourceMethod, String bundleName, String message, Throwable thrown) {
+        logUserFriendlyOnly(level, message, thrown);
+        removeHandler(userFriendlyLogFile);
+        super.logrb(level, sourceClass, sourceMethod, bundleName, message, thrown);
+        addHandler(userFriendlyLogFile);
+    }
+
+    private void logUserFriendlyOnly(Level level, String message, Throwable thrown) {
+        removeHandler(developersLogFile);
+        super.log(level, "{0}\nException:  {1}", new Object[]{message, thrown.toString()}); //NON-NLS
+        addHandler(developersLogFile);        
+    }
+    
+    @Override
     public void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
-        removeHandler(normal);
+        removeHandler(userFriendlyLogFile);
         super.throwing(sourceClass, sourceMethod, thrown);
-        addHandler(normal);
+        addHandler(userFriendlyLogFile);
     }
 }
