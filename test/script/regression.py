@@ -221,6 +221,8 @@ class TestRunner(object):
                if f.endswith("Diff.txt"):
                   Errors.add_errors_out(os.path.join(test_data.output_path, f))
             Errors.add_errors_out(test_data.common_log_path)
+            if os.path.isfile(os.path.join(test_data.output_path, "logs", "autopsy_traces.log.0")):
+                Errors.add_errors_out(os.path.join(test_data.output_path, "logs", "autopsy_traces.log.0"))
         return logres
 
     def _extract_gold(test_data):
@@ -842,7 +844,6 @@ class TestResultsDiffer(object):
         output_list = TestResultsDiffer._split(outputHtml, 50)
         if not len(gold_list) == len(output_list):
             ex = (len(gold_list), len(output_list))
-            print("846 ex is " + str(ex))
             return ex
         else:
             return (0, 0)
@@ -1170,6 +1171,8 @@ class Logs(object):
             rep_path = make_local_path(test_data.main_config.output_dir)
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
+                if file.startswith('autopsy') and file != "autopsy_traces.log.0":
+                    continue
                 log = codecs.open(make_path(logs_path, file), "r", "utf_8")
                 for line in log:
                     line = line.replace(rep_path, "test_data")
@@ -1821,9 +1824,6 @@ def setupAttachments(attachments, test_config):
        attachments: a listof_String, the files to be moved
        test_config: TestConfiguration, used to determine where to move the files to
     """
-    call = ['pwd']
-    subprocess.call(call)
-
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:
