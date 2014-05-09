@@ -190,7 +190,7 @@ import org.openide.util.NbBundle;
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
+        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.titleLabel.text")); // NOI18N
 
         progressBar.setIndeterminate(true);
@@ -279,7 +279,7 @@ import org.openide.util.NbBundle;
     protected javax.swing.JTextArea progressTextArea;
     protected javax.swing.JLabel statusLabel;
     protected javax.swing.JLabel subTitle1Label;
-    protected javax.swing.JLabel titleLabel;
+    private javax.swing.JLabel titleLabel;
     protected javax.swing.JButton viewLogButton;
     // End of variables declaration//GEN-END:variables
 }
