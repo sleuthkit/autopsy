@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.ingest.IngestJobLauncher;
+import org.sleuthkit.autopsy.ingest.IngestJobConfigurator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;

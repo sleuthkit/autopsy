@@ -69,7 +69,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         // Listen to the ingest modules to refresh the enabled/disabled state of 
         // the components in sync with file ingest.
-        IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
+        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (isIngestJobEvent(evt)) {

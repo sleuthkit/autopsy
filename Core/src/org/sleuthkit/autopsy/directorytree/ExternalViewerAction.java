@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-
 
 /**
  * Extracts a File object to a temporary file in the case directory, and then
@@ -70,8 +69,6 @@ public class ExternalViewerAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         // Get the temp folder path of the case
         String tempPath = Case.getCurrentCase().getTempDirectory();
         tempPath = tempPath + File.separator + this.fileObject.getName();

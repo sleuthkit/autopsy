@@ -45,11 +45,11 @@ public final class RunIngestModulesDialog extends JDialog {
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private List<Content> dataSources = new ArrayList<>();
-    private IngestJobLauncher ingestJobLauncher;
+    private IngestJobConfigurator ingestJobLauncher;
 
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestJobLauncher = new IngestJobLauncher(RunIngestModulesDialog.class.getCanonicalName());
+        ingestJobLauncher = new IngestJobConfigurator(RunIngestModulesDialog.class.getCanonicalName());
         List<String> messages = ingestJobLauncher.getIngestJobConfigWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();

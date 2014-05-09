@@ -95,7 +95,7 @@ public final class IngestServices {
      * artifact data
      */
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        IngestManager.fireModuleDataEvent(moduleDataEvent);
+        IngestManager.getInstance().fireIngestModuleDataEvent(moduleDataEvent);
     }
 
     /**
@@ -107,7 +107,7 @@ public final class IngestServices {
      * changed
      */
     public void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        IngestManager.fireModuleContentEvent(moduleContentEvent);
+        IngestManager.getInstance().fireIngestModuleContentEvent(moduleContentEvent);
     }
 
     /**

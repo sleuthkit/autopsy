@@ -44,7 +44,7 @@ final class IngestModuleFactoryLoader {
         }
         return instance;
     }
-    
+
     synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         // Discover the ingest module factories, making sure that there are no
         // duplicate module display names. The duplicates requirement could be
@@ -58,30 +58,31 @@ final class IngestModuleFactoryLoader {
         Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
         for (IngestModuleFactory factory : factories) {
             logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
+            moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
+            moduleDisplayNames.add(factory.getModuleDisplayName());
             if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
-                moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
-                moduleDisplayNames.add(factory.getModuleDisplayName());
-            } else {
                 // Not popping up a message box to keep this class UI-indepdent.
-                logger.log(Level.SEVERE, "Found duplicate ingest module display name, discarding ingest module factory (name = {0}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
+                logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
             }
         }
-        
+
         // Kick out the sample modules factory.
         moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory");
-        
+
         // Do the core ingest module ordering hack described above.
-        ArrayList<String> coreModuleOrdering = new ArrayList<String>() {{
-            add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory");
-            add("org.sleuthkit.autopsy.ewfverify.EwfVerifierModuleFactory");
-            add("org.sleuthkit.autopsy.hashdatabase.HashLookupModuleFactory");
-            add("org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory");
-            add("org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory");
-            add("org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory");
-            add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory");
-            add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory");
-            add("org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory");
-        }};
+        ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
+            {
+                add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory");
+                add("org.sleuthkit.autopsy.ewfverify.EwfVerifierModuleFactory");
+                add("org.sleuthkit.autopsy.hashdatabase.HashLookupModuleFactory");
+                add("org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory");
+                add("org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory");
+                add("org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory");
+                add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory");
+                add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory");
+                add("org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory");
+            }
+        };
         List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();
         for (String className : coreModuleOrdering) {
             IngestModuleFactory coreFactory = moduleFactoriesByClass.remove(className);
@@ -89,12 +90,12 @@ final class IngestModuleFactoryLoader {
                 orderedModuleFactories.add(coreFactory);
             }
         }
-        
+
         // Add in any non-core factories discovered. Order is not guaranteed!
         for (IngestModuleFactory nonCoreFactory : moduleFactoriesByClass.values()) {
             orderedModuleFactories.add(nonCoreFactory);
         }
-        
+
         return orderedModuleFactories;
     }
 }

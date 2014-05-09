@@ -60,7 +60,7 @@ public final class IngestJobContext {
      */
     public void addFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            IngestManager.getInstance().addFileToIngestJob(ingestJob.getId(), file);
+            IngestScheduler.getInstance().addFileToIngestJob(ingestJob, file);
         }
     }
 }

@@ -554,7 +554,7 @@ public class HashDbManager implements PropertyChangeListener {
         boolean updatedSchema = false;
 
         // Open the XML document that implements the configuration file.
-        final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath, XSD_FILE_NAME);
+        final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath);
         if (doc == null) {
             return false;
         }

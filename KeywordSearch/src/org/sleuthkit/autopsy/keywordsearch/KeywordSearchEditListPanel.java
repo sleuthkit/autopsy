@@ -126,7 +126,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         setButtonStates();
 
-        IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
+        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();

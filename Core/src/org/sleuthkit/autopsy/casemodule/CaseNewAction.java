@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,8 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The action to create a new case. This action class is always enabled.
@@ -41,8 +39,6 @@ public final class CaseNewAction implements CaseNewActionInterface {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         wizard.performAction();
     }
 }

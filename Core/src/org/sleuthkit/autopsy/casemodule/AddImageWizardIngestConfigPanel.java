@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 
-import org.sleuthkit.autopsy.ingest.IngestJobLauncher;
+import org.sleuthkit.autopsy.ingest.IngestJobConfigurator;
 import org.openide.util.NbBundle;
 import java.awt.Color;
 import java.awt.Component;
@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
-    private IngestJobLauncher ingestConfig;
+    private IngestJobConfigurator ingestConfig;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -73,7 +73,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
         
-        ingestConfig = new IngestJobLauncher(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+        ingestConfig = new IngestJobConfigurator(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         List<String> messages = ingestConfig.getIngestJobConfigWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();

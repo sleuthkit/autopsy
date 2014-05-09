@@ -43,8 +43,8 @@ class TskDbDiff(object):
         self.output_dir = output_dir
         self.gold_bb_dump = gold_bb_dump
         self.gold_dump = gold_dump
-        self._generate_gold_dump = gold_dump is None
-        self._generate_gold_bb_dump = gold_bb_dump is None
+        self._generate_gold_dump = True
+        self._generate_gold_bb_dump = True
         self._bb_dump_diff = ""
         self._dump_diff = ""
         self._bb_dump = ""
@@ -244,6 +244,10 @@ class TskDbDiff(object):
             for line in conn.iterdump():
                 line = replace_id(line, id_path_table)
                 db_log.write('%s\n' % line)
+            # Now sort the file    
+            
+        srtcmdlst = ["sort", dump_file, "-o", dump_file]
+        subprocess.call(srtcmdlst)
 
         conn.close()
         # cleanup the backup
@@ -275,15 +279,38 @@ def replace_id(line, table):
         line: a String, the line to remove the object id from.
         table: a map from object ids to file paths.
     """
-    index = line.find('INSERT INTO "tsk_files"')
-    if (index != -1):
-        # take the portion of the string between the open parenthesis and the comma (ie, the object id)
-        obj_id = line[line.find('(') + 1 : line.find(',')]
-        # takes everything from the beginning of the string up to the opening
-        # parenthesis, the path associated with the object id, and everything after 
-        # the first comma, and concactenate it
-        newLine = (line[:line.find('('):] + '(' + table[int(obj_id)] + line[line.find(','):])
+
+    files_index = line.find('INSERT INTO "tsk_files"')
+    path_index = line.find('INSERT INTO "tsk_files_path"')
+    object_index = line.find('INSERT INTO "tsk_objects"')
+    parens = line[line.find('(') + 1 : line.find(')')]
+    fields_list = parens.replace(" ", "").split(',')
+    
+    if (files_index != -1):
+        obj_id = fields_list[0]
+        path = table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_files" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
         return newLine
+    
+    elif (path_index != -1):
+        obj_id = fields_list[0]
+        path = table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    
+    elif (object_index != -1):
+        obj_id = fields_list[0]
+        parent_id = fields_list[1]
+    
+        try:
+             path = table[int(obj_id)]
+             parent_path = table[int(parent_id)]
+             newLine = ('INSERT INTO "tsk_objects" VALUES(' + path + ', ' + parent_path + ', '.join(fields_list[2:]) + ');') 
+             return newLine
+        except Exception as e: 
+            # objects table has things that aren't files. if lookup fails, don't replace anything.
+            return line
+    
     else:
         return line
 
@@ -308,7 +335,7 @@ def main():
         print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
         sys.exit()
 
-    db_diff = TskDbDiff(output_db, gold_db, output_dir=".")
+    db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
     dump_passed, bb_dump_passed = db_diff.run_diff()
 
     if dump_passed and bb_dump_passed:

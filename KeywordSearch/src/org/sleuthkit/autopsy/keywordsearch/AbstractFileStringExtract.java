@@ -44,12 +44,11 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     private static final int BOM_LEN = 0;  //disabled prepending of BOM
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
-    private final byte[] stringChunkBuf = new byte[(int) MAX_STRING_CHUNK_SIZE];
     private KeywordSearchIngestModule module;
     private AbstractFile sourceFile;
     private int numChunks = 0;
-    private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
-    private Map<String, String> extractOptions = new HashMap<String, String>();   
+    private final List<SCRIPT> extractScripts = new ArrayList<>();
+    private Map<String, String> extractOptions = new HashMap<>();   
 
     //disabled prepending of BOM
     //static {
@@ -73,7 +72,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
 
     @Override
     public List<SCRIPT> getScripts() {
-        return new ArrayList<SCRIPT>(extractScripts);
+        return new ArrayList<>(extractScripts);
     }
 
     @Override
@@ -114,7 +113,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             return true;
         }
 
-        InputStream stringStream = null;
+        InputStream stringStream;
         //check which extract stream to use
         if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)) {
             //optimal for english, english only
@@ -129,7 +128,8 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             success = true;
             //break input stream into chunks 
 
-            long readSize = 0;
+            final byte[] stringChunkBuf = new byte[(int) MAX_STRING_CHUNK_SIZE];
+            long readSize;
             while ((readSize = stringStream.read(stringChunkBuf, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
                 //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
                 //debug.write(stringChunkBuf, 0, (int)readSize);
