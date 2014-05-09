@@ -22,7 +22,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -119,8 +118,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
         @Override
-        public ExtractedContentNode visit(ExtractedContent ec) {
-            return new ExtractedContentNode(ec.getSleuthkitCase());
+        public ExtractedContent.RootNode visit(ExtractedContent ec) {
+            return ec.new RootNode(ec.getSleuthkitCase());
         }
 
         @Override
@@ -145,27 +144,27 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(KeywordHits kh) {
-            return kh.new KeywordHitsRootNode();
+            return kh.new RootNode();
         }
 
         @Override
         public AbstractNode visit(HashsetHits hh) {
-            return hh.new HashsetHitsRootNode();
+            return hh.new RootNode();
         }
 
         @Override
         public AbstractNode visit(InterestingHits ih) {
-            return ih.new InterestingHitsRootNode();
+            return ih.new RootNode();
         }
 
         @Override
         public AbstractNode visit(EmailExtracted ee) {
-            return ee.new EmailExtractedRootNode();
+            return ee.new RootNode();
         }
 
         @Override
-        public AbstractNode visit(TagsNodeKey tagsNodeKey) {
-            return new TagsNode();
+        public AbstractNode visit(Tags tagsNodeKey) {
+            return tagsNodeKey.new RootNode();
         }
 
         @Override
