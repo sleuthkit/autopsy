@@ -20,11 +20,8 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
