@@ -22,6 +22,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -75,12 +77,18 @@ public class KeywordHits implements AutopsyVisitableItem {
             update();
         }
         
-        Set<String> getListNames() {
-            return topLevelMap.keySet();
+        List<String> getListNames() {
+            List <String> names = new ArrayList<>(topLevelMap.keySet());
+            // this causes the "Single ..." terms to be in the middle of the results, 
+            // which is wierd.  Make a custom comparator or do something else to maek them on top
+            //Collections.sort(names);
+            return names;
         }
         
-        Set<String> getKeywords(String listName) {
-            return topLevelMap.get(listName).keySet();
+        List<String> getKeywords(String listName) {
+            List <String> keywords = new ArrayList<>(topLevelMap.get(listName).keySet());
+            Collections.sort(keywords);
+            return keywords;
         }
         
         Set<Long> getArtifactIds(String listName, String keyword) {
@@ -97,7 +105,6 @@ public class KeywordHits implements AutopsyVisitableItem {
             // Map from String (regex keyword) to set<long> (artifact ids);
             Map<String, Set<Long>> regexMap = new LinkedHashMap<>();
         
-            
             // top-level nodes
             topLevelMap.put(SIMPLE_LITERAL_SEARCH, literalMap);
             topLevelMap.put(SIMPLE_REGEX_SEARCH, regexMap);
@@ -244,6 +251,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         protected void addNotify() {
             IngestManager.addPropertyChangeListener(pcl);
+            keywordResults.update();
             keywordResults.addObserver(this);
         }
 

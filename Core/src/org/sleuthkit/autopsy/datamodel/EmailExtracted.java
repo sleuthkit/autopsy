@@ -297,6 +297,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         protected void addNotify() {
             IngestManager.addPropertyChangeListener(pcl);
+            emailResults.update();
             emailResults.addObserver(this);
         }
 

@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -48,15 +52,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
      * or deleted outside of an actionPerformed() call.
      */
     protected void refreshDirectoryTree() {
-        // The way the "directory tree" currently works, a new tags sub-tree 
-        // needs to be made to reflect the results of invoking tag Actions. The 
-        // way to do this is to call DirectoryTreeTopComponent.refreshResultsTree(), 
-        // which calls RootContentChildren.refreshKeys(BlackboardArtifact.ARTIFACT_TYPE... types) 
-        // for the RootContentChildren object that is the child factory for the 
-        // ResultsNode that is the root of the tags sub-tree. There is a switch 
-        // statement in RootContentChildren.refreshKeys() that maps both
-        // BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE and BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT
-        // to making a call to refreshKey(TagsNodeKey).
-        DirectoryTreeTopComponent.findInstance().refreshResultsTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
+        
+        /* Note: this is a hack.  In an ideal world, TagsManager would fire events so 
+         * that the directory tree would refresh. But, we haven't had a chance to add
+         * that so, we fire these events and the tree refreshes based on them. 
+         */
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE));        
     }        
 }

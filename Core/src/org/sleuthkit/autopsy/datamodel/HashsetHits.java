@@ -22,6 +22,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,8 +83,10 @@ public class HashsetHits implements AutopsyVisitableItem {
             update();
         }
         
-        Set<String> getSetNames() {
-            return hashSetHitsMap.keySet();
+        List<String> getSetNames() {
+            List<String> names = new ArrayList<>(hashSetHitsMap.keySet());
+            Collections.sort(names);
+            return names;
         }
         
         Set<Long> getArtifactIds(String hashSetName) {
@@ -193,6 +198,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         @Override
         protected void addNotify() {
             IngestManager.addPropertyChangeListener(pcl);
+            hashsetResults.update();
             hashsetResults.addObserver(this);
         }
 
@@ -227,8 +233,8 @@ public class HashsetHits implements AutopsyVisitableItem {
         public HashsetNameNode(String hashSetName) {
             super(Children.create(new HitFactory(hashSetName), true), Lookups.singleton(hashSetName));
             super.setName(hashSetName);
-            super.setDisplayName(hashSetName + " (0)");
             this.hashSetName = hashSetName;
+            updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
             hashsetResults.addObserver(this);
         }
@@ -236,7 +242,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         /**
          * Update the count in the display name
          */
-        private void updateName() {
+        private void updateDisplayName() {
             super.setDisplayName(hashSetName + " (" + hashsetResults.getArtifactIds(hashSetName).size() + ")");  
         }
 
@@ -269,7 +275,7 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            updateName();
+            updateDisplayName();
         }
     }
 

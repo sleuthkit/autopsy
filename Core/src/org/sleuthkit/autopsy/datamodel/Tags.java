@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -114,7 +115,7 @@ public class Tags implements AutopsyVisitableItem {
         }
     }
 
-    private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> {
+    private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -135,17 +136,22 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected void addNotify() {
             IngestManager.addPropertyChangeListener(pcl);
+            tagResults.update();
+            tagResults.addObserver(this);
         }
 
         @Override
         protected void removeNotify() {
             IngestManager.removePropertyChangeListener(pcl);
+            tagResults.deleteObserver(this);
         }
 
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {
-                keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse());
+                List<TagName> tagNamesInUse = Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse();
+                Collections.sort(tagNamesInUse);
+                keys.addAll(tagNamesInUse);
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
@@ -155,6 +161,11 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(TagName key) {
             return new TagNameNode(key);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 
