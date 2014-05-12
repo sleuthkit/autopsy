@@ -76,7 +76,7 @@ import javax.swing.JPanel;
 
         subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.subtitleLabel.text")); // NOI18N
 
-        configPanel.setPreferredSize(new java.awt.Dimension(569, 255));
+        configPanel.setPreferredSize(new java.awt.Dimension(569, 400));
 
         javax.swing.GroupLayout configPanelLayout = new javax.swing.GroupLayout(configPanel);
         configPanel.setLayout(configPanelLayout);

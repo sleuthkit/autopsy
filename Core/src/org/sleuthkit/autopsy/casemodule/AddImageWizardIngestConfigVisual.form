@@ -52,7 +52,7 @@
     <Container class="javax.swing.JPanel" name="configPanel">
       <Properties>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[569, 255]"/>
+          <Dimension value="[569, 400]"/>
         </Property>
       </Properties>
 
