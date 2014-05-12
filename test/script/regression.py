@@ -842,7 +842,7 @@ class TestResultsDiffer(object):
         output_list = TestResultsDiffer._split(outputHtml, 50)
         if not len(gold_list) == len(output_list):
             ex = (len(gold_list), len(output_list))
-            print("846 ex is " + str(ex)) 
+            print("846 ex is " + str(ex))
             return ex
         else:
             return (0, 0)
@@ -1823,7 +1823,7 @@ def setupAttachments(attachments, test_config):
     """
     call = ['pwd']
     subprocess.call(call)
-    
+   
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:
