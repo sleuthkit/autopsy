@@ -842,6 +842,8 @@ class TestResultsDiffer(object):
         output_list = TestResultsDiffer._split(outputHtml, 50)
         if not len(gold_list) == len(output_list):
             ex = (len(gold_list), len(output_list))
+            print("846 ex is " + str(ex)) 
+            
             return ex
         else:
             return (0, 0)
@@ -1178,11 +1180,6 @@ class Logs(object):
                         common_log.write(file +": " +  line)
                     elif line.startswith("SEVERE"):
                         common_log.write(file +":" +  line)
-                    elif line.startswith("WARNING"):
-                        try:
-                            next(line)
-                        except Exception as e:
-                            pass
                     else:
                         warning_log.write(file +": " +  line)
                 log.close()
@@ -1825,6 +1822,8 @@ def setupAttachments(attachments, test_config):
        attachments: a listof_String, the files to be moved
        test_config: TestConfiguration, used to determine where to move the files to
     """
+    call = ['pwd']
+    subprocess.call(call)
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:
