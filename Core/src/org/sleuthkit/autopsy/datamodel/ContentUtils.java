@@ -80,8 +80,10 @@ public final class ContentUtils {
     public static String getStringTime(long epochSeconds, TimeZone tzone) {
         String time = "0000-00-00 00:00:00";
         if (epochSeconds != 0) {
-            dateFormatter.setTimeZone(tzone);
-            time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
+            synchronized (dateFormatter) {
+                dateFormatter.setTimeZone(tzone);
+                time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
+            }
         }
         return time;
     }
@@ -89,8 +91,10 @@ public final class ContentUtils {
     public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
         String time = "0000-00-00T00:00:00Z"; //NON-NLS
         if (epochSeconds != 0) {
-            dateFormatterISO8601.setTimeZone(tzone);
-            time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
+            synchronized (dateFormatterISO8601) {
+                dateFormatterISO8601.setTimeZone(tzone);
+                time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
+            }
         }
 
         return time;
