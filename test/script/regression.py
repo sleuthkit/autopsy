@@ -221,8 +221,6 @@ class TestRunner(object):
                if f.endswith("Diff.txt"):
                   Errors.add_errors_out(os.path.join(test_data.output_path, f))
             Errors.add_errors_out(test_data.common_log_path)
-            if os.path.isfile(os.path.join(test_data.output_path, "logs", "autopsy_traces.log.0")):
-                Errors.add_errors_out(os.path.join(test_data.output_path, "logs", "autopsy_traces.log.0"))
         return logres
 
     def _extract_gold(test_data):
@@ -1171,8 +1169,6 @@ class Logs(object):
             rep_path = make_local_path(test_data.main_config.output_dir)
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
-                if file.startswith('autopsy') and file != "autopsy_traces.log.0":
-                    continue
                 log = codecs.open(make_path(logs_path, file), "r", "utf_8")
                 for line in log:
                     line = line.replace(rep_path, "test_data")
@@ -1182,6 +1178,11 @@ class Logs(object):
                         common_log.write(file +": " +  line)
                     elif line.startswith("SEVERE"):
                         common_log.write(file +":" +  line)
+                    elif line.startswith("WARNING"):
+                        try:
+                            next(line)
+                        except Exception as e:
+                            pass
                     else:
                         warning_log.write(file +": " +  line)
                 log.close()
