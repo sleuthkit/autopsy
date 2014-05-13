@@ -236,13 +236,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 
-                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT) {
                         keywordResults.update();
                     }
                 }
-                else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     keywordResults.update();
                 }
             }
@@ -250,14 +250,16 @@ public class KeywordHits implements AutopsyVisitableItem {
         
         @Override
         protected void addNotify() {
-            IngestManager.addPropertyChangeListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
             keywordResults.update();
             keywordResults.addObserver(this);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.removePropertyChangeListener(pcl);
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             keywordResults.deleteObserver(this);
         }
         

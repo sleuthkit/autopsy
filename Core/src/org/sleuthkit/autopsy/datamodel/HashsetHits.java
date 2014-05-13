@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -57,8 +56,8 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final String HASHSET_HITS = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
-    private SleuthkitCase skCase;
-    private HashsetResults hashsetResults;
+    private final SleuthkitCase skCase;
+    private final HashsetResults hashsetResults;
    
     public HashsetHits(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -183,13 +182,13 @@ public class HashsetHits implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 
-                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == ARTIFACT_TYPE.TSK_HASHSET_HIT) {
                         hashsetResults.update();
                     }
                 }
-                else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     hashsetResults.update();
                 }
             }
@@ -197,14 +196,16 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.addPropertyChangeListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
             hashsetResults.update();
             hashsetResults.addObserver(this);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.removePropertyChangeListener(pcl);
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             hashsetResults.deleteObserver(this);
         }
         
@@ -229,7 +230,7 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Node for a hash set name
      */
     public class HashsetNameNode extends DisplayableItemNode implements Observer {
-        private String hashSetName;
+        private final String hashSetName;
         public HashsetNameNode(String hashSetName) {
             super(Children.create(new HitFactory(hashSetName), true), Lookups.singleton(hashSetName));
             super.setName(hashSetName);

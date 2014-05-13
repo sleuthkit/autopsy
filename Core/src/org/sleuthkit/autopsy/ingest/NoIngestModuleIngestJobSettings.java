@@ -24,11 +24,12 @@ package org.sleuthkit.autopsy.ingest;
  */
 public final class NoIngestModuleIngestJobSettings implements IngestModuleIngestJobSettings {
 
+    private static final long serialVersionUID = 1L;
     private final String setting = "None"; //NON-NLS
 
     @Override
-    public String getVersionNumber() {
-        return "1.0"; //NON-NLS
+    public long getVersionNumber() {
+        return serialVersionUID;
     }    
         
     /**
