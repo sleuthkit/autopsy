@@ -31,19 +31,15 @@ import org.openide.awt.ActionRegistration;
 import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 
-@ActionID(
-        category = "Help",
-        id = "org.sleuthkit.autopsy.actions.OpenLogFolder")
-@ActionRegistration(
-        displayName = "#CTL_OpenLogFolder")
-@ActionReference(path = "Menu/Help", position = 1750)
-// Move to Bundle for I18N
-//@Messages("CTL_OpenLogFolder=Open Log Folder")
+
 /**
  * Action in menu to open the folder containing the log files
  */
+@ActionRegistration(
+        displayName = "#CTL_OpenLogFolder", iconInMenu = true)
+@ActionReference(path = "Menu/Help", position = 1750)
+@ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
 public final class OpenLogFolderAction implements ActionListener {
 
     @Override
