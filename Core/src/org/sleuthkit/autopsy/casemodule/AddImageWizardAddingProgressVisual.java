@@ -52,7 +52,6 @@ import org.openide.util.NbBundle;
      */
     protected void setStateFinished() {
         inProgressPanel.setVisible(false);
-        //titleLabel.setText(ADDING_DATA_SOURCE_COMPLETE);
         donePanel.setVisible(true);
         //force repaint just in case
         validate();
