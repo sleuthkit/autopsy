@@ -178,7 +178,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) ||
                             (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)) {
                         interestingResults.update();

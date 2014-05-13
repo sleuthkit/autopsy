@@ -183,7 +183,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == ARTIFACT_TYPE.TSK_HASHSET_HIT) {
                         hashsetResults.update();
                     }

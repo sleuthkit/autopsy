@@ -121,7 +121,7 @@ public class Tags implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT) || ((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
                         refresh(true);
                         tagResults.update();

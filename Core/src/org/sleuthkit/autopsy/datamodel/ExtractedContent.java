@@ -152,7 +152,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
 
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (doNotShow.contains(event.getArtifactType()) == false) {
                         refresh(true);
@@ -349,7 +349,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
 
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (event.getArtifactType() == type) {
                         refresh(true);

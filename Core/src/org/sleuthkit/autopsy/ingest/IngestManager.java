@@ -265,7 +265,7 @@ public class IngestManager {
          * PropertyChangeEvent is a ModuleDataEvent object, and the new value is
          * set to null.
          */
-        DATA,
+        DATA_ADDED,
         /**
          * Property change event fired when an ingest module adds new content to
          * a case or changes a recorded attribute of existing content. For
@@ -361,7 +361,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.DATA, moduleDataEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.DATA_ADDED, moduleDataEvent, null));
     }
 
     /**

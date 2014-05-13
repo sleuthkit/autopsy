@@ -575,7 +575,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
         } 
-        else if (changed.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
+        else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
             // nothing to do here.
             // all nodes should be listening for these events and update accordingly.
         } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
