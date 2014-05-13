@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 public class IngestManager {
 
-    private static final int MAX_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
@@ -65,6 +64,7 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private volatile IngestMessageTopComponent ingestMessageBox;
+    private int numberOfFileIngestThreads;
 
     /**
      * Gets the ingest manager.
@@ -81,7 +81,7 @@ public class IngestManager {
      */
     private IngestManager() {
         startDataSourceIngestThread();
-        int numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
+        numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
         if ((numberOfFileIngestThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
             numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
             UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
@@ -89,15 +89,6 @@ public class IngestManager {
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
-
-        UserPreferences.addChangeListener(new PreferenceChangeListener() {
-            @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
-                if (evt.getKey().equals(UserPreferences.NUMBER_OF_FILE_INGEST_THREADS)) {
-                    setNumberOfFileIngestThreads();
-                }
-            }
-        });
     }
 
     /**
@@ -112,49 +103,19 @@ public class IngestManager {
     }
 
     /**
-     * Gets the maximum number of data source ingest threads the ingest manager
-     * will use.
+     * Gets the number of data source ingest threads the ingest manager will
+     * use.
      */
-    public static int getMaxNumberOfDataSourceIngestThreads() {
-        return MAX_NUMBER_OF_DATA_SOURCE_INGEST_THREADS;
+    public int getNumberOfDataSourceIngestThreads() {
+        return 1;
     }
 
     /**
      * Gets the maximum number of file ingest threads the ingest manager will
      * use.
      */
-    public static int getMaxNumberOfFileIngestThreads() {
-        return MAX_NUMBER_OF_FILE_INGEST_THREADS;
-    }
-
-    /**
-     * Changes the number of file ingest threads the ingest manager will use to
-     * no more than MAX_NUMBER_OF_FILE_INGEST_THREADS and no less than
-     * MIN_NUMBER_OF_FILE_INGEST_THREADS. Out of range requests are converted to
-     * requests for DEFAULT_NUMBER_OF_FILE_INGEST_THREADS.
-     *
-     * @param numberOfThreads The desired number of file ingest threads.
-     */
-    public synchronized static void setNumberOfFileIngestThreads() {
-        int numberOfThreads = UserPreferences.numberOfFileIngestThreads();
-        if ((numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
-            numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
-            UserPreferences.setNumberOfFileIngestThreads(numberOfThreads);
-        }
-        if (instance.fileIngestThreads.size() != numberOfThreads) {
-            if (instance.fileIngestThreads.size() > numberOfThreads) {
-                Long[] threadIds = instance.fileIngestThreads.keySet().toArray(new Long[instance.fileIngestThreads.size()]);
-                int numberOfThreadsToCancel = instance.fileIngestThreads.size() - numberOfThreads;
-                for (int i = 0; i < numberOfThreadsToCancel; ++i) {
-                    instance.cancelFileIngestThread(threadIds[i]);
-                }
-            } else if (instance.fileIngestThreads.size() < numberOfThreads) {
-                int numberOfThreadsToAdd = numberOfThreads - instance.fileIngestThreads.size();
-                for (int i = 0; i < numberOfThreadsToAdd; ++i) {
-                    instance.startFileIngestThread();
-                }
-            }
-        }
+    public int getNumberOfFileIngestThreads() {
+        return numberOfFileIngestThreads;
     }
 
     /**
@@ -317,6 +278,30 @@ public class IngestManager {
      */
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
         ingestModuleEventPublisher.removePropertyChangeListener(listener);
+    }
+
+    /**
+     * Add an ingest job and ingest module event property change listener.
+     *
+     * @deprecated Use addIngestJobEventListener() and/or
+     * addIngestModuleEventListener().
+     * @param listener The PropertyChangeListener to register.
+     */
+    public static void addPropertyChangeListener(final PropertyChangeListener listener) {
+        instance.ingestJobEventPublisher.addPropertyChangeListener(listener);
+        instance.ingestModuleEventPublisher.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Remove an ingest job and ingest module event property change listener.
+     *
+     * @deprecated Use removeIngestJobEventListener() and/or
+     * removeIngestModuleEventListener().
+     * @param listener The PropertyChangeListener to unregister.
+     */
+    public static void removePropertyChangeListener(final PropertyChangeListener listener) {
+        instance.ingestJobEventPublisher.removePropertyChangeListener(listener);
+        instance.ingestModuleEventPublisher.removePropertyChangeListener(listener);
     }
 
     /**
