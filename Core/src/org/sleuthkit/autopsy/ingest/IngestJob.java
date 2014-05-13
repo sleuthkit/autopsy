@@ -73,8 +73,8 @@ final class IngestJob {
         IngestJobContext context = new IngestJobContext(this);
         List<IngestModuleError> errors = new ArrayList<>();
 
-        int maxNumberOfPipelines = IngestManager.getMaxNumberOfDataSourceIngestThreads();
-        for (int i = 0; i < maxNumberOfPipelines; ++i) {
+        int numberOfPipelines = IngestManager.getInstance().getNumberOfDataSourceIngestThreads();
+        for (int i = 0; i < numberOfPipelines; ++i) {
             DataSourceIngestPipeline pipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
             errors.addAll(pipeline.startUp());
             dataSourceIngestPipelines.put(pipeline);
@@ -84,8 +84,8 @@ final class IngestJob {
             }
         }
 
-        maxNumberOfPipelines = IngestManager.getMaxNumberOfFileIngestThreads();
-        for (int i = 0; i < maxNumberOfPipelines; ++i) {
+        numberOfPipelines = IngestManager.getInstance().getNumberOfFileIngestThreads();
+        for (int i = 0; i < numberOfPipelines; ++i) {
             FileIngestPipeline pipeline = new FileIngestPipeline(context, ingestModuleTemplates);
             errors.addAll(pipeline.startUp());
             fileIngestPipelines.put(pipeline);
