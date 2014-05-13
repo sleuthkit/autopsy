@@ -204,7 +204,7 @@ final class IngestScheduler {
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get children of file and update file queues: " + parentFile.getName(), ex);
+                logger.log(Level.SEVERE, "Could not get children of file and update file queues: " + parentFile.getName(), ex); //NON-NLS
             }
         }
     }
