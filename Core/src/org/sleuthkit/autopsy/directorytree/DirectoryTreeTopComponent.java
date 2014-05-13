@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.RootNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
@@ -67,8 +66,6 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -578,18 +575,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
         } 
-        else if (changed.equals(IngestEvent.DATA.toString())) {
+        else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
             // nothing to do here.
             // all nodes should be listening for these events and update accordingly.
-        } else if (changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
-                || changed.equals(IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+        } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     refreshDataSourceTree();
                 }
             });
-        } else if (changed.equals(IngestEvent.CONTENT_CHANGED.toString())) {
+        } else if (changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
