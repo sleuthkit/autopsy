@@ -268,6 +268,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         jScrollPane2 = new javax.swing.JScrollPane();
         knownBadHashTable = new javax.swing.JTable();
 
+        setPreferredSize(new java.awt.Dimension(292, 150));
+
         jScrollPane1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         knownHashTable.setBackground(new java.awt.Color(240, 240, 240));

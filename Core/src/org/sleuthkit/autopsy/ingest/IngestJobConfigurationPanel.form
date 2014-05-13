@@ -163,6 +163,9 @@
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestJobConfigurationPanel.descriptionLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+          <AccessibilityProperties>
+            <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="" noResource="true"/>
+          </AccessibilityProperties>
         </Component>
         <Container class="javax.swing.JScrollPane" name="jScrollPane1">
           <Properties>

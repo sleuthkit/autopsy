@@ -206,6 +206,8 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
+        descriptionLabel.getAccessibleContext().setAccessibleName(""); // NOI18N
+
         processUnallocPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
 
         processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.processUnallocCheckbox.text")); // NOI18N
