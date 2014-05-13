@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
+    private static final long serialVersionUID = 1L;
     private volatile boolean skipKnownFiles = true;
 
     FileTypeIdModuleSettings() {
@@ -35,8 +36,8 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
     }
     
     @Override
-    public String getVersionNumber() {
-        return "1.0"; //NON-NLS
+    public long getVersionNumber() {
+        return serialVersionUID;
     }    
     
     void setSkipKnownFiles(boolean enabled) {
