@@ -80,7 +80,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
         for (MediaType mt : mediaTypes) {
             TIKA_SUPPORTED_TYPES.add(mt.getType() + "/" + mt.getSubtype());
         }
-        logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES); //NON-NLS
+        //logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES); //NON-NLS
     }
 
     @Override
