@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     
+    private static final long serialVersionUID = 1L;
     private final HashSet<String> namesOfEnabledKeywordLists = new HashSet<>();
 
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists) {
@@ -35,8 +36,8 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     }
 
     @Override
-    public String getVersionNumber() {
-        return "1.0"; //NON-NLS
+    public long getVersionNumber() {
+        return serialVersionUID;
     }    
         
     boolean isKeywordListEnabled(String keywordListName) {
