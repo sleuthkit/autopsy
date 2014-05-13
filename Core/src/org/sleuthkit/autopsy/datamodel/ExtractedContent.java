@@ -152,13 +152,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
 
-                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (doNotShow.contains(event.getArtifactType()) == false) {
                         refresh(true);
                     }
-                } else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     refresh(true);
                 }
             }
@@ -166,12 +166,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.addPropertyChangeListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.removePropertyChangeListener(pcl);
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             typeNodeList.clear();
         }
 
@@ -347,13 +349,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
 
-                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (event.getArtifactType() == type) {
                         refresh(true);
                     }
-                } else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     refresh(true);
                 }
             }
@@ -361,12 +363,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.addPropertyChangeListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.removePropertyChangeListener(pcl);
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
         }
 
         @Override

@@ -230,45 +230,55 @@ public class IngestManager {
     }
 
     /**
-     * Ingest events.
+     * Ingest job events.
      */
-    public enum IngestEvent {
+    public enum IngestJobEvent {
 
         /**
          * Property change event fired when an ingest job is started. The old
          * value of the PropertyChangeEvent object is set to the ingest job id,
          * and the new value is set to null.
          */
-        INGEST_JOB_STARTED,
+        STARTED,
         /**
          * Property change event fired when an ingest job is completed. The old
          * value of the PropertyChangeEvent object is set to the ingest job id,
          * and the new value is set to null.
          */
-        INGEST_JOB_COMPLETED,
+        COMPLETED,
         /**
          * Property change event fired when an ingest job is canceled. The old
          * value of the PropertyChangeEvent object is set to the ingest job id,
          * and the new value is set to null.
          */
-        INGEST_JOB_CANCELLED,
+        CANCELLED,
+    };
+
+    /**
+     * Ingest module events.
+     */
+    public enum IngestModuleEvent {
+
         /**
-         * Event sent when an ingest module posts new data to blackboard or
-         * somewhere else. Second argument of the property change fired contains
-         * ModuleDataEvent object and third argument is null. The object can
-         * contain encapsulated new data created by the module. Listener can
-         * also query new data as needed.
+         * Property change event fired when an ingest module adds new data to a
+         * case, usually by posting to the blackboard. The old value of the
+         * PropertyChangeEvent is a ModuleDataEvent object, and the new value is
+         * set to null.
          */
         DATA,
         /**
-         * Event send when content changed, either its attributes changed, or
-         * new content children have been added. I.e. from ZIP files or Carved
-         * files
+         * Property change event fired when an ingest module adds new content to
+         * a case or changes a recorded attribute of existing content. For
+         * example, if a module adds an extracted or carved file to a case, the
+         * module should fire this event. The old value of the
+         * PropertyChangeEvent is a ModuleContentEvent object, and the new value
+         * is set to null.
          */
         CONTENT_CHANGED,
         /**
-         * Event sent when a file has finished going through a pipeline of
-         * modules. Second argument is the object ID. Third argument is null
+         * Property change event fired when the ingest of a file is completed.
+         * The old value of the PropertyChangeEvent is the Autopsy object ID of
+         * the file, and the new value is set to null.
          */
         FILE_DONE,
     };
@@ -310,34 +320,12 @@ public class IngestManager {
     }
 
     /**
-     * Add an ingest module event property change listener.
-     *
-     * @deprecated
-     * @param listener The PropertyChangeListener to register.
-     */
-    public static void addPropertyChangeListener(final PropertyChangeListener listener) {
-        instance.ingestJobEventPublisher.addPropertyChangeListener(listener);
-        instance.ingestModuleEventPublisher.addPropertyChangeListener(listener);
-    }
-
-    /**
-     * Remove an ingest module event property change listener.
-     *
-     * @deprecated
-     * @param listener The PropertyChangeListener to unregister.
-     */
-    public static void removePropertyChangeListener(final PropertyChangeListener listener) {
-        instance.ingestJobEventPublisher.removePropertyChangeListener(listener);
-        instance.ingestModuleEventPublisher.removePropertyChangeListener(listener);
-    }
-
-    /**
      * Fire an ingest event signifying an ingest job started.
      *
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_STARTED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestJobEvent.STARTED, ingestJobId, null));
     }
 
     /**
@@ -346,7 +334,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_COMPLETED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestJobEvent.COMPLETED, ingestJobId, null));
     }
 
     /**
@@ -355,7 +343,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_CANCELLED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestJobEvent.CANCELLED, ingestJobId, null));
     }
 
     /**
@@ -364,7 +352,7 @@ public class IngestManager {
      * @param fileId The object id of file.
      */
     void fireFileIngestDone(long fileId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.FILE_DONE, fileId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, fileId, null));
     }
 
     /**
@@ -373,7 +361,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.DATA, moduleDataEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.DATA, moduleDataEvent, null));
     }
 
     /**
@@ -384,7 +372,7 @@ public class IngestManager {
      * content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.CONTENT_CHANGED, moduleContentEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
     }
 
     /**
@@ -534,13 +522,23 @@ public class IngestManager {
     private static class FireIngestEventThread implements Runnable {
 
         private final PropertyChangeSupport publisher;
-        private final IngestEvent event;
+        private final IngestJobEvent jobEvent;
+        private final IngestModuleEvent moduleEvent;
         private final Object oldValue;
         private final Object newValue;
 
-        FireIngestEventThread(PropertyChangeSupport publisher, IngestEvent event, Object oldValue, Object newValue) {
+        FireIngestEventThread(PropertyChangeSupport publisher, IngestJobEvent event, Object oldValue, Object newValue) {
             this.publisher = publisher;
-            this.event = event;
+            this.jobEvent = event;
+            this.moduleEvent = null;
+            this.oldValue = oldValue;
+            this.newValue = newValue;
+        }
+
+        FireIngestEventThread(PropertyChangeSupport publisher, IngestModuleEvent event, Object oldValue, Object newValue) {
+            this.publisher = publisher;
+            this.jobEvent = null;
+            this.moduleEvent = event;
             this.oldValue = oldValue;
             this.newValue = newValue;
         }
@@ -548,7 +546,7 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                publisher.firePropertyChange(event.toString(), oldValue, newValue);
+                publisher.firePropertyChange((jobEvent != null ? jobEvent.toString() : moduleEvent.toString()), oldValue, newValue);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),

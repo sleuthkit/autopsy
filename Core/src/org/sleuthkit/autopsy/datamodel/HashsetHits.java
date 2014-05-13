@@ -183,13 +183,13 @@ public class HashsetHits implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 
-                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
                     if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == ARTIFACT_TYPE.TSK_HASHSET_HIT) {
                         hashsetResults.update();
                     }
                 }
-                else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     hashsetResults.update();
                 }
             }
@@ -197,14 +197,16 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.addPropertyChangeListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
             hashsetResults.update();
             hashsetResults.addObserver(this);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.removePropertyChangeListener(pcl);
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             hashsetResults.deleteObserver(this);
         }
         

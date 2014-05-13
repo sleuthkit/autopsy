@@ -121,12 +121,12 @@ public class Tags implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestEvent.DATA.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA.toString())) {
                     if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT) || ((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
                         refresh(true);
                         tagResults.update();
                     }
-                } else if (eventType.equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString()) || eventType.equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     refresh(true);
                     tagResults.update();
                 }
@@ -135,14 +135,16 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.addPropertyChangeListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
             tagResults.update();
             tagResults.addObserver(this);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.removePropertyChangeListener(pcl);
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             tagResults.deleteObserver(this);
         }
 
