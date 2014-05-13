@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -57,8 +56,8 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final String HASHSET_HITS = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
-    private SleuthkitCase skCase;
-    private HashsetResults hashsetResults;
+    private final SleuthkitCase skCase;
+    private final HashsetResults hashsetResults;
    
     public HashsetHits(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -229,7 +228,7 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Node for a hash set name
      */
     public class HashsetNameNode extends DisplayableItemNode implements Observer {
-        private String hashSetName;
+        private final String hashSetName;
         public HashsetNameNode(String hashSetName) {
             super(Children.create(new HitFactory(hashSetName), true), Lookups.singleton(hashSetName));
             super.setName(hashSetName);
