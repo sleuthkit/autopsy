@@ -29,8 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.progress.ProgressHandle;
@@ -64,7 +62,7 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private volatile IngestMessageTopComponent ingestMessageBox;
-    private int numberOfFileIngestThreads;
+    private int numberOfFileIngestThreads = 0;
 
     /**
      * Gets the ingest manager.
