@@ -108,6 +108,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
                     simplePanel.repaint();
                     advancedButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
                     descriptionLabel.setText(selectedModule.getDescription());
+                    descriptionLabel.setToolTipText(selectedModule.getDescription());
                 }
             }
         });
@@ -130,16 +131,15 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         advancedButton = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
+        descriptionLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         simplePanel = new javax.swing.JPanel();
-        scrollpane = new javax.swing.JScrollPane();
-        descriptionLabel = new javax.swing.JTextArea();
         processUnallocPanel = new javax.swing.JPanel();
         processUnallocCheckbox = new javax.swing.JCheckBox();
 
         setMaximumSize(new java.awt.Dimension(5750, 3000));
         setMinimumSize(new java.awt.Dimension(522, 257));
-        setPreferredSize(new java.awt.Dimension(575, 400));
+        setPreferredSize(new java.awt.Dimension(575, 300));
 
         modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         modulesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
@@ -169,25 +169,13 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
+        descriptionLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.descriptionLabel.text")); // NOI18N
+
         jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(250, 180));
 
         simplePanel.setLayout(new javax.swing.BoxLayout(simplePanel, javax.swing.BoxLayout.PAGE_AXIS));
         jScrollPane1.setViewportView(simplePanel);
-
-        scrollpane.setBorder(null);
-        scrollpane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollpane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
-        descriptionLabel.setEditable(false);
-        descriptionLabel.setBackground(new java.awt.Color(240, 240, 240));
-        descriptionLabel.setColumns(20);
-        descriptionLabel.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N NON-NLS
-        descriptionLabel.setLineWrap(true);
-        descriptionLabel.setRows(5);
-        descriptionLabel.setWrapStyleWord(true);
-        descriptionLabel.setBorder(null);
-        scrollpane.setViewportView(descriptionLabel);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -196,30 +184,29 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(scrollpane)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(advancedButton)
-                        .addGap(14, 14, 14))))
-            .addComponent(jSeparator2)
+                        .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
+                        .addComponent(advancedButton))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(scrollpane, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(advancedButton)))
+                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(advancedButton))
                 .addContainerGap())
         );
+
+        descriptionLabel.getAccessibleContext().setAccessibleName(""); // NOI18N
 
         processUnallocPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
 
@@ -238,14 +225,14 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             .addGroup(processUnallocPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(processUnallocCheckbox)
-                .addContainerGap(108, Short.MAX_VALUE))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
         processUnallocPanelLayout.setVerticalGroup(
             processUnallocPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, processUnallocPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(processUnallocPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(processUnallocCheckbox)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -255,8 +242,8 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -266,7 +253,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 342, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -304,7 +291,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
-    private javax.swing.JTextArea descriptionLabel;
+    private javax.swing.JLabel descriptionLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator2;
@@ -312,7 +299,6 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
     private javax.swing.JTable modulesTable;
     private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.JPanel processUnallocPanel;
-    private javax.swing.JScrollPane scrollpane;
     private javax.swing.JPanel simplePanel;
     private javax.swing.ButtonGroup timeGroup;
     // End of variables declaration//GEN-END:variables
