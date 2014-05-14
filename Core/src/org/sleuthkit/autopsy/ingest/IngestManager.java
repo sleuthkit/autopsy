@@ -62,7 +62,7 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private volatile IngestMessageTopComponent ingestMessageBox;
-    private int numberOfFileIngestThreads = 0;
+    private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
 
     /**
      * Gets the ingest manager.
