@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 public class IngestManager {
 
+    private static final int DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
@@ -105,7 +106,7 @@ public class IngestManager {
      * use.
      */
     public int getNumberOfDataSourceIngestThreads() {
-        return 1;
+        return DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS;
     }
 
     /**
