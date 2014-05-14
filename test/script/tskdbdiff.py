@@ -305,7 +305,7 @@ def replace_id(line, table):
         try:
              path = table[int(obj_id)]
              parent_path = table[int(parent_id)]
-             newLine = ('INSERT INTO "tsk_objects" VALUES(' + path + ', ' + parent_path + ', '.join(fields_list[2:]) + ');') 
+             newLine = ('INSERT INTO "tsk_objects" VALUES(' + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');') 
              return newLine
         except Exception as e: 
             # objects table has things that aren't files. if lookup fails, don't replace anything.
