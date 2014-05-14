@@ -29,8 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.progress.ProgressHandle;
@@ -46,6 +44,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 public class IngestManager {
 
+    private static final int DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
@@ -64,7 +63,7 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private volatile IngestMessageTopComponent ingestMessageBox;
-    private int numberOfFileIngestThreads;
+    private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
 
     /**
      * Gets the ingest manager.
@@ -107,7 +106,7 @@ public class IngestManager {
      * use.
      */
     public int getNumberOfDataSourceIngestThreads() {
-        return 1;
+        return DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS;
     }
 
     /**
