@@ -46,7 +46,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -66,7 +65,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
  * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
  * reschedules extracted DerivedFiles for ingest.
  */
-public final class SevenZipIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public final class SevenZipIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
@@ -186,7 +185,7 @@ public final class SevenZipIngestModule extends IngestModuleAdapter implements F
     }
 
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         // We don't need the value, but for cleanliness and consistency
         refCounter.decrementAndGet(jobId);
     }

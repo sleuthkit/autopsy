@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -79,24 +80,15 @@ final class DataSourceIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModuleDecorator module : this.modules) {
             try {
-                module.process(dataSource, new DataSourceIngestModuleProgress(progress, module.getDisplayName()));
+                progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                        "IngestJob.progress.dataSourceIngest.displayName",
+                        module.getDisplayName(), dataSource.getName()));
+                module.process(dataSource, new DataSourceIngestModuleProgress(progress));
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
             if (context.isJobCancelled()) {
                 break;
-            }
-        }
-        return errors;
-    }
-
-    List<IngestModuleError> shutDown() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        for (DataSourceIngestModuleDecorator module : this.modules) {
-            try {
-                module.shutDown(context.isJobCancelled());
-            } catch (Exception ex) {
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
         return errors;
@@ -128,11 +120,6 @@ final class DataSourceIngestPipeline {
         @Override
         public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
             return module.process(dataSource, statusHelper);
-        }
-
-        @Override
-        public void shutDown(boolean ingestJobWasCancelled) {
-            module.shutDown(ingestJobWasCancelled);
         }
     }
 }

@@ -23,7 +23,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.DatatypeConverter;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -41,7 +40,7 @@ import org.openide.util.NbBundle;
  * Format (EWF) E01 image file by generating a hash of the file and comparing it
  * to the value stored in the image.
  */
-public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
+public class EwfVerifyIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(EwfVerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
@@ -62,7 +61,6 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         verified = false;
-        skipped = false;
         img = null;
         imgName = "";
         storedHash = "";
@@ -104,7 +102,6 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
                     NbBundle.getMessage(this.getClass(),
                     "EwfVerifyIngestModule.process.skipNonEwf",
                     imgName)));
-            skipped = true;
             return ProcessResult.OK;
         }
 
@@ -169,26 +166,22 @@ public class EwfVerifyIngestModule extends IngestModuleAdapter implements DataSo
         calculatedHash = DatatypeConverter.printHexBinary(messageDigest.digest()).toLowerCase();
         verified = calculatedHash.equals(storedHash);
         logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, calculatedHash}); //NON-NLS
-        return ProcessResult.OK;
-    }
 
-    @Override
-    public void shutDown(boolean ingestJobCancelled) {
         logger.log(Level.INFO, "complete() {0}", EwfVerifierModuleFactory.getModuleName()); //NON-NLS
-        if (skipped == false) {
-            String msg = "";
-            if (verified) {
-                msg = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verified");
-            } else {
-                msg = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.notVerified");
-            }
-            String extra = NbBundle
-                    .getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verifyResultsHeader", imgName);
-            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", msg);
-            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.calcHashLi", calculatedHash);
-            extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.storedHashLi", storedHash);
-            services.postMessage(IngestMessage.createMessage( MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), imgName + msg, extra));
-            logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
+        String msg;
+        if (verified) {
+            msg = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verified");
+        } else {
+            msg = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.notVerified");
         }
+        String extra = NbBundle
+                .getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verifyResultsHeader", imgName);
+        extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", msg);
+        extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.calcHashLi", calculatedHash);
+        extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.storedHashLi", storedHash);
+        services.postMessage(IngestMessage.createMessage( MessageType.INFO, EwfVerifierModuleFactory.getModuleName(), imgName + msg, extra));
+        logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
+                
+        return ProcessResult.OK;
     }
 }

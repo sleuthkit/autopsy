@@ -29,8 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.progress.ProgressHandle;
@@ -46,6 +44,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 public class IngestManager {
 
+    private static final int DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
@@ -57,14 +56,14 @@ public class IngestManager {
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
-    private final ExecutorService fileIngestThreadPool = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
+    private final ExecutorService fileIngestThreadPool;
     private final ExecutorService fireIngestEventsThreadPool = Executors.newSingleThreadExecutor();
     private final AtomicLong nextThreadId = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, Future<Void>> startIngestJobThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private volatile IngestMessageTopComponent ingestMessageBox;
-    private int numberOfFileIngestThreads;
+    private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
 
     /**
      * Gets the ingest manager.
@@ -81,11 +80,13 @@ public class IngestManager {
      */
     private IngestManager() {
         startDataSourceIngestThread();
+        
         numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
         if ((numberOfFileIngestThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
             numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
             UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
         }
+        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads);        
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
@@ -107,7 +108,7 @@ public class IngestManager {
      * use.
      */
     public int getNumberOfDataSourceIngestThreads() {
-        return 1;
+        return DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS;
     }
 
     /**
@@ -166,7 +167,7 @@ public class IngestManager {
      * @return True if any ingest jobs are in progress, false otherwise.
      */
     public boolean isIngestRunning() {
-        return scheduler.ingestJobsAreRunning();
+        return IngestJob.ingestJobsAreRunning();
     }
 
     public void cancelAllIngestJobs() {
@@ -185,9 +186,8 @@ public class IngestManager {
             }
         }
 
-        // Cancel all the jobs already created. This will make the the ingest
-        // threads flush out any lingering ingest tasks without processing them.
-        scheduler.cancelAllIngestJobs();
+        // Cancel all the jobs already created.
+        IngestJob.cancelAllIngestJobs();
     }
 
     /**
@@ -433,7 +433,7 @@ public class IngestManager {
                     }
 
                     // Start an ingest job for the data source.
-                    List<IngestModuleError> errors = scheduler.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = IngestJob.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
                     if (!errors.isEmpty()) {
                         // Report the errors to the user. They have already been logged.
                         StringBuilder moduleStartUpErrors = new StringBuilder();
@@ -490,7 +490,6 @@ public class IngestManager {
                 try {
                     IngestTask task = tasks.getNextTask(); // Blocks.
                     task.execute();
-                    scheduler.ingestTaskIsCompleted(task);
                 } catch (InterruptedException ex) {
                     break;
                 }
