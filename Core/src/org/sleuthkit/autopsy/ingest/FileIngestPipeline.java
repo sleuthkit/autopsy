@@ -97,7 +97,7 @@ final class FileIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (FileIngestModuleDecorator module : this.modules) {
             try {
-                module.shutDown(context.isJobCancelled());
+                module.shutDown();
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -134,8 +134,8 @@ final class FileIngestPipeline {
         }
 
         @Override
-        public void shutDown(boolean ingestJobWasCancelled) {
-            module.shutDown(ingestJobWasCancelled);
+        public void shutDown() {
+            module.shutDown();
         }
     }
 }

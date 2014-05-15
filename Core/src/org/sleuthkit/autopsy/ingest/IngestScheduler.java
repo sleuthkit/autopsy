@@ -23,9 +23,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -42,7 +40,6 @@ final class IngestScheduler {
     private static final IngestScheduler instance = new IngestScheduler();
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
     private static final int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-    private final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
     private final LinkedBlockingQueue<DataSourceIngestTask> dataSourceTasks = new LinkedBlockingQueue<>();
     private final TreeSet<FileIngestTask> rootDirectoryTasks = new TreeSet<>(new RootDirectoryTaskComparator()); // Guarded by this
     private final List<FileIngestTask> directoryTasks = new ArrayList<>();  // Guarded by this
@@ -50,7 +47,6 @@ final class IngestScheduler {
     private final List<IngestTask> tasksInProgress = new ArrayList<>();  // Guarded by this
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
-    private final AtomicLong nextIngestJobId = new AtomicLong(0L);
 
     static IngestScheduler getInstance() {
         return instance;
@@ -59,42 +55,7 @@ final class IngestScheduler {
     private IngestScheduler() {
     }
 
-    /**
-     * Creates an ingest job for a data source.
-     *
-     * @param rootDataSource The data source to ingest.
-     * @param ingestModuleTemplates The ingest module templates to use to create
-     * the ingest pipelines for the job.
-     * @param processUnallocatedSpace Whether or not the job should include
-     * processing of unallocated space.
-     * @return A collection of ingest module start up errors, empty on success.
-     * @throws InterruptedException
-     */
-    List<IngestModuleError> startIngestJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
-        long jobId = nextIngestJobId.incrementAndGet();
-        IngestJob job = new IngestJob(jobId, dataSource, ingestModuleTemplates, processUnallocatedSpace);
-        ingestJobsById.put(jobId, job);
-        IngestManager.getInstance().fireIngestJobStarted(jobId);
-        List<IngestModuleError> errors = job.startUp();
-        if (errors.isEmpty()) {
-            addDataSourceToIngestJob(job, dataSource);
-        } else {
-            ingestJobsById.remove(jobId);
-            IngestManager.getInstance().fireIngestJobCancelled(jobId);
-        }
-        return errors;
-    }
-
-    boolean ingestJobsAreRunning() {
-        for (IngestJob job : ingestJobsById.values()) {
-            if (!job.isCancelled()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    synchronized void addDataSourceToIngestJob(IngestJob job, Content dataSource) throws InterruptedException {
+    synchronized void scheduleTasksForIngestJob(IngestJob job, Content dataSource) throws InterruptedException {
         // Enqueue a data source ingest task for the data source.
         // If the thread executing this code is interrupted, it is because the 
         // the number of ingest threads has been decreased while ingest jobs are 
@@ -153,7 +114,7 @@ final class IngestScheduler {
         updateFileTaskQueues(null);
     }
 
-    void addFileToIngestJob(IngestJob job, AbstractFile file) {
+    void addFileTaskToIngestJob(IngestJob job, AbstractFile file) {
         FileIngestTask task = new FileIngestTask(job, file);
         if (shouldEnqueueFileTask(task)) {
             addTaskToFileQueue(task);
@@ -271,12 +232,6 @@ final class IngestScheduler {
         return true;
     }
 
-    void cancelAllIngestJobs() {
-        for (IngestJob job : ingestJobsById.values()) {
-            job.cancel();
-        }
-    }
-
     IngestTaskQueue getDataSourceIngestTaskQueue() {
         return dataSourceTaskDispenser;
     }
@@ -285,16 +240,7 @@ final class IngestScheduler {
         return fileTaskDispenser;
     }
 
-    void ingestTaskIsCompleted(IngestTask completedTask) {
-        if (ingestJobIsCompleted(completedTask)) {
-            IngestJob job = completedTask.getIngestJob();
-            job.shutDown();
-            ingestJobsById.remove(job.getId());
-            IngestManager.getInstance().fireIngestJobCompleted(job.getId());
-        }
-    }
-
-    private synchronized boolean ingestJobIsCompleted(IngestTask completedTask) {
+    synchronized boolean isLastTaskForIngestJob(IngestTask completedTask) {
         tasksInProgress.remove(completedTask);
         IngestJob job = completedTask.getIngestJob();
         long jobId = job.getId();

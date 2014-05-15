@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
@@ -54,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
  * module settings, use of a subset of the available ingest services and
  * thread-safe sharing of per ingest job data.
  */
-class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
+class SampleFileIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
     private static int attrId = -1;
@@ -159,21 +158,23 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
     }
 
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
-        // This method is thread-safe with per ingest job reference counted
-        // management of shared data.
-        reportBlackboardPostCount(context.getJobId());
+    public void shutDown() {
+        if (!context.isJobCancelled()) {
+            // This method is thread-safe with per ingest job reference counted
+            // management of shared data.
+            reportBlackboardPostCount(context.getJobId());
+        }
     }
 
     synchronized static void addToBlackboardPostCount(long ingestJobId, long countToAdd) {
         Long fileCount = artifactCountsForIngestJobs.get(ingestJobId);
-        
+
         // Ensures that this job has an entry
         if (fileCount == null) {
             fileCount = 0L;
             artifactCountsForIngestJobs.put(ingestJobId, fileCount);
         }
-        
+
         fileCount += countToAdd;
         artifactCountsForIngestJobs.put(ingestJobId, fileCount);
     }
@@ -189,5 +190,5 @@ class SampleFileIngestModule extends IngestModuleAdapter implements FileIngestMo
                     msgText);
             IngestServices.getInstance().postMessage(message);
         }
-    }  
+    }
 }

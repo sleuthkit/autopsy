@@ -31,7 +31,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -50,7 +49,7 @@ import org.sleuthkit.datamodel.TskException;
  * Understands Thunderbird folder layout to provide additional structure and
  * metadata.
  */
-public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
@@ -402,5 +401,9 @@ public final class ThunderbirdMboxFileIngestModule extends IngestModuleAdapter i
 
     IngestServices getServices() {
         return services;
+    }
+    
+    @Override
+    public void shutDown() {        
     }
 }
