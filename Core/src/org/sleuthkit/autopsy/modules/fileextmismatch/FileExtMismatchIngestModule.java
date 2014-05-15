@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -44,7 +43,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Flags mismatched filename extensions based on file signature.
  */
-public class FileExtMismatchIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public class FileExtMismatchIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -173,7 +172,7 @@ public class FileExtMismatchIngestModule extends IngestModuleAdapter implements 
     }
 
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {    
             IngestJobTotals jobTotals;

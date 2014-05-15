@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
  */
-public final class KeywordSearchIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public final class KeywordSearchIngestModule implements FileIngestModule {
 
     enum UpdateFrequency {
 
@@ -93,6 +92,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private IngestJobContext context;
     
     private enum IngestStatus {
 
@@ -136,6 +136,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
+        this.context = context;
 
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
@@ -248,14 +249,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      * Cleanup resources, threads, timers
      */
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         logger.log(Level.INFO, "Instance {0}", instanceNum); //NON-NLS
        
         if (initialized == false) {
             return;
         }
 
-        if (ingestJobCancelled) {
+        if (context.isJobCancelled()) {
             logger.log(Level.INFO, "Ingest job cancelled"); //NON-NLS
             stop();
             return;

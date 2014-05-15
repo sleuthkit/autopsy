@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -33,21 +35,65 @@ import org.sleuthkit.datamodel.Content;
 final class IngestJob {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
+    private static final AtomicLong nextIngestJobId = new AtomicLong(0L);
+    private static final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
+    private static final IngestScheduler taskScheduler = IngestScheduler.getInstance();
     private final long id;
-    private final Content rootDataSource;
+    private final Content dataSource;
     private final List<IngestModuleTemplate> ingestModuleTemplates;
     private final boolean processUnallocatedSpace;
-    private final LinkedBlockingQueue<DataSourceIngestPipeline> dataSourceIngestPipelines = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines = new LinkedBlockingQueue<>();
     private long estimatedFilesToProcess = 0L; // Guarded by this
     private long processedFiles = 0L; // Guarded by this
+    private DataSourceIngestPipeline dataSourceIngestPipeline;
     private ProgressHandle dataSourceTasksProgress;
     private ProgressHandle fileTasksProgress;
     private volatile boolean cancelled = false;
 
+    /**
+     * Creates an ingest job for a data source.
+     *
+     * @param dataSource The data source to ingest.
+     * @param ingestModuleTemplates The ingest module templates to use to create
+     * the ingest pipelines for the job.
+     * @param processUnallocatedSpace Whether or not the job should include
+     * processing of unallocated space.
+     * @return A collection of ingest module start up errors, empty on success.
+     * @throws InterruptedException
+     */
+    static List<IngestModuleError> startIngestJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
+        long jobId = nextIngestJobId.incrementAndGet();
+        IngestJob job = new IngestJob(jobId, dataSource, ingestModuleTemplates, processUnallocatedSpace);
+        ingestJobsById.put(jobId, job);
+        IngestManager.getInstance().fireIngestJobStarted(jobId);
+        List<IngestModuleError> errors = job.start();
+        if (errors.isEmpty()) {
+            taskScheduler.scheduleTasksForIngestJob(job, dataSource);
+        } else {
+            ingestJobsById.remove(jobId);
+            IngestManager.getInstance().fireIngestJobCancelled(jobId);
+        }
+        return errors;
+    }
+
+    static boolean ingestJobsAreRunning() {
+        for (IngestJob job : ingestJobsById.values()) {
+            if (!job.isCancelled()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void cancelAllIngestJobs() {
+        for (IngestJob job : ingestJobsById.values()) {
+            job.cancel();
+        }
+    }
+
     IngestJob(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
         this.id = id;
-        this.rootDataSource = dataSource;
+        this.dataSource = dataSource;
         this.ingestModuleTemplates = ingestModuleTemplates;
         this.processUnallocatedSpace = processUnallocatedSpace;
     }
@@ -60,7 +106,7 @@ final class IngestJob {
         return processUnallocatedSpace;
     }
 
-    List<IngestModuleError> startUp() throws InterruptedException {
+    List<IngestModuleError> start() throws InterruptedException {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             startFileIngestProgressBar();
@@ -71,20 +117,12 @@ final class IngestJob {
 
     private List<IngestModuleError> startUpIngestPipelines() throws InterruptedException {
         IngestJobContext context = new IngestJobContext(this);
+        
+        dataSourceIngestPipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
         List<IngestModuleError> errors = new ArrayList<>();
+        errors.addAll(dataSourceIngestPipeline.startUp());
 
-        int numberOfPipelines = IngestManager.getInstance().getNumberOfDataSourceIngestThreads();
-        for (int i = 0; i < numberOfPipelines; ++i) {
-            DataSourceIngestPipeline pipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
-            errors.addAll(pipeline.startUp());
-            dataSourceIngestPipelines.put(pipeline);
-            if (!errors.isEmpty()) {
-                // No need to accumulate presumably redundant errors.
-                break;
-            }
-        }
-
-        numberOfPipelines = IngestManager.getInstance().getNumberOfFileIngestThreads();
+        int numberOfPipelines = IngestManager.getInstance().getNumberOfFileIngestThreads();
         for (int i = 0; i < numberOfPipelines; ++i) {
             FileIngestPipeline pipeline = new FileIngestPipeline(context, ingestModuleTemplates);
             errors.addAll(pipeline.startUp());
@@ -96,13 +134,13 @@ final class IngestJob {
         }
 
         logIngestModuleErrors(errors);
-        return errors; // Returned so UI can report to user.
+        return errors;
     }
 
     private void startDataSourceIngestProgressBar() {
         final String displayName = NbBundle.getMessage(this.getClass(),
-                "IngestJob.progress.dataSourceIngest.displayName",
-                rootDataSource.getName());
+                "IngestJob.progress.dataSourceIngest.initialDisplayName",
+                dataSource.getName());
         dataSourceTasksProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
@@ -123,7 +161,7 @@ final class IngestJob {
     private void startFileIngestProgressBar() {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.fileIngest.displayName",
-                rootDataSource.getName());
+                dataSource.getName());
         fileTasksProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
@@ -136,32 +174,32 @@ final class IngestJob {
                 return true;
             }
         });
-        estimatedFilesToProcess = rootDataSource.accept(new GetFilesCountVisitor());
+        estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
         fileTasksProgress.start();
         fileTasksProgress.switchToDeterminate((int) estimatedFilesToProcess);
     }
 
-    void process(Content dataSource) throws InterruptedException {
+    void process(DataSourceIngestTask task) throws InterruptedException {
         // If the job is not cancelled, complete the task, otherwise just flush 
-        // it. In either case, the task counter needs to be decremented and the
-        // shut down check needs to occur.
+        // it.
         if (!isCancelled()) {
             List<IngestModuleError> errors = new ArrayList<>();
-            DataSourceIngestPipeline pipeline = dataSourceIngestPipelines.take();
-            errors.addAll(pipeline.process(dataSource, dataSourceTasksProgress));
+            errors.addAll(dataSourceIngestPipeline.process(task.getDataSource(), dataSourceTasksProgress));
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
-            dataSourceIngestPipelines.put(pipeline);
+            dataSourceTasksProgress.finish();
+        }
+        if (taskScheduler.isLastTaskForIngestJob(task)) {
+            finish();
         }
     }
 
-    void process(AbstractFile file) throws InterruptedException {
+    void process(FileIngestTask task) throws InterruptedException {
         // If the job is not cancelled, complete the task, otherwise just flush 
-        // it. In either case, the task counter needs to be decremented and the
-        // shut down check needs to occur.
+        // it.
         if (!isCancelled()) {
-            List<IngestModuleError> errors = new ArrayList<>();
+            AbstractFile file = task.getFile();
             synchronized (this) {
                 ++processedFiles;
                 if (processedFiles <= estimatedFilesToProcess) {
@@ -171,28 +209,32 @@ final class IngestJob {
                 }
             }
             FileIngestPipeline pipeline = fileIngestPipelines.take();
+            List<IngestModuleError> errors = new ArrayList<>();
             errors.addAll(pipeline.process(file));
             fileIngestPipelines.put(pipeline);
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
         }
+        if (taskScheduler.isLastTaskForIngestJob(task)) {
+            finish();
+        }
     }
 
-    void shutDown() {
+    private void finish() {
         List<IngestModuleError> errors = new ArrayList<>();
-        while (!dataSourceIngestPipelines.isEmpty()) {
-            DataSourceIngestPipeline pipeline = dataSourceIngestPipelines.poll();
-            errors.addAll(pipeline.shutDown());
-        }
         while (!fileIngestPipelines.isEmpty()) {
             FileIngestPipeline pipeline = fileIngestPipelines.poll();
             errors.addAll(pipeline.shutDown());
         }
         fileTasksProgress.finish();
-        dataSourceTasksProgress.finish();
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
+        }
+
+        ingestJobsById.remove(id);
+        if (!cancelled) {
+            IngestManager.getInstance().fireIngestJobCompleted(id);
         }
     }
 
@@ -208,7 +250,7 @@ final class IngestJob {
 
     void cancel() {
         cancelled = true;
-        fileTasksProgress.finish(); 
+        fileTasksProgress.finish();
         dataSourceTasksProgress.finish();
         IngestManager.getInstance().fireIngestJobCancelled(id);
     }
