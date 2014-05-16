@@ -68,7 +68,7 @@ final class IngestJob {
         List<IngestModuleError> errors = job.start();
         if (errors.isEmpty()) {
             IngestManager.getInstance().fireIngestJobStarted(jobId);
-            taskScheduler.scheduleTasksForIngestJob(job, dataSource);
+            taskScheduler.addTasksForIngestJob(job, dataSource);
         } else {
             ingestJobsById.remove(jobId);
         }
@@ -185,14 +185,16 @@ final class IngestJob {
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
+        } else {
+            taskScheduler.removeTasksForIngestJob(id);
         }
-        
+
         // Because there is only one data source task per job, it is o.k. to 
         // call ProgressHandle.finish() now that the data source ingest modules 
-        // are through using it via the DataSourceIngestModuleProgress wrapper.
+        // are through using the progress bar via the DataSourceIngestModuleProgress wrapper.
         // Calling ProgressHandle.finish() again in finish() will be harmless.
-        dataSourceTasksProgress.finish(); 
-        
+        dataSourceTasksProgress.finish();
+
         if (taskScheduler.isLastTaskForIngestJob(task)) {
             finish();
         }
@@ -216,7 +218,10 @@ final class IngestJob {
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
+        } else {
+            taskScheduler.removeTasksForIngestJob(id);
         }
+
         if (taskScheduler.isLastTaskForIngestJob(task)) {
             finish();
         }
