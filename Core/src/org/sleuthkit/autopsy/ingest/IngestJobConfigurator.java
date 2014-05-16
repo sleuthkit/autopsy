@@ -196,10 +196,12 @@ public final class IngestJobConfigurator {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch (IOException | ClassNotFoundException ex) {
-                settings = factory.getDefaultIngestJobSettings();
                 String logMessage = String.format("Error loading ingest job settings for %s module for %s context, using defaults", factory.getModuleDisplayName(), launcherContext); //NON-NLS
                 logger.log(Level.WARNING, logMessage, ex);
             }
+        }
+        if (settings == null) {
+            settings = factory.getDefaultIngestJobSettings();
         }
         return settings;
     }
