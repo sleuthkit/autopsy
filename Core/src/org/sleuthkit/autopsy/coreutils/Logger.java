@@ -73,7 +73,7 @@ public final class Logger extends java.util.logging.Logger {
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name, String resourceBundleName) {
-        return new Logger(java.util.logging.Logger.getLogger(name));
+        return new Logger(java.util.logging.Logger.getLogger(name, resourceBundleName));
     }
 
     private Logger(java.util.logging.Logger log) {
