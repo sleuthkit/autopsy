@@ -121,33 +121,6 @@ final class IngestScheduler {
             addTaskToFileQueue(task);
         }
     }
-
-    synchronized void removeAllTasksForIngestJob(long ingestJobId) {
-        Iterator<FileIngestTask> fileTasksIterator = fileTasks.iterator();
-        while (fileTasksIterator.hasNext()) {
-            if (fileTasksIterator.next().getIngestJob().getId() == ingestJobId) {
-                fileTasksIterator.remove();
-            }
-        }
-        Iterator<FileIngestTask> directoryTasksIterator = directoryTasks.iterator();
-        while (directoryTasksIterator.hasNext()) {
-            if (directoryTasksIterator.next().getIngestJob().getId() == ingestJobId) {
-                directoryTasksIterator.remove();
-            }
-        }
-        Iterator<FileIngestTask> rootDirectoryTasksIterator = rootDirectoryTasks.iterator();
-        while (rootDirectoryTasksIterator.hasNext()) {
-            if (rootDirectoryTasksIterator.next().getIngestJob().getId() == ingestJobId) {
-                rootDirectoryTasksIterator.remove();
-            }
-        }
-        Iterator<DataSourceIngestTask> dataSourceTasksIterator = dataSourceTasks.iterator();
-        while (dataSourceTasksIterator.hasNext()) {
-            if (dataSourceTasksIterator.next().getIngestJob().getId() == ingestJobId) {
-                dataSourceTasksIterator.remove();
-            }
-        }
-    }
     
     private synchronized void updateFileTaskQueues(FileIngestTask taskInProgress) throws InterruptedException {
         if (taskInProgress != null) {
