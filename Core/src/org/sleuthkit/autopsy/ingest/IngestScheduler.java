@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,7 +58,7 @@ final class IngestScheduler {
 
     synchronized void scheduleTasksForIngestJob(IngestJob job, Content dataSource) throws InterruptedException {
         // Enqueue a data source ingest task for the data source.
-        // If the thread executing this code is interrupted, it is because the 
+        // If the thread executing this code is interrupted, tasksInProgressIterator is because the 
         // the number of ingest threads has been decreased while ingest jobs are 
         // running. The calling thread will exit in an orderly fashion, but the 
         // task still needs to be enqueued rather than lost, hence the loop.
@@ -85,12 +86,12 @@ final class IngestScheduler {
                 try {
                     children = root.getChildren();
                     if (children.isEmpty()) {
-                        // Add the root object itself, it could be an unallocated space 
+                        // Add the root object itself, tasksInProgressIterator could be an unallocated space 
                         // file, or a child of a volume or an image.
                         toptLevelFiles.add(root);
                     } else {
                         // The root object is a file system root directory, get
-                        // the files within it.
+                        // the files within tasksInProgressIterator.
                         for (Content child : children) {
                             if (child instanceof AbstractFile) {
                                 toptLevelFiles.add((AbstractFile) child);
@@ -121,6 +122,33 @@ final class IngestScheduler {
         }
     }
 
+    synchronized void removeAllTasksForIngestJob(long ingestJobId) {
+        Iterator<FileIngestTask> fileTasksIterator = fileTasks.iterator();
+        while (fileTasksIterator.hasNext()) {
+            if (fileTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                fileTasksIterator.remove();
+            }
+        }
+        Iterator<FileIngestTask> directoryTasksIterator = directoryTasks.iterator();
+        while (directoryTasksIterator.hasNext()) {
+            if (directoryTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                directoryTasksIterator.remove();
+            }
+        }
+        Iterator<FileIngestTask> rootDirectoryTasksIterator = rootDirectoryTasks.iterator();
+        while (rootDirectoryTasksIterator.hasNext()) {
+            if (rootDirectoryTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                rootDirectoryTasksIterator.remove();
+            }
+        }
+        Iterator<DataSourceIngestTask> dataSourceTasksIterator = dataSourceTasks.iterator();
+        while (dataSourceTasksIterator.hasNext()) {
+            if (dataSourceTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                dataSourceTasksIterator.remove();
+            }
+        }
+    }
+    
     private synchronized void updateFileTaskQueues(FileIngestTask taskInProgress) throws InterruptedException {
         if (taskInProgress != null) {
             tasksInProgress.add(taskInProgress);
@@ -133,7 +161,7 @@ final class IngestScheduler {
             if (fileTasks.isEmpty() == false) {
                 return;
             }
-            // fill in the directory queue if it is empty.
+            // fill in the directory queue if tasksInProgressIterator is empty.
             if (this.directoryTasks.isEmpty()) {
                 // bail out if root is also empty -- we are done
                 if (rootDirectoryTasks.isEmpty()) {
@@ -171,7 +199,7 @@ final class IngestScheduler {
     }
 
     private void addTaskToFileQueue(FileIngestTask task) {
-        // If the thread executing this code is interrupted, it is because the 
+        // If the thread executing this code is interrupted, tasksInProgressIterator is because the 
         // the number of ingest threads has been decreased while ingest jobs are 
         // running. The calling thread will exit in an orderly fashion, but the 
         // task still needs to be enqueued rather than lost.
@@ -189,7 +217,7 @@ final class IngestScheduler {
 
     private static boolean shouldEnqueueFileTask(final FileIngestTask processTask) {
         final AbstractFile aFile = processTask.getFile();
-        //if it's unalloc file, skip if so scheduled
+        //if tasksInProgressIterator's unalloc file, skip if so scheduled
         if (processTask.getIngestJob().shouldProcessUnallocatedSpace() == false && aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return false;
         }

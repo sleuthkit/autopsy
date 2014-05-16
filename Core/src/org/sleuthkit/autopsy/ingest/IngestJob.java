@@ -117,7 +117,7 @@ final class IngestJob {
 
     private List<IngestModuleError> startUpIngestPipelines() throws InterruptedException {
         IngestJobContext context = new IngestJobContext(this);
-        
+
         dataSourceIngestPipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(dataSourceIngestPipeline.startUp());
@@ -227,13 +227,13 @@ final class IngestJob {
             FileIngestPipeline pipeline = fileIngestPipelines.poll();
             errors.addAll(pipeline.shutDown());
         }
-        fileTasksProgress.finish();
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
         }
 
         ingestJobsById.remove(id);
         if (!cancelled) {
+            fileTasksProgress.finish();
             IngestManager.getInstance().fireIngestJobCompleted(id);
         }
     }
@@ -248,7 +248,8 @@ final class IngestJob {
         return cancelled;
     }
 
-    void cancel() {
+    private void cancel() {
+        taskScheduler.removeAllTasksForIngestJob(id);
         cancelled = true;
         fileTasksProgress.finish();
         dataSourceTasksProgress.finish();
