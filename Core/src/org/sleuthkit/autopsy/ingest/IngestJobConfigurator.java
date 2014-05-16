@@ -149,11 +149,11 @@ public final class IngestJobConfigurator {
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Failed to create ingest module settings directory", ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "IngestJobConfigurator.createModuleSettingsFolderForContext.exception.msg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "IngestJobConfigurator.createModuleSettingsFolderForContext.exception.title"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                    "IngestJobConfigurator.createModuleSettingsFolderForContext.exception.msg"),
+                    NbBundle.getMessage(this.getClass(),
+                    "IngestJobConfigurator.createModuleSettingsFolderForContext.exception.title"),
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -197,12 +197,7 @@ public final class IngestJobConfigurator {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch (IOException | ClassNotFoundException ex) {
                 String logMessage = String.format("Error loading ingest job settings for %s module for %s context, using defaults", factory.getModuleDisplayName(), launcherContext); //NON-NLS
-                logger.log(Level.SEVERE, logMessage, ex);
-                String userMessage = NbBundle.getMessage(this.getClass(), "IngestJobConfigurator.loadJobSettings.usermsg.text", factory.getModuleDisplayName());
-                JOptionPane.showMessageDialog(null, userMessage,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "IngestJobConfigurator.loadJobSettings.usermsg.title"),
-                                              JOptionPane.WARNING_MESSAGE);
+                logger.log(Level.WARNING, logMessage, ex);
             }
         }
         if (settings == null) {
@@ -221,9 +216,9 @@ public final class IngestJobConfigurator {
             logger.log(Level.SEVERE, logMessage, ex);
             String userMessage = NbBundle.getMessage(this.getClass(), "IngestJobConfigurator.saveJobSettings.usermsg", factory.getModuleDisplayName());
             JOptionPane.showMessageDialog(null, userMessage,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "IngestJobConfigurator.saveJobSettings.usermsg.title"),
-                                          JOptionPane.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                    "IngestJobConfigurator.saveJobSettings.usermsg.title"),
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 
