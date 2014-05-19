@@ -52,7 +52,7 @@ public class Tags implements AutopsyVisitableItem {
     // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
     // override of Children.Keys<T>.createNodes().
     
-    private TagResults tagResults = new TagResults();
+    private final TagResults tagResults = new TagResults();
     private final String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
@@ -130,6 +130,12 @@ public class Tags implements AutopsyVisitableItem {
                     refresh(true);
                     tagResults.update();
                 }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that this can be garbage collected
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                    }
+                }
             }
         };
 
@@ -137,6 +143,7 @@ public class Tags implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
             tagResults.update();
             tagResults.addObserver(this);
         }
@@ -145,6 +152,7 @@ public class Tags implements AutopsyVisitableItem {
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
             tagResults.deleteObserver(this);
         }
 

@@ -39,6 +39,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -62,7 +63,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
     private static final String MAIL_PATH_SEPARATOR = "/";
     private SleuthkitCase skCase;
-    private EmailResults emailResults;
+    private final EmailResults emailResults;
     
 
     public EmailExtracted(SleuthkitCase skCase) {
@@ -71,7 +72,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
     
     private final class EmailResults extends Observable {
-        private Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
+        private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
         
         EmailResults() {
             update();
@@ -91,6 +92,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
         
         public void update() {
             accounts.clear();
+            if (skCase == null) {
+                return;   
+            }
+            
             try {
                 int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
                 int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
@@ -291,6 +296,13 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     emailResults.update();
                 }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
         
@@ -298,6 +310,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
             emailResults.update();
             emailResults.addObserver(this);
         }
@@ -306,6 +319,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
             emailResults.deleteObserver(this);
         }
         
@@ -484,6 +498,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
+            if (skCase == null) {
+                return null;            
+            }
             try {
                 BlackboardArtifact artifact = skCase.getBlackboardArtifact(artifactId);
                 return new BlackboardArtifactNode(artifact);
