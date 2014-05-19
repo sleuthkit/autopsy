@@ -18,6 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-interface IngestTaskQueue {
+interface IngestTaskQueue { // RJCTODO: Renmae to IngestTaskScheduler
     IngestTask getNextTask() throws InterruptedException;
 }
