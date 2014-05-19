@@ -54,6 +54,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
          * that the directory tree would refresh. But, we haven't had a chance to add
          * that so, we fire these events and the tree refreshes based on them. 
          */
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE));        
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
     }        
 }
