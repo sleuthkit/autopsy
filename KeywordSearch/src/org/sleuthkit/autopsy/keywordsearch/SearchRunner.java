@@ -383,7 +383,7 @@ public final class SearchRunner {
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user."); //NON-NLS
                     if (progressGroup != null) {
-                        progressGroup.setDisplayName(displayName + " (" + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg") + "...)");
+                        progressGroup.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
                     }
                     return SearchRunner.Searcher.this.cancel(true);
                 }
