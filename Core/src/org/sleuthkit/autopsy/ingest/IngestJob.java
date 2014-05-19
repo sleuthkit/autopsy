@@ -46,8 +46,8 @@ final class IngestJob {
     private long estimatedFilesToProcess = 0L; // Guarded by this
     private long processedFiles = 0L; // Guarded by this
     private DataSourceIngestPipeline dataSourceIngestPipeline;
-    private ProgressHandle dataSourceTasksProgress;
-    private ProgressHandle fileTasksProgress;
+    private ProgressHandle dataSourceIngestProgress;
+    private ProgressHandle fileIngestProgress;
     private volatile boolean cancelled = false;
 
     /**
@@ -140,11 +140,11 @@ final class IngestJob {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.dataSourceIngest.initialDisplayName",
                 dataSource.getName());
-        dataSourceTasksProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+        dataSourceIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
-                if (dataSourceTasksProgress != null) {
-                    dataSourceTasksProgress.setDisplayName(
+                if (dataSourceIngestProgress != null) {
+                    dataSourceIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(),
                             "IngestJob.progress.cancelling",
                             displayName));
@@ -153,19 +153,19 @@ final class IngestJob {
                 return true;
             }
         });
-        dataSourceTasksProgress.start();
-        dataSourceTasksProgress.switchToIndeterminate();
+        dataSourceIngestProgress.start();
+        dataSourceIngestProgress.switchToIndeterminate();
     }
 
     private void startFileIngestProgressBar() {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.fileIngest.displayName",
                 dataSource.getName());
-        fileTasksProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+        fileIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
-                if (fileTasksProgress != null) {
-                    fileTasksProgress.setDisplayName(
+                if (fileIngestProgress != null) {
+                    fileIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
                             displayName));
                 }
@@ -174,29 +174,28 @@ final class IngestJob {
             }
         });
         estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
-        fileTasksProgress.start();
-        fileTasksProgress.switchToDeterminate((int) estimatedFilesToProcess);
+        fileIngestProgress.start();
+        fileIngestProgress.switchToDeterminate((int) estimatedFilesToProcess);
     }
 
     void process(DataSourceIngestTask task) throws InterruptedException {
         if (!isCancelled()) {
             List<IngestModuleError> errors = new ArrayList<>();
-            errors.addAll(dataSourceIngestPipeline.process(task.getDataSource(), dataSourceTasksProgress));
+            errors.addAll(dataSourceIngestPipeline.process(task.getDataSource(), dataSourceIngestProgress));
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
         } else {
             taskScheduler.removeTasksForIngestJob(id);
         }
+        taskScheduler.notifyDataSourceIngestTaskCompleted(task);
 
-        // Because there is only one data source task per job, it is o.k. to 
-        // call ProgressHandle.finish() now that the data source ingest modules 
-        // are through using the progress bar via the DataSourceIngestModuleProgress wrapper.
-        // Calling ProgressHandle.finish() again in finish() will be harmless.
-        dataSourceTasksProgress.finish();
-
-        if (taskScheduler.isLastTaskForIngestJob(task)) {
-            finish();
+        if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
+            finishProgressBar(dataSourceIngestProgress);
+            if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
+                finishProgressBar(fileIngestProgress);
+                finish();
+            }
         }
     }
 
@@ -206,9 +205,9 @@ final class IngestJob {
             synchronized (this) {
                 ++processedFiles;
                 if (processedFiles <= estimatedFilesToProcess) {
-                    fileTasksProgress.progress(file.getName(), (int) processedFiles);
+                    fileIngestProgress.progress(file.getName(), (int) processedFiles);
                 } else {
-                    fileTasksProgress.progress(file.getName(), (int) estimatedFilesToProcess);
+                    fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
                 }
             }
             FileIngestPipeline pipeline = fileIngestPipelines.take();
@@ -221,9 +220,21 @@ final class IngestJob {
         } else {
             taskScheduler.removeTasksForIngestJob(id);
         }
+        taskScheduler.notifyFileIngestTaskCompleted(task);
 
-        if (taskScheduler.isLastTaskForIngestJob(task)) {
-            finish();
+        if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
+            finishProgressBar(fileIngestProgress);
+            if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
+                finishProgressBar(dataSourceIngestProgress);
+                finish();
+            }
+        }
+    }
+
+    private synchronized void finishProgressBar(ProgressHandle progress) {
+        if (progress != null) {
+            progress.finish();
+            progress = null;
         }
     }
 
@@ -236,8 +247,6 @@ final class IngestJob {
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
         }
-        dataSourceTasksProgress.finish();
-        fileTasksProgress.finish();
         ingestJobsById.remove(id);
         if (!isCancelled()) {
             IngestManager.getInstance().fireIngestJobCompleted(id);
@@ -256,6 +265,8 @@ final class IngestJob {
 
     private void cancel() {
         cancelled = true;
+        finishProgressBar(dataSourceIngestProgress);
+        finishProgressBar(fileIngestProgress);
         IngestManager.getInstance().fireIngestJobCancelled(id);
     }
 }
