@@ -37,7 +37,8 @@ final class IngestJob {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final AtomicLong nextIngestJobId = new AtomicLong(0L);
     private static final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
-    private static final IngestScheduler taskScheduler = IngestScheduler.getInstance();
+    private static final DataSourceIngestTaskScheduler dataSourceTaskScheduler = DataSourceIngestTaskScheduler.getInstance();
+    private static final FileIngestTaskScheduler fileTaskScheduler = FileIngestTaskScheduler.getInstance();
     private final long id;
     private final Content dataSource;
     private final boolean processUnallocatedSpace;
@@ -63,7 +64,7 @@ final class IngestJob {
     static List<IngestModuleError> startIngestJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
         List<IngestModuleError> errors = new ArrayList<>();
         long jobId = nextIngestJobId.incrementAndGet();
-        IngestJob job = new IngestJob(jobId, dataSource, processUnallocatedSpace);        
+        IngestJob job = new IngestJob(jobId, dataSource, processUnallocatedSpace);
         job.createIngestPipelines(ingestModuleTemplates);
         if (job.hasNonEmptyPipeline()) {
             ingestJobsById.put(jobId, job);
@@ -134,13 +135,13 @@ final class IngestJob {
             // data source task to make sure the progress bar will be available 
             // as soon as the task begins to be processed.
             startDataSourceIngestProgressBar();
-            taskScheduler.scheduleDataSourceTask(this, dataSource);
-                        
+            dataSourceTaskScheduler.scheduleTask(this, dataSource);
+
             // Start the file ingest progress bar before scheduling the file
             // ingest tasks to make sure the progress bar will be available 
             // as soon as the tasks begin to be processed.
             startFileIngestProgressBar();
-            if (!taskScheduler.tryScheduleFileTasks(this, dataSource)) {
+            if (!fileTaskScheduler.tryScheduleTasks(this, dataSource)) {
                 finishProgressBar(fileIngestProgress);
             }
         }
@@ -210,15 +211,12 @@ final class IngestJob {
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
-        } 
-        taskScheduler.notifyDataSourceIngestTaskCompleted(task);
+        }
+        dataSourceTaskScheduler.notifyTaskCompleted(task);
+        finishProgressBar(dataSourceIngestProgress);
 
-        if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
-            finishProgressBar(dataSourceIngestProgress);
-            if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
-                finishProgressBar(fileIngestProgress);
-                finish();
-            }
+        if (!dataSourceTaskScheduler.hasIncompleteTasksForIngestJob(this) && !fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+            finish();
         }
     }
 
@@ -241,12 +239,19 @@ final class IngestJob {
                 logIngestModuleErrors(errors);
             }
         }
-        taskScheduler.notifyFileIngestTaskCompleted(task);
+        fileTaskScheduler.notifyTaskCompleted(task);
 
-        if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
+        if (!fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+            List<IngestModuleError> errors = new ArrayList<>();
+            while (!fileIngestPipelines.isEmpty()) {
+                FileIngestPipeline pipeline = fileIngestPipelines.poll();
+                errors.addAll(pipeline.shutDown());
+            }
+            if (!errors.isEmpty()) {
+                logIngestModuleErrors(errors);
+            }
             finishProgressBar(fileIngestProgress);
-            if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
-                finishProgressBar(dataSourceIngestProgress);
+            if (!dataSourceTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
                 finish();
             }
         }
@@ -260,14 +265,6 @@ final class IngestJob {
     }
 
     private void finish() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        while (!fileIngestPipelines.isEmpty()) {
-            FileIngestPipeline pipeline = fileIngestPipelines.poll();
-            errors.addAll(pipeline.shutDown());
-        }
-        if (!errors.isEmpty()) {
-            logIngestModuleErrors(errors);
-        }
         ingestJobsById.remove(id);
         if (!isCancelled()) {
             IngestManager.getInstance().fireIngestJobCompleted(id);
