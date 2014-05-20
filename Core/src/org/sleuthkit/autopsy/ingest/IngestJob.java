@@ -37,10 +37,10 @@ final class IngestJob {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final AtomicLong nextIngestJobId = new AtomicLong(0L);
     private static final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
-    private static final IngestScheduler taskScheduler = IngestScheduler.getInstance();
+    private static final DataSourceIngestTaskScheduler dataSourceTaskScheduler = DataSourceIngestTaskScheduler.getInstance();
+    private static final FileIngestTaskScheduler fileTaskScheduler = FileIngestTaskScheduler.getInstance();
     private final long id;
     private final Content dataSource;
-    private final List<IngestModuleTemplate> ingestModuleTemplates;
     private final boolean processUnallocatedSpace;
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines = new LinkedBlockingQueue<>();
     private long estimatedFilesToProcess = 0L; // Guarded by this
@@ -62,26 +62,24 @@ final class IngestJob {
      * @throws InterruptedException
      */
     static List<IngestModuleError> startIngestJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
+        List<IngestModuleError> errors = new ArrayList<>();
         long jobId = nextIngestJobId.incrementAndGet();
-        IngestJob job = new IngestJob(jobId, dataSource, ingestModuleTemplates, processUnallocatedSpace);
-        ingestJobsById.put(jobId, job);
-        List<IngestModuleError> errors = job.start();
-        if (errors.isEmpty()) {
-            IngestManager.getInstance().fireIngestJobStarted(jobId);
-            taskScheduler.addTasksForIngestJob(job, dataSource);
-        } else {
-            ingestJobsById.remove(jobId);
+        IngestJob job = new IngestJob(jobId, dataSource, processUnallocatedSpace);
+        job.createIngestPipelines(ingestModuleTemplates);
+        if (job.hasNonEmptyPipeline()) {
+            ingestJobsById.put(jobId, job);
+            errors = job.start();
+            if (errors.isEmpty()) {
+                IngestManager.getInstance().fireIngestJobStarted(jobId);
+            } else {
+                ingestJobsById.remove(jobId);
+            }
         }
         return errors;
     }
 
     static boolean ingestJobsAreRunning() {
-        for (IngestJob job : ingestJobsById.values()) {
-            if (!job.isCancelled()) {
-                return true;
-            }
-        }
-        return false;
+        return !ingestJobsById.isEmpty();
     }
 
     static void cancelAllIngestJobs() {
@@ -90,10 +88,9 @@ final class IngestJob {
         }
     }
 
-    IngestJob(long id, Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
+    IngestJob(long id, Content dataSource, boolean processUnallocatedSpace) {
         this.id = id;
         this.dataSource = dataSource;
-        this.ingestModuleTemplates = ingestModuleTemplates;
         this.processUnallocatedSpace = processUnallocatedSpace;
     }
 
@@ -105,33 +102,56 @@ final class IngestJob {
         return processUnallocatedSpace;
     }
 
+    private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
+        IngestJobContext context = new IngestJobContext(this);
+        dataSourceIngestPipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
+        int numberOfPipelines = IngestManager.getInstance().getNumberOfFileIngestThreads();
+        for (int i = 0; i < numberOfPipelines; ++i) {
+            fileIngestPipelines.put(new FileIngestPipeline(context, ingestModuleTemplates));
+        }
+    }
+
+    private boolean hasNonEmptyPipeline() {
+        if (dataSourceIngestPipeline.isEmpty() && fileIngestPipelines.peek().isEmpty()) {
+            return false;
+        }
+        return true;
+    }
+
     private List<IngestModuleError> start() throws InterruptedException {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
-            startFileIngestProgressBar();
-            startDataSourceIngestProgressBar();
+            if (!dataSourceIngestPipeline.isEmpty()) {
+                // Start the data source ingest progress bar before scheduling the
+                // data source task to make sure the progress bar will be available 
+                // as soon as the task begins to be processed.
+                startDataSourceIngestProgressBar();
+                dataSourceTaskScheduler.scheduleTask(this, dataSource);
+            }
+
+            if (!fileIngestPipelines.peek().isEmpty()) {
+                // Start the file ingest progress bar before scheduling the file
+                // ingest tasks to make sure the progress bar will be available 
+                // as soon as the tasks begin to be processed.
+                startFileIngestProgressBar();
+                if (!fileTaskScheduler.tryScheduleTasks(this, dataSource)) {
+                    fileIngestProgress.finish();
+                }
+            }
         }
         return errors;
     }
 
     private List<IngestModuleError> startUpIngestPipelines() throws InterruptedException {
-        IngestJobContext context = new IngestJobContext(this);
-
-        dataSourceIngestPipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(dataSourceIngestPipeline.startUp());
-
-        int numberOfPipelines = IngestManager.getInstance().getNumberOfFileIngestThreads();
-        for (int i = 0; i < numberOfPipelines; ++i) {
-            FileIngestPipeline pipeline = new FileIngestPipeline(context, ingestModuleTemplates);
+        for (FileIngestPipeline pipeline : fileIngestPipelines) {
             errors.addAll(pipeline.startUp());
-            fileIngestPipelines.put(pipeline);
             if (!errors.isEmpty()) {
                 // No need to accumulate presumably redundant errors.
                 break;
             }
         }
-
         logIngestModuleErrors(errors);
         return errors;
     }
@@ -185,17 +205,12 @@ final class IngestJob {
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
-        } else {
-            taskScheduler.removeTasksForIngestJob(id);
         }
-        taskScheduler.notifyDataSourceIngestTaskCompleted(task);
+        dataSourceTaskScheduler.notifyTaskCompleted(task);
+        dataSourceIngestProgress.finish();
 
-        if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
-            finishProgressBar(dataSourceIngestProgress);
-            if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
-                finishProgressBar(fileIngestProgress);
-                finish();
-            }
+        if (!fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+            finish();
         }
     }
 
@@ -217,39 +232,31 @@ final class IngestJob {
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
-        } else {
-            taskScheduler.removeTasksForIngestJob(id);
         }
-        taskScheduler.notifyFileIngestTaskCompleted(task);
+        fileTaskScheduler.notifyTaskCompleted(task);
 
-        if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
-            finishProgressBar(fileIngestProgress);
-            if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
-                finishProgressBar(dataSourceIngestProgress);
+        if (!fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+            List<IngestModuleError> errors = new ArrayList<>();
+            while (!fileIngestPipelines.isEmpty()) {
+                FileIngestPipeline pipeline = fileIngestPipelines.poll();
+                errors.addAll(pipeline.shutDown());
+            }
+            if (!errors.isEmpty()) {
+                logIngestModuleErrors(errors);
+            }
+            fileIngestProgress.finish();
+            if (!dataSourceTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
                 finish();
             }
         }
     }
 
-    private synchronized void finishProgressBar(ProgressHandle progress) {
-        if (progress != null) {
-            progress.finish();
-            progress = null;
-        }
-    }
-
     private void finish() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        while (!fileIngestPipelines.isEmpty()) {
-            FileIngestPipeline pipeline = fileIngestPipelines.poll();
-            errors.addAll(pipeline.shutDown());
-        }
-        if (!errors.isEmpty()) {
-            logIngestModuleErrors(errors);
-        }
         ingestJobsById.remove(id);
         if (!isCancelled()) {
             IngestManager.getInstance().fireIngestJobCompleted(id);
+        } else {
+            IngestManager.getInstance().fireIngestJobCancelled(id);
         }
     }
 
@@ -265,8 +272,5 @@ final class IngestJob {
 
     private void cancel() {
         cancelled = true;
-        finishProgressBar(dataSourceIngestProgress);
-        finishProgressBar(fileIngestProgress);
-        IngestManager.getInstance().fireIngestJobCancelled(id);
     }
 }

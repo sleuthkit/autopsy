@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -60,7 +62,15 @@ public final class IngestJobContext {
      */
     public void addFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
-            IngestScheduler.getInstance().addFileTaskToIngestJob(ingestJob, file);
+            try {
+                FileIngestTaskScheduler.getInstance().scheduleTask(ingestJob, file);
+            } catch (InterruptedException ex) {
+                // Ultimately, this method is called by ingest task execution
+                // threads running ingest module code. Handle the unexpected
+                // interrupt here rather
+                Thread.currentThread().interrupt();
+                Logger.getLogger(IngestJobContext.class.getName()).log(Level.SEVERE, "File task scheduling unexpectedly interrupted", ex); //NON-NLS
+            }
         }
     }
 }

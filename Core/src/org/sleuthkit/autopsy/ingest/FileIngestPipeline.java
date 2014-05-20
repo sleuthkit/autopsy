@@ -31,37 +31,28 @@ import org.sleuthkit.datamodel.AbstractFile;
 final class FileIngestPipeline {
 
     private final IngestJobContext context;
-    private final List<IngestModuleTemplate> moduleTemplates;
     private List<FileIngestModuleDecorator> modules = new ArrayList<>();
 
     FileIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
         this.context = context;
-        this.moduleTemplates = moduleTemplates;
-    }
 
-    List<IngestModuleError> startUp() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        // Create an ingest module instance from each ingest module template
-        // that has an ingest module factory capable of making data source
-        // ingest modules. Map the module class names to the module instance
-        // to allow the modules to be put in the sequence indicated by the
-        // ingest pipelines configuration.
+        // Create an ingest module instance from each file ingest module 
+        // template. Put the modules in a map of module class names to module 
+        // instances to facilitate loading the modules into the pipeline in the 
+        // sequence indicated by the ordered list of module class names that 
+        // will be obtained from the file ingest pipeline configuration.
         Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
                 FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
-                try {
-                    module.startUp(context);
-                    modulesByClass.put(module.getClassName(), module);
-                } catch (Exception ex) {
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                }
+                modulesByClass.put(module.getClassName(), module);
             }
         }
-        // Establish the module sequence of the core ingest modules
-        // indicated by the ingest pipeline configuration, adding any
-        // additional modules found in the global lookup to the end of the
-        // pipeline in arbitrary order.
+
+        // Add the ingest modules to the pipeline in the order indicated by the 
+        // data source ingest pipeline configuration, adding any additional 
+        // modules found in the global lookup, but not mentioned in the 
+        // configuration, to the end of the pipeline in arbitrary order.
         List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getFileIngestPipelineConfig();
         for (String moduleClassName : pipelineConfig) {
             if (modulesByClass.containsKey(moduleClassName)) {
@@ -71,12 +62,27 @@ final class FileIngestPipeline {
         for (FileIngestModuleDecorator module : modulesByClass.values()) {
             modules.add(module);
         }
+    }
+
+    boolean isEmpty() {
+        return modules.isEmpty();
+    }
+
+    List<IngestModuleError> startUp() {
+        List<IngestModuleError> errors = new ArrayList<>();
+        for (FileIngestModuleDecorator module : modules) {
+            try {
+                module.startUp(context);
+            } catch (Exception ex) {
+                errors.add(new IngestModuleError(module.getDisplayName(), ex));
+            }
+        }
         return errors;
     }
 
     List<IngestModuleError> process(AbstractFile file) {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : this.modules) {
+        for (FileIngestModuleDecorator module : modules) {
             try {
                 module.process(file);
             } catch (Exception ex) {
@@ -95,7 +101,7 @@ final class FileIngestPipeline {
 
     List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : this.modules) {
+        for (FileIngestModuleDecorator module : modules) {
             try {
                 module.shutDown();
             } catch (Exception ex) {
@@ -105,7 +111,7 @@ final class FileIngestPipeline {
         return errors;
     }
 
-    private static class FileIngestModuleDecorator implements FileIngestModule {
+    private static final class FileIngestModuleDecorator implements FileIngestModule {
 
         private final FileIngestModule module;
         private final String displayName;
