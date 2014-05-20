@@ -257,36 +257,52 @@ final class IngestScheduler {
         return fileTaskDispenser;
     }
 
-    synchronized boolean wasLastTaskForIngestJob(IngestTask completedTask) {
-        tasksInProgress.remove(completedTask);
-        IngestJob job = completedTask.getIngestJob();
+    synchronized void notifyDataSourceIngestTaskCompleted(DataSourceIngestTask task) {
+        dataSourceTasksInProgress.remove(task);        
+    }
+    
+    synchronized void notifyFileIngestTaskCompleted(FileIngestTask task) {
+        fileTasksInProgress.remove(task);        
+    }
+
+    synchronized boolean hasDataSourceIngestTaskForIngestJob(IngestJob job) {
         long jobId = job.getId();
-        for (IngestTask task : tasksInProgress) {
+        for (IngestTask task : dataSourceTasksInProgress) {
             if (task.getIngestJob().getId() == jobId) {
-                return false;
-            }
-        }
-        for (FileIngestTask task : fileTasks) {
-            if (task.getIngestJob().getId() == jobId) {
-                return false;
-            }
-        }
-        for (FileIngestTask task : directoryTasks) {
-            if (task.getIngestJob().getId() == jobId) {
-                return false;
-            }
-        }
-        for (FileIngestTask task : rootDirectoryTasks) {
-            if (task.getIngestJob().getId() == jobId) {
-                return false;
+                return true;
             }
         }
         for (DataSourceIngestTask task : dataSourceTasks) {
             if (task.getIngestJob().getId() == jobId) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
+    }
+        
+    synchronized boolean hasFileIngestTaskForIngestJob(IngestJob job) {
+        long jobId = job.getId();
+        for (IngestTask task : fileTasksInProgress) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        for (FileIngestTask task : fileTasks) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        for (FileIngestTask task : directoryTasks) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        for (FileIngestTask task : rootDirectoryTasks) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static class RootDirectoryTaskComparator implements Comparator<FileIngestTask> {
@@ -388,9 +404,11 @@ final class IngestScheduler {
     private class DataSourceIngestTaskQueue implements IngestTaskQueue {
 
         @Override
-        public IngestTask getNextTask() throws InterruptedException { // RJCTODO: Does this need to be synchronized?
+        public IngestTask getNextTask() throws InterruptedException {
             DataSourceIngestTask task = dataSourceTasks.take();
-            dataSourceTasksInProgress.add(task);
+            synchronized (this) {
+                dataSourceTasksInProgress.add(task);
+            }
             return task;
         }
     }
@@ -400,7 +418,9 @@ final class IngestScheduler {
         @Override
         public IngestTask getNextTask() throws InterruptedException {  // RJCTODO: Does this need to be synchronized?
             FileIngestTask task = fileTasks.take();
-            fileTasksInProgress.add(task);
+            synchronized (this) {
+                fileTasksInProgress.add(task);
+            }
             updateFileTaskQueues();
             return task;
         }

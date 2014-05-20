@@ -42,6 +42,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -57,7 +58,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
     private SleuthkitCase skCase;
-    private InterestingResults interestingResults = new InterestingResults();
+    private final InterestingResults interestingResults = new InterestingResults();
     
     public InterestingHits(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -65,7 +66,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     }
  
     private class InterestingResults extends Observable {
-        private Map<String, Set<Long>> interestingItemsMap = new LinkedHashMap<>();
+        private final Map<String, Set<Long>> interestingItemsMap = new LinkedHashMap<>();
     
         public List<String> getSetNames() {
             List<String> setNames = new ArrayList<>(interestingItemsMap.keySet());
@@ -89,6 +90,10 @@ public class InterestingHits implements AutopsyVisitableItem {
          * Reads the artifacts of specified type, grouped by Set, and loads into the interestingItemsMap
          */
         private void loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE artType) {
+            if (skCase == null) {
+                return;   
+            }
+            
             ResultSet rs = null;
             try {
                 int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
@@ -188,6 +193,13 @@ public class InterestingHits implements AutopsyVisitableItem {
                 || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     interestingResults.update();
                 }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
 
@@ -195,6 +207,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
             interestingResults.update();
             interestingResults.addObserver(this);
         }
@@ -203,6 +216,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
             interestingResults.deleteObserver(this);
         }
         
@@ -290,6 +304,9 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long l) {
+            if (skCase == null) {
+                return null;   
+            }
             try {
                 return new BlackboardArtifactNode(skCase.getBlackboardArtifact(l));
             } catch (TskCoreException ex) {

@@ -136,7 +136,7 @@ final class IngestJob {
             taskScheduler.addDataSourceTask(this, dataSource);
             startFileIngestProgressBar();
             if (!taskScheduler.addFileTasks(this, dataSource)) {
-                finishFileIngestProgressBar();
+                finishProgressBar(fileIngestProgress);
             }
         }
         return errors;
@@ -185,13 +185,6 @@ final class IngestJob {
         dataSourceIngestProgress.switchToIndeterminate();
     }
 
-    private synchronized void finishDataSourceIngestProgressBar() {
-        if (dataSourceIngestProgress != null) {
-            dataSourceIngestProgress.finish();
-            dataSourceIngestProgress = null;
-        }
-    }
-
     private void startFileIngestProgressBar() {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.fileIngest.displayName",
@@ -213,13 +206,6 @@ final class IngestJob {
         fileIngestProgress.switchToDeterminate((int) estimatedFilesToProcess);
     }
 
-    private synchronized void finishFileIngestProgressBar() {
-        if (fileIngestProgress != null) {
-            fileIngestProgress.finish();
-            fileIngestProgress = null;
-        }
-    }
-
     void process(DataSourceIngestTask task) throws InterruptedException {
         if (!isCancelled()) {
             List<IngestModuleError> errors = new ArrayList<>();
@@ -230,12 +216,15 @@ final class IngestJob {
         } else {
             taskScheduler.removeQueuedTasksForIngestJob(id);            
         }
-        // taskScheduler.taskIsCompleted(task);
+        taskScheduler.notifyDataSourceIngestTaskCompleted(task);
 
-        dataSourceIngestProgress.finish();
-        // if (!taskScheduler.hasFileIngestTasksForIngestJob()) {
-        //    finish();
-        // }
+        if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
+            finishProgressBar(dataSourceIngestProgress);
+            if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
+                finishProgressBar(fileIngestProgress);
+                finish();
+            }
+        }
     }
 
     void process(FileIngestTask task) throws InterruptedException {
@@ -259,14 +248,22 @@ final class IngestJob {
         } else {
             taskScheduler.removeQueuedTasksForIngestJob(id);            
         }
-        // taskScheduler.taskIsCompleted(task);
+        taskScheduler.notifyFileIngestTaskCompleted(task);
 
-        // if (!taskScheduler.hasFileIngestTasksForIngestJob()) {
-        //    fileIngestProgress.finish();
-        //    if (!taskScheduler.hasDataSourceTasksForIngestJob()) {
-        //       finish();
-        //    }
-        // }
+        if (!taskScheduler.hasFileIngestTaskForIngestJob(this)) {
+            finishProgressBar(fileIngestProgress);
+            if (!taskScheduler.hasDataSourceIngestTaskForIngestJob(this)) {
+                finishProgressBar(dataSourceIngestProgress);
+                finish();
+            }
+        }
+    }
+
+    private synchronized void finishProgressBar(ProgressHandle progress) {
+        if (progress != null) {
+            progress.finish();
+            progress = null;
+        }
     }
 
     private void finish() {
@@ -296,6 +293,8 @@ final class IngestJob {
 
     private void cancel() {
         cancelled = true;
+        finishProgressBar(dataSourceIngestProgress);
+        finishProgressBar(fileIngestProgress);
         IngestManager.getInstance().fireIngestJobCancelled(id);
     }
 }
