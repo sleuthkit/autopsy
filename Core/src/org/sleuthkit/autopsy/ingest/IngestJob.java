@@ -79,12 +79,7 @@ final class IngestJob {
     }
 
     static boolean ingestJobsAreRunning() {
-        for (IngestJob job : ingestJobsById.values()) {
-            if (!job.isCancelled()) {
-                return true;
-            }
-        }
-        return false;
+        return !ingestJobsById.isEmpty();
     }
 
     static void cancelAllIngestJobs() {
@@ -126,10 +121,10 @@ final class IngestJob {
     private List<IngestModuleError> start() throws InterruptedException {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
-            // Start the data source ingest progress bar before scheduling the
-            // data source task to make sure the progress bar will be available 
-            // as soon as the task begins to be processed.
             if (!dataSourceIngestPipeline.isEmpty()) {
+                // Start the data source ingest progress bar before scheduling the
+                // data source task to make sure the progress bar will be available 
+                // as soon as the task begins to be processed.
                 startDataSourceIngestProgressBar();
                 dataSourceTaskScheduler.scheduleTask(this, dataSource);
             }
@@ -140,7 +135,7 @@ final class IngestJob {
                 // as soon as the tasks begin to be processed.
                 startFileIngestProgressBar();
                 if (!fileTaskScheduler.tryScheduleTasks(this, dataSource)) {
-                    finishProgressBar(fileIngestProgress);
+                    fileIngestProgress.finish();
                 }
             }
         }
@@ -212,9 +207,9 @@ final class IngestJob {
             }
         }
         dataSourceTaskScheduler.notifyTaskCompleted(task);
-        finishProgressBar(dataSourceIngestProgress);
+        dataSourceIngestProgress.finish();
 
-        if (!dataSourceTaskScheduler.hasIncompleteTasksForIngestJob(this) && !fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+        if (!fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
             finish();
         }
     }
@@ -249,17 +244,10 @@ final class IngestJob {
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
-            finishProgressBar(fileIngestProgress);
+            fileIngestProgress.finish();
             if (!dataSourceTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
                 finish();
             }
-        }
-    }
-
-    private synchronized void finishProgressBar(ProgressHandle progress) {
-        if (progress != null) {
-            progress.finish();
-            progress = null;
         }
     }
 
@@ -267,6 +255,8 @@ final class IngestJob {
         ingestJobsById.remove(id);
         if (!isCancelled()) {
             IngestManager.getInstance().fireIngestJobCompleted(id);
+        } else {
+            IngestManager.getInstance().fireIngestJobCancelled(id);
         }
     }
 
@@ -282,8 +272,5 @@ final class IngestJob {
 
     private void cancel() {
         cancelled = true;
-        finishProgressBar(dataSourceIngestProgress);
-        finishProgressBar(fileIngestProgress);
-        IngestManager.getInstance().fireIngestJobCancelled(id);
     }
 }

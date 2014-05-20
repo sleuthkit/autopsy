@@ -115,7 +115,7 @@ final class FileIngestTaskScheduler implements IngestTaskQueue {
         updateTaskQueues();
         return task;
     }
-    
+
     private synchronized void updateTaskQueues() throws InterruptedException {
         // we loop because we could have a directory that has all files
         // that do not get enqueued
