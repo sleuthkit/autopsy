@@ -38,11 +38,11 @@ final class DataSourceIngestPipeline {
     DataSourceIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
         this.context = context;
 
-        // Create an ingest module instance from each ingest module template
-        // that has an ingest module factory capable of making data source
-        // ingest modules. Map the module class names to the module instances
-        // to allow the modules to be put in the sequence indicated by the
-        // ingest pipelines configuration.
+        // Create an ingest module instance from each data source ingest module 
+        // template. Put the modules in a map of module class names to module 
+        // instances to facilitate loading the modules into the pipeline in the 
+        // sequence indicated by the ordered list of module class names that 
+        // will be obtained from the data source ingest pipeline configuration.
         Map<String, DataSourceIngestModuleDecorator> modulesByClass = new HashMap<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
@@ -53,8 +53,8 @@ final class DataSourceIngestPipeline {
 
         // Add the ingest modules to the pipeline in the order indicated by the 
         // data source ingest pipeline configuration, adding any additional 
-        // modules found in the global lookup but not mentioned in the 
-        // configuration to the end of the pipeline in arbitrary order.
+        // modules found in the global lookup, but not mentioned in the 
+        // configuration, to the end of the pipeline in arbitrary order.
         List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getDataSourceIngestPipelineConfig();
         for (String moduleClassName : pipelineConfig) {
             if (modulesByClass.containsKey(moduleClassName)) {
@@ -72,7 +72,7 @@ final class DataSourceIngestPipeline {
 
     List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (DataSourceIngestModuleDecorator module : this.modules) {
+        for (DataSourceIngestModuleDecorator module : modules) {
             try {
                 module.startUp(context);
             } catch (Exception ex) {
@@ -84,7 +84,7 @@ final class DataSourceIngestPipeline {
 
     List<IngestModuleError> process(Content dataSource, ProgressHandle progress) {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (DataSourceIngestModuleDecorator module : this.modules) {
+        for (DataSourceIngestModuleDecorator module : modules) {
             try {
                 progress.setDisplayName(NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.displayName",

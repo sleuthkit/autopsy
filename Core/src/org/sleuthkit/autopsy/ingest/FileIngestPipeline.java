@@ -36,11 +36,11 @@ final class FileIngestPipeline {
     FileIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
         this.context = context;
 
-        // Create an ingest module instance from each ingest module template
-        // that has an ingest module factory capable of making file ingest
-        // modules. Map the module class names to the module instances to allow
-        // the modules to be put in the sequence indicated by the ingest 
-        // pipelines configuration.
+        // Create an ingest module instance from each file ingest module 
+        // template. Put the modules in a map of module class names to module 
+        // instances to facilitate loading the modules into the pipeline in the 
+        // sequence indicated by the ordered list of module class names that 
+        // will be obtained from the file ingest pipeline configuration.
         Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
@@ -50,9 +50,9 @@ final class FileIngestPipeline {
         }
 
         // Add the ingest modules to the pipeline in the order indicated by the 
-        // file ingest pipeline configuration, adding any additional modules 
-        // found in the global lookup but not mentioned in the configuration to 
-        // the end of the pipeline in arbitrary order.
+        // data source ingest pipeline configuration, adding any additional 
+        // modules found in the global lookup, but not mentioned in the 
+        // configuration, to the end of the pipeline in arbitrary order.
         List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getFileIngestPipelineConfig();
         for (String moduleClassName : pipelineConfig) {
             if (modulesByClass.containsKey(moduleClassName)) {
