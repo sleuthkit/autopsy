@@ -109,6 +109,13 @@ final class FileIngestTaskScheduler implements IngestTaskQueue {
         }
     }
 
+    @Override
+    public IngestTask getNextTask() throws InterruptedException {
+        FileIngestTask task = fileTasksQueue.take();
+        updateTaskQueues();
+        return task;
+    }
+    
     private synchronized void updateTaskQueues() throws InterruptedException {
         // we loop because we could have a directory that has all files
         // that do not get enqueued
@@ -209,11 +216,6 @@ final class FileIngestTaskScheduler implements IngestTaskQueue {
             Logger.getLogger(DataSourceIngestTaskScheduler.class.getName()).log(Level.FINE, "Interruption of unexpected block on tasks queue", ex); //NON-NLS
             throw ex;
         }
-    }
-
-    @Override
-    public IngestTask getNextTask() throws InterruptedException {
-        return fileTasksQueue.take();
     }
 
     synchronized void notifyTaskCompleted(FileIngestTask task) {
