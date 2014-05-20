@@ -117,15 +117,10 @@ final class IngestJob {
     }
 
     private boolean hasNonEmptyPipeline() {
-        if (!dataSourceIngestPipeline.isEmpty()) {
-            return true;
+        if (dataSourceIngestPipeline.isEmpty() && fileIngestPipelines.peek().isEmpty()) {
+            return false;
         }
-        for (FileIngestPipeline pipeline : fileIngestPipelines) {
-            if (!pipeline.isEmpty()) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 
     private List<IngestModuleError> start() throws InterruptedException {
@@ -134,15 +129,19 @@ final class IngestJob {
             // Start the data source ingest progress bar before scheduling the
             // data source task to make sure the progress bar will be available 
             // as soon as the task begins to be processed.
-            startDataSourceIngestProgressBar();
-            dataSourceTaskScheduler.scheduleTask(this, dataSource);
+            if (!dataSourceIngestPipeline.isEmpty()) {
+                startDataSourceIngestProgressBar();
+                dataSourceTaskScheduler.scheduleTask(this, dataSource);
+            }
 
-            // Start the file ingest progress bar before scheduling the file
-            // ingest tasks to make sure the progress bar will be available 
-            // as soon as the tasks begin to be processed.
-            startFileIngestProgressBar();
-            if (!fileTaskScheduler.tryScheduleTasks(this, dataSource)) {
-                finishProgressBar(fileIngestProgress);
+            if (!fileIngestPipelines.peek().isEmpty()) {
+                // Start the file ingest progress bar before scheduling the file
+                // ingest tasks to make sure the progress bar will be available 
+                // as soon as the tasks begin to be processed.
+                startFileIngestProgressBar();
+                if (!fileTaskScheduler.tryScheduleTasks(this, dataSource)) {
+                    finishProgressBar(fileIngestProgress);
+                }
             }
         }
         return errors;
