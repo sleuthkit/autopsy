@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,8 +47,6 @@ public class NewWindowViewAction extends AbstractAction{
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-        
         String name = "DataContent"; //NON-NLS
         String s = contentNode.getLookup().lookup(String.class);
         if (s != null) {

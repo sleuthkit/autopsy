@@ -26,11 +26,9 @@ import org.netbeans.api.progress.ProgressHandle;
 public class DataSourceIngestModuleProgress {
 
     private final ProgressHandle progress;
-    private final String moduleDisplayName;
 
-    DataSourceIngestModuleProgress(ProgressHandle progress, String moduleDisplayName) {
+    DataSourceIngestModuleProgress(ProgressHandle progress) {
         this.progress = progress;
-        this.moduleDisplayName = moduleDisplayName;
     }
 
     /**
@@ -60,6 +58,6 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        progress.progress(this.moduleDisplayName, workUnits);
+        progress.progress("", workUnits);
     }
 }

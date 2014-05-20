@@ -22,8 +22,9 @@
         <!-- This assumes that TSK, libewf, and zlib have been installed on the system and those libraries will be with normal loading approaches -->
     </target>
     
-    <target name="copyExternalLibsToZip">
-    </target>
+    <target name="copyLibsToZip" />
+    
+    <target name="copyLibsToBaseDir" />
     
     <target name="build-installer-unix">
         <echo>Unix installer creation not supported at this time</echo>

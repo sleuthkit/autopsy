@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.JPanel;
@@ -49,11 +51,11 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
@@ -64,8 +66,6 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -73,6 +73,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 
 /**
  * Top component which displays something.
@@ -111,25 +112,37 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         setName(NbBundle.getMessage(DirectoryTreeTopComponent.class, "CTL_DirectoryTreeTopComponent"));
         setToolTipText(NbBundle.getMessage(DirectoryTreeTopComponent.class, "HINT_DirectoryTreeTopComponent"));
 
-        setListener();
+        subscribeToChangeEvents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
 
 
         this.pcs = new PropertyChangeSupport(this);
 
         // set the back & forward list and also disable the back & forward button
-        this.backList = new LinkedList<String[]>();
-        this.forwardList = new LinkedList<String[]>();
+        this.backList = new LinkedList<>();
+        this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
     }
 
     /**
-     * Set the FileBrowserTopComponent as the listener to any property changes
-     * in the Case.java class
+     * Make this TopComponent a listener to various change events.
      */
-    private void setListener() {
-        Case.addPropertyChangeListener(this);// add this class to listen to any changes in the Case.java class
+    private void subscribeToChangeEvents() {
+        UserPreferences.addChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                switch (evt.getKey()) {
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE:
+                        refreshContentTreeSafe();
+                        break;
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
+                        // TODO: Need a way to refresh the Views subtree
+                        break;
+                }
+            }
+        });
+        Case.addPropertyChangeListener(this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
         IngestManager.getInstance().addIngestModuleEventListener(this);
@@ -388,7 +401,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                     Children resultsChilds = results.getChildren();
                     tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
-                    tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
+                    tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
 
 
                     Node views = childNodes.findChild(ViewsNode.NAME);
@@ -557,62 +570,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             componentOpened();
-//            Image img = (Image)newValue;
-//
-//            int[] imageIDs = Case.getCurrentCase().getImageIDs();
-//
-//            // add the first image
-//            if(imageIDs.length == 1){
-//                
-//            }
-//            else{
-//                // add the additional images
-//                ImageNode newNode = new ImageNode(img);
-//                ((ImageChildren)getOriginalRootContent().getChildren()).addNode(newNode);
-//
-//                // expand the new added node
-//                int count = em.getRootContext().getChildren().getNodesCount();
-//                em.setExploredContext(em.getRootContext().getChildren().getNodeAt(count - 1));
-//            }
-        } // not supporting deleting images for now
-        //        // if the image is removed from the case
-        //        if(changed.equals(Case.CASE_DEL_IMAGE)){
-        //            if(Case.getCurrentCase().getImageIDs().length > 0){
-        //                // just remove the given image from the directory tree
-        //                Image img = (Image)newValue;
-        //                int ID = Integer.parseInt(oldValue.toString());
-        //                ImageNode tempNode = new ImageNode(img);
-        //                ((ImageChildren)getOriginalRootContent().getChildren()).removeNode(tempNode);
-        //            }
-        //        }
+        }
         // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
-        } else if (changed.equals(IngestEvent.DATA.toString())) {
-            final ModuleDataEvent event = (ModuleDataEvent) oldValue;
-            if (event.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO) {
-                return;
-            }
+        } 
+        else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+            // nothing to do here.
+            // all nodes should be listening for these events and update accordingly.
+        } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    refreshTree(event.getArtifactType());
+                    refreshDataSourceTree();
                 }
             });
-        } else if (changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
-                || changed.equals(IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+        } else if (changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    refreshContentTree();
-                    refreshTree();
-                }
-            });
-        } else if (changed.equals(IngestEvent.CONTENT_CHANGED.toString())) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    refreshContentTree();
+                    refreshDataSourceTree();
                 }
             });
         }
@@ -769,7 +747,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                refreshContentTree();
+                refreshDataSourceTree();
             }
         });
     }
@@ -777,7 +755,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     /**
      * Refreshes changed content nodes
      */
-    void refreshContentTree() {
+    private void refreshDataSourceTree() {
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
 
@@ -810,56 +788,52 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database should
      * be called in the gui thread
      */
-    public void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
-        //save current selection
-        Node selectedNode = getSelectedNode();
-        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-
-        //TODO: instead, we should choose a specific key to refresh? Maybe?
-        //contentChildren.refreshKeys();
-
-        Children dirChilds = em.getRootContext().getChildren();
-
-        Node results = dirChilds.findChild(ResultsNode.NAME);
-
-        if (results == null) {
-            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree"); //NON-NLS
-            return;
-        }
-        OriginalNode original = results.getLookup().lookup(OriginalNode.class);
-        ResultsNode resultsNode = (ResultsNode) original.getNode();
-        RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
-        resultsNodeChilds.refreshKeys(types);
-
-        final TreeView tree = getTree();
-
-        tree.expandNode(results);
-
-        Children resultsChilds = results.getChildren();
-
-        if (resultsChilds == null) //intermediate state check
-        {
-            return;
-        }
-
-        Node childNode = resultsChilds.findChild(KeywordHits.NAME);
-        if (childNode == null) //intermediate state check
-        {
-            return;
-        }
-        tree.expandNode(childNode);
-
-        childNode = resultsChilds.findChild(ExtractedContentNode.NAME);
-        if (childNode == null) //intermediate state check
-        {
-            return;
-        }
-        tree.expandNode(childNode);
-
-        //restores selection if it was under the Results node
-        setSelectedNode(selectedPath, ResultsNode.NAME);
-
-    }
+//    public void refreshResultsTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+//        //save current selection
+//        Node selectedNode = getSelectedNode();
+//        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
+//
+//        //TODO: instead, we should choose a specific key to refresh? Maybe?
+//        //contentChildren.refreshKeys();
+//
+//        Children dirChilds = em.getRootContext().getChildren();
+//
+//        Node results = dirChilds.findChild(ResultsNode.NAME);
+//        if (results == null) {
+//            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree"); //NON-NLS
+//            return;
+//        }
+//        
+//        OriginalNode original = results.getLookup().lookup(OriginalNode.class);
+//        ResultsNode resultsNode = (ResultsNode) original.getNode();
+//        RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
+//        resultsNodeChilds.refreshKeys(types);
+//
+//        
+//        final TreeView tree = getTree();
+//        // @@@ tree.expandNode(results);
+//
+//        Children resultsChilds = results.getChildren();
+//        if (resultsChilds == null) { 
+//            return;
+//        }
+//
+//        Node childNode = resultsChilds.findChild(KeywordHits.NAME);
+//        if (childNode == null) { 
+//            return;
+//        }
+//        // @@@tree.expandNode(childNode);
+//
+//        childNode = resultsChilds.findChild(ExtractedContent.NAME);
+//        if (childNode == null) {
+//            return;
+//        }
+//        tree.expandNode(childNode);
+//
+//        //restores selection if it was under the Results node
+//        //@@@ setSelectedNode(selectedPath, ResultsNode.NAME);
+//        
+//    }
 
     /**
      * Set the selected node using a path to a previously selected node.
@@ -984,7 +958,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
-            Node extractedContent = resultsChilds.findChild(ExtractedContentNode.NAME);
+            Node extractedContent = resultsChilds.findChild(ExtractedContent.NAME);
             Children extractedChilds = extractedContent.getChildren();
             treeNode = extractedChilds.findChild(type.getLabel());
         }

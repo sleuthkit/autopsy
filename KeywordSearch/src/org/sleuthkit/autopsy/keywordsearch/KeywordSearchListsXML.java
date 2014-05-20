@@ -147,7 +147,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
      */
     @Override
     public boolean load() {
-        final Document doc = XMLUtil.loadDoc(KeywordSearchListsXML.class, filePath, XSDFILE);
+        final Document doc = XMLUtil.loadDoc(KeywordSearchListsXML.class, filePath);
         if (doc == null) {
             return false;
         }

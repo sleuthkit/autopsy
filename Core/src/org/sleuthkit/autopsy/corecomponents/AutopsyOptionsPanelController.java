@@ -34,12 +34,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         position = 1,
         keywords = "#OptionsCategory_Keywords_General",
         keywordsCategory = "General")
-public final class GeneralOptionsPanelController extends OptionsPanelController {
+public final class AutopsyOptionsPanelController extends OptionsPanelController {
 
-    private GeneralPanel panel;
+    private AutopsyOptionsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private static final Logger logger = Logger.getLogger(GeneralOptionsPanelController.class.getName());
+    private static final Logger logger = Logger.getLogger(AutopsyOptionsPanelController.class.getName());
 
     @Override
     public void update() {
@@ -87,9 +87,9 @@ public final class GeneralOptionsPanelController extends OptionsPanelController 
         pcs.removePropertyChangeListener(l);
     }
 
-    private GeneralPanel getPanel() {
+    private AutopsyOptionsPanel getPanel() {
         if (panel == null) {
-            panel = new GeneralPanel(this);
+            panel = new AutopsyOptionsPanel(this);
         }
         return panel;
     }

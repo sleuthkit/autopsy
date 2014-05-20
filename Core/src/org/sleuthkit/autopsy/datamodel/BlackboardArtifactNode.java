@@ -41,8 +41,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Node wrapping a blackboard artifact object.  This represents a single artifact. 
- * Its parent is typically an ArtifactTypeNode.
+ * Node wrapping a blackboard artifact object.  This is generated from several
+ * places in the tree. 
  */
 public class BlackboardArtifactNode extends DisplayableItemNode {
 

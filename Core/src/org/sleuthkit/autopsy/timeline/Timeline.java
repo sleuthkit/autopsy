@@ -961,7 +961,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
            
             //conversion to GMT
                 
-            if (!ContentUtils.getDisplayInLocalTime()) {
+            if (!ContentUtils.shouldDisplayTimesInLocalTime()) {
                calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
             }
             else{

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.BeanTreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  *
@@ -38,8 +37,6 @@ class CollapseAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
         Node[] selectedNode = em.getSelectedNodes();
 

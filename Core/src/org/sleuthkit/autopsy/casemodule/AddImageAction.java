@@ -106,8 +106,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(AddImageAction.class);
-        
         if (IngestManager.getInstance().isIngestRunning()) {
             final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
             if (JOptionPane.showConfirmDialog(null, msg,

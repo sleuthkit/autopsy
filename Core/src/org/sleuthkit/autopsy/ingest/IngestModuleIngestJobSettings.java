@@ -28,9 +28,11 @@ import java.io.Serializable;
 public interface IngestModuleIngestJobSettings extends Serializable {
 
     /**
-     * Returns the version number of the settings object.
+     * Returns the version number of the settings object. The version number
+     * should be a private final static long per the documentation of the
+     * Serializable interface.
      *
-     * @return A version number string.
+     * @return A serialization version number.
      */
-    String getVersionNumber();
+    long getVersionNumber();
 }

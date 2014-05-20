@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -50,7 +49,7 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * Scalpel carving ingest module
  */
-class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileIngestModule {
+class ScalpelCarverIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ScalpelCarverIngestModule.class.getName());
     private final String MODULE_OUTPUT_DIR_NAME = "ScalpelCarver"; //NON-NLS
@@ -227,5 +226,9 @@ class ScalpelCarverIngestModule extends IngestModuleAdapter implements FileInges
         context.addFiles(new ArrayList<AbstractFile>(carvedFiles));
 
         return ProcessResult.OK;
+    }
+    
+    @Override
+    public void shutDown() {        
     }
 }

@@ -34,24 +34,21 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
-import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Manages the execution of ingest jobs.
  */
 public class IngestManager {
 
-    private static final int MAX_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
-    private static final String NUMBER_OF_FILE_INGEST_THREADS_KEY = "NumberOfFileingestThreads"; //NON-NLS
+    private static final int DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS = 1;
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private static final Preferences userPreferences = NbPreferences.forModule(IngestManager.class);
     private static final IngestManager instance = new IngestManager();
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
@@ -59,13 +56,14 @@ public class IngestManager {
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
-    private final ExecutorService fileIngestThreadPool = Executors.newFixedThreadPool(MAX_NUMBER_OF_FILE_INGEST_THREADS);
+    private final ExecutorService fileIngestThreadPool;
     private final ExecutorService fireIngestEventsThreadPool = Executors.newSingleThreadExecutor();
     private final AtomicLong nextThreadId = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, Future<Void>> startIngestJobThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private volatile IngestMessageTopComponent ingestMessageBox;
+    private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
 
     /**
      * Gets the ingest manager.
@@ -82,7 +80,13 @@ public class IngestManager {
      */
     private IngestManager() {
         startDataSourceIngestThread();
-        int numberOfFileIngestThreads = getNumberOfFileIngestThreads();
+        
+        numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
+        if ((numberOfFileIngestThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
+            numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+            UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
+        }
+        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads);        
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
@@ -100,56 +104,19 @@ public class IngestManager {
     }
 
     /**
-     * Gets the maximum number of data source ingest threads the ingest manager
-     * will use.
+     * Gets the number of data source ingest threads the ingest manager will
+     * use.
      */
-    public static int getMaxNumberOfDataSourceIngestThreads() {
-        return MAX_NUMBER_OF_DATA_SOURCE_INGEST_THREADS;
+    public int getNumberOfDataSourceIngestThreads() {
+        return DEFAULT_NUMBER_OF_DATA_SOURCE_INGEST_THREADS;
     }
 
     /**
      * Gets the maximum number of file ingest threads the ingest manager will
      * use.
      */
-    public static int getMaxNumberOfFileIngestThreads() {
-        return MAX_NUMBER_OF_FILE_INGEST_THREADS;
-    }
-
-    /**
-     * Gets the number of file ingest threads the ingest manager will use.
-     */
-    public synchronized static int getNumberOfFileIngestThreads() {
-        return userPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, DEFAULT_NUMBER_OF_FILE_INGEST_THREADS);
-    }
-
-    /**
-     * Changes the number of file ingest threads the ingest manager will use to
-     * no more than MAX_NUMBER_OF_FILE_INGEST_THREADS and no less than
-     * MIN_NUMBER_OF_FILE_INGEST_THREADS. Out of range requests are converted to
-     * requests for DEFAULT_NUMBER_OF_FILE_INGEST_THREADS.
-     *
-     * @param numberOfThreads The desired number of file ingest threads.
-     */
-    public synchronized static void setNumberOfFileIngestThreads(int numberOfThreads) {
-        if ((numberOfThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
-            numberOfThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
-        }
-        userPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS_KEY, numberOfThreads);
-
-        if (instance.fileIngestThreads.size() != numberOfThreads) {
-            if (instance.fileIngestThreads.size() > numberOfThreads) {
-                Long[] threadIds = instance.fileIngestThreads.keySet().toArray(new Long[instance.fileIngestThreads.size()]);
-                int numberOfThreadsToCancel = instance.fileIngestThreads.size() - numberOfThreads;
-                for (int i = 0; i < numberOfThreadsToCancel; ++i) {
-                    instance.cancelFileIngestThread(threadIds[i]);
-                }
-            } else if (instance.fileIngestThreads.size() < numberOfThreads) {
-                int numberOfThreadsToAdd = numberOfThreads - instance.fileIngestThreads.size();
-                for (int i = 0; i < numberOfThreadsToAdd; ++i) {
-                    instance.startFileIngestThread();
-                }
-            }
-        }
+    public int getNumberOfFileIngestThreads() {
+        return numberOfFileIngestThreads;
     }
 
     /**
@@ -200,7 +167,7 @@ public class IngestManager {
      * @return True if any ingest jobs are in progress, false otherwise.
      */
     public boolean isIngestRunning() {
-        return scheduler.ingestJobsAreRunning();
+        return IngestJob.ingestJobsAreRunning();
     }
 
     public void cancelAllIngestJobs() {
@@ -215,55 +182,64 @@ public class IngestManager {
             } catch (InterruptedException | ExecutionException ex) {
                 // This should never happen, something is awry, but everything
                 // should be o.k. anyway.
-                logger.log(Level.SEVERE, "Unexpected thread interrupt", ex);
+                logger.log(Level.SEVERE, "Unexpected thread interrupt", ex); //NON-NLS
             }
         }
 
-        // Cancel all the jobs already created. This will make the the ingest
-        // threads flush out any lingering ingest tasks without processing them.
-        scheduler.cancelAllIngestJobs();
+        // Cancel all the jobs already created.
+        IngestJob.cancelAllIngestJobs();
     }
 
     /**
-     * Ingest events.
+     * Ingest job events.
      */
-    public enum IngestEvent {
+    public enum IngestJobEvent {
 
         /**
          * Property change event fired when an ingest job is started. The old
          * value of the PropertyChangeEvent object is set to the ingest job id,
          * and the new value is set to null.
          */
-        INGEST_JOB_STARTED,
+        STARTED,
         /**
          * Property change event fired when an ingest job is completed. The old
          * value of the PropertyChangeEvent object is set to the ingest job id,
          * and the new value is set to null.
          */
-        INGEST_JOB_COMPLETED,
+        COMPLETED,
         /**
          * Property change event fired when an ingest job is canceled. The old
          * value of the PropertyChangeEvent object is set to the ingest job id,
          * and the new value is set to null.
          */
-        INGEST_JOB_CANCELLED,
+        CANCELLED,
+    };
+
+    /**
+     * Ingest module events.
+     */
+    public enum IngestModuleEvent {
+
         /**
-         * Event sent when an ingest module posts new data to blackboard or
-         * somewhere else. Second argument of the property change fired contains
-         * ModuleDataEvent object and third argument is null. The object can
-         * contain encapsulated new data created by the module. Listener can
-         * also query new data as needed.
+         * Property change event fired when an ingest module adds new data to a
+         * case, usually by posting to the blackboard. The old value of the
+         * PropertyChangeEvent is a ModuleDataEvent object, and the new value is
+         * set to null.
          */
-        DATA,
+        DATA_ADDED,
         /**
-         * Event send when content changed, either its attributes changed, or
-         * new content children have been added. I.e. from ZIP files or Carved
-         * files
+         * Property change event fired when an ingest module adds new content to
+         * a case or changes a recorded attribute of existing content. For
+         * example, if a module adds an extracted or carved file to a case, the
+         * module should fire this event. The old value of the
+         * PropertyChangeEvent is a ModuleContentEvent object, and the new value
+         * is set to null.
          */
         CONTENT_CHANGED,
         /**
-         * Event sent when a file has finished going through a pipeline of
-         * modules. Second argument is the object ID. Third argument is null
+         * Property change event fired when the ingest of a file is completed.
+         * The old value of the PropertyChangeEvent is the Autopsy object ID of
+         * the file, and the new value is set to null.
          */
         FILE_DONE,
     };
@@ -305,9 +281,10 @@ public class IngestManager {
     }
 
     /**
-     * Add an ingest module event property change listener.
+     * Add an ingest job and ingest module event property change listener.
      *
-     * @deprecated
+     * @deprecated Use addIngestJobEventListener() and/or
+     * addIngestModuleEventListener().
      * @param listener The PropertyChangeListener to register.
      */
     public static void addPropertyChangeListener(final PropertyChangeListener listener) {
@@ -316,9 +293,10 @@ public class IngestManager {
     }
 
     /**
-     * Remove an ingest module event property change listener.
+     * Remove an ingest job and ingest module event property change listener.
      *
-     * @deprecated
+     * @deprecated Use removeIngestJobEventListener() and/or
+     * removeIngestModuleEventListener().
      * @param listener The PropertyChangeListener to unregister.
      */
     public static void removePropertyChangeListener(final PropertyChangeListener listener) {
@@ -332,7 +310,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_STARTED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestJobEvent.STARTED, ingestJobId, null));
     }
 
     /**
@@ -341,7 +319,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_COMPLETED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestJobEvent.COMPLETED, ingestJobId, null));
     }
 
     /**
@@ -350,7 +328,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestEvent.INGEST_JOB_CANCELLED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestJobEventPublisher, IngestJobEvent.CANCELLED, ingestJobId, null));
     }
 
     /**
@@ -359,7 +337,7 @@ public class IngestManager {
      * @param fileId The object id of file.
      */
     void fireFileIngestDone(long fileId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.FILE_DONE, fileId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, fileId, null));
     }
 
     /**
@@ -368,7 +346,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.DATA, moduleDataEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.DATA_ADDED, moduleDataEvent, null));
     }
 
     /**
@@ -379,7 +357,7 @@ public class IngestManager {
      * content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestEvent.CONTENT_CHANGED, moduleContentEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventThread(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
     }
 
     /**
@@ -455,7 +433,7 @@ public class IngestManager {
                     }
 
                     // Start an ingest job for the data source.
-                    List<IngestModuleError> errors = scheduler.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = IngestJob.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
                     if (!errors.isEmpty()) {
                         // Report the errors to the user. They have already been logged.
                         StringBuilder moduleStartUpErrors = new StringBuilder();
@@ -512,7 +490,6 @@ public class IngestManager {
                 try {
                     IngestTask task = tasks.getNextTask(); // Blocks.
                     task.execute();
-                    scheduler.ingestTaskIsCompleted(task);
                 } catch (InterruptedException ex) {
                     break;
                 }
@@ -529,13 +506,23 @@ public class IngestManager {
     private static class FireIngestEventThread implements Runnable {
 
         private final PropertyChangeSupport publisher;
-        private final IngestEvent event;
+        private final IngestJobEvent jobEvent;
+        private final IngestModuleEvent moduleEvent;
         private final Object oldValue;
         private final Object newValue;
 
-        FireIngestEventThread(PropertyChangeSupport publisher, IngestEvent event, Object oldValue, Object newValue) {
+        FireIngestEventThread(PropertyChangeSupport publisher, IngestJobEvent event, Object oldValue, Object newValue) {
             this.publisher = publisher;
-            this.event = event;
+            this.jobEvent = event;
+            this.moduleEvent = null;
+            this.oldValue = oldValue;
+            this.newValue = newValue;
+        }
+
+        FireIngestEventThread(PropertyChangeSupport publisher, IngestModuleEvent event, Object oldValue, Object newValue) {
+            this.publisher = publisher;
+            this.jobEvent = null;
+            this.moduleEvent = event;
             this.oldValue = oldValue;
             this.newValue = newValue;
         }
@@ -543,7 +530,7 @@ public class IngestManager {
         @Override
         public void run() {
             try {
-                publisher.firePropertyChange(event.toString(), oldValue, newValue);
+                publisher.firePropertyChange((jobEvent != null ? jobEvent.toString() : moduleEvent.toString()), oldValue, newValue);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),

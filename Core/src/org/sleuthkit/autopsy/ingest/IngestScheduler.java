@@ -21,11 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -42,15 +41,14 @@ final class IngestScheduler {
     private static final IngestScheduler instance = new IngestScheduler();
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
     private static final int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-    private final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
     private final LinkedBlockingQueue<DataSourceIngestTask> dataSourceTasks = new LinkedBlockingQueue<>();
     private final TreeSet<FileIngestTask> rootDirectoryTasks = new TreeSet<>(new RootDirectoryTaskComparator()); // Guarded by this
     private final List<FileIngestTask> directoryTasks = new ArrayList<>();  // Guarded by this
     private final LinkedBlockingQueue<FileIngestTask> fileTasks = new LinkedBlockingQueue<>();  // Guarded by this
-    private final List<IngestTask> tasksInProgress = new ArrayList<>();  // Guarded by this
+    private final List<IngestTask> dataSourceTasksInProgress = new ArrayList<>();  // Guarded by this
+    private final List<IngestTask> fileTasksInProgress = new ArrayList<>();  // Guarded by this
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
-    private final AtomicLong nextIngestJobId = new AtomicLong(0L);
 
     static IngestScheduler getInstance() {
         return instance;
@@ -59,57 +57,15 @@ final class IngestScheduler {
     private IngestScheduler() {
     }
 
-    /**
-     * Creates an ingest job for a data source.
-     *
-     * @param rootDataSource The data source to ingest.
-     * @param ingestModuleTemplates The ingest module templates to use to create
-     * the ingest pipelines for the job.
-     * @param processUnallocatedSpace Whether or not the job should include
-     * processing of unallocated space.
-     * @return A collection of ingest module start up errors, empty on success.
-     * @throws InterruptedException
-     */
-    List<IngestModuleError> startIngestJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
-        long jobId = nextIngestJobId.incrementAndGet();
-        IngestJob job = new IngestJob(jobId, dataSource, ingestModuleTemplates, processUnallocatedSpace);
-        ingestJobsById.put(jobId, job);
-        IngestManager.getInstance().fireIngestJobStarted(jobId);
-        List<IngestModuleError> errors = job.startUp();
-        if (errors.isEmpty()) {
-            addDataSourceToIngestJob(job, dataSource);
-        } else {
-            ingestJobsById.remove(jobId);
-            IngestManager.getInstance().fireIngestJobCancelled(jobId);
-        }
-        return errors;
-    }
-
-    boolean ingestJobsAreRunning() {
-        for (IngestJob job : ingestJobsById.values()) {
-            if (!job.isCancelled()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    synchronized void addDataSourceToIngestJob(IngestJob job, Content dataSource) throws InterruptedException {
-        // Enqueue a data source ingest task for the data source.
-        // If the thread executing this code is interrupted, it is because the 
-        // the number of ingest threads has been decreased while ingest jobs are 
-        // running. The calling thread will exit in an orderly fashion, but the 
-        // task still needs to be enqueued rather than lost, hence the loop.
+    synchronized void addTasksForIngestJob(IngestJob job, Content dataSource) throws InterruptedException {
+        // Enqueue a data source ingest task for the data source. 
         DataSourceIngestTask task = new DataSourceIngestTask(job, dataSource);
-        while (true) {
-            try {
-                dataSourceTasks.put(task);
-                break;
-            } catch (InterruptedException ex) {
-                // Reset the interrupted status of the thread so the orderly
-                // exit can occur in the intended place.
-                Thread.currentThread().interrupt();
-            }
+        try {
+            dataSourceTasks.put(task);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            logger.log(Level.FINE, "Task scheduling for ingest job interrupted", ex); //NON-NLS
+            return;
         }
 
         // Get the top level files of the data source.
@@ -150,21 +106,50 @@ final class IngestScheduler {
             }
         }
 
-        updateFileTaskQueues(null);
+        updateFileTaskQueues();
     }
 
-    void addFileToIngestJob(IngestJob job, AbstractFile file) {
+    void addFileTaskToIngestJob(IngestJob job, AbstractFile file) {
         FileIngestTask task = new FileIngestTask(job, file);
         if (shouldEnqueueFileTask(task)) {
-            addTaskToFileQueue(task);
+            try {
+                fileTasks.put(task);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                logger.log(Level.FINE, "Task scheduling for ingest job interrupted", ex); //NON-NLS
+            }
         }
     }
 
-    private synchronized void updateFileTaskQueues(FileIngestTask taskInProgress) throws InterruptedException {
-        if (taskInProgress != null) {
-            tasksInProgress.add(taskInProgress);
+    synchronized void removeTasksForIngestJob(long ingestJobId) {
+        // Remove all tasks for this ingest job that are not in progress. 
+        Iterator<FileIngestTask> fileTasksIterator = fileTasks.iterator();
+        while (fileTasksIterator.hasNext()) {
+            if (fileTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                fileTasksIterator.remove();
+            }
         }
+        Iterator<FileIngestTask> directoryTasksIterator = directoryTasks.iterator();
+        while (directoryTasksIterator.hasNext()) {
+            if (directoryTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                directoryTasksIterator.remove();
+            }
+        }
+        Iterator<FileIngestTask> rootDirectoryTasksIterator = rootDirectoryTasks.iterator();
+        while (rootDirectoryTasksIterator.hasNext()) {
+            if (rootDirectoryTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                rootDirectoryTasksIterator.remove();
+            }
+        }
+        Iterator<DataSourceIngestTask> dataSourceTasksIterator = dataSourceTasks.iterator();
+        while (dataSourceTasksIterator.hasNext()) {
+            if (dataSourceTasksIterator.next().getIngestJob().getId() == ingestJobId) {
+                dataSourceTasksIterator.remove();
+            }
+        }
+    }
 
+    private synchronized void updateFileTaskQueues() throws InterruptedException {
         // we loop because we could have a directory that has all files
         // that do not get enqueued
         while (true) {
@@ -187,7 +172,13 @@ final class IngestScheduler {
             final AbstractFile parentFile = parentTask.getFile();
             // add itself to the file list
             if (shouldEnqueueFileTask(parentTask)) {
-                addTaskToFileQueue(parentTask);
+                try {
+                    fileTasks.put(parentTask);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    logger.log(Level.FINE, "Task scheduling for ingest job interrupted", ex); //NON-NLS
+                    return;
+                }
             }
             // add its children to the file and directory lists
             try {
@@ -199,29 +190,18 @@ final class IngestScheduler {
                         if (childFile.hasChildren()) {
                             directoryTasks.add(childTask);
                         } else if (shouldEnqueueFileTask(childTask)) {
-                            addTaskToFileQueue(childTask);
+                            try {
+                                fileTasks.put(childTask);
+                            } catch (InterruptedException ex) {
+                                Thread.currentThread().interrupt();
+                                logger.log(Level.FINE, "Task scheduling for ingest job interrupted", ex); //NON-NLS
+                                return;
+                            }
                         }
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get children of file and update file queues: " + parentFile.getName(), ex);
-            }
-        }
-    }
-
-    private void addTaskToFileQueue(FileIngestTask task) {
-        // If the thread executing this code is interrupted, it is because the 
-        // the number of ingest threads has been decreased while ingest jobs are 
-        // running. The calling thread will exit in an orderly fashion, but the 
-        // task still needs to be enqueued rather than lost.
-        while (true) {
-            try {
-                fileTasks.put(task);
-                break;
-            } catch (InterruptedException ex) {
-                // Reset the interrupted status of the thread so the orderly
-                // exit can occur in the intended place.
-                Thread.currentThread().interrupt();
+                logger.log(Level.SEVERE, "Could not get children of file and update file queues: " + parentFile.getName(), ex); //NON-NLS
             }
         }
     }
@@ -271,12 +251,6 @@ final class IngestScheduler {
         return true;
     }
 
-    void cancelAllIngestJobs() {
-        for (IngestJob job : ingestJobsById.values()) {
-            job.cancel();
-        }
-    }
-
     IngestTaskQueue getDataSourceIngestTaskQueue() {
         return dataSourceTaskDispenser;
     }
@@ -285,45 +259,52 @@ final class IngestScheduler {
         return fileTaskDispenser;
     }
 
-    void ingestTaskIsCompleted(IngestTask completedTask) {
-        if (ingestJobIsCompleted(completedTask)) {
-            IngestJob job = completedTask.getIngestJob();
-            job.shutDown();
-            ingestJobsById.remove(job.getId());
-            IngestManager.getInstance().fireIngestJobCompleted(job.getId());
-        }
+    synchronized void notifyDataSourceIngestTaskCompleted(DataSourceIngestTask task) {
+        dataSourceTasksInProgress.remove(task);        
+    }
+    
+    synchronized void notifyFileIngestTaskCompleted(FileIngestTask task) {
+        fileTasksInProgress.remove(task);        
     }
 
-    private synchronized boolean ingestJobIsCompleted(IngestTask completedTask) {
-        tasksInProgress.remove(completedTask);
-        IngestJob job = completedTask.getIngestJob();
+    synchronized boolean hasDataSourceIngestTaskForIngestJob(IngestJob job) {
         long jobId = job.getId();
-        for (IngestTask task : tasksInProgress) {
+        for (IngestTask task : dataSourceTasksInProgress) {
             if (task.getIngestJob().getId() == jobId) {
-                return false;
-            }
-        }
-        for (FileIngestTask task : fileTasks) {
-            if (task.getIngestJob().getId() == jobId) {
-                return false;
-            }
-        }
-        for (FileIngestTask task : directoryTasks) {
-            if (task.getIngestJob().getId() == jobId) {
-                return false;
-            }
-        }
-        for (FileIngestTask task : rootDirectoryTasks) {
-            if (task.getIngestJob().getId() == jobId) {
-                return false;
+                return true;
             }
         }
         for (DataSourceIngestTask task : dataSourceTasks) {
             if (task.getIngestJob().getId() == jobId) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
+    }
+        
+    synchronized boolean hasFileIngestTaskForIngestJob(IngestJob job) {
+        long jobId = job.getId();
+        for (IngestTask task : fileTasksInProgress) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        for (FileIngestTask task : fileTasks) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        for (FileIngestTask task : directoryTasks) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        for (FileIngestTask task : rootDirectoryTasks) {
+            if (task.getIngestJob().getId() == jobId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static class RootDirectoryTaskComparator implements Comparator<FileIngestTask> {
@@ -426,7 +407,11 @@ final class IngestScheduler {
 
         @Override
         public IngestTask getNextTask() throws InterruptedException {
-            return dataSourceTasks.take();
+            DataSourceIngestTask task = dataSourceTasks.take();
+            synchronized (this) {
+                dataSourceTasksInProgress.add(task);
+            }
+            return task;
         }
     }
 
@@ -435,7 +420,10 @@ final class IngestScheduler {
         @Override
         public IngestTask getNextTask() throws InterruptedException {
             FileIngestTask task = fileTasks.take();
-            updateFileTaskQueues(task);
+            synchronized (this) {
+                fileTasksInProgress.add(task);
+            }
+            updateFileTaskQueues();
             return task;
         }
     }

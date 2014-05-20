@@ -21,17 +21,27 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Interface that must be implemented by all file ingest modules. 
- * See description of IngestModule for more details on interface behavior.
+ * Interface that must be implemented by all file ingest modules. See
+ * description of IngestModule for more details on interface behavior.
  */
 public interface FileIngestModule extends IngestModule {
 
     /**
-     * Processes a file. Called between calls to startUp() and shutDown().
-     * Will be called for each file in a data source.
+     * Processes a file. Called between calls to startUp() and shutDown(). Will
+     * be called for each file in a data source.
      *
      * @param file The file to analyze.
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(AbstractFile file);
+
+    /**
+     * Invoked by Autopsy when an ingest job is completed (either because the
+     * data has been analyzed or because the job was canceled - check
+     * IngestJobContext.isJobCancelled()), before the ingest module instance is
+     * discarded. The module should respond by doing things like releasing
+     * private resources, submitting final results, and posting a final ingest
+     * message.
+     */
+    void shutDown();
 }

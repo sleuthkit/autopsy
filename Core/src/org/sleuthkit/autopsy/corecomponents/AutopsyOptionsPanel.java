@@ -18,45 +18,38 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
-import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
-final class GeneralPanel extends javax.swing.JPanel {
+/**
+ * Options panel that allow users to set application preferences.
+ */
+final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
-    private static final String KEEP_PREFERRED_VIEWER = "keepPreferredViewer"; //NON-NLS
-    private static final String USE_LOCAL_TIME = "useLocalTime"; //NON-NLS
-    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false NON-NLS
-    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true NON-NLS
-    private final Preferences prefs = NbPreferences.forModule(this.getClass());
-
-    GeneralPanel(GeneralOptionsPanelController controller) {
+    AutopsyOptionsPanel(AutopsyOptionsPanelController controller) {
         initComponents();
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(new Integer[]{1, 2, 4, 8, 16}));
-        ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
         // TODO listen to changes in form fields and call controller.changed()
     }
 
     void load() {
-        boolean keepPreferredViewer = prefs.getBoolean(KEEP_PREFERRED_VIEWER, false);
+        boolean keepPreferredViewer = UserPreferences.keepPreferredContentViewer();
         keepCurrentViewerRB.setSelected(keepPreferredViewer);
         useBestViewerRB.setSelected(!keepPreferredViewer);
-        boolean useLocalTime = prefs.getBoolean(USE_LOCAL_TIME, true);
+        dataSourcesHideKnownCB.setSelected(UserPreferences.hideKnownFilesInDataSourcesTree());
+        viewsHideKnownCB.setSelected(UserPreferences.hideKnownFilesInViewsTree());
+        boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
-        dataSourcesHideKnownCB.setSelected(prefs.getBoolean(DS_HIDE_KNOWN, false));
-        viewsHideKnownCB.setSelected(prefs.getBoolean(VIEWS_HIDE_KNOWN, true));
-        numberOfFileIngestThreadsComboBox.setSelectedItem(IngestManager.getNumberOfFileIngestThreads());
+        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
     }
 
     void store() {
-        prefs.putBoolean(KEEP_PREFERRED_VIEWER, keepCurrentViewerRB.isSelected());
-        prefs.putBoolean(USE_LOCAL_TIME, useLocalTimeRB.isSelected());
-        prefs.putBoolean(DS_HIDE_KNOWN, dataSourcesHideKnownCB.isSelected());
-        prefs.putBoolean(VIEWS_HIDE_KNOWN, viewsHideKnownCB.isSelected());
-        IngestManager.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
+        UserPreferences.setKeepPreferredContentViewer(keepCurrentViewerRB.isSelected());
+        UserPreferences.setHideKnownFilesInDataSourcesTree(dataSourcesHideKnownCB.isSelected());
+        UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCB.isSelected());
+        UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
+        UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
     }
 
     boolean valid() {
@@ -84,44 +77,38 @@ final class GeneralPanel extends javax.swing.JPanel {
         viewsHideKnownCB = new javax.swing.JCheckBox();
         jLabel4 = new javax.swing.JLabel();
         numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<Integer>();
+        restartRequiredLabel = new javax.swing.JLabel();
 
         buttonGroup1.add(useBestViewerRB);
         useBestViewerRB.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(useBestViewerRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useBestViewerRB.text")); // NOI18N
-        useBestViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useBestViewerRB.toolTipText")); // NOI18N
-        useBestViewerRB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                useBestViewerRBActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(useBestViewerRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.useBestViewerRB.text")); // NOI18N
+        useBestViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.useBestViewerRB.toolTipText")); // NOI18N
 
         buttonGroup1.add(keepCurrentViewerRB);
-        org.openide.awt.Mnemonics.setLocalizedText(keepCurrentViewerRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.keepCurrentViewerRB.text")); // NOI18N
-        keepCurrentViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.keepCurrentViewerRB.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(keepCurrentViewerRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.keepCurrentViewerRB.text")); // NOI18N
+        keepCurrentViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.keepCurrentViewerRB.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabel1.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabel2.text")); // NOI18N
 
         buttonGroup3.add(useLocalTimeRB);
         useLocalTimeRB.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(useLocalTimeRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useLocalTimeRB.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(useLocalTimeRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.useLocalTimeRB.text")); // NOI18N
 
         buttonGroup3.add(useGMTTimeRB);
-        org.openide.awt.Mnemonics.setLocalizedText(useGMTTimeRB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.useGMTTimeRB.text")); // NOI18N
-        useGMTTimeRB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                useGMTTimeRBActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(useGMTTimeRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.useGMTTimeRB.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabel3.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesHideKnownCB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.dataSourcesHideKnownCB.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesHideKnownCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.dataSourcesHideKnownCB.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(viewsHideKnownCB, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.viewsHideKnownCB.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(viewsHideKnownCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.viewsHideKnownCB.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel4.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabel4.text")); // NOI18N
+
+        restartRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N NON-NLS
+        org.openide.awt.Mnemonics.setLocalizedText(restartRequiredLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -130,6 +117,19 @@ final class GeneralPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(keepCurrentViewerRB)
+                            .addComponent(useBestViewerRB)
+                            .addComponent(dataSourcesHideKnownCB)
+                            .addComponent(viewsHideKnownCB)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(restartRequiredLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
@@ -137,22 +137,10 @@ final class GeneralPanel extends javax.swing.JPanel {
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(useLocalTimeRB)
-                                    .addComponent(useGMTTimeRB))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(useGMTTimeRB)))
                             .addComponent(jLabel1)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(keepCurrentViewerRB)
-                                    .addComponent(useBestViewerRB)
-                                    .addComponent(dataSourcesHideKnownCB)
-                                    .addComponent(viewsHideKnownCB)
-                                    .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                            .addComponent(jLabel4))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -177,17 +165,11 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(restartRequiredLabel)))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void useBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useBestViewerRBActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_useBestViewerRBActionPerformed
-
-    private void useGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useGMTTimeRBActionPerformed
-        ContentUtils.setDisplayInLocalTime(useLocalTimeRB.isSelected());
-    }//GEN-LAST:event_useGMTTimeRBActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
@@ -198,6 +180,7 @@ final class GeneralPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JRadioButton keepCurrentViewerRB;
     private javax.swing.JComboBox<Integer> numberOfFileIngestThreadsComboBox;
+    private javax.swing.JLabel restartRequiredLabel;
     private javax.swing.JRadioButton useBestViewerRB;
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;

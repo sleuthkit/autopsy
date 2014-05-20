@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
 import java.awt.Dialog;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
@@ -47,9 +46,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public void performAction() {
-        Logger.noteAction(this.getClass());
-
-
         // there's a case open
         if (Case.existsCurrentCase()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel

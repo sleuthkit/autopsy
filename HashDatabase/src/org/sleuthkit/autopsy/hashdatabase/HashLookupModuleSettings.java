@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
+    private static final long serialVersionUID = 1L;
     private final HashSet<String> namesOfEnabledKnownHashSets = new HashSet<>();
     private final HashSet<String> namesOfEnabledKnownBadHashSets = new HashSet<>();
     private boolean shouldCalculateHashes = true;
@@ -39,8 +40,8 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     }
 
     @Override
-    public String getVersionNumber() {
-        return "1.0"; //NON-NLS
+    public long getVersionNumber() {
+        return serialVersionUID;
     }    
         
     boolean shouldCalculateHashes() {

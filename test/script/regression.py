@@ -1823,7 +1823,7 @@ def setupAttachments(attachments, test_config):
     """
     call = ['pwd']
     subprocess.call(call)
-
+   
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:

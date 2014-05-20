@@ -43,7 +43,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 
 /**
  * KeywordSearchEditListPanel widget to manage keywords in lists
@@ -130,9 +130,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
-                if (changed.equals(IngestEvent.INGEST_JOB_STARTED.toString())
-                        || changed.equals(IngestEvent.INGEST_JOB_COMPLETED.toString())
-                        || changed.equals(IngestEvent.INGEST_JOB_CANCELLED.toString())) {
+                if (changed.equals(IngestJobEvent.STARTED.toString())
+                        || changed.equals(IngestJobEvent.COMPLETED.toString())
+                        || changed.equals(IngestJobEvent.CANCELLED.toString())) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
