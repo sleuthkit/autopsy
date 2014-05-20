@@ -40,6 +40,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -56,7 +57,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final String HASHSET_HITS = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
-    private final SleuthkitCase skCase;
+    private SleuthkitCase skCase;
     private final HashsetResults hashsetResults;
    
     public HashsetHits(SleuthkitCase skCase) {
@@ -76,7 +77,7 @@ public class HashsetHits implements AutopsyVisitableItem {
      */
     private class HashsetResults extends Observable {
         // maps hashset name to list of artifacts for that set
-        private Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
+        private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
         
         HashsetResults() {
             update();
@@ -94,6 +95,11 @@ public class HashsetHits implements AutopsyVisitableItem {
         
         final void update() {
             hashSetHitsMap.clear();
+            
+            if (skCase == null) {
+                return;   
+            }
+            
             ResultSet rs = null;
             try {
                 int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
@@ -191,6 +197,13 @@ public class HashsetHits implements AutopsyVisitableItem {
                 || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     hashsetResults.update();
                 }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
 
@@ -198,6 +211,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
             hashsetResults.update();
             hashsetResults.addObserver(this);
         }
@@ -206,6 +220,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
             hashsetResults.deleteObserver(this);
         }
         
@@ -309,6 +324,10 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long id) {
+            if (skCase == null) {
+                return null;            
+            }
+            
             try {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                 return new BlackboardArtifactNode(art);
