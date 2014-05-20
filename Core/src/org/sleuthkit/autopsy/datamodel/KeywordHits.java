@@ -39,6 +39,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -61,7 +62,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             .getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
     public static final String SIMPLE_REGEX_SEARCH = NbBundle
             .getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
-    private KeywordResults keywordResults;
+    private final KeywordResults keywordResults;
 
     public KeywordHits(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -70,7 +71,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     
     private final class KeywordResults extends Observable {
         // Map from listName/Type to Map of keyword to set of artifact Ids
-        private Map<String, Map<String, Set<Long>>> topLevelMap;
+        private final Map<String, Map<String, Set<Long>>> topLevelMap;
         
         KeywordResults() {
             topLevelMap = new LinkedHashMap<>();
@@ -145,6 +146,10 @@ public class KeywordHits implements AutopsyVisitableItem {
         
         public void update() {
             Map<Long, Map<Long, String>> artifactIds = new LinkedHashMap<>();
+            
+            if (skCase == null) {
+                return;   
+            }
             
             ResultSet rs = null;
             try {
@@ -245,6 +250,13 @@ public class KeywordHits implements AutopsyVisitableItem {
                 || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     keywordResults.update();
                 }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
         
@@ -252,6 +264,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
             keywordResults.update();
             keywordResults.addObserver(this);
         }
@@ -260,6 +273,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
             keywordResults.deleteObserver(this);
         }
         
@@ -462,12 +476,16 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
+            if (skCase == null) {
+                return null;   
+            }
+            
             try {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
                 BlackboardArtifactNode n = new BlackboardArtifactNode(art);
                 AbstractFile file;
                 try {
-                    file = art.getSleuthkitCase().getAbstractFileById(art.getObjectID());
+                    file = skCase.getAbstractFileById(art.getObjectID());
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
                     return n;

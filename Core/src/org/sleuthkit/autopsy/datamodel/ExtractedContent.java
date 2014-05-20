@@ -32,6 +32,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -67,7 +68,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class ExtractedContent implements AutopsyVisitableItem {
 
-    private SleuthkitCase skCase;
+    private SleuthkitCase skCase;   // set to null after case has been closed
     public static final String NAME = NbBundle.getMessage(RootNode.class, "ExtractedContentNode.name.text");
 
     public ExtractedContent(SleuthkitCase skCase) {
@@ -86,7 +87,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     public class RootNode extends DisplayableItemNode {
 
         public RootNode(SleuthkitCase skCase) {
-            super(Children.create(new TypeFactory(skCase), true), Lookups.singleton(NAME));
+            super(Children.create(new TypeFactory(), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/extracted_content.png"); //NON-NLS
@@ -125,15 +126,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
      * more specific form elsewhere in the tree.
      */
     private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.ARTIFACT_TYPE> {
-
-        private SleuthkitCase skCase;
         private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow;
         // maps the artifact type to its child node 
-        private HashMap<BlackboardArtifact.ARTIFACT_TYPE, TypeNode> typeNodeList = new HashMap<>();
+        private final HashMap<BlackboardArtifact.ARTIFACT_TYPE, TypeNode> typeNodeList = new HashMap<>();
 
-        public TypeFactory(SleuthkitCase skCase) {
+        public TypeFactory() {
             super();
-            this.skCase = skCase;
 
             // these are shown in other parts of the UI tree
             doNotShow = new ArrayList<>();
@@ -161,6 +159,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     refresh(true);
                 }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
 
@@ -168,17 +173,23 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
         }
 
         @Override
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
             typeNodeList.clear();
         }
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
+            if (skCase == null) {
+                return false;
+            }
+            
             try {
                 List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
                 inUse.removeAll(doNotShow);
@@ -208,7 +219,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact.ARTIFACT_TYPE key) {
-            TypeNode node = new TypeNode(key, skCase);
+            TypeNode node = new TypeNode(key);
             typeNodeList.put(key, node);
             return node;
         }
@@ -224,18 +235,20 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         private BlackboardArtifact.ARTIFACT_TYPE type;
         private long childCount = 0;
-        private SleuthkitCase skCase;
 
-        TypeNode(BlackboardArtifact.ARTIFACT_TYPE type, SleuthkitCase skCase) {
-            super(Children.create(new ArtifactFactory(type, skCase), true), Lookups.singleton(type.getDisplayName()));
+        TypeNode(BlackboardArtifact.ARTIFACT_TYPE type) {
+            super(Children.create(new ArtifactFactory(type), true), Lookups.singleton(type.getDisplayName()));
             super.setName(type.getLabel());
-            this.skCase = skCase;
             this.type = type;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(type)); //NON-NLS
             updateDisplayName();
         }
 
         final void updateDisplayName() {
+            if (skCase == null) {
+                return;
+            }
+            
             // NOTE: This completely destroys our lazy-loading ideal
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
@@ -333,14 +346,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
     /**
      * Creates children for a given artifact type
      */
-    private static class ArtifactFactory extends ChildFactory.Detachable<BlackboardArtifact> {
+    private class ArtifactFactory extends ChildFactory.Detachable<BlackboardArtifact> {
 
-        private SleuthkitCase skCase;
         private BlackboardArtifact.ARTIFACT_TYPE type;
 
-        public ArtifactFactory(BlackboardArtifact.ARTIFACT_TYPE type, SleuthkitCase skCase) {
+        public ArtifactFactory(BlackboardArtifact.ARTIFACT_TYPE type) {
             super();
-            this.skCase = skCase;
             this.type = type;
         }
         
@@ -375,6 +386,10 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
+            if (skCase == null) {
+                return false;
+            }
+            
             try {
                 List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
                 list.addAll(arts);
