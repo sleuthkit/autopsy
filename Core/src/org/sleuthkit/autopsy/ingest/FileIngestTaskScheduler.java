@@ -83,21 +83,18 @@ final class FileIngestTaskScheduler implements IngestTaskQueue {
             }
         }
 
-        // Enqueue file ingest tasks for the top level files.
-        boolean fileTasksAdded = false;
+        // Try to enqueue file ingest tasks for the top level files.
         for (AbstractFile firstLevelFile : topLevelFiles) {
             FileIngestTask fileTask = new FileIngestTask(job, firstLevelFile);
             if (shouldEnqueueTask(fileTask)) {
                 synchronized (this) {
                     rootDirectoryTasksQueue.add(fileTask);
                 }
-                fileTasksAdded = true;
             }
         }
-        if (fileTasksAdded) {
-            updateTaskQueues();
-        }
-        return fileTasksAdded;
+        updateTaskQueues();
+        
+        return !fileTasks.isEmpty();
     }
 
     void scheduleTask(IngestJob job, AbstractFile file) throws InterruptedException {
