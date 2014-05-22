@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-
-package org.sleuthkit.autopsy.modules.externalresults;
+package org.sleuthkit.autopsy.externalresults;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,40 +26,40 @@ import java.util.List;
 /**
  *
  */
-public class ResultsData {
+final class ExternalResults {
     private final List<String> dataSources = new ArrayList<>();
     private final List<ArtifactData> artifacts = new ArrayList<>();
     private final List<ReportData> reports = new ArrayList<>();
     private final List<DerivedFileData> derivedFiles = new ArrayList<>();
     
-    public List<String> getDataSources() {
+    List<String> getDataSources() {
         return dataSources;
     }
     
-    public List<ArtifactData> getArtifacts() {
+    List<ArtifactData> getArtifacts() {
         return artifacts;
     }
     
-    public List<ReportData> getReports() {
+    List<ReportData> getReports() {
         return reports;
     }
    
-    public List<DerivedFileData> getDerivedFiles() {
+    List<DerivedFileData> getDerivedFiles() {
         return derivedFiles;
     }    
     
-    public void addDataSource(String dataSrc) {
+    void addDataSource(String dataSrc) {
         dataSources.add(dataSrc);
     }
     
-    public int addArtifact(String typeStr) {
+    int addArtifact(String typeStr) {
         ArtifactData d = new ArtifactData();
         d.typeStr = typeStr;
         artifacts.add(d);
         return artifacts.size() - 1;
     }
     
-    public int addAttribute(int artIndex, String typeStr) {
+    int addAttribute(int artIndex, String typeStr) {
         ArtifactData art = artifacts.get(artIndex);
         AttributeData d = new AttributeData();
         d.typeStr = typeStr;
@@ -68,7 +67,7 @@ public class ResultsData {
         return art.attributes.size() - 1;      
     }
     
-    public void addAttributeValue(int artIndex, int attrIndex, String valueStr, String valueType) {
+    void addAttributeValue(int artIndex, int attrIndex, String valueStr, String valueType) {
         ArtifactData art = artifacts.get(artIndex);
         AttributeData attr = art.attributes.get(attrIndex);        
         if (valueType.isEmpty()) {
@@ -77,19 +76,19 @@ public class ResultsData {
         attr.valueStr.put(valueType, valueStr);
     }    
     
-    public void addAttributeSource(int artIndex, int attrIndex, String source) {
+    void addAttributeSource(int artIndex, int attrIndex, String source) {
         ArtifactData art = artifacts.get(artIndex);
         AttributeData attr = art.attributes.get(attrIndex);
         attr.source = source;
     }
  
-    public void addAttributeContext(int artIndex, int attrIndex, String context) {
+    void addAttributeContext(int artIndex, int attrIndex, String context) {
         ArtifactData art = artifacts.get(artIndex);
         AttributeData attr = art.attributes.get(attrIndex);
         attr.context = context;
     }    
     
-    public int addArtifactFile(int artIndex, String path) {
+    int addArtifactFile(int artIndex, String path) {
         ArtifactData art = artifacts.get(artIndex);
         FileData d = new FileData();
         d.path = path;
@@ -97,7 +96,7 @@ public class ResultsData {
         return art.files.size() - 1;      
     }
     
-    public void addReport(String name, String displayName, String localPath) {
+    void addReport(String name, String displayName, String localPath) {
         ReportData d = new ReportData();
         d.name = name;
         d.displayName = displayName;
@@ -105,7 +104,7 @@ public class ResultsData {
         reports.add(d);
     }
     
-    public void addDerivedFile(String localPath, String parentPath) {
+    void addDerivedFile(String localPath, String parentPath) {
         DerivedFileData d = new DerivedFileData();
         d.localPath = localPath;
         d.parentPath = parentPath;
@@ -114,13 +113,13 @@ public class ResultsData {
     
     // Data structures
     
-    public static class ArtifactData {
+    static class ArtifactData {
         public String typeStr;
         public List<AttributeData> attributes = new ArrayList<>();
         public List<FileData> files = new ArrayList<>();
     }
     
-    public static class AttributeData {
+    static class AttributeData {
         public static final String DEFAULT_VALUE_TYPE = "text";
         public String typeStr;        
         public HashMap<String, String> valueStr = new HashMap<>(); //valueType determines how to interpret valueStr
@@ -128,17 +127,17 @@ public class ResultsData {
         public String context;        
     }    
     
-    public static class FileData {
+    static class FileData {
         public String path;   
     }
     
-    public static class ReportData {
+    static class ReportData {
         public String name;
         public String displayName;
         public String localPath;
     }
         
-    public static class DerivedFileData {
+    static class DerivedFileData {
         public String localPath;
         public String parentPath;
     }        

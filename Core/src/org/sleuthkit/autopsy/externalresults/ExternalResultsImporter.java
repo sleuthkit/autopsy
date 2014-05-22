@@ -16,9 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-package org.sleuthkit.autopsy.modules.externalresults;
+package org.sleuthkit.autopsy.externalresults;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -45,40 +42,42 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
- * Mechanism to import blackboard items, derived files, etc.
- * It is decoupled from the actual parsing/interfacing with external data.
+ * Mechanism to import blackboard items, derived files, etc. It is decoupled
+ * from the actual parsing/interfacing with external data.
  */
-public class ExternalResultsUtility {
-    private static final Logger logger = Logger.getLogger(ExternalResultsUtility.class.getName());
+public class ExternalResultsImporter {
+
+    private static final Logger logger = Logger.getLogger(ExternalResultsImporter.class.getName());
     private static final String EVENT_STRING = "External Results";
 
     /**
-     * Tell the parser to get data, and then import that data into Autopsy.
-     * @param parser An initialized instance of an ExternalResultsParser derivative
-     * @param defaultDataSource Typically the current data source for the caller
+     * Import results for a data source from an XML file (see
+     * org.sleuthkit.autopsy.externalresults.autopsy_external_results.xsd).
+     *
+     * @param dataSource A data source.
+     * @param resultsXmlPath Path to an XML file containing results (e.g.,
+     * blackboard artifacts, derived files, reports) from the data source.
      */
-    public static void importResults(ExternalResultsParser parser, Content defaultDataSource) {
-        // Create temporary data object
-        ResultsData resultsData = parser.parse();
-        
-        // Use that data object to import the externally-generated information into the case
-        generateDerivedFiles(resultsData, defaultDataSource);
-        generateBlackboardItems(resultsData, defaultDataSource);
-        generateReportRecords(resultsData, defaultDataSource);
+    public static void importResultsFromXML(Content dataSource, String resultsXmlPath) {
+        ExternalResults results = new ExternalResultsXMLParser(resultsXmlPath).parse();
+        generateDerivedFiles(dataSource, results);
+        generateBlackboardItems(dataSource, results);
+        generateReportRecords(results);
     }
 
     /**
-     * Add derived files. This should be called before generateBlackboardItems() in case 
-     * any of the new blackboard artifacts refer to expected derived files.
-     * @param resultsData
-     * @param defaultDataSource 
+     * Add derived files. This should be called before generateBlackboardItems()
+     * in case any of the new blackboard artifacts refer to expected derived
+     * files.
+     *
+     * @param results
+     * @param dataSource
      */
-    private static void generateDerivedFiles(ResultsData resultsData, Content defaultDataSource) {
-        try {    
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();            
-            for (ResultsData.DerivedFileData derf : resultsData.getDerivedFiles()) {           
+    private static void generateDerivedFiles(Content dataSource, ExternalResults results) {
+        try {
+            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+            for (ExternalResults.DerivedFileData derf : results.getDerivedFiles()) {
                 String derp = derf.localPath;
                 File fileObj = new File(derp);
                 if (fileObj.exists()) {
@@ -86,32 +85,31 @@ public class ExternalResultsUtility {
                     int charPos = derp.lastIndexOf(File.separator);
                     if (charPos > 0) {
                         fileName = derp.substring(charPos + 1);
-                    }                   
-                    
+                    }
+
                     // Get a parent object for the new derived object
-                    AbstractFile parentFile = null;
-                    
+                    AbstractFile parentFile;
                     if (!derf.parentPath.isEmpty()) {
-                        parentFile = findFileInDatabase(derf.parentPath);                        
+                        parentFile = findFileInDatabase(derf.parentPath);
                     } else { //if no parent specified, try to use the root directory (//)                        
-                        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(defaultDataSource, "");
+                        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(dataSource, "");
                         parentFile = files.get(0);
                     }
-                    
+
                     if (parentFile != null) {
                         // Try to get a relative local path
-                        String relPath = derp;                    
+                        String relPath = derp;
                         Path pathTo = Paths.get(derp);
                         if (pathTo.isAbsolute()) {
                             Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
                             try {
                                 Path pathRelative = pathBase.relativize(pathTo);
                                 relPath = pathRelative.toString();
-                            } catch(IllegalArgumentException ex) {
-                                logger.log(Level.WARNING, "Derived file " + fileName + " path may be incorrect. The derived file object will still be added to the database.");
+                            } catch (IllegalArgumentException ex) {
+                                logger.log(Level.WARNING, "Derived file {0} path may be incorrect. The derived file object will still be added to the database.", fileName);
                             }
                         }
-                        
+
                         // Get file times
                         long ctime = 0;
                         long crtime = 0;
@@ -123,15 +121,15 @@ public class ExternalResultsUtility {
                             atime = fileAttrs.lastAccessTime().toMillis() / 1000;
                             mtime = fileAttrs.lastModifiedTime().toMillis() / 1000;
                         } catch (IOException ex) {
-                            logger.log(Level.WARNING, "Exception getting file attributes for derived file " + fileName);
+                            logger.log(Level.WARNING, "Exception getting file attributes for derived file {0}", fileName);
                         }
-                        
+
                         // Make a new derived file object in the database
                         DerivedFile df = fileManager.addDerivedFile(fileName, relPath, fileObj.length(),
                                 ctime, crtime, atime, mtime,
                                 true, parentFile, "", EVENT_STRING, "", "");
 
-                        if (df != null) {                 
+                        if (df != null) {
                             IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(df));
                         }
                     }
@@ -139,16 +137,17 @@ public class ExternalResultsUtility {
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, ex.getLocalizedMessage());
-        }            
+        }
     }
-    
+
     /**
      * Create and add new blackboard artifacts, attributes, and types
-     * @param resultsData
-     * @param defaultDataSource 
+     *
+     * @param results
+     * @param dataSource
      */
-    private static void generateBlackboardItems(ResultsData resultsData, Content defaultDataSource) {
-        for (ResultsData.ArtifactData art : resultsData.getArtifacts()) {           
+    private static void generateBlackboardItems(Content dataSource, ExternalResults results) {
+        for (ExternalResults.ArtifactData art : results.getArtifacts()) {
             try {
                 int bbArtTypeId;
                 BlackboardArtifact.ARTIFACT_TYPE stdArtType = isStandardArtifactType(art.typeStr);
@@ -157,10 +156,10 @@ public class ExternalResultsUtility {
                 } else {
                     // assume it's user defined
                     bbArtTypeId = Case.getCurrentCase().getSleuthkitCase().addArtifactType(art.typeStr, art.typeStr);
-                }                    
+                }
 
                 Collection<BlackboardAttribute> bbAttributes = new ArrayList<>();
-                for (ResultsData.AttributeData attr : art.attributes) {
+                for (ExternalResults.AttributeData attr : art.attributes) {
                     int bbAttrTypeId;
                     BlackboardAttribute.ATTRIBUTE_TYPE stdAttrType = isStandardAttributeType(attr.typeStr);
                     if (stdAttrType != null) {
@@ -168,11 +167,11 @@ public class ExternalResultsUtility {
                     } else {
                         // assume it's user defined
                         bbAttrTypeId = Case.getCurrentCase().getSleuthkitCase().addAttrType(attr.typeStr, attr.typeStr);
-                    }                    
+                    }
 
                     // Add all attribute values
                     Set<String> valueTypes = attr.valueStr.keySet();
-                    for (String valueType : valueTypes) {                        
+                    for (String valueType : valueTypes) {
                         String valueString = attr.valueStr.get(valueType);
                         BlackboardAttribute bbAttr = null;
                         switch (valueType) {
@@ -192,15 +191,15 @@ public class ExternalResultsUtility {
                                 bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, doubleValue);
                                 break;
                             default:
-                                logger.log(Level.WARNING, "Ignoring invalid attribute value type " + valueType);
+                                logger.log(Level.WARNING, "Ignoring invalid attribute value type {0}", valueType);
                                 break;
                         }
                         if (bbAttr != null) {
                             bbAttributes.add(bbAttr);
                         }
                     }
-                }        
-                
+                }
+
                 // Get associated file (if any) to use as the content obj to attach the artifact to
                 Content currContent = null;
                 if (art.files.size() > 0) {
@@ -209,7 +208,7 @@ public class ExternalResultsUtility {
 
                 // If no associated file, use current data source itself
                 if (currContent == null) {
-                    currContent = defaultDataSource;
+                    currContent = dataSource;
                 }
 
                 BlackboardArtifact bbArt = currContent.newArtifact(bbArtTypeId);
@@ -219,33 +218,34 @@ public class ExternalResultsUtility {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, ex.getLocalizedMessage());
-            }            
+            }
         }
     }
 
     /**
      * Add report info to the database
-     * @param resultsData
-     * @param defaultDataSource 
+     *
+     * @param results
+     * @param dataSource
      */
-    private static void generateReportRecords(ResultsData resultsData, Content defaultDataSource) {
-        try {   
-            for (ResultsData.ReportData report : resultsData.getReports()) {
+    private static void generateReportRecords(ExternalResults results) {
+        try {
+            for (ExternalResults.ReportData report : results.getReports()) {
                 String repp = report.localPath;
                 File fileObj = new File(repp);
                 if (fileObj.exists()) {
                     // Try to get a relative local path
-                    String relPath = repp;                    
+                    String relPath = repp;
                     Path pathTo = Paths.get(repp);
                     if (pathTo.isAbsolute()) {
                         Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
                         try {
                             Path pathRelative = pathBase.relativize(pathTo);
                             relPath = pathRelative.toString();
-                        } catch(IllegalArgumentException ex) {
-                            logger.log(Level.WARNING, "Report file " + repp + " path may be incorrect. The report record will still be added to the database.");
+                        } catch (IllegalArgumentException ex) {
+                            logger.log(Level.WARNING, "Report file {0} path may be incorrect. The report record will still be added to the database.", repp);
                         }
-                    }                    
+                    }
 
                     if (!relPath.isEmpty()) {
                         Case.getCurrentCase().getSleuthkitCase().addReport(relPath, report.displayName);
@@ -254,11 +254,11 @@ public class ExternalResultsUtility {
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, ex.getLocalizedMessage());
-        }    
+        }
     }
-    
+
     /**
-     * 
+     *
      * @param artTypeStr
      * @return valid artifact type or null if the type is not a standard TSK one
      */
@@ -271,11 +271,12 @@ public class ExternalResultsUtility {
         }
         return null;
     }
-    
-   /**
-     * 
+
+    /**
+     *
      * @param attrTypeStr
-     * @return valid attribute type or null if the type is not a standard TSK one
+     * @return valid attribute type or null if the type is not a standard TSK
+     * one
      */
     private static BlackboardAttribute.ATTRIBUTE_TYPE isStandardAttributeType(String attrTypeStr) {
         BlackboardAttribute.ATTRIBUTE_TYPE[] stdAttrs = BlackboardAttribute.ATTRIBUTE_TYPE.values();
@@ -285,18 +286,19 @@ public class ExternalResultsUtility {
             }
         }
         return null;
-    }    
+    }
 
     /**
      * util function
+     *
      * @param filePath full path including file or dir name
      * @return AbstractFile
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
     private static AbstractFile findFileInDatabase(String filePath) throws TskCoreException {
         AbstractFile abstractFile = null;
         String fileName = filePath;
-        String parentPath = "";              
+        String parentPath = "";
         int charPos = filePath.lastIndexOf("/");
         if (charPos >= 0) {
             fileName = filePath.substring(charPos + 1);
@@ -307,8 +309,8 @@ public class ExternalResultsUtility {
         if (files.size() > 0) {
             abstractFile = files.get(0);
             if (files.size() > 1) {
-                logger.log(Level.WARNING, "Ignoring extra files found for path " + filePath);
-            }                         
+                logger.log(Level.WARNING, "Ignoring extra files found for path {0}", filePath);
+            }
         }
         return abstractFile;
     }

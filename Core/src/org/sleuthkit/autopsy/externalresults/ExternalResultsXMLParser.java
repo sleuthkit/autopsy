@@ -18,7 +18,7 @@
  */
 
 
-package org.sleuthkit.autopsy.modules.externalresults;
+package org.sleuthkit.autopsy.externalresults;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,8 +30,8 @@ import org.w3c.dom.NodeList;
 /**
  *
  */
-public class ExternalResultsXML implements ExternalResultsParser {
-    private static final Logger logger = Logger.getLogger(ExternalResultsXML.class.getName());    
+final class ExternalResultsXMLParser {
+    private static final Logger logger = Logger.getLogger(ExternalResultsXMLParser.class.getName());    
             
     private static final String XSDFILE = "autopsy_external_results.xsd"; //NON-NLS
     
@@ -56,13 +56,13 @@ public class ExternalResultsXML implements ExternalResultsParser {
     private static final String NAME_ATTR = "name"; //NON-NLS
 
     private String importFilePath;
-    private ResultsData resultsData = null;
+    private ExternalResults resultsData = null;
     
     /**
      * 
      * @param importFilePath 
      */
-    ExternalResultsXML(String importFilePath) {
+    ExternalResultsXMLParser(String importFilePath) {
         this.importFilePath = importFilePath;
     }
     
@@ -70,12 +70,11 @@ public class ExternalResultsXML implements ExternalResultsParser {
      * Parses info for artifacts, derived files, and reports in the given XML file.
      * @return 
      */
-    @Override
-    public ResultsData parse() {
-        resultsData = new ResultsData();
+    ExternalResults parse() {
+        resultsData = new ExternalResults();
         try
         {
-            final Document doc = XMLUtil.loadDoc(ExternalResultsXML.class, importFilePath, XSDFILE);
+            final Document doc = XMLUtil.loadDoc(ExternalResultsXMLParser.class, importFilePath, XSDFILE);
             if (doc == null) {
                 return null;
             }
