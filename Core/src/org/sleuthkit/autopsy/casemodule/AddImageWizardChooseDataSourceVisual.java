@@ -203,6 +203,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         setPreferredSize(new java.awt.Dimension(588, 328));
 
         org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
+        nextLabel.setPreferredSize(new java.awt.Dimension(514, 35));
+        nextLabel.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
         inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -267,7 +269,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(39, 39, 39)
                 .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );
