@@ -77,20 +77,20 @@ public class ExternalResultsImporter {
     private static void generateDerivedFiles(Content dataSource, ExternalResults results) {
         try {
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-            for (ExternalResults.DerivedFileData derf : results.getDerivedFiles()) {
-                String derp = derf.localPath;
-                File fileObj = new File(derp);
+            for (ExternalResults.DerivedFileData derivedFile : results.getDerivedFiles()) {
+                String path = derivedFile.localPath;
+                File fileObj = new File(path);
                 if (fileObj.exists()) {
-                    String fileName = derp;
-                    int charPos = derp.lastIndexOf(File.separator);
+                    String fileName = path;
+                    int charPos = path.lastIndexOf(File.separator);
                     if (charPos > 0) {
-                        fileName = derp.substring(charPos + 1);
+                        fileName = path.substring(charPos + 1);
                     }
 
                     // Get a parent object for the new derived object
                     AbstractFile parentFile;
-                    if (!derf.parentPath.isEmpty()) {
-                        parentFile = findFileInDatabase(derf.parentPath);
+                    if (!derivedFile.parentPath.isEmpty()) {
+                        parentFile = findFileInDatabase(derivedFile.parentPath);
                     } else { //if no parent specified, try to use the root directory (//)                        
                         List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(dataSource, "");
                         parentFile = files.get(0);
@@ -98,8 +98,8 @@ public class ExternalResultsImporter {
 
                     if (parentFile != null) {
                         // Try to get a relative local path
-                        String relPath = derp;
-                        Path pathTo = Paths.get(derp);
+                        String relPath = path;
+                        Path pathTo = Paths.get(path);
                         if (pathTo.isAbsolute()) {
                             Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
                             try {
