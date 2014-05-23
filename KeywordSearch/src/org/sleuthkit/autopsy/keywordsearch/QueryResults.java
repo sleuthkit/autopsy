@@ -40,25 +40,41 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Stores the results from running a SOLR query. 
+ * Stores the results from running a SOLR query (which could contain multiple keywords). 
  * 
  */
 class QueryResults {
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
    
-    // maps Keyword object to its hits -> This is the long-term idea
-    private Map<Keyword, List<ContentHit>> resultsK = new HashMap<>();
+    private KeywordSearchQuery keywordSearchQuery;
+    
+    // maps Keyword object to its hits
+    private Map<Keyword, List<ContentHit>> results = new HashMap<>();
+    private KeywordList keywordList;
+    
+    QueryResults (KeywordSearchQuery query, KeywordList keywordList) {
+        this.keywordSearchQuery = query;
+        this.keywordList = keywordList;
+    }
     
     void addResult(Keyword keyword, List<ContentHit> hits) {
-        resultsK.put(keyword, hits);
+        results.put(keyword, hits);
+    }
+    
+    KeywordList getKeywordList() {
+        return keywordList;
+    }
+    
+    KeywordSearchQuery getQuery() {
+        return keywordSearchQuery;
     }
     
     List<ContentHit> getResults(Keyword keyword) {
-        return resultsK.get(keyword);
+        return results.get(keyword);
     }
     
     Set<Keyword> getKeywords() {
-        return resultsK.keySet();        
+        return results.keySet();        
     }
     
     /**
@@ -85,7 +101,7 @@ class QueryResults {
     /**
      * Get the unique set of files for a specific keyword
      * @param keyword
-     * @return 
+     * @return Map of Abstract files and the chunk with the first hit
      */
     Map<AbstractFile, Integer> getUniqueFiles(Keyword keyword) {
         Map<AbstractFile, Integer> ret = new LinkedHashMap<>();
@@ -101,14 +117,13 @@ class QueryResults {
      
     /**
      * Creates a blackboard artifact for each keyword hit
-     * @param query
      * @param listName
      * @param progress    can be null
      * @param subProgress can be null
-     * @param notifyInbox flag indicating whether or not to call writeInboxMessage() for each hit
-     * @return list of new artifacts
+     * @param notifyInbox flag indicating whether or not to call writeSingleFileInboxMessage() for each hit
+     * @return list of new artifactsPerFile
      */
-    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(KeywordSearchQuery query, String listName, ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox, boolean fullHitInfo) {
+    public Collection<BlackboardArtifact> writeAllHitsToBlackBoard(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
         if (progress != null) {
             progress.start(getKeywords().size());
@@ -130,19 +145,19 @@ class QueryResults {
                 if (hitDisplayStr.length() > 50) {
                     hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                 }
-                subProgress.progress(listName + ": " + hitDisplayStr, unitProgress);
+                subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
             }
             
             // this returns the unique files in the set with the first chunk that has a hit
             Map<AbstractFile, Integer> flattened = getUniqueFiles(hitTerm);
             
             for (AbstractFile hitFile : flattened.keySet()) {
-                String termHit = fullHitInfo ? hitTerm.toString() : hitTerm.getQuery();
+                String termString = hitTerm.getQuery();
                 int chunkId = flattened.get(hitFile);
-                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termHit);
+                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                 String snippet;
                 try {
-                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, !query.isLiteral(), true);
+                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, !keywordSearchQuery.isLiteral(), true);
                 } catch (NoOpenCoreException e) {
                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                     //no reason to continue
@@ -152,12 +167,12 @@ class QueryResults {
                     continue;
                 }
                 if (snippet != null) {
-                    KeywordWriteResult written = query.writeToBlackBoard(termHit, hitFile, snippet, listName);
+                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(termString, hitFile, snippet, keywordList.getName());
                     
-                    if (written != null) {
-                        newArtifacts.add(written.getArtifact());
+                    if (writeResult != null) {
+                        newArtifacts.add(writeResult.getArtifact());
                         if (notifyInbox) {
-                            writeInboxMessage(query, written, hitFile);
+                            writeSingleFileInboxMessage(writeResult, hitFile);
                         }
                     } else {
                         logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()}); //NON-NLS
@@ -177,15 +192,14 @@ class QueryResults {
     
     /**
      * Generate an ingest inbox message for given keyword in given file
-     * @param query
      * @param written
      * @param hitFile 
      */
-    public void writeInboxMessage(KeywordSearchQuery query, KeywordWriteResult written, AbstractFile hitFile) {
+    public void writeSingleFileInboxMessage(KeywordCachedArtifact written, AbstractFile hitFile) {
         StringBuilder subjectSb = new StringBuilder();
         StringBuilder detailsSb = new StringBuilder();
 
-        if (!query.isLiteral()) {
+        if (!keywordSearchQuery.isLiteral()) {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
         } else {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
@@ -229,7 +243,7 @@ class QueryResults {
         detailsSb.append("</tr>"); //NON-NLS
 
         //regex
-        if (!query.isLiteral()) {
+        if (!keywordSearchQuery.isLiteral()) {
             attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
             if (attr != null) {
                 detailsSb.append("<tr>"); //NON-NLS

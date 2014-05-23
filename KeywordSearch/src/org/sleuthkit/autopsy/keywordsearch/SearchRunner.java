@@ -416,7 +416,6 @@ public final class SearchRunner {
 
                     final String queryStr = keywordQuery.getQuery();
                     final KeywordList list = keywordToList.get(queryStr);
-                    final String listName = list.getName();
 
                     //new subProgress will be active after the initial query
                     //when we know number of hits to start() with
@@ -428,9 +427,9 @@ public final class SearchRunner {
 
                     boolean isRegex = !keywordQuery.isLiteral();
                     if (isRegex) {
-                        keywordSearchQuery = new TermComponentQuery(keywordQuery);
+                        keywordSearchQuery = new TermComponentQuery(list, keywordQuery);
                     } else {
-                        keywordSearchQuery = new LuceneQuery(keywordQuery);
+                        keywordSearchQuery = new LuceneQuery(list, keywordQuery);
                         keywordSearchQuery.escape();
                     }
 
@@ -461,7 +460,7 @@ public final class SearchRunner {
 
                     // calculate new results by substracting results already obtained in this ingest
                     // this creates a map of each keyword to the list of unique files that have that hit. 
-                    QueryResults newResults = filterResults(queryResults, isRegex);
+                    QueryResults newResults = filterResults(queryResults, list);
 
                     if (!newResults.getKeywords().isEmpty()) {
 
@@ -478,10 +477,10 @@ public final class SearchRunner {
                         if (queryDisplayStr.length() > 50) {
                             queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
                         }
-                        subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
+                        subProgresses[keywordsSearched].progress(list.getName() + ": " + queryDisplayStr, unitProgress);
         
                         // Create blackboard artifacts                
-                        newArtifacts = queryResults.writeAllHitsToBlackBoard(keywordSearchQuery, listName, null, subProgresses[keywordsSearched], this, list.getIngestMessages(), false);
+                        newArtifacts = queryResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, list.getIngestMessages());
                         
                     } //if has results
 
@@ -529,7 +528,7 @@ public final class SearchRunner {
          * Sync-up the updated keywords from the currently used lists in the XML
          */
         private void updateKeywords() {
-            KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+            XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
 
             keywords.clear();
             keywordToList.clear();
@@ -560,11 +559,11 @@ public final class SearchRunner {
 
         //calculate new results but substracting results already obtained in this ingest
         //update currentResults map with the new results
-        private QueryResults filterResults(QueryResults queryResult, boolean isRegex) {
-            QueryResults newResults = new QueryResults();
+        private QueryResults filterResults(QueryResults queryResult, KeywordList keywordList) {
+            QueryResults newResults = new QueryResults(queryResult.getQuery(), keywordList);
 
-            for (Keyword termResult : queryResult.getKeywords()) {
-                List<ContentHit> queryTermResults = queryResult.getResults(termResult);
+            for (Keyword keyword : queryResult.getKeywords()) {
+                List<ContentHit> queryTermResults = queryResult.getResults(keyword);
 
                 //translate to list of IDs that we keep track of
                 List<Long> queryTermResultsIDs = new ArrayList<>();
@@ -572,19 +571,19 @@ public final class SearchRunner {
                     queryTermResultsIDs.add(ch.getId());
                 }
 
-                List<Long> curTermResults = job.currentKeywordResults(termResult);
+                List<Long> curTermResults = job.currentKeywordResults(keyword);
                 if (curTermResults == null) {
-                    job.addKeywordResults(termResult, queryTermResultsIDs);
-                    newResults.addResult(termResult, queryTermResults);
+                    job.addKeywordResults(keyword, queryTermResultsIDs);
+                    newResults.addResult(keyword, queryTermResults);
                 } else {
                     //some AbstractFile hits already exist for this keyword
                     for (ContentHit res : queryTermResults) {
                         if (!curTermResults.contains(res.getId())) {
                             //add to new results
-                            List<ContentHit> newResultsFs = newResults.getResults(termResult);
+                            List<ContentHit> newResultsFs = newResults.getResults(keyword);
                             if (newResultsFs == null) {
                                 newResultsFs = new ArrayList<>();
-                                newResults.addResult(termResult, newResultsFs);
+                                newResults.addResult(keyword, newResultsFs);
                             }
                             newResultsFs.add(res);
                             curTermResults.add(res.getId());
@@ -594,9 +593,6 @@ public final class SearchRunner {
             }
 
             return newResults;
-
-        }        
-        
-    }    
-    
+        }   
+    }
 }

@@ -32,7 +32,7 @@ import java.util.logging.Level;
 
 /**
  * @author dfickling
- * KeywordSearchListsEncase adds support for Encase tab-delimited
+ * EnCaseKeywordSearchList adds support for Encase tab-delimited
  * keyword list exports to Autopsy.
  * 
  * load() does the I/O operation, converting lines from the text file to
@@ -41,12 +41,12 @@ import java.util.logging.Level;
  * and finally the EncaseFileEntries are converted to KeywordSearchLists
  * 
  */
-class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
+class EnCaseKeywordSearchList extends KeywordSearchList{
     
     ArrayList<EncaseFileEntry> entriesUnsorted;
     EncaseFileEntry rootEntry;
     
-    public KeywordSearchListsEncase(String encasePath) {
+    public EnCaseKeywordSearchList(String encasePath) {
         super(encasePath);
     }
     
@@ -155,6 +155,10 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
                 }
                 entriesUnsorted.add(new EncaseFileEntry(name, value, Integer.parseInt(childCount), false, null, type, flags));
             }
+            if (entriesUnsorted.isEmpty()) {
+                return false;
+            }
+            
             this.rootEntry = entriesUnsorted.remove(0);
             doCreateEntryStructure(this.rootEntry);
             doCreateListsFromEntries(this.rootEntry, "");
@@ -178,7 +182,7 @@ class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
                 return Expression;
             } else {
                 throw new IllegalArgumentException(
-                        NbBundle.getMessage(KeywordSearchListsEncase.class,
+                        NbBundle.getMessage(EnCaseKeywordSearchList.class,
                                             "KeywordSearchListsEncase.encaseMetaType.exception.msg",
                                             type));
             }

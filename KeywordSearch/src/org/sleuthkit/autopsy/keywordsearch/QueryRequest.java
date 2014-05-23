@@ -35,13 +35,12 @@ class QueryRequest  {
 
     /**
      * NOTE: The below descriptions are based on how it is used in teh code.
-     * @param queryString Query string
      * @param map Map that stores settings to use during the search
      * @param id ID that callers simply increment from 0
      * @param query Query that will be performed. 
      */
-    public QueryRequest(String queryString, Map<String, Object> map, int id, KeywordSearchQuery query) {
-        this.queryString = queryString;
+    public QueryRequest(Map<String, Object> map, int id, KeywordSearchQuery query) {
+        this.queryString = query.getEscapedQueryString();
         this.map = map;
         this.query = query;
     }

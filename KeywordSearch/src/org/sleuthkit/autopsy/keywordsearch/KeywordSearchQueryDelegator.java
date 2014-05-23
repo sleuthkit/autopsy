@@ -31,92 +31,49 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 
 /**
  * Responsible for running a keyword search query and displaying
- * the results. 
+ * the results. Delegates the actual work to the various implementations
+ * of KeywordSearchQuery. 
  */
-class KeywordSearchQueryManager {
-    private List<Keyword> keywords;
+class KeywordSearchQueryDelegator {
+    private List<KeywordList> keywordLists;
     private List<KeywordSearchQuery> queryDelegates;
-    private QueryType queryType;
-    private boolean queryWholeword;
     private static int resultWindowCount = 0; //keep track of unique window ids to display
-    private static Logger logger = Logger.getLogger(KeywordSearchQueryManager.class.getName());
+    private static Logger logger = Logger.getLogger(KeywordSearchQueryDelegator.class.getName());
 
-    /**
-     * 
-     * @param queries Keywords to search for
-     */
-    public KeywordSearchQueryManager(List<Keyword> queries, boolean wholeword) {
-        queryType = QueryType.REGEX;
-        queryWholeword = wholeword;
-        keywords = queries;
+    
+    public KeywordSearchQueryDelegator(List<KeywordList> keywordLists) {
+        this.keywordLists = keywordLists;
         init();
     }
-
-    /**
-     * KeywordSearchQueryManager will change a literal keyword to regex unless wholeword is set
-     * @param query Keyword to search for
-     * @param qt Query type
-     */
-    public KeywordSearchQueryManager(String query, QueryType qt, boolean wholeword) {
-        queryType = qt;
-        queryWholeword = wholeword;
-        keywords = new ArrayList<>();
-        keywords.add(new Keyword(query, ((queryType == QueryType.LITERAL) && queryWholeword) ? true : false));
-        init();
-    }
-
-    /**
-     * 
-     * @param query Keyword to search for
-     * @param isLiteral false if reg-exp
-     * @param presentation Presentation layout
-     */
-    public KeywordSearchQueryManager(String query, boolean isLiteral, boolean wholeword) {
-        queryType = isLiteral ? QueryType.LITERAL : QueryType.REGEX;
-        queryWholeword = wholeword;
-        keywords = new ArrayList<>();
-        keywords.add(new Keyword(query, isLiteral));
-        init();
-    }
-
-    /**
-     * Initialize internal settings based on constructor arguments.
-     * Create a list of queries to later run
-     */
+    
     private void init() {
+        // make a query for each keyword
         queryDelegates = new ArrayList<>();
-        for (Keyword keyword : keywords) {
-            KeywordSearchQuery query = null;
-            
-            /**
-             * There are three usable combinations:             
-             * Substrings (we wrap with substring regex):
-             *     1. Literal query 
-             * Whole words (no wrapping):
-             *     2. Literal query (Lucene search)
-             *     3. Regex query
-             */
-            if (keyword.isLiteral()) {
-                query = new LuceneQuery(keyword);
-            } else {            
-                query = new TermComponentQuery(keyword);
-            }
-
-            if (query != null) {
-                if (keyword.isLiteral() || (queryType == QueryType.LITERAL)) {
-                    query.escape();
+        
+        for (KeywordList keywordList : keywordLists) {
+            for (Keyword keyword : keywordList.getKeywords()) {
+                KeywordSearchQuery query;
+                if (keyword.isLiteral()) {
+                    // literal, exact match
+                    if (keyword.isWholeword()) {
+                        query = new LuceneQuery(keywordList, keyword);
+                        query.escape();
+                    }
+                    // literal, substring match
+                    else {
+                        query = new TermComponentQuery(keywordList, keyword);
+                        query.escape();
+                        query.setSubstringQuery();
+                    }
                 }
-                
-                // Wrap the keyword with wildcards (for substrings)
-                if (!queryWholeword && (queryType == QueryType.LITERAL)) {
-                    query.setSubstringQuery();
+                // regexp
+                else {            
+                    query = new TermComponentQuery(keywordList, keyword);
                 }
-                
-                queryDelegates.add(query);
+                queryDelegates.add(query);            
             }
         }
     }
@@ -125,36 +82,27 @@ class KeywordSearchQueryManager {
      * Execute the keyword search based on keywords passed into constructor.
      * Post results into a new DataResultViewer.
      */
-    public void execute() {
-        //execute and present the query
-        //delegate query to query objects and presentation child factories
-        //if (queryType == QueryType.WORD || presentation == Presentation.DETAIL) {
-        //   for (KeywordSearchQuery q : queryDelegates) {
-        //       q.execute();
-        //  }
-        // } else {
-        
-        //Collapsed view
+    public void execute() {        
         Collection<QueryRequest> queryRequests = new ArrayList<>();
         int queryID = 0;
         StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
         for (KeywordSearchQuery q : queryDelegates) {
             Map<String, Object> kvs = new LinkedHashMap<>();
             final String queryStr = q.getQueryString();
-            final String escQueryStr = q.getEscapedQueryString();
             queryConcat.append(queryStr).append(" ");
-            queryRequests.add(new QueryRequest(escQueryStr, kvs, ++queryID, q));
+            queryRequests.add(new QueryRequest(kvs, ++queryID, q));
         }
-
-        Node rootNode;
+        
         String queryConcatStr = queryConcat.toString();
         final int queryConcatStrLen = queryConcatStr.length();
         final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
         final String windowTitle = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.execute.exeWinTitle", ++resultWindowCount, queryStrShort);
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
+        
+        Node rootNode;
         if (queryRequests.size() > 0) {
             Children childNodes =
-                    Children.create(new KeywordSearchResultFactory(keywords, queryRequests, searchResultWin), true);
+                    Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {
@@ -166,7 +114,6 @@ class KeywordSearchQueryManager {
         DataResultTopComponent.initInstance(pathText, rootNode, queryRequests.size(), searchResultWin);
 
         searchResultWin.requestActive();
-        // }
     }
     
     /**

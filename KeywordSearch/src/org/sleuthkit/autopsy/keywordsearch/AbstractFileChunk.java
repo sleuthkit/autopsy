@@ -25,18 +25,18 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
- * Represents each string chunk to be indexed, a derivative of AbstractFileExtract file
+ * Represents each string chunk to be indexed, a derivative of TextExtractor file
  */
 class AbstractFileChunk {
     private int chunkID;
-    private AbstractFileExtract parent;
+    private TextExtractor parent;
 
-    AbstractFileChunk(AbstractFileExtract parent, int chunkID) {
+    AbstractFileChunk(TextExtractor parent, int chunkID) {
         this.parent = parent;
         this.chunkID = chunkID;
     }
 
-    public AbstractFileExtract getParent() {
+    public TextExtractor getParent() {
         return parent;
     }
 

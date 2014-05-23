@@ -100,10 +100,13 @@ public class KeywordHits implements AutopsyVisitableItem {
         void populateMaps(Map<Long, Map<Long, String>> artifactIds) {
             topLevelMap.clear();
             
+            // map of list name to keword to artifact IDs
             Map<String, Map<String, Set<Long>>> listsMap = new LinkedHashMap<>();
-            // Map from String (literal keyword) to set<long> (artifact ids)
+            
+            // Map from from literal keyword to artifact IDs
             Map<String, Set<Long>> literalMap = new LinkedHashMap<>();
-            // Map from String (regex keyword) to set<long> (artifact ids);
+            
+            // Map from regex keyword artifact IDs
             Map<String, Set<Long>> regexMap = new LinkedHashMap<>();
         
             // top-level nodes
@@ -118,21 +121,30 @@ public class KeywordHits implements AutopsyVisitableItem {
                 String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                 String word = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
                 String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
+                
+                // part of a list
                 if (listName != null) {
-                    if (!listsMap.containsKey(listName)) {
+                    if (listsMap.containsKey(listName) == false) {
                         listsMap.put(listName, new LinkedHashMap<String, Set<Long>>());
                     }
-                    if (!listsMap.get(listName).containsKey(word)) {
-                        listsMap.get(listName).put(word, new HashSet<Long>());
+                    
+                    Map<String, Set<Long>> listMap = listsMap.get(listName);
+                    if (listMap.containsKey(word) == false) {
+                        listMap.put(word, new HashSet<Long>());
                     }
-                    listsMap.get(listName).get(word).add(id);
-                } else if (reg != null) {
-                    if (!regexMap.containsKey(reg)) {
+                    
+                    listMap.get(word).add(id);
+                }
+                // regular expression, single term
+                else if (reg != null) {
+                    if (regexMap.containsKey(reg) == false) {
                         regexMap.put(reg, new HashSet<Long>());
                     }
                     regexMap.get(reg).add(id);
-                } else {
-                    if (!literalMap.containsKey(word)) {
+                }
+                // literal, single term
+                else {
+                    if (literalMap.containsKey(word) == false) {
                         literalMap.put(word, new HashSet<Long>());
                     }
                     literalMap.get(word).add(id);

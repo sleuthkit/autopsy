@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private KeywordSearchGlobalListSettingsPanel listsPanel;
+    private GlobalListSettingsPanel listsPanel;
     private KeywordSearchGlobalLanguageSettingsPanel languagesPanel;
     private KeywordSearchGlobalSearchSettingsPanel generalPanel;
 
@@ -38,7 +38,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
 
     private void customizeComponents() {
         setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
-        listsPanel = new KeywordSearchGlobalListSettingsPanel();
+        listsPanel = new GlobalListSettingsPanel();
         languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
         generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
@@ -80,7 +80,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
         generalPanel.load();
 
         // Reload the XML to avoid 'ghost' vars
-        KeywordSearchListsXML.getCurrent().reload();
+        XmlKeywordSearchList.getCurrent().reload();
     }
 
     @Override
@@ -96,7 +96,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     }
 
     public void cancel() {
-        KeywordSearchListsXML.getCurrent().reload();
+        XmlKeywordSearchList.getCurrent().reload();
     }
 
     boolean valid() {

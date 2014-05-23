@@ -35,10 +35,10 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Takes an AbstractFile, extract strings, converts into chunks (associated with
  * the original source file) up to 1MB then and indexes chunks as text with Solr
  */
-class AbstractFileStringExtract implements AbstractFileExtract {
+class StringsTextExtractor implements TextExtractor {
     
     private static Ingester ingester;    
-    private static final Logger logger = Logger.getLogger(AbstractFileStringExtract.class.getName());
+    private static final Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;        
     //private static final int BOM_LEN = 3; 
     private static final int BOM_LEN = 0;  //disabled prepending of BOM
@@ -57,7 +57,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     //stringChunkBuf[1] = (byte) 0xBB;
     //stringChunkBuf[2] = (byte) 0xBF;
     //}
-    public AbstractFileStringExtract(KeywordSearchIngestModule module) {
+    public StringsTextExtractor(KeywordSearchIngestModule module) {
         this.module = module;
         ingester = Server.getIngester();
         extractScripts.add(DEFAULT_SCRIPT);
@@ -103,10 +103,10 @@ class AbstractFileStringExtract implements AbstractFileExtract {
 
 
         final boolean extractUTF8 =
-                Boolean.parseBoolean(extractOptions.get(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
+                Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
 
         final boolean extractUTF16 =
-                Boolean.parseBoolean(extractOptions.get(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
+                Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         if (extractUTF8 == false && extractUTF16 == false) {
             //nothing to do

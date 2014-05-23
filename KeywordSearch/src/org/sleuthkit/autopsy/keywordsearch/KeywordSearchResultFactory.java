@@ -83,23 +83,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             }
         },
     }
-    private List<Keyword> queries;
     private Collection<QueryRequest> queryRequests;
     private final DataResultTopComponent viewer; //viewer driving this child node factory
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(List<Keyword> queries, Collection<QueryRequest> queryRequests, DataResultTopComponent viewer) {
-        this.queries = queries;
+    KeywordSearchResultFactory(Collection<QueryRequest> queryRequests, DataResultTopComponent viewer) {
         this.queryRequests = queryRequests;
         this.viewer = viewer;
     }
 
-    KeywordSearchResultFactory(Keyword query, Collection<QueryRequest> queryRequests, DataResultTopComponent viewer) {
-        queries = new ArrayList<>();
-        queries.add(query);
-        this.queryRequests = queryRequests;
-        this.viewer = viewer;
-    }
 
     /**
      * call this at least for the parent Node, to make sure all common
@@ -174,14 +166,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         // Get listname
         String listName = "";
-        // fullHitInfo determines whether a hit is posted in a list as a raw query string or formatted with Keyword.toString()
-        boolean fullHitInfo = true;         
         if (queryRequests.size() > 1) {
-            KeywordList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(keywordSearchQuery.getQueryString());
+            KeywordList list = XmlKeywordSearchList.getCurrent().getListWithKeyword(keywordSearchQuery.getQueryString());
             if (list != null) {
                 listName = list.getName();
             }
-            fullHitInfo = false;
         }
         
         final boolean literal_query = keywordSearchQuery.isLiteral();
@@ -239,7 +228,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         //cannot reuse snippet in BlackboardResultWriter
         //because for regex searches in UI we compress results by showing a file per regex once (even if multiple term hits)
         //whereas in bb we write every hit per file separately
-        new BlackboardResultWriter(queryResults, keywordSearchQuery, listName, fullHitInfo).execute();
+        new BlackboardResultWriter(queryResults, listName).execute();
 
         return true;
     }
@@ -386,14 +375,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         private String listName;
         private QueryResults hits;
         private Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
-        private boolean fullHitInfo;
         private static final int QUERY_DISPLAY_LEN = 40;   
 
-        BlackboardResultWriter(QueryResults hits, KeywordSearchQuery query, String listName, boolean fullHitInfo) {
+        BlackboardResultWriter(QueryResults hits, String listName) {
             this.hits = hits;
-            this.query = query;
+            this.query = hits.getQuery();
             this.listName = listName;
-            this.fullHitInfo = fullHitInfo;
         }
 
         protected void finalizeWorker() {
@@ -424,9 +411,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                         }
                     });                
                 
-                // Create blackboard artifacts                
-                boolean notifyInbox = false;
-                newArtifacts = hits.writeAllHitsToBlackBoard(query, listName, progress, null, this, notifyInbox, fullHitInfo);
+                // Create blackboard artifacts
+                newArtifacts = hits.writeAllHitsToBlackBoard(progress, null, this, false);
             } finally {
                 finalizeWorker();
             }

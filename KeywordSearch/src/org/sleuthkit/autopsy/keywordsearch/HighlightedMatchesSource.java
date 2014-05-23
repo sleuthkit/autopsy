@@ -139,7 +139,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                     queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
                 }
                 Keyword keywordQuery = new Keyword(queryStr, false);
-                chunksQuery = new LuceneQuery(keywordQuery);
+                chunksQuery = new LuceneQuery(hits.getKeywordList(), keywordQuery);
                 KeywordQueryFilter contentIdFilter = new KeywordQueryFilter(FilterType.CHUNK, contentId);
                 chunksQuery.addFilter(contentIdFilter);
                 try {
@@ -181,9 +181,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             hitsPages.put(1, 0);
             pages.add(1);
             pagesToHits.put(1, 0);
-
         }
-
         inited = true;
     }
 

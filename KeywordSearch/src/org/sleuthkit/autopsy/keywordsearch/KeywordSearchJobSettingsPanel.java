@@ -40,7 +40,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private final KeywordListsTableModel tableModel = new KeywordListsTableModel();
     private final List<String> keywordListNames = new ArrayList<>();
     private final Map<String, Boolean> keywordListStates = new HashMap<>();
-    private final KeywordSearchListsXML keywordListsManager = KeywordSearchListsXML.getCurrent();
+    private final XmlKeywordSearchList keywordListsManager = XmlKeywordSearchList.getCurrent();
 
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
         initializeKeywordListSettings(initialSettings);
@@ -100,8 +100,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void displayEncodings() {
-        String utf8 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString());
-        String utf16 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString());
+        String utf8 = KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
+        String utf16 = KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
         ArrayList<String> encodingsList = new ArrayList<>();
         if (utf8 == null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");
@@ -116,10 +116,10 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        if (event.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.name())
-                || event.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.name())
-                || event.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.name())
-                || event.getPropertyName().equals(KeywordSearchListsXML.LanguagesEvent.LANGUAGES_CHANGED.name())) {
+        if (event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_ADDED.name())
+                || event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_DELETED.name())
+                || event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_UPDATED.name())
+                || event.getPropertyName().equals(XmlKeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED.name())) {
             update();
         }
     }

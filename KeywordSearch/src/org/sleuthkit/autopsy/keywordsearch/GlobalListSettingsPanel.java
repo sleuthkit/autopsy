@@ -25,15 +25,15 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
-final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
+final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private final KeywordSearchListsManagementPanel listsManagementPanel = new KeywordSearchListsManagementPanel();
-    private final KeywordSearchEditListPanel editListPanel = new KeywordSearchEditListPanel();
+    private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel();
+    private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
 
-    KeywordSearchGlobalListSettingsPanel() {
+    GlobalListSettingsPanel() {
         initComponents();
         customizeComponents();
-        setName(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig"));
+        setName(org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig"));
     }
 
     private void customizeComponents() {
@@ -45,7 +45,7 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
                     editListPanel.setCurrentKeywordList(null);
                     editListPanel.setButtonStates();
-                    KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
+                    XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
                     deleter.deleteList(toDelete);
                     listsManagementPanel.resync();
                 }
@@ -78,7 +78,7 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
                     return;
                 }
 
-                KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
+                XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
                 if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
@@ -112,9 +112,9 @@ final class KeywordSearchGlobalListSettingsPanel extends javax.swing.JPanel impl
 
     @Override
     public void store() {
-        KeywordSearchListsXML.getCurrent().save(false);
+        XmlKeywordSearchList.getCurrent().save(false);
         //refresh the list viewer/searcher panel
-        KeywordSearchListsViewerPanel.getDefault().resync();
+        DropdownListSearchPanel.getDefault().resync();
     }
 
     @Override

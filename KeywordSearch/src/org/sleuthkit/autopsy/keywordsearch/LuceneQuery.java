@@ -58,6 +58,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private String keywordStringEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
+    private KeywordList keywordList = null; 
     private final List <KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
     private static final int MAX_RESULTS = 20000;
@@ -74,8 +75,9 @@ class LuceneQuery implements KeywordSearchQuery {
      * Constructor with query to process.
      * @param keywordQuery 
      */
-    public LuceneQuery(Keyword keywordQuery) {
+    public LuceneQuery(KeywordList keywordList, Keyword keywordQuery) {
         this(keywordQuery.getQuery());
+        this.keywordList = keywordList;
         this.keywordQuery = keywordQuery;
     }
 
@@ -132,14 +134,10 @@ class LuceneQuery implements KeywordSearchQuery {
         return this.keywordString;
     }
 
-    @Override
-    public Collection<Term> getTerms() {
-        return null;
-    }
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
-        QueryResults results = new QueryResults();
+        QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = KeywordSearchSettings.getShowSnippets();
         results.addResult(new Keyword(keywordString, true), performLuceneQuery(showSnippets));
@@ -153,15 +151,15 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
-        KeywordWriteResult writeResult;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardArtifact bba;
+        KeywordCachedArtifact writeResult;
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            writeResult = new KeywordWriteResult(bba);
+            writeResult = new KeywordCachedArtifact(bba);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
@@ -170,13 +168,11 @@ class LuceneQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
-        //keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
-        //list
-        if (listName == null) {
-            listName = "";
+        if ((listName != null) && (listName.equals("") == false)) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
+        
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
 

@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Common methods for utilities that extract text and content and divide into
  * chunks
  */
-interface AbstractFileExtract {
+interface TextExtractor {
 
     /**
      * Common options that can be used by some extractors

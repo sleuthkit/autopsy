@@ -47,29 +47,29 @@ import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 /**
  * Viewer panel widget for keyword lists that is used in the ingest config and options area.
  */
-class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
+class DropdownListSearchPanel extends KeywordSearchPanel {
 
-    private static final Logger logger = Logger.getLogger(KeywordSearchListsViewerPanel.class.getName());
-    private static KeywordSearchListsViewerPanel instance;
-    private KeywordSearchListsXML loader;
+    private static final Logger logger = Logger.getLogger(DropdownListSearchPanel.class.getName());
+    private static DropdownListSearchPanel instance;
+    private XmlKeywordSearchList loader;
     private KeywordListsTableModel listsTableModel;
     private KeywordsTableModel keywordsTableModel;
     private ActionListener searchAddListener;
     private boolean ingestRunning;
 
     /**
-     * Creates new form KeywordSearchListsViewerPanel
+     * Creates new form DropdownListSearchPanel
      */
-    private KeywordSearchListsViewerPanel() {
+    private DropdownListSearchPanel() {
         listsTableModel = new KeywordListsTableModel();
         keywordsTableModel = new KeywordsTableModel();
         initComponents();
         customizeComponents();
     }
 
-    static synchronized KeywordSearchListsViewerPanel getDefault() {
+    static synchronized DropdownListSearchPanel getDefault() {
         if (instance == null) {
-            instance = new KeywordSearchListsViewerPanel();
+            instance = new DropdownListSearchPanel();
         }
         return instance;
     }
@@ -100,7 +100,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         }
 
-        loader = KeywordSearchListsXML.getCurrent();
+        loader = XmlKeywordSearchList.getCurrent();
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -223,18 +223,23 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         jSplitPane1.setRightComponent(rightPane);
 
-        manageListsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
-        manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
+        manageListsButton.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
+        manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
         manageListsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 manageListsButtonActionPerformed(evt);
             }
         });
 
-        searchAddButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
+        searchAddButton.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
+        searchAddButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchAddButtonActionPerformed(evt);
+            }
+        });
 
-        ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N NON-NLS
-        ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
+        ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -270,6 +275,11 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private void manageListsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageListsButtonActionPerformed
         SystemAction.get(KeywordSearchConfigurationAction.class).performAction();
     }//GEN-LAST:event_manageListsButtonActionPerformed
+
+    private void searchAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchAddButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_searchAddButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel ingestIndexLabel;
     private javax.swing.JSplitPane jSplitPane1;
@@ -292,38 +302,10 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     }
 
     @Override
-    public List<Keyword> getQueryList() {
-        List<Keyword> ret = new ArrayList<>();
-        for (KeywordList list : getSelectedLists()) {
-            ret.addAll(list.getKeywords());
-        }
-        return ret;
-    }
-
-    private List<KeywordList> getSelectedLists() {
+    List<KeywordList> getKeywordLists() {
         return listsTableModel.getSelectedListsL();
     }
 
-    @Override
-    public boolean isMultiwordQuery() {
-        return true;
-    }
-
-    @Override
-    public boolean isRegExQuerySelected() {
-        return true;
-    }
-
-    @Override
-    public boolean isWholewordQuerySelected() {
-        return false;
-    }    
-    
-    @Override
-    public String getQueryText() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.getQueryText.exception.msg"));
-    }
 
     void addSearchButtonActionListener(ActionListener al) {
         searchAddButton.addActionListener(al);
@@ -332,7 +314,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private class KeywordListsTableModel extends AbstractTableModel {
         //data
 
-        private KeywordSearchListsXML listsHandle = KeywordSearchListsXML.getCurrent();
+        private XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
         private List<ListTableEntry> listData = new ArrayList<>();
 
         @Override

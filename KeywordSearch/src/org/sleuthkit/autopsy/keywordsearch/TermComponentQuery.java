@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -52,8 +50,9 @@ class TermComponentQuery implements KeywordSearchQuery {
     private static final String TERMS_HANDLER = "/terms"; //NON-NLS
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
     private static Logger logger = Logger.getLogger(TermComponentQuery.class.getName());
-    private String termsQuery;
     private String queryEscaped;
+    private KeywordList keywordList;
+    private Keyword keyword;
     private boolean isEscaped;
     private List<Term> terms;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
@@ -62,10 +61,11 @@ class TermComponentQuery implements KeywordSearchQuery {
     
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    public TermComponentQuery(Keyword keywordQuery) {
+    public TermComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.field = null;
-        this.termsQuery = keywordQuery.getQuery();
-        this.queryEscaped = termsQuery;
+        this.keyword = keyword;
+        this.keywordList = keywordList;
+        this.queryEscaped = keyword.getQuery();
         isEscaped = false;
         terms = null;
     }
@@ -87,7 +87,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     
     @Override
     public void escape() {
-        queryEscaped = Pattern.quote(termsQuery);
+        queryEscaped = Pattern.quote(keyword.getQuery());
         isEscaped = true;
     }
 
@@ -148,7 +148,7 @@ class TermComponentQuery implements KeywordSearchQuery {
             List<Term> termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex); //NON-NLS
+            logger.log(Level.WARNING, "Error executing the regex terms query: " + keyword.getQuery(), ex); //NON-NLS
             return null;  //no need to create result view, just display error dialog
         }
     }
@@ -160,25 +160,22 @@ class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public String getQueryString() {
-        return this.termsQuery;
+        return keyword.getQuery();
     }
 
-    @Override
-    public Collection<Term> getTerms() {
-        return terms;
-    }
+    
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         //there is match actually in this file, create artifact only then
         BlackboardArtifact bba;
-        KeywordWriteResult writeResult;
+        KeywordCachedArtifact writeResult;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            writeResult = new KeywordWriteResult(bba);
+            writeResult = new KeywordCachedArtifact(bba);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
@@ -186,18 +183,17 @@ class TermComponentQuery implements KeywordSearchQuery {
 
         //regex match
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
-        //list
-        if (listName == null) {
-            listName = "";
+        
+        if ((listName != null) && (listName.equals("") == false)) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
-
+        
         //preview
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
         //regex keyword
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, termsQuery));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, keyword.getQuery()));
 
         try {
             bba.addAttributes(attributes);
@@ -212,14 +208,14 @@ class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
-        QueryResults results = new QueryResults();
-
+        
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
         q.setTermsLimit(MAX_TERMS_RESULTS); 
         logger.log(Level.INFO, "Query: {0}", q.toString()); //NON-NLS
         terms = executeQuery(q);
 
+        QueryResults results = new QueryResults(this, keywordList);
         int resultSize = 0;
         
         for (Term term : terms) {
