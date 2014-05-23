@@ -17,11 +17,11 @@ The difference between these two types of modules is that data-source-level modu
 - Your module should be a data-source-level ingest module if it only needs to 
 retrieve and analyze a small subset of the files present in a data source and it can find those files based on data in the database (such as file names).  
 For example, a Windows registry analysis module that only processes 
-registry hive files should be implemented as a data-source-level ingest module because there are only a few registry hives and we can find them by name. 
+registry hive files should be implemented as a data-source-level ingest module because there are only a few registry hives and you can find them by name. 
 - Your module should be a file-level ingest module if it analyzes most or all of 
 the files from a data source, one file at a time. If you cannot rely on finding a file based on its name, it will need to be a file-level ingest module. For example, a hash look up 
 module might process every file system file by looking up its hash in one or 
-more known file and known bad files hash sets (hash databases). 
+more known files and known bad files hash sets (hash databases). 
 
 As you will learn a little later in this guide, it is possible to package a 
 data-source-level ingest module and a file-level ingest module together. You
@@ -39,11 +39,11 @@ ingest modules.
 
 \section ingest_modules_lifecycle Ingest Module Life Cycle
 
-Before we dive into the details of creating a module, it is important to understand the life cycle of the module. Note that this life cycle is much different for Autopsy 3.1 modules than it was for Autopsy 3.0. This section only talks about 3.1 modules. 
+Before we dive into the details of creating a module, it is important to understand the life cycle of the module. Note that this life cycle is much different for Autopsy 3.1 modules compared to Autopsy 3.0 modules. This section only talks about 3.1 modules. 
 
 You will need to implement at least 2 interfaces to make an ingest module:
--# A factory class that will be created when Autopsy starts and will provide configuration panels to Autopsy and create instances of the ingest modules.
--# An ingest module class that will be instantiated by the factory when the ingest modules are run.  A new instance of this will be created for each thread. 
+-# A factory class that will be created when Autopsy starts and will provide configuration panels to Autopsy and will create instances of your ingest module.
+-# An ingest module class that will be instantiated by the factory when the ingest modules are run.  A new instance of this will class be created for each ingest thread. 
 
 Here is an example sequence of events.  Details will be provided below. 
 -# User launches Autopsy and it looks for classes that implement the org.sleuthkit.autopsy.ingest.IngestModuleFactory interface.  
@@ -52,7 +52,7 @@ Here is an example sequence of events.  Details will be provided below.
 -# Autopsy presents the list of available ingest modules to the user and uses the utility methods from FooIngestModuleFactory class to get the module's name, description, and configuration panels. 
 -# User enables your module (and others).
 -# Autopsy uses FooIngestModuleFactory to create two instances of FooIngestModule (Autopsy is using two threads to process the files).
--# Autopsy starts up the module, calls its process method, and shuts it down when all of the data is analyzed. 
+-# Autopsy starts up the module and calls its process method. 
   
 
 
@@ -73,7 +73,7 @@ Our basic factory will use the adapter.
 
 -# Create a class either manually or using the NetBeans wizards. Edit the class to extend org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter. NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. 
 -# Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleFactory interface for details on what each method needs to do. You can also refer to org.sleuthkit.autopsy.examples.SampleIngestModuleFactory as an example.  
--# Add NetBeans annotations so that the module is found at run time: 
+-# Add a NetBeans ServiceProvider annotation so that the factory is found at run time: 
 \code
 @ServiceProvider(service = IngestModuleFactory.class)
 \endcode
@@ -83,7 +83,7 @@ API module to the NetBeans module that contains your ingest module.
 
 At this point, you should be able to compile your NetBeans module and run it. When you add a data source, 
 you should see the module in the list of ingest modules.  If you don't see it, double check that you extend 
-correct class and added the service provider annotation. 
+the correct class and added the service provider annotation. 
 
 
 
@@ -92,27 +92,18 @@ correct class and added the service provider annotation.
 Data source and file ingest modules have similar APIs. The main difference is what data gets passed 
 to the methods.  Let's first cover the common concepts. 
 
-Both modules implement the org.sleuthkit.autopsy.ingest.IngestModule interface, which defines two methods to allocate and free resources:
+Both modules implement the org.sleuthkit.autopsy.ingest.IngestModule interface, which defines a module initialization method:
 - org.sleuthkit.autopsy.ingest.IngestModule.startUp() 
-- org.sleuthkit.autopsy.ingest.IngestModule.shutDown()
 
-Use the previous links to get the details of each method. The ingest modules will also have to implement a process()
-method that will get passed in either a DataSource or a File.  
+Use the previous links to get the details of this method. The ingest modules have to implement a process()
+method that will get passed in either a data source or a file. A file ingest module will also have to implement a shutDown() method.  
 
-This section outlines the basic idea of modules and the org.sleuthkit.autopsy.ingest.IngestModule documentation should
-be referred to for more details. 
-
-- startUp() will be called before any data is analyzed to initialize and allocate resources, process() will then be called with data to analyze, and then shutDown() will be called to free resources and send ingest messages (see \ref ingest_modules_making_results). 
-- Any setup procedures that could fail should be done in startUp() so that it can throw an exception and cause the ingest job to stop and notify the user. 
-- startUp(), process(), and shutDown() will be called from a single thread.  So, basic modules do not need to worry about thread safety if they allocate resources for each instance of the module. If the module wants to share resources between instances, then it is responsible for  synchronizing the the shared resource.  See org.sleuthkit.autopsy.examples.SampleFileIngestModule as an example that shares resources. 
-
+- startUp() will be called before any data is analyzed to initialize and allocate resources. Any setup procedures that could fail should be done in startUp() so that it can throw an exception and cause the ingest job to stop and notify the user. 
+- shutDown() will be called on file ingest modules after all of the files have been analyzed.
+- startUp(), process(), and shutDown() will be called from a single thread.  So, basic modules do not need to worry about thread safety if they allocate resources for each instance of the module. However, if the module wants to share resources between instances, then it is responsible for  synchronizing the the shared resource.  See org.sleuthkit.autopsy.examples.SampleFileIngestModule as an example that shares resources. 
 
 The org.sleuthkit.autopsy.ingest.DataSourceIngestModule and org.sleuthkit.autopsy.ingest.FileIngestModule
 interfaces both extend org.sleuthkit.autopsy.ingest.IngestModule. 
-For your convenience, an ingest module that does not require 
-initialization and/or clean up may extend the abstract 
-org.sleuthkit.autopsy.ingest.IngestModuleAdapter class to get default 
-"do nothing" implementations of these methods.
 
 \subsection ingest_modules_implementing_datasourceingestmodule Creating a Data Source Ingest Module
 
@@ -120,8 +111,7 @@ To create a data source ingest module:
 -# Make a new Java class either manually or 
 using the NetBeans wizards. 
 -# Make the class implement 
-org.sleuthkit.autopsy.ingest.DataSourceIngestModule and optionally make it 
-extend org.sleuthkit.autopsy.ingest.IngestModuleAdapter.  
+org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  
 -# The NetBeans IDE 
 will complain that you have not implemented one or more of the required methods.
 You can use its "hints" to automatically generate stubs for the missing methods.  Use this page and the 
@@ -137,9 +127,9 @@ org.sleuthkit.autopsy.ingest.DataSourceIngestModule interface:
 - org.sleuthkit.autopsy.ingest.DataSourceIngestModule.process()
 
 The process() method is where all of the work of a data source ingest module is
-done. It will be called exactly once between startUp() and shutDown(). The 
+done. It will be called exactly once. The 
 process() method receives a reference to an org.sleuthkit.datamodel.Content object
-and an org.sleuthkit.autopsy.ingest.DataSourceIngestModuleStatusHelper object.
+and an org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress object.
 The former is a representation of the data source. The latter should be used
 by the module instance to be a good citizen within Autopsy as it does its 
 potentially long-running processing.
@@ -171,8 +161,7 @@ To create a file ingest module:
 -# Make a new Java class either manually or 
 using the NetBeans wizards. 
 -# Make the class implement 
-org.sleuthkit.autopsy.ingest.FileIngestModule and optionally make it 
-extend org.sleuthkit.autopsy.ingest.IngestModuleAdapter.  
+org.sleuthkit.autopsy.ingest.FileIngestModule.  
 -# The NetBeans IDE 
 will complain that you have not implemented one or more of the required methods. 
 You can use its "hints" to automatically generate stubs for the missing methods.  Use this page and the 
@@ -182,10 +171,11 @@ each method needs to do.  Or you can copy the code from
 org.sleuthkit.autopsy.examples.SampleFileIngestModule and use it as a 
 template for your module.  
 
-All file ingest modules must implement the single method defined by the 
+All file ingest modules must implement the two methods defined by the 
 org.sleuthkit.autopsy.ingest.FileIngestModule interface:
 
 - org.sleuthkit.autopsy.ingest.FileIngestModule.process()
+- org.sleuthkit.autopsy.ingest.FileIngestModule.shutDown()
 
 The process() method is where all of the work of a file ingest module is
 done. It will be called repeatedly between startUp() and shutDown(), once for 
@@ -385,7 +375,7 @@ IngestModuleAbstract.getName() | IngestModuleFactory.getModuleName() |
 IngestModuleAbstract.getDescription() | IngestModuleFactory.getModuleDescription() |
 IngestModuleAbstract.getVersion() | IngestModuleFactory.getModuleVersion() |
 IngestModuleAbstract.hasBackgroundJobsRunning | N/A |
-IngestModuleAbstract.complete() | IngestModule.shutDown() |
+IngestModuleAbstract.complete() | IngestModule.shutDown() for file ingest modules; data source ingest modules should do anything they did in complete() at the end of the process() method |
 IngestModuleAbstract.hasAdvancedConfiguration() | IngestModuleFactory.hasGlobalSettingsPanel() |
 IngestModuleAbstract.getAdvancedConfiguration() | IngestModuleFactory.getGlobalSettingsPanel() |
 IngestModuleAbstract.saveAdvancedConfiguration() | IngestModuleGlobalSetttingsPanel.saveSettings() |
@@ -402,7 +392,7 @@ N/A | IngestModuleFactory.createFileIngestModule() |
 Notes:
 - IngestModuleFactory.getModuleName() should delegate to a static class method 
 that can also be called by ingest module instances.
-- Autopsy passes a flag to IngestModule.shutDown() indicating whether the ingest 
+- The IngestJobContext object passed to startUp() can be queried to determine whether the ingest 
 job completed or was cancelled.
 - The global settings panel (formerly "advanced") for a module must implement
 IngestModuleGlobalSettingsPanel which extends JPanel. Global settings are those

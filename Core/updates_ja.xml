@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE module_updates PUBLIC "-//NetBeans//DTD Autoupdate Catalog 2.5//EN" "http://www.netbeans.org/dtds/autoupdate-catalog-2_7.dtd">
+<module_updates timestamp="00/00/00/04/10/2014">
+	<!--<notification url="http://sleuthkit.org/autopsy/"> Not using URL because it then uses the internal browser, which can't download -->
+	<notification>
+		Autopsy バージョン 3.0.10 は下記からダウンロードできます。http://www.sleuthkit.org/autopsy/.
+	</notification>
+</module_updates>
+
+<!-- Steps to update: 
+  1. Update timestamp so that clients will read the rest of the file.
+     - timestamp seems to be: SEC/MIN/HOUR/DAY/MON/YEAR
+  2. Update message
+
+  See this page for details https://platform.netbeans.org/articles/update-descriptor-specification.html
+-->

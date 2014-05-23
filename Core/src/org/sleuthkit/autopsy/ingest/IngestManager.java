@@ -52,7 +52,6 @@ public class IngestManager {
     private static final IngestManager instance = new IngestManager();
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
-    private final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
@@ -125,7 +124,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(scheduler.getDataSourceIngestTaskQueue()));
+        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(DataSourceIngestTaskScheduler.getInstance()));
         dataSourceIngestThreads.put(threadId, handle);
     }
 
@@ -135,7 +134,7 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(scheduler.getFileIngestTaskQueue()));
+        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(FileIngestTaskScheduler.getInstance()));
         fileIngestThreads.put(threadId, handle);
     }
 
