@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Looks up loaded ingest module factories using the NetBeans global lookup.
@@ -66,9 +67,12 @@ final class IngestModuleFactoryLoader {
             }
         }
 
-        // Kick out the sample modules factory.
-        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory");
-
+        // Kick out the sample module factories.
+        if (Version.getBuildType() == Version.Type.RELEASE) {        
+            moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory");
+            moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory");
+        }
+        
         // Do the core ingest module ordering hack described above.
         ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
             {

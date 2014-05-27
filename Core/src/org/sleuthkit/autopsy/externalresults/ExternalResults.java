@@ -85,7 +85,6 @@ final class ExternalResults {
     void addAttributeContext(int artIndex, int attrIndex, String context) {
         ArtifactData art = artifacts.get(artIndex);
         AttributeData attr = art.attributes.get(attrIndex);
-        attr.context = context;
     }    
     
     int addArtifactFile(int artIndex, String path) {
@@ -124,7 +123,6 @@ final class ExternalResults {
         public String typeStr;        
         public HashMap<String, String> valueStr = new HashMap<>(); //valueType determines how to interpret valueStr
         public String source;
-        public String context;        
     }    
     
     static class FileData {

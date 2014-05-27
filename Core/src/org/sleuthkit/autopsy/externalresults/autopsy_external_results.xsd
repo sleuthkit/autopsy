@@ -3,14 +3,14 @@
     <xs:element name="autopsy_results">
         <xs:complexType>
             <xs:sequence minOccurs="0" maxOccurs="unbounded">
-                <xs:element minOccurs="0" maxOccurs="unbounded" name="data_source" type="xs:string" />
+                <xs:element minOccurs="0" maxOccurs="1" name="data_source" type="xs:string" />
                 <xs:element minOccurs="0" maxOccurs="unbounded" name="artifacts">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element maxOccurs="unbounded" name="artifact">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element minOccurs="0" name="file">
+                                        <xs:element minOccurs="0" maxOccurs="1" name="file">
                                             <xs:complexType>
                                                 <xs:sequence>
                                                     <xs:element name="path" type="xs:string" />
@@ -20,7 +20,7 @@
                                         <xs:element maxOccurs="unbounded" name="attribute">
                                             <xs:complexType>
                                                 <xs:sequence>
-                                                    <xs:element maxOccurs="unbounded" name="value">
+                                                    <xs:element name="value">
                                                         <xs:complexType>
                                                             <xs:simpleContent>
                                                                 <xs:extension base="xs:string">
@@ -29,8 +29,7 @@
                                                             </xs:simpleContent>
                                                         </xs:complexType>
                                                     </xs:element>
-                                                    <xs:element minOccurs="0" name="source" type="xs:string" />
-                                                    <xs:element minOccurs="0" name="context" type="xs:string" />
+                                                    <xs:element name="source" type="xs:string" />
                                                 </xs:sequence>
                                                 <xs:attribute name="type" type="xs:string" use="required" />
                                             </xs:complexType>
@@ -51,7 +50,6 @@
                                         <xs:element name="display_name" type="xs:string" />
                                         <xs:element name="local_path" type="xs:string" />
                                     </xs:sequence>
-                                    <xs:attribute name="name" type="xs:string" use="required" />
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>

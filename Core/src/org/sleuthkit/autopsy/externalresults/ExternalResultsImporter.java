@@ -19,11 +19,8 @@
 package org.sleuthkit.autopsy.externalresults;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -110,23 +107,9 @@ public class ExternalResultsImporter {
                             }
                         }
 
-                        // Get file times
-                        long ctime = 0;
-                        long crtime = 0;
-                        long atime = 0;
-                        long mtime = 0;
-                        try {
-                            BasicFileAttributes fileAttrs = Files.readAttributes(pathTo, BasicFileAttributes.class);
-                            crtime = fileAttrs.creationTime().toMillis() / 1000;
-                            atime = fileAttrs.lastAccessTime().toMillis() / 1000;
-                            mtime = fileAttrs.lastModifiedTime().toMillis() / 1000;
-                        } catch (IOException ex) {
-                            logger.log(Level.WARNING, "Exception getting file attributes for derived file {0}", fileName);
-                        }
-
-                        // Make a new derived file object in the database
+                        // Make a new derived file object in the database. Note: do not currently have file times for derived files.
                         DerivedFile df = fileManager.addDerivedFile(fileName, relPath, fileObj.length(),
-                                ctime, crtime, atime, mtime,
+                                0, 0, 0, 0,
                                 true, parentFile, "", EVENT_STRING, "", "");
 
                         if (df != null) {
@@ -176,19 +159,19 @@ public class ExternalResultsImporter {
                         BlackboardAttribute bbAttr = null;
                         switch (valueType) {
                             case "text": //NON-NLS
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, valueString);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, valueString);
                                 break;
                             case "int32": //NON-NLS
                                 int intValue = Integer.parseInt(valueString);
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, intValue);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, intValue);
                                 break;
                             case "int64": //NON-NLS
                                 long longValue = Long.parseLong(valueString);
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, longValue);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, longValue);
                                 break;
                             case "double": //NON-NLS
                                 double doubleValue = Double.parseDouble(valueString);
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, attr.context, doubleValue);
+                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, doubleValue);
                                 break;
                             default:
                                 logger.log(Level.WARNING, "Ignoring invalid attribute value type {0}", valueType);
@@ -231,19 +214,19 @@ public class ExternalResultsImporter {
     private static void generateReportRecords(ExternalResults results) {
         try {
             for (ExternalResults.ReportData report : results.getReports()) {
-                String repp = report.localPath;
-                File fileObj = new File(repp);
+                String reportPath = report.localPath;
+                File fileObj = new File(reportPath);
                 if (fileObj.exists()) {
                     // Try to get a relative local path
-                    String relPath = repp;
-                    Path pathTo = Paths.get(repp);
+                    String relPath = reportPath;
+                    Path pathTo = Paths.get(reportPath);
                     if (pathTo.isAbsolute()) {
                         Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
                         try {
                             Path pathRelative = pathBase.relativize(pathTo);
                             relPath = pathRelative.toString();
                         } catch (IllegalArgumentException ex) {
-                            logger.log(Level.WARNING, "Report file {0} path may be incorrect. The report record will still be added to the database.", repp);
+                            logger.log(Level.WARNING, "Report file {0} path may be incorrect. The report record will still be added to the database.", reportPath);
                         }
                     }
 

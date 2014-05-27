@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.externalresults;
 
 import java.util.logging.Level;
@@ -28,136 +26,99 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- *
+ * Parses an XML listing of externally generated results (artifacts, derived
+ * files, reports).
  */
 final class ExternalResultsXMLParser {
-    private static final Logger logger = Logger.getLogger(ExternalResultsXMLParser.class.getName());    
-            
-    private static final String XSDFILE = "autopsy_external_results.xsd"; //NON-NLS
-    
-    private static final String ROOT_EL = "autopsy_results"; //NON-NLS
-    private static final String DATASRC_EL = "data_source"; //NON-NLS
-    private static final String ARTLIST_EL = "artifacts"; //NON-NLS
-    private static final String ART_EL = "artifact"; //NON-NLS
-    private static final String FILE_EL = "file"; //NON-NLS
-    private static final String PATH_EL = "path"; //NON-NLS
-    private static final String ATTR_EL = "attribute"; //NON-NLS
-    private static final String VALUE_EL = "value"; //NON-NLS
-    private static final String SRC_EL = "source"; //NON-NLS
-    private static final String CONTEXT_EL = "context"; //NON-NLS
-    private static final String REPORTLIST_EL = "reports"; //NON-NLS
-    private static final String REPORT_EL = "report"; //NON-NLS
-    private static final String DISPLAYNAME_EL = "display_name"; //NON-NLS
-    private static final String DERIVEDLIST_EL = "derived_files"; //NON-NLS
-    private static final String DERIVED_EL = "derived_file"; //NON-NLS
-    private static final String LOCALPATH_EL = "local_path"; //NON-NLS
-    private static final String PARENTPATH_EL = "parent_path"; //NON-NLS
-    private static final String TYPE_ATTR = "type"; //NON-NLS
-    private static final String NAME_ATTR = "name"; //NON-NLS
 
+    private static final Logger logger = Logger.getLogger(ExternalResultsXMLParser.class.getName());
+    private static final String XSD_FILE = "autopsy_external_results.xsd"; //NON-NLS
     private String importFilePath;
     private ExternalResults resultsData = null;
-    
+
     /**
-     * 
-     * @param importFilePath 
+     * Constructor.
+     *
+     * @param importFilePath Path of the XML file to parse.
      */
     ExternalResultsXMLParser(String importFilePath) {
         this.importFilePath = importFilePath;
     }
-    
+
     /**
-     * Parses info for artifacts, derived files, and reports in the given XML file.
-     * @return 
+     * Parses info for artifacts, derived files, and reports in the given XML
+     * file.
+     *
+     * @return An object encapsulating the results as objects.
      */
     ExternalResults parse() {
         resultsData = new ExternalResults();
-        try
-        {
-            final Document doc = XMLUtil.loadDoc(ExternalResultsXMLParser.class, importFilePath, XSDFILE);
+        try {
+            final Document doc = XMLUtil.loadDoc(ExternalResultsXMLParser.class, importFilePath, XSD_FILE);
             if (doc == null) {
                 return null;
             }
-            
+
             Element root = doc.getDocumentElement();
             if (root == null) {
-                logger.log(Level.SEVERE, "Error loading XML file: invalid file format (bad root)."); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading XML file {0} : invalid file format (bad root)", importFilePath); //NON-NLS
                 return null;
-            }            
-            if (!root.getNodeName().equals(ROOT_EL)) {
-                logger.log(Level.SEVERE, "Error loading XML file: root element must be " + ROOT_EL + ")."); //NON-NLS
-                return null;                
+            }
+
+            if (!root.getNodeName().equals(ExternalResultsXML.ROOT_ELEM.toString())) {
+                logger.log(Level.SEVERE, "Error loading XML file {0} : root element must be " + ExternalResultsXML.ROOT_ELEM.toString(), importFilePath); //NON-NLS
+                return null;
             }
 
             parseDataSource(root);
             parseArtifacts(root);
             parseReports(root);
             parseDerivedFiles(root);
-            
+
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error loading XML file.", e); //NON-NLS
+            logger.log(Level.SEVERE, "Error loading XML file " + importFilePath, e); //NON-NLS
             return null;
         }
         return resultsData;
     }
 
-    /**
-     * 
-     * @param root
-     * @throws Exception 
-     */
-     private void parseDataSource(Element root ) throws Exception {
-        NodeList nodeList = root.getElementsByTagName(DATASRC_EL);
+    private void parseDataSource(Element root) throws Exception {
+        NodeList nodeList = root.getElementsByTagName(ExternalResultsXML.DATA_SRC_ELEM.toString());
         final int numNodes = nodeList.getLength();
-
-        for(int index = 0; index < numNodes; ++index) {                
-            Element el = (Element)nodeList.item(index);
+        for (int index = 0; index < numNodes; ++index) {
+            Element el = (Element) nodeList.item(index);
             String dataSourceStr = el.getTextContent();
             // We allow an empty data source element...we just ignore it
             if (!dataSourceStr.isEmpty()) {
                 resultsData.addDataSource(dataSourceStr);
             }
         }
-    }   
-    
-    /**
-     * 
-     * @param root 
-     */
-    private void parseArtifacts(Element root ) throws Exception {
-        NodeList nodeList = root.getElementsByTagName(ARTLIST_EL);
+    }
 
-        // for each artifacts list (normally there should be just 1)
-        for(int index = 0; index < nodeList.getLength(); ++index) {             
-            Element el = (Element)nodeList.item(index);
-            NodeList subNodeList = el.getElementsByTagName(ART_EL);
-            
-            // for each artifact
-            for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
-                Element subEl = (Element)subNodeList.item(subIndex);
-                final String type = subEl.getAttribute(TYPE_ATTR);
+    private void parseArtifacts(Element root) throws Exception {
+        NodeList nodeList = root.getElementsByTagName(ExternalResultsXML.ARTIFACTS_LIST_ELEM.toString());
+        for (int index = 0; index < nodeList.getLength(); ++index) {
+            Element artifactsListElem = (Element) nodeList.item(index);
+            NodeList subNodeList = artifactsListElem.getElementsByTagName(ExternalResultsXML.ARTIFACT_ELEM.toString());
+            for (int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {
+                Element artifactElem = (Element) subNodeList.item(subIndex);
+                final String type = artifactElem.getAttribute(ExternalResultsXML.TYPE_ATTR.toString());
                 if (type.isEmpty()) {
-                    logger.log(Level.WARNING, "Ignoring invalid attribute: no type specified.");
+                    logger.log(Level.WARNING, "Ignoring invalid artifact: no type specified.");
                     return;
-                }                
+                }
                 final int artResultsIndex = resultsData.addArtifact(type);
-                parseAttributes(subEl, artResultsIndex);
-                parseFiles(subEl, artResultsIndex);
+                parseArtifactAttributes(artifactElem, artResultsIndex);
+                parseArtifactFiles(artifactElem, artResultsIndex);
             }
         }
     }
-    
-    /**
-     * 
-     * @param root  Should be an artifact element
-     * @param artResultsIndex 
-     */
-    private void parseAttributes(Element root, int artResultsIndex) {
-        NodeList nodeList = root.getElementsByTagName(ATTR_EL);
 
-        for(int index = 0; index < nodeList.getLength(); ++index) {                
-            Element el = (Element)nodeList.item(index);
-            final String type = el.getAttribute(TYPE_ATTR);
+    private void parseArtifactAttributes(Element artifactElem, int artResultsIndex) {
+        NodeList nodeList = artifactElem.getElementsByTagName(ExternalResultsXML.ATTRIBUTE_ELEM.toString());
+        for (int index = 0; index < nodeList.getLength(); ++index) {
+            Element attributeElem = (Element) nodeList.item(index);
+            final String type = attributeElem.getAttribute(ExternalResultsXML.TYPE_ATTR.toString());
             if (type.isEmpty()) {
                 logger.log(Level.WARNING, "Ignoring invalid attribute: no type specified.");
                 return;
@@ -165,90 +126,65 @@ final class ExternalResultsXMLParser {
             final int attrResultsIndex = resultsData.addAttribute(artResultsIndex, type);
 
             // add values, if any
-            NodeList valueNodeList = el.getElementsByTagName(VALUE_EL);
-            for(int subindex = 0; subindex < valueNodeList.getLength(); ++subindex) { 
-                Element subEl = (Element)valueNodeList.item(subindex);
-                final String valueStr = subEl.getTextContent();
-                final String valueType = subEl.getAttribute(TYPE_ATTR); //empty string is ok
+            NodeList valueNodeList = attributeElem.getElementsByTagName(ExternalResultsXML.VALUE_ELEM.toString());
+            for (int subindex = 0; subindex < valueNodeList.getLength(); ++subindex) {
+                Element valueElem = (Element) valueNodeList.item(subindex);
+                final String valueStr = valueElem.getTextContent();
+                final String valueType = valueElem.getAttribute(ExternalResultsXML.TYPE_ATTR.toString()); //empty string is ok
                 resultsData.addAttributeValue(artResultsIndex, attrResultsIndex, valueStr, valueType);
-            }               
-
-            // add source, if any
-            NodeList srcNodeList = el.getElementsByTagName(SRC_EL);
-            if (srcNodeList.getLength() > 0) {
-                // we only use the first occurence
-                Element subEl = (Element)srcNodeList.item(0);
-                final String srcStr = subEl.getTextContent();
-                resultsData.addAttributeSource(artResultsIndex, attrResultsIndex, srcStr);
             }
 
-            // add context, if any
-            NodeList contextNodeList = el.getElementsByTagName(CONTEXT_EL);
-            if (contextNodeList.getLength() > 0) {
+            // add source, if any
+            NodeList srcNodeList = attributeElem.getElementsByTagName(ExternalResultsXML.SRC_ELEM.toString());
+            if (srcNodeList.getLength() > 0) {
                 // we only use the first occurence
-                Element subEl = (Element)contextNodeList.item(0);
-                final String contextStr = subEl.getTextContent();
-                resultsData.addAttributeContext(artResultsIndex, attrResultsIndex, contextStr);
-            }            
+                Element srcFileElem = (Element) srcNodeList.item(0);
+                final String srcStr = srcFileElem.getTextContent();
+                resultsData.addAttributeSource(artResultsIndex, attrResultsIndex, srcStr);
+            }
         }
-    }        
-    
-    /**
-     * 
-     * @param root  Should be an artifact element
-     * @param artResultsIndex 
-     */
-    private void parseFiles(Element root, int artResultsIndex) throws Exception {
-        NodeList nodeList = root.getElementsByTagName(FILE_EL);
+    }
 
+    private void parseArtifactFiles(Element artifactElem, int artResultsIndex) throws Exception {
+        NodeList nodeList = artifactElem.getElementsByTagName(ExternalResultsXML.FILE_ELEM.toString());
         if (nodeList.getLength() > 0) {
             // we only use the first occurence
-            Element el = (Element)nodeList.item(0);
-
-            // add path 
-            NodeList subNodeList = el.getElementsByTagName(PATH_EL);
+            Element srcFileElem = (Element) nodeList.item(0);
+            NodeList subNodeList = srcFileElem.getElementsByTagName(ExternalResultsXML.PATH_ELEM.toString());
             if (nodeList.getLength() > 0) {
                 // we only use the first occurence
-                Element subEl = (Element)subNodeList.item(0);
-                final String path = subEl.getTextContent();
+                Element pathElem = (Element) subNodeList.item(0);
+                final String path = pathElem.getTextContent();
                 resultsData.addArtifactFile(artResultsIndex, path);
             } else {
                 // error to have a file element without a path element
-                throw new Exception("File element is missing path element.");
+                throw new Exception("file element is missing path element.");
             }
         }
-    }            
-    
-    /**
-     * 
-     * @param root 
-     */
-    private void parseReports(Element root ) throws Exception {
-        NodeList nodeList = root.getElementsByTagName(REPORTLIST_EL);
+    }
 
-        // for each reports list (normally there should be just 1)
-        for(int index = 0; index < nodeList.getLength(); ++index) {             
-            Element el = (Element)nodeList.item(index);
-            NodeList subNodeList = el.getElementsByTagName(REPORT_EL);
-            
-            // for each report
-            for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
-                Element subEl = (Element)subNodeList.item(subIndex);                
-                String name = subEl.getAttribute(NAME_ATTR);
+    private void parseReports(Element root) throws Exception {
+        NodeList nodeList = root.getElementsByTagName(ExternalResultsXML.REPORTS_LIST_ELEM.toString());
+        for (int index = 0; index < nodeList.getLength(); ++index) {
+            Element reportsListElem = (Element) nodeList.item(index);
+            NodeList subNodeList = reportsListElem.getElementsByTagName(ExternalResultsXML.REPORT_ELEM.toString());
+            for (int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {
+                Element reportElem = (Element) subNodeList.item(subIndex);
+                String name = reportElem.getAttribute(ExternalResultsXML.NAME_ATTR.toString());
                 String displayName = "";
                 String localPath = "";
-                NodeList nameNodeList = subEl.getElementsByTagName(DISPLAYNAME_EL);
+                NodeList nameNodeList = reportElem.getElementsByTagName(ExternalResultsXML.DISPLAY_NAME_ELEM.toString());
                 if (nameNodeList.getLength() > 0) {
                     // we only use the first occurence
-                    Element nameEl = (Element)nameNodeList.item(0);
-                    displayName = nameEl.getTextContent();
+                    Element nameElem = (Element) nameNodeList.item(0);
+                    displayName = nameElem.getTextContent();
                 }
-                NodeList pathNodeList = subEl.getElementsByTagName(LOCALPATH_EL);
+                NodeList pathNodeList = reportElem.getElementsByTagName(ExternalResultsXML.LOCAL_PATH_ELEM.toString());
                 if (pathNodeList.getLength() > 0) {
                     // we only use the first occurence
-                    Element pathEl = (Element)pathNodeList.item(0);
-                    localPath = pathEl.getTextContent();
-                }                
+                    Element pathElem = (Element) pathNodeList.item(0);
+                    localPath = pathElem.getTextContent();
+                }
                 if ((!displayName.isEmpty()) && (!localPath.isEmpty())) {
                     resultsData.addReport(name, displayName, localPath);
                 } else {
@@ -257,38 +193,29 @@ final class ExternalResultsXMLParser {
                 }
             }
         }
-    }    
-    
-    /**
-     * 
-     * @param root 
-     */
-    private void parseDerivedFiles(Element root ) throws Exception {
-        NodeList nodeList = root.getElementsByTagName(DERIVEDLIST_EL);
-        
-        // for each derived files list (normally there should be just 1)
-        for(int index = 0; index < nodeList.getLength(); ++index) {             
-            Element el = (Element)nodeList.item(index);
-            NodeList subNodeList = el.getElementsByTagName(DERIVED_EL);
-            
-            // for each derived file
-            for(int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {             
-                Element subEl = (Element)subNodeList.item(subIndex);                
+    }
+
+    private void parseDerivedFiles(Element rootElement) throws Exception {
+        NodeList nodeList = rootElement.getElementsByTagName(ExternalResultsXML.DERIVED_FILES_LIST_ELEM.toString());
+        for (int index = 0; index < nodeList.getLength(); ++index) {
+            Element derivedFilesElem = (Element) nodeList.item(index);
+            NodeList subNodeList = derivedFilesElem.getElementsByTagName(ExternalResultsXML.DERIVED_FILE_ELEM.toString());
+            for (int subIndex = 0; subIndex < subNodeList.getLength(); ++subIndex) {
+                Element derivedFileElem = (Element) subNodeList.item(subIndex);
                 String localPath = "";
-                NodeList pathNodeList = subEl.getElementsByTagName(LOCALPATH_EL);
+                NodeList pathNodeList = derivedFileElem.getElementsByTagName(ExternalResultsXML.LOCAL_PATH_ELEM.toString());
                 if (pathNodeList.getLength() > 0) {
                     // we only use the first occurence
-                    Element pathEl = (Element)pathNodeList.item(0);
-                    localPath = pathEl.getTextContent();
-                }                
+                    Element pathElem = (Element) pathNodeList.item(0);
+                    localPath = pathElem.getTextContent();
+                }
                 String parentPath = "";
-                NodeList parPathNodeList = subEl.getElementsByTagName(PARENTPATH_EL);
+                NodeList parPathNodeList = derivedFileElem.getElementsByTagName(ExternalResultsXML.PARENT_PATH_ELEM.toString());
                 if (parPathNodeList.getLength() > 0) {
                     // we only use the first occurence
-                    Element pathEl = (Element)parPathNodeList.item(0);
-                    parentPath = pathEl.getTextContent();
-                }                
-                
+                    Element parentPathElem = (Element) parPathNodeList.item(0);
+                    parentPath = parentPathElem.getTextContent();
+                }
                 if (!localPath.isEmpty()) {
                     resultsData.addDerivedFile(localPath, parentPath);
                 } else {
@@ -297,5 +224,5 @@ final class ExternalResultsXMLParser {
                 }
             }
         }
-    }    
+    }
 }
