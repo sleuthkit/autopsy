@@ -32,14 +32,14 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.datamodel.HighlightLookup;
+import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.datamodel.Content;
 
 /**
  * Highlights hits for a given document. Knows about pages and such for the content viewer. 
  */
-class HighlightedTextMarkup implements TextMarkup, HighlightLookup {
+class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
     private static final Logger logger = Logger.getLogger(HighlightedTextMarkup.class.getName());
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
@@ -438,11 +438,11 @@ class HighlightedTextMarkup implements TextMarkup, HighlightLookup {
         return buf.toString();
     }
     //dummy instance for Lookup only
-    private static HighlightLookup instance = null;
+    private static TextMarkupLookup instance = null;
 
     //getter of the singleton dummy instance solely for Lookup purpose
     //this instance does not actually work with Solr
-    public static synchronized HighlightLookup getDefault() {
+    public static synchronized TextMarkupLookup getDefault() {
         if (instance == null) {
             instance = new HighlightedTextMarkup();
         }
@@ -450,8 +450,8 @@ class HighlightedTextMarkup implements TextMarkup, HighlightLookup {
     }
 
     @Override
-    //factory method, i.e. invoked on dummy (Lookup) instance
-    public HighlightLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery) {
+    // factory method to create an instance of this object
+    public TextMarkupLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery) {
         return new HighlightedTextMarkup(c, keywordHitQuery, isRegex, originalQuery);
     }
 }

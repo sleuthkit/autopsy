@@ -69,7 +69,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * @param iconPath icon to use for the artifact
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-        super(Children.LEAF, getLookups(artifact));
+        super(Children.LEAF, createLookup(artifact));
 
         this.artifact = artifact;
         //this.associated = getAssociatedContent(artifact);
@@ -86,7 +86,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * @param artifact artifact to encapsulate
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, getLookups(artifact));
+        super(Children.LEAF, createLookup(artifact));
 
         this.artifact = artifact;
         //this.associated = getAssociatedContent(artifact);
@@ -294,14 +294,25 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         return v.visit(this);
     }
 
-    private static Lookup getLookups(BlackboardArtifact artifact) {
-        Content content = getAssociatedContent(artifact);
-        HighlightLookup highlight = getHighlightLookup(artifact, content);
+    /**
+     * Create a Lookup based on what is in the passed in artifact.
+     * 
+     * @param artifact
+     * @return 
+     */
+    private static Lookup createLookup(BlackboardArtifact artifact) {
         List<Object> forLookup = new ArrayList<>();
         forLookup.add(artifact);
+        
+        // Add the content the artifact is associated with
+        Content content = getAssociatedContent(artifact);
         if (content != null) {
             forLookup.add(content);
         }
+        
+        // if there is a text highlighted version, of the content, add it too
+        // currently happens from keyword search module
+        TextMarkupLookup highlight = getHighlightLookup(artifact, content);
         if (highlight != null) {
             forLookup.add(highlight);
         }
@@ -319,12 +330,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
 
-    private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
+    private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
         }
         Lookup lookup = Lookup.getDefault();
-        HighlightLookup highlightFactory = lookup.lookup(HighlightLookup.class);
+        TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
         try {
             List<BlackboardAttribute> attributes = artifact.getAttributes();
             String keyword = null;

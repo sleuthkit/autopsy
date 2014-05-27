@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.HighlightLookup;
+import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -177,7 +177,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         
         // see if the node has a Highlight object in it.  
         // BC @@@ This seems to be added by BlackboardArtifactNode from the tree
-        if (node.getLookup().lookup(HighlightLookup.class) != null) {
+        if (node.getLookup().lookup(TextMarkupLookup.class) != null) {
             return true;
         }
 
