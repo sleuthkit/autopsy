@@ -20,7 +20,7 @@
         ======================================================= -->
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedTextMarkup.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.HighlightLookup"/>
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.TextMarkupLookup"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedTextMarkup.getDefault"/>
             <attr name="position" intvalue="250"/>
         </file>
