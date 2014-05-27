@@ -42,12 +42,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.HashInfo;
 
-public class HashDbIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
@@ -359,7 +358,7 @@ public class HashDbIngestModule extends IngestModuleAdapter implements FileInges
     }
                
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         if (refCounter.decrementAndGet(jobId) == 0) {
             postSummary();
         }

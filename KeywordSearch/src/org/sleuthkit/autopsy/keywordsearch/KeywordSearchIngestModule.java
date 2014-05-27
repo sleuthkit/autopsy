@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
  */
-public final class KeywordSearchIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public final class KeywordSearchIngestModule implements FileIngestModule {
 
     enum UpdateFrequency {
 
@@ -83,8 +82,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
     private boolean startedSearching = false;
     private SleuthkitCase caseHandle = null;
-    private List<AbstractFileExtract> textExtractors;
-    private AbstractFileStringExtract stringExtractor;
+    private List<TextExtractor> textExtractors;
+    private StringsTextExtractor stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private Tika tikaFormatDetector;
@@ -93,6 +92,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
     private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private IngestJobContext context;
     
     private enum IngestStatus {
 
@@ -136,6 +136,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
+        this.context = context;
 
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
@@ -168,7 +169,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
             }
 
             // check if this job has any searchable keywords    
-            List<KeywordList> keywordLists = KeywordSearchListsXML.getCurrent().getListsL();
+            List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
             boolean hasKeywordsForSearch = false;
             for (KeywordList keywordList : keywordLists) {
                 if (settings.isKeywordListEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
@@ -183,7 +184,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
         }
         
         //initialize extractors
-        stringExtractor = new AbstractFileStringExtract(this);
+        stringExtractor = new StringsTextExtractor(this);
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
 
@@ -196,8 +197,8 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
-        textExtractors.add(new AbstractFileHtmlExtract(this));
-        textExtractors.add(new AbstractFileTikaTextExtract(this));
+        textExtractors.add(new HtmlTextExtractor(this));
+        textExtractors.add(new TikaTextExtractor(this));
         
         indexer = new Indexer();
         initialized = true;
@@ -248,14 +249,14 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
      * Cleanup resources, threads, timers
      */
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         logger.log(Level.INFO, "Instance {0}", instanceNum); //NON-NLS
        
         if (initialized == false) {
             return;
         }
 
-        if (ingestJobCancelled) {
+        if (context.isJobCancelled()) {
             logger.log(Level.INFO, "Ingest job cancelled"); //NON-NLS
             stop();
             return;
@@ -389,10 +390,10 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            AbstractFileExtract fileExtract = null;
+            TextExtractor fileExtract = null;
 
             //go over available text extractors in order, and pick the first one (most specific one)
-            for (AbstractFileExtract fe : textExtractors) {
+            for (TextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
                     fileExtract = fe;
                     break;
@@ -444,7 +445,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
          * @return true if text extraction is supported
          */
         private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
-            for (AbstractFileExtract extractor : textExtractors) {
+            for (TextExtractor extractor : textExtractors) {
                 if (extractor.isContentTypeSpecific() == true
                         && extractor.isSupported(aFile, detectedFormat)) {
                     return true;
@@ -508,7 +509,7 @@ public final class KeywordSearchIngestModule extends IngestModuleAdapter impleme
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
+            if (TextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);

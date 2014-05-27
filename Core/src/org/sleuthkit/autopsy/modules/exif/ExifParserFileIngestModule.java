@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -56,7 +55,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
-public final class ExifParserFileIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -198,7 +197,7 @@ public final class ExifParserFileIngestModule extends IngestModuleAdapter implem
     }
 
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         // We only need to check for this final event on the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             if (filesToFire) {

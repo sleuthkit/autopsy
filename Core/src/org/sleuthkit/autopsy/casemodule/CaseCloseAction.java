@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,16 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;;
+import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
+;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -39,7 +48,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-
 
 /**
  * The action to close the current Case. This class should be disabled on
@@ -75,8 +83,6 @@ import org.openide.util.actions.Presenter;
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         if (Case.existsCurrentCase() == false)
             return;
         

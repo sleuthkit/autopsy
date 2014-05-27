@@ -58,13 +58,14 @@ class LuceneQuery implements KeywordSearchQuery {
     private String keywordStringEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
+    private KeywordList keywordList = null; 
     private final List <KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
     private static final int MAX_RESULTS = 20000;
     static final int SNIPPET_LENGTH = 50;
     //can use different highlight schema fields for regex and literal search
-    static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.CONTENT.toString();
-    static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT.toString();
+    static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.TEXT.toString();
+    static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.TEXT.toString();
     //TODO use content_ws stored="true" in solr schema for perfect highlight hits
     //static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT_WS.toString()
     
@@ -74,8 +75,9 @@ class LuceneQuery implements KeywordSearchQuery {
      * Constructor with query to process.
      * @param keywordQuery 
      */
-    public LuceneQuery(Keyword keywordQuery) {
+    public LuceneQuery(KeywordList keywordList, Keyword keywordQuery) {
         this(keywordQuery.getQuery());
+        this.keywordList = keywordList;
         this.keywordQuery = keywordQuery;
     }
 
@@ -132,17 +134,13 @@ class LuceneQuery implements KeywordSearchQuery {
         return this.keywordString;
     }
 
-    @Override
-    public Collection<Term> getTerms() {
-        return null;
-    }
 
     @Override
-    public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
-        Map<String, List<ContentHit>> results = new HashMap<>();
+    public QueryResults performQuery() throws NoOpenCoreException {
+        QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = KeywordSearchSettings.getShowSnippets();
-        results.put(keywordString, performLuceneQuery(showSnippets));
+        results.addResult(new Keyword(keywordString, true), performLuceneQuery(showSnippets));
 
         return results;
     }
@@ -153,15 +151,15 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
-        KeywordWriteResult writeResult;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardArtifact bba;
+        KeywordCachedArtifact writeResult;
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            writeResult = new KeywordWriteResult(bba);
+            writeResult = new KeywordCachedArtifact(bba);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
@@ -170,13 +168,11 @@ class LuceneQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
-        //keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
-        //list
-        if (listName == null) {
-            listName = "";
+        if ((listName != null) && (listName.equals("") == false)) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
+        
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
 
@@ -201,6 +197,7 @@ class LuceneQuery implements KeywordSearchQuery {
     
     /**
      * Perform the query and return result
+     * @param snippets True if results should have a snippet
      * @return list of ContentHit objects
      * @throws NoOpenCoreException
      */
@@ -211,6 +208,7 @@ class LuceneQuery implements KeywordSearchQuery {
         
         SolrQuery q = createAndConfigureSolrQuery(snippets);
 
+        // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
             q.setStart(start);
 
@@ -218,6 +216,8 @@ class LuceneQuery implements KeywordSearchQuery {
                 QueryResponse response = solrServer.query(q, METHOD.POST);
                 SolrDocumentList resultList = response.getResults();
                 Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
+                
+                // get the unique set of files with hits
                 Set<SolrDocument> solrDocumentsWithMatches = filterDuplicateSolrDocuments(resultList);
                 
                 allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
@@ -251,6 +251,11 @@ class LuceneQuery implements KeywordSearchQuery {
         return matches;
     }
     
+    /**
+     * Create the query object for the stored keyword
+     * @param snippets True if query should request snippets
+     * @return 
+     */
     private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
@@ -267,7 +272,7 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setRows(MAX_RESULTS);
         
         if (snippets) {
-            q.setFields(Server.Schema.ID.toString(), Server.Schema.CONTENT.toString());
+            q.setFields(Server.Schema.ID.toString());
         } else {
             q.setFields(Server.Schema.ID.toString());
         }
@@ -277,7 +282,7 @@ class LuceneQuery implements KeywordSearchQuery {
         }
         
         if (snippets) {
-            q.addHighlightField(Server.Schema.CONTENT.toString());
+            q.addHighlightField(Server.Schema.TEXT.toString());
             //q.setHighlightSimplePre("&laquo;"); //original highlighter only
             //q.setHighlightSimplePost("&raquo;");  //original highlighter only
             q.setHighlightSnippets(1);
@@ -300,24 +305,41 @@ class LuceneQuery implements KeywordSearchQuery {
         return q;
     }
 
+    /**
+     * Create the minimum set of documents. Ignores chunk IDs. Only one hit per file in results. 
+     * @param resultList 
+     * @return 
+     */
     private Set<SolrDocument> filterDuplicateSolrDocuments(SolrDocumentList resultList) {
-        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparator());
+        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparatorIgnoresChunkId());
         solrDocumentsWithMatches.addAll(resultList);
         return solrDocumentsWithMatches;
     }
 
+    /**
+     * Utility method to create a ContentHit object from the various query result objects
+     * @param resultDoc Document to make object about
+     * @param highlightResponse Set of snippets to pull snippet from
+     * @param snippets True if user wants snippets to be displayed
+     * @param sc Current case
+     * @return 
+     * @throws TskException 
+     */
     private ContentHit createContentHitFromQueryResults(SolrDocument resultDoc, Map<String, Map<String, List<String>>> highlightResponse, boolean snippets, SleuthkitCase sc) throws TskException {
-        ContentHit chit;
+        ContentHit contentHit;
         final String resultID = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
-        final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
+        
         String snippet = "";
+        // get the first snippet if the user wants it -- ignores the rest
         if (snippets) {
-            List<String> snippetList = highlightResponse.get(resultID).get(Server.Schema.CONTENT.toString());
+            List<String> snippetList = highlightResponse.get(resultID).get(Server.Schema.TEXT.toString());
             // list is null if there wasn't a snippet
             if (snippetList != null) {
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }
+        
+        final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
         if (sepIndex != -1) {
             //file chunk result
             final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
@@ -326,9 +348,9 @@ class LuceneQuery implements KeywordSearchQuery {
 
             try {
                 AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
-                chit = new ContentHit(resultAbstractFile, chunkId);
+                contentHit = new ContentHit(resultAbstractFile, chunkId);
                 if (snippet.isEmpty() == false) {
-                    chit.setSnippet(snippet);
+                    contentHit.setSnippet(snippet);
                 }
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex); //NON-NLS
@@ -341,9 +363,9 @@ class LuceneQuery implements KeywordSearchQuery {
 
             try {
                 AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
-                chit = new ContentHit(resultAbstractFile);
+                contentHit = new ContentHit(resultAbstractFile);
                 if (snippet.isEmpty() == false) {
-                    chit.setSnippet(snippet);
+                    contentHit.setSnippet(snippet);
                 }
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex); //NON-NLS
@@ -351,7 +373,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 throw ex;
             }
         }
-        return chit;
+        return contentHit;
     }
 
     /**
@@ -468,7 +490,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * Compares SolrDocuments based on their ID's. Two SolrDocuments with
      * different chunk numbers are considered equal.
      */
-    private class SolrDocumentComparator implements Comparator<SolrDocument> {
+    private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
         @Override
         public int compare(SolrDocument left, SolrDocument right) {
             String idName = Server.Schema.ID.toString();

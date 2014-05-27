@@ -231,9 +231,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     private boolean isIngestJobEvent(PropertyChangeEvent evt) {
-        return evt.getPropertyName().equals(IngestManager.IngestEvent.INGEST_JOB_STARTED.toString())
-                || evt.getPropertyName().equals(IngestManager.IngestEvent.INGEST_JOB_COMPLETED.toString())
-                || evt.getPropertyName().equals(IngestManager.IngestEvent.INGEST_JOB_CANCELLED.toString());
+        return evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())
+                || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString());
     }
 
     @Override

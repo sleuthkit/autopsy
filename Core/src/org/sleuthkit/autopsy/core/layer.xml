@@ -18,6 +18,13 @@
         <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
+        <file name="org-sleuthkit-autopsy-corecomponents-AutopsyOptionsPanelController.instance">
+            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox.png"/>
+            <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
+            <attr name="keywordsCategory" stringvalue="General"/>
+            <attr name="position" intvalue="1"/>
+        </file>
+        <file name="org-sleuthkit-autopsy-corecomponents-GeneralOptionsPanelController.instance_hidden"/>
     </folder>
     <file name="OptionsExport_hidden"/> <!-- Hide import/export in Options -->
     
@@ -123,16 +130,6 @@
         <folder name="Help">
             <file name="org-netbeans-core-actions-AboutAction.instance_hidden"/>
             <file name="org-sleuthkit-autopsy-actions-OpenLogFolder.instance_hidden"/>
-            <file name="org-sleuthkit-autopsy-actions-OpenLogFolderAction.instance">
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-corecomponents-AboutWindowAction.instance">
-                <attr name="delegate" newvalue="org.sleuthkit.autopsy.corecomponents.AboutWindowAction"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.corecomponents.Bundle#CTL_CustomAboutAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
         </folder>
         <folder name="Toolbars">
              <folder name="QuickSearch_hidden"/>
@@ -264,10 +261,6 @@
             <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
             <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
             <attr name="master-help.xml/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow" boolvalue="true"/>
-            <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Help/org-sleuthkit-autopsy-corecomponents-AboutWindowAction.instance"/>
-                <attr name="position" intvalue="3000"/>
-            </file>
         </folder>
     </folder>
 

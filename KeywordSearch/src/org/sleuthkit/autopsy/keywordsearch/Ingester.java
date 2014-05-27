@@ -112,17 +112,17 @@ class Ingester {
     }
 
     /**
-     * Sends a AbstractFileExtract to Solr to have its content extracted and
+     * Sends a TextExtractor to Solr to have its content extracted and
      * added to the index. commit() should be called once you're done ingesting
      * files. FileExtract represents a parent of extracted file with actual
      * content. The parent itself has no content, only meta data and is used to
      * associate the extracted AbstractFileChunk
      *
-     * @param fe AbstractFileExtract to ingest
+     * @param fe TextExtractor to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(AbstractFileExtract fe) throws IngesterException {
+    void ingest(TextExtractor fe) throws IngesterException {
         Map<String, String> params = getContentFields(fe.getSourceFile());
 
         params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(fe.getNumChunks()));

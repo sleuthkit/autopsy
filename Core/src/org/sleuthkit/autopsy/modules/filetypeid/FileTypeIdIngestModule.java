@@ -34,14 +34,13 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
-public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileIngestModule {
+public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static final long MIN_FILE_SIZE = 512;
@@ -129,7 +128,7 @@ public class FileTypeIdIngestModule extends IngestModuleAdapter implements FileI
     }
 
     @Override
-    public void shutDown(boolean ingestJobCancelled) {
+    public void shutDown() {
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             IngestJobTotals jobTotals;

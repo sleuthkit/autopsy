@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJobSettings {
 
+    private static final long serialVersionUID = 1L;
     private boolean skipFilesWithNoExtension = true;
     private boolean skipFilesWithTextPlainMimeType = false;
 
@@ -37,8 +38,8 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     }
 
     @Override
-    public String getVersionNumber() {
-        return "1.0"; //NON-NLS
+    public long getVersionNumber() {
+        return serialVersionUID;
     }    
         
     void setSkipFilesWithNoExtension(boolean enabled) {

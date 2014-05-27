@@ -35,6 +35,6 @@ final class DataSourceIngestTask extends IngestTask {
     
     @Override
     void execute() throws InterruptedException {
-        getIngestJob().process(dataSource);
+        getIngestJob().process(this);
     }
 }

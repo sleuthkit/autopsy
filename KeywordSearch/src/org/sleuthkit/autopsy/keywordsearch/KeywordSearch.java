@@ -29,7 +29,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.BlackboardResultWriter;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 
@@ -138,7 +138,7 @@ public class KeywordSearch {
                 } else if (oldValue != null) {
                     // a case was closed
                     try {
-                        ResultWriter.stopAllWriters();
+                        BlackboardResultWriter.stopAllWriters();
                         Thread.sleep(2000);
                         server.closeCore();
                     } catch (Exception e) {

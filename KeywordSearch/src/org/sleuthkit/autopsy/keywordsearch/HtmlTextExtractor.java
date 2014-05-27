@@ -37,9 +37,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
- class AbstractFileHtmlExtract implements AbstractFileExtract {
+ class HtmlTextExtractor implements TextExtractor {
 
-    private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
+    private static final Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private static Ingester ingester;
     static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             //"application/xml-dtd",
             );
 
-    AbstractFileHtmlExtract(KeywordSearchIngestModule module) {
+    HtmlTextExtractor(KeywordSearchIngestModule module) {
         this.module = module;
         ingester = Server.getIngester();
     }

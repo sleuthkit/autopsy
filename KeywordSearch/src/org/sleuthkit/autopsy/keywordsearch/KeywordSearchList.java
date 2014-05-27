@@ -36,15 +36,15 @@ import java.util.logging.Level;
 /**
  * Keyword list saving, loading, and editing abstract class.
  */
-abstract class KeywordSearchListsAbstract {
+abstract class KeywordSearchList {
 
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data 
-    protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
+    protected static final Logger logger = Logger.getLogger(KeywordSearchList.class.getName());
     PropertyChangeSupport changeSupport; 
     protected List<String> lockedLists;
 
-    KeywordSearchListsAbstract(String filePath) {
+    KeywordSearchList(String filePath) {
         this.filePath = filePath;
         theLists = new LinkedHashMap<>();
         lockedLists = new ArrayList<>();

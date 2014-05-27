@@ -26,13 +26,14 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * result of writing keyword search result to blackboard (cached artifact and attributes)
+ * This is mainly to cache the attributes, so that we don't query the DB to get them back again.
  */
-class KeywordWriteResult {
+class KeywordCachedArtifact {
 
     private BlackboardArtifact artifact;
     private Map<Integer, BlackboardAttribute> attributes;
 
-    KeywordWriteResult(BlackboardArtifact artifact) {
+    KeywordCachedArtifact(BlackboardArtifact artifact) {
         this.artifact = artifact;
         attributes = new HashMap<Integer, BlackboardAttribute>();
     }

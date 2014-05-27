@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- *
- * @author dfickling
  */
  interface AutopsyItemVisitor<T> {
 
@@ -52,7 +50,7 @@ package org.sleuthkit.autopsy.datamodel;
 
     T visit(EmailExtracted ee);
 
-    T visit(TagsNodeKey tagsNodeKey);
+    T visit(Tags tagsNodeKey);
     
     T visit(InterestingHits ih);
         
@@ -141,7 +139,7 @@ package org.sleuthkit.autopsy.datamodel;
         }
 
         @Override
-        public T visit(TagsNodeKey tagsNodeKey) {
+        public T visit(Tags tagsNodeKey) {
             return defaultVisit(tagsNodeKey);
         }
 

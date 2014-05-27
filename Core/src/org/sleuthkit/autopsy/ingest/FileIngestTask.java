@@ -36,7 +36,7 @@ final class FileIngestTask extends IngestTask {
 
     @Override
     void execute() throws InterruptedException {
-        getIngestJob().process(file);
+        getIngestJob().process(this);
     }
 
     @Override

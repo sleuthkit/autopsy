@@ -56,9 +56,9 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  * parsers-supported content type.
  *
  */
-class AbstractFileTikaTextExtract implements AbstractFileExtract {
+class TikaTextExtractor implements TextExtractor {
 
-    private static final Logger logger = Logger.getLogger(AbstractFileTikaTextExtract.class.getName());
+    private static final Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private static Ingester ingester;
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
@@ -72,7 +72,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
-    AbstractFileTikaTextExtract(KeywordSearchIngestModule module) {
+    TikaTextExtractor(KeywordSearchIngestModule module) {
         this.module = module;
         ingester = Server.getIngester();
 
@@ -80,7 +80,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
         for (MediaType mt : mediaTypes) {
             TIKA_SUPPORTED_TYPES.add(mt.getType() + "/" + mt.getSubtype());
         }
-        logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES); //NON-NLS
+        //logger.log(Level.INFO, "Tika supported media types: {0}", TIKA_SUPPORTED_TYPES); //NON-NLS
     }
 
     @Override
@@ -273,7 +273,7 @@ class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 || detectedFormat.equals("application/x-msdownload")) { //NON-NLS
             //any binary unstructured blobs (string extraction will be used)
             return false;
-        } else if (AbstractFileExtract.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
+        } else if (TextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
             return false;
         } //skip video other than flv (tika supports flv only)
         else if (detectedFormat.contains("video/") //NON-NLS

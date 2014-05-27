@@ -41,9 +41,9 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
  * or to any file provided in constructor
  */
-final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
+final class XmlKeywordSearchList extends KeywordSearchList {
 
-    private static final Logger xmlListslogger = Logger.getLogger(KeywordSearchListsXML.class.getName());
+    private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;   
     private static final String XSDFILE = "KeywordsSchema.xsd"; //NON-NLS
@@ -59,12 +59,12 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
     private static final String KEYWORD_SELECTOR_ATTR = "selector"; //NON-NLS
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
-    private static KeywordSearchListsXML currentInstance = null; 
+    private static XmlKeywordSearchList currentInstance = null; 
     private DateFormat dateFormatter;
 
-    static synchronized KeywordSearchListsXML getCurrent() {
+    static synchronized XmlKeywordSearchList getCurrent() {
         if (currentInstance == null) {
-            currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);
+            currentInstance = new XmlKeywordSearchList(CUR_LISTS_FILE);
             currentInstance.reload();
         }
         return currentInstance;
@@ -73,9 +73,9 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
     /**
      * Constructor to obtain handle on other that the current keyword list
      * (such as for import or export)
-     * @param xmlFile xmlFile to obtain KeywordSearchListsXML handle on
+     * @param xmlFile xmlFile to obtain XmlKeywordSearchList handle on
      */
-    KeywordSearchListsXML(String xmlFile) {
+    XmlKeywordSearchList(String xmlFile) {
         super(xmlFile);
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
@@ -135,7 +135,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
                 rootEl.appendChild(listEl);
             }
 
-            success = XMLUtil.saveDoc(KeywordSearchListsXML.class, filePath, ENCODING, doc);
+            success = XMLUtil.saveDoc(XmlKeywordSearchList.class, filePath, ENCODING, doc);
         } catch (ParserConfigurationException e) {
             xmlListslogger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e); //NON-NLS
         }
@@ -147,7 +147,7 @@ final class KeywordSearchListsXML extends KeywordSearchListsAbstract {
      */
     @Override
     public boolean load() {
-        final Document doc = XMLUtil.loadDoc(KeywordSearchListsXML.class, filePath, XSDFILE);
+        final Document doc = XMLUtil.loadDoc(XmlKeywordSearchList.class, filePath);
         if (doc == null) {
             return false;
         }

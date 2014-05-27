@@ -36,13 +36,12 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 
 /**
  * Recent activity image ingest module
  */
-public final class RAImageIngestModule extends IngestModuleAdapter implements DataSourceIngestModule {
+public final class RAImageIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extracters = new ArrayList<>();
@@ -160,14 +159,9 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
                                                                    historyMsg.toString());
         services.postMessage(inboxMsg);
 
-        return ProcessResult.OK;
-    }
-
-    @Override
-    public void shutDown(boolean ingestJobCancelled) {
-        if (ingestJobCancelled) {
+        if (context.isJobCancelled()) {
             stop();
-            return;
+            return ProcessResult.OK;
         }
         
         for (int i = 0; i < extracters.size(); i++) {
@@ -180,6 +174,8 @@ public final class RAImageIngestModule extends IngestModuleAdapter implements Da
                                                         extracter.getName()));
             }
         }
+                
+        return ProcessResult.OK;
     }
 
     private void stop() {

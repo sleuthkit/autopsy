@@ -22,11 +22,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -36,14 +36,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * due to the necessity to find a font that displays both Arabic and Asian fonts at an acceptable size. 
  * The default, Tahoma 14, could not perform this task at the desired size, and neither could numerous other fonts. 
  */
-public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
-    private static final Logger logger = Logger.getLogger(DropdownSearchPanel.class.getName());
-    private static DropdownSearchPanel instance = null;
+public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
+    private static final Logger logger = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
+    private static DropdownSingleTermSearchPanel instance = null;
     
     /**
-     * Creates new form DropdownSearchPanel
+     * Creates new form DropdownSingleTermSearchPanel
      */
-    public DropdownSearchPanel() {
+    public DropdownSingleTermSearchPanel() {
         initComponents();
         customizeComponents();
     }
@@ -85,9 +85,9 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         selectAllMenuItem.addActionListener(actList);        
     }
     
-    public static synchronized DropdownSearchPanel getDefault() {
+    public static synchronized DropdownSingleTermSearchPanel getDefault() {
         if (instance == null) {
-            instance = new DropdownSearchPanel();
+            instance = new DropdownSingleTermSearchPanel();
         }
         return instance;
     }
@@ -96,34 +96,20 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         searchButton.addActionListener(actionListener);
     }    
        
-    public void resetSearchBox() {
+    void resetSearchBox() {
         keywordTextField.setText("");
-    }       
-    
-    @Override
-    public String getQueryText() {
-        return keywordTextField.getText();
     }
 
     @Override
-    public boolean isRegExQuerySelected() {
-        return regexRadioButton.isSelected();
-    }
-
-    @Override
-    public boolean isWholewordQuerySelected() {
-        return exactRadioButton.isSelected();
-    }
-    
-    @Override
-    public boolean isMultiwordQuery() {
-        return false;
-    }
-
-    @Override
-    public List<Keyword> getQueryList() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "DropdownSearchPanelgetQueryList.exception.msg"));
+    List<KeywordList> getKeywordLists() {        
+        List<Keyword> keywords = new ArrayList<>();
+        keywords.add(new Keyword(keywordTextField.getText(), 
+                !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
+        
+        List <KeywordList> keywordLists = new ArrayList<>();
+        keywordLists.add(new KeywordList(keywords));
+        
+        return keywordLists;
     }    
 
     @Override
@@ -152,20 +138,20 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         substringRadioButton = new javax.swing.JRadioButton();
         regexRadioButton = new javax.swing.JRadioButton();
 
-        org.openide.awt.Mnemonics.setLocalizedText(cutMenuItem, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.cutMenuItem.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cutMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.cutMenuItem.text")); // NOI18N
         rightClickMenu.add(cutMenuItem);
 
-        org.openide.awt.Mnemonics.setLocalizedText(copyMenuItem, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.copyMenuItem.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(copyMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
 
-        org.openide.awt.Mnemonics.setLocalizedText(pasteMenuItem, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.pasteMenuItem.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pasteMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.pasteMenuItem.text")); // NOI18N
         rightClickMenu.add(pasteMenuItem);
 
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
         keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N NON-NLS
-        keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
+        keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
         keywordTextField.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(192, 192, 192), 1, true));
         keywordTextField.setMinimumSize(new java.awt.Dimension(2, 25));
         keywordTextField.setPreferredSize(new java.awt.Dimension(2, 25));
@@ -181,7 +167,7 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         });
 
         searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N NON-NLS
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.searchButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
@@ -189,14 +175,14 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
         });
 
         queryTypeButtonGroup.add(exactRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(exactRadioButton, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.exactRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(exactRadioButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.exactRadioButton.text")); // NOI18N
 
         queryTypeButtonGroup.add(substringRadioButton);
         substringRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(substringRadioButton, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.substringRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(substringRadioButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.substringRadioButton.text")); // NOI18N
 
         queryTypeButtonGroup.add(regexRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(regexRadioButton, org.openide.util.NbBundle.getMessage(DropdownSearchPanel.class, "DropdownSearchPanel.regexRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(regexRadioButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.regexRadioButton.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -265,6 +251,4 @@ public class DropdownSearchPanel extends AbstractKeywordSearchPerformer {
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JRadioButton substringRadioButton;
     // End of variables declaration//GEN-END:variables
-  
- 
 }

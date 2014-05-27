@@ -40,7 +40,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private final KeywordListsTableModel tableModel = new KeywordListsTableModel();
     private final List<String> keywordListNames = new ArrayList<>();
     private final Map<String, Boolean> keywordListStates = new HashMap<>();
-    private final KeywordSearchListsXML keywordListsManager = KeywordSearchListsXML.getCurrent();
+    private final XmlKeywordSearchList keywordListsManager = XmlKeywordSearchList.getCurrent();
 
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
         initializeKeywordListSettings(initialSettings);
@@ -64,6 +64,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         displayLanguages();
         displayEncodings();
         keywordListsManager.addPropertyChangeListener(this);
+         languagesLabel.setText("<html>" + org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text") + "</html>"); // NOI18N
     }
 
     private void customizeKeywordListsTable() {
@@ -100,8 +101,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void displayEncodings() {
-        String utf8 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString());
-        String utf16 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString());
+        String utf8 = KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
+        String utf16 = KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
         ArrayList<String> encodingsList = new ArrayList<>();
         if (utf8 == null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");
@@ -116,10 +117,10 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        if (event.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.name())
-                || event.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.name())
-                || event.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.name())
-                || event.getPropertyName().equals(KeywordSearchListsXML.LanguagesEvent.LANGUAGES_CHANGED.name())) {
+        if (event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_ADDED.name())
+                || event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_DELETED.name())
+                || event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_UPDATED.name())
+                || event.getPropertyName().equals(XmlKeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED.name())) {
             update();
         }
     }
@@ -254,6 +255,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
         languagesLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text")); // NOI18N
         languagesLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.toolTipText")); // NOI18N
+        languagesLabel.setPreferredSize(new java.awt.Dimension(294, 35));
+        languagesLabel.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
         languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.text")); // NOI18N
         languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.toolTipText")); // NOI18N
@@ -269,13 +272,13 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addComponent(languagesValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(10, 10, 10))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -292,9 +295,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 .addGap(7, 7, 7)
                 .addComponent(titleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 41, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(languagesLabel)
+                .addComponent(languagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(languagesValLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)

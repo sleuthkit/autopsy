@@ -383,7 +383,7 @@ public final class SearchRunner {
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user."); //NON-NLS
                     if (progressGroup != null) {
-                        progressGroup.setDisplayName(displayName + " (" + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg") + "...)");
+                        progressGroup.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
                     }
                     return SearchRunner.Searcher.this.cancel(true);
                 }
@@ -416,7 +416,6 @@ public final class SearchRunner {
 
                     final String queryStr = keywordQuery.getQuery();
                     final KeywordList list = keywordToList.get(queryStr);
-                    final String listName = list.getName();
 
                     //new subProgress will be active after the initial query
                     //when we know number of hits to start() with
@@ -424,25 +423,27 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched - 1].finish();
                     }
 
-                    KeywordSearchQuery del = null;
+                    KeywordSearchQuery keywordSearchQuery = null;
 
                     boolean isRegex = !keywordQuery.isLiteral();
                     if (isRegex) {
-                        del = new TermComponentQuery(keywordQuery);
+                        keywordSearchQuery = new TermComponentQuery(list, keywordQuery);
                     } else {
-                        del = new LuceneQuery(keywordQuery);
-                        del.escape();
+                        keywordSearchQuery = new LuceneQuery(list, keywordQuery);
+                        keywordSearchQuery.escape();
                     }
 
+                    // Filtering
                     //limit search to currently ingested data sources
                     //set up a filter with 1 or more image ids OR'ed
                     final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
-                    del.addFilter(dataSourceFilter);
+                    keywordSearchQuery.addFilter(dataSourceFilter);
 
-                    Map<String, List<ContentHit>> queryResult;
+                    QueryResults queryResults;
 
+                    // Do the actual search
                     try {
-                        queryResult = del.performQuery();
+                        queryResults = keywordSearchQuery.performQuery();
                     } catch (NoOpenCoreException ex) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
                         //no reason to continue with next query if recovery failed
@@ -458,141 +459,29 @@ public final class SearchRunner {
                     }
 
                     // calculate new results by substracting results already obtained in this ingest
-                    // this creates a map of each keyword to the list of unique files that have that hit.  
-                    Map<Keyword, List<ContentHit>> newResults = filterResults(queryResult, isRegex);
+                    // this creates a map of each keyword to the list of unique files that have that hit. 
+                    QueryResults newResults = filterResults(queryResults, list);
 
-                    if (!newResults.isEmpty()) {
+                    if (!newResults.getKeywords().isEmpty()) {
 
-                        //write results to BB
+                        // Write results to BB
 
                         //new artifacts created, to report to listeners
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
                         //scale progress bar more more granular, per result sub-progress, within per keyword
-                        int totalUnits = newResults.size();
+                        int totalUnits = newResults.getKeywords().size();
                         subProgresses[keywordsSearched].start(totalUnits);
                         int unitProgress = 0;
                         String queryDisplayStr = keywordQuery.getQuery();
                         if (queryDisplayStr.length() > 50) {
                             queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
                         }
-                        subProgresses[keywordsSearched].progress(listName + ": " + queryDisplayStr, unitProgress);
-
-                        // cycle through the keywords returned -- only one unless it was a regexp
-                        for (final Keyword hitTerm : newResults.keySet()) {
-                            //checking for cancellation between results
-                            if (this.isCancelled()) {
-                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: {0}", keywordQuery.getQuery()); //NON-NLS
-                                return null;
-                            }
-
-                            // update progress display
-                            String hitDisplayStr = hitTerm.getQuery();
-                            if (hitDisplayStr.length() > 50) {
-                                hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
-                            }
-                            subProgresses[keywordsSearched].progress(listName + ": " + hitDisplayStr, unitProgress);
-
-                            // this returns the unique files in the set with the first chunk that has a hit
-                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(newResults.get(hitTerm));
-                            for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
-
-                                // get the snippet for the first hit in the file
-                                String snippet;
-                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
-                                int chunkId = contentHitsFlattened.get(hitFile);
-                                try {
-                                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
-                                } catch (NoOpenCoreException e) {
-                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                                    //no reason to continue
-                                    return null;
-                                } catch (Exception e) {
-                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                                    continue;
-                                }
-
-                                // write the blackboard artifact for this keyword in this file
-                                KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
-                                if (written == null) {
-                                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hitFile, hitTerm.toString()}); //NON-NLS
-                                    continue;
-                                }
-
-                                newArtifacts.add(written.getArtifact());
-
-                                //generate an ingest inbox message for this keyword in this file
-                                if (list.getIngestMessages()) {
-                                    StringBuilder subjectSb = new StringBuilder();
-                                    StringBuilder detailsSb = new StringBuilder();
-
-                                    if (!keywordQuery.isLiteral()) {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
-                                    } else {
-                                        subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
-                                    }
-                                    String uniqueKey = null;
-                                    BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
-                                    if (attr != null) {
-                                        final String keyword = attr.getValueString();
-                                        subjectSb.append(keyword);
-                                        uniqueKey = keyword.toLowerCase();
-                                    }
-
-                                    //details
-                                    detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-                                    //hit
-                                    detailsSb.append("<tr>"); //NON-NLS
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
-                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
-                                    detailsSb.append("</tr>"); //NON-NLS
-
-                                    //preview
-                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
-                                    if (attr != null) {
-                                        detailsSb.append("<tr>"); //NON-NLS
-                                        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
-                                        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
-                                        detailsSb.append("</tr>"); //NON-NLS
-                                    }
-
-                                    //file
-                                    detailsSb.append("<tr>"); //NON-NLS
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
-                                    detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
-                                    detailsSb.append("</tr>"); //NON-NLS
-
-                                    //list
-                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-                                    detailsSb.append("<tr>"); //NON-NLS
-                                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-                                    detailsSb.append("</tr>"); //NON-NLS
-
-                                    //regex
-                                    if (!keywordQuery.isLiteral()) {
-                                        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
-                                        if (attr != null) {
-                                            detailsSb.append("<tr>"); //NON-NLS
-                                            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
-                                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-                                            detailsSb.append("</tr>"); //NON-NLS
-                                        }
-                                    }
-                                    detailsSb.append("</table>"); //NON-NLS
-
-                                    services.postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
-                                }
-                            } //for each file hit
-
-                            ++unitProgress;
-
-                        }//for each hit term
-
-                        //update artifact browser
-                        if (!newArtifacts.isEmpty()) {
-                            services.fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
-                        }
+                        subProgresses[keywordsSearched].progress(list.getName() + ": " + queryDisplayStr, unitProgress);
+        
+                        // Create blackboard artifacts                
+                        newArtifacts = queryResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, list.getIngestMessages());
+                        
                     } //if has results
 
                     //reset the status text before it goes away
@@ -639,7 +528,7 @@ public final class SearchRunner {
          * Sync-up the updated keywords from the currently used lists in the XML
          */
         private void updateKeywords() {
-            KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+            XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
 
             keywords.clear();
             keywordToList.clear();
@@ -648,8 +537,8 @@ public final class SearchRunner {
             for (String name : keywordListNames) {
                 KeywordList list = loader.getList(name);
                 for (Keyword k : list.getKeywords()) {
-                    this.keywords.add(k);
-                    this.keywordToList.put(k.getQuery(), list);
+                    keywords.add(k);
+                    keywordToList.put(k.getQuery(), list);
                 }
             }
         }
@@ -670,11 +559,11 @@ public final class SearchRunner {
 
         //calculate new results but substracting results already obtained in this ingest
         //update currentResults map with the new results
-        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult, boolean isRegex) {
-            Map<Keyword, List<ContentHit>> newResults = new HashMap<>();
+        private QueryResults filterResults(QueryResults queryResult, KeywordList keywordList) {
+            QueryResults newResults = new QueryResults(queryResult.getQuery(), keywordList);
 
-            for (String termResult : queryResult.keySet()) {
-                List<ContentHit> queryTermResults = queryResult.get(termResult);
+            for (Keyword keyword : queryResult.getKeywords()) {
+                List<ContentHit> queryTermResults = queryResult.getResults(keyword);
 
                 //translate to list of IDs that we keep track of
                 List<Long> queryTermResultsIDs = new ArrayList<>();
@@ -682,20 +571,19 @@ public final class SearchRunner {
                     queryTermResultsIDs.add(ch.getId());
                 }
 
-                Keyword termResultK = new Keyword(termResult, !isRegex);
-                List<Long> curTermResults = job.currentKeywordResults(termResultK);
+                List<Long> curTermResults = job.currentKeywordResults(keyword);
                 if (curTermResults == null) {
-                    job.addKeywordResults(termResultK, queryTermResultsIDs);
-                    newResults.put(termResultK, queryTermResults);
+                    job.addKeywordResults(keyword, queryTermResultsIDs);
+                    newResults.addResult(keyword, queryTermResults);
                 } else {
                     //some AbstractFile hits already exist for this keyword
                     for (ContentHit res : queryTermResults) {
                         if (!curTermResults.contains(res.getId())) {
                             //add to new results
-                            List<ContentHit> newResultsFs = newResults.get(termResultK);
+                            List<ContentHit> newResultsFs = newResults.getResults(keyword);
                             if (newResultsFs == null) {
                                 newResultsFs = new ArrayList<>();
-                                newResults.put(termResultK, newResultsFs);
+                                newResults.addResult(keyword, newResultsFs);
                             }
                             newResultsFs.add(res);
                             curTermResults.add(res.getId());
@@ -705,9 +593,6 @@ public final class SearchRunner {
             }
 
             return newResults;
-
-        }        
-        
-    }    
-    
+        }   
+    }
 }
