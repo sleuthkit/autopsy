@@ -37,15 +37,14 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Gets extracted content from Solr with the parts that match the query
- * highlighted
+ * Highlights hits for a given document. Knows about pages and such for the content viewer. 
  */
-class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
+class HighlightedTextMarkup implements TextMarkup, HighlightLookup {
 
-    private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
+    private static final Logger logger = Logger.getLogger(HighlightedTextMarkup.class.getName());
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
-    private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
+    private static final String ANCHOR_PREFIX = HighlightedTextMarkup.class.getName() + "_";
 
     private Content content;
     private String keywordHitQuery;
@@ -62,17 +61,17 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private List<Integer> pages;
     private QueryResults hits = null; //original hits that may get passed in
     private String originalQuery = null; //or original query if hits are not available
-    private boolean inited = false;
+    private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    HighlightedMatchesSource(Content content, String keywordHitQuery, boolean isRegex) {
+    HighlightedTextMarkup(Content content, String keywordHitQuery, boolean isRegex) {
         this.content = content;
         this.keywordHitQuery = keywordHitQuery;
         this.isRegex = isRegex;
         this.group = true;
-        this.hitsPages = new LinkedHashMap<Integer, Integer>();
-        this.pages = new ArrayList<Integer>();
-        this.pagesToHits = new HashMap<Integer, Integer>();
+        this.hitsPages = new LinkedHashMap<>();
+        this.pages = new ArrayList<>();
+        this.pagesToHits = new HashMap<>();
 
         this.solrServer = KeywordSearch.getServer();
         this.numberPages = 0;
@@ -82,23 +81,26 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     }
 
     //when the results are not known and need to requery to get hits
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, String originalQuery) {
+    HighlightedTextMarkup(Content content, String solrQuery, boolean isRegex, String originalQuery) {
         this(content, solrQuery, isRegex);
         this.originalQuery = originalQuery;
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, QueryResults hits) {
+    HighlightedTextMarkup(Content content, String solrQuery, boolean isRegex, QueryResults hits) {
         this(content, solrQuery, isRegex);
         this.hits = hits;
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
+    HighlightedTextMarkup(Content content, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
         this(content, solrQuery, isRegex, hits);
         this.group = group;
     }
 
-    private void init() {
-        if (inited) {
+    /** 
+     * The main goal of this method is to figure out which pages / chunks have hits.
+     */
+    private void loadPageInfo() {
+        if (isPageInfoLoaded) {
             return;
         }
         try {
@@ -122,26 +124,22 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             //extract pages of interest, sorted
             final long contentId = content.getId();
 
+            /* If this is being called from the artifacts / dir tree, then we
+             * need to perform the search to get the highlights. 
+             */
             if (hits == null) {
-                //special case, aka in case of dir tree, we don't know which chunks
-                //reperform search query for the content to get matching chunks info
-                KeywordSearchQuery chunksQuery = null;
-
-                /**
-                 * Keyword keywordQuery = new Keyword(this.originalQuery,
-                 * !isRegex); if (this.isRegex) { chunksQuery = new
-                 * TermComponentQuery(keywordQuery); } else { chunksQuery = new
-                 * LuceneQuery(keywordQuery); chunksQuery.escape(); }
-                 */
                 String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
                 if (isRegex) {
                     //use white-space sep. field to get exact matches only of regex query result
                     queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
                 }
-                Keyword keywordQuery = new Keyword(queryStr, false);
-                chunksQuery = new LuceneQuery(hits.getKeywordList(), keywordQuery);
-                KeywordQueryFilter contentIdFilter = new KeywordQueryFilter(FilterType.CHUNK, contentId);
-                chunksQuery.addFilter(contentIdFilter);
+                
+                Keyword keywordQuery = new Keyword(queryStr, !isRegex);
+                List<Keyword> keywords = new ArrayList<>();
+                keywords.add(keywordQuery);
+                KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
+                
+                chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, contentId));
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
@@ -182,11 +180,11 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             pages.add(1);
             pagesToHits.put(1, 0);
         }
-        inited = true;
+        isPageInfoLoaded = true;
     }
 
     //constructor for dummy singleton factory instance for Lookup
-    private HighlightedMatchesSource() {
+    private HighlightedTextMarkup() {
     }
 
     @Override
@@ -291,7 +289,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public String getMarkup() {
-        init(); //inits once
+        loadPageInfo(); //inits once
 
         String highLightField = null;
 
@@ -446,7 +444,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     //this instance does not actually work with Solr
     public static synchronized HighlightLookup getDefault() {
         if (instance == null) {
-            instance = new HighlightedMatchesSource();
+            instance = new HighlightedTextMarkup();
         }
         return instance;
     }
@@ -454,6 +452,6 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     //factory method, i.e. invoked on dummy (Lookup) instance
     public HighlightLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery) {
-        return new HighlightedMatchesSource(c, keywordHitQuery, isRegex, originalQuery);
+        return new HighlightedTextMarkup(c, keywordHitQuery, isRegex, originalQuery);
     }
 }

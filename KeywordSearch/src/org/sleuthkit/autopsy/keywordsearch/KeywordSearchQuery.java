@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.Collection;
-import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -28,6 +26,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * is created for each query. 
  */
 interface KeywordSearchQuery {
+    
+    KeywordList getKeywordList();
 
     /**
      * validate the query pre execution

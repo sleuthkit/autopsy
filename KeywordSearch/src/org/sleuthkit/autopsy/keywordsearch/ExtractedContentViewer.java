@@ -49,7 +49,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
-    private MarkupSource currentSource = null;
+    private TextMarkup currentSource = null;
     private final IsDirVisitor isDirVisitor = new IsDirVisitor();
 
 
@@ -80,10 +80,11 @@ public class ExtractedContentViewer implements DataContentViewer {
          * for the text markedup by SOLR and another that just displayed
          * raw text. 
          */
-        final List<MarkupSource> sources = new ArrayList<MarkupSource>();
+        final List<TextMarkup> sources = new ArrayList<TextMarkup>();
 
-        //add additional registered sources for this node
-        sources.addAll(selectedNode.getLookup().lookupAll(MarkupSource.class));
+        // See if the node has any sources attached to it and add them to our
+        // internal list
+        sources.addAll(selectedNode.getLookup().lookupAll(TextMarkup.class));
 
         
         // if it doesn't have any SOLR content, then we won't add more sources
@@ -98,9 +99,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         // make a new source for the raw content
-        MarkupSource rawSource = new RawMarkupSource(content);
-        // @@@ NOTE: We used to do some level of caching between instances when this
-        // was an inner class.  Consider doing so again and save rawSource at the class level
+        TextMarkup rawSource = new RawTextMarkup(content);
         
         currentSource = rawSource;
         sources.add(rawSource);
@@ -118,7 +117,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void scrollToCurrentHit() {
-        final MarkupSource source = panel.getSelectedSource();
+        final TextMarkup source = panel.getSelectedSource();
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -157,7 +156,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<MarkupSource>());
+        setPanel(new ArrayList<TextMarkup>());
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -171,7 +170,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         // see if the node has a MarkupSource object in it
         // BC @@@ This seems to be added from the upper right search.
-        Collection<? extends MarkupSource> sources = node.getLookup().lookupAll(MarkupSource.class);
+        Collection<? extends TextMarkup> sources = node.getLookup().lookupAll(TextMarkup.class);
         if (sources.isEmpty() == false) {
             return true;
         }
@@ -204,7 +203,7 @@ public class ExtractedContentViewer implements DataContentViewer {
      *
      * @param sources
      */
-    private void setPanel(List<MarkupSource> sources) {
+    private void setPanel(List<TextMarkup> sources) {
         if (panel != null) {
             panel.setSources(sources);
         }
@@ -266,7 +265,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            MarkupSource source = panel.getSelectedSource();
+            TextMarkup source = panel.getSelectedSource();
             if (source == null) {
                 // reset
                 panel.updateControls(null);
@@ -306,7 +305,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            MarkupSource source = panel.getSelectedSource();
+            TextMarkup source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
             int indexVal = 0;

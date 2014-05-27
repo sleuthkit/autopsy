@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,10 +31,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -76,20 +73,15 @@ class LuceneQuery implements KeywordSearchQuery {
      * @param keywordQuery 
      */
     public LuceneQuery(KeywordList keywordList, Keyword keywordQuery) {
-        this(keywordQuery.getQuery());
         this.keywordList = keywordList;
         this.keywordQuery = keywordQuery;
+        
+        // @@@ BC: Long-term, we should try to get rid of this string and use only the
+        // keyword object.  Refactoring did not make its way through this yet.
+        this.keywordString = keywordQuery.getQuery();
+        this.keywordStringEscaped = this.keywordString;
     }
 
-    /**
-     * Constructor with keyword string to process
-     * @param queryStr Keyword to search for
-     */
-    public LuceneQuery(String queryStr) {
-        this.keywordString = queryStr;
-        this.keywordStringEscaped = queryStr;
-        isEscaped = false;
-    }
 
     @Override
     public void addFilter(KeywordQueryFilter filter) {
@@ -196,9 +188,9 @@ class LuceneQuery implements KeywordSearchQuery {
 
     
     /**
-     * Perform the query and return result
+     * Perform the query and return results of unique files.
      * @param snippets True if results should have a snippet
-     * @return list of ContentHit objects
+     * @return list of ContentHit objects.  One per file with hit (ignores multiple hits of the word in the same doc)
      * @throws NoOpenCoreException
      */
     private List<ContentHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
@@ -215,10 +207,12 @@ class LuceneQuery implements KeywordSearchQuery {
             try {
                 QueryResponse response = solrServer.query(q, METHOD.POST);
                 SolrDocumentList resultList = response.getResults();
+                
+                // objectId_chunk -> "text" -> List of previews
                 Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
                 
                 // get the unique set of files with hits
-                Set<SolrDocument> solrDocumentsWithMatches = filterDuplicateSolrDocuments(resultList);
+                Set<SolrDocument> uniqueSolrDocumentsWithHits = filterDuplicateSolrDocuments(resultList);
                 
                 allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
                 
@@ -230,7 +224,7 @@ class LuceneQuery implements KeywordSearchQuery {
                     return matches;
                 }
 
-                for (SolrDocument resultDoc : solrDocumentsWithMatches) {
+                for (SolrDocument resultDoc : uniqueSolrDocumentsWithHits) {
                     ContentHit contentHit;
                     try {
                         contentHit = createContentHitFromQueryResults(resultDoc, highlightResponse, snippets, sleuthkitCase);
@@ -485,6 +479,11 @@ class LuceneQuery implements KeywordSearchQuery {
             return "";
         }
     }
+
+    @Override
+    public KeywordList getKeywordList() {
+        return keywordList;
+    }
     
     /**
      * Compares SolrDocuments based on their ID's. Two SolrDocuments with
@@ -493,6 +492,8 @@ class LuceneQuery implements KeywordSearchQuery {
     private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
         @Override
         public int compare(SolrDocument left, SolrDocument right) {
+            // ID is in the form of ObjectId_Chunk
+            
             String idName = Server.Schema.ID.toString();
             String leftID = left.getFieldValue(idName).toString();
             int index = leftID.indexOf(Server.ID_CHUNK_SEP);

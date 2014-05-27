@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.File;
  */
 class KeywordSearchFilterNode extends FilterNode {
 
-    KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original) {
+    KeywordSearchFilterNode(HighlightedTextMarkup highlights, Node original) {
         super(original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
     }
 
