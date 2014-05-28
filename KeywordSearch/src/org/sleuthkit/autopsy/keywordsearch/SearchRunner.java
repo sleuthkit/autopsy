@@ -38,15 +38,11 @@ import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Singleton keyword search manager:
@@ -60,6 +56,8 @@ public final class SearchRunner {
     private Ingester ingester = null;
     private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
+    
+    // maps a jobID to the search
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
     
     SearchRunner() {
@@ -79,26 +77,26 @@ public final class SearchRunner {
     }
     
     /**
-     *
-     * @param jobId
-     * @param dataSourceId
-     * @param keywordListNames
+     * Add a new job.  Searches will be periodically performed after this is called. 
+     * @param jobId Job ID that this is associated with
+     * @param dataSourceId Data source that is being indexed and that searches should be restricted to. 
+     * @param keywordListNames List of keyword lists that will be searched. List contents will be refreshed each search.
      */
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
-        if (!jobs.containsKey(jobId)) {
+        if (jobs.containsKey(jobId) == false) {
             logger.log(Level.INFO, "Adding job {0}", jobId); //NON-NLS
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
             jobs.put(jobId, jobData);         
         }
         
+        // keep track of how many threads / module instances from this job have asked for this
         jobs.get(jobId).incrementModuleReferenceCount();
         
-        if (jobs.size() > 0) {
+        // start the timer, if needed
+        if ((jobs.size() > 0) && (updateTimerRunning == false)) {
             final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
-            if (!updateTimerRunning) {
-                updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
-                updateTimerRunning = true;
-            }
+            updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
+            updateTimerRunning = true;
         }
     }
     
@@ -116,7 +114,7 @@ public final class SearchRunner {
                 return;
             }
             
-            // Only do final search if this is the last module in this job to call endJob()
+            // Only do final search if this is the last module/thread in this job to call endJob()
             if(job.decrementModuleReferenceCount() == 0) {
                 jobs.remove(jobId);
                 readyForFinalSearch = true;
@@ -157,8 +155,8 @@ public final class SearchRunner {
     }
     
     /**
-     * Add these lists to all of the jobs
-     * @param keywordListName 
+     * Add these lists to all of the jobs.  Used when user wants to search for a list while ingest has already started. 
+     * @param keywordListNames
      */
     public synchronized void addKeywordListsToAllJobs(List<String> keywordListNames) {
         for(String listName : keywordListNames) {
@@ -178,7 +176,7 @@ public final class SearchRunner {
         // Signal a potential change in number of text_ingested files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-            KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
+            KeywordSearch.fireNumIndexedFilesChange(null, numIndexedFiles);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex); //NON-NLS
         }
@@ -355,6 +353,7 @@ public final class SearchRunner {
         private SearchJobInfo job;
         private List<Keyword> keywords; //keywords to search
         private List<String> keywordListNames; // lists currently being searched
+        private List<KeywordList> keywordLists;
         private Map<String, KeywordList> keywordToList; //keyword to list name mapping
         private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(SearchRunner.Searcher.class.getName());
@@ -365,6 +364,7 @@ public final class SearchRunner {
             keywordListNames = job.getKeywordListNames();
             keywords = new ArrayList<>();
             keywordToList = new HashMap<>();
+            keywordLists = new ArrayList<>();
             //keywords are populated as searcher runs
         }
 
@@ -460,7 +460,7 @@ public final class SearchRunner {
 
                     // calculate new results by substracting results already obtained in this ingest
                     // this creates a map of each keyword to the list of unique files that have that hit. 
-                    QueryResults newResults = filterResults(queryResults, list);
+                    QueryResults newResults = filterResults(queryResults);
 
                     if (!newResults.getKeywords().isEmpty()) {
 
@@ -480,7 +480,7 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched].progress(list.getName() + ": " + queryDisplayStr, unitProgress);
         
                         // Create blackboard artifacts                
-                        newArtifacts = queryResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, list.getIngestMessages());
+                        newArtifacts = newResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, list.getIngestMessages());
                         
                     } //if has results
 
@@ -532,10 +532,11 @@ public final class SearchRunner {
 
             keywords.clear();
             keywordToList.clear();
-            
+            keywordLists.clear();
 
             for (String name : keywordListNames) {
                 KeywordList list = loader.getList(name);
+                keywordLists.add(list);
                 for (Keyword k : list.getKeywords()) {
                     keywords.add(k);
                     keywordToList.put(k.getQuery(), list);
@@ -559,8 +560,9 @@ public final class SearchRunner {
 
         //calculate new results but substracting results already obtained in this ingest
         //update currentResults map with the new results
-        private QueryResults filterResults(QueryResults queryResult, KeywordList keywordList) {
-            QueryResults newResults = new QueryResults(queryResult.getQuery(), keywordList);
+        private QueryResults filterResults(QueryResults queryResult) {
+            
+            QueryResults newResults = new QueryResults(queryResult.getQuery(), queryResult.getKeywordList());
 
             for (Keyword keyword : queryResult.getKeywords()) {
                 List<ContentHit> queryTermResults = queryResult.getResults(keyword);
