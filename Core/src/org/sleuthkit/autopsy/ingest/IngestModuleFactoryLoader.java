@@ -68,10 +68,8 @@ final class IngestModuleFactoryLoader {
         }
 
         // Kick out the sample module factories.
-        if (Version.getBuildType() == Version.Type.RELEASE) {        
             moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory");
-            moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory");
-        }
+//            moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory"); // RJCTODO: Restore
         
         // Do the core ingest module ordering hack described above.
         ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
