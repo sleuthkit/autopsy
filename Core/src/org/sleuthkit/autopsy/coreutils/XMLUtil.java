@@ -144,7 +144,6 @@ public class XMLUtil {
      * @param xsdPath the full path to the file to validate against
      */
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = loadDoc(clazz, xmlPath);
         if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
             Logger.getLogger(clazz.getName()).log(Level.WARNING, "Error loading XML file: could not validate against [{0}], results may not be accurate", xsdPath); //NON-NLS

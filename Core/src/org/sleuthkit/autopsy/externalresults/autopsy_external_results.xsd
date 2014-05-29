@@ -7,7 +7,7 @@
                 <xs:element minOccurs="0" maxOccurs="unbounded" name="artifacts">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element maxOccurs="unbounded" name="artifact">
+                            <xs:element minOccurs="0" maxOccurs="unbounded" name="artifact">
                                 <xs:complexType>
                                     <xs:sequence>
                                         <xs:element minOccurs="0" maxOccurs="1" name="file">

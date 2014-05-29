@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this fileOnDisk except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -49,24 +49,23 @@ public class ExternalResultsImporter {
     private static final String EVENT_STRING = "External Results";
 
     /**
-     * Import results for a data source from an XML file (see
+     * Import results for a data source from an XML fileOnDisk (see
      * org.sleuthkit.autopsy.externalresults.autopsy_external_results.xsd).
      *
      * @param dataSource A data source.
-     * @param resultsXmlPath Path to an XML file containing results (e.g.,
+     * @param resultsXmlPath Path to an XML fileOnDisk containing results (e.g.,
      * blackboard artifacts, derived files, reports) from the data source.
      */
     public static void importResultsFromXML(Content dataSource, String resultsXmlPath) {
-        ExternalResults results = new ExternalResultsXMLParser(resultsXmlPath).parse();
+        ExternalResults results = new ExternalResultsXMLParser(dataSource, resultsXmlPath).parse();
         generateDerivedFiles(dataSource, results);
-        generateBlackboardItems(dataSource, results);
-        generateReportRecords(results);
+        importArtifacts(dataSource, results);
+        importReports(results);
     }
 
     /**
-     * Add derived files. This should be called before generateBlackboardItems()
-     * in case any of the new blackboard artifacts refer to expected derived
-     * files.
+     * Add derived files. This should be called before importArtifacts() in case
+     * any of the new blackboard artifacts refer to expected derived files.
      *
      * @param results
      * @param dataSource
@@ -74,23 +73,20 @@ public class ExternalResultsImporter {
     private static void generateDerivedFiles(Content dataSource, ExternalResults results) {
         try {
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-            for (ExternalResults.DerivedFileData derivedFile : results.getDerivedFiles()) {
-                String path = derivedFile.localPath;
-                File fileObj = new File(path);
-                if (fileObj.exists()) {
-                    String fileName = path;
-                    int charPos = path.lastIndexOf(File.separator);
-                    if (charPos > 0) {
-                        fileName = path.substring(charPos + 1);
-                    }
-
-                    // Get a parent object for the new derived object
+            for (ExternalResults.DerivedFile derivedFileResult : results.getDerivedFiles()) {
+                String path = derivedFileResult.getLocalPath();
+                File fileOnDisk = new File(path);
+                if (fileOnDisk.exists()) {
+                    // Get a parent object.
                     AbstractFile parentFile;
-                    if (!derivedFile.parentPath.isEmpty()) {
-                        parentFile = findFileInDatabase(derivedFile.parentPath);
-                    } else { //if no parent specified, try to use the root directory (//)                        
-                        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(dataSource, "");
-                        parentFile = files.get(0);
+                    if (!derivedFileResult.getParentPath().isEmpty()) {
+                        parentFile = findFileInDatabase(derivedFileResult.getParentPath());
+                    } else {
+                        // RJCTODO: Create a virtual folder for the data source, if necessary. Make that
+                        // folder the parent.
+//                        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findFiles(dataSource, "");
+//                        parentFile = files.get(0);
+                        parentFile = null;
                     }
 
                     if (parentFile != null) {
@@ -103,18 +99,20 @@ public class ExternalResultsImporter {
                                 Path pathRelative = pathBase.relativize(pathTo);
                                 relPath = pathRelative.toString();
                             } catch (IllegalArgumentException ex) {
-                                logger.log(Level.WARNING, "Derived file {0} path may be incorrect. The derived file object will still be added to the database.", fileName);
+                                // RJCTODO: Fix
+//                                logger.log(Level.WARNING, "Derived file {0} path may be incorrect. The derived file object will still be added to the database.", fileName);
                             }
                         }
 
-                        // Make a new derived file object in the database. Note: do not currently have file times for derived files.
-                        DerivedFile df = fileManager.addDerivedFile(fileName, relPath, fileObj.length(),
-                                0, 0, 0, 0,
+                        DerivedFile derivedFile = fileManager.addDerivedFile(fileOnDisk.getName(), relPath, fileOnDisk.length(),
+                                0, 0, 0, 0, // Do not currently have fileOnDisk times for derived files.
                                 true, parentFile, "", EVENT_STRING, "", "");
 
-                        if (df != null) {
-                            IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(df));
+                        if (derivedFile != null) {
+                            IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(derivedFile));
                         }
+                    } else {
+                        // RJCTODO: Emit a warning or get rid of the condition.
                     }
                 }
             }
@@ -129,72 +127,68 @@ public class ExternalResultsImporter {
      * @param results
      * @param dataSource
      */
-    private static void generateBlackboardItems(Content dataSource, ExternalResults results) {
-        for (ExternalResults.ArtifactData art : results.getArtifacts()) {
+    private static void importArtifacts(Content dataSource, ExternalResults results) {
+        for (ExternalResults.Artifact art : results.getArtifacts()) {
             try {
-                int bbArtTypeId;
-                BlackboardArtifact.ARTIFACT_TYPE stdArtType = isStandardArtifactType(art.typeStr);
+                // Get the artifact type id if defined, or create a new 
+                // user-defined artifact type.
+                int artifactTypeId;
+                BlackboardArtifact.ARTIFACT_TYPE stdArtType = isStandardArtifactType(art.getType());
                 if (stdArtType != null) {
-                    bbArtTypeId = stdArtType.getTypeID();
+                    artifactTypeId = stdArtType.getTypeID();
                 } else {
-                    // assume it's user defined
-                    bbArtTypeId = Case.getCurrentCase().getSleuthkitCase().addArtifactType(art.typeStr, art.typeStr);
+                    artifactTypeId = Case.getCurrentCase().getSleuthkitCase().addArtifactType(art.getType(), art.getType());
                 }
 
                 Collection<BlackboardAttribute> bbAttributes = new ArrayList<>();
-                for (ExternalResults.AttributeData attr : art.attributes) {
+                for (ExternalResults.ArtifactAttribute attr : art.getAttributes()) {
                     int bbAttrTypeId;
-                    BlackboardAttribute.ATTRIBUTE_TYPE stdAttrType = isStandardAttributeType(attr.typeStr);
+                    BlackboardAttribute.ATTRIBUTE_TYPE stdAttrType = isStandardAttributeType(attr.getType());
                     if (stdAttrType != null) {
                         bbAttrTypeId = stdAttrType.getTypeID();
                     } else {
-                        // assume it's user defined
-                        bbAttrTypeId = Case.getCurrentCase().getSleuthkitCase().addAttrType(attr.typeStr, attr.typeStr);
+                        // assume it's user defined RJCTODO fix
+                        bbAttrTypeId = Case.getCurrentCase().getSleuthkitCase().addAttrType(attr.getType(), attr.getType());
                     }
 
-                    // Add all attribute values
-                    Set<String> valueTypes = attr.valueStr.keySet();
-                    for (String valueType : valueTypes) {
-                        String valueString = attr.valueStr.get(valueType);
-                        BlackboardAttribute bbAttr = null;
-                        switch (valueType) {
-                            case "text": //NON-NLS
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, valueString);
-                                break;
-                            case "int32": //NON-NLS
-                                int intValue = Integer.parseInt(valueString);
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, intValue);
-                                break;
-                            case "int64": //NON-NLS
-                                long longValue = Long.parseLong(valueString);
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, longValue);
-                                break;
-                            case "double": //NON-NLS
-                                double doubleValue = Double.parseDouble(valueString);
-                                bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.source, doubleValue);
-                                break;
-                            default:
-                                logger.log(Level.WARNING, "Ignoring invalid attribute value type {0}", valueType);
-                                break;
-                        }
-                        if (bbAttr != null) {
-                            bbAttributes.add(bbAttr);
-                        }
+                    BlackboardAttribute bbAttr = null;
+                    switch (attr.getValueType()) {
+                        case "text": //NON-NLS
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.getSourceModule(), attr.getValue());
+                            break;
+                        case "int32": //NON-NLS
+                            int intValue = Integer.parseInt(attr.getValue());
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.getSourceModule(), intValue);
+                            break;
+                        case "int64": //NON-NLS
+                            long longValue = Long.parseLong(attr.getValue());
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.getSourceModule(), longValue);
+                            break;
+                        case "double": //NON-NLS
+                            double doubleValue = Double.parseDouble(attr.getValue());
+                            bbAttr = new BlackboardAttribute(bbAttrTypeId, attr.getSourceModule(), doubleValue);
+                            break;
+                        default:
+                            logger.log(Level.WARNING, "Ignoring invalid attribute value type {0}", attr.getValueType());
+                            break;
+                    }
+                    if (bbAttr != null) {
+                        bbAttributes.add(bbAttr);
                     }
                 }
 
-                // Get associated file (if any) to use as the content obj to attach the artifact to
+                // Get associated fileOnDisk (if any) to use as the content obj to attach the artifact to
                 Content currContent = null;
-                if (art.files.size() > 0) {
-                    currContent = findFileInDatabase(art.files.get(0).path);
+                if (art.getSourceFilePath().isEmpty()) {
+                    currContent = findFileInDatabase(art.getSourceFilePath());
                 }
 
-                // If no associated file, use current data source itself
+                // If no associated fileOnDisk, use current data source itself
                 if (currContent == null) {
                     currContent = dataSource;
                 }
 
-                BlackboardArtifact bbArt = currContent.newArtifact(bbArtTypeId);
+                BlackboardArtifact bbArt = currContent.newArtifact(artifactTypeId);
                 bbArt.addAttributes(bbAttributes);
                 if (stdArtType != null) {
                     IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(EVENT_STRING, stdArtType)); //NON-NLS
@@ -205,18 +199,12 @@ public class ExternalResultsImporter {
         }
     }
 
-    /**
-     * Add report info to the database
-     *
-     * @param results
-     * @param dataSource
-     */
-    private static void generateReportRecords(ExternalResults results) {
-        try {
-            for (ExternalResults.ReportData report : results.getReports()) {
-                String reportPath = report.localPath;
-                File fileObj = new File(reportPath);
-                if (fileObj.exists()) {
+    private static void importReports(ExternalResults results) {
+        for (ExternalResults.Report report : results.getReports()) {
+            try {
+                String reportPath = report.getLocalPath();
+                File reportFile = new File(reportPath);
+                if (reportFile.exists()) {
                     // Try to get a relative local path
                     String relPath = reportPath;
                     Path pathTo = Paths.get(reportPath);
@@ -231,12 +219,12 @@ public class ExternalResultsImporter {
                     }
 
                     if (!relPath.isEmpty()) {
-                        Case.getCurrentCase().getSleuthkitCase().addReport(relPath, report.displayName);
+                        Case.getCurrentCase().getSleuthkitCase().addReport(relPath, report.getDisplayName());
                     }
                 }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, ex.getLocalizedMessage());
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, ex.getLocalizedMessage());
         }
     }
 
@@ -274,7 +262,7 @@ public class ExternalResultsImporter {
     /**
      * util function
      *
-     * @param filePath full path including file or dir name
+     * @param filePath full path including fileOnDisk or dir name
      * @return AbstractFile
      * @throws TskCoreException
      */

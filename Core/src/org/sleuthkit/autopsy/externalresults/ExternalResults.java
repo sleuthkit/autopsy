@@ -16,127 +16,175 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.externalresults;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 
 /**
  *
  */
 final class ExternalResults {
-    private final List<String> dataSources = new ArrayList<>();
-    private final List<ArtifactData> artifacts = new ArrayList<>();
-    private final List<ReportData> reports = new ArrayList<>();
-    private final List<DerivedFileData> derivedFiles = new ArrayList<>();
-    
-    List<String> getDataSources() {
-        return dataSources;
-    }
-    
-    List<ArtifactData> getArtifacts() {
-        return artifacts;
-    }
-    
-    List<ReportData> getReports() {
-        return reports;
-    }
-   
-    List<DerivedFileData> getDerivedFiles() {
-        return derivedFiles;
-    }    
-    
-    void addDataSource(String dataSrc) {
-        dataSources.add(dataSrc);
-    }
-    
-    int addArtifact(String typeStr) {
-        ArtifactData d = new ArtifactData();
-        d.typeStr = typeStr;
-        artifacts.add(d);
-        return artifacts.size() - 1;
-    }
-    
-    int addAttribute(int artIndex, String typeStr) {
-        ArtifactData art = artifacts.get(artIndex);
-        AttributeData d = new AttributeData();
-        d.typeStr = typeStr;
-        art.attributes.add(d);
-        return art.attributes.size() - 1;      
-    }
-    
-    void addAttributeValue(int artIndex, int attrIndex, String valueStr, String valueType) {
-        ArtifactData art = artifacts.get(artIndex);
-        AttributeData attr = art.attributes.get(attrIndex);        
-        if (valueType.isEmpty()) {
-            valueType = AttributeData.DEFAULT_VALUE_TYPE;
+
+    // RJCTODO: Consider adding data source Content object to results
+    private final List<Artifact> artifacts = new ArrayList<>();
+    private final List<Report> reports = new ArrayList<>();
+    private final List<DerivedFile> derivedFiles = new ArrayList<>();
+
+    Artifact addArtifact(String type, String sourceFilePath) {
+        if (type.isEmpty()) {
+            throw new IllegalArgumentException("type argument is empty");
         }
-        attr.valueStr.put(valueType, valueStr);
-    }    
-    
-    void addAttributeSource(int artIndex, int attrIndex, String source) {
-        ArtifactData art = artifacts.get(artIndex);
-        AttributeData attr = art.attributes.get(attrIndex);
-        attr.source = source;
+        if (sourceFilePath.isEmpty()) {
+            throw new IllegalArgumentException("source argument is empty");
+        }
+        Artifact artifact = new Artifact(type, sourceFilePath);
+        artifacts.add(artifact);
+        return artifact;
     }
- 
-    void addAttributeContext(int artIndex, int attrIndex, String context) {
-        ArtifactData art = artifacts.get(artIndex);
-        AttributeData attr = art.attributes.get(attrIndex);
-    }    
-    
-    int addArtifactFile(int artIndex, String path) {
-        ArtifactData art = artifacts.get(artIndex);
-        FileData d = new FileData();
-        d.path = path;
-        art.files.add(d);
-        return art.files.size() - 1;      
+
+    List<Artifact> getArtifacts() {
+        return Collections.unmodifiableList(artifacts);
     }
-    
-    void addReport(String name, String displayName, String localPath) {
-        ReportData d = new ReportData();
-        d.name = name;
-        d.displayName = displayName;
-        d.localPath = localPath;
-        reports.add(d);
+
+    void addReport(String displayName, String localPath) {
+        if (displayName.isEmpty()) {
+            throw new IllegalArgumentException("displayName argument is empty");
+        }
+        if (localPath.isEmpty()) {
+            throw new IllegalArgumentException("localPath argument is empty");
+        }
+        Report report = new Report(displayName, localPath);
+        reports.add(report);
     }
-    
+
+    List<Report> getReports() {
+        return Collections.unmodifiableList(reports);
+    }
+
     void addDerivedFile(String localPath, String parentPath) {
-        DerivedFileData d = new DerivedFileData();
-        d.localPath = localPath;
-        d.parentPath = parentPath;
-        derivedFiles.add(d);
-    }    
-    
-    // Data structures
-    
-    static class ArtifactData {
-        public String typeStr;
-        public List<AttributeData> attributes = new ArrayList<>();
-        public List<FileData> files = new ArrayList<>();
+        if (localPath.isEmpty()) {
+            throw new IllegalArgumentException("localPath argument is empty");
+        }
+        if (parentPath.isEmpty()) {
+            throw new IllegalArgumentException("parentPath argument is empty");
+        }
+        DerivedFile file = new DerivedFile(localPath, parentPath);
+        derivedFiles.add(file);
     }
-    
-    static class AttributeData {
-        public static final String DEFAULT_VALUE_TYPE = "text";
-        public String typeStr;        
-        public HashMap<String, String> valueStr = new HashMap<>(); //valueType determines how to interpret valueStr
-        public String source;
-    }    
-    
-    static class FileData {
-        public String path;   
+
+    List<DerivedFile> getDerivedFiles() {
+        return Collections.unmodifiableList(derivedFiles);
     }
-    
-    static class ReportData {
-        public String name;
-        public String displayName;
-        public String localPath;
+
+    static final class Artifact {
+
+        private final String type;
+        private final String sourceFilePath;
+        private final ArrayList<ArtifactAttribute> attributes = new ArrayList<>();
+
+        Artifact(String type, String sourceFilePath) {
+            this.type = type;
+            this.sourceFilePath = sourceFilePath;
+        }
+
+        String getType() {
+            return type;
+        }
+
+        String getSourceFilePath() {
+            return sourceFilePath;
+        }
+
+        void addAttribute(String type, String value, String valueType, String sourceModule) {
+            if (type.isEmpty()) {
+                throw new IllegalArgumentException("type argument is empty");
+            }
+            if (value.isEmpty()) {
+                throw new IllegalArgumentException("value argument is empty");
+            }
+            if (value.isEmpty()) {
+                valueType = ArtifactAttribute.DEFAULT_VALUE_TYPE;
+            }
+            if (sourceModule.isEmpty()) {
+                throw new IllegalArgumentException("sourceModule argument is empty");
+            }
+            attributes.add(new ArtifactAttribute(type, value, valueType, sourceModule));
+        }
+
+        List<ArtifactAttribute> getAttributes() {
+            return Collections.unmodifiableList(attributes);
+        }
     }
+
+    static final class ArtifactAttribute {
+
+        private static final String DEFAULT_VALUE_TYPE = "text";
+        private final String type;
+        private final String valueType;
+        private final String value;
+        private final String sourceModule;
+
+        private ArtifactAttribute(String type, String value, String valueType, String sourceModule) {
+            this.type = type;
+            this.value = value;
+            this.valueType = valueType;
+            this.sourceModule = sourceModule;
+        }
+
+        String getType() {
+            return type;
+        }
         
-    static class DerivedFileData {
-        public String localPath;
-        public String parentPath;
-    }        
+        String getValue() {
+            return value;
+        }
+
+        String getValueType() {
+            return valueType;
+        }
+
+        String getSourceModule() {
+            return sourceModule;
+        }
+    }
+
+    static final class Report {
+
+        private final String displayName;
+        private final String localPath;
+
+        Report(String displayName, String localPath) {
+            this.displayName = displayName;
+            this.localPath = localPath;
+        }
+
+        String getDisplayName() {
+            return displayName;
+        }
+
+        String getLocalPath() {
+            return localPath;
+        }
+    }
+
+    static final class DerivedFile {
+
+        private final String localPath;
+        private final String parentPath;
+
+        DerivedFile(String localPath, String parentPath) {
+            this.localPath = localPath;
+            this.parentPath = parentPath;
+        }
+
+        String getLocalPath() {
+            return localPath;
+        }
+
+        String getParentPath() {
+            return parentPath;
+        }
+    }
 }

@@ -190,7 +190,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         // artifact is usually specified. If an artifact element has no file
         // element, the data source is used as the default source file for the
         // artifact.
-        Element fileElement = doc.createElement(ExternalResultsXML.FILE_ELEM.toString());
+        Element fileElement = doc.createElement(ExternalResultsXML.SOURCE_FILE_ELEM.toString());
         artifactElement.appendChild(fileElement);
         Element pathElement = doc.createElement(ExternalResultsXML.PATH_ELEM.toString());
         pathElement.setTextContent(dataSourcePath);
@@ -212,7 +212,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
 
         // Add an optional source module element to the artifct attribute 
         // element.
-        Element artifactAttrSourceElement = doc.createElement(ExternalResultsXML.SRC_ELEM.toString());
+        Element artifactAttrSourceElement = doc.createElement(ExternalResultsXML.SOURCE_MODULE_ELEM.toString());
         artifactAttrSourceElement.setTextContent(moduleName);
         artifactAttrElement.appendChild(artifactAttrSourceElement);
 

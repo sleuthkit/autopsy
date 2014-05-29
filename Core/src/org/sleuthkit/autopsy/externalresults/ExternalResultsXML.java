@@ -26,17 +26,17 @@ public enum ExternalResultsXML {
     DATA_SRC_ELEM("data_source"), //NON-NLS
     ARTIFACTS_LIST_ELEM("artifacts"), //NON-NLS
     ARTIFACT_ELEM("artifact"), //NON-NLS
-    FILE_ELEM("file"), //NON-NLS
+    SOURCE_FILE_ELEM("source_file"), //NON-NLS
     PATH_ELEM("path"), //NON-NLS
     ATTRIBUTE_ELEM("attribute"), //NON-NLS
     VALUE_ELEM("value"), //NON-NLS
-    SRC_ELEM("source"), //NON-NLS
+    SOURCE_MODULE_ELEM("source_module"), //NON-NLS
     REPORTS_LIST_ELEM("reports"), //NON-NLS
     REPORT_ELEM("report"), //NON-NLS
     DISPLAY_NAME_ELEM("display_name"), //NON-NLS
+    LOCAL_PATH_ELEM("local_path"), //NON-NLS
     DERIVED_FILES_LIST_ELEM("derived_files"), //NON-NLS
     DERIVED_FILE_ELEM("derived_file"), //NON-NLS
-    LOCAL_PATH_ELEM("local_path"), //NON-NLS
     PARENT_PATH_ELEM("parent_path"), //NON-NLS
     TYPE_ATTR("type"), //NON-NLS
     NAME_ATTR("name"), //NON-NLS 

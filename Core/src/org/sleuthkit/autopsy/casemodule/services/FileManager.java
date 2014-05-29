@@ -158,7 +158,7 @@ public class FileManager implements Closeable {
      *
      * @param fileName        file name the derived file
      * @param localPath       local path of the derived file, including the file
-     *                        name. The path is relative to the database path.
+     *                        name. The path is relative to the case folder.
      * @param size            size of the derived file in bytes
      * @param ctime
      * @param crtime
