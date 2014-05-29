@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.casemodule;
 
 
+import org.sleuthkit.autopsy.ingest.IngestJobConfigurator;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Window;
@@ -33,7 +33,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
@@ -47,7 +46,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
-    private IngestConfigurator ingestConfig;
+    private IngestJobConfigurator ingestConfig;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -74,8 +73,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
         
-        ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        List<String> messages = ingestConfig.setContext(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+        ingestConfig = new IngestJobConfigurator(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+        List<String> messages = ingestConfig.getIngestJobConfigWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -96,7 +95,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     @Override
     public Component getComponent() {
         if (component == null) {
-            component = new AddImageWizardIngestConfigVisual(ingestConfig.getIngestConfigPanel());
+            component = new AddImageWizardIngestConfigVisual(ingestConfig.getIngestJobConfigPanel());
         }
         return component;
     }
@@ -164,7 +163,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        JButton cancel = new JButton("Cancel");
+        JButton cancel = new JButton(
+                NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text"));
         cancel.setEnabled(false);
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupTask = null;
@@ -188,8 +188,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //save previously selected config
-        ingestConfig.save();
+        ingestConfig.saveIngestJobConfig();
+
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();
@@ -202,8 +202,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            ingestConfig.setContent(newContents);
-            ingestConfig.start();
+            ingestConfig.startIngestJobs(newContents);
             progressPanel.setStateFinished();
 
         }

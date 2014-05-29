@@ -45,20 +45,20 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset());
-        autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
+        autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset()); //NON-NLS
+        autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding()); //NON-NLS
 
-        autopsyLogger.log(Level.INFO, "Java runtime version: " + Version.getJavaRuntimeVersion());
+        autopsyLogger.log(Level.INFO, "Java runtime version: " + Version.getJavaRuntimeVersion()); //NON-NLS
 
-        autopsyLogger.log(Level.INFO, "Netbeans Platform build: " + Version.getNetbeansBuild());
+        autopsyLogger.log(Level.INFO, "Netbeans Platform build: " + Version.getNetbeansBuild()); //NON-NLS
 
-        autopsyLogger.log(Level.INFO, "Application name: " + Version.getName()
-                + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
+        autopsyLogger.log(Level.INFO, "Application name: " + Version.getName() //NON-NLS
+                + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType()); //NON-NLS NON-NLS
         
-        autopsyLogger.log(Level.INFO, "os.name: " + System.getProperty("os.name"));
-        autopsyLogger.log(Level.INFO, "os.arch: " + System.getProperty("os.arch"));
-        autopsyLogger.log(Level.INFO, "PID: " + PlatformUtil.getPID());
-        autopsyLogger.log(Level.INFO, "Process Virtual Memory Used: " + PlatformUtil.getProcessVirtualMemoryUsed());
+        autopsyLogger.log(Level.INFO, "os.name: " + System.getProperty("os.name")); //NON-NLS
+        autopsyLogger.log(Level.INFO, "os.arch: " + System.getProperty("os.arch")); //NON-NLS
+        autopsyLogger.log(Level.INFO, "PID: " + PlatformUtil.getPID()); //NON-NLS
+        autopsyLogger.log(Level.INFO, "Process Virtual Memory Used: " + PlatformUtil.getProcessVirtualMemoryUsed()); //NON-NLS
         
         
         

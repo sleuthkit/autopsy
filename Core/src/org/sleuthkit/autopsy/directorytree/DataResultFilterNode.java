@@ -33,43 +33,40 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
-import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ContentTagTypeNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.AccountNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.FolderNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.TypeNode;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
-import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
+import org.sleuthkit.autopsy.datamodel.HashsetHits;
+import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetNameNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.InterestingHits;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.TermNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.ListNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.TagNameNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -345,7 +342,7 @@ public class DataResultFilterNode extends FilterNode {
                     }
                 }
             } catch (TskException ex) {
-                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex);
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex); //NON-NLS
             }
             return c;
         }
@@ -367,47 +364,47 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(ExtractedContentNode ecn) {
+        public AbstractAction visit(ExtractedContent.RootNode ecn) {
             return openChild(ecn);
         }
 
         @Override
-        public AbstractAction visit(KeywordHitsRootNode khrn) {
+        public AbstractAction visit(KeywordHits.RootNode khrn) {
             return openChild(khrn);
         }
 
         @Override
-        public AbstractAction visit(HashsetHitsRootNode hhrn) {
+        public AbstractAction visit(HashsetHits.RootNode hhrn) {
             return openChild(hhrn);
         }
 
         @Override
-        public AbstractAction visit(HashsetHitsSetNode hhsn) {
+        public AbstractAction visit(HashsetNameNode hhsn) {
             return openChild(hhsn);
         }
         
         @Override
-        public AbstractAction visit(InterestingHitsRootNode iarn) {
+        public AbstractAction visit(InterestingHits.RootNode iarn) {
             return openChild(iarn);
         }
 
         @Override
-        public AbstractAction visit(InterestingHitsSetNode iasn) {
+        public AbstractAction visit(InterestingHits.SetNameNode iasn) {
             return openChild(iasn);
         }
         
         @Override
-        public AbstractAction visit(EmailExtractedRootNode eern) {
+        public AbstractAction visit(EmailExtracted.RootNode eern) {
             return openChild(eern);
         }
 
         @Override
-        public AbstractAction visit(EmailExtractedAccountNode eean) {
+        public AbstractAction visit(AccountNode eean) {
             return openChild(eean);
         }
 
         @Override
-        public AbstractAction visit(EmailExtractedFolderNode eefn) {
+        public AbstractAction visit(FolderNode eefn) {
             return openChild(eefn);
         }
 
@@ -443,22 +440,22 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(ArtifactTypeNode atn) {
+        public AbstractAction visit(TypeNode atn) {
             return openChild(atn);
         }
 
         @Override
-        public AbstractAction visit(TagNameNode node) {
+        public AbstractAction visit(Tags.TagNameNode node) {
             return openChild(node);
         }
 
         @Override
-        public AbstractAction visit(ContentTagTypeNode node) {
+        public AbstractAction visit(Tags.ContentTagTypeNode node) {
             return openChild(node);
         }
 
         @Override
-        public AbstractAction visit(BlackboardArtifactTagTypeNode node) {
+        public AbstractAction visit(Tags.BlackboardArtifactTagTypeNode node) {
             return openChild(node);
         }
                 
@@ -516,12 +513,12 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(KeywordHitsListNode khsn) {
+        public AbstractAction visit(ListNode khsn) {
             return openChild(khsn);
         }
 
         @Override
-        public AbstractAction visit(KeywordHitsKeywordNode khmln) {
+        public AbstractAction visit(TermNode khmln) {
             return openChild(khmln);
         }
 
@@ -555,7 +552,7 @@ public class DataResultFilterNode extends FilterNode {
                             sourceEm.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
                         } catch (PropertyVetoException ex) {
                             Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex);
+                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
                         }
                     }
                 }
@@ -580,7 +577,7 @@ public class DataResultFilterNode extends FilterNode {
                         sourceEm.setSelectedNodes(new Node[]{parentNode});
                     } catch (PropertyVetoException ex) {
                         Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                        logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
+                        logger.log(Level.WARNING, "Error: can't open the parent directory.", ex); //NON-NLS
                     }
                 }
             };

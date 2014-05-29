@@ -52,7 +52,6 @@ import org.openide.util.NbBundle;
      */
     protected void setStateFinished() {
         inProgressPanel.setVisible(false);
-        titleLabel.setText(ADDING_DATA_SOURCE_COMPLETE);
         donePanel.setVisible(true);
         //force repaint just in case
         validate();
@@ -142,7 +141,6 @@ import org.openide.util.NbBundle;
         donePanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
         viewLogButton = new javax.swing.JButton();
-        titleLabel = new javax.swing.JLabel();
         inProgressPanel = new javax.swing.JPanel();
         progressBar = new javax.swing.JProgressBar();
         progressLabel = new javax.swing.JLabel();
@@ -189,9 +187,6 @@ import org.openide.util.NbBundle;
                 .addComponent(viewLogButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.titleLabel.text")); // NOI18N
 
         progressBar.setIndeterminate(true);
 
@@ -245,7 +240,6 @@ import org.openide.util.NbBundle;
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(titleLabel)
                     .addComponent(inProgressPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(donePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 67, Short.MAX_VALUE))
@@ -253,9 +247,7 @@ import org.openide.util.NbBundle;
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(titleLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(34, 34, 34)
                 .addComponent(inProgressPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(donePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -279,7 +271,6 @@ import org.openide.util.NbBundle;
     protected javax.swing.JTextArea progressTextArea;
     protected javax.swing.JLabel statusLabel;
     protected javax.swing.JLabel subTitle1Label;
-    protected javax.swing.JLabel titleLabel;
     protected javax.swing.JButton viewLogButton;
     // End of variables declaration//GEN-END:variables
 }

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -37,11 +37,8 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.recentactivity.ExtractUSB.USBInfo;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -67,12 +64,14 @@ class ExtractRegistry extends Extract {
     private boolean rrFullFound = false; // true if we found the full version of regripper
     final private static String MODULE_VERSION = "1.0";
     private ExecUtil execRR;
+    private Content dataSource;
+    private IngestJobContext context;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
-        final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
+        final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper not found");
+            logger.log(Level.SEVERE, "RegRipper not found"); //NON-NLS
             rrFound = false;
             return;
         } else {
@@ -80,60 +79,52 @@ class ExtractRegistry extends Extract {
         }
         
         final String rrHome = rrRoot.getAbsolutePath();
-        logger.log(Level.INFO, "RegRipper home: " + rrHome);
+        logger.log(Level.INFO, "RegRipper home: {0}", rrHome); //NON-NLS
 
         if (PlatformUtil.isWindowsOS()) {
-            RR_PATH = rrHome + File.separator + "rip.exe";
+            RR_PATH = rrHome + File.separator + "rip.exe"; //NON-NLS
         } else {
-            RR_PATH = "perl " + rrHome + File.separator + "rip.pl";
+            RR_PATH = "perl " + rrHome + File.separator + "rip.pl"; //NON-NLS
         }
         
-        final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", ExtractRegistry.class.getPackage().getName(), false);
+        final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrFullRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper Full not found");
+            logger.log(Level.SEVERE, "RegRipper Full not found"); //NON-NLS
             rrFullFound = false;
         } else {
             rrFullFound = true;
         }
         
         final String rrFullHome = rrFullRoot.getAbsolutePath();
-        logger.log(Level.INFO, "RegRipper Full home: " + rrFullHome);
+        logger.log(Level.INFO, "RegRipper Full home: {0}", rrFullHome); //NON-NLS
 
         if (PlatformUtil.isWindowsOS()) {
-            RR_FULL_PATH = rrFullHome + File.separator + "rip.exe";
+            RR_FULL_PATH = rrFullHome + File.separator + "rip.exe"; //NON-NLS
         } else {
-            RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl";
+            RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl"; //NON-NLS
         }
     }
-
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
     
     /**
      * Search for the registry hives on the system.
-     * @param dataSource Data source to search for hives in.
-     * @return List of registry hives 
      */
-    private List<AbstractFile> findRegistryFiles(Content dataSource) {
+    private List<AbstractFile> findRegistryFiles() {
         List<AbstractFile> allRegistryFiles = new ArrayList<>();
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         
         // find the user-specific ntuser-dat files
         try {
-            allRegistryFiles.addAll(fileManager.findFiles(dataSource, "ntuser.dat"));
+            allRegistryFiles.addAll(fileManager.findFiles(dataSource, "ntuser.dat")); //NON-NLS
         } 
         catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file.");
+            logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file."); //NON-NLS
         }
 
         // find the system hives'
-        String[] regFileNames = new String[] {"system", "software", "security", "sam"};
+        String[] regFileNames = new String[] {"system", "software", "security", "sam"}; //NON-NLS
         for (String regFileName : regFileNames) {
             try {
-                allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config"));
+                allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config")); //NON-NLS
             } 
             catch (TskCoreException ex) {
                 String msg = NbBundle.getMessage(this.getClass(),
@@ -147,40 +138,37 @@ class ExtractRegistry extends Extract {
     
     /**
      * Identifies registry files in the database by mtimeItem, runs regripper on them, and parses the output.
-     * 
-     * @param dataSource
-     * @param controller 
      */
-    private void analyzeRegistryFiles(Content dataSource, IngestDataSourceWorkerController controller) {
-        List<AbstractFile> allRegistryFiles = findRegistryFiles(dataSource);
+    private void analyzeRegistryFiles() {        
+        List<AbstractFile> allRegistryFiles = findRegistryFiles();
         
         // open the log file
         FileWriter logFile = null;
         try {
-            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt");
+            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt"); //NON-NLS
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        ExtractUSB extrctr = new ExtractUSB();
+        UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
         
         int j = 0;
         for (AbstractFile regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
             String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
-            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++);
+            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++); //NON-NLS
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
+                logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                             this.getName(), regFileName));
                 continue;
             }
             
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
            
@@ -193,16 +181,16 @@ class ExtractRegistry extends Extract {
                 java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-            logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal);
+            logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal); //NON-NLS
             RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
             
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
             
             // parse the autopsy-specific output
             if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
-                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), extrctr) == false) {
+                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), usbMapper) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                                 this.getName(), regFileName));
@@ -238,7 +226,7 @@ class ExtractRegistry extends Extract {
                         try {
                             input.close();
                         } catch (IOException ex) {
-                            logger.log(Level.WARNING, "Failed to close reader.", ex);
+                            logger.log(Level.WARNING, "Failed to close reader.", ex); //NON-NLS
                         }
                     }
                     att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
@@ -285,23 +273,23 @@ class ExtractRegistry extends Extract {
 
         RegOutputFiles regOutputFiles = new RegOutputFiles();
         
-        if (regFilePath.toLowerCase().contains("system")) {
-            autopsyType = "autopsysystem";
-            fullType = "system";
+        if (regFilePath.toLowerCase().contains("system")) { //NON-NLS
+            autopsyType = "autopsysystem"; //NON-NLS
+            fullType = "system"; //NON-NLS
         } 
-        else if (regFilePath.toLowerCase().contains("software")) {
-            autopsyType = "autopsysoftware";
-            fullType = "software";
+        else if (regFilePath.toLowerCase().contains("software")) { //NON-NLS
+            autopsyType = "autopsysoftware"; //NON-NLS
+            fullType = "software"; //NON-NLS
         } 
-        else if (regFilePath.toLowerCase().contains("ntuser")) {
-            autopsyType = "autopsyntuser";
-            fullType = "ntuser";
+        else if (regFilePath.toLowerCase().contains("ntuser")) { //NON-NLS
+            autopsyType = "autopsyntuser"; //NON-NLS
+            fullType = "ntuser"; //NON-NLS
         }  
-        else if (regFilePath.toLowerCase().contains("sam")) {
-            fullType = "sam";
+        else if (regFilePath.toLowerCase().contains("sam")) { //NON-NLS
+            fullType = "sam"; //NON-NLS
         } 
-        else if (regFilePath.toLowerCase().contains("security")) {
-            fullType = "security";
+        else if (regFilePath.toLowerCase().contains("security")) { //NON-NLS
+            fullType = "security"; //NON-NLS
         } 
         else {
             return regOutputFiles;
@@ -312,19 +300,19 @@ class ExtractRegistry extends Extract {
             // TODO - add error messages
             Writer writer = null;
             try {
-                regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt";
-                logger.log(Level.INFO, "Writing RegRipper results to: " + regOutputFiles.autopsyPlugins);
+                regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
+                logger.log(Level.INFO, "Writing RegRipper results to: " + regOutputFiles.autopsyPlugins); //NON-NLS
                 writer = new FileWriter(regOutputFiles.autopsyPlugins);
                 execRR = new ExecUtil();
                 execRR.execute(writer, RR_PATH,
-                        "-r", regFilePath, "-f", autopsyType);
+                        "-r", regFilePath, "-f", autopsyType); //NON-NLS
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
+                logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile",
                                             this.getName()));
             } catch (InterruptedException ex) {
-                logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
+                logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile2",
                                             this.getName()));
@@ -333,7 +321,7 @@ class ExtractRegistry extends Extract {
                     try {
                         writer.close();
                     } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex);
+                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex); //NON-NLS
                     }
                 }
             }
@@ -343,19 +331,19 @@ class ExtractRegistry extends Extract {
         if (!fullType.isEmpty() && rrFullFound) {
             Writer writer = null;
             try {
-                regOutputFiles.fullPlugins = outFilePathBase + "-full.txt";
-                logger.log(Level.INFO, "Writing Full RegRipper results to: " + regOutputFiles.fullPlugins);
+                regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
+                logger.log(Level.INFO, "Writing Full RegRipper results to: " + regOutputFiles.fullPlugins); //NON-NLS
                 writer = new FileWriter(regOutputFiles.fullPlugins);
                 execRR = new ExecUtil();
                 execRR.execute(writer, RR_FULL_PATH,
-                        "-r", regFilePath, "-f", fullType);
+                        "-r", regFilePath, "-f", fullType); //NON-NLS
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex);
+                logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile3",
                                             this.getName()));
             } catch (InterruptedException ex) {
-                logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex);
+                logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile4",
                                             this.getName()));
@@ -364,7 +352,7 @@ class ExtractRegistry extends Extract {
                     try {
                         writer.close();
                     } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper full", ex);
+                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper full", ex); //NON-NLS
                     }
                 }
             }
@@ -374,7 +362,7 @@ class ExtractRegistry extends Extract {
     }
     
     // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
-    private boolean parseAutopsyPluginOutput(String regRecord, long orgId, ExtractUSB extrctr) {
+    private boolean parseAutopsyPluginOutput(String regRecord, long orgId, UsbDeviceIdMapper extrctr) {
         FileInputStream fstream = null;
         try {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
@@ -383,14 +371,14 @@ class ExtractRegistry extends Extract {
             File regfile = new File(regRecord);
             fstream = new FileInputStream(regfile);
             
-            String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next();
-            String startdoc = "<?xml version=\"1.0\"?><document>";
+            String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next(); //NON-NLS
+            String startdoc = "<?xml version=\"1.0\"?><document>"; //NON-NLS
             String result = regString.replaceAll("----------------------------------------", "");
-            result = result.replaceAll("\\n", "");
-            result = result.replaceAll("\\r", "");
-            result = result.replaceAll("'", "&apos;");
-            result = result.replaceAll("&", "&amp;");
-            String enddoc = "</document>";
+            result = result.replaceAll("\\n", ""); //NON-NLS
+            result = result.replaceAll("\\r", ""); //NON-NLS
+            result = result.replaceAll("'", "&apos;"); //NON-NLS
+            result = result.replaceAll("&", "&amp;"); //NON-NLS
+            String enddoc = "</document>"; //NON-NLS
             String stringdoc = startdoc + result + enddoc;
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
@@ -404,7 +392,7 @@ class ExtractRegistry extends Extract {
                 
                 String dataType = tempnode.getNodeName();
 
-                NodeList timenodes = tempnode.getElementsByTagName("mtime");
+                NodeList timenodes = tempnode.getElementsByTagName("mtime"); //NON-NLS
                 Long mtime = null;
                 if (timenodes.getLength() > 0) {
                     Element timenode = (Element) timenodes.item(0);
@@ -415,11 +403,11 @@ class ExtractRegistry extends Extract {
                         String Tempdate = mtime.toString();
                         mtime = Long.valueOf(Tempdate) / 1000;
                     } catch (ParseException ex) {
-                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.");
+                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry."); //NON-NLS
                     }
                 }
 
-                NodeList artroots = tempnode.getElementsByTagName("artifacts");
+                NodeList artroots = tempnode.getElementsByTagName("artifacts"); //NON-NLS
                 if (artroots.getLength() == 0) {
                     // If there isn't an artifact node, skip this entry
                     continue;
@@ -437,7 +425,7 @@ class ExtractRegistry extends Extract {
                         String value = artnode.getTextContent().trim();
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
 
-                        if ("recentdocs".equals(dataType)) {
+                        if ("recentdocs".equals(dataType)) { //NON-NLS
                             //               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
@@ -445,19 +433,19 @@ class ExtractRegistry extends Extract {
                             //               bbart.addAttributes(bbattributes);
                             // @@@ BC: Why are we ignoring this...
                         } 
-                        else if ("usb".equals(dataType)) {
+                        else if ("usb".equals(dataType)) { //NON-NLS
                             try {      
-                                Long usbMtime = Long.parseLong(artnode.getAttribute("mtime"));
+                                Long usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
                                 usbMtime = Long.valueOf(usbMtime.toString());
 
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                                                                          NbBundle.getMessage(this.getClass(),
                                                                                              "ExtractRegistry.parentModuleName.noSpace"), usbMtime));
-                                String dev = artnode.getAttribute("dev");       
+                                String dev = artnode.getAttribute("dev"); //NON-NLS
                                 String model = dev; 
-                                if (dev.toLowerCase().contains("vid")) {
-                                    USBInfo info = extrctr.get(dev);
+                                if (dev.toLowerCase().contains("vid")) { //NON-NLS
+                                    USBInfo info = extrctr.parseAndLookup(dev);
                                     if(info.getVendor()!=null)
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
                                                                                  NbBundle.getMessage(this.getClass(),
@@ -473,17 +461,17 @@ class ExtractRegistry extends Extract {
                                                                                              "ExtractRegistry.parentModuleName.noSpace"), value));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");
+                                logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS
                             }
                         } 
-                        else if ("uninstall".equals(dataType)) {
+                        else if ("uninstall".equals(dataType)) { //NON-NLS
                             Long itemMtime = null;
                             try {
-                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime();
+                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
                                 itemMtime = epochtime.longValue();
                                 itemMtime = itemMtime / 1000;
                             } catch (ParseException e) {
-                                logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.");
+                                logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
                             }
 
                             try {
@@ -496,19 +484,19 @@ class ExtractRegistry extends Extract {
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.");
+                                logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
                             }
                         } 
-                        else if ("WinVersion".equals(dataType)) {
-                            String name = artnode.getAttribute("name");
+                        else if ("WinVersion".equals(dataType)) { //NON-NLS
+                            String name = artnode.getAttribute("name"); //NON-NLS
 
-                            if (name.contains("ProductName")) {
+                            if (name.contains("ProductName")) { //NON-NLS
                                 winver = value;
                             }
-                            if (name.contains("CSDVersion")) {
+                            if (name.contains("CSDVersion")) { //NON-NLS
                                 winver = winver + " " + value;
                             }
-                            if (name.contains("InstallDate")) {
+                            if (name.contains("InstallDate")) { //NON-NLS
                                 Long installtime = null;
                                 try {
                                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
@@ -516,7 +504,7 @@ class ExtractRegistry extends Extract {
                                     String Tempdate = installtime.toString();
                                     installtime = Long.valueOf(Tempdate) / 1000;
                                 } catch (ParseException e) {
-                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
+                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
                                 }
                                 try {
                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
@@ -528,12 +516,12 @@ class ExtractRegistry extends Extract {
                                     BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                     bbart.addAttributes(bbattributes);
                                 } catch (TskCoreException ex) {
-                                    logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.");
+                                    logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
                                 }
                             }
                         } 
-                        else if ("office".equals(dataType)) {
-                            String name = artnode.getAttribute("name");
+                        else if ("office".equals(dataType)) { //NON-NLS
+                            String name = artnode.getAttribute("name"); //NON-NLS
                             
                             try {
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
@@ -554,7 +542,7 @@ class ExtractRegistry extends Extract {
                                                                                              "ExtractRegistry.parentModuleName.noSpace"), artnode.getNodeName()));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.");
+                                logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
                             }
                         }
                     }
@@ -562,13 +550,13 @@ class ExtractRegistry extends Extract {
             }
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error finding the registry file.");
+            logger.log(Level.SEVERE, "Error finding the registry file."); //NON-NLS
         } catch (SAXException ex) {
-            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex);
+            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex);
+            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParserConfigurationException ex) {
-            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex);
+            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex); //NON-NLS
         } finally {
             try {
                 if (fstream != null) {
@@ -581,16 +569,10 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        analyzeRegistryFiles(dataSource, controller);
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-    }
-
-    @Override
-    public void complete() {
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
+        analyzeRegistryFiles();
     }
 
     @Override
@@ -599,20 +581,5 @@ class ExtractRegistry extends Extract {
             execRR.stop();
             execRR = null;
         }
-    }
-
-    @Override
-    public String getName() {
-        return NbBundle.getMessage(this.getClass(), "ExtractRegistry.getName");
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "ExtractRegistry.getDesc");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
     }
 }

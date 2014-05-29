@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -22,7 +22,6 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-//IO imports
 import java.io.BufferedReader;
 
 import org.openide.util.NbBundle;
@@ -34,8 +33,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
-
-//Util Imports
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,12 +41,9 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
 import java.util.Scanner;
-
-// TSK Imports
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -58,58 +52,49 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
 
+/**
+ * Extracts activity from Internet Explorer browser, as well as recent documents in windows.
+ */
 class ExtractIE extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private IngestServices services;
-    
-    //paths set in init()
+    private IngestServices services = IngestServices.getInstance();
     private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
-    private String JAVA_PATH;
-    
-    final private static String MODULE_VERSION = "1.0";
+    private String JAVA_PATH;    
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-    
     private  ExecUtil execPasco;
+    private Content dataSource;
+    private IngestJobContext context;
 
-    //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
-        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "IE") + File.separator + "results";
+        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "IE") + File.separator + "results"; //NON-NLS
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
     @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
-
-
-    @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
         dataFound = false;
-        this.getBookmark(dataSource, controller);
-        this.getCookie(dataSource, controller);
-        this.getHistory(dataSource, controller);
+        this.getBookmark();
+        this.getCookie();
+        this.getHistory();
     }
 
     /**
      * Finds the files storing bookmarks and creates artifacts
-     * @param dataSource
-     * @param controller 
      */
-    private void getBookmark(Content dataSource, IngestDataSourceWorkerController controller) {       
+    private void getBookmark() {       
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> favoritesFiles = null;
+        List<AbstractFile> favoritesFiles;
         try {
-            favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites");
+            favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites"); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex);
+            logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
                                                      this.getName()));
@@ -117,7 +102,7 @@ class ExtractIE extends Extract {
         }
 
         if (favoritesFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any IE bookmark files.");
+            logger.log(Level.INFO, "Didn't find any IE bookmark files."); //NON-NLS
             return;
         }
         
@@ -127,7 +112,7 @@ class ExtractIE extends Extract {
                 continue;
             }
          
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
             
@@ -169,18 +154,18 @@ class ExtractIE extends Extract {
             while ((line = reader.readLine()) != null) {
                 // The actual shortcut line we are interested in is of the
                 // form URL=http://path/to/website
-                if (line.startsWith("URL")) {
+                if (line.startsWith("URL")) { //NON-NLS
                     url = line.substring(line.indexOf("=") + 1);
                     break;
                 }
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex);
+            logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
                                         fav.getName()));
         } catch (IndexOutOfBoundsException ex) {
-            logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex);
+            logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
                                         fav.getName()));
@@ -188,7 +173,7 @@ class ExtractIE extends Extract {
             try {
                 reader.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to close reader.", ex);
+                logger.log(Level.WARNING, "Failed to close reader.", ex); //NON-NLS
             }
         }
         
@@ -197,29 +182,27 @@ class ExtractIE extends Extract {
 
     /**
      * Finds files that store cookies and adds artifacts for them. 
-     * @param dataSource
-     * @param controller 
      */
-    private void getCookie(Content dataSource, IngestDataSourceWorkerController controller) { 
+    private void getCookie() { 
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> cookiesFiles = null;
+        List<AbstractFile> cookiesFiles;
         try {
-            cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies");
+            cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies"); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting cookie files for IE");
+            logger.log(Level.WARNING, "Error getting cookie files for IE"); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getName()));
             return;
         }
 
         if (cookiesFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any IE cookies files.");
+            logger.log(Level.INFO, "Didn't find any IE cookies files."); //NON-NLS
             return;
         }
         
         dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
             if (cookiesFile.getSize() == 0) {
@@ -230,7 +213,7 @@ class ExtractIE extends Extract {
             try {
                 final int bytesRead = cookiesFile.read(t, 0, cookiesFile.getSize());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer cookie.", ex);
+                logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
                                             this.getName(), cookiesFile.getName()));
@@ -274,25 +257,23 @@ class ExtractIE extends Extract {
 
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts. 
-     * @param dataSource
-     * @param controller 
      */
-    private void getHistory(Content dataSource, IngestDataSourceWorkerController controller) {
-        logger.log(Level.INFO, "Pasco results path: " + moduleTempResultsDir);
+    private void getHistory() {
+        logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
         boolean foundHistory = false;
 
-        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
+        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
-            logger.log(Level.SEVERE, "Error finding pasco program ");
+            logger.log(Level.SEVERE, "Error finding pasco program "); //NON-NLS
             return;
         } 
        
         final String pascoHome = pascoRoot.getAbsolutePath();
-        logger.log(Level.INFO, "Pasco2 home: " + pascoHome);
+        logger.log(Level.INFO, "Pasco2 home: {0}", pascoHome); //NON-NLS
 
-        PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator
+        PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator //NON-NLS
                 + pascoHome + File.separator + "*";
 
         File resultsDir = new File(moduleTempResultsDir);
@@ -300,13 +281,13 @@ class ExtractIE extends Extract {
      
         // get index.dat files
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> indexFiles = null;
+        List<AbstractFile> indexFiles;
         try {
-            indexFiles = fileManager.findFiles(dataSource, "index.dat");
+            indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
         } catch (TskCoreException ex) {
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errGettingHistFiles",
                                                      this.getName()));
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
             return;
         }
 
@@ -325,24 +306,24 @@ class ExtractIE extends Extract {
             // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
             // Write each index.dat file to a temp directory.
             //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-            indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat";
+            indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat"; //NON-NLS
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
-            temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName;
+            temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
             File datFile = new File(temps);
-            if (controller.isCancelled()) {
+            if (context.isJobCancelled()) {
                 break;
             }
             try {
                 ContentUtils.writeToFile(indexFile, datFile);
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
+                logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
                                             datFile.getAbsolutePath()));
                 continue;
             }
 
-            String filename = "pasco2Result." + indexFile.getId() + ".txt";
+            String filename = "pasco2Result." + indexFile.getId() + ".txt"; //NON-NLS
             boolean bPascProcSuccess = executePasco(temps, filename);
 
             //At this point pasco2 proccessed the index files.
@@ -354,7 +335,7 @@ class ExtractIE extends Extract {
                 //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
             } else {
-                logger.log(Level.WARNING, "pasco execution failed on: " + this.getName());
+                logger.log(Level.WARNING, "pasco execution failed on: {0}", this.getName()); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
@@ -378,19 +359,19 @@ class ExtractIE extends Extract {
         Writer writer = null;
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
-            logger.log(Level.INFO, "Writing pasco results to: " + outputFileFullPath);
+            logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS
             writer = new FileWriter(outputFileFullPath);
             execPasco = new ExecUtil();
             execPasco.execute(writer, JAVA_PATH, 
-                    "-cp", PASCO_LIB_PATH, 
-                    "isi.pasco2.Main", "-T", "history", indexFilePath );
+                    "-cp", PASCO_LIB_PATH,  //NON-NLS
+                    "isi.pasco2.Main", "-T", "history", indexFilePath ); //NON-NLS
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             success = false;
-            logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex);
+            logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex); //NON-NLS
         } catch (InterruptedException ex) {
             success = false;
-            logger.log(Level.SEVERE, "Pasco has been interrupted, failed to extract some web history from Internet Explorer.", ex);
+            logger.log(Level.SEVERE, "Pasco has been interrupted, failed to extract some web history from Internet Explorer.", ex); //NON-NLS
         }
         finally {
             if (writer != null) {
@@ -398,7 +379,7 @@ class ExtractIE extends Extract {
                     writer.flush();
                     writer.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error closing writer stream after for Pasco result", ex);
+                    logger.log(Level.WARNING, "Error closing writer stream after for Pasco result", ex); //NON-NLS
                 }
             }
         }
@@ -419,7 +400,7 @@ class ExtractIE extends Extract {
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
                                         file.getName()));
-            logger.log(Level.WARNING, "Pasco Output not found: " + file.getPath());
+            logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
             return;
         }
 
@@ -436,20 +417,20 @@ class ExtractIE extends Extract {
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
                                         file.getName()));
-            logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex);
+            logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return;
         }
 
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
-            if (!line.startsWith("URL")) {  
+            if (!line.startsWith("URL")) {   //NON-NLS
                 continue;
             }
 
-            String[] lineBuff = line.split("\\t");
+            String[] lineBuff = line.split("\\t"); //NON-NLS
 
             if (lineBuff.length < 4) {
-                logger.log(Level.INFO, "Found unrecognized IE history format.");
+                logger.log(Level.INFO, "Found unrecognized IE history format."); //NON-NLS
                 continue;
             }
 
@@ -467,14 +448,14 @@ class ExtractIE extends Extract {
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
                 user = url[0];
-                user = user.replace("Visited:", "");
-                user = user.replace(":Host:", "");
+                user = user.replace("Visited:", ""); //NON-NLS
+                user = user.replace(":Host:", ""); //NON-NLS
                 user = user.replaceAll("(:)(.*?)(:)", "");
                 user = user.trim();
                 realurl = url[1];
-                realurl = realurl.replace("Visited:", "");
+                realurl = realurl.replace("Visited:", ""); //NON-NLS
                 realurl = realurl.replaceAll(":(.*?):", "");
-                realurl = realurl.replace(":Host:", "");
+                realurl = realurl.replace(":Host:", ""); //NON-NLS
                 realurl = realurl.trim();
             } else {
                 user = "";
@@ -484,7 +465,7 @@ class ExtractIE extends Extract {
             domain = Util.extractDomain(realurl);
 
             if (!ddtime.isEmpty()) {
-                ddtime = ddtime.replace("T", " ");
+                ddtime = ddtime.replace("T", " "); //NON-NLS
                 ddtime = ddtime.substring(ddtime.length() - 5);
             }
 
@@ -497,7 +478,7 @@ class ExtractIE extends Extract {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
                                                 this.getName()));
-                    logger.log(Level.SEVERE, "Error parsing Pasco results.", e);
+                    logger.log(Level.SEVERE, "Error parsing Pasco results.", e); //NON-NLS
                 }
             }
 
@@ -529,19 +510,10 @@ class ExtractIE extends Extract {
                                                                              "ExtractIE.parentModuleName.noSpace"), user));
                 bbart.addAttributes(bbattributes);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex);
+                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
             }                                    
         }
         fileScanner.close();        
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        services = IngestServices.getDefault();
-    }
-
-    @Override
-    public void complete() {
     }
 
     @Override
@@ -549,19 +521,6 @@ class ExtractIE extends Extract {
         if (execPasco != null) {
             execPasco.stop();
             execPasco = null;
-        }
-        
-        //call regular cleanup from complete() method
-        complete();
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "ExtractIE.getDesc.text");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
+        }        
     }
 }

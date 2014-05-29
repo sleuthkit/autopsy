@@ -61,7 +61,7 @@ public class PlatformUtil {
      * @return absolute path string to the install root dir
      */
     public static String getInstallPath() {
-        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false);
+        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
         File rootPath = coreFolder.getParentFile().getParentFile();
         return rootPath.getAbsolutePath();
     }
@@ -73,7 +73,7 @@ public class PlatformUtil {
      * not found
      */
     public static String getInstallModulesPath() {
-        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false);
+        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
 
         File rootPath = coreFolder.getParentFile();
         String modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
@@ -122,10 +122,10 @@ public class PlatformUtil {
                     NbBundle.getMessage(PlatformUtil.class,
                                         "PlatformUtil.jrePath.jreDir.msg",
                                         jrePath.getAbsolutePath()));
-            javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
+            javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java"; //NON-NLS
         } else {
             //else use system installed java in PATH env variable
-            javaPath = "java";
+            javaPath = "java"; //NON-NLS
 
         }
 
@@ -172,7 +172,7 @@ public class PlatformUtil {
      * @return Get user config directory path string
      */
     public static String getUserConfigDirectory() {
-        return Places.getUserDirectory() + File.separator + "config";
+        return Places.getUserDirectory() + File.separator + "config"; //NON-NLS
     }
 
     /**
@@ -182,7 +182,7 @@ public class PlatformUtil {
      */
     public static String getLogDirectory() {
         return Places.getUserDirectory().getAbsolutePath() + File.separator
-                + "var" + File.separator + "log" + File.separator;
+                + "var" + File.separator + "log" + File.separator; //NON-NLS
     }
 
     public static String getDefaultPlatformFileEncoding() {
@@ -208,11 +208,11 @@ public class PlatformUtil {
      * @throws IOException exception thrown if extract the file failed for IO
      * reasons
      */
-    public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFile) throws IOException {
+    public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFile, boolean overWrite) throws IOException {
         final File userDir = new File(getUserConfigDirectory());
 
         final File resourceFileF = new File(userDir + File.separator + resourceFile);
-        if (resourceFileF.exists()) {
+        if (resourceFileF.exists() && !overWrite) {
             return false;
         }
 
@@ -247,7 +247,7 @@ public class PlatformUtil {
      * @return OS name string
      */
     public static String getOSName() {
-        return System.getProperty("os.name", OS_NAME_UNKNOWN);
+        return System.getProperty("os.name", OS_NAME_UNKNOWN); //NON-NLS
     }
 
     /**
@@ -256,7 +256,7 @@ public class PlatformUtil {
      * @return OS version string
      */
     public static String getOSVersion() {
-        return System.getProperty("os.version", OS_VERSION_UNKNOWN);
+        return System.getProperty("os.version", OS_VERSION_UNKNOWN); //NON-NLS
     }
 
     /**
@@ -265,7 +265,7 @@ public class PlatformUtil {
      * @return OS arch string
      */
     public static String getOSArch() {
-        return System.getProperty("os.arch", OS_ARCH_UNKNOWN);
+        return System.getProperty("os.arch", OS_ARCH_UNKNOWN); //NON-NLS
     }
 
     /**
@@ -274,7 +274,7 @@ public class PlatformUtil {
      * @return true if running on Windows OS
      */
     public static boolean isWindowsOS() {
-        return PlatformUtil.getOSName().toLowerCase().contains("windows");
+        return PlatformUtil.getOSName().toLowerCase().contains("windows"); //NON-NLS
     }
 
     /**
@@ -304,10 +304,10 @@ public class PlatformUtil {
             int n = 0;
             int breakCount = 0;
             while (true) {
-                String path = "\\\\.\\PhysicalDrive" + n;
+                String path = "\\\\.\\PhysicalDrive" + n; //NON-NLS
                 if (canReadDrive(path)) {
                     try {
-                        drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
+                        drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path))); //NON-NLS
                     } catch (TskCoreException ex) {
                         // Don't add the drive because we can't read the size
                     }
@@ -326,8 +326,8 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) {
-                    String path = "/dev/" + name;
+                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) { //NON-NLS
+                    String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         try {
                             drives.add(new LocalDisk(path, path, SleuthkitJNI.findDeviceSize(path)));
@@ -369,8 +369,8 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) {
-                    String path = "/dev/" + name;
+                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) { //NON-NLS
+                    String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         drives.add(new LocalDisk(path, path, f.getTotalSpace()));
                     }
@@ -451,7 +451,7 @@ public class PlatformUtil {
      */
     public static synchronized long getJavaPID(String sigarSubQuery) {
         long jpid = -1;
-        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery;
+        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery; //NON-NLS
         try {
             if (sigar == null) {
                 sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
@@ -482,7 +482,7 @@ public class PlatformUtil {
      */
     public static synchronized long[] getJavaPIDs(String sigarSubQuery) {
         long[] jpids = null;
-        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery;
+        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery; //NON-NLS
         try {
             if (sigar == null) {
                 sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();

@@ -41,32 +41,12 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 
 /**
- * Filter Node to add a "Snippet" property containing the first snippet of
- * content matching the search that the Node was found with, and to provide
- * the full highlighted content as a MarkupSource
+ * 
  */
 class KeywordSearchFilterNode extends FilterNode {
 
-    String solrQuery;
-    int previewChunk;
-
-    KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original, String solrQuery, int previewChunk) {
+    KeywordSearchFilterNode(HighlightedTextMarkup highlights, Node original) {
         super(original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
-        this.solrQuery = solrQuery;
-        this.previewChunk = previewChunk;
-    }
-
-    String getSnippet() {
-        final Content content = this.getOriginal().getLookup().lookup(Content.class);
-        String snippet;
-        try {
-            snippet = LuceneQuery.querySnippet(solrQuery, content.getId(), previewChunk, false, true);
-        } catch (NoOpenCoreException ex) {
-            //logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
-            return "";
-        }
-
-        return snippet;
     }
 
     @Override
@@ -106,7 +86,7 @@ class KeywordSearchFilterNode extends FilterNode {
     @Override
     public Action[] getActions(boolean popup) {
 
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         Content content = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(content.accept(new GetPopupActionsContentVisitor()));

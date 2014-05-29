@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,24 +24,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
-import org.sleuthkit.autopsy.datamodel.HighlightLookup;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * Displays marked-up (HTML) content for a Node. The sources are all the
@@ -54,15 +49,12 @@ public class ExtractedContentViewer implements DataContentViewer {
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
-    private MarkupSource currentSource = null;
+    private TextMarkup currentSource = null;
     private final IsDirVisitor isDirVisitor = new IsDirVisitor();
-    //keep last content cached
-    private String curContent;
-    private long curContentId;
-    private int curContentChunk;
+
 
     public ExtractedContentViewer() {
-        logger.log(Level.INFO, "Created TextView instance: " + this);
+        logger.log(Level.INFO, "Created TextView instance: " + this); //NON-NLS
     }
 
     @Override
@@ -88,10 +80,11 @@ public class ExtractedContentViewer implements DataContentViewer {
          * for the text markedup by SOLR and another that just displayed
          * raw text. 
          */
-        final List<MarkupSource> sources = new ArrayList<MarkupSource>();
+        final List<TextMarkup> sources = new ArrayList<TextMarkup>();
 
-        //add additional registered sources for this node
-        sources.addAll(selectedNode.getLookup().lookupAll(MarkupSource.class));
+        // See if the node has any sources attached to it and add them to our
+        // internal list
+        sources.addAll(selectedNode.getLookup().lookupAll(TextMarkup.class));
 
         
         // if it doesn't have any SOLR content, then we won't add more sources
@@ -105,149 +98,11 @@ public class ExtractedContentViewer implements DataContentViewer {
             return;
         }
 
-        //add to page tracking if not there yet
-        final long contentID = content.getId();
-
         // make a new source for the raw content
-        // @@@ BC: Why isn't this its own class like Highlight?
-        final MarkupSource newSource = new MarkupSource() {
-            private boolean inited = false;
-            private int numPages = 0;
-            private int currentPage = 0;
-            private boolean hasChunks = false;
-
-            @Override
-            public int getCurrentPage() {
-                return this.currentPage;
-            }
-
-            @Override
-            public boolean hasNextPage() {
-                return currentPage < numPages;
-            }
-
-            @Override
-            public boolean hasPreviousPage() {
-                return currentPage > 1;
-            }
-
-            @Override
-            public int nextPage() {
-                if (!hasNextPage()) {
-                    throw new IllegalStateException(
-                            NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextPage.exception.msg"));
-                }
-                ++currentPage;
-                return currentPage;
-            }
-
-            @Override
-            public int previousPage() {
-                if (!hasPreviousPage()) {
-                    throw new IllegalStateException(
-                            NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousPage.exception.msg"));
-                }
-                --currentPage;
-                return currentPage;
-            }
-
-            @Override
-            public boolean hasNextItem() {
-                throw new UnsupportedOperationException(
-                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasNextItem.exception.msg"));
-            }
-
-            @Override
-            public boolean hasPreviousItem() {
-                throw new UnsupportedOperationException(
-                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasPreviousItem.exception.msg"));
-            }
-
-            @Override
-            public int nextItem() {
-                throw new UnsupportedOperationException(
-                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextItem.exception.msg"));
-            }
-
-            @Override
-            public int previousItem() {
-                throw new UnsupportedOperationException(
-                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousItem.exception.msg"));
-            }
-
-            @Override
-            public int currentItem() {
-                throw new UnsupportedOperationException(
-                        NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.currentItem.exception.msg"));
-            }
-
-            @Override
-            public String getMarkup() {
-                try {
-                    return getSolrContent(selectedNode, currentPage, hasChunks);
-                } catch (SolrServerException ex) {
-                    logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
-                    return "";
-                }
-            }
-
-            @Override
-            public String toString() {
-                return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.toString");
-            }
-
-            @Override
-            public boolean isSearchable() {
-                return false;
-            }
-
-            @Override
-            public String getAnchorPrefix() {
-                return "";
-            }
-
-            @Override
-            public int getNumberHits() {
-                return 0;
-            }
-
-            @Override
-            public LinkedHashMap<Integer, Integer> getHitsPages() {
-                return null;
-            }
-
-            @Override
-            public int getNumberPages() {
-                if (inited) {
-                    return this.numPages;
-                }
-
-                final Server solrServer = KeywordSearch.getServer();
-
-                try {
-                    numPages = solrServer.queryNumFileChunks(contentID);
-                    if (numPages == 0) {
-                        numPages = 1;
-                        hasChunks = false;
-                    } else {
-                        hasChunks = true;
-                    }
-                    inited = true;
-                } catch (KeywordSearchModuleException ex) {
-                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
-
-                } catch (NoOpenCoreException ex) {
-                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
-                }
-                return numPages;
-            }
-        };
-
-        //initialize the  source
-        newSource.getNumberPages();
+        TextMarkup rawSource = new RawTextMarkup(content);
         
-        currentSource = newSource;
-        sources.add(newSource);
+        currentSource = rawSource;
+        sources.add(rawSource);
       
 
         //init pages
@@ -262,7 +117,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void scrollToCurrentHit() {
-        final MarkupSource source = panel.getSelectedSource();
+        final TextMarkup source = panel.getSelectedSource();
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -301,7 +156,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<MarkupSource>());
+        setPanel(new ArrayList<TextMarkup>());
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -313,10 +168,20 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
-        Collection<? extends MarkupSource> sources = node.getLookup().lookupAll(MarkupSource.class);
-        HighlightLookup highlight = node.getLookup().lookup(HighlightLookup.class);
+        // see if the node has a MarkupSource object in it
+        // BC @@@ This seems to be added from the upper right search.
+        Collection<? extends TextMarkup> sources = node.getLookup().lookupAll(TextMarkup.class);
+        if (sources.isEmpty() == false) {
+            return true;
+        }
+        
+        // see if the node has a Highlight object in it.  
+        // BC @@@ This seems to be added by BlackboardArtifactNode from the tree
+        if (node.getLookup().lookup(TextMarkupLookup.class) != null) {
+            return true;
+        }
 
-        return !sources.isEmpty() || highlight != null || solrHasContent(node);
+        return solrHasContent(node);
     }
 
     @Override
@@ -338,21 +203,13 @@ public class ExtractedContentViewer implements DataContentViewer {
      *
      * @param sources
      */
-    private void setPanel(List<MarkupSource> sources) {
+    private void setPanel(List<TextMarkup> sources) {
         if (panel != null) {
             panel.setSources(sources);
         }
     }
 
-    //get current node content id, or 0 if not available
-    private long getNodeContentId() {
-        Content content = currentNode.getLookup().lookup(Content.class);
-        if (content == null) {
-            return 0;
-        }
 
-        return content.getId();
-    }
 
     private class IsDirVisitor extends ContentVisitor.Default<Boolean> {
 
@@ -395,83 +252,20 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             return solrServer.queryIsIndexed(contentID);
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
         }
     }
 
-    /**
-     * Get extracted content for a node from Solr
-     *
-     * @param node a node that has extracted content in Solr (check with
-     * solrHasContent(ContentNode))
-     * @param currentPage currently used page
-     * @param hasChunks true if the content behind the node has multiple chunks.
-     * This means we need to address the content pages specially.
-     * @return the extracted content
-     * @throws SolrServerException if something goes wrong
-     */
-    private String getSolrContent(Node node, int currentPage, boolean hasChunks) throws SolrServerException {
-        Content contentObj = node.getLookup().lookup(Content.class);
-
-        final Server solrServer = KeywordSearch.getServer();
-
-        int chunkId = 0;
-        if (hasChunks) {
-            chunkId = currentPage;
-        }
-        else {
-            //if no chunks, it is safe to assume there is no text content
-            //because we are storing extracted text in chunks only
-            //and the non-chunk stores meta-data only
-            String name = contentObj.getName();
-            String msg = null;
-            if (contentObj instanceof AbstractFile) { 
-                //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
-                boolean isKnown = FileKnown.KNOWN.equals(((AbstractFile)contentObj).getKnown());
-                if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
-                }
-            }
-            if (msg == null) {
-                 msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", name);
-            }
-            String htmlMsg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
-            return htmlMsg;
-        }
-
-        //check if cached
-        long contentId = getNodeContentId();
-        if (curContent != null) {
-            if (contentId == curContentId
-                    && curContentChunk == chunkId) {
-                return curContent;
-            }
-        }
-
-        //not cached
-        try {
-            curContent = EscapeUtil.escapeHtml(solrServer.getSolrContent(contentObj, chunkId)).trim();
-            StringBuilder sb = new StringBuilder(curContent.length() + 20);
-            sb.append("<pre>").append(curContent).append("</pre>");
-            curContent = sb.toString();
-            curContentId = contentId;
-            curContentChunk = chunkId;
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get text content.", ex);
-            return "";
-        }
-        return curContent;
-    }
 
     private class NextFindActionListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            MarkupSource source = panel.getSelectedSource();
+            TextMarkup source = panel.getSelectedSource();
             if (source == null) {
                 // reset
                 panel.updateControls(null);
@@ -511,7 +305,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            MarkupSource source = panel.getSelectedSource();
+            TextMarkup source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
             int indexVal = 0;

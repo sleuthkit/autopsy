@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.fileextmismatch/3
-OpenIDE-Module-Implementation-Version: 1
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/fileextmismatch/Bundle.properties
-

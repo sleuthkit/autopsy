@@ -97,7 +97,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
             newContents.add(fileManager.addLocalFilesDirs(absLocalPaths, progUpdater));
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Errors occurred while running add logical files. ", ex);
+            logger.log(Level.WARNING, "Errors occurred while running add logical files. ", ex); //NON-NLS
             hasCritError = true;
             errorList.add(ex.getMessage());
         } 
@@ -111,11 +111,11 @@ import org.sleuthkit.datamodel.TskCoreException;
     private void postProcess() {
         
         if (cancelRequested() || hasCritError) {
-            logger.log(Level.WARNING, "Handling errors or interruption that occured in logical files process"); 
+            logger.log(Level.WARNING, "Handling errors or interruption that occured in logical files process");  //NON-NLS
         }
         if (!errorList.isEmpty()) {
                 //data error (non-critical)
-                logger.log(Level.WARNING, "Handling non-critical errors that occured in logical files process");
+                logger.log(Level.WARNING, "Handling non-critical errors that occured in logical files process"); //NON-NLS
         }
    
         if (!(cancelRequested() || hasCritError)) {

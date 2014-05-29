@@ -320,15 +320,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         //First property column is sortable, but also sorted initially, so
         //initially this one will have the arrow icon:
         if (props.size() > 0) {
-            props.get(0).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
-            props.get(0).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
+            props.get(0).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column. NON-NLS
+            props.get(0).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column. NON-NLS
         }
 
         // The rest of the columns are sortable, but not initially sorted,
         // so initially will have no arrow icon:
         String[] propStrings = new String[props.size() * 2];
         for (int i = 0; i < props.size(); i++) {
-            props.get(i).setValue("ComparableColumnTTV", Boolean.TRUE);
+            props.get(i).setValue("ComparableColumnTTV", Boolean.TRUE); //NON-NLS
             propStrings[2 * i] = props.get(i).getName();
             propStrings[2 * i + 1] = props.get(i).getDisplayName();
         }
@@ -391,10 +391,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // Populate a two-dimensional array with rows of property values for up 
     // to maxRows children of the node passed in. 
     private static Object[][] getRowValues(Node node, int maxRows) {
-        Object[][] rowValues = new Object[Math.min(maxRows, node.getChildren().getNodesCount())][];
+        int numRows = Math.min(maxRows, node.getChildren().getNodesCount());
+        Object[][] rowValues = new Object[numRows][];
         int rowCount = 0;
         for (Node child : node.getChildren().getNodes()) {
             if (rowCount >= maxRows) {
+                break;
+            }
+            // BC: I got this once, I think it was because the table
+            // refreshed while we were in this method 
+            // could be better synchronized.  Or it was from 
+            // the lazy nodes updating...  Didn't have time 
+            // to fully debug it. 
+            if (rowCount > numRows) {
                 break;
             }
             PropertySet[] propertySets = child.getPropertySets();
@@ -405,7 +414,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     try {
                         rowValues[rowCount][j] = properties[j].getValue();
                     } catch (IllegalAccessException | InvocationTargetException ignore) {
-                        rowValues[rowCount][j] = "n/a";
+                        rowValues[rowCount][j] = "n/a"; //NON-NLS
                     }
                 }
             }

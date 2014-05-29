@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2011-2014 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
@@ -10,14 +24,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.prefs.Preferences;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     private Node currentNode;
     private final boolean isMain;
     private boolean listeningToTabbedPane = false;    
-    
+     
     /**
      * Creates new DataContentPanel panel
      * The main data content panel can only be created by the data content top component, 
@@ -132,7 +145,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                     try {
                         path = content.getUniquePath();
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content);
+                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content); //NON-NLS
                     }
                     setName(path);
                 } else {
@@ -162,10 +175,6 @@ import org.sleuthkit.datamodel.TskCoreException;
             listeningToTabbedPane = true;
         }
                 
-        // get the preference for the preferred viewer
-        Preferences pref = NbPreferences.forModule(GeneralPanel.class);
-        boolean keepCurrentViewer = pref.getBoolean("keepPreferredViewer", false);
-
         int currTabIndex = jTabbedPane1.getSelectedIndex();
         int totalTabs = jTabbedPane1.getTabCount();
         int maxPreferred = 0;
@@ -190,8 +199,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
         
         // let the user decide if we should stay with the current viewer
-        int tabIndex = keepCurrentViewer ? currTabIndex : preferredViewerIndex;
-
+        int tabIndex = UserPreferences.keepPreferredContentViewer() ? currTabIndex : preferredViewerIndex;
         
         UpdateWrapper dcv = viewers.get(tabIndex);
         // this is really only needed if no tabs were enabled 

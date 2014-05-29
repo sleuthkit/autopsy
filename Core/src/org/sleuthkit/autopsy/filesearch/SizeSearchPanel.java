@@ -19,6 +19,8 @@
 
 package org.sleuthkit.autopsy.filesearch;
 
+import org.openide.util.NbBundle;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
@@ -110,7 +112,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
+        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" })); //NON-NLS
 
         sizeTextField.setValue(0);
         sizeTextField.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -119,7 +121,10 @@ class SizeSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "equal to", "greater than", "less than" }));
+        sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
+                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.equalTo"),
+                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.greaterThan"),
+                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.lessThan") }));
 
         sizeCheckBox.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.sizeCheckBox.text")); // NOI18N
 

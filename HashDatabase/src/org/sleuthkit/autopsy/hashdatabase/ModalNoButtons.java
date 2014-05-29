@@ -42,7 +42,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     List<HashDb> unindexed;
     HashDb toIndex;
-    HashDbConfigPanel hdbmp;
+    HashLookupSettingsPanel hdbmp;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -53,7 +53,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed the list of unindexed databases to index.
      */
-    ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
+    ModalNoButtons(HashLookupSettingsPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
         super(parent, NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.indexingDbsTitle"), true);
         this.unindexed = unindexed;
         this.toIndex = null;
@@ -68,7 +68,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
      * @param parent Swing parent frame.
      * @param unindexed The unindexed database to index.
      */
-     ModalNoButtons(HashDbConfigPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
+     ModalNoButtons(HashLookupSettingsPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
         super(parent, NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.indexingDbTitle"), true);
         this.unindexed = null;
         this.toIndex = unindexed;
@@ -102,10 +102,10 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         GO_GET_COFFEE_LABEL.setDisplayedMnemonic('H');
         org.openide.awt.Mnemonics.setLocalizedText(GO_GET_COFFEE_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.GO_GET_COFFEE_LABEL.text")); // NOI18N
 
-        CURRENTLYON_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        CURRENTLYON_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTLYON_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTLYON_LABEL.text")); // NOI18N
 
-        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(CANCEL_BUTTON, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CANCEL_BUTTON.text")); // NOI18N

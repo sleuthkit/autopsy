@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
         try {
             children = parent.getChildren();
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error getting Content children.", ex);
+            logger.log(Level.WARNING, "Error getting Content children.", ex); //NON-NLS
             children = Collections.emptyList();
         }
 

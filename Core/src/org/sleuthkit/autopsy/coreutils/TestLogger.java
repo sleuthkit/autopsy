@@ -35,7 +35,7 @@ import java.util.logging.Level;
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        logger.log(Level.WARNING, "Testing log!", new Exception(new Exception(new Exception(new Exception("original reason with asdfasdfasdfasdfasd fasdfasdfasdf sdfasdfasdfa asdfasdf asdfa sdfas ", new Exception("more original reason"))))));
+        logger.log(Level.WARNING, "Testing log!", new Exception(new Exception(new Exception(new Exception("original reason with asdfasdfasdfasdfasd fasdfasdfasdf sdfasdfasdfa asdfasdf asdfa sdfas ", new Exception("more original reason")))))); //NON-NLS
         //throw new RuntimeException("othe");
 
         //logger.log(Level.WARNING, "Testing log!");

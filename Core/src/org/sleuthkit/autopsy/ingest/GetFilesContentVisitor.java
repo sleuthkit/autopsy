@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,21 +25,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
-import org.sleuthkit.datamodel.LayoutFile;
 
 /**
- * Abstract visitor for getting all the files from content
- * TODO should be moved to utility module (needs resolve cyclic deps)
+ * Abstract visitor for getting all the files from content.
  */
- abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
+abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
     private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
 
@@ -47,7 +43,7 @@ import org.sleuthkit.datamodel.LayoutFile;
     public Collection<AbstractFile> visit(VirtualDirectory ld) {
         return getAllFromChildren(ld);
     }
-    
+
     @Override
     public Collection<AbstractFile> visit(Directory drctr) {
         return getAllFromChildren(drctr);
@@ -69,20 +65,21 @@ import org.sleuthkit.datamodel.LayoutFile;
     }
 
     /**
-     * Aggregate all the matches from visiting the children Content objects of the
-     * one passed
-     * @param parent
-     * @return 
+     * Aggregate all the matches from visiting the children Content objects of
+     * a parent Content object.
+     *
+     * @param parent A content object.
+     * @return The child files of the content.
      */
     protected Collection<AbstractFile> getAllFromChildren(Content parent) {
-        Collection<AbstractFile> all = new ArrayList<AbstractFile>();
+        Collection<AbstractFile> all = new ArrayList<>();
 
         try {
             for (Content child : parent.getChildren()) {
                 all.addAll(child.accept(this));
             }
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error getting Content children", ex);
+            logger.log(Level.SEVERE, "Error getting Content children", ex); //NON-NLS
         }
 
         return all;

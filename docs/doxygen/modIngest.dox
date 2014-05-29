@@ -1,265 +1,410 @@
 /*! \page mod_ingest_page Developing Ingest Modules
 
 
-\section ingestmodule_modules Ingest Module Basics
+\section ingest_modules_getting_started Getting Started
 
-This section tells you how to make an Ingest Module.  Ingest modules
-analyze data from a data source (a disk image or set of logical
-files).  They typically focus on a specific type of data analysis.
-The modules are loaded each time that Autopsy starts.  The user can
-choose to enable each module when they add an image to the case.
-It assumes you have already setup your development environment as
-described in \ref mod_dev_page.
+This page describes how to develop ingest modules.  It assumes you have 
+already set up your development environment as described in \ref mod_dev_page.
+  
+Ingest modules analyze data from a data source (e.g., a disk image or a folder 
+of logical files). There are two types of ingest modules in Autopsy: 
 
-First, you need to choose the type of Ingest Module. 
+- Data-source-level ingest modules
+- File-level ingest modules
 
-- Data Source-level modules are passed in a reference to a top-level data source, such as an Image or folder of logical files. 
-These modules may query the database for a small set of specific files. For example, a Windows registry module that runs on the hive files.  It is interested in only a small subset of the hard drive files. 
+The difference between these two types of modules is that data-source-level modules are called once and passed in a reference to a data source to analyze and file-level ingest modules are called for each file and passed in the file to analyze. Here are some guidelines for choosing the type of your ingest module:
 
-- File-level modules are passed in a reference to each file.  
-The Ingest Manager chooses which files to pass and when.  
-These modules are intended to analyze most of the files on the system 
-For example, a hash calculation module that reads in the content of every file. 
+- Your module should be a data-source-level ingest module if it only needs to 
+retrieve and analyze a small subset of the files present in a data source and it can find those files based on data in the database (such as file names).  
+For example, a Windows registry analysis module that only processes 
+registry hive files should be implemented as a data-source-level ingest module because there are only a few registry hives and you can find them by name. 
+- Your module should be a file-level ingest module if it analyzes most or all of 
+the files from a data source, one file at a time. If you cannot rely on finding a file based on its name, it will need to be a file-level ingest module. For example, a hash look up 
+module might process every file system file by looking up its hash in one or 
+more known files and known bad files hash sets (hash databases). 
 
+As you will learn a little later in this guide, it is possible to package a 
+data-source-level ingest module and a file-level ingest module together. You
+would do this when you need to work at both levels to get all of your analysis
+done. The modules in such a pair will be enabled or disabled together and will 
+have common per ingest job and global settings. 
 
-
-Refer to org.sleuthkit.autopsy.ingest.example for sample source code of dummy modules. 
-
-\section ingest_common Commonalities
-
-There are several things about these module types that are common and we'll outline those here.  For both modules, you will extend an interface and implement some methods.
-
-Refer to the documentation for each method for its use. 
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.init() is invoked when an ingest session starts. 
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.complete() is invoked when an ingest session completes.  
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.stop() is invoked on a module when an ingest session is interrupted by the user or system.
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getName() returns the name of the module.
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getDescription() returns a short description of the module.
-- org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getVersion() returns the version of the module. 
+The text below will refer to example code in the org.sleuthkit.autopsy.ingest.examples package.
+The sample modules don't do anything 
+particularly useful, but they can serve as templates for developing your own 
+ingest modules.  
 
 
-The process() method is invoked to analyze the data. This is where
-the analysis is done. The specific method depends on the module
-type; it is passed either a data source or a file to process.  We'll
-cover this in later sections.  This method will post results to the
-blackboard and with inbox messages to the user.
 
 
-\section ingest_datasrc Data Source-level Modules
+\section ingest_modules_lifecycle Ingest Module Life Cycle
 
-To make a data source-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleDataSource". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleDataSource class for details on what each needs to do. 
-You can also refer to org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule as an example module. 
+Before we dive into the details of creating a module, it is important to understand the life cycle of the module. Note that this life cycle is much different for Autopsy 3.1 modules compared to Autopsy 3.0 modules. This section only talks about 3.1 modules. 
+
+You will need to implement at least 2 interfaces to make an ingest module:
+-# A factory class that will be created when Autopsy starts and will provide configuration panels to Autopsy and will create instances of your ingest module.
+-# An ingest module class that will be instantiated by the factory when the ingest modules are run.  A new instance of this will class be created for each ingest thread. 
+
+Here is an example sequence of events.  Details will be provided below. 
+-# User launches Autopsy and it looks for classes that implement the org.sleuthkit.autopsy.ingest.IngestModuleFactory interface.  
+-# Autopsy finds and creates an instance of your FooIngestModuleFactory class.
+-# User adds a disk image.
+-# Autopsy presents the list of available ingest modules to the user and uses the utility methods from FooIngestModuleFactory class to get the module's name, description, and configuration panels. 
+-# User enables your module (and others).
+-# Autopsy uses FooIngestModuleFactory to create two instances of FooIngestModule (Autopsy is using two threads to process the files).
+-# Autopsy starts up the module and calls its process method. 
+  
 
 
-Data source-level ingest modules must find the files that they want to analyze.  The best way to do that is using one of the findFiles() methods in org.sleuthkit.autopsy.casemodule.services.FileManager.   See \ref mod_dev_other_services for more details. 
+\section ingest_modules_implementing_ingestmodulefactory_basic Creating a Basic Ingest Module
 
-Example snippet of an ingest-level module process() method:
+\subsection ingest_modules_implementing_basic_factory Basic Ingest Module Factory
+
+The first step to write an ingest module is to make its factory.  There are three general types of things that a factory does:
+-# Provides  basic information such as the module's name, version, and description. (required)
+-# Creates ingest modules. (required) 
+-# Provides panels so that the user can configure the module. (optional)
+
+This section covers the required parts of a basic factory so that we can make the ingest module.  A later section (\ref ingest_modules_making_options)
+covers how you can use the factory to provide options to the user. 
+
+To make writing a simple factory easier, Autopsy provides an adapter class that implements the "optional" methods in the interface. 
+Our basic factory will use the adapter. 
+
+-# Create a class either manually or using the NetBeans wizards. Edit the class to extend org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter. NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. 
+-# Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleFactory interface for details on what each method needs to do. You can also refer to org.sleuthkit.autopsy.examples.SampleIngestModuleFactory as an example.  
+-# Add a NetBeans ServiceProvider annotation so that the factory is found at run time: 
+\code
+@ServiceProvider(service = IngestModuleFactory.class)
+\endcode
+
+You will also need to import org.openide.util.lookup.ServiceProvider and add a dependency on the NetBeans Lookup 
+API module to the NetBeans module that contains your ingest module.
+
+At this point, you should be able to compile your NetBeans module and run it. When you add a data source, 
+you should see the module in the list of ingest modules.  If you don't see it, double check that you extend 
+the correct class and added the service provider annotation. 
+
+
+
+\subsection ingest_modules_implementing_ingestmodule Understanding the IngestModule Interface
+
+Data source and file ingest modules have similar APIs. The main difference is what data gets passed 
+to the methods.  Let's first cover the common concepts. 
+
+Both modules implement the org.sleuthkit.autopsy.ingest.IngestModule interface, which defines a module initialization method:
+- org.sleuthkit.autopsy.ingest.IngestModule.startUp() 
+
+Use the previous links to get the details of this method. The ingest modules have to implement a process()
+method that will get passed in either a data source or a file. A file ingest module will also have to implement a shutDown() method.  
+
+- startUp() will be called before any data is analyzed to initialize and allocate resources. Any setup procedures that could fail should be done in startUp() so that it can throw an exception and cause the ingest job to stop and notify the user. 
+- shutDown() will be called on file ingest modules after all of the files have been analyzed.
+- startUp(), process(), and shutDown() will be called from a single thread.  So, basic modules do not need to worry about thread safety if they allocate resources for each instance of the module. However, if the module wants to share resources between instances, then it is responsible for  synchronizing the the shared resource.  See org.sleuthkit.autopsy.examples.SampleFileIngestModule as an example that shares resources. 
+
+The org.sleuthkit.autopsy.ingest.DataSourceIngestModule and org.sleuthkit.autopsy.ingest.FileIngestModule
+interfaces both extend org.sleuthkit.autopsy.ingest.IngestModule. 
+
+\subsection ingest_modules_implementing_datasourceingestmodule Creating a Data Source Ingest Module
+
+To create a data source ingest module:
+-# Make a new Java class either manually or 
+using the NetBeans wizards. 
+-# Make the class implement 
+org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  
+-# The NetBeans IDE 
+will complain that you have not implemented one or more of the required methods.
+You can use its "hints" to automatically generate stubs for the missing methods.  Use this page and the 
+documentation for the org.sleuthkit.autopsy.ingest.IngestModule and 
+org.sleuthkit.autopsy.ingest.DataSourceIngestModule interfaces for guidance on 
+what each method needs to do.  Or you can copy the code from  
+org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule and use it as a 
+template for your module.  
+
+All data source ingest modules must implement the single method defined by the 
+org.sleuthkit.autopsy.ingest.DataSourceIngestModule interface:
+
+- org.sleuthkit.autopsy.ingest.DataSourceIngestModule.process()
+
+The process() method is where all of the work of a data source ingest module is
+done. It will be called exactly once. The 
+process() method receives a reference to an org.sleuthkit.datamodel.Content object
+and an org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress object.
+The former is a representation of the data source. The latter should be used
+by the module instance to be a good citizen within Autopsy as it does its 
+potentially long-running processing.
+
+
+Note that data source ingest modules must find the files that they want to analyze.  
+The best way to do that is using one of the findFiles() methods of the  
+org.sleuthkit.autopsy.casemodule.services.FileManager class.  See 
+\ref mod_dev_other_services for more details. 
+
+The final step to getting the basic ingest module working is to configure your factory class to create instances of it. To do this, you will need to change the isDataSourceIngestModuleFactory() method to return true and have the createDataSourceIngestModule() method return a new instance of your ingest module. Both of these methods have default implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to:
 
 \code
-@Override
-public void process(Content dataSource, IngestDataSourceWorkerController controller) {
-        
-    //we have some number workunits / sub-tasks to execute
-    //in this case, we know the number of total tasks in advance
-    final int totalTasks = 12;
+    @Override
+    public boolean isDataSourceIngestModuleFactory() {
+        return true;
+    }
 
-    //initialize the overall image ingest progress
-    controller.switchToDeterminate();
-    controller.progress(totalTasks);
-       
-    for(int subTask = 0; subTask < totalTasks; ++subTask) {
-        //add cancellation support
-        if (controller.isCancelled() ) {
-            break; // break out early to let the thread terminate
-        }
-
-         //do the work
-        try {
-            //sub-task may add blackboard artifacts and create an inbox message
-            performSubTask(i);
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Exception occurred in subtask " + subTask, ex);
-        }
-
-        //update progress
-        controller.progress(i+1);
-    }   
-}
+    @Override
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+        return new FooDataSourceIngestModule();  // replace this class name with the name of your class
+    }
 \endcode
 
 
-\section ingest_file File-level Modules
+\subsection ingest_modules_implementing_fileingestmodule Creating a File Ingest Module
 
-To make a File-level module, make a new Java class either manually or using the NetBeans wizards. Edit the class to extend "org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile". NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. Use the method documentation in the org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile class to fill in the details.
-You can also refer to org.sleuthkit.autopsy.examples.SampleFileIngestModule as an example module. 
+To create a file ingest module:
+-# Make a new Java class either manually or 
+using the NetBeans wizards. 
+-# Make the class implement 
+org.sleuthkit.autopsy.ingest.FileIngestModule.  
+-# The NetBeans IDE 
+will complain that you have not implemented one or more of the required methods. 
+You can use its "hints" to automatically generate stubs for the missing methods.  Use this page and the 
+documentation for the org.sleuthkit.autopsy.ingest.IngestModule and 
+org.sleuthkit.autopsy.ingest.FileIngestModule interfaces for guidance on what 
+each method needs to do.  Or you can copy the code from  
+org.sleuthkit.autopsy.examples.SampleFileIngestModule and use it as a 
+template for your module.  
 
-Unlike Data Source-level modules, file-level modules are singletons.  Only a single instance is created for all files. 
-The same file-level module instance will be used for files in different images and even different cases if new cases are opened. 
+All file ingest modules must implement the two methods defined by the 
+org.sleuthkit.autopsy.ingest.FileIngestModule interface:
 
-Every file-level module should support multiple init() -> process() -> complete(), and init() -> process() -> stop() invocations.  It should also support init() -> complete() sequences.  A new case could be open for each call of init().
+- org.sleuthkit.autopsy.ingest.FileIngestModule.process()
+- org.sleuthkit.autopsy.ingest.FileIngestModule.shutDown()
 
-Currently (and this is likely to change in the future), File-level ingest modules are Singletons (meaning that only a single instance is created for the runtime of Autopsy).  
-You will need to implement a public static getDefault() method that returns a static instance of the module.  Note that if you skip this step, you will not see an error until Autopsy tries to load your module and the log will say that it does not have a getDefault method. 
+The process() method is where all of the work of a file ingest module is
+done. It will be called repeatedly between startUp() and shutDown(), once for 
+each file Autopsy feeds into the pipeline of which the module instance is a part. The 
+process() method receives a reference to a org.sleuthkit.datamodel.AbstractFile 
+object. 
 
-The implementation of this method is very standard, example:
+The final step to getting the basic ingest module working is to configure your factory class to create instances of it. To do this, you will need to change the isFileIngestModuleFactory() method to return true and have the createFileIngestModule() method return a new instance of your ingest module. Both of these methods have default implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to:
 
 \code
-public static synchronized MyIngestModule getDefault() {
+    @Override
+    public boolean isFileIngestModuleFactory() {
+        return true;
+    }
 
-   //defaultInstance is a private static class variable
-   if (defaultInstance == null) {
-        defaultInstance = new MyIngestModule();
-   }
-   return defaultInstance;
-}
+    @Override
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+        return new FooFileIngestModule(); // replace this class name with the name of your class
+    }
 \endcode
 
 
-You should also make the constructor private to ensure the singleton status. 
+\section ingest_modules_services Platform Services
 
-As a result of the singleton design, init() will be called multiple times and even for different cases.  Ensure that you update local member variables accordingly each time init() is called.  Again, this design will likely change, but it is what it is for now.
-
-
-\section ingestmodule_registration Module Registration
-
-Modules are automatically discovered if they implement the proper interface. 
-Currently, a restart of Autopsy is required after a module is installed before it is discovered.
-
-By default, modules that do not come with a standard Autopsy installation will run after the standard modules. No order
-is implied. This design will likely change in the future, but currently manual configuration is needed to enforce order.
+The previous section will allow you to get a module up and running that will be passed in either a file or a data source to analyze. 
+This section covers how you get access to more data and how you can display data to the user. 
 
 
-There is an XML pipeline configuration that contains the standard modules and specifies the order that they are run in. 
-If you need to specify the order of modules, then they needed to be manually addded to this file in the correct order. 
-This file is the same format as The Sleuth Kit Framework configuration file. 
-Refer to http://sleuthkit.org/sleuthkit/docs/framework-docs/pipeline_config_page.html which is an official documentation 
-for the pipeline configuration schema.
+\subsection ingest_modules_services_ingest Ingest Services
 
-Autopsy will provide tools for reconfiguring the ingest pipeline in the near future, 
-and user/developer will be able to reload current view of discovered modules, 
-reorder modules in the pipeline and set their arguments using GUI.
+The singleton instance of the org.sleuthkit.autopsy.ingest.IngestServices class 
+provides services tailored to the needs of ingest modules, and a module developer 
+should use these utilities to log errors, send messages, get the current case, 
+fire events, persist simple global settings, etc.  Refer to the documentation 
+of the IngestServices class for method details. 
 
+\subsection ingest_modules_making_results Giving the User Feedback
 
-\section ingestmodule_services Ingest Services
+Ingest modules run in the background.  There are three ways to send messages and 
+save results so that the user can see them:
 
-Class org.sleuthkit.autopsy.ingest.IngestServices provides services specifically for the ingest modules
-and a module developer should use these utilities to send messages, get current case, etc.  Refer to its documentation for method details. 
-
-Remember, update references to IngestServices and Cases with each call to init() inside of the module. 
-
-Module developers are encouraged to use Autopsy's org.sleuthkit.autopsy.coreutils.Logger 
-infrastructure to log errors to the Autopsy log.  
-The logger can also be accessed using the org.sleuthkit.autopsy.ingest.IngestServices class.
-
-Certain modules may need need a persistant store (other than for storing results) for storing and reading
-module configurations or state.  
-The ModuleSettings API can be used also via org.sleuthkit.autopsy.ingest.IngestServices class.
+- Use the blackboard for long-term storage of analysis results. These results
+will be displayed in the results tree.
+- Use the ingest messages inbox to notify users of high-value analysis results 
+that were also posted to the blackboard.
+- Use the logging and/or message box utilities for error messages.
 
 
-\section ingestmodule_making_results Making Results Available to User
+\subsection ingest_modules_making_results_bb Posting Results to the Blackboard
+The blackboard is used to store results so that they are displayed in the results tree.  
+See \ref platform_blackboard  for details on posting results to it. 
 
-Ingest modules run in the background.  There are three ways to send messages and save results so that the user can see them:
-- Blackboard for long-term storage of analysis results and to display in the results tree.
-- Ingest Inbox to notify user of high-value analysis results that were also posted to blackboard.
-- Error messages.
+The blackboard defines artifacts for specific data types (such as web bookmarks). 
+You can use one of the standard artifact types, create your own, or simply post text 
+as a org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT artifact.
+The latter is much easier (for example, you can simply copy in the output from 
+an existing tool), but it forces the user to parse the output themselves.  
 
-\subsection ingestmodule_making_results_bb Posting Results to Blackboard
-The blackboard is used to store results so that they are displayed in the results tree.  See \ref platform_blackboard  for details on posting results to it. 
-
-The blackboard defines artifacts for specific data types (such as web bookmarks). You can use one of the standard artifact types, create your own, or simply post text with a org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT. The later is much easier (for example, you can simply copy in the output from an existing tool), but it forces the user to parse the output themselves.  
-
-When modules add data to the blackboard, 
-they should notify listeners of the new data by 
-invoking IngestServices.fireModuleDataEvent() method. 
+When modules add data to the blackboard, they should notify listeners of the new 
+data by invoking the org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() method. 
 Do so as soon as you have added an artifact to the blackboard.
-This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
-However, if you are writing a larger number of blackboard artifacts in a loop, it is better to invoke
-IngestServices.fireModuleDataEvent() only once after the bulk write, not to flood the system with events.
+This allows other modules (and the main UI) to know when to query the blackboard 
+for the latest data.  However, if you are writing a large number of blackboard 
+artifacts in a loop, it is better to invoke org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() 
+only once after the bulk write, so as not to flood the system with events.
 
 
-\subsection ingestmodule_making_results_inbox Posting Results to Message Inbox
+\subsection ingest_modules_making_results_inbox Posting Results to the Message Inbox
 
-Modules should post messages to the inbox when interesting data is found
-that has also been posted to the blackboard.  The idea behind these
-messages are that they are presented in chronological order so that
+Modules should post messages to the inbox when interesting data is found. 
+Of course, such data should also be posted to the blackboard as described above.  The idea behind 
+the ingest messages is that they are presented in chronological order so that
 users can see what was found while they were focusing on something else.
-Error messages are also sent here as is summary information after the module has run to give the user some feedback. 
+
+Inbox messages should only be sent if the result has a low false positive rate 
+and will likely be relevant.  For example, the core Autopsy hash lookup module 
+sends messages if known bad (notable) files are found, but not if known good 
+(NSRL) files are found. This module also provides a global setting 
+(using its global settings panel) that allows a user to turn these messages on 
+or off. 
+
+Messages are created using the org.sleuthkit.autopsy.ingest.IngestMessage class 
+and posted to the inbox using the org.sleuthkit.autopsy.ingest.IngestServices.postMessage() 
+method. 
 
 
-These messages should only be sent if the result has a low false positive rate and will likely be relevant.  
-For example, the hash lookup module will send messages if known bad (notable) files are found, 
-but not if known good (NSRL) files are found.  You can provide options to the users on when to make messages. 
+\subsection ingest_modules_making_results_error Reporting Errors
 
-
-A single message includes the module name, message subject, message details, 
-a unique message id (in the context of the originating module), and a uniqueness attribute.  
-The uniqueness attribute is used to group similar messages together 
-and to determine the overall importance priority of the message 
-(if the same message is seen repeatedly, it is considered lower priority).
-
-For example, for a keyword search module, the uniqueness attribute would the keyword that was hit.
-
-Messages are created using the org.sleuthkit.autopsy.ingest.IngestMessage class and posted to the inbox using org.sleuthkit.autopsy.ingest.IngestServices.postMessage() method. 
-
-
-\subsection ingestmodule_making_results_error Reporting Errors
-
-When an error occurs, you should send a message to the ingest inbox with an error level.  The downside of this though is that the ingest inbox was not entirely designed for this goal and it is easy for the user to miss these messages.  Therefore, we identify these messages in the IngestInbox and also post a pop-up message that comes up in the lower right. 
-
-You can make your own message in the lower right by using 
-org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show()
+When an error occurs, you should write an error message to the Autopsy logs, using a 
+logger obtained from org.sleuthkit.autopsy.ingest.IngestServices.getLogger().
+You could also send an error message to the ingest inbox. The 
+downside of this is that the ingest inbox was not really designed for this 
+purpose and it is easy for the user to miss these messages.  Therefore, it is 
+preferable to post a pop-up message that is displayed in the lower right hand
+corner of the main window by calling 
+org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show().
 
 
 
-\section ingestmodule_making_configuration Module Configuration
-
-Ingest modules may require user configuration. In \ref mod_dev_adv_options, you wll learn about Autopsy-wide settings.  There are some
-settings that are specific to ingest modules as well. 
-
-The framework 
-supports two levels of configuration: simple and advanced. Simple settings enable the user to enable and disable basic things at run-time (using check boxes and such).
-Advanced settings require more in-depth configuration with more powerful interface. 
-
-As an example, the advanced configuration for the keyword search module allows you to add and create keyword lists, choose encodings, etc. The simple interface allows
-you to enable and disable lists. 
-
-Module configuration is module-specific: every module maintains its own configuration state and is responsible for implementing the graphical interface. 
-If a module needs simple or advanced configuration, it needs to implement methods in its interface. 
-The org.sleuthkit.autopsy.ingest.IngestModuleAbstract.hasSimpleConfiguration(),
-org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getSimpleConfiguration(), and org.sleuthkit.autopsy.ingest.IngestModuleAbstract.saveSimpleConfiguration()
-methods should be used for simple configuration.  This panel will be shown when the user chooses which ingest modules to enable. 
-
-The advanced configuration is implemented with the 
-org.sleuthkit.autopsy.ingest.IngestModuleAbstract.hasAdvancedConfiguration(),
-org.sleuthkit.autopsy.ingest.IngestModuleAbstract.getAdvancedConfiguration(), and 
-org.sleuthkit.autopsy.ingest.IngestModuleAbstract.saveAdvancedConfiguration()
-methods. This panel can be accessed from the "Advanced" button when the user chooses which ingest modules to enable. 
-It is recommended that the advanced panel be the same panel that is used in the Options area (see  \ref mod_dev_adv_options).
-
-Refer to \ref mod_dev_adv_properties for details on saving properties from these panels. 
 
 
-<!-- @@@  MOVE THIS TO ADVANED -- I"M NOT SURE WHO NEEDS THIS..
-\section ingestmodule_events Getting Ingest Status and Events
+\section ingest_modules_making_options User Options
 
-NOTE: Sync this up with \ref mod_dev_events.
+Autopsy allows a module to provide two levels of configuration:
+- When an ingest job is being configured, the user can choose settings that are unique to that ingest job / pipeline.  For example. to enable a certain hash set.
+- The user can configure global settings that apply to all jobs. For example, to add or delete a hash set.
 
-Other modules and core Autopsy classes may want to get the overall ingest status from the ingest manager.  
-The IngestManager handle is obtained using org.sleuthkit.autopsy.ingest.IngestManager.getDefault().
-The manager provides access to ingest status with the 
-org.sleuthkit.autopsy.ingest.IngestManager.isIngestRunning() method and related methods 
-that allow to query ingest status per specific module.
+To provide either or both of these options to the user, we need to implement methods defined in the IngestModuleFactory interface.  You can either add them to your class that extends the IngestModuleFactoryAdapter or decide to simply implement the interface.
 
-External modules (such as data viewers) can also register themselves as ingest module event listeners 
-and receive event notifications (when a module is started, stopped, completed or has new data).  
-Use the IngestManager.addPropertyChangeListener() method to register a module event listener.  
-Events types received are defined in IngestManager.IngestModuleEvent enum.   
+You can also refer to sample implementations of the interfaces and abstract 
+classes in the org.sleuthkit.autopsy.examples package, although you should note 
+that the samples do not do anything particularly useful. 
 
-At the end of the ingest, IngestManager itself will notify all listeners of IngestModuleEvent.COMPLETED event.
-The event is an indication for listeners to perform the final data refresh by quering the blackboard.
-Module developers are encouraged to generate periodic IngestModuleEvent.DATA 
-ModuleDataEvent events when they post data to the blackboard, 
-but the IngestManager will make a final event to handle scenarios where the module did not notify listeners while it was running. 
--->
+
+\subsection ingest_modules_making_options_ingest Ingest Job Options
+
+To provide options for each ingest job:
+- hasIngestJobSettingsPanel() must return true
+- getIngestJobSettingsPanel() must return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options and returns a IngestModuleIngestJobSettings object based on the settings.
+- You are free to implement IngestModuleIngestJobSettings and store whatever you want in it (as long as it is serializable)
+- The IngestModuleIngestJobSettings object that was created during configuration will be passed back to the factory with each call to createDataSourceIngestModule() or createFileIngestModule().  The factory should cast it to its internal class that implements IngestModuleIngestJobSettings and pass that object into the constructor of its ingest module so that it can use the settings when it runs. 
+
+
+You can also implement the getDefaultIngestJobSettings() method to return the default settings that Autopsy should use when the module has not been run before. 
+
+NOTE: We recommend storing simple data in the IngestModuleIngestJobSettings-based class.  In the case of our hash lookup module, we store the string names of the hash databases to lookup in.  We then get the hash database handles in the call to startUp() using the global module settings. 
+
+
+\subsection ingest_modules_making_options_global Global Options
+
+To provide global options: 
+- hasGlobalSettingsPanel() must return true
+- getGlobalSettingsPanel() must return a org.sleuthkit.autopsy.ingest.IngestModuleGlobalSetttingsPanel with widgets to support the global settings. 
+- You are responsible for persisting global settings and may use the module 
+settings methods provided by org.sleuthkit.autopsy.ingest.IngestServices for 
+saving simple properties, or the facilities of classes such as 
+org.sleuthkit.autopsy.coreutils.PlatformUtil and org.sleuthkit.autopsy.coreutils.XMLUtil 
+for more sophisticated approaches.
+- You are responsible for providing a way for the ingest module to obtain the global settings. For 
+example, the Autopsy core hash look up module comes with a singleton hash databases
+manager. Users import and create hash databases using the global settings panel.
+Then they select which hash databases to use for a particular job using the 
+ingest job settings panel. When a module instance runs, it gets the relevant
+databases from the hash databases manager. 
+- You are responsible for having the ingest job options panel update itself if the global settings change (i.e. if a new item is added that must be listed on the ingest panel). 
+
+
+
+
+\section ingest_modules_pipeline_configuration Controlling the Ordering of Ingest Modules in Ingest Pipelines
+
+By default, ingest modules that are not part of the standard Autopsy 
+installation will run after the core ingest modules. No order is implied. This 
+will likely change in the future, but currently manual configuration is needed 
+to enforce sequencing of ingest modules.
+
+There is an ingest pipeline configuration XML file that specifies the order for
+running the core ingest modules. If you need to insert your ingest modules in
+the sequence of core modules or control the ordering of non-core modules, you 
+must edit this file by hand. You will find it in the config directory of your
+Autopsy installation, typically something like "C:\Users\yourUserName\AppData\Roaming\.autopsy\dev\config\pipeline_config.xml"
+on a Microsoft Windows platform.  Check the Userdir listed in the Autopsy About 
+dialog.
+
+Autopsy will provide tools for reconfiguring the ingest pipeline in the near 
+future. Until that time, there is no guarantee that the schema of this file will
+remain fixed and that it will not be overwritten when upgrading your Autopsy
+installation.
+
+\section ingest_modules_api_migration Migrating Ingest Modules to the Current API
+
+This section is a guide for module developers who wrote modules for the 3.0 API.  These API changes occurred so that 
+we could make parallel pipelines of the file-level ingest modules.   This section assumes you've read the above description of the new API.
+
+There are three big changes to make in your module:
+-# Modules are no longer singletons. Autopsy will make one of your factory classes and many instances of the ingest modules.  As part of the migration to the new classes, your singleton infrastructure will disappear. 
+-# You'll need to move the UI/Configuration methods into the factory class and the ingest module methods into their own class.  You'll also need to update the APIs for the methods a bit.
+-# You'll need to review your ingest module code for thread safety if you are using any static member variables. 
+
+
+We recommend that you:
+-# Create a new factory class and move over the UI panels, configuration code, and standard methods (name, description, version, etc.).
+-- You'll probably want the name in the ingest module code, so you should also store the name in a package-wide member variable.
+-# Get the factory to compile and work. You can do basic testing by running Autopsy and verifying that you see your module and its panels. 
+-# Change your old ingest module to implement the new interface and adjust it (see the name changes below). Then update the factory to create it. 
+-# Review the ingest module code for thread safety (especially look for static member variables)
+
+
+The following tables provide a mapping of the methods of the old abstract classes to 
+the new interfaces:
+
+Old method | New Method |
+---------- | ---------- |
+IngestModuleAbstract.getType() | N/A |
+IngestModuleAbstract.init() | IngestModule.startUp() |
+IngestModuleAbstract.getName() | IngestModuleFactory.getModuleName() |
+IngestModuleAbstract.getDescription() | IngestModuleFactory.getModuleDescription() |
+IngestModuleAbstract.getVersion() | IngestModuleFactory.getModuleVersion() |
+IngestModuleAbstract.hasBackgroundJobsRunning | N/A |
+IngestModuleAbstract.complete() | IngestModule.shutDown() for file ingest modules; data source ingest modules should do anything they did in complete() at the end of the process() method |
+IngestModuleAbstract.hasAdvancedConfiguration() | IngestModuleFactory.hasGlobalSettingsPanel() |
+IngestModuleAbstract.getAdvancedConfiguration() | IngestModuleFactory.getGlobalSettingsPanel() |
+IngestModuleAbstract.saveAdvancedConfiguration() | IngestModuleGlobalSetttingsPanel.saveSettings() |
+N/A | IngestModuleFactory.getDefaultIngestJobSettings() |
+IngestModuleAbstract.hasSimpleConfiguration() | IngestModuleFactory.hasIngestJobSettingsPanel() |
+IngestModuleAbstract.getSimpleConfiguration() | IngestModuleFactory.getIngestJobSettingsPanel() |
+IngestModuleAbstract.saveSimpleConfiguration() | N/A |
+N/A | IngestModuleIngestJobSettingsPanel.getSettings()  |
+N/A | IngestModuleFactory.isDataSourceIngestModuleFactory() |
+N/A | IngestModuleFactory.createDataSourceIngestModule() |
+N/A | IngestModuleFactory.isFileIngestModuleFactory() |
+N/A | IngestModuleFactory.createFileIngestModule() |
+
+Notes:
+- IngestModuleFactory.getModuleName() should delegate to a static class method 
+that can also be called by ingest module instances.
+- The IngestJobContext object passed to startUp() can be queried to determine whether the ingest 
+job completed or was cancelled.
+- The global settings panel (formerly "advanced") for a module must implement
+IngestModuleGlobalSettingsPanel which extends JPanel. Global settings are those
+that affect all modules, regardless of ingest job and pipeline.
+- The per ingest job settings panel (formerly "simple") for a module must implement
+IngestModuleIngestJobSettingsPanel which extends JPanel. It takes the settings
+for the current context as a serializable IngestModuleIngestJobSettings object
+and its getSettings() methods returns a serializable IngestModuleIngestJobSettings object.  
+The IngestModuleIngestJobSettingsPanel.getSettings() method replaces the saveSimpleSettings() method, 
+except that now Autopsy persists the settings in a context-sensitive fashion.
+- The IngestModuleFactory creation methods replace the getInstance() methods of
+the former singletons and receive a IngestModuleIngestJobSettings object that should be
+passed to the constructors of the module instances the factory creates. 
 
 */

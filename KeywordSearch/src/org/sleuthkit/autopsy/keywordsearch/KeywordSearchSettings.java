@@ -38,7 +38,7 @@ class KeywordSearchSettings {
     static final String PROPERTIES_OPTIONS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.properties_options.text", MODULE_NAME);
     static final String PROPERTIES_NSRL = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesNSRL.text", MODULE_NAME);
     static final String PROPERTIES_SCRIPTS = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.propertiesScripts.text", MODULE_NAME);
-    static final String SHOW_SNIPPETS = "showSnippets";
+    static final String SHOW_SNIPPETS = "showSnippets"; //NON-NLS
     static final boolean DEFAULT_SHOW_SNIPPETS = true;
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
@@ -52,11 +52,11 @@ class KeywordSearchSettings {
      * @return KeywordSearchIngestModule's update frequency
      */
     static UpdateFrequency getUpdateFrequency() {
-        if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null) {
-            return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency"));
+        if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null) { //NON-NLS
+            return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency")); //NON-NLS
         }
         //if it failed, return the default/last known value
-        logger.log(Level.WARNING, "Could not read property for UpdateFrequency, returning backup value.");
+        logger.log(Level.WARNING, "Could not read property for UpdateFrequency, returning backup value."); //NON-NLS
         return UpdateFrequency.DEFAULT;
     }
 
@@ -66,7 +66,7 @@ class KeywordSearchSettings {
      * @param freq Sets KeywordSearchIngestModule to this value.
      */
     static void setUpdateFrequency(UpdateFrequency freq) {
-        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency", freq.name());
+        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency", freq.name()); //NON-NLS
         UpdateFreq = freq;
     }
 
@@ -77,7 +77,7 @@ class KeywordSearchSettings {
      * @param skip
      */
     static void setSkipKnown(boolean skip) {
-        ModuleSettings.setConfigSetting(PROPERTIES_NSRL, "SkipKnown", Boolean.toString(skip));
+        ModuleSettings.setConfigSetting(PROPERTIES_NSRL, "SkipKnown", Boolean.toString(skip)); //NON-NLS
         skipKnown = skip;
     }
 
@@ -88,11 +88,11 @@ class KeywordSearchSettings {
      * @return skip setting
      */
     static boolean getSkipKnown() {
-        if (ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null) {
-            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown"));
+        if (ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null) { //NON-NLS
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown")); //NON-NLS
         }
         //if it fails, return the default/last known value
-        logger.log(Level.WARNING, "Could not read property for SkipKnown, returning backup value.");
+        logger.log(Level.WARNING, "Could not read property for SkipKnown, returning backup value."); //NON-NLS
         return skipKnown;
     }
 
@@ -108,12 +108,12 @@ class KeywordSearchSettings {
         //Disabling scripts that weren't selected
         for (String s : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).keySet()) {
             if (!scripts.contains(StringExtract.StringExtractUnicodeTable.SCRIPT.valueOf(s))) {
-                ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s, "false");
+                ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s, "false"); //NON-NLS
             }
         }
         //Writing and enabling selected scripts
         for (StringExtract.StringExtractUnicodeTable.SCRIPT s : stringExtractScripts) {
-            ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s.name(), "true");
+            ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s.name(), "true"); //NON-NLS
         }
 
     }
@@ -130,12 +130,12 @@ class KeywordSearchSettings {
     }
 
     static void setShowSnippets(boolean showSnippets) {
-        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS, (showSnippets ? "true" : "false"));
+        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS, (showSnippets ? "true" : "false")); //NON-NLS
     }
 
     static boolean getShowSnippets() {
         if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, SHOW_SNIPPETS)) {
-            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS).equals("true");
+            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, SHOW_SNIPPETS).equals("true"); //NON-NLS
         } else {
             return DEFAULT_SHOW_SNIPPETS;
         }
@@ -150,14 +150,14 @@ class KeywordSearchSettings {
         if (ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS) != null && !ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).isEmpty()) {
             List<SCRIPT> scripts = new ArrayList<>();
             for (Map.Entry<String, String> kvp : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).entrySet()) {
-                if (kvp.getValue().equals("true")) {
+                if (kvp.getValue().equals("true")) { //NON-NLS
                     scripts.add(SCRIPT.valueOf(kvp.getKey()));
                 }
             }
             return scripts;
         }
         //if it failed, try to return the built-in list maintained by the singleton.
-        logger.log(Level.WARNING, "Could not read properties for extracting scripts, returning backup values.");
+        logger.log(Level.WARNING, "Could not read properties for extracting scripts, returning backup values."); //NON-NLS
         return new ArrayList<>(stringExtractScripts);
     }
 
@@ -171,7 +171,7 @@ class KeywordSearchSettings {
         if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key) != null) {
             return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key);
         } else {
-            logger.log(Level.WARNING, "Could not read property for key {0}, returning backup value.", key);
+            logger.log(Level.WARNING, "Could not read property for key {0}, returning backup value.", key); //NON-NLS
             return stringExtractOptions.get(key);
         }
     }
@@ -185,7 +185,7 @@ class KeywordSearchSettings {
         Map<String, String> settings = ModuleSettings.getConfigSettings(PROPERTIES_OPTIONS);
         if (settings == null) {
             Map<String, String> settingsv2 = new HashMap<>();
-            logger.log(Level.WARNING, "Could not read properties for {0}.properties, returning backup values", PROPERTIES_OPTIONS);
+            logger.log(Level.WARNING, "Could not read properties for {0}.properties, returning backup values", PROPERTIES_OPTIONS); //NON-NLS
             settingsv2.putAll(stringExtractOptions);
             return settingsv2;
         } else {
@@ -198,30 +198,30 @@ class KeywordSearchSettings {
      * already exist.
      */
     static void setDefaults() {
-        logger.log(Level.INFO, "Detecting default settings.");
+        logger.log(Level.INFO, "Detecting default settings."); //NON-NLS
         //setting default NSRL
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) {
-            logger.log(Level.INFO, "No configuration for NSRL found, generating default...");
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
+            logger.log(Level.INFO, "No configuration for NSRL found, generating default..."); //NON-NLS
             KeywordSearchSettings.setSkipKnown(true);
         }
         //setting default Update Frequency
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) {
-            logger.log(Level.INFO, "No configuration for Update Frequency found, generating default...");
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
+            logger.log(Level.INFO, "No configuration for Update Frequency found, generating default..."); //NON-NLS
             KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
         }
         //setting default Extract UTF8
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString())) {
-            logger.log(Level.INFO, "No configuration for UTF8 found, generating default...");
-            KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+            logger.log(Level.INFO, "No configuration for UTF8 found, generating default..."); //NON-NLS
+            KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
         }
         //setting default Extract UTF16
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString())) {
-            logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults...");
-            KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+            logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults..."); //NON-NLS
+            KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
         }
         //setting default Latin-1 Script
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
-            logger.log(Level.INFO, "No configuration for Scripts found, generating defaults...");
+            logger.log(Level.INFO, "No configuration for Scripts found, generating defaults..."); //NON-NLS
             ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
         }
     }

@@ -61,31 +61,31 @@ public class Installer extends ModuleInstall {
                 //Note: if shipping with a different CRT version, this will only print a warning
                 //and try to use linker mechanism to find the correct versions of libs.
                 //We should update this if we officially switch to a new version of CRT/compiler
-                System.loadLibrary("msvcr100");
-                System.loadLibrary("msvcp100");
-                logger.log(Level.INFO, "MS CRT libraries loaded");
+                System.loadLibrary("msvcr100"); //NON-NLS
+                System.loadLibrary("msvcp100"); //NON-NLS
+                logger.log(Level.INFO, "MS CRT libraries loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e);
+                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e); //NON-NLS
             }
 
             try {
-               System.loadLibrary("zlib");
-               logger.log(Level.INFO, "ZLIB library loaded loaded");
+               System.loadLibrary("zlib"); //NON-NLS
+               logger.log(Level.INFO, "ZLIB library loaded loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e);
+               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e); //NON-NLS
             }
 
             try {
-               System.loadLibrary("libewf");
-               logger.log(Level.INFO, "EWF library loaded");
+               System.loadLibrary("libewf"); //NON-NLS
+               logger.log(Level.INFO, "EWF library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-               logger.log(Level.SEVERE, "Error loading EWF library, ", e);
+               logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
             }
          }
      }
     
     public Installer() {
-        logger.log(Level.INFO, "core installer created");
+        logger.log(Level.INFO, "core installer created"); //NON-NLS
         javaFxInit = false;
         packageInstallers = new ArrayList<ModuleInstall>();
 
@@ -132,12 +132,12 @@ public class Installer extends ModuleInstall {
     public void restored() {
         super.restored();
 
-        logger.log(Level.INFO, "restored()");
+        logger.log(Level.INFO, "restored()"); //NON-NLS
 
         initJavaFx();
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " restored()");
+            logger.log(Level.INFO, mi.getClass().getName() + " restored()"); //NON-NLS
             try {
                 mi.restored();
             } catch (Exception e) {
@@ -151,9 +151,9 @@ public class Installer extends ModuleInstall {
     public void validate() throws IllegalStateException {
         super.validate();
 
-        logger.log(Level.INFO, "validate()");
+        logger.log(Level.INFO, "validate()"); //NON-NLS
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " validate()");
+            logger.log(Level.INFO, mi.getClass().getName() + " validate()"); //NON-NLS
             try {
                 mi.validate();
             } catch (Exception e) {
@@ -166,10 +166,10 @@ public class Installer extends ModuleInstall {
     public void uninstalled() {
         super.uninstalled();
 
-        logger.log(Level.INFO, "uninstalled()");
+        logger.log(Level.INFO, "uninstalled()"); //NON-NLS
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " uninstalled()");
+            logger.log(Level.INFO, mi.getClass().getName() + " uninstalled()"); //NON-NLS
             try {
                 mi.uninstalled();
             } catch (Exception e) {
@@ -185,7 +185,7 @@ public class Installer extends ModuleInstall {
     public void close() {
         super.close();
 
-        logger.log(Level.INFO, "close()");
+        logger.log(Level.INFO, "close()"); //NON-NLS
 
         //exit JavaFx plat
         if (javaFxInit) {
@@ -193,7 +193,7 @@ public class Installer extends ModuleInstall {
         }
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " close()");
+            logger.log(Level.INFO, mi.getClass().getName() + " close()"); //NON-NLS
             try {
                 mi.close();
             } catch (Exception e) {

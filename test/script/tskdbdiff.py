@@ -43,8 +43,8 @@ class TskDbDiff(object):
         self.output_dir = output_dir
         self.gold_bb_dump = gold_bb_dump
         self.gold_dump = gold_dump
-        self._generate_gold_dump = gold_dump is None
-        self._generate_gold_bb_dump = gold_bb_dump is None
+        self._generate_gold_dump = True
+        self._generate_gold_bb_dump = True
         self._bb_dump_diff = ""
         self._dump_diff = ""
         self._bb_dump = ""
@@ -118,7 +118,7 @@ class TskDbDiff(object):
 
         if (not(gold_data == output_data)):
             diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", output_file, gold_file]
+            dffcmdlst = ["diff", gold_file, output_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             return False
         else:
@@ -175,7 +175,7 @@ class TskDbDiff(object):
                     database_log.write('Error Extracting Attributes')
                     database_log.close()
                     raise TskDbDiffException(msg)
-
+                
                 # Print attributes
                 if(looptry == True):
                     if (len(attributes) == 0):
@@ -207,13 +207,15 @@ class TskDbDiff(object):
                 database_log.write(' <artifact/>\n')
                 row = artifact_cursor.fetchone()
 
-            print(artifact_fail)
             if(artifact_fail > 0):
                 msg ="There were " + str(artifact_count) + " artifacts and " + str(artifact_fail) + " threw an exception while loading.\n"
         except Exception as e:
             raise TskDbDiffException("Unexpected error while dumping blackboard database: " + str(e))
         finally:
             database_log.close()
+            attribute_cursor.close()
+            artifact_cursor.close()
+            conn.close()
         
         # Now sort the file
         srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
@@ -231,6 +233,7 @@ class TskDbDiff(object):
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
         conn = sqlite3.connect(backup_db_file)
+        id_path_table = build_id_table(conn.cursor())
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
         # Delete the blackboard tables
         conn.execute("DROP TABLE blackboard_artifacts")
@@ -239,8 +242,14 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
+                line = replace_id(line, id_path_table)
                 db_log.write('%s\n' % line)
+            # Now sort the file    
+            
+        srtcmdlst = ["sort", dump_file, "-o", dump_file]
+        subprocess.call(srtcmdlst)
 
+        conn.close()
         # cleanup the backup
         os.remove(backup_db_file)
 
@@ -263,7 +272,60 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
+def replace_id(line, table):
+    """Remove the object id from a line.
 
+    Args:
+        line: a String, the line to remove the object id from.
+        table: a map from object ids to file paths.
+    """
+
+    files_index = line.find('INSERT INTO "tsk_files"')
+    path_index = line.find('INSERT INTO "tsk_files_path"')
+    object_index = line.find('INSERT INTO "tsk_objects"')
+    parens = line[line.find('(') + 1 : line.find(')')]
+    fields_list = parens.replace(" ", "").split(',')
+    
+    if (files_index != -1):
+        obj_id = fields_list[0]
+        path = table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_files" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    
+    elif (path_index != -1):
+        obj_id = fields_list[0]
+        path = table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    
+    elif (object_index != -1):
+        obj_id = fields_list[0]
+        parent_id = fields_list[1]
+    
+        try:
+             path = table[int(obj_id)]
+             parent_path = table[int(parent_id)]
+             newLine = ('INSERT INTO "tsk_objects" VALUES(' + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');') 
+             return newLine
+        except Exception as e: 
+            # objects table has things that aren't files. if lookup fails, don't replace anything.
+            return line
+    
+    else:
+        return line
+
+def build_id_table(artifact_cursor):
+    """Build the map of object ids to file paths.
+
+    Args:
+        artifact_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
+    # with the object id as the key and the full file path (parent + name) as the value
+    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
+    return mapping
+
+     
 def main():
     try:
         sys.argv.pop(0)
@@ -273,7 +335,7 @@ def main():
         print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
         sys.exit()
 
-    db_diff = TskDbDiff(output_db, gold_db, output_dir=".")
+    db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
     dump_passed, bb_dump_passed = db_diff.run_diff()
 
     if dump_passed and bb_dump_passed:

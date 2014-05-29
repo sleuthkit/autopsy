@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,8 +58,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      */
     @Override
     public void performAction() {
-        Logger.noteAction(this.getClass());
-        
         try {
             // create the popUp window for it
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
@@ -102,7 +100,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
             popUpWindow.setVisible(true);
         } catch (Exception ex) {
-            Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex);
+            Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex); //NON-NLS
         }
     }
 

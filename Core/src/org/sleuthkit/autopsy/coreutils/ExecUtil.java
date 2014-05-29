@@ -24,17 +24,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Takes care of forking a process and reading output / error streams to either a
  * string buffer or directly to a file writer
+ * BC: @@@ This code scares me in a multi-threaded env. I think the arguments should be passed into the constructor
+ * and different run methods that either return the string or use the redirected writer. 
  */
  public final class ExecUtil {
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
-    private String command = null;
+    private final String command = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
     private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
@@ -49,8 +50,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      * @return string buffer with captured stdout
      */
     public synchronized String execute(final String aCommand, final String... params) throws IOException, InterruptedException {
-        String output = "";
-
         // build command array
         String[] arrayCommand = new String[params.length + 1];
         arrayCommand[0] = aCommand;
@@ -64,35 +63,27 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
+        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
         //stderr redirect
-        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
-        //stdout redirect
-        outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT");
+        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
+        errorStringRedirect.start();        
 
-        //start redurectors
-        errorStringRedirect.start();
+        //stdout redirect
+        outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT"); //NON-NLS
         outputStringRedirect.start();
 
         //wait for process to complete and capture error core
         final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
+        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
 
-        errorStringRedirect.stopRun();
-        errorStringRedirect = null;
-
-        outputStringRedirect.stopRun();
-        output = outputStringRedirect.getOutput();
-
-        outputStringRedirect = null;
-
-        //gc process with its streams
-        proc = null;
-
-        return output;
+        // wait for output redirectors to finish writing / reading
+        outputWriterRedirect.join();
+        errorStringRedirect.join();
+        
+        return outputStringRedirect.getOutput();
     }
 
     /**
@@ -119,32 +110,38 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString());
+        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
         //stderr redirect
-        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR");
+        errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
+        errorStringRedirect.start();        
+
         //stdout redirect
         outputWriterRedirect = new ExecUtil.StreamToWriterRedirect(proc.getInputStream(), stdoutWriter);
-
-        //start redurectors
-        errorStringRedirect.start();
         outputWriterRedirect.start();
 
         //wait for process to complete and capture error core
         final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal);
+        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
 
+        // wait for them to finish writing / reading
+        outputWriterRedirect.join();
+        errorStringRedirect.join();
+        
         //gc process with its streams
-        proc = null;
+        //proc = null;
     }
+    
+    
+    
 
     /**
      * Interrupt the running process and stop its stream redirect threads
      */
     public synchronized void stop() {
-        logger.log(Level.INFO, "Stopping Execution of: " + command);
+        logger.log(Level.INFO, "Stopping Execution of: " + command); //NON-NLS
 
         if (errorStringRedirect != null) {
             errorStringRedirect.stopRun();
@@ -173,7 +170,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      * managed in this thread.
      *
      */
-    public static class StreamToStringRedirect extends Thread {
+    private static class StreamToStringRedirect extends Thread {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
         private InputStream is;
@@ -204,13 +201,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     this.output.append(line).append(SEP);
                 }
             } catch (final IOException ex) {
-                logger.log(Level.WARNING, "Error redirecting stream to string buffer", ex);
+                logger.log(Level.WARNING, "Error redirecting stream to string buffer", ex); //NON-NLS
             } finally {
                 if (br != null) {
                     try {
                         br.close();
                     } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Error closing stream reader", ex);
+                        logger.log(Level.SEVERE, "Error closing stream reader", ex); //NON-NLS
                     }
                 }
             }
@@ -243,7 +240,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      * Any exception during execution of the command is managed in this thread.
      *
      */
-    public static class StreamToWriterRedirect extends Thread {
+    private static class StreamToWriterRedirect extends Thread {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
         private InputStream is;
@@ -275,7 +272,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     writer.append(line).append(SEP);
                 }
             } catch (final IOException ex) {
-                logger.log(Level.SEVERE, "Error reading output and writing to file writer", ex);
+                logger.log(Level.SEVERE, "Error reading output and writing to file writer", ex); //NON-NLS
             } finally {
                 try {
                     if (doRun) {
@@ -286,7 +283,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     }
 
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error flushing file writer", ex);
+                    logger.log(Level.SEVERE, "Error flushing file writer", ex); //NON-NLS
                 }
             }
         }

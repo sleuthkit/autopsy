@@ -63,27 +63,24 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 public class HashDbManager implements PropertyChangeListener {
 
-    private static final String ROOT_ELEMENT = "hash_sets";
-    private static final String SET_ELEMENT = "hash_set";
-    private static final String SET_NAME_ATTRIBUTE = "name";
-    private static final String SET_TYPE_ATTRIBUTE = "type";
-    private static final String SEARCH_DURING_INGEST_ATTRIBUTE = "use_for_ingest";
-    private static final String SEND_INGEST_MESSAGES_ATTRIBUTE = "show_inbox_messages";
-    private static final String PATH_ELEMENT = "hash_set_path";
-    private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number";
-    private static final String CONFIG_FILE_NAME = "hashsets.xml";
-    private static final String XSD_FILE_NAME = "HashsetsSchema.xsd";
-    private static final String ENCODING = "UTF-8";
-    private static final String ALWAYS_CALCULATE_HASHES_ELEMENT = "hash_calculate";
-    private static final String VALUE_ATTRIBUTE = "value";
-    private static final String HASH_DATABASE_FILE_EXTENSON = "kdb";
+    private static final String ROOT_ELEMENT = "hash_sets"; //NON-NLS
+    private static final String SET_ELEMENT = "hash_set"; //NON-NLS
+    private static final String SET_NAME_ATTRIBUTE = "name"; //NON-NLS
+    private static final String SET_TYPE_ATTRIBUTE = "type"; //NON-NLS
+    private static final String SEARCH_DURING_INGEST_ATTRIBUTE = "use_for_ingest"; //NON-NLS
+    private static final String SEND_INGEST_MESSAGES_ATTRIBUTE = "show_inbox_messages"; //NON-NLS
+    private static final String PATH_ELEMENT = "hash_set_path"; //NON-NLS
+    private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
+    private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
+    private static final String XSD_FILE_NAME = "HashsetsSchema.xsd"; //NON-NLS
+    private static final String ENCODING = "UTF-8"; //NON-NLS
+    private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
-    private boolean alwaysCalculateHashes = true;
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
 
@@ -94,7 +91,7 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public enum SetEvt {
 
-        DB_ADDED, DB_DELETED
+        DB_ADDED, DB_DELETED, DB_INDEXED
     };
 
     /**
@@ -286,10 +283,10 @@ public class HashDbManager implements PropertyChangeListener {
         // Update the collections used to ensure that hash set names are unique 
         // and the same database is not added to the configuration more than once.
         hashSetNames.add(hashDb.getHashSetName());
-        if (!databasePath.equals("None")) {
+        if (!databasePath.equals("None")) { //NON-NLS
             hashSetPaths.add(databasePath);
         }
-        if (!indexPath.equals("None")) {
+        if (!indexPath.equals("None")) { //NON-NLS
             hashSetPaths.add(indexPath);
         }
 
@@ -304,9 +301,9 @@ public class HashDbManager implements PropertyChangeListener {
         try {
             changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
+            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
-                    "Module Error",
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
@@ -326,11 +323,11 @@ public class HashDbManager implements PropertyChangeListener {
             if (null != hashDb) {
                 try {
                     String indexPath = hashDb.getIndexPath();
-                    if (!indexPath.equals("None")) {
+                    if (!indexPath.equals("None")) { //NON-NLS
                         hashSetPaths.add(indexPath);
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database after indexing", ex);
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database after indexing", ex); //NON-NLS
                 }
             }
         }
@@ -345,7 +342,7 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized void removeHashDatabase(HashDb hashDb) throws HashDbManagerException {
         // Don't remove a database if ingest is running
-        boolean ingestIsRunning = IngestManager.getDefault().isIngestRunning();
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         if (ingestIsRunning) {
             throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.ingestRunningExceptionMsg"));
         }
@@ -377,19 +374,19 @@ public class HashDbManager implements PropertyChangeListener {
         try {
             hashSetPaths.remove(hashDb.getIndexPath());
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database when removing the database", ex);
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
         }
         try {
             if (!hashDb.hasIndexOnly()) {
                 hashSetPaths.remove(hashDb.getDatabasePath());
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting database path of " + hashDb.getHashSetName() + " hash database when removing the database", ex);
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting database path of " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
         }
         try {
             hashDb.close();
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex);
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
         }
 
         // Let any external listeners know that a set has been deleted
@@ -397,9 +394,9 @@ public class HashDbManager implements PropertyChangeListener {
         try {
             changeSupport.firePropertyChange(SetEvt.DB_DELETED.toString(), null, hashSetName);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
+            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
-                    "Module Error",
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
@@ -459,26 +456,10 @@ public class HashDbManager implements PropertyChangeListener {
                     updateableDbs.add(db);
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error checking updateable status of " + db.getHashSetName() + " hash database", ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error checking updateable status of " + db.getHashSetName() + " hash database", ex); //NON-NLS
             }
         }
         return updateableDbs;
-    }
-
-    /**
-     * Sets the value for the flag that indicates whether hashes should be
-     * calculated for content even if no hash databases are configured.
-     */
-    synchronized void setAlwaysCalculateHashes(boolean alwaysCalculateHashes) {
-        this.alwaysCalculateHashes = alwaysCalculateHashes;
-    }
-
-    /**
-     * Gets the flag that indicates whether hashes should be calculated for
-     * content even if no hash databases are configured.
-     */
-    synchronized boolean getAlwaysCalculateHashes() {
-        return alwaysCalculateHashes;
     }
 
     /**
@@ -511,7 +492,7 @@ public class HashDbManager implements PropertyChangeListener {
             try {
                 database.close();
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash database", ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash database", ex); //NON-NLS
             }
         }
         hashDatabases.clear();
@@ -529,14 +510,9 @@ public class HashDbManager implements PropertyChangeListener {
             writeHashDbsToDisk(doc, rootEl, knownHashSets);
             writeHashDbsToDisk(doc, rootEl, knownBadHashSets);
 
-            String calcValue = Boolean.toString(alwaysCalculateHashes);
-            Element setCalc = doc.createElement(ALWAYS_CALCULATE_HASHES_ELEMENT);
-            setCalc.setAttribute(VALUE_ATTRIBUTE, calcValue);
-            rootEl.appendChild(setCalc);
-
             success = XMLUtil.saveDoc(HashDbManager.class, configFilePath, ENCODING, doc);
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error saving hash databases", ex);
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error saving hash databases", ex); //NON-NLS
         }
         return success;
     }
@@ -553,7 +529,7 @@ public class HashDbManager implements PropertyChangeListener {
                     path = db.getDatabasePath();
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting path of hash database " + db.getHashSetName() + ", discarding from hash database configuration", ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting path of hash database " + db.getHashSetName() + ", discarding from hash database configuration", ex); //NON-NLS
                 continue;
             }
 
@@ -578,7 +554,7 @@ public class HashDbManager implements PropertyChangeListener {
         boolean updatedSchema = false;
 
         // Open the XML document that implements the configuration file.
-        final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath, XSD_FILE_NAME);
+        final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath);
         if (doc == null) {
             return false;
         }
@@ -586,7 +562,7 @@ public class HashDbManager implements PropertyChangeListener {
         // Get the root element.
         Element root = doc.getDocumentElement();
         if (root == null) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading hash sets: invalid file format.");
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading hash sets: invalid file format."); //NON-NLS
             return false;
         }
 
@@ -594,13 +570,13 @@ public class HashDbManager implements PropertyChangeListener {
         NodeList setsNList = root.getElementsByTagName(SET_ELEMENT);
         int numSets = setsNList.getLength();
         if (numSets == 0) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No element hash_set exists.");
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No element hash_set exists."); //NON-NLS
         }
 
         // Create HashDb objects for each hash set element. Skip to the next hash database if the definition of
         // a particular hash database is not well-formed.
-        String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class";
-        String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class";
+        String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
+        String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
         for (int i = 0; i < numSets; ++i) {
             Element setEl = (Element) setsNList.item(i);
 
@@ -634,7 +610,7 @@ public class HashDbManager implements PropertyChangeListener {
             }
 
             // Handle legacy known files types.
-            if (knownFilesType.equals("NSRL")) {
+            if (knownFilesType.equals("NSRL")) { //NON-NLS
                 knownFilesType = HashDb.KnownFilesType.KNOWN.toString();
                 updatedSchema = true;
             }
@@ -679,7 +655,7 @@ public class HashDbManager implements PropertyChangeListener {
                 try {
                     addExistingHashDatabaseInternal(hashSetName, dbPath, seearchDuringIngestFlag, sendIngestMessagesFlag, HashDb.KnownFilesType.valueOf(knownFilesType));
                 } catch (HashDbManagerException | TskCoreException ex) {
-                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex);
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(this.getClass(),
                             "HashDbManager.unableToOpenHashDbMsg", dbPath),
@@ -687,23 +663,12 @@ public class HashDbManager implements PropertyChangeListener {
                             JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i); //NON-NLS
             }
         }
 
-        // Get the element that stores the always calculate hashes flag.
-        NodeList calcList = root.getElementsByTagName(ALWAYS_CALCULATE_HASHES_ELEMENT);
-        if (calcList.getLength() > 0) {
-            Element calcEl = (Element) calcList.item(0); // Shouldn't be more than one.
-            final String value = calcEl.getAttribute(VALUE_ATTRIBUTE);
-            alwaysCalculateHashes = Boolean.parseBoolean(value);
-        } else {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, " element ");
-            alwaysCalculateHashes = true;
-        }
-
         if (updatedSchema) {
-            String backupFilePath = configFilePath + ".v1_backup";
+            String backupFilePath = configFilePath + ".v1_backup"; //NON-NLS
             String messageBoxTitle = NbBundle.getMessage(this.getClass(),
                     "HashDbManager.msgBoxTitle.confFileFmtChanged");
             String baseMessage = NbBundle.getMessage(this.getClass(),
@@ -717,7 +682,7 @@ public class HashDbManager implements PropertyChangeListener {
                         messageBoxTitle,
                         JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex); //NON-NLS
                 JOptionPane.showMessageDialog(null, baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
             }
 
@@ -757,7 +722,7 @@ public class HashDbManager implements PropertyChangeListener {
         JFileChooser fc = new JFileChooser();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[]{"txt", "idx", "hash", "Hash", "kdb"};
+        String[] EXTENSION = new String[]{"txt", "idx", "hash", "Hash", "kdb"}; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 NbBundle.getMessage(this.getClass(), "HashDbManager.fileNameExtensionFilter.title"), EXTENSION);
         fc.setFileFilter(filter);
@@ -767,7 +732,7 @@ public class HashDbManager implements PropertyChangeListener {
             try {
                 filePath = f.getCanonicalPath();
             } catch (IOException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Couldn't get selected file path", ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Couldn't get selected file path", ex); //NON-NLS
             }
         }
         return filePath;
@@ -988,7 +953,7 @@ public class HashDbManager implements PropertyChangeListener {
             try {
                 SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle);
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex);
+                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
                         "HashDbManager.dlgMsg.errorIndexingHashSet",
@@ -1008,16 +973,20 @@ public class HashDbManager implements PropertyChangeListener {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error creating index", ex);
-                MessageNotifyUtil.Notify.show("Error creating index",
-                        "Error creating index: " + ex.getMessage(),
+                logger.log(Level.SEVERE, "Error creating index", ex); //NON-NLS
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.title"),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.msg", ex.getMessage()),
                         MessageNotifyUtil.MessageType.ERROR);
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
 
             try {
                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
+                hashDb.propertyChangeSupport.firePropertyChange(HashDbManager.SetEvt.DB_INDEXED.toString(), null, hashDb.getHashSetName());
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "HashDbManager listener threw exception", e);
+                logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),

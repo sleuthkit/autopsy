@@ -40,13 +40,13 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class ArtifactStringContent implements StringContent {
 
-    BlackboardArtifact wrapped;
+    BlackboardArtifact artifact;
     private String stringContent = "";
     static final Logger logger = Logger.getLogger(ArtifactStringContent.class.getName());
     private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public ArtifactStringContent(BlackboardArtifact art) {
-        wrapped = art;
+        artifact = art;
     }
 
     @Override
@@ -54,29 +54,29 @@ public class ArtifactStringContent implements StringContent {
         if (stringContent.isEmpty()) {
             try {
                 StringBuilder buffer = new StringBuilder();
-                buffer.append("<html>\n");
-                buffer.append("<body>\n");
+                buffer.append("<html>\n"); //NON-NLS
+                buffer.append("<body>\n"); //NON-NLS
 
                 // artifact name header
-                buffer.append("<h4>");
-                buffer.append(wrapped.getDisplayName());
-                buffer.append("</h4>\n");
+                buffer.append("<h4>"); //NON-NLS
+                buffer.append(artifact.getDisplayName());
+                buffer.append("</h4>\n"); //NON-NLS
 
                 // start table for attributes
-                buffer.append("<table border='0'>");
-                buffer.append("<tr>");
-                buffer.append("</tr>\n");
+                buffer.append("<table border='0'>"); //NON-NLS
+                buffer.append("<tr>"); //NON-NLS
+                buffer.append("</tr>\n"); //NON-NLS
 
                 // cycle through each attribute and display in a row in the table. 
-                for (BlackboardAttribute attr : wrapped.getAttributes()) {
+                for (BlackboardAttribute attr : artifact.getAttributes()) {
 
                     // name column
-                    buffer.append("<tr><td>");
+                    buffer.append("<tr><td>"); //NON-NLS
                     buffer.append(attr.getAttributeTypeDisplayName());
-                    buffer.append("</td>");
+                    buffer.append("</td>"); //NON-NLS
 
                     // value column
-                    buffer.append("<td>");
+                    buffer.append("<td>"); //NON-NLS
                     if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
                             || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
                             || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID() 
@@ -88,7 +88,7 @@ public class ArtifactStringContent implements StringContent {
                         long epoch = attr.getValueLong();
                         String time = "0000-00-00 00:00:00";
                         if (epoch != 0) {
-                            dateFormatter.setTimeZone(getTimeZone(wrapped));
+                            dateFormatter.setTimeZone(getTimeZone(artifact));
                             time = dateFormatter.format(new java.util.Date(epoch * 1000));
                         }
                         buffer.append(time);
@@ -96,10 +96,10 @@ public class ArtifactStringContent implements StringContent {
                         switch (attr.getValueType()) {
                             case STRING:
                                 String str = attr.getValueString();
-                                str = str.replaceAll(" ", "&nbsp;");
-                                str = str.replaceAll("<", "&lt;");
-                                str = str.replaceAll(">", "&gt;");
-                                str = str.replaceAll("(\r\n|\n)", "<br />");
+                                str = str.replaceAll(" ", "&nbsp;"); //NON-NLS
+                                str = str.replaceAll("<", "&lt;"); //NON-NLS
+                                str = str.replaceAll(">", "&gt;"); //NON-NLS
+                                str = str.replaceAll("(\r\n|\n)", "<br />"); //NON-NLS
                                 buffer.append(str);
                                 break;
                             case INTEGER:
@@ -121,32 +121,42 @@ public class ArtifactStringContent implements StringContent {
                         buffer.append(attr.getContext());
                         buffer.append(")");
                     }
-                    buffer.append("</td>");
-                    buffer.append("</tr>\n");
+                    buffer.append("</td>"); //NON-NLS
+                    buffer.append("</tr>\n"); //NON-NLS
                 }
 
-                final Content content = getAssociatedContent(wrapped);
+                final Content content = getAssociatedContent(artifact);
 
                 String path = "";
                 try {
                     path = content.getUniquePath();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() on {0} : {1}", new Object[]{content, ex.getLocalizedMessage()});
+                    logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() on {0} : {1}", new Object[]{content, ex.getLocalizedMessage()}); //NON-NLS
                 }
 
                 //add file path
 
-                buffer.append("<tr>");
-                buffer.append("<td>");
+                buffer.append("<tr>"); //NON-NLS
+                buffer.append("<td>"); //NON-NLS
                 buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.srcFilePath.text"));
-                buffer.append("</td>");
-                buffer.append("<td>");
+                buffer.append("</td>"); //NON-NLS
+                buffer.append("<td>"); //NON-NLS
                 buffer.append(path);
-                buffer.append("</td>");
-                buffer.append("</tr>\n");
+                buffer.append("</td>"); //NON-NLS
+                buffer.append("</tr>\n"); //NON-NLS
+                
+                
+                // add artifact ID (useful for debugging)
+                buffer.append("<tr><td>"); //NON-NLS
+                buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.artifactId.text"));
+                buffer.append("</td><td>"); //NON-NLS
+                buffer.append(artifact.getArtifactID());
+                buffer.append("</td>"); //NON-NLS
+                buffer.append("</tr>\n"); //NON-NLS
+                
 
-                buffer.append("</table>");
-                buffer.append("</html>\n");
+                buffer.append("</table>"); //NON-NLS
+                buffer.append("</html>\n"); //NON-NLS
                 
                 stringContent = buffer.toString();
             } catch (TskException ex) {
@@ -161,7 +171,7 @@ public class ArtifactStringContent implements StringContent {
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Getting file failed", ex);
+            logger.log(Level.WARNING, "Getting file failed", ex); //NON-NLS
         }
         throw new IllegalArgumentException(NbBundle.getMessage(ArtifactStringContent.class, "ArtifactStringContent.exception.msg"));
     }
