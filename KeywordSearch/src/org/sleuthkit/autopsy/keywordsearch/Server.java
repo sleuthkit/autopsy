@@ -91,7 +91,7 @@ public class Server {
         TEXT {
             @Override
             public String toString() {
-                return "text";
+                return "text"; //NON-NLS
             }
         },
         CONTENT_WS {
