@@ -32,18 +32,18 @@ import org.sleuthkit.datamodel.TskData;
  * Display content with just raw text, no markup
  *
  */
-class RawMarkupSource implements MarkupSource {
+class RawTextMarkup implements TextMarkup {
     private int numPages = 0;
     private int currentPage = 0;
     private boolean hasChunks = false;
     
-    private Content currentContent;
+    private final Content currentContent;
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
-    private static final Logger logger = Logger.getLogger(RawMarkupSource.class.getName());
+    private static final Logger logger = Logger.getLogger(RawTextMarkup.class.getName());
 
-    RawMarkupSource(Content content) {
+    RawTextMarkup(Content content) {
         currentContent = content;
         initialize();
     }

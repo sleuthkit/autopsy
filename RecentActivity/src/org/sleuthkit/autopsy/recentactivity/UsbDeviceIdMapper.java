@@ -63,20 +63,29 @@ class UsbDeviceIdMapper {
      */
     public USBInfo parseAndLookup(String dev) {
         String[] dtokens = dev.split("[_&]");
-        String vID = dtokens[1];
+        String vID = dtokens[1].toUpperCase();
         String pID;
         if (dtokens.length < 4 || dtokens[3].length() < 4) {
             pID = "0000";
         } else {
             pID = dtokens[3];
         }
+        pID = pID.toUpperCase();
+        
+        // first try the full key
         String key = vID + pID;
-        key = key.toUpperCase();
-        if (!devices.containsKey(key)) {
-            return new USBInfo(null, null);
-        } else {
+        if (devices.containsKey(key)) {
             return devices.get(key);
         }
+        
+        // try just the vendor ID -> In case database doesn't know about this specific product
+        key = vID + "0000";
+        if (devices.containsKey(key)) {
+            USBInfo info = devices.get(key);
+            return new USBInfo(info.getVendor(), "Product: " + pID);
+        }
+        
+        return new USBInfo(null, null);
     }
 
     /**
@@ -152,8 +161,8 @@ class UsbDeviceIdMapper {
      * Stores the vendor information about a USB device 
      */
     public class USBInfo {
-        private String vendor;
-        private String product;
+        private final String vendor;
+        private final String product;
 
         private USBInfo(String vend, String prod) {
             vendor = vend;

@@ -30,9 +30,7 @@ import javax.swing.JOptionPane;
 
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
-import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.ingest.IngestJobConfigurator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -42,61 +40,61 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Instances of this Action allow users to content to a hash database.
  */
-final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup { 
+final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup {
+
     private static AddContentToHashDbAction instance;
     private final static String SINGLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
-                                                                            "AddContentToHashDbAction.singleSelectionName");
+            "AddContentToHashDbAction.singleSelectionName");
     private final static String MULTIPLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
-                                                                              "AddContentToHashDbAction.multipleSelectionName");
+            "AddContentToHashDbAction.multipleSelectionName");
 
     /**
-     * AddContentToHashDbAction is a singleton to support multi-selection of nodes, since 
-     * org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action from a node
-     * if every node in the nodes array returns a reference to the same action object from 
-     * Node.getActions(boolean).
+     * AddContentToHashDbAction is a singleton to support multi-selection of
+     * nodes, since org.openide.nodes.NodeOp.findActions(Node[] nodes) will only
+     * pick up an Action from a node if every node in the nodes array returns a
+     * reference to the same action object from Node.getActions(boolean).
      */
     public static synchronized AddContentToHashDbAction getInstance() {
         if (null == instance) {
             instance = new AddContentToHashDbAction();
-        }        
+        }
         return instance;
     }
 
     private AddContentToHashDbAction() {
     }
-    
+
     @Override
-    public JMenuItem getPopupPresenter() {            
+    public JMenuItem getPopupPresenter() {
         return new AddContentToHashDbMenu();
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent event) {
-    }  
-    
+    }
+
     // Instances of this class are used to implement the a pop up menu for this
     // action.
-    private final class AddContentToHashDbMenu extends JMenu { 
+    private final class AddContentToHashDbMenu extends JMenu {
 
         AddContentToHashDbMenu() {
             super(SINGLE_SELECTION_NAME);
-                        
+
             // Disable the menu if file ingest is in progress.
             if (IngestManager.getInstance().isIngestRunning()) {
                 setEnabled(false);
                 return;
             }
-            
+
             // Get any AbstractFile objects from the lookup of the currently focused top component. 
             final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
             if (selectedFiles.isEmpty()) {
                 setEnabled(false);
                 return;
-            }
-            else if (selectedFiles.size() > 1) {
+            } else if (selectedFiles.size() > 1) {
                 setText(MULTIPLE_SELECTION_NAME);
             }
-                        
+
             // Disable the menu if hashes have not been calculated.
             for (AbstractFile file : selectedFiles) {
                 if (null == file.getMd5Hash()) {
@@ -104,7 +102,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     return;
                 }
             }
-                                    
+
             // Get the current set of updateable hash databases and add each
             // one to the menu as a separate menu item. Selecting a hash database
             // adds the selected files to the selected database.
@@ -119,21 +117,20 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                         }
                     });
                 }
-            }
-            else {
+            } else {
                 JMenuItem empty = new JMenuItem(
                         NbBundle.getMessage(this.getClass(),
-                                            "AddContentToHashDbAction.ContentMenu.noHashDbsConfigd"));
+                        "AddContentToHashDbAction.ContentMenu.noHashDbsConfigd"));
                 empty.setEnabled(false);
-                add(empty);                
+                add(empty);
             }
-                        
+
             // Add a "New Hash Set..." menu item. Selecting this item invokes a
             // a hash database creation dialog and adds the selected files to the 
             // the new database.
             addSeparator();
             JMenuItem newHashSetItem = new JMenuItem(NbBundle.getMessage(this.getClass(),
-                                                                         "AddContentToHashDbAction.ContentMenu.createDbItem"));
+                    "AddContentToHashDbAction.ContentMenu.createDbItem"));
             newHashSetItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -141,46 +138,56 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     if (null != hashDb) {
                         HashDbManager.getInstance().save();
                         addFilesToHashSet(selectedFiles, hashDb);
-                    }                    
+                    }
                 }
             });
-            add(newHashSetItem);        
+            add(newHashSetItem);
         }
-        
+
         private void addFilesToHashSet(final Collection<? extends AbstractFile> files, HashDb hashSet) {
             for (AbstractFile file : files) {
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
+                    // don't let them add the hash for an empty file to the DB
+                    if (md5Hash.toLowerCase().equals("d41d8cd98f00b204e9800998ecf8427e")) {
+                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)");
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",
+                                file.getName()),
+                                NbBundle.getMessage(this.getClass(),
+                                "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                        continue;
+                    }
                     try {
                         hashSet.addHashes(file);
-                    }
-                    catch (TskCoreException ex) {
+                    } catch (TskCoreException ex) {
                         //noinspection HardCodedStringLiteral
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);
                         JOptionPane.showMessageDialog(null,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
-                                                                          file.getName()),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
-                                                      JOptionPane.ERROR_MESSAGE);
-                    }                    
-                }  
-                else {
+                                NbBundle.getMessage(this.getClass(),
+                                "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
+                                file.getName()),
+                                NbBundle.getMessage(this.getClass(),
+                                "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
                     JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
-                                                                      files.size() > 1 ? NbBundle
-                                                                              .getMessage(this.getClass(),
-                                                                                          "AddContentToHashDbAction.addFilesToHashSet.files") : NbBundle
-                                                                              .getMessage(this.getClass(),
-                                                                                          "AddContentToHashDbAction.addFilesToHashSet.file")),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
-                                                  JOptionPane.ERROR_MESSAGE);
+                            NbBundle.getMessage(this.getClass(),
+                            "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
+                            files.size() > 1 ? NbBundle
+                            .getMessage(this.getClass(),
+                            "AddContentToHashDbAction.addFilesToHashSet.files") : NbBundle
+                            .getMessage(this.getClass(),
+                            "AddContentToHashDbAction.addFilesToHashSet.file")),
+                            NbBundle.getMessage(this.getClass(),
+                            "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
+                            JOptionPane.ERROR_MESSAGE);
                     break;
                 }
-            }            
+            }
         }
-    }    
+    }
 }

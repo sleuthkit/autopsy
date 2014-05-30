@@ -116,7 +116,7 @@ class QueryResults {
     }
      
     /**
-     * Creates a blackboard artifact for each keyword hit
+     * Creates a blackboard artifacts for the hits. makes one artifact per keyword per file (i.e. if a keyword hits several times in teh file, only one artifact is created)
      * @param listName
      * @param progress    can be null
      * @param subProgress can be null

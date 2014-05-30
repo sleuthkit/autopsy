@@ -164,14 +164,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             return false;
         }
 
-        // Get listname
-        String listName = "";
-        if (queryRequests.size() > 1) {
-            KeywordList list = XmlKeywordSearchList.getCurrent().getListWithKeyword(keywordSearchQuery.getQueryString());
-            if (list != null) {
-                listName = list.getName();
-            }
-        }
+        
+        String listName = queryRequest.getQuery().getKeywordList().getName();
         
         final boolean literal_query = keywordSearchQuery.isLiteral();
 
@@ -305,7 +299,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !key.getQuery().isLiteral(), false, hits);
+        HighlightedTextMarkup highlights = new HighlightedTextMarkup(content, queryStr, !key.getQuery().isLiteral(), false, hits);
         return new KeywordSearchFilterNode(highlights, kvNode);
     }
 

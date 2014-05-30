@@ -49,15 +49,15 @@ class TermComponentQuery implements KeywordSearchQuery {
     private static final String TERMS_SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
     private static final String TERMS_HANDLER = "/terms"; //NON-NLS
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
-    private static Logger logger = Logger.getLogger(TermComponentQuery.class.getName());
+    private static final Logger logger = Logger.getLogger(TermComponentQuery.class.getName());
     private String queryEscaped;
-    private KeywordList keywordList;
-    private Keyword keyword;
+    private final KeywordList keywordList;
+    private final Keyword keyword;
     private boolean isEscaped;
     private List<Term> terms;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field;
-    private static int MAX_TERMS_RESULTS = 20000;
+    private static final int MAX_TERMS_RESULTS = 20000;
     
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -220,8 +220,9 @@ class TermComponentQuery implements KeywordSearchQuery {
         
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
-
-            LuceneQuery filesQuery = new LuceneQuery(termStr);
+            
+            LuceneQuery filesQuery = new LuceneQuery(keywordList, new Keyword(termStr, true));
+            
             //filesQuery.setField(TERMS_SEARCH_FIELD);
             for (KeywordQueryFilter filter : filters) {
                 //set filter
@@ -251,5 +252,10 @@ class TermComponentQuery implements KeywordSearchQuery {
         logger.log(Level.INFO, "Regex # results: {0}", resultSize); //NON-NLS
 
         return results;
+    }
+    
+    @Override
+    public KeywordList getKeywordList() {
+        return keywordList;
     }
 }

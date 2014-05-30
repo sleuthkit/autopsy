@@ -40,13 +40,13 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class ArtifactStringContent implements StringContent {
 
-    BlackboardArtifact wrapped;
+    BlackboardArtifact artifact;
     private String stringContent = "";
     static final Logger logger = Logger.getLogger(ArtifactStringContent.class.getName());
     private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public ArtifactStringContent(BlackboardArtifact art) {
-        wrapped = art;
+        artifact = art;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class ArtifactStringContent implements StringContent {
 
                 // artifact name header
                 buffer.append("<h4>"); //NON-NLS
-                buffer.append(wrapped.getDisplayName());
+                buffer.append(artifact.getDisplayName());
                 buffer.append("</h4>\n"); //NON-NLS
 
                 // start table for attributes
@@ -68,7 +68,7 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("</tr>\n"); //NON-NLS
 
                 // cycle through each attribute and display in a row in the table. 
-                for (BlackboardAttribute attr : wrapped.getAttributes()) {
+                for (BlackboardAttribute attr : artifact.getAttributes()) {
 
                     // name column
                     buffer.append("<tr><td>"); //NON-NLS
@@ -88,7 +88,7 @@ public class ArtifactStringContent implements StringContent {
                         long epoch = attr.getValueLong();
                         String time = "0000-00-00 00:00:00";
                         if (epoch != 0) {
-                            dateFormatter.setTimeZone(getTimeZone(wrapped));
+                            dateFormatter.setTimeZone(getTimeZone(artifact));
                             time = dateFormatter.format(new java.util.Date(epoch * 1000));
                         }
                         buffer.append(time);
@@ -125,7 +125,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("</tr>\n"); //NON-NLS
                 }
 
-                final Content content = getAssociatedContent(wrapped);
+                final Content content = getAssociatedContent(artifact);
 
                 String path = "";
                 try {
@@ -144,6 +144,16 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append(path);
                 buffer.append("</td>"); //NON-NLS
                 buffer.append("</tr>\n"); //NON-NLS
+                
+                
+                // add artifact ID (useful for debugging)
+                buffer.append("<tr><td>"); //NON-NLS
+                buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.artifactId.text"));
+                buffer.append("</td><td>"); //NON-NLS
+                buffer.append(artifact.getArtifactID());
+                buffer.append("</td>"); //NON-NLS
+                buffer.append("</tr>\n"); //NON-NLS
+                
 
                 buffer.append("</table>"); //NON-NLS
                 buffer.append("</html>\n"); //NON-NLS

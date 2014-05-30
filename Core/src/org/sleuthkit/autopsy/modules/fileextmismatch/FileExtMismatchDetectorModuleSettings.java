@@ -27,7 +27,7 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
 
     private static final long serialVersionUID = 1L;
     private boolean skipFilesWithNoExtension = true;
-    private boolean skipFilesWithTextPlainMimeType = false;
+    private boolean skipFilesWithTextPlainMimeType = true;
 
     FileExtMismatchDetectorModuleSettings() {
     }
