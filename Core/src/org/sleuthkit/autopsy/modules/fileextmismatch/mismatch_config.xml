@@ -223,7 +223,9 @@
   <ext>jpe</ext>
   <ext>jpeg</ext>
   <ext>jpg</ext>
+  <ext>jpg:ms-thumbnail</ext>
   <ext>png</ext>
+  <ext>tile</ext>
  </signature>
  <signature mimetype="image/png">
   <ext>gif</ext>
@@ -264,6 +266,7 @@
   <ext>adm</ext>
   <ext>admx</ext>
   <ext>aff</ext>
+  <ext>appcontent-ms</ext>
   <ext>arff</ext>
   <ext>ashx</ext>
   <ext>asp</ext>
@@ -300,6 +303,7 @@
   <ext>dun</ext>
   <ext>ecf</ext>
   <ext>elm</ext>
+  <ext>eml</ext>
   <ext>eng</ext>
   <ext>ent</ext>
   <ext>enu</ext>
@@ -398,6 +402,7 @@
   <ext>sql</ext>
   <ext>std</ext>
   <ext>stp</ext>
+  <ext>strings</ext>
   <ext>sve</ext>
   <ext>sve</ext>
   <ext>svg</ext>
