@@ -345,7 +345,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     static Map<Long, String> getImagePaths(SleuthkitCase db) { //TODO: clean this up
-        Map<Long, String> imgPaths = new HashMap<Long, String>();
+        Map<Long, String> imgPaths = new HashMap<>();
         try {
             Map<Long, List<String>> imgPathsList = db.getImagePaths();
             for (Map.Entry<Long, List<String>> entry : imgPathsList.entrySet()) {
@@ -721,7 +721,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return xmlcm.getExportDir();
         }
     }
-
+    
+    /**
+     * Gets the full path to the log directory for this case.
+     * 
+     * @return The log directory path.
+     */
+    public String getLogDirectoryPath() {
+        if (xmlcm == null) {
+            return "";
+        } else {
+            return xmlcm.getLogDir();
+        }
+    }
+    
     /**
      * get the created date of this case
      *

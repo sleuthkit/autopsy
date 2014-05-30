@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.logging.*;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Autopsy specialization of the Java Logger class with custom file handlers.
@@ -27,18 +31,47 @@ import java.util.logging.*;
 public final class Logger extends java.util.logging.Logger {
 
     private static final String LOG_ENCODING = PlatformUtil.getLogFileEncoding();
-    private static final String LOG_DIR = PlatformUtil.getLogDirectory();
     private static final int LOG_SIZE = 0; // In bytes, zero is unlimited
     private static final int LOG_FILE_COUNT = 10;
     private static final String LOG_WITHOUT_STACK_TRACES = "autopsy.log"; //NON-NLS
     private static final String LOG_WITH_STACK_TRACES = "autopsy_traces.log"; //NON-NLS
-    private static final FileHandler userFriendlyLogFile = createFileHandler(LOG_WITHOUT_STACK_TRACES);
-    private static final FileHandler developersLogFile = createFileHandler(LOG_WITH_STACK_TRACES);
+    private static final CaseChangeListener caseChangeListener = new CaseChangeListener();
     private static final Handler console = new java.util.logging.ConsoleHandler();
+    private static FileHandler userFriendlyLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITHOUT_STACK_TRACES);
+    private static FileHandler developersLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITH_STACK_TRACES);
 
-    private static FileHandler createFileHandler(String fileName) {
+    static {
+        Case.addPropertyChangeListener(caseChangeListener);
+    }
+
+    private static class CaseChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            if (event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                // Write to logs in the Logs directory of the current case, or 
+                // to logs in the user directory when there is no case.
+                if (event.getNewValue() != null) {
+                    String logDirectoryPath = ((Case) event.getNewValue()).getLogDirectoryPath();
+                    if (!logDirectoryPath.isEmpty()) {
+                        userFriendlyLogFile.close();
+                        userFriendlyLogFile = createFileHandler(logDirectoryPath, LOG_WITHOUT_STACK_TRACES);
+                        developersLogFile.close();
+                        developersLogFile = createFileHandler(logDirectoryPath, LOG_WITH_STACK_TRACES);
+                    }
+                } else {
+                    userFriendlyLogFile.close();
+                    userFriendlyLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITHOUT_STACK_TRACES);
+                    developersLogFile.close();
+                    developersLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITH_STACK_TRACES);
+                }
+            }
+        }
+    }
+
+    private static FileHandler createFileHandler(String logDirectory, String fileName) {
         try {
-            FileHandler f = new FileHandler(LOG_DIR + fileName, LOG_SIZE, LOG_FILE_COUNT);
+            FileHandler f = new FileHandler(logDirectory + File.separator + fileName, LOG_SIZE, LOG_FILE_COUNT);
             f.setEncoding(LOG_ENCODING);
             f.setFormatter(new SimpleFormatter());
             return f;
@@ -113,9 +146,9 @@ public final class Logger extends java.util.logging.Logger {
     private void logUserFriendlyOnly(Level level, String message, Throwable thrown) {
         removeHandler(developersLogFile);
         super.log(level, "{0}\nException:  {1}", new Object[]{message, thrown.toString()}); //NON-NLS
-        addHandler(developersLogFile);        
+        addHandler(developersLogFile);
     }
-    
+
     @Override
     public void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
         removeHandler(userFriendlyLogFile);
