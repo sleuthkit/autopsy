@@ -131,6 +131,15 @@ public class HashDbIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
         
+        /* Skip directories. One reason for this is because we won't accurately
+         * calculate hashes of NTFS directories that have content that spans the 
+         * IDX_ROOT and IDX_ALLOC artifacts. So we disable that until a solution for
+         * it is developed.
+         */
+        if (file.isDir()) {
+            return ProcessResult.OK;
+        }
+        
         // bail out if we have no hashes set
         if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (!settings.shouldCalculateHashes())) {
             return ProcessResult.OK;
