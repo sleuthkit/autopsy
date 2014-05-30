@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.externalresults;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -31,11 +31,10 @@ import org.w3c.dom.NodeList;
  * Parses an XML representation of externally generated results (artifacts,
  * derived files, and reports).
  */
-final class ExternalResultsXMLParser {
+public final class ExternalResultsXMLParser implements ExternalResultsParser {
 
     private static final Logger logger = Logger.getLogger(ExternalResultsXMLParser.class.getName());
     private static final String XSD_FILE = "autopsy_external_results.xsd"; //NON-NLS
-    private final Content dataSource;
     private final String resultsFilePath;
     private final ExternalResults externalResults;
 
@@ -45,148 +44,103 @@ final class ExternalResultsXMLParser {
      * @param importFilePath Full path of the results file to be parsed.
      */
     ExternalResultsXMLParser(Content dataSource, String resultsFilePath) {
-        this.dataSource = dataSource;
         this.resultsFilePath = resultsFilePath;
-        externalResults = new ExternalResults();
+        externalResults = new ExternalResults(dataSource);
     }
 
-    /**
-     * Parses artifacts, derived files, and reports represented in the XML file
-     * passed to the constructor.
-     *
-     * @return A possibly empty collection of result objects (artifacts, derived
-     * files, and reports).
-     */
-    ExternalResults parse() {
+    @Override
+    public ExternalResults parse() {
         try {
-            // Try loading and parsing the results file - note that 
-            // XMLUtil.loadDoc() only logs a warning if the file does not 
-            // conform to the XSD. Validation is still required!
-            final Document doc = XMLUtil.loadDoc(ExternalResultsXMLParser.class, resultsFilePath, XSD_FILE);
+            // Note that XMLUtil.loadDoc() logs a warning if the file does not
+            // conform to the XSD, but still returns a Document object. Until 
+            // this behavior is improved, validation is still required. If 
+            // XMLUtil.loadDoc() does return null, it failed to load the 
+            // document and it logged the error.
+            final Document doc = XMLUtil.loadDoc(ExternalResultsXMLParser.class, this.resultsFilePath, XSD_FILE);
             if (doc != null) {
-                Element rootElem = doc.getDocumentElement();
-                if (rootElem != null) {
-                    if (rootElem.getNodeName().equals(ExternalResultsXML.ROOT_ELEM.toString())) {
-                        parseArtifacts(rootElem);
-                        parseReports(rootElem);
-                        parseDerivedFiles(rootElem);
-                    } else {
-                        logger.log(Level.SEVERE, "Error loading XML file {0} : root element must be " + ExternalResultsXML.ROOT_ELEM.toString(), resultsFilePath); //NON-NLS
-                    }
+                final Element rootElem = doc.getDocumentElement();
+                if (rootElem != null && rootElem.getNodeName().equals(ExternalResultsXML.ROOT_ELEM.toString())) {
+                    parseArtifacts(rootElem);
+                    parseReports(rootElem);
+                    parseDerivedFiles(rootElem);
                 } else {
-                    logger.log(Level.SEVERE, "Error loading XML file {0} : missing root element", resultsFilePath); //NON-NLS
+                    logger.log(Level.SEVERE, "Did not find {0} root element of {2}", new Object[]{
+                        ExternalResultsXML.ROOT_ELEM.toString(), this.resultsFilePath}); //NON-NLS
                 }
-            } else {
-                logger.log(Level.SEVERE, "Error loading XML file {0}", resultsFilePath); //NON-NLS
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error loading XML file " + resultsFilePath, e); //NON-NLS
+            logger.log(Level.SEVERE, "Error parsing " + this.resultsFilePath, e); //NON-NLS
         }
         return externalResults;
     }
 
-    private void parseArtifacts(Element root) {
+    @Override
+    public List<String> getErrorMessages() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+        
+    private void parseArtifacts(final Element root) {
         NodeList artifactsListNodes = root.getElementsByTagName(ExternalResultsXML.ARTIFACTS_LIST_ELEM.toString());
         for (int i = 0; i < artifactsListNodes.getLength(); ++i) {
             Element artifactsListElem = (Element) artifactsListNodes.item(i);
             NodeList artifactNodes = artifactsListElem.getElementsByTagName(ExternalResultsXML.ARTIFACT_ELEM.toString());
             for (int j = 0; j < artifactNodes.getLength(); ++j) {
                 Element artifactElem = (Element) artifactNodes.item(j);
-                final String type = artifactElem.getAttribute(ExternalResultsXML.TYPE_ATTR.toString());
-                if (type.isEmpty()) {
-                    logger.log(Level.WARNING, "Ignoring invalid {0} element, missing {1} attribute ({2})", new Object[]{
-                        ExternalResultsXML.ARTIFACT_ELEM.toString(),
-                        ExternalResultsXML.TYPE_ATTR.toString(),
-                        resultsFilePath});
-                    continue;
-                }
-
-                String sourceFilePath = "";
-                NodeList sourceFileNodes = artifactElem.getElementsByTagName(ExternalResultsXML.SOURCE_FILE_ELEM.toString());
-                if (sourceFileNodes.getLength() > 0) {
-                    if (sourceFileNodes.getLength() > 1) {
-                        logger.log(Level.WARNING, "Found multiple {0} elements for a single {1} element, ignoring excess elements", new Object[]{ExternalResultsXML.SOURCE_FILE_ELEM.toString(), ExternalResultsXML.ARTIFACT_ELEM.toString()});
-                    }
-                    Element sourceFileElem = (Element) sourceFileNodes.item(0);
-                    NodeList pathNodes = sourceFileElem.getElementsByTagName(ExternalResultsXML.PATH_ELEM.toString());
-                    if (pathNodes.getLength() > 0) {
-                        if (pathNodes.getLength() > 1) {
-                            logger.log(Level.WARNING, "Found multiple {0} elements for a single {1} element, ignoring excess elements", new Object[]{ExternalResultsXML.PATH_ELEM.toString(), ExternalResultsXML.SOURCE_FILE_ELEM.toString()});
+                final String type = getElementAttributeValue(artifactElem, ExternalResultsXML.TYPE_ATTR.toString());
+                if (!type.isEmpty()) {
+                    Element sourceFileElem = getChildElement(artifactElem, ExternalResultsXML.SOURCE_FILE_ELEM.toString());
+                    if (sourceFileElem != null) {
+                        final String sourceFilePath = this.getChildElementContent((Element) sourceFileElem, ExternalResultsXML.PATH_ELEM.toString());
+                        if (!sourceFilePath.isEmpty()) {
+                            ExternalResults.Artifact artifact = externalResults.addArtifact(type, sourceFilePath);
+                            parseArtifactAttributes(artifactElem, artifact);
                         }
-                        Element pathElem = (Element) pathNodes.item(0);
-                        sourceFilePath = pathElem.getTextContent();
-                        if (sourceFilePath.isEmpty()) {
-                            logger.log(Level.WARNING, "Found empty {0} element, will use data source as artifact source file", ExternalResultsXML.PATH_ELEM.toString());
-                        }
-                    } else {
-                        logger.log(Level.WARNING, "Found {0} element missing {1} element, will use data source as artifact source file", new Object[]{ExternalResultsXML.SOURCE_FILE_ELEM.toString(), ExternalResultsXML.PATH_ELEM.toString()});
                     }
                 }
-                if (sourceFilePath.isEmpty()) {
-                    // Default to data source as the source file for the artifact.
-                    try {
-                        sourceFilePath = dataSource.getImage().getPaths()[0];
-                    } catch (TskCoreException ex) {
-                        // RJCTODO: Can do better than this, get rid of artifact...need to do better?
-                        logger.log(Level.SEVERE, "Failed to get data source path to use as default artifact source file, artifact will have no source file", ex); //NON-NLS
-                    }
-                }
-
-                ExternalResults.Artifact artifact = externalResults.addArtifact(type, sourceFilePath); 
-                parseArtifactAttributes(artifactElem, artifact);
             }
         }
     }
 
-    private void parseArtifactAttributes(Element artifactElem, ExternalResults.Artifact artifact) {
+    private void parseArtifactAttributes(final Element artifactElem, ExternalResults.Artifact artifact) {
         NodeList attributeNodesList = artifactElem.getElementsByTagName(ExternalResultsXML.ATTRIBUTE_ELEM.toString());
         for (int i = 0; i < attributeNodesList.getLength(); ++i) {
-            // Make sure the artifact attribute element has a type attribute.
+            // Get the type of the artifact attribute.
             Element attributeElem = (Element) attributeNodesList.item(i);
-            final String type = attributeElem.getAttribute(ExternalResultsXML.TYPE_ATTR.toString());
+            final String type = getElementAttributeValue(attributeElem, ExternalResultsXML.TYPE_ATTR.toString());
             if (type.isEmpty()) {
-                logger.log(Level.WARNING, "Ignoring invalid {0} element, missing {1} attribute", new Object[]{ExternalResultsXML.ATTRIBUTE_ELEM.toString(), ExternalResultsXML.TYPE_ATTR.toString()});
+                continue;
+            }            
+            // Get the value of the artifact attribute.
+            Element valueElem = this.getChildElement(attributeElem, ExternalResultsXML.VALUE_ELEM.toString());
+            if (valueElem == null) {
                 continue;
             }
-
-            // Make sure the artifact attribute element has a value element.
-            NodeList valueNodesList = attributeElem.getElementsByTagName(ExternalResultsXML.VALUE_ELEM.toString());
-            if (valueNodesList.getLength() < 1) {
-                logger.log(Level.WARNING, "Ignoring invalid {0} element, missing {1} element", new Object[]{ExternalResultsXML.ATTRIBUTE_ELEM.toString(), ExternalResultsXML.VALUE_ELEM.toString()});
-                continue;
-            }
-
-            if (valueNodesList.getLength() > 1) {
-                logger.log(Level.WARNING, "Found multiple {0} elements for a single {1} element, ignoring excess elements", new Object[]{ExternalResultsXML.VALUE_ELEM.toString(), ExternalResultsXML.ATTRIBUTE_ELEM.toString()});
-            }
-
-            // Make sure the value element is not empty.
-            Element valueElem = (Element) valueNodesList.item(0);
             final String value = valueElem.getTextContent();
             if (value.isEmpty()) {
-                logger.log(Level.WARNING, "Ignoring invalid {0} element, {1} element has no content", new Object[]{ExternalResultsXML.ATTRIBUTE_ELEM.toString(), ExternalResultsXML.VALUE_ELEM.toString()});
+                logger.log(Level.WARNING, "Found {0} element that has no content in {1}", new Object[]{
+                    ExternalResultsXML.VALUE_ELEM.toString(), this.resultsFilePath});
                 continue;
-            }
-
-            // It's ok if the value element does not have a type attribute - the
-            // default is ExternalResultsXML.VALUE_TYPE_TEXT.
+            }            
+            // Get the value type.
             String valueType = valueElem.getAttribute(ExternalResultsXML.TYPE_ATTR.toString());
             if (valueType.isEmpty()) {
                 valueType = ExternalResultsXML.VALUE_TYPE_TEXT.toString();
-            }
-
-            // Get the optional source module element.
-            String srcModule = "";
+            }            
+            // Get the source module for the artifact attribute.
+            String sourceModule = "";
             NodeList sourceModuleNodes = attributeElem.getElementsByTagName(ExternalResultsXML.SOURCE_MODULE_ELEM.toString());
             if (sourceModuleNodes.getLength() > 0) {
                 if (sourceModuleNodes.getLength() > 1) {
-                    logger.log(Level.WARNING, "Found multiple {0} elements for a single {1} element, ignoring excess elements", new Object[]{ExternalResultsXML.SOURCE_MODULE_ELEM.toString(), ExternalResultsXML.ATTRIBUTE_ELEM.toString()});
+                    logger.log(Level.WARNING, "Found multiple {0} child elements for {1} element in {2}, ignoring all but first occurrence", new Object[]{
+                        ExternalResultsXML.SOURCE_MODULE_ELEM.toString(),
+                        attributeElem.getTagName(),
+                        this.resultsFilePath}); // NON-NLS
                 }
                 Element srcModuleElem = (Element) sourceModuleNodes.item(0);
-                srcModule = srcModuleElem.getTextContent();
-            }
-
-            artifact.addAttribute(type, value, valueType, valueType);
+                sourceModule = srcModuleElem.getTextContent();
+            }            
+            // Add the attribute to the artifact.
+            artifact.addAttribute(type, value, valueType, sourceModule);
         }
     }
 
@@ -197,11 +151,11 @@ final class ExternalResultsXMLParser {
             NodeList reportNodes = reportsListElem.getElementsByTagName(ExternalResultsXML.REPORT_ELEM.toString());
             for (int j = 0; j < reportNodes.getLength(); ++j) {
                 Element reportElem = (Element) reportNodes.item(j);
-                String displayName = getRequiredChildElementContent(reportElem, ExternalResultsXML.DISPLAY_NAME_ELEM.toString());
+                String displayName = getChildElementContent(reportElem, ExternalResultsXML.DISPLAY_NAME_ELEM.toString());
                 if (displayName.isEmpty()) {
                     continue;
                 }
-                String path = getRequiredChildElementContent(reportElem, ExternalResultsXML.LOCAL_PATH_ELEM.toString());
+                String path = getChildElementContent(reportElem, ExternalResultsXML.LOCAL_PATH_ELEM.toString());
                 if (displayName.isEmpty()) {
                     continue;
                 }
@@ -217,11 +171,11 @@ final class ExternalResultsXMLParser {
             NodeList derivedFileNodes = derivedFilesListElem.getElementsByTagName(ExternalResultsXML.DERIVED_FILE_ELEM.toString());
             for (int j = 0; j < derivedFileNodes.getLength(); ++j) {
                 Element derivedFileElem = (Element) derivedFileNodes.item(j);
-                String path = getRequiredChildElementContent(derivedFileElem, ExternalResultsXML.LOCAL_PATH_ELEM.toString());
+                String path = getChildElementContent(derivedFileElem, ExternalResultsXML.LOCAL_PATH_ELEM.toString());
                 if (path.isEmpty()) {
                     continue;
                 }
-                String parentPath = getRequiredChildElementContent((Element) derivedFileNodes.item(j), ExternalResultsXML.PARENT_PATH_ELEM.toString());
+                String parentPath = getChildElementContent((Element) derivedFileNodes.item(j), ExternalResultsXML.PARENT_PATH_ELEM.toString());
                 if (parentPath.isEmpty()) {
                     continue;
                 }
@@ -230,29 +184,54 @@ final class ExternalResultsXMLParser {
         }
     }
 
-    private String getRequiredChildElementContent(Element parentElement, String childElementTagName) {
+    private Element getChildElement(Element parentElement, String childElementTagName) {
+        Element childElem = null;
+        NodeList childNodes = parentElement.getElementsByTagName(childElementTagName);
+        if (childNodes.getLength() > 0) {
+            if (childNodes.getLength() > 1) {
+                logger.log(Level.WARNING, "Found multiple {0} child elements for {1} element in {2}, ignoring all but first occurrence", new Object[]{
+                    childElementTagName,
+                    parentElement.getTagName(),
+                    this.resultsFilePath}); // NON-NLS
+            }
+        }
+        return childElem;
+    }
+
+    private String getElementAttributeValue(Element element, String attributeName) {
+        final String attributeValue = element.getAttribute(attributeName);
+        if (attributeValue.isEmpty()) {
+            logger.log(Level.WARNING, "Found {0} element missing {1} attribute in {2}", new Object[]{
+                element.getTagName(),
+                attributeName,
+                this.resultsFilePath});
+        }
+        return attributeValue;
+    }
+
+    private String getChildElementContent(Element parentElement, String childElementTagName) {
         String content = "";
         NodeList childNodes = parentElement.getElementsByTagName(childElementTagName);
         if (childNodes.getLength() > 0) {
             if (childNodes.getLength() > 1) {
-                logger.log(Level.WARNING, "Found multiple {0} child elements for {1} element, ignoring all but first occurrence ({2})", new Object[]{
+                logger.log(Level.WARNING, "Found multiple {0} child elements for {1} element in {2}, ignoring all but first occurrence", new Object[]{
                     childElementTagName,
                     parentElement.getTagName(),
-                    resultsFilePath}); // NON-NLS
+                    this.resultsFilePath}); // NON-NLS
             }
             Element childElement = (Element) childNodes.item(0);
             content = childElement.getTextContent();
             if (content.isEmpty()) {
-                logger.log(Level.WARNING, "Ignoring {0} element, {1} child element has no content ({2})", new Object[]{
+                logger.log(Level.WARNING, "Found {0} element with {1} child element that has no content in {2}", new Object[]{
                     parentElement.getTagName(),
                     childElementTagName,
-                    resultsFilePath}); // NON-NLS
+                    this.resultsFilePath}); // NON-NLS
             }
         } else {
-            logger.log(Level.WARNING, "Ignoring {0} element missing {1} child element ({2})", new Object[]{
+            logger.log(Level.WARNING, "Found {0} element missing {1} child element in {2}", new Object[]{
                 parentElement.getTagName(),
                 childElementTagName,
-                resultsFilePath});  // NON-NLS   
+                this.resultsFilePath});  // NON-NLS   
         }
         return content;
     }

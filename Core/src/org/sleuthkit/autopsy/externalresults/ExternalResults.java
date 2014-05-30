@@ -21,17 +21,26 @@ package org.sleuthkit.autopsy.externalresults;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.sleuthkit.datamodel.Content;
 
 /**
  *
  */
-final class ExternalResults {
+final public class ExternalResults {
 
-    // RJCTODO: Consider adding data source Content object to results
+    private final Content dataSource;
     private final List<Artifact> artifacts = new ArrayList<>();
     private final List<Report> reports = new ArrayList<>();
     private final List<DerivedFile> derivedFiles = new ArrayList<>();
 
+    ExternalResults(Content dataSource) {
+        this.dataSource = dataSource;
+    }
+    
+    Content getDataSource() {
+        return this.dataSource;
+    }
+    
     Artifact addArtifact(String type, String sourceFilePath) {
         if (type.isEmpty()) {
             throw new IllegalArgumentException("type argument is empty");

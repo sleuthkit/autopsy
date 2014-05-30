@@ -126,12 +126,12 @@ public class XMLUtil {
             DocumentBuilder builder = builderFactory.newDocumentBuilder();
             ret = builder.parse(new FileInputStream(xmlPath));
         } catch (ParserConfigurationException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't initialize parser.", e); //NON-NLS
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't initialize parser.", e); //NON-NLS
         } catch (SAXException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't parse XML.", e); //NON-NLS
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't parse XML.", e); //NON-NLS
         } catch (IOException e) {
             //error reading file
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't read file.", e); //NON-NLS
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't read file.", e); //NON-NLS
         }
         return ret;
     }

@@ -23,7 +23,6 @@ package org.sleuthkit.autopsy.externalresults;
  */
 public enum ExternalResultsXML {
     ROOT_ELEM("autopsy_results"), //NON-NLS
-    DATA_SRC_ELEM("data_source"), //NON-NLS
     ARTIFACTS_LIST_ELEM("artifacts"), //NON-NLS
     ARTIFACT_ELEM("artifact"), //NON-NLS
     SOURCE_FILE_ELEM("source_file"), //NON-NLS

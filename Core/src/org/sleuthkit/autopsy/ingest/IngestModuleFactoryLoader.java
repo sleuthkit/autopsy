@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Looks up loaded ingest module factories using the NetBeans global lookup.

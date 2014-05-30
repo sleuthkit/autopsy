@@ -167,13 +167,6 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         Element rootElement = doc.createElement(ExternalResultsXML.ROOT_ELEM.toString());
         doc.appendChild(rootElement);
 
-        // Add a data source element to the root element. This is optional and 
-        // is currently ignored by Autopsy, but it is used here to provide some 
-        // portable context to the results file.
-        Element dataSourceElement = doc.createElement(ExternalResultsXML.DATA_SRC_ELEM.toString());
-        dataSourceElement.setTextContent(dataSourcePath);
-        rootElement.appendChild(dataSourceElement);
-
         // Add an artifacts list element to the root element.
         Element artifactsListElement = doc.createElement(ExternalResultsXML.ARTIFACTS_LIST_ELEM.toString());
         rootElement.appendChild(artifactsListElement);
