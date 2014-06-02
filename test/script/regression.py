@@ -142,7 +142,7 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-
+            print("Total ingest time was " + test_data.total_ingest_time)
         Reports.write_html_foot(test_config.html_log)
         
         if test_config.jenkins:
@@ -1200,17 +1200,18 @@ class Logs(object):
             test_data: the TestData to modify
         """
         try:
-            # Open autopsy.log.0
-            log_path = make_path(test_data.logs_dir, "autopsy.log.0")
+            # Open autopsy_case.log.0
+            log_path = make_path(test_data.logs_dir, "autopsy_case.log.0")
             log = open(log_path)
 
-            # Set the TestData start time based off the first line of autopsy.log.0
+            # Set the TestData start time based off the first line of autopsy_case.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
+            print("1210")
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
-            Errors.print_error("Error: Unable to open autopsy.log.0.")
+            Errors.print_error("Error: Unable to open autopsy_case.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
         # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -1224,9 +1225,10 @@ class Logs(object):
             # Set Autopsy version, heap space, ingest time, and service times
 
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
+            print("1228")
             test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-            
+            print("1231")
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
             
@@ -1245,7 +1247,7 @@ class Logs(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
-            service_lines = find_msg_in_log("autopsy.log.0", "to process()", test_data)
+            service_lines = find_msg_in_log("autopsy_case.log.0", "to process()", test_data)
             service_list = []
             for line in service_lines:
                 words = line.split(" ")
@@ -1253,11 +1255,16 @@ class Logs(object):
                 # If this format changes, the tester will break
                 i = words.index("secs.")
                 times = words[i-4] + " "
+                print("1")
                 times += words[i-3] + " "
+                print("2")
                 times += words[i-2] + " "
+                print("3")
                 times += words[i-1] + " "
+                print("4")
                 times += words[i]
                 service_list.append(times)
+                print("5")
             test_data.service_times = "; ".join(service_list)
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unknown fatal error when finding service times.")
@@ -1361,11 +1368,22 @@ def copy_logs(test_data):
         test_data: the TestData whose logs will be copied
     """
     try:
-        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
+        # copy logs from autopsy case's Log folder
+        log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, "Log")
         shutil.copytree(log_dir, test_data.logs_dir)
+
+        # copy logs from userdir0
+        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
+        print("log_dir is " + log_dir)
+        for log in log_dir:
+            new_name = "userdir0." + log
+            os.rename(log, new_name)
+            print("a log name is " + log)
+        print("log_dir is " + log_dir)
+        shutil.copytree(log_dir, test_data.logs_dir)    
     except OSError as e:
-        printerror(test_data,"Error: Failed to copy the logs.")
-        printerror(test_data,str(e) + "\n")
+        print(test_data,"Error: Failed to copy the logs.")
+        print(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
 
 def setDay():
@@ -1655,6 +1673,7 @@ def search_logs(string, test_data):
     logs_path = test_data.logs_dir
     results = []
     for file in os.listdir(logs_path):
+        print(file)
         log = codecs.open(make_path(logs_path, file), "r", "utf_8")
         for line in log:
             if string in line:
@@ -1739,7 +1758,7 @@ def find_msg_in_log(log, string, test_data):
    """
    lines = []
    try:
-      lines = search_log("autopsy.log.0", string, test_data)[0]
+      lines = search_log("autopsy_case.log.0", string, test_data)[0]
    except (Exception) as e:
       # there weren't any matching messages found
       pass
