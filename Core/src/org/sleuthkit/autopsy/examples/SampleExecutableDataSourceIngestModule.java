@@ -44,11 +44,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.externalresults.ExternalResults;
 import org.sleuthkit.autopsy.externalresults.ExternalResultsImporter;
-import org.sleuthkit.autopsy.externalresults.ExternalResultsXML;
+import org.sleuthkit.autopsy.externalresults.ExternalResultsXMLParser;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -111,7 +111,12 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
                 progressBar.progress(1);
 
                 // Import the results of the analysis.
-                ExternalResultsImporter.importResultsFromXML(dataSource, resultsFilePath);
+                ExternalResults results = new ExternalResultsXMLParser(dataSource, resultsFilePath).parse(); 
+                // RJCTODO: Get error messages
+                ExternalResultsImporter importer = new ExternalResultsImporter();
+                importer.importResults(results);
+                // RJCTODO: Get error messages
+                
                 progressBar.progress(2);
             } catch (TskCoreException | ParserConfigurationException | TransformerException | IOException ex) {
                 Logger logger = IngestServices.getInstance().getLogger(moduleName);
@@ -164,18 +169,18 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
         Document doc = docBuilder.newDocument();
-        Element rootElement = doc.createElement(ExternalResultsXML.ROOT_ELEM.toString());
+        Element rootElement = doc.createElement(ExternalResultsXMLParser.TagNames.ROOT_ELEM.toString());
         doc.appendChild(rootElement);
 
         // Add an artifacts list element to the root element.
-        Element artifactsListElement = doc.createElement(ExternalResultsXML.ARTIFACTS_LIST_ELEM.toString());
+        Element artifactsListElement = doc.createElement(ExternalResultsXMLParser.TagNames.ARTIFACTS_LIST_ELEM.toString());
         rootElement.appendChild(artifactsListElement);
 
         // Add an artifact element to the artifacts list element. A standard 
         // artifact type is used as the required type attribute of this 
         // artifact element.
-        Element artifactElement = doc.createElement(ExternalResultsXML.ARTIFACT_ELEM.toString());
-        artifactElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getLabel());
+        Element artifactElement = doc.createElement(ExternalResultsXMLParser.TagNames.ARTIFACT_ELEM.toString());
+        artifactElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getLabel());
         artifactsListElement.appendChild(artifactElement);
 
         // Add an optional file element to the artifact element, and add a path 
@@ -183,61 +188,61 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         // artifact is usually specified. If an artifact element has no file
         // element, the data source is used as the default source file for the
         // artifact.
-        Element fileElement = doc.createElement(ExternalResultsXML.SOURCE_FILE_ELEM.toString());
+        Element fileElement = doc.createElement(ExternalResultsXMLParser.TagNames.SOURCE_FILE_ELEM.toString());
         artifactElement.appendChild(fileElement);
-        Element pathElement = doc.createElement(ExternalResultsXML.PATH_ELEM.toString());
+        Element pathElement = doc.createElement(ExternalResultsXMLParser.TagNames.PATH_ELEM.toString());
         pathElement.setTextContent(dataSourcePath);
         fileElement.appendChild(pathElement);
 
         // Add an artifact attribute element to the artifact element. A standard 
         // artifact attribute type is used as the required type XML attribute of 
         // the artifact attribute element.
-        Element artifactAttrElement = doc.createElement(ExternalResultsXML.ATTRIBUTE_ELEM.toString());
-        artifactAttrElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel());
+        Element artifactAttrElement = doc.createElement(ExternalResultsXMLParser.TagNames.ATTRIBUTE_ELEM.toString());
+        artifactAttrElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel());
         artifactElement.appendChild(artifactAttrElement);
 
         // Add the required value element to the artifact attribute element, 
         // with an optional type XML attribute of ExternalXML.VALUE_TYPE_TEXT, 
         // which is the default.        
-        Element artifactAttributeValueElement = doc.createElement(ExternalResultsXML.VALUE_ELEM.toString());
+        Element artifactAttributeValueElement = doc.createElement(ExternalResultsXMLParser.TagNames.VALUE_ELEM.toString());
         artifactAttributeValueElement.setTextContent("SampleInterestingFilesSet");
         artifactAttrElement.appendChild(artifactAttributeValueElement);
 
         // Add an optional source module element to the artifct attribute 
         // element.
-        Element artifactAttrSourceElement = doc.createElement(ExternalResultsXML.SOURCE_MODULE_ELEM.toString());
+        Element artifactAttrSourceElement = doc.createElement(ExternalResultsXMLParser.TagNames.SOURCE_MODULE_ELEM.toString());
         artifactAttrSourceElement.setTextContent(moduleName);
         artifactAttrElement.appendChild(artifactAttrSourceElement);
 
         // Add an artifact element with a user-defined type. No file element is 
         // added to the artifact element, so the data source will be used as the 
         // default for the source file.
-        artifactElement = doc.createElement(ExternalResultsXML.ARTIFACT_ELEM.toString());
-        artifactElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), "SampleArtifactType");
+        artifactElement = doc.createElement(ExternalResultsXMLParser.TagNames.ARTIFACT_ELEM.toString());
+        artifactElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), "SampleArtifactType");
         artifactsListElement.appendChild(artifactElement);
 
         // Add artifact attribute elements with user-defined types to the 
         // artifact element, adding value elements of assorted types.
         for (int i = 0; i < 4; ++i) {
-            artifactAttrElement = doc.createElement(ExternalResultsXML.ATTRIBUTE_ELEM.toString());
-            artifactAttrElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), "SampleArtifactAttributeType");
+            artifactAttrElement = doc.createElement(ExternalResultsXMLParser.TagNames.ATTRIBUTE_ELEM.toString());
+            artifactAttrElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), "SampleArtifactAttributeType");
             artifactElement.appendChild(artifactAttrElement);
-            artifactAttributeValueElement = doc.createElement(ExternalResultsXML.VALUE_ELEM.toString());
+            artifactAttributeValueElement = doc.createElement(ExternalResultsXMLParser.TagNames.VALUE_ELEM.toString());
             switch (i) {
                 case 0:
-                    artifactAttributeValueElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), ExternalResultsXML.VALUE_TYPE_TEXT.toString());
+                    artifactAttributeValueElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), ExternalResultsXMLParser.TagNames.VALUE_TYPE_TEXT.toString());
                     artifactAttributeValueElement.setTextContent("One");
                     break;
                 case 1:
-                    artifactAttributeValueElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), ExternalResultsXML.VALUE_TYPE_INT32.toString());
+                    artifactAttributeValueElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), ExternalResultsXMLParser.TagNames.VALUE_TYPE_INT32.toString());
                     artifactAttributeValueElement.setTextContent("2");
                     break;
                 case 2:
-                    artifactAttributeValueElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), ExternalResultsXML.VALUE_TYPE_INT64.toString());
+                    artifactAttributeValueElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), ExternalResultsXMLParser.TagNames.VALUE_TYPE_INT64.toString());
                     artifactAttributeValueElement.setTextContent("3");
                     break;
                 case 3:
-                    artifactAttributeValueElement.setAttribute(ExternalResultsXML.TYPE_ATTR.toString(), ExternalResultsXML.VALUE_TYPE_DOUBLE.toString());
+                    artifactAttributeValueElement.setAttribute(ExternalResultsXMLParser.TagNames.TYPE_ATTR.toString(), ExternalResultsXMLParser.TagNames.VALUE_TYPE_DOUBLE.toString());
                     artifactAttributeValueElement.setTextContent("4.0");
                     break;
             }
@@ -245,25 +250,25 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         }
 
         // Add a reports list element to the root element.
-        Element reportsListElement = doc.createElement(ExternalResultsXML.REPORTS_LIST_ELEM.toString());
+        Element reportsListElement = doc.createElement(ExternalResultsXMLParser.TagNames.REPORTS_LIST_ELEM.toString());
         rootElement.appendChild(reportsListElement);
 
         // Add a report element to the reports list element.
-        Element reportElement = doc.createElement(ExternalResultsXML.REPORT_ELEM.toString());
+        Element reportElement = doc.createElement(ExternalResultsXMLParser.TagNames.REPORT_ELEM.toString());
         reportsListElement.appendChild(reportElement);
 
         // Add the required display name element to the report element.
-        Element reportDisplayNameElement = doc.createElement(ExternalResultsXML.DISPLAY_NAME_ELEM.toString());
+        Element reportDisplayNameElement = doc.createElement(ExternalResultsXMLParser.TagNames.DISPLAY_NAME_ELEM.toString());
         reportDisplayNameElement.setTextContent("Sample Report");
         reportElement.appendChild(reportDisplayNameElement);
 
         // Add the required local path element to the report element.
-        Element reportPathElement = doc.createElement(ExternalResultsXML.LOCAL_PATH_ELEM.toString());
+        Element reportPathElement = doc.createElement(ExternalResultsXMLParser.TagNames.LOCAL_PATH_ELEM.toString());
         reportPathElement.setTextContent(reportPath);
         reportElement.appendChild(reportPathElement);
 
         // Add a derived files list element to the root element.
-        Element derivedFilesListElement = doc.createElement(ExternalResultsXML.DERIVED_FILES_LIST_ELEM.toString());
+        Element derivedFilesListElement = doc.createElement(ExternalResultsXMLParser.TagNames.DERIVED_FILES_LIST_ELEM.toString());
         rootElement.appendChild(derivedFilesListElement);
 
         // Add derived file elements to the derived files list element. Each 
@@ -273,13 +278,13 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         // parent.
         Element parentPathElement = null;
         for (String filePath : derivedFilePaths) {
-            Element derivedFileElement = doc.createElement(ExternalResultsXML.DERIVED_FILE_ELEM.toString());
+            Element derivedFileElement = doc.createElement(ExternalResultsXMLParser.TagNames.DERIVED_FILE_ELEM.toString());
             derivedFilesListElement.appendChild(derivedFileElement);
-            Element localPathElement = doc.createElement(ExternalResultsXML.LOCAL_PATH_ELEM.toString());
+            Element localPathElement = doc.createElement(ExternalResultsXMLParser.TagNames.LOCAL_PATH_ELEM.toString());
             localPathElement.setTextContent(filePath);
             derivedFileElement.appendChild(localPathElement);
             if (parentPathElement == null) {
-                parentPathElement = doc.createElement(ExternalResultsXML.PARENT_PATH_ELEM.toString());
+                parentPathElement = doc.createElement(ExternalResultsXMLParser.TagNames.PARENT_PATH_ELEM.toString());
                 parentPathElement.setTextContent(dataSourcePath);
                 derivedFileElement.appendChild(parentPathElement);
             }

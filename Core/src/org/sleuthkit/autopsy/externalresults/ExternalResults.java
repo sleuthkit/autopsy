@@ -32,7 +32,7 @@ final public class ExternalResults {
     private final List<Artifact> artifacts = new ArrayList<>();
     private final List<Report> reports = new ArrayList<>();
     private final List<DerivedFile> derivedFiles = new ArrayList<>();
-
+    
     ExternalResults(Content dataSource) {
         this.dataSource = dataSource;
     }
