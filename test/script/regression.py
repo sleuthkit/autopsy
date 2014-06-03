@@ -1207,7 +1207,6 @@ class Logs(object):
             # Set the TestData start time based off the first line of autopsy_case.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
-            print("1210")
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
@@ -1225,10 +1224,8 @@ class Logs(object):
             # Set Autopsy version, heap space, ingest time, and service times
 
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
-            print("1228")
             test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-            print("1231")
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
             
@@ -1255,15 +1252,10 @@ class Logs(object):
                 # If this format changes, the tester will break
                 i = words.index("secs.")
                 times = words[i-4] + " "
-                print("1")
                 times += words[i-3] + " "
-                print("2")
                 times += words[i-2] + " "
-                print("3")
                 times += words[i-1] + " "
-                print("4")
                 times += words[i]
-                service_list.append(times)
                 print("5")
             test_data.service_times = "; ".join(service_list)
         except (OSError, IOError) as e:
@@ -1374,13 +1366,12 @@ def copy_logs(test_data):
 
         # copy logs from userdir0
         log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
-        print("log_dir is " + log_dir)
-        for log in log_dir:
-            new_name = "userdir0." + log
-            os.rename(log, new_name)
-            print("a log name is " + log)
-        print("log_dir is " + log_dir)
-        shutil.copytree(log_dir, test_data.logs_dir)    
+        for log in os.listdir(log_dir):
+            if log.find("log"):
+                new_name = log_dir + "userdir0." + log
+                log = log_dir + log
+                shutil.move(log, new_name)
+                shutil.copy(new_name, test_data.logs_dir)    
     except OSError as e:
         print(test_data,"Error: Failed to copy the logs.")
         print(test_data,str(e) + "\n")
@@ -1574,15 +1565,11 @@ class Args(object):
             arg = sys.argv.pop(0)
             nxtproc.append(arg)
             if(arg == "-f"):
-                #try: @@@ Commented out until a more specific except statement is added
                 arg = sys.argv.pop(0)
                 print("Running on a single file:")
                 print(path_fix(arg) + "\n")
                 self.single = True
                 self.single_file = path_fix(arg)
-                #except:
-                #   print("Error: No single file given.\n")
-            #       return False
             elif(arg == "-r" or arg == "--rebuild"):
                 print("Running in rebuild mode.\n")
                 self.rebuild = True
@@ -1673,7 +1660,6 @@ def search_logs(string, test_data):
     logs_path = test_data.logs_dir
     results = []
     for file in os.listdir(logs_path):
-        print(file)
         log = codecs.open(make_path(logs_path, file), "r", "utf_8")
         for line in log:
             if string in line:
@@ -1776,8 +1762,8 @@ def clear_dir(dir):
         os.makedirs(dir)
         return True;
     except OSError as e:
-        printerror(test_data,"Error: Cannot clear the given directory:")
-        printerror(test_data,dir + "\n")
+        print_error(test_data,"Error: Cannot clear the given directory:")
+        print_error(test_data,dir + "\n")
         print(str(e))
         return False;
 
@@ -1792,8 +1778,8 @@ def del_dir(dir):
             shutil.rmtree(dir)
         return True;
     except:
-        printerror(test_data,"Error: Cannot delete the given directory:")
-        printerror(test_data,dir + "\n")
+        print_error(test_data,"Error: Cannot delete the given directory:")
+        print_error(test_data,dir + "\n")
         return False;
 
 def get_file_in_dir(dir, ext):
