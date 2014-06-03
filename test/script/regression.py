@@ -1256,7 +1256,7 @@ class Logs(object):
                 times += words[i-2] + " "
                 times += words[i-1] + " "
                 times += words[i]
-                print("5")
+                service_list.append(times)
             test_data.service_times = "; ".join(service_list)
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unknown fatal error when finding service times.")
@@ -1364,7 +1364,7 @@ def copy_logs(test_data):
         log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, "Log")
         shutil.copytree(log_dir, test_data.logs_dir)
 
-        # copy logs from userdir0
+        # copy logs from userdir0/var/log
         log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
         for log in os.listdir(log_dir):
             if log.find("log"):
@@ -1373,8 +1373,8 @@ def copy_logs(test_data):
                 shutil.move(log, new_name)
                 shutil.copy(new_name, test_data.logs_dir)    
     except OSError as e:
-        print(test_data,"Error: Failed to copy the logs.")
-        print(test_data,str(e) + "\n")
+        print_error(test_data,"Error: Failed to copy the logs.")
+        print_error(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
 
 def setDay():
