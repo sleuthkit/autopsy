@@ -71,29 +71,33 @@ public final class ExternalResultsImporter {
     private void importDerivedFiles(ExternalResults results) {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         for (ExternalResults.DerivedFile fileData : results.getDerivedFiles()) {
-            String filePath = Case.getCurrentCase().getCaseDirectory() + File.separator + fileData.getLocalPath();
+            String localPath = fileData.getLocalPath();
             try {
-                File localFile = new File(filePath);
-                if (!localFile.exists()) {
-                    AbstractFile parentFile = findFile(results.getDataSource(), fileData.getParentPath());
-                    if (parentFile != null) {
-                        DerivedFile derivedFile = fileManager.addDerivedFile(localFile.getName(), fileData.getLocalPath(), localFile.length(),
-                                0, 0, 0, 0, // Do not currently have file times for derived files from external processes.
-                                true, parentFile,
-                                "", "", "", ""); // Not currently providing derivation info for derived files from external processes.
-                        IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(derivedFile));
-                    } else {
-                        String errorMessage = String.format("Could not import derived file at %s, parent file %s not found", filePath);
-                        ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
-                        this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
+                File localFile = new File(localPath);
+                if (localFile.exists()) {
+                    String relativePath = this.getPathRelativeToCaseFolder(localPath);
+                    if (!relativePath.isEmpty()) {
+                        String parentFilePath = fileData.getParentPath();
+                        AbstractFile parentFile = findFileInCaseDatabase(results.getDataSource(), parentFilePath);
+                        if (parentFile != null) {
+                            DerivedFile derivedFile = fileManager.addDerivedFile(localFile.getName(), relativePath, localFile.length(),
+                                    0, 0, 0, 0, // Do not currently have file times for derived files from external processes.
+                                    true, parentFile,
+                                    "", "", "", ""); // Not currently providing derivation info for derived files from external processes.
+                            IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(derivedFile));
+                        } else {
+                            String errorMessage = String.format("Could not import derived file at %s, parent file %s not found", localPath, parentFilePath);
+                            ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
+                            this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
+                        }
                     }
                 } else {
-                    String errorMessage = String.format("Could not import derived file at %s, file does not exist", filePath);
+                    String errorMessage = String.format("Could not import derived file at %s, file does not exist", localPath);
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
                     this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                 }
             } catch (TskCoreException ex) {
-                String errorMessage = String.format("Could not import derived file at %s, error querying/updating case database", filePath);
+                String errorMessage = String.format("Could not import derived file at %s, error querying/updating case database", localPath);
                 ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage, ex);
                 this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage, ex));
             }
@@ -111,46 +115,48 @@ public final class ExternalResultsImporter {
                     artifactTypeId = caseDb.addArtifactType(artifactData.getType(), artifactData.getType());
                     artifactTypeIsUserDefined = true;
                 }
-                Content sourceFile = findFile(results.getDataSource(), artifactData.getSourceFilePath());
-                BlackboardArtifact artifact = sourceFile.newArtifact(artifactTypeId);
+                Content sourceFile = findFileInCaseDatabase(results.getDataSource(), artifactData.getSourceFilePath());
+                if (sourceFile != null) {
+                    BlackboardArtifact artifact = sourceFile.newArtifact(artifactTypeId);
 
-                // Add the artifact's attributes to the case database.
-                Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                for (ExternalResults.ArtifactAttribute attributeData : artifactData.getAttributes()) {
-                    int attributeTypeId = caseDb.getAttrTypeIdIfExists(attributeData.getType());
-                    if (artifactTypeId == -1) {
-                        artifactTypeId = caseDb.addArtifactType(attributeData.getType(), attributeData.getType());
+                    // Add the artifact's attributes to the case database.
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    for (ExternalResults.ArtifactAttribute attributeData : artifactData.getAttributes()) {
+                        int attributeTypeId = caseDb.getAttrTypeIdIfExists(attributeData.getType());
+                        if (attributeTypeId == -1) {
+                            attributeTypeId = caseDb.addAttrType(attributeData.getType(), attributeData.getType());
+                        }
+                        switch (attributeData.getValueType()) {
+                            case "text": //NON-NLS
+                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), attributeData.getValue()));
+                                break;
+                            case "int32": //NON-NLS
+                                int intValue = Integer.parseInt(attributeData.getValue());
+                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), intValue));
+                                break;
+                            case "int64": //NON-NLS
+                                long longValue = Long.parseLong(attributeData.getValue());
+                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), longValue));
+                                break;
+                            case "double": //NON-NLS
+                                double doubleValue = Double.parseDouble(attributeData.getValue());
+                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), doubleValue));
+                                break;
+                            default:
+                                String errorMessage = String.format("Could not import %s attribute, value = %s, for %s artifact from %s, unrecognized attribute value type: %s",
+                                        attributeData.getType(), attributeData.getValue(),
+                                        artifactData.getType(), artifactData.getSourceFilePath(),
+                                        attributeData.getValueType());
+                                ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
+                                this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
+                                break;
+                        }
                     }
-                    switch (attributeData.getValueType()) {
-                        case "text": //NON-NLS
-                            attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), attributeData.getValue()));
-                            break;
-                        case "int32": //NON-NLS
-                            int intValue = Integer.parseInt(attributeData.getValue());
-                            attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), intValue));
-                            break;
-                        case "int64": //NON-NLS
-                            long longValue = Long.parseLong(attributeData.getValue());
-                            attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), longValue));
-                            break;
-                        case "double": //NON-NLS
-                            double doubleValue = Double.parseDouble(attributeData.getValue());
-                            attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), doubleValue));
-                            break;
-                        default:
-                            String errorMessage = String.format("Could not import %s attribute, value = %s, for %s artifact from %s, unrecognized attribute value type: %s", 
-                                    attributeData.getType(), attributeData.getValue(), 
-                                    artifactData.getType(), artifactData.getSourceFilePath(),
-                                    attributeData.getValueType());
-                            ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
-                            this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
-                            break;
-                    }
-                }
-                artifact.addAttributes(attributes);
+                    artifact.addAttributes(attributes);
 
-                if (!artifactTypeIsUserDefined) {
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
+                    if (!artifactTypeIsUserDefined) {
+                        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
+                    }
                 }
             } catch (TskCoreException ex) {
                 String errorMessage = String.format("Could not import %s artifact from %s, error updating case database", artifactData.getType(), artifactData.getSourceFilePath());
@@ -162,11 +168,14 @@ public final class ExternalResultsImporter {
 
     private void importReports(ExternalResults results) {
         for (ExternalResults.Report report : results.getReports()) {
-            String reportPath = Case.getCurrentCase().getCaseDirectory() + File.separator + report.getLocalPath();
+            String reportPath = report.getLocalPath();
             try {
                 File reportFile = new File(reportPath);
                 if (reportFile.exists()) {
-                    Case.getCurrentCase().getSleuthkitCase().addReport(reportPath, report.getDisplayName());
+                    String relativePath = this.getPathRelativeToCaseFolder(reportPath);
+                    if (!relativePath.isEmpty()) {
+                        Case.getCurrentCase().getSleuthkitCase().addReport(relativePath, report.getDisplayName());
+                    }
                 } else {
                     String errorMessage = String.format("Could not import report at %s, file does not exist", reportPath);
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
@@ -180,23 +189,59 @@ public final class ExternalResultsImporter {
         }
     }
 
-    private AbstractFile findFile(Content dataSource, String filePath) throws TskCoreException {
+    private AbstractFile findFileInCaseDatabase(Content dataSource, String filePath) throws TskCoreException {
         AbstractFile file = null;
-        Path path = Paths.get(filePath);
-        if (path.isAbsolute()) {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-            List<AbstractFile> files = fileManager.openFiles(dataSource, filePath);
-            if (files.size() > 0) {
+        // Split the path into the file name and the parent path.
+        String fileName = filePath;
+        String parentPath = "";
+        int charPos = filePath.lastIndexOf("/");
+        if (charPos >= 0) {
+            fileName = filePath.substring(charPos + 1);
+            parentPath = filePath.substring(0, charPos + 1);
+        }
+        // Find the file.
+        String condition = "name='" + fileName + "' AND parent_path='" + parentPath + "'"; //NON-NLS
+        List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(condition);
+        if (!files.isEmpty()) {
+            if (files.size() == 1) {
                 file = files.get(0);
-                if (files.size() > 1) {
-                    String errorMessage = String.format("Ambiguous file path: %s", filePath);
-                    ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
-                    this.errors.add(new ErrorInfo(this.getClass().getName(), errorMessage));
-                }
+            } else {
+                String errorMessage = String.format("Parent file path %s is ambiguous", filePath);
+                this.recordError(errorMessage);
             }
-        } else {
-            // RJCTODO: Need a look up that goes for relative path            
         }
         return file;
+    }
+
+    private String getPathRelativeToCaseFolder(String localPath) {
+        String relativePath = "";
+        String caseDirectoryPath = Case.getCurrentCase().getCaseDirectory();
+        Path path = Paths.get(localPath);
+        if (path.isAbsolute()) {
+            Path pathBase = Paths.get(caseDirectoryPath);
+            try {
+                Path pathRelative = pathBase.relativize(path);
+                relativePath = pathRelative.toString();
+            } catch (IllegalArgumentException ex) {
+                String errorMessage = String.format("Did not convert %s to relative path, not in a subdirectory of case directory %s",
+                        localPath, caseDirectoryPath);
+                this.recordError(errorMessage, ex);
+            }
+        } else {
+            String errorMessage = String.format("Expected %s to be an absolute path to a file in a subdirectory of case directory %s",
+                    localPath, caseDirectoryPath);
+            this.recordError(errorMessage);
+        }
+        return relativePath;
+    }
+
+    private void recordError(String errorMessage) {
+        ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
+        this.errors.add(new ErrorInfo(this.getClass().getName(), errorMessage));
+    }
+
+    private void recordError(String errorMessage, Exception ex) {
+        ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage, ex);
+        this.errors.add(new ErrorInfo(this.getClass().getName(), errorMessage));
     }
 }

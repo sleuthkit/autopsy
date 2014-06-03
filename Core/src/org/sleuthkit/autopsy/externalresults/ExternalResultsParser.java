@@ -35,7 +35,7 @@ public interface ExternalResultsParser {
      *
      * @return External results data in a form ready for import into Autopsy.
      */
-    ExternalResults parse(); // RJCTODO: May need to add data source arg
+    ExternalResults parse();
 
     /**
      * Gets error information describing any errors encountered while parsing

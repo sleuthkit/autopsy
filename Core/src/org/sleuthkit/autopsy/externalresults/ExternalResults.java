@@ -32,15 +32,15 @@ final public class ExternalResults {
     private final List<Artifact> artifacts = new ArrayList<>();
     private final List<Report> reports = new ArrayList<>();
     private final List<DerivedFile> derivedFiles = new ArrayList<>();
-    
+
     ExternalResults(Content dataSource) {
         this.dataSource = dataSource;
     }
-    
+
     Content getDataSource() {
         return this.dataSource;
     }
-    
+
     Artifact addArtifact(String type, String sourceFilePath) {
         if (type.isEmpty()) {
             throw new IllegalArgumentException("type argument is empty");
@@ -113,11 +113,8 @@ final public class ExternalResults {
             if (value.isEmpty()) {
                 throw new IllegalArgumentException("value argument is empty");
             }
-            if (value.isEmpty()) {
-                valueType = ArtifactAttribute.DEFAULT_VALUE_TYPE;
-            }
-            if (sourceModule.isEmpty()) {
-                throw new IllegalArgumentException("sourceModule argument is empty");
+            if (valueType.isEmpty()) {
+                throw new IllegalArgumentException("value type argument is empty");
             }
             attributes.add(new ArtifactAttribute(type, value, valueType, sourceModule));
         }
@@ -129,7 +126,6 @@ final public class ExternalResults {
 
     static final class ArtifactAttribute {
 
-        private static final String DEFAULT_VALUE_TYPE = "text";
         private final String type;
         private final String valueType;
         private final String value;
@@ -145,7 +141,7 @@ final public class ExternalResults {
         String getType() {
             return type;
         }
-        
+
         String getValue() {
             return value;
         }
