@@ -74,6 +74,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.Reports;
 
 /**
  * Top component which displays something.
@@ -358,6 +359,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     items.add(new DataSources(tskCase));
                     items.add(new Views(tskCase));
                     items.add(new Results(tskCase));
+                    items.add(new Reports());
                     contentChildren = new RootContentChildren(items);
                     Node root = new AbstractNode(contentChildren) {
                         /**

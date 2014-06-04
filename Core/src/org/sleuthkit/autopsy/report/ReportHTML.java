@@ -32,6 +32,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -818,8 +820,22 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             index.append("</frameset>\n"); //NON-NLS
             index.append("</html>"); //NON-NLS
             indexOut.write(index.toString());
+            
+            // RJCTODO: Add this file as a report, clean this up, make utility
+            String relativePath = "";
+            Path pathObj = Paths.get(path + "index.html");
+            Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
+            try {
+                Path pathRelative = pathBase.relativize(pathObj);
+                relativePath = pathRelative.toString();
+            } catch (IllegalArgumentException ex) {
+                // RJCTODO
+            }            
+            Case.getCurrentCase().addReport("HTML Report", relativePath);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex); // RJCTODO: Handle this
         } finally {
             try {
                 if(indexOut != null) {

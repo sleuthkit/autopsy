@@ -119,7 +119,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * closed, the "new value" will be null and the "old value" will be the
          * instance of the Case object being closed.
          */
-        CURRENT_CASE;
+        CURRENT_CASE,
+        // RJCTODO: Describe
+        REPORT_ADDED;
     };
 
     private String name;
@@ -1164,4 +1166,22 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public void receiveError(String context, String errorMessage) {
         MessageNotifyUtil.Notify.error(context, errorMessage);
     }
+    
+    // RJCTODO: Clean this up
+    /**
+     * Inserts row into the reports table in the case database.
+     * @param [in] relPath The path of the report file, relative to the database (case directory in Autopsy).
+     * @param [in] displayName The display name for the new tag name.
+     * @return A Report data transfer object (DTO) for the new row.
+     * @throws TskCoreException 
+     */
+    public void addReport(String relPath, String displayName) throws TskCoreException {
+        Report report = this.db.addReport(relPath, displayName);
+        // RJCTODO: Fire event, perhaps with repoprt data
+        Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report); // RJCTODO: Need exception firewall, maybe thread to do publishing        
+    }    
+    
+    public List<Report> getAllReports() throws TskCoreException {
+        return this.db.getAllReports();
+    }    
 }

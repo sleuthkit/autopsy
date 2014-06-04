@@ -174,7 +174,7 @@ public final class ExternalResultsImporter {
                 if (reportFile.exists()) {
                     String relativePath = this.getPathRelativeToCaseFolder(reportPath);
                     if (!relativePath.isEmpty()) {
-                        Case.getCurrentCase().getSleuthkitCase().addReport(relativePath, report.getDisplayName());
+                        Case.getCurrentCase().addReport(relativePath, report.getDisplayName());
                     }
                 } else {
                     String errorMessage = String.format("Could not import report at %s, file does not exist", reportPath);
