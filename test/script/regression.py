@@ -1371,7 +1371,8 @@ def copy_logs(test_data):
                 new_name = log_dir + "userdir0." + log
                 log = log_dir + log
                 shutil.move(log, new_name)
-                shutil.copy(new_name, test_data.logs_dir)    
+                shutil.copy(new_name, test_data.logs_dir)
+                shutil.move(new_name, log)
     except OSError as e:
         print_error(test_data,"Error: Failed to copy the logs.")
         print_error(test_data,str(e) + "\n")
