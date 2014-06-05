@@ -1200,17 +1200,17 @@ class Logs(object):
             test_data: the TestData to modify
         """
         try:
-            # Open autopsy_case.log.0
-            log_path = make_path(test_data.logs_dir, "autopsy_case.log.0")
+            # Open autopsy.log.0
+            log_path = make_path(test_data.logs_dir, "autopsy.log.0")
             log = open(log_path)
 
-            # Set the TestData start time based off the first line of autopsy_case.log.0
+            # Set the TestData start time based off the first line of autopsy.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
-            Errors.print_error("Error: Unable to open autopsy_case.log.0.")
+            Errors.print_error("Error: Unable to open autopsy.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
         # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -1244,7 +1244,7 @@ class Logs(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
-            service_lines = find_msg_in_log("autopsy_case.log.0", "to process()", test_data)
+            service_lines = find_msg_in_log("autopsy.log.0", "to process()", test_data)
             service_list = []
             for line in service_lines:
                 words = line.split(" ")
@@ -1744,7 +1744,7 @@ def find_msg_in_log(log, string, test_data):
    """
    lines = []
    try:
-      lines = search_log("autopsy_case.log.0", string, test_data)[0]
+      lines = search_log("autopsy.log.0", string, test_data)[0]
    except (Exception) as e:
       # there weren't any matching messages found
       pass

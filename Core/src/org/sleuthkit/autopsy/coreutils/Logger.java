@@ -33,8 +33,8 @@ public final class Logger extends java.util.logging.Logger {
     private static final String LOG_ENCODING = PlatformUtil.getLogFileEncoding();
     private static final int LOG_SIZE = 0; // In bytes, zero is unlimited
     private static final int LOG_FILE_COUNT = 10;
-    private static final String LOG_WITHOUT_STACK_TRACES = "autopsy_case.log"; //NON-NLS
-    private static final String LOG_WITH_STACK_TRACES = "autopsy_case_traces.log"; //NON-NLS
+    private static final String LOG_WITHOUT_STACK_TRACES = "autopsy.log"; //NON-NLS
+    private static final String LOG_WITH_STACK_TRACES = "autopsy_traces.log"; //NON-NLS
     private static final CaseChangeListener caseChangeListener = new CaseChangeListener();
     private static final Handler console = new java.util.logging.ConsoleHandler();
     private static FileHandler userFriendlyLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITHOUT_STACK_TRACES);
