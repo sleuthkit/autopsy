@@ -1166,18 +1166,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public void receiveError(String context, String errorMessage) {
         MessageNotifyUtil.Notify.error(context, errorMessage);
     }
-    
-    // RJCTODO: Clean this up
+
     /**
-     * Inserts row into the reports table in the case database.
-     * @param [in] relPath The path of the report file, relative to the database (case directory in Autopsy).
-     * @param [in] displayName The display name for the new tag name.
+     * Adds a report to the case.
+     * 
+     * @param [in] localPath The path of the report file, must be in the case directory or one of its subdirectories.
+     * @param [in] sourceModuleName The name of the module that created the report.
+     * @param [in] reportName The report name, may be empty.
      * @return A Report data transfer object (DTO) for the new row.
      * @throws TskCoreException 
-     */
-    public void addReport(String relPath, String displayName) throws TskCoreException {
-        Report report = this.db.addReport(relPath, displayName);
-        // RJCTODO: Fire event, perhaps with repoprt data
+     */    
+    public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+        Report report = this.db.addReport(localPath, srcModuleName, reportName);
         Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report); // RJCTODO: Need exception firewall, maybe thread to do publishing        
     }    
     

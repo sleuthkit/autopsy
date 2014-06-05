@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -25,8 +25,6 @@ package org.sleuthkit.autopsy.report;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -151,11 +149,17 @@ import org.sleuthkit.datamodel.*;
                 logger.log(Level.WARNING, "Could not write the temp body file report.", ex); //NON-NLS
             } finally {
                 try {
-                    out.flush();
-                    out.close();
+                    if (out != null) {
+                        out.flush();
+                        out.close();
+                        Case.getCurrentCase().addReport(reportPath, "TSK Body File", "");                                
+                    }
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
-                }
+                } catch (TskCoreException ex) {
+                    String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
+                    logger.log(Level.SEVERE, errorMessage, ex);
+                }                    
             }
             progressPanel.complete();
         }  catch(TskCoreException ex) {

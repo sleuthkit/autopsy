@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.externalresults;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,7 +60,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         SOURCE_MODULE_ELEM("source_module"), //NON-NLS
         REPORTS_LIST_ELEM("reports"), //NON-NLS
         REPORT_ELEM("report"), //NON-NLS
-        DISPLAY_NAME_ELEM("display_name"); //NON-NLS
+        REPORT_NAME_ELEM("report_name"); //NON-NLS
         private final String text;
 
         private TagNames(final String text) {
@@ -154,7 +153,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
 
     @Override
     public List<ErrorInfo> getErrorInfo() {
-        return Collections.unmodifiableList(this.errors);
+        return new ArrayList<>(this.errors);
     }
 
     private void parseDerivedFiles(Element rootElement) {
@@ -266,17 +265,19 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
             NodeList reportNodes = reportsListElem.getElementsByTagName(TagNames.REPORT_ELEM.toString());
             for (int j = 0; j < reportNodes.getLength(); ++j) {
                 Element reportElem = (Element) reportNodes.item(j);
-                // Get the display name.
-                String displayName = getChildElementContent(reportElem, TagNames.DISPLAY_NAME_ELEM.toString(), true);
-                if (displayName.isEmpty()) {
-                    continue;
-                }
                 // Get the local path.
                 String path = getChildElementContent(reportElem, TagNames.LOCAL_PATH_ELEM.toString(), true);
                 if (path.isEmpty()) {
                     continue;
                 }
-                this.resultsData.addReport(displayName, path);
+                // Get the source module.
+                String sourceModule = getChildElementContent(reportElem, TagNames.SOURCE_MODULE_ELEM.toString(), true);
+                if (path.isEmpty()) {
+                    continue;
+                }
+                // Get the optional report name.
+                String reportName = getChildElementContent(reportElem, TagNames.REPORT_NAME_ELEM.toString(), false);
+                this.resultsData.addReport(path, sourceModule, reportName);
             }
         }
     }

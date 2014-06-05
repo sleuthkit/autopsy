@@ -57,14 +57,14 @@ final public class ExternalResults {
         return Collections.unmodifiableList(artifacts);
     }
 
-    void addReport(String displayName, String localPath) {
-        if (displayName.isEmpty()) {
-            throw new IllegalArgumentException("displayName argument is empty");
-        }
+    void addReport(String localPath, String sourceModuleName, String reportName) {
         if (localPath.isEmpty()) {
             throw new IllegalArgumentException("localPath argument is empty");
         }
-        Report report = new Report(displayName, localPath);
+        if (sourceModuleName.isEmpty()) {
+            throw new IllegalArgumentException("sourceModuleName argument is empty");
+        }
+        Report report = new Report(localPath, sourceModuleName, reportName);
         reports.add(report);
     }
 
@@ -157,21 +157,27 @@ final public class ExternalResults {
 
     static final class Report {
 
-        private final String displayName;
         private final String localPath;
+        private final String sourceModuleName;
+        private final String reportName;
 
-        Report(String displayName, String localPath) {
-            this.displayName = displayName;
+        Report(String localPath, String sourceModuleName, String displayName) {
             this.localPath = localPath;
-        }
-
-        String getDisplayName() {
-            return displayName;
+            this.sourceModuleName = sourceModuleName;
+            this.reportName = displayName;
         }
 
         String getLocalPath() {
             return localPath;
         }
+        
+        String getSourceModuleName() {
+            return sourceModuleName;
+        }
+        
+        String getReportName() {
+            return reportName;
+        }        
     }
 
     static final class DerivedFile {

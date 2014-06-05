@@ -66,6 +66,7 @@ import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -522,6 +523,11 @@ public class DataResultFilterNode extends FilterNode {
             return openChild(khmln);
         }
 
+        @Override
+        public AbstractAction visit(Reports.ReportNode reportNode) {
+            return reportNode.getPreferredAction();
+        }
+        
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return null;

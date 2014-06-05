@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -65,7 +64,9 @@ public final class ExternalResultsImporter {
         importDerivedFiles(results);
         importArtifacts(results);
         importReports(results);
-        return Collections.unmodifiableList(this.errors);
+        List<ErrorInfo> importErrors = new ArrayList(this.errors);
+        this.errors.clear();
+        return importErrors;
     }
 
     private void importDerivedFiles(ExternalResults results) {
@@ -78,7 +79,7 @@ public final class ExternalResultsImporter {
                     String relativePath = this.getPathRelativeToCaseFolder(localPath);
                     if (!relativePath.isEmpty()) {
                         String parentFilePath = fileData.getParentPath();
-                        AbstractFile parentFile = findFileInCaseDatabase(results.getDataSource(), parentFilePath);
+                        AbstractFile parentFile = findFileInCaseDatabase(parentFilePath);
                         if (parentFile != null) {
                             DerivedFile derivedFile = fileManager.addDerivedFile(localFile.getName(), relativePath, localFile.length(),
                                     0, 0, 0, 0, // Do not currently have file times for derived files from external processes.
@@ -110,19 +111,19 @@ public final class ExternalResultsImporter {
             try {
                 // Add the artifact to the case database.
                 boolean artifactTypeIsUserDefined = false;
-                int artifactTypeId = caseDb.getArtifactTypeIdIfExists(artifactData.getType());
+                int artifactTypeId = caseDb.getArtifactTypeID(artifactData.getType());
                 if (artifactTypeId == -1) {
                     artifactTypeId = caseDb.addArtifactType(artifactData.getType(), artifactData.getType());
                     artifactTypeIsUserDefined = true;
                 }
-                Content sourceFile = findFileInCaseDatabase(results.getDataSource(), artifactData.getSourceFilePath());
+                Content sourceFile = findFileInCaseDatabase(artifactData.getSourceFilePath());
                 if (sourceFile != null) {
                     BlackboardArtifact artifact = sourceFile.newArtifact(artifactTypeId);
 
                     // Add the artifact's attributes to the case database.
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     for (ExternalResults.ArtifactAttribute attributeData : artifactData.getAttributes()) {
-                        int attributeTypeId = caseDb.getAttrTypeIdIfExists(attributeData.getType());
+                        int attributeTypeId = caseDb.getAttrTypeID(attributeData.getType());
                         if (attributeTypeId == -1) {
                             attributeTypeId = caseDb.addAttrType(attributeData.getType(), attributeData.getType());
                         }
@@ -157,6 +158,10 @@ public final class ExternalResultsImporter {
                     if (!artifactTypeIsUserDefined) {
                         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
                     }
+                } else {
+                    String errorMessage = String.format("Could not import %s artifact from %s, source file not found", artifactData.getType(), artifactData.getSourceFilePath());
+                    ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
+                    this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                 }
             } catch (TskCoreException ex) {
                 String errorMessage = String.format("Could not import %s artifact from %s, error updating case database", artifactData.getType(), artifactData.getSourceFilePath());
@@ -172,10 +177,7 @@ public final class ExternalResultsImporter {
             try {
                 File reportFile = new File(reportPath);
                 if (reportFile.exists()) {
-                    String relativePath = this.getPathRelativeToCaseFolder(reportPath);
-                    if (!relativePath.isEmpty()) {
-                        Case.getCurrentCase().addReport(relativePath, report.getDisplayName());
-                    }
+                    Case.getCurrentCase().addReport(reportPath, report.getSourceModuleName(), report.getReportName());
                 } else {
                     String errorMessage = String.format("Could not import report at %s, file does not exist", reportPath);
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
@@ -189,7 +191,7 @@ public final class ExternalResultsImporter {
         }
     }
 
-    private AbstractFile findFileInCaseDatabase(Content dataSource, String filePath) throws TskCoreException {
+    private AbstractFile findFileInCaseDatabase(String filePath) throws TskCoreException {
         AbstractFile file = null;
         // Split the path into the file name and the parent path.
         String fileName = filePath;
@@ -203,10 +205,9 @@ public final class ExternalResultsImporter {
         String condition = "name='" + fileName + "' AND parent_path='" + parentPath + "'"; //NON-NLS
         List<AbstractFile> files = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(condition);
         if (!files.isEmpty()) {
-            if (files.size() == 1) {
-                file = files.get(0);
-            } else {
-                String errorMessage = String.format("Parent file path %s is ambiguous", filePath);
+            file = files.get(0);
+            if (files.size() > 1) {
+                String errorMessage = String.format("Parent file path %s is ambiguous, using first file found", filePath);
                 this.recordError(errorMessage);
             }
         }

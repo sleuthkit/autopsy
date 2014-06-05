@@ -18,11 +18,20 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.Desktop;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JOptionPane;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -37,10 +46,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Implements the Reports subtree of the Autopsy tree.
  */
-public class Reports implements AutopsyVisitableItem {
+public final class Reports implements AutopsyVisitableItem {
 
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-        
+
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         // The CreateAutopsyNodeVisitor constructs a ReportsListNode when it
@@ -51,7 +60,7 @@ public class Reports implements AutopsyVisitableItem {
     /**
      * The root node of the Reports subtree of the Autopsy tree.
      */
-    public static class ReportsListNode extends DisplayableItemNode {
+    public static final class ReportsListNode extends DisplayableItemNode {
 
         private static final String DISPLAY_NAME = NbBundle.getMessage(ReportsListNode.class, "ReportsListNode.displayName");
         private static final String ICON_PATH = "org/sleuthkit/autopsy/images/report_16.png"; //NON-NLS
@@ -82,7 +91,7 @@ public class Reports implements AutopsyVisitableItem {
      * The child node factory that creates ReportNode children for a
      * ReportsListNode.
      */
-    private static class ReportNodeFactory extends ChildFactory<Report> {
+    private static final class ReportNodeFactory extends ChildFactory<Report> {
 
         ReportNodeFactory() {
             Case.addPropertyChangeListener(new PropertyChangeListener() {
@@ -116,7 +125,7 @@ public class Reports implements AutopsyVisitableItem {
      * A leaf node in the Reports subtree of the Autopsy tree, wraps a Report
      * object.
      */
-    public static class ReportNode extends DisplayableItemNode {
+    public static final class ReportNode extends DisplayableItemNode {
 
         private static final String ICON_PATH = "org/sleuthkit/autopsy/images/report_16.png"; //NON-NLS
         private final Report report;
@@ -124,8 +133,8 @@ public class Reports implements AutopsyVisitableItem {
         ReportNode(Report report) {
             super(Children.LEAF, Lookups.fixed(report));
             this.report = report;
-            super.setName(this.report.getDisplayName());
-            super.setDisplayName(this.report.getDisplayName());            
+            super.setName(this.report.getSourceModuleName());
+            super.setDisplayName(this.report.getSourceModuleName());
             this.setIconBaseWithExtension(ICON_PATH);
         }
 
@@ -136,8 +145,8 @@ public class Reports implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            // The GetPopupActionsDisplayableItemNodeVisitor gets the Actions for this class.
-            // The GetPreferredActionsDisplayableItemNodeVisitor RJCTODO
+            // The GetPopupActionsDisplayableItemNodeVisitor calls getActions(). // RJCTODO: Try to get rid of parent collapse all
+            // The GetPreferredActionsDisplayableItemNodeVisitor calls getPreferredAction().
             // The IsLeafItemVisitor returns true.
             // The ShowItemVisitor always returns true.
             return visitor.visit(this);
@@ -151,19 +160,58 @@ public class Reports implements AutopsyVisitableItem {
                 propertiesSet = Sheet.createPropertiesSet();
                 sheet.put(propertiesSet);
             }
-            propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.displayNameProperty.name"),
-                    NbBundle.getMessage(this.getClass(), "ReportNode.displayNameProperty.displayName"),
-                    NbBundle.getMessage(this.getClass(), "ReportNode.displayNameProperty.desc"),
-                    this.report.getDisplayName()));
+            propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.sourceModuleNameProperty.name"),
+                    NbBundle.getMessage(this.getClass(), "ReportNode.sourceModuleNameProperty.displayName"),
+                    NbBundle.getMessage(this.getClass(), "ReportNode.sourceModuleNameProperty.desc"),
+                    this.report.getSourceModuleName()));
             propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.name"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.desc"),
-                    dateFormatter.format(new java.util.Date(this.report.getCreatedTime() * 1000)).toString()));                    
+                    dateFormatter.format(new java.util.Date(this.report.getCreatedTime() * 1000)).toString()));
             propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.name"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.desc"),
                     this.report.getPath()));
             return sheet;
+        }
+
+        @Override
+        public Action[] getActions(boolean popup) {
+            List<Action> actions = new ArrayList<>();
+            actions.addAll(Arrays.asList(super.getActions(true)));
+            actions.add(new OpenReportAction());
+            return actions.toArray(new Action[actions.size()]);
+        }
+
+        @Override
+        public AbstractAction getPreferredAction() {
+            return new OpenReportAction();
+        }
+
+        private final class OpenReportAction extends AbstractAction { // RJCTODO: Needs name for menu
+
+            private OpenReportAction() {
+                super("Open Report"); // RJCTODO: bundle
+            }
+            
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                File file = new File(ReportNode.this.report.getPath());
+                try {
+                    Desktop.getDesktop().open(file);
+                } catch (IOException ex) {
+                    // RJCTODO: Failed to open no associated editor or associated application failed to launch
+                    // RJCTODO: Bundle
+                    JOptionPane.showMessageDialog(null, "There is no associated editor for reports of this type or the associated application failed to launch.", 
+                            "Open Report Failure", JOptionPane.ERROR_MESSAGE);
+                } catch (UnsupportedOperationException ex) {
+                    // RJCTODO                    
+                } catch (IllegalArgumentException ex) {
+                    // RJCTODO: File does not exist                    
+                } catch (SecurityException ex) {
+                    // RJCTODO: permission denied                    
+                }
+            }
         }
     }
 }

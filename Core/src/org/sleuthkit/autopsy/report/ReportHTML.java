@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -803,8 +803,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
      */
     private void writeIndex() {
         Writer indexOut = null;
+        String indexFilePath = path + "index.html";
         try {
-            indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.html"), "UTF-8")); //NON-NLS
+            indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
             index.append("<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
@@ -820,22 +821,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             index.append("</frameset>\n"); //NON-NLS
             index.append("</html>"); //NON-NLS
             indexOut.write(index.toString());
-            
-            // RJCTODO: Add this file as a report, clean this up, make utility
-            String relativePath = "";
-            Path pathObj = Paths.get(path + "index.html");
-            Path pathBase = Paths.get(Case.getCurrentCase().getCaseDirectory());
-            try {
-                Path pathRelative = pathBase.relativize(pathObj);
-                relativePath = pathRelative.toString();
-            } catch (IllegalArgumentException ex) {
-                // RJCTODO
-            }            
-            Case.getCurrentCase().addReport("HTML Report", relativePath);
+            Case.getCurrentCase().addReport(indexFilePath, "HTML Report", "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex); //NON-NLS
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex); // RJCTODO: Handle this
+            String errorMessage = String.format("Error adding %s to case as a report", indexFilePath); //NON-NLS
+            logger.log(Level.SEVERE, errorMessage, ex);
         } finally {
             try {
                 if(indexOut != null) {

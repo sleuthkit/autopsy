@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,11 @@ import java.util.logging.Level;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskCoreException;
 
  class ReportExcel implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
@@ -110,8 +112,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             out = new FileOutputStream(reportPath);
             wb.write(out);
+            Case.getCurrentCase().addReport(reportPath, "Excel Report", "");            
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
+            logger.log(Level.SEVERE, errorMessage, ex);
         } finally {
             if (out != null) {
                 try {
