@@ -874,8 +874,25 @@ class TestResultsDiffer(object):
             test_data: the TestData
             old_time_path: path to the log containing the run time from a previous test
         """
-        return "THIS ISN'T DONE AND NEEDS TO BE DONE"
+        # read in time
+        file = open(old_time_path + '/' + test_data.image + "_time.txt", "r")
+        line = file.readline()
+        oldtime = int(line[:line.find("ms")].replace(',', ''))
+        file.close()
+        
+        newtime = test_data.total_ingest_time
+        newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
+        print("old time: " + str(oldtime))
+        print("new time: " + str(newtime))
+        print("adjusted old time: " + str(1.05 * oldtime))
+        # run the test, 5% tolerance
+        if oldtime * 1.05 >=  newtime: # new run was faster
+            return True
+        else: # old run was faster
+            difference = (newtime / oldtime) - 1
+            print("This run took " + str(difference) + "% longer to run than the last run.") 
+            return False
 
     # Split a string into an array of string of the given size
     def _split(input, size):
@@ -1161,10 +1178,11 @@ class Reports(object):
         Args:
             test_data: the TestData
         """
-        new_file = open("time.txt", "w")
+        filename = test_data.image + "_time.txt"
+        new_file = open(filename, "w")
         new_file.write(test_data.total_ingest_time)
         new_file.close()
-        shutil.move(new_file.name, test_data.main_config.input_dir)
+        shutil.copy(new_file.name, test_data.main_config.input_dir)
 
     def _get_num_memory_errors(type, test_data):
         """Get the number of OutOfMemory errors and Exceptions.
@@ -1244,17 +1262,17 @@ class Logs(object):
             test_data: the TestData to modify
         """
         try:
-            # Open autopsy_case.log.0
-            log_path = make_path(test_data.logs_dir, "autopsy_case.log.0")
+            # Open autopsy.log.0
+            log_path = make_path(test_data.logs_dir, "autopsy.log.0")
             log = open(log_path)
 
-            # Set the TestData start time based off the first line of autopsy_case.log.0
+            # Set the TestData start time based off the first line of autopsy.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
-            Errors.print_error("Error: Unable to open autopsy_case.log.0.")
+            Errors.print_error("Error: Unable to open autopsy.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
         # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -1288,7 +1306,7 @@ class Logs(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
-            service_lines = find_msg_in_log("autopsy_case.log.0", "to process()", test_data)
+            service_lines = find_msg_in_log("autopsy.log.0", "to process()", test_data)
             service_list = []
             for line in service_lines:
                 words = line.split(" ")
@@ -1415,7 +1433,8 @@ def copy_logs(test_data):
                 new_name = log_dir + "userdir0." + log
                 log = log_dir + log
                 shutil.move(log, new_name)
-                shutil.copy(new_name, test_data.logs_dir)    
+                shutil.copy(new_name, test_data.logs_dir)
+                shutil.move(new_name, log)
     except OSError as e:
         print_error(test_data,"Error: Failed to copy the logs.")
         print_error(test_data,str(e) + "\n")
@@ -1788,7 +1807,7 @@ def find_msg_in_log(log, string, test_data):
    """
    lines = []
    try:
-      lines = search_log("autopsy_case.log.0", string, test_data)[0]
+      lines = search_log("autopsy.log.0", string, test_data)[0]
    except (Exception) as e:
       # there weren't any matching messages found
       pass
