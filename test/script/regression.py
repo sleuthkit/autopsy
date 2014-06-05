@@ -142,7 +142,8 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-
+            print("Total ingest time was " + test_data.total_ingest_time)
+        
         Reports.write_html_foot(test_config.html_log)
         
         if test_config.jenkins:
@@ -182,7 +183,7 @@ class TestRunner(object):
         except sqlite3.OperationalError as e:
             print("Ingest did not run properly.",
             "Make sure no other instances of Autopsy are open and try again.")
-            sys.exit()
+            sys.exit(1)
 
         # merges logs into a single log for later diff / rebuild
         copy_logs(test_data)
@@ -211,8 +212,14 @@ class TestRunner(object):
         print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
-        test_data.overall_passed = (test_data.html_report_passed and
-        test_data.errors_diff_passed and test_data.db_diff_passed)
+        if test_data.main_config.jenkins: # run time test only for jenkins
+            print("Run time test passed: ", test_data.run_time_passed)
+            test_data.overall_passed = (test_data.html_report_passed and
+            test_data.errors_diff_passed and test_data.db_diff_passed and
+            test_data.run_time_passed)
+        else:
+            test_data.overall_passed = (test_data.html_report_passed and
+            test_data.errors_diff_passed and test_data.db_diff_passed)
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
@@ -394,6 +401,7 @@ class TestData(object):
         html_report_passed: a boolean, did the HTML report diff pass?
         errors_diff_passed: a boolean, did the error diff pass?
         db_diff_passed: a boolean, did the db diff pass?
+        run_time_passed: a boolean, did the run time test pass?
         overall_passed: a boolean, did the test pass?
         total_test_time: a String representation of the test duration
         start_date: a String representation of this TestData's start date
@@ -445,6 +453,7 @@ class TestData(object):
         self.html_report_passed = False
         self.errors_diff_passed = False
         self.db_diff_passed = False
+        self.run_time_passed = False
         self.overall_passed = False
         # Ingest info
         self.total_test_time = ""
@@ -526,6 +535,11 @@ class TestData(object):
             file_type: the DBType of the path to be generated
         """
         return self._get_path_to_file(file_type, "DBDump.txt")
+
+    def get_run_time_path(self):
+        """Get the path to the run time storage file."
+        """
+        return os.path.join("..", "input")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
@@ -729,6 +743,12 @@ class TestResultsDiffer(object):
             passed = TestResultsDiffer._html_report_diff(gold_report_path,
             output_report_path)
             test_data.html_report_passed = passed
+            
+            # Compare run times
+            if test_data.main_config.jenkins:
+                old_time_path = test_data.get_run_time_path()
+                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+                test_data.run_time_passed = passed
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -847,6 +867,16 @@ class TestResultsDiffer(object):
         else:
             return (0, 0)
 
+    def _run_time_diff(test_data, old_time_path):
+        """ Compare run times for this run, and the run previous.
+        
+        Args:
+            test_data: the TestData
+            old_time_path: path to the log containing the run time from a previous test
+        """
+        return "THIS ISN'T DONE AND NEEDS TO BE DONE"
+
+
     # Split a string into an array of string of the given size
     def _split(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
@@ -864,7 +894,10 @@ class Reports(object):
             Reports._generate_csv(test_data.main_config.global_csv, test_data)
         else:
             Reports._generate_csv(test_data.main_config.csv, test_data)
-
+        
+        if test_data.main_config.jenkins:
+            Reports._write_time(test_data)
+            
     def _generate_html(test_data):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
@@ -1122,6 +1155,17 @@ class Reports(object):
             output += "\n"
             csv.write(output)
 
+    def _write_time(test_data):
+        """Write out the time ingest took. For jenkins purposes.
+
+        Args:
+            test_data: the TestData
+        """
+        new_file = open("time.txt", "w")
+        new_file.write(test_data.total_ingest_time)
+        new_file.close()
+        shutil.move(new_file.name, test_data.main_config.input_dir)
+
     def _get_num_memory_errors(type, test_data):
         """Get the number of OutOfMemory errors and Exceptions.
 
@@ -1200,17 +1244,17 @@ class Logs(object):
             test_data: the TestData to modify
         """
         try:
-            # Open autopsy.log.0
-            log_path = make_path(test_data.logs_dir, "autopsy.log.0")
+            # Open autopsy_case.log.0
+            log_path = make_path(test_data.logs_dir, "autopsy_case.log.0")
             log = open(log_path)
 
-            # Set the TestData start time based off the first line of autopsy.log.0
+            # Set the TestData start time based off the first line of autopsy_case.log.0
             # *** If logging time format ever changes this will break ***
             test_data.start_date = log.readline().split(" org.")[0]
             # Set the test_data ending time based off the "create" time (when the file was copied)
             test_data.end_date = time.ctime(os.path.getmtime(log_path))
         except IOError as e:
-            Errors.print_error("Error: Unable to open autopsy.log.0.")
+            Errors.print_error("Error: Unable to open autopsy_case.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
         # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -1226,7 +1270,6 @@ class Logs(object):
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
             test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-            
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
             
@@ -1245,7 +1288,7 @@ class Logs(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
         try:
-            service_lines = find_msg_in_log("autopsy.log.0", "to process()", test_data)
+            service_lines = find_msg_in_log("autopsy_case.log.0", "to process()", test_data)
             service_list = []
             for line in service_lines:
                 words = line.split(" ")
@@ -1361,11 +1404,21 @@ def copy_logs(test_data):
         test_data: the TestData whose logs will be copied
     """
     try:
-        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
+        # copy logs from autopsy case's Log folder
+        log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, "Log")
         shutil.copytree(log_dir, test_data.logs_dir)
+
+        # copy logs from userdir0/var/log
+        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
+        for log in os.listdir(log_dir):
+            if log.find("log"):
+                new_name = log_dir + "userdir0." + log
+                log = log_dir + log
+                shutil.move(log, new_name)
+                shutil.copy(new_name, test_data.logs_dir)    
     except OSError as e:
-        printerror(test_data,"Error: Failed to copy the logs.")
-        printerror(test_data,str(e) + "\n")
+        print_error(test_data,"Error: Failed to copy the logs.")
+        print_error(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
 
 def setDay():
@@ -1556,15 +1609,11 @@ class Args(object):
             arg = sys.argv.pop(0)
             nxtproc.append(arg)
             if(arg == "-f"):
-                #try: @@@ Commented out until a more specific except statement is added
                 arg = sys.argv.pop(0)
                 print("Running on a single file:")
                 print(path_fix(arg) + "\n")
                 self.single = True
                 self.single_file = path_fix(arg)
-                #except:
-                #   print("Error: No single file given.\n")
-            #       return False
             elif(arg == "-r" or arg == "--rebuild"):
                 print("Running in rebuild mode.\n")
                 self.rebuild = True
@@ -1739,7 +1788,7 @@ def find_msg_in_log(log, string, test_data):
    """
    lines = []
    try:
-      lines = search_log("autopsy.log.0", string, test_data)[0]
+      lines = search_log("autopsy_case.log.0", string, test_data)[0]
    except (Exception) as e:
       # there weren't any matching messages found
       pass
@@ -1757,8 +1806,8 @@ def clear_dir(dir):
         os.makedirs(dir)
         return True;
     except OSError as e:
-        printerror(test_data,"Error: Cannot clear the given directory:")
-        printerror(test_data,dir + "\n")
+        print_error(test_data,"Error: Cannot clear the given directory:")
+        print_error(test_data,dir + "\n")
         print(str(e))
         return False;
 
@@ -1773,8 +1822,8 @@ def del_dir(dir):
             shutil.rmtree(dir)
         return True;
     except:
-        printerror(test_data,"Error: Cannot delete the given directory:")
-        printerror(test_data,dir + "\n")
+        print_error(test_data,"Error: Cannot delete the given directory:")
+        print_error(test_data,dir + "\n")
         return False;
 
 def get_file_in_dir(dir, ext):
