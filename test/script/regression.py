@@ -890,8 +890,9 @@ class TestResultsDiffer(object):
         if oldtime * 1.05 >=  newtime: # new run was faster
             return True
         else: # old run was faster
-            difference = (newtime / oldtime) - 1
-            print("This run took " + str(difference) + "% longer to run than the last run.") 
+            diff = ((newtime / oldtime) * 100) - 100
+            diff = str(diff)[:str(diff).find('.') + 3]
+            print("This run took " + diff + "% longer to run than the last run.") 
             return False
 
     # Split a string into an array of string of the given size
