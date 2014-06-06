@@ -160,7 +160,6 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         services.postMessage(inboxMsg);
 
         if (context.isJobCancelled()) {
-            stop();
             return ProcessResult.OK;
         }
         
@@ -178,16 +177,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         return ProcessResult.OK;
     }
 
-    private void stop() {
-        for (Extract extracter : extracters) {
-            try {
-                extracter.stop();
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception during stop() of " + extracter.getName(), ex); //NON-NLS
-            }
-        }
-        logger.log(Level.INFO, "Recent Activity processes has been shutdown."); //NON-NLS
-    }
+
 
     /**
      * Get the temp path for a specific sub-module in recent activity. Will

@@ -1136,6 +1136,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
                     logger.log(Level.SEVERE, "Could not clsoe writer after creating mactime file, encountered error ", ex); //NON-NLS
                 }
             }
+            execUtil.stop();
         }
 
         return macfile;

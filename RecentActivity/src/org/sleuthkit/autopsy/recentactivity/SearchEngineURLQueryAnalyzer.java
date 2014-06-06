@@ -373,9 +373,4 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     public void complete() {
         logger.info("Search Engine URL Query Analyzer has completed."); //NON-NLS
     }
-
-    @Override
-    public void stop() {
-        logger.info("Attempted to stop Search Engine URL Query Analyzer, but operation is not supported; skipping..."); //NON-NLS
-    }
 }
