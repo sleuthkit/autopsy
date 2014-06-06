@@ -70,7 +70,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         customizeHashSetsTable(jScrollPane2, knownBadHashTable, knownBadHashSetsTableModel);
         alwaysCalcHashesCheckbox.setSelected(settings.shouldCalculateHashes());
         hashDbManager.addPropertyChangeListener(this);
-        alwaysCalcHashesCheckbox.setText("<html>" + org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text") + "</html>"); // NOI18N
+        alwaysCalcHashesCheckbox.setText("<html>" + org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text") + "</html>"); // NOI18N NON-NLS
     }
 
     private void customizeHashSetsTable(JScrollPane scrollPane, JTable table, HashSetsTableModel tableModel) {

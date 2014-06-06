@@ -142,7 +142,7 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-
+            print("Total ingest time was " + test_data.total_ingest_time)
         Reports.write_html_foot(test_config.html_log)
         
         if test_config.jenkins:
@@ -1226,7 +1226,6 @@ class Logs(object):
             version_line = search_logs("INFO: Application name: Autopsy, version:", test_data)[0]
             test_data.autopsy_version = get_word_at(version_line, 5).rstrip(",")
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
-            
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
             
@@ -1361,11 +1360,22 @@ def copy_logs(test_data):
         test_data: the TestData whose logs will be copied
     """
     try:
-        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log")
+        # copy logs from autopsy case's Log folder
+        log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, "Log")
         shutil.copytree(log_dir, test_data.logs_dir)
+
+        # copy logs from userdir0/var/log
+        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
+        for log in os.listdir(log_dir):
+            if log.find("log"):
+                new_name = log_dir + "userdir0." + log
+                log = log_dir + log
+                shutil.move(log, new_name)
+                shutil.copy(new_name, test_data.logs_dir)
+                shutil.move(new_name, log)
     except OSError as e:
-        printerror(test_data,"Error: Failed to copy the logs.")
-        printerror(test_data,str(e) + "\n")
+        print_error(test_data,"Error: Failed to copy the logs.")
+        print_error(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
 
 def setDay():
@@ -1556,15 +1566,11 @@ class Args(object):
             arg = sys.argv.pop(0)
             nxtproc.append(arg)
             if(arg == "-f"):
-                #try: @@@ Commented out until a more specific except statement is added
                 arg = sys.argv.pop(0)
                 print("Running on a single file:")
                 print(path_fix(arg) + "\n")
                 self.single = True
                 self.single_file = path_fix(arg)
-                #except:
-                #   print("Error: No single file given.\n")
-            #       return False
             elif(arg == "-r" or arg == "--rebuild"):
                 print("Running in rebuild mode.\n")
                 self.rebuild = True
@@ -1757,8 +1763,8 @@ def clear_dir(dir):
         os.makedirs(dir)
         return True;
     except OSError as e:
-        printerror(test_data,"Error: Cannot clear the given directory:")
-        printerror(test_data,dir + "\n")
+        print_error(test_data,"Error: Cannot clear the given directory:")
+        print_error(test_data,dir + "\n")
         print(str(e))
         return False;
 
@@ -1773,8 +1779,8 @@ def del_dir(dir):
             shutil.rmtree(dir)
         return True;
     except:
-        printerror(test_data,"Error: Cannot delete the given directory:")
-        printerror(test_data,dir + "\n")
+        print_error(test_data,"Error: Cannot delete the given directory:")
+        print_error(test_data,dir + "\n")
         return False;
 
 def get_file_in_dir(dir, ext):

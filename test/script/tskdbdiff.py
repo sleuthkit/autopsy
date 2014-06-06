@@ -289,7 +289,7 @@ def replace_id(line, table):
     if (files_index != -1):
         obj_id = fields_list[0]
         path = table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_files" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     
     elif (path_index != -1):

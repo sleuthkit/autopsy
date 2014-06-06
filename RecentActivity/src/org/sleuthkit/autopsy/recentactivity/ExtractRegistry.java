@@ -447,12 +447,14 @@ class ExtractRegistry extends Extract {
                                 String model = dev; 
                                 if (dev.toLowerCase().contains("vid")) { //NON-NLS
                                     USBInfo info = extrctr.parseAndLookup(dev);
-                                    if(info.getVendor()!=null)
+                                    if (info.getVendor() != null) {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
                                                                                  NbBundle.getMessage(this.getClass(),
                                                                                                      "ExtractRegistry.parentModuleName.noSpace"), info.getVendor()));
-                                    if(info.getProduct() != null)
+                                    }
+                                    if (info.getProduct() != null) {
                                         model = info.getProduct();
+                                    }
                                 }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(),
                                                                          NbBundle.getMessage(this.getClass(),
