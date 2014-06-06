@@ -68,7 +68,7 @@ final class IngestModuleFactoryLoader {
 
         // Kick out the sample module factories.
         moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory");
-//        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory");
+        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory");
 
         // Do the core ingest module ordering hack described above.
         ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
