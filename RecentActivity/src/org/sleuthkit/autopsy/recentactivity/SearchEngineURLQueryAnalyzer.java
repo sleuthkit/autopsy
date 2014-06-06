@@ -76,6 +76,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     private IngestJobContext context;
 
     SearchEngineURLQueryAnalyzer() {
+        moduleName = NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
     }
 
     private static class SearchEngine {

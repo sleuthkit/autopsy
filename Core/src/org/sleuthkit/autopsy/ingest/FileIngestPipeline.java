@@ -68,6 +68,10 @@ final class FileIngestPipeline {
         return modules.isEmpty();
     }
 
+    /**
+     * Start up all of the modules in the pipeline. 
+     * @return List of errors or empty list if no errors
+     */
     List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
         for (FileIngestModuleDecorator module : modules) {
@@ -80,6 +84,13 @@ final class FileIngestPipeline {
         return errors;
     }
 
+    /**
+     * Process the file down the pipeline of modules.
+     * Startup must have been called before this is called.
+     * 
+     * @param file File to analyze
+     * @return List of errors or empty list if no errors
+     */
     List<IngestModuleError> process(AbstractFile file) {
         List<IngestModuleError> errors = new ArrayList<>();
         for (FileIngestModuleDecorator module : modules) {

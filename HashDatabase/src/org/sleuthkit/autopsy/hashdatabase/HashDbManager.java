@@ -49,7 +49,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.HashInfo;
+import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -883,7 +883,13 @@ public class HashDbManager implements PropertyChangeListener {
             SleuthkitJNI.addToHashDatabase(hashes, handle);
         }
 
-        public boolean hasMd5HashOf(Content content) throws TskCoreException {
+        /**
+         * Perform a basic boolean lookup of the file's hash. 
+         * @param content
+         * @return True if file's MD5 is in the hash database
+         * @throws TskCoreException 
+         */
+        public boolean lookupMD5Quick(Content content) throws TskCoreException {
             boolean result = false;
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
@@ -895,8 +901,14 @@ public class HashDbManager implements PropertyChangeListener {
             return result;
         }
 
-        public HashInfo lookUp(Content content) throws TskCoreException {
-            HashInfo result = null;
+        /**
+         * Lookup hash value in DB and provide details on file. 
+         * @param content
+         * @return null if file is not in database.
+         * @throws TskCoreException 
+         */
+        public HashHitInfo lookupMD5(Content content) throws TskCoreException {
+            HashHitInfo result = null;
             // This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
@@ -907,6 +919,7 @@ public class HashDbManager implements PropertyChangeListener {
             }
             return result;
         }
+        
 
         boolean hasIndex() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);

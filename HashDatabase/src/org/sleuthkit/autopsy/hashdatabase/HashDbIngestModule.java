@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Hash;
+import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -44,13 +44,12 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.datamodel.HashInfo;
+import org.sleuthkit.datamodel.HashHitInfo;
 
 public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
-    private final Hash hasher = new Hash();
     private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
@@ -82,8 +81,8 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();  
-        getEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
-        getEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
+        updateEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
+        updateEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);        
         
         if (refCounter.incrementAndGet(jobId) == 1) {                  
             // if first module for this job then post error msgs if needed
@@ -108,9 +107,14 @@ public class HashDbIngestModule implements FileIngestModule {
         }
     }
     
-    private void getEnabledHashSets(List<HashDb> hashSets, List<HashDb> enabledHashSets) {
+    /**
+     * Cycle through list of hashsets and return the subset that is enabled.
+     * @param allHashSets List of all hashsets from DB manager
+     * @param enabledHashSets List of enabled ones to return.  
+     */
+    private void updateEnabledHashSets(List<HashDb> allHashSets, List<HashDb> enabledHashSets) {
         enabledHashSets.clear();
-        for (HashDb db : hashSets) {
+        for (HashDb db : allHashSets) {
             if (settings.isHashSetEnabled(db.getHashSetName())) {
                 try {
                     if (db.hasIndex()) {
@@ -154,7 +158,7 @@ public class HashDbIngestModule implements FileIngestModule {
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
                 long calcstart = System.currentTimeMillis();
-                md5Hash = hasher.calculateMd5(file);
+                md5Hash = HashUtility.calculateMd5(file);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);
                 
@@ -178,7 +182,7 @@ public class HashDbIngestModule implements FileIngestModule {
         for (HashDb db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
-                HashInfo hashInfo = db.lookUp(file);
+                HashHitInfo hashInfo = db.lookupMD5(file);
                 if (null != hashInfo) {
                     foundBad = true;
                     totals.totalKnownBadCount.incrementAndGet();
@@ -239,7 +243,7 @@ public class HashDbIngestModule implements FileIngestModule {
             for (HashDb db : knownHashSets) {
                 try {
                     long lookupstart = System.currentTimeMillis();
-                    if (db.hasMd5HashOf(file)) {
+                    if (db.lookupMD5Quick(file)) {
                         try {
                             skCase.setKnown(file, TskData.FileKnown.KNOWN);
                             break;

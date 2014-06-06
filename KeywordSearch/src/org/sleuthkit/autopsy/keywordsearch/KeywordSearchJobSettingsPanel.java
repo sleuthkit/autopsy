@@ -64,7 +64,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         displayLanguages();
         displayEncodings();
         keywordListsManager.addPropertyChangeListener(this);
-         languagesLabel.setText("<html>" + org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text") + "</html>"); // NOI18N
+         languagesLabel.setText("<html>" + org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text") + "</html>"); // NOI18N NON-NLS
     }
 
     private void customizeKeywordListsTable() {

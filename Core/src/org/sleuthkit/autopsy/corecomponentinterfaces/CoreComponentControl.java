@@ -66,7 +66,7 @@ public class CoreComponentControl {
 
         // find the data content top component
         TopComponent contentWin = DataContentTopComponent.findInstance();
-        Mode m = WindowManager.getDefault().findMode("output");
+        Mode m = WindowManager.getDefault().findMode("output"); //NON-NLS
         if (m != null) {
             m.dockInto(contentWin); // redock into the output mode
         } else {

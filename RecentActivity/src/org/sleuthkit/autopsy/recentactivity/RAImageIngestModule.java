@@ -88,7 +88,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                                                                              dataSource.getName())));
 
         progressBar.switchToDeterminate(extracters.size());
-        progressBar.progress(0);
+        
         ArrayList<String> errors = new ArrayList<>();
 
         for (int i = 0; i < extracters.size(); i++) {
@@ -97,6 +97,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
             }
+            
+            progressBar.progress(extracter.getName(), i);
 
             try {
                 extracter.process(dataSource, context);

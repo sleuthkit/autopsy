@@ -60,4 +60,23 @@ public class DataSourceIngestModuleProgress {
     public void progress(int workUnits) {
         progress.progress("", workUnits);
     }
+    
+    /**
+     * Updates the sub-title on the progress bar
+     * @param message Message to display
+     */
+    public void progress(String message) {
+        progress.progress(message);
+    }
+    
+    /**
+     * Updates the progress bar with the number of work units performed, if in
+     * the determinate mode.
+     *
+     * @param message Message to display in sub-title
+     * @param workUnits Number of work units performed so far by the module.
+     */
+    public void progress(String message, int workUnits) {
+        progress.progress(message, workUnits);
+    }
 }
