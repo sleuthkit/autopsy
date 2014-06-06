@@ -113,7 +113,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
     }
 
     /**
-     * Creates appropriate Node for each supported artifact category / grouping
+     * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy 
+     * tree view from each type of AutopsyVisitableItem visited. There are 
+     * AutopsyVisitableItems for the Data Sources, Views, Results, and Reports 
+     * subtrees, and for the subtrees of Results (e.g., Extracted Content, 
+     * Hash Set Hits, etc.). 
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
@@ -184,6 +188,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         @Override
         public AbstractNode visit(Results r) {
             return new ResultsNode(r.getSleuthkitCase());
+        }
+
+        @Override
+        public AbstractNode visit(Reports reportsItem) {
+            return new Reports.ReportsListNode();
         }
 
         @Override

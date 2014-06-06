@@ -256,11 +256,13 @@ class ReportKML implements GeneralReportModule {
                     FileOutputStream writer = new FileOutputStream(reportPath);
                     outputter.output(kmlDocument, writer);
                     writer.close();
+                    Case.getCurrentCase().addReport(reportPath, "KML Report", "");                                
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
+                } catch (TskCoreException ex) {
+                    String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
+                    logger.log(Level.SEVERE, errorMessage, ex);
                 }
-
-
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not write the KML report.", ex); //NON-NLS
             }

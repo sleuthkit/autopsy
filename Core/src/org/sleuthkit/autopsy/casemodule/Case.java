@@ -119,7 +119,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * closed, the "new value" will be null and the "old value" will be the
          * instance of the Case object being closed.
          */
-        CURRENT_CASE;
+        CURRENT_CASE,
+        /**
+         * Name for property change events fired when a report is added to the
+         * case. The old value supplied by the event object is null and the new
+         * value is a reference to a Report object representing the new report.
+         */
+        REPORT_ADDED;
     };
 
     private String name;
@@ -1164,4 +1170,27 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public void receiveError(String context, String errorMessage) {
         MessageNotifyUtil.Notify.error(context, errorMessage);
     }
+
+    /**
+     * Adds a report to the case.
+     * 
+     * @param [in] localPath The path of the report file, must be in the case directory or one of its subdirectories.
+     * @param [in] sourceModuleName The name of the module that created the report.
+     * @param [in] reportName The report name, may be empty.
+     * @return A Report data transfer object (DTO) for the new row.
+     * @throws TskCoreException 
+     */    
+    public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+        Report report = this.db.addReport(localPath, srcModuleName, reportName);
+        try {
+            Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
+        } catch (Exception ex) {
+            String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString());
+            logger.log(Level.SEVERE, errorMessage, ex);
+        }
+    }    
+    
+    public List<Report> getAllReports() throws TskCoreException {
+        return this.db.getAllReports();
+    }    
 }

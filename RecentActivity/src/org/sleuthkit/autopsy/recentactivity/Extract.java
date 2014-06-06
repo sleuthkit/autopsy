@@ -56,8 +56,6 @@ abstract class Extract {
     void complete() {
     }
 
-    void stop() {
-    }
     
     /**
      * Returns a List of string error messages from the inheriting class

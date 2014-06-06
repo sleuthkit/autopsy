@@ -102,6 +102,10 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(VirtualDirectoryNode ldn);
 
+    T visit(Reports.ReportsListNode reportsNode);
+
+    T visit(Reports.ReportNode reportNode);
+        
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -300,6 +304,16 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(BlackboardArtifactTagNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Reports.ReportsListNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Reports.ReportNode node) {
             return defaultVisit(node);
         }
     }

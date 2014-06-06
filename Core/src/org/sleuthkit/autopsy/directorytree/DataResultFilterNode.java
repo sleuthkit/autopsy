@@ -66,6 +66,7 @@ import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -308,6 +309,12 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
+        public List<Action> visit(Reports.ReportsListNode ditem) {
+            // The base class Action is "Collapse All", inappropriate.
+            return null;
+        }
+                
+        @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
             List<Action> actions = new ArrayList<>();
@@ -522,6 +529,11 @@ public class DataResultFilterNode extends FilterNode {
             return openChild(khmln);
         }
 
+        @Override
+        public AbstractAction visit(Reports.ReportNode reportNode) {
+            return reportNode.getPreferredAction();
+        }
+        
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return null;

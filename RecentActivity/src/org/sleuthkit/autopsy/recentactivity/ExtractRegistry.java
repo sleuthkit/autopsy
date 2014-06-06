@@ -63,7 +63,7 @@ class ExtractRegistry extends Extract {
     private boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper
     private boolean rrFullFound = false; // true if we found the full version of regripper
     final private static String MODULE_VERSION = "1.0";
-    private ExecUtil execRR;
+    
     private Content dataSource;
     private IngestJobContext context;
 
@@ -300,6 +300,7 @@ class ExtractRegistry extends Extract {
         if (!autopsyType.isEmpty() && rrFound) {
             // TODO - add error messages
             Writer writer = null;
+            ExecUtil execRR = null;
             try {
                 regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
                 logger.log(Level.INFO, "Writing RegRipper results to: " + regOutputFiles.autopsyPlugins); //NON-NLS
@@ -325,12 +326,16 @@ class ExtractRegistry extends Extract {
                         logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex); //NON-NLS
                     }
                 }
+                if (execRR != null) {
+                    execRR.stop();
+                }
             }
         }
         
         // run the full set of rr modules
         if (!fullType.isEmpty() && rrFullFound) {
             Writer writer = null;
+            ExecUtil execRR = null;
             try {
                 regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
                 logger.log(Level.INFO, "Writing Full RegRipper results to: " + regOutputFiles.fullPlugins); //NON-NLS
@@ -355,6 +360,9 @@ class ExtractRegistry extends Extract {
                     } catch (IOException ex) {
                         logger.log(Level.SEVERE, "Error closing output writer after running RegRipper full", ex); //NON-NLS
                     }
+                }
+                if (execRR != null) {
+                    execRR.stop();
                 }
             }
         }
@@ -578,11 +586,4 @@ class ExtractRegistry extends Extract {
         analyzeRegistryFiles();
     }
 
-    @Override
-    public void stop() {
-        if (execRR != null) {
-            execRR.stop();
-            execRR = null;
-        }
-    }
 }

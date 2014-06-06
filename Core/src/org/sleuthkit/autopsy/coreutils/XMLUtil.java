@@ -126,12 +126,12 @@ public class XMLUtil {
             DocumentBuilder builder = builderFactory.newDocumentBuilder();
             ret = builder.parse(new FileInputStream(xmlPath));
         } catch (ParserConfigurationException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't initialize parser.", e); //NON-NLS
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't initialize parser.", e); //NON-NLS
         } catch (SAXException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't parse XML.", e); //NON-NLS
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't parse XML.", e); //NON-NLS
         } catch (IOException e) {
             //error reading file
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file: can't read file.", e); //NON-NLS
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't read file.", e); //NON-NLS
         }
         return ret;
     }
@@ -144,7 +144,6 @@ public class XMLUtil {
      * @param xsdPath the full path to the file to validate against
      */
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = loadDoc(clazz, xmlPath);
         if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
             Logger.getLogger(clazz.getName()).log(Level.WARNING, "Error loading XML file: could not validate against [{0}], results may not be accurate", xsdPath); //NON-NLS

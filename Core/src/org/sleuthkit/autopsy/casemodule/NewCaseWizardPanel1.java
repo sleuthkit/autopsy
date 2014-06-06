@@ -202,7 +202,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     public void validate() throws WizardValidationException {
         String caseName = getComponent().getCaseName();
         String caseParentDir = getComponent().getCaseParentDir();
-        String caseDirPath = caseParentDir + File.separator + caseName;
+        String caseDirPath = caseParentDir + caseName;
 
         // check if case Name contain one of this following symbol:
         //  \ / : * ? " < > |
