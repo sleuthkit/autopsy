@@ -32,6 +32,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
+/**
+ * InjestJobs store all settings and data associated with the user selecting a
+ * datasource and running a set of ingest modules on it. 
+ */
 final class IngestJob {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
@@ -102,6 +106,11 @@ final class IngestJob {
         return processUnallocatedSpace;
     }
 
+    /**
+     * Create the file and data source pipelines.
+     * @param ingestModuleTemplates
+     * @throws InterruptedException 
+     */
     private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
         IngestJobContext context = new IngestJobContext(this);
         dataSourceIngestPipeline = new DataSourceIngestPipeline(context, ingestModuleTemplates);
@@ -118,6 +127,11 @@ final class IngestJob {
         return true;
     }
 
+    /**
+     * Start both the data source and file ingest pipelines
+     * @return
+     * @throws InterruptedException 
+     */
     private List<IngestModuleError> start() throws InterruptedException {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
@@ -142,6 +156,14 @@ final class IngestJob {
         return errors;
     }
 
+    
+    /**
+     * Startup each of the file and data source ingest modules to collect
+     * possible errors.
+     * 
+     * @return
+     * @throws InterruptedException 
+     */
     private List<IngestModuleError> startUpIngestPipelines() throws InterruptedException {
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(dataSourceIngestPipeline.startUp());
