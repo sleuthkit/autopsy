@@ -52,8 +52,7 @@ public final class Reports implements AutopsyVisitableItem {
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        // The CreateAutopsyNodeVisitor constructs a ReportsListNode when it
-        // visits.
+        // CreateAutopsyNodeVisitor.visit() constructs a ReportsListNode.
         return visitor.visit(this);
     }
 
@@ -79,10 +78,10 @@ public final class Reports implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            // The GetPopupActionsDisplayableItemNodeVisitor gets the Actions for this class.
-            // The GetPreferredActionsDisplayableItemNodeVisitor RJCTODO?
-            // The IsLeafItemVisitor returns false.
-            // The ShowItemVisitor always returns true.
+            // - GetPopupActionsDisplayableItemNodeVisitor.visit() returns null.
+            // - GetPreferredActionsDisplayableItemNodeVisitor.visit() returns null.
+            // - IsLeafItemVisitor.visit() returns false.
+            // - ShowItemVisitor.visit() returns true.
             return visitor.visit(this);
         }
     }
@@ -145,10 +144,10 @@ public final class Reports implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            // The GetPopupActionsDisplayableItemNodeVisitor calls getActions(). // RJCTODO: Try to get rid of parent collapse all
-            // The GetPreferredActionsDisplayableItemNodeVisitor calls getPreferredAction().
-            // The IsLeafItemVisitor returns true.
-            // The ShowItemVisitor always returns true.
+            // - GetPopupActionsDisplayableItemNodeVisitor.visit() calls getActions().
+            // - GetPreferredActionsDisplayableItemNodeVisitor.visit() calls getPreferredAction().
+            // - IsLeafItemVisitor.visit() returns true.
+            // - ShowItemVisitor.visit() returns true.
             return visitor.visit(this);
         }
 
@@ -188,28 +187,36 @@ public final class Reports implements AutopsyVisitableItem {
             return new OpenReportAction();
         }
 
-        private final class OpenReportAction extends AbstractAction { // RJCTODO: Needs name for menu
-
-            private OpenReportAction() {
-                super("Open Report"); // RJCTODO: bundle
-            }
+        private final class OpenReportAction extends AbstractAction {
             
+            private OpenReportAction() {
+                super(NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionDisplayName"));
+            }
             @Override
             public void actionPerformed(ActionEvent e) {
                 File file = new File(ReportNode.this.report.getPath());
                 try {
                     Desktop.getDesktop().open(file);
                 } catch (IOException ex) {
-                    // RJCTODO: Failed to open no associated editor or associated application failed to launch
-                    // RJCTODO: Bundle
-                    JOptionPane.showMessageDialog(null, "There is no associated editor for reports of this type or the associated application failed to launch.", 
-                            "Open Report Failure", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, 
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.NoAssociatedEditorMessage"),
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
+                            JOptionPane.ERROR_MESSAGE);
                 } catch (UnsupportedOperationException ex) {
-                    // RJCTODO                    
+                    JOptionPane.showMessageDialog(null, 
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.NoOpenInEditorSupportMessage"),
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
+                            JOptionPane.ERROR_MESSAGE);
                 } catch (IllegalArgumentException ex) {
-                    // RJCTODO: File does not exist                    
-                } catch (SecurityException ex) {
-                    // RJCTODO: permission denied                    
+                    JOptionPane.showMessageDialog(null, 
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MissingReportFileMessage"),
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
+                            JOptionPane.ERROR_MESSAGE);
+                } catch (SecurityException ex) {                    
+                    JOptionPane.showMessageDialog(null, 
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.ReportFileOpenPermissionDeniedMessage"),
+                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }

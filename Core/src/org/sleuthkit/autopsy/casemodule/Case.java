@@ -120,7 +120,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * instance of the Case object being closed.
          */
         CURRENT_CASE,
-        // RJCTODO: Describe
+        /**
+         * Name for property change events fired when a report is added to the
+         * case. The old value supplied by the event object is null and the new
+         * value is a reference to a Report object representing the new report.
+         */
         REPORT_ADDED;
     };
 
@@ -1178,7 +1182,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */    
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         Report report = this.db.addReport(localPath, srcModuleName, reportName);
-        Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report); // RJCTODO: Need exception firewall, maybe thread to do publishing        
+        synchronized (this) {
+            try {
+                Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
+            } catch (Exception ex) {
+                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString());
+                logger.log(Level.SEVERE, errorMessage, ex);
+            }
+        }
     }    
     
     public List<Report> getAllReports() throws TskCoreException {

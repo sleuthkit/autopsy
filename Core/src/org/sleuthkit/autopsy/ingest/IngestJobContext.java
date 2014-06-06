@@ -60,7 +60,7 @@ public final class IngestJobContext {
      *
      * @param files The files to be processed by the file ingest pipeline.
      */
-    public void addFiles(List<AbstractFile> files) { // RJCTODO: Rename
+    public void addFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
             try {
                 FileIngestTaskScheduler.getInstance().scheduleTask(ingestJob, file);

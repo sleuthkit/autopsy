@@ -309,6 +309,12 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
+        public List<Action> visit(Reports.ReportsListNode ditem) {
+            // The base class Action is "Collapse All", inappropriate.
+            return null;
+        }
+                
+        @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
             List<Action> actions = new ArrayList<>();
