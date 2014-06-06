@@ -1182,13 +1182,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */    
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         Report report = this.db.addReport(localPath, srcModuleName, reportName);
-        synchronized (this) {
-            try {
-                Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
-            } catch (Exception ex) {
-                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString());
-                logger.log(Level.SEVERE, errorMessage, ex);
-            }
+        try {
+            Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
+        } catch (Exception ex) {
+            String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString());
+            logger.log(Level.SEVERE, errorMessage, ex);
         }
     }    
     
