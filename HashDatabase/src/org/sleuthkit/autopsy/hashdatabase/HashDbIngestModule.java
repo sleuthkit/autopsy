@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Hash;
+import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -50,7 +50,6 @@ public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
-    private final Hash hasher = new Hash();
     private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
@@ -159,7 +158,7 @@ public class HashDbIngestModule implements FileIngestModule {
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
                 long calcstart = System.currentTimeMillis();
-                md5Hash = hasher.calculateMd5(file);
+                md5Hash = HashUtility.calculateMd5(file);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);
                 
