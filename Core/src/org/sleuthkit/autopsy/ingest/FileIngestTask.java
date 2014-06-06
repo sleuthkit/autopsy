@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.Objects;
 import org.sleuthkit.datamodel.AbstractFile;
 
+/**
+ * Represents a single file analysis task, which is defined
+ * by a file to analyze and the InjestJob/Pipeline to run it on.
+ */
 final class FileIngestTask extends IngestTask {
 
     private final AbstractFile file;
