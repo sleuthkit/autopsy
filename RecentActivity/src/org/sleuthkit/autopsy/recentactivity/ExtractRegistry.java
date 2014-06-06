@@ -69,6 +69,7 @@ class ExtractRegistry extends Extract {
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
+        moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
             logger.log(Level.SEVERE, "RegRipper not found"); //NON-NLS
