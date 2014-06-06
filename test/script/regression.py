@@ -142,7 +142,6 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-            print("Total ingest time was " + test_data.total_ingest_time)
         
         Reports.write_html_foot(test_config.html_log)
         
@@ -212,11 +211,18 @@ class TestRunner(object):
         print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
-        if test_data.main_config.jenkins: # run time test only for jenkins
+        
+        # run time test only for the specific jenkins test
+        if test_data.main_config.timing: 
+            if test_data.main_config.timing:
+                old_time_path = test_data.get_run_time_path()
+                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+                test_data.run_time_passed = passed
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed and
             test_data.run_time_passed)
+        # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed)
@@ -583,6 +589,7 @@ class TestConfiguration(object):
         timeout: a Nat, the amount of time before killing the test
         ant: a listof_String, the ant command to run the tests
         jenkins: a boolean, is this test running through a Jenkins job?
+        timing: are we doing a running time test?
     """
 
     def __init__(self, args):
@@ -610,6 +617,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         self.jenkins = False
+        self.timing = False
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -653,6 +661,10 @@ class TestConfiguration(object):
                     self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
             else:
                 self.jenkins = False
+            if parsed_config.getElementsByTagName("timing"):
+                self.timing = True
+            else:
+                self.timing = False
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -744,11 +756,6 @@ class TestResultsDiffer(object):
             output_report_path)
             test_data.html_report_passed = passed
             
-            # Compare run times
-            if test_data.main_config.jenkins:
-                old_time_path = test_data.get_run_time_path()
-                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
-                test_data.run_time_passed = passed
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -883,13 +890,12 @@ class TestResultsDiffer(object):
         newtime = test_data.total_ingest_time
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
-        print("old time: " + str(oldtime))
-        print("new time: " + str(newtime))
-        print("adjusted old time: " + str(1.05 * oldtime))
         # run the test, 5% tolerance
         if oldtime * 1.05 >=  newtime: # new run was faster
             return True
         else: # old run was faster
+            print("The last run took: " + str(oldtime))
+            print("This run took: " + str(newtime))
             diff = ((newtime / oldtime) * 100) - 100
             diff = str(diff)[:str(diff).find('.') + 3]
             print("This run took " + diff + "% longer to run than the last run.") 
@@ -913,7 +919,7 @@ class Reports(object):
         else:
             Reports._generate_csv(test_data.main_config.csv, test_data)
         
-        if test_data.main_config.jenkins:
+        if test_data.main_config.timing:
             Reports._write_time(test_data)
             
     def _generate_html(test_data):
