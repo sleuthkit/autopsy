@@ -70,9 +70,9 @@ public final class SevenZipIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(SevenZipIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
-    private String unpackDir; //relative to the case, to store in db
-    private String unpackDirPath; //absolute, to extract to
-    private FileManager fileManager;
+    private String moduleDirRelative; //relative to the case, to store in db
+    private String moduleDirAbsolute; //absolute, to extract to
+
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(SevenZipIngestModule.class,
             "SevenZipIngestModule.encryptionFileLevel");
@@ -103,22 +103,21 @@ public final class SevenZipIngestModule implements FileIngestModule {
 
         final Case currentCase = Case.getCurrentCase();
 
-        unpackDir = Case.getModulesOutputDirRelPath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
-        unpackDirPath = currentCase.getModulesOutputDirAbsPath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
+        moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
+        moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
 
-        fileManager = currentCase.getServices().getFileManager();
-
-        File unpackDirPathFile = new File(unpackDirPath);
+        
+        File unpackDirPathFile = new File(moduleDirAbsolute);
         if (!unpackDirPathFile.exists()) {
             try {
                 unpackDirPathFile.mkdirs();
             } catch (SecurityException e) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + unpackDirPath, e); //NON-NLS
+                logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, e); //NON-NLS
                 String msg = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.init.errInitModule.msg", ArchiveFileExtractorModuleFactory.getModuleName());
                 String details = NbBundle.getMessage(this.getClass(),
                         "SevenZipIngestModule.init.errInitModule.details",
-                        unpackDirPath, e.getMessage());
+                        moduleDirAbsolute, e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
                 throw e;
             }
@@ -177,8 +176,10 @@ public final class SevenZipIngestModule implements FileIngestModule {
 
         List<AbstractFile> unpackedFiles = unpack(abstractFile);
         if (!unpackedFiles.isEmpty()) {
-            sendNewFilesEvent(abstractFile, unpackedFiles);
-            context.addFiles(unpackedFiles);
+            //currently sending a single event for all new files
+            services.fireModuleContentEvent(new ModuleContentEvent(abstractFile));
+        
+            context.scheduleFiles(unpackedFiles);
         }
 
         return ProcessResult.OK;
@@ -190,10 +191,6 @@ public final class SevenZipIngestModule implements FileIngestModule {
         refCounter.decrementAndGet(jobId);
     }
         
-    private void sendNewFilesEvent(AbstractFile archive, List<AbstractFile> unpackedFiles) {
-        //currently sending a single event for all new files
-        services.fireModuleContentEvent(new ModuleContentEvent(archive));
-    }
 
     /**
      * Get local relative path to the unpacked archive root
@@ -212,7 +209,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
      * @return
      */
     private String getLocalRootAbsPath(String localRootRelPath) {
-        return unpackDirPath + File.separator + localRootRelPath;
+        return moduleDirAbsolute + File.separator + localRootRelPath;
     }
 
     /**
@@ -315,8 +312,8 @@ public final class SevenZipIngestModule implements FileIngestModule {
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
             //setup the archive local root folder
-            final String uniqueFileName = getUniqueName(archiveFile);
-            final String localRootAbsPath = getLocalRootAbsPath(uniqueFileName);
+            final String uniqueArchiveFileName = getUniqueName(archiveFile);
+            final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
             final File localRoot = new File(localRootAbsPath);
             if (!localRoot.exists()) {
                 try {
@@ -329,15 +326,16 @@ public final class SevenZipIngestModule implements FileIngestModule {
             }
 
             //initialize tree hierarchy to keep track of unpacked file structure
-            UnpackedTree uTree = new UnpackedTree(unpackDir + "/" + uniqueFileName, archiveFile, fileManager);
+            UnpackedTree unpackedTree = new UnpackedTree(moduleDirRelative + "/" + uniqueArchiveFileName, archiveFile);
 
             long freeDiskSpace = services.getFreeDiskSpace();
 
             //unpack and process every item in archive
             int itemNumber = 0;
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
-                String extractedPath = item.getPath();
-                if (extractedPath == null || extractedPath.isEmpty()) {
+                String pathInArchive = item.getPath();
+                
+                if (pathInArchive == null || pathInArchive.isEmpty()) {
                     //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
                     //handle this for .tar.gz and tgz but assuming the child is tar,
                     //otherwise, unpack using itemNumber as name
@@ -360,18 +358,18 @@ public final class SevenZipIngestModule implements FileIngestModule {
                     }
 
                     if (useName == null) {
-                        extractedPath = "/" + archName + "/" + Integer.toString(itemNumber);
+                        pathInArchive = "/" + archName + "/" + Integer.toString(itemNumber);
                     } else {
-                        extractedPath = "/" + useName;
+                        pathInArchive = "/" + useName;
                     }
 
                     String msg = NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.unpack.unknownPath.msg",
-                            archiveFile.getName(), extractedPath);
+                            archiveFile.getName(), pathInArchive);
                     logger.log(Level.WARNING, msg);
 
                 }
                 ++itemNumber;
-                logger.log(Level.INFO, "Extracted item path: {0}", extractedPath); //NON-NLS
+                logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile.getName(), item)) {
@@ -379,9 +377,9 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 }
 
                 //find this node in the hierarchy, create if needed
-                UnpackedTree.Data uNode = uTree.find(extractedPath);
+                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
 
-                String fileName = uNode.getFileName();
+                String fileName = unpackedNode.getFileName();
 
                 //update progress bar
                 progress.progress(archiveFile.getName() + ": " + fileName, processedItems);
@@ -394,7 +392,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 final boolean isDir = item.isFolder();
 
                 if (isEncrypted) {
-                    logger.log(Level.WARNING, "Skipping encrypted file in archive: {0}", extractedPath); //NON-NLS
+                    logger.log(Level.WARNING, "Skipping encrypted file in archive: {0}", pathInArchive); //NON-NLS
                     hasEncrypted = true;
                     continue;
                 } else {
@@ -423,9 +421,11 @@ public final class SevenZipIngestModule implements FileIngestModule {
                     }
                 }
 
-                final String localFileRelPath = uniqueFileName + File.separator + extractedPath;
+                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + new File(pathInArchive).getName();
+                
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
-                final String localAbsPath = unpackDirPath + File.separator + localFileRelPath;
+                final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
+                final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
 
                 //create local dirs and empty files before extracted
                 File localFile = new java.io.File(localAbsPath);
@@ -443,9 +443,14 @@ public final class SevenZipIngestModule implements FileIngestModule {
                             }
                         }
                     } catch (SecurityException e) {
-                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", extractedPath); //NON-NLS
+                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", pathInArchive); //NON-NLS
                         //TODO consider bail out / msg to the user
                     }
+                }
+                
+                // skip the rest of this loop if we couldn't create the file
+                if (localFile.exists() == false) {
+                    continue;
                 }
 
                 final Date createTime = item.getCreationTime();
@@ -456,8 +461,8 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
 
                 //record derived data in unode, to be traversed later after unpacking the archive
-                uNode.addDerivedInfo(size, !isDir,
-                        0L, createtime, accesstime, modtime);
+                unpackedNode.addDerivedInfo(size, !isDir,
+                        0L, createtime, accesstime, modtime, localRelPath);
 
                 //unpack locally if a file
                 if (!isDir) {
@@ -477,11 +482,13 @@ public final class SevenZipIngestModule implements FileIngestModule {
 
                 //update units for progress bar
                 ++processedItems;
-            } //for every item in archive
-
+            }
+            
+            // add them to the DB. We wait until the end so that we have the metadata on all of the
+            // intermediate nodes since the order is not guaranteed
             try {
-                uTree.createDerivedFiles();
-                unpackedFiles = uTree.getAllFileObjects();
+                unpackedTree.addDerivedFilesToCase();
+                unpackedFiles = unpackedTree.getAllFileObjects();
 
                 //check if children are archives, update archive depth tracking
                 for (AbstractFile unpackedFile : unpackedFiles) {
@@ -658,7 +665,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
     }
 
     /**
-     * Representation of local directory tree of unpacked archive. Used to track
+     * Representation of the files in the archive. Used to track
      * of local tree file hierarchy, archive depth, and files created to easily
      * and reliably get parent AbstractFile for unpacked file. So that we don't
      * have to depend on type of traversal of unpacked files handed to us by
@@ -666,27 +673,30 @@ public final class SevenZipIngestModule implements FileIngestModule {
      */
     private class UnpackedTree {
 
-        final String localPathRoot;
-        final Data root; //dummy root to hold children
-        final FileManager fileManager;
+        final UnpackedNode rootNode;         
 
-        UnpackedTree(String localPathRoot, AbstractFile archiveRoot, FileManager fileManager) {
-            this.localPathRoot = localPathRoot;
-            this.fileManager = fileManager;
-            this.root = new Data();
-            this.root.setFile(archiveRoot);
-            this.root.setFileName(archiveRoot.getName());
-            this.root.localRelPath = localPathRoot;
+        /**
+         * 
+         * @param localPathRoot Path in module output folder that files will be saved to
+         * @param archiveFile Archive file being extracted
+         * @param fileManager 
+         */
+        UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
+            this.rootNode = new UnpackedNode();
+            this.rootNode.setFile(archiveFile);
+            this.rootNode.setFileName(archiveFile.getName());
+            this.rootNode.localRelPath = localPathRoot;
         }
 
         /**
-         * Tokenizes filePath passed in and traverses the dir structure,
-         * creating data nodes on the path way as needed
+         * Creates a node in the tree at the given path.  Makes intermediate
+         * nodes if needed.  If a node already exists at that path, it is
+         * returned. 
          *
          * @param filePath file path with 1 or more tokens separated by /
          * @return child node for the last file token in the filePath
          */
-        Data find(String filePath) {
+        UnpackedNode addNode(String filePath) {
             String[] toks = filePath.split("[\\/\\\\]");
             List<String> tokens = new ArrayList<>();
             for (int i = 0; i < toks.length; ++i) {
@@ -694,28 +704,31 @@ public final class SevenZipIngestModule implements FileIngestModule {
                     tokens.add(toks[i]);
                 }
             }
-            return find(root, tokens);
+            return addNode(rootNode, tokens);
         }
 
         /**
-         * recursive method that traverses the path
+         * recursive method that traverses the path 
          *
          * @param tokenPath
          * @return
          */
-        private Data find(Data parent, List<String> tokenPath) {
-            //base case
+        private UnpackedNode addNode(UnpackedNode parent, List<String> tokenPath) {
+            // we found all of the tokens
             if (tokenPath.isEmpty()) {
                 return parent;
             }
 
-            String childName = tokenPath.remove(0); //step towards base case
-            Data child = parent.getChild(childName);
+            // get the next name in the path and look it up
+            String childName = tokenPath.remove(0); 
+            UnpackedNode child = parent.getChild(childName);
+            // create new node
             if (child == null) {
-                child = new Data(childName, parent);
+                child = new UnpackedNode(childName, parent);
             }
-            return find(child, tokenPath);
-
+            
+            // go down one more level
+            return addNode(child, tokenPath);
         }
 
         /**
@@ -726,7 +739,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
          */
         List<AbstractFile> getRootFileObjects() {
             List<AbstractFile> ret = new ArrayList<>();
-            for (Data child : root.children) {
+            for (UnpackedNode child : rootNode.children) {
                 ret.add(child.getFile());
             }
             return ret;
@@ -740,15 +753,15 @@ public final class SevenZipIngestModule implements FileIngestModule {
          */
         List<AbstractFile> getAllFileObjects() {
             List<AbstractFile> ret = new ArrayList<>();
-            for (Data child : root.children) {
+            for (UnpackedNode child : rootNode.children) {
                 getAllFileObjectsRec(ret, child);
             }
             return ret;
         }
 
-        private void getAllFileObjectsRec(List<AbstractFile> list, Data parent) {
+        private void getAllFileObjectsRec(List<AbstractFile> list, UnpackedNode parent) {
             list.add(parent.getFile());
-            for (Data child : parent.children) {
+            for (UnpackedNode child : parent.children) {
                 getAllFileObjectsRec(list, child);
             }
         }
@@ -757,26 +770,21 @@ public final class SevenZipIngestModule implements FileIngestModule {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void createDerivedFiles() throws TskCoreException {
-            for (Data child : root.children) {
-                createDerivedFilesRec(child);
+        void addDerivedFilesToCase() throws TskCoreException {
+            final FileManager fileManager =  Case.getCurrentCase().getServices().getFileManager();
+            for (UnpackedNode child : rootNode.children) {
+                addDerivedFilesToCaseRec(child, fileManager);
             }
-
         }
 
-        private void createDerivedFilesRec(Data node) throws TskCoreException {
+        private void addDerivedFilesToCaseRec(UnpackedNode node, FileManager fileManager) throws TskCoreException {
             final String fileName = node.getFileName();
-            final String localRelPath = node.getLocalRelPath();
-            final long size = node.getSize();
-            final boolean isFile = node.isIsFile();
-            final AbstractFile parent = node.getParent().getFile();
 
             try {
-                DerivedFile df = fileManager.addDerivedFile(fileName, localRelPath, size,
+                DerivedFile df = fileManager.addDerivedFile(fileName, node.getLocalRelPath(), node.getSize(),
                         node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                        isFile, parent, "", ArchiveFileExtractorModuleFactory.getModuleName(), "", "");
+                        node.isIsFile(), node.getParent().getFile(), "", ArchiveFileExtractorModuleFactory.getModuleName(), "", "");
                 node.setFile(df);
-
 
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error adding a derived file to db:" + fileName, ex); //NON-NLS
@@ -786,31 +794,35 @@ public final class SevenZipIngestModule implements FileIngestModule {
             }
 
             //recurse
-            for (Data child : node.children) {
-                createDerivedFilesRec(child);
+            for (UnpackedNode child : node.children) {
+                addDerivedFilesToCaseRec(child, fileManager);
             }
         }
 
-        private class Data {
+        
+        /**
+         * A node in the unpacked tree that represents a file or folder. 
+         */
+        private class UnpackedNode {
 
             private String fileName;
             private AbstractFile file;
-            private List<Data> children = new ArrayList<>();
-            private String localRelPath;
+            private List<UnpackedNode> children = new ArrayList<>();
+            private String localRelPath = "";
             private long size;
             private long ctime, crtime, atime, mtime;
             private boolean isFile;
-            private Data parent;
+            private UnpackedNode parent;
 
             //root constructor
-            Data() {
+            UnpackedNode() {
             }
 
             //child node constructor
-            Data(String fileName, Data parent) {
+            UnpackedNode(String fileName, UnpackedNode parent) {
                 this.fileName = fileName;
                 this.parent = parent;
-                this.localRelPath = parent.localRelPath + File.separator + fileName;
+                //this.localRelPath = parent.localRelPath + File.separator + fileName;
                 //new child derived file will be set by unpack() method
                 parent.children.add(this);
 
@@ -836,19 +848,20 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 this.fileName = fileName;
             }
 
-            Data getParent() {
+            UnpackedNode getParent() {
                 return parent;
             }
 
             void addDerivedInfo(long size,
                     boolean isFile,
-                    long ctime, long crtime, long atime, long mtime) {
+                    long ctime, long crtime, long atime, long mtime, String relLocalPath) {
                 this.size = size;
                 this.isFile = isFile;
                 this.ctime = ctime;
                 this.crtime = crtime;
                 this.atime = atime;
                 this.mtime = mtime;
+                this.localRelPath = relLocalPath;
             }
 
             void setFile(AbstractFile file) {
@@ -861,9 +874,9 @@ public final class SevenZipIngestModule implements FileIngestModule {
              * @param childFileName
              * @return
              */
-            Data getChild(String childFileName) {
-                Data ret = null;
-                for (Data child : children) {
+            UnpackedNode getChild(String childFileName) {
+                UnpackedNode ret = null;
+                for (UnpackedNode child : children) {
                     if (child.fileName.equals(childFileName)) {
                         ret = child;
                         break;

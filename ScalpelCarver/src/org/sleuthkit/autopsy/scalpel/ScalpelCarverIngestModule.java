@@ -223,7 +223,7 @@ class ScalpelCarverIngestModule implements FileIngestModule {
         }
 
         // reschedule carved files
-        context.addFiles(new ArrayList<AbstractFile>(carvedFiles));
+        context.scheduleFiles(new ArrayList<AbstractFile>(carvedFiles));
 
         return ProcessResult.OK;
     }

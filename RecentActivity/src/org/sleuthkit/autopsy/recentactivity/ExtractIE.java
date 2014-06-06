@@ -65,7 +65,6 @@ class ExtractIE extends Extract {
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;    
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-    private  ExecUtil execPasco;
     private Content dataSource;
     private IngestJobContext context;
 
@@ -357,11 +356,11 @@ class ExtractIE extends Extract {
         boolean success = true;
 
         Writer writer = null;
+        ExecUtil execPasco = new ExecUtil();
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
             logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS
             writer = new FileWriter(outputFileFullPath);
-            execPasco = new ExecUtil();
             execPasco.execute(writer, JAVA_PATH, 
                     "-cp", PASCO_LIB_PATH,  //NON-NLS
                     "isi.pasco2.Main", "-T", "history", indexFilePath ); //NON-NLS
@@ -382,6 +381,7 @@ class ExtractIE extends Extract {
                     logger.log(Level.WARNING, "Error closing writer stream after for Pasco result", ex); //NON-NLS
                 }
             }
+            execPasco.stop();
         }
         return success;
     }
@@ -514,13 +514,5 @@ class ExtractIE extends Extract {
             }                                    
         }
         fileScanner.close();        
-    }
-
-    @Override
-    public void stop() {
-        if (execPasco != null) {
-            execPasco.stop();
-            execPasco = null;
-        }        
     }
 }

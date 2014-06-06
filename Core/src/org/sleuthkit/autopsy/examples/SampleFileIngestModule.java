@@ -79,21 +79,18 @@ class SampleFileIngestModule implements FileIngestModule {
                 // modules.
                 Case autopsyCase = Case.getCurrentCase();
                 SleuthkitCase sleuthkitCase = autopsyCase.getSleuthkitCase();
-
-                // See if the attribute type has already been defined.
                 try {
+                    // See if the attribute type has already been defined.
                     attrId = sleuthkitCase.getAttrTypeID("ATTR_SAMPLE");
-                } catch (TskCoreException e) {
-                    // If not, create the the attribute type.
-                    try {
+                    if (attrId == -1) {
                         attrId = sleuthkitCase.addAttrType("ATTR_SAMPLE", "Sample Attribute");
-                    } catch (TskCoreException ex) {
-                        IngestServices ingestServices = IngestServices.getInstance();
-                        Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
-                        logger.log(Level.SEVERE, "Failed to create blackboard attribute", ex);
-                        attrId = -1;
-                        throw new IngestModuleException(ex.getLocalizedMessage());
                     }
+                } catch (TskCoreException ex) {
+                    IngestServices ingestServices = IngestServices.getInstance();
+                    Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
+                    logger.log(Level.SEVERE, "Failed to create blackboard attribute", ex);
+                    attrId = -1;
+                    throw new IngestModuleException(ex.getLocalizedMessage());
                 }
             }
         }
