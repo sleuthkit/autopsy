@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * IngestJobs encapsulates the settings, ingest module pipelines, and progress
+ * IngestJob encapsulates the settings, ingest module pipelines, and progress
  * bars that are used to process a data source when a user chooses to run a set
  * of ingest modules on the data source.
  */
