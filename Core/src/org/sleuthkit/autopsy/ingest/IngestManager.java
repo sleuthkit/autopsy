@@ -124,7 +124,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(DataSourceIngestTaskScheduler.getInstance()));
+        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestTaskScheduler.getInstance().getDataSourceIngestTaskQueue()));
         dataSourceIngestThreads.put(threadId, handle);
     }
 
@@ -134,7 +134,7 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(FileIngestTaskScheduler.getInstance()));
+        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestTaskScheduler.getInstance().getFileIngestTaskQueue()));
         fileIngestThreads.put(threadId, handle);
     }
 
