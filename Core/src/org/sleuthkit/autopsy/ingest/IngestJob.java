@@ -109,6 +109,8 @@ final class IngestJob {
     /**
      * Create the file and data source pipelines.
      *
+     * @param ingestModuleTemplates Ingest module templates to use to populate
+     * the pipelines.
      * @throws InterruptedException
      */
     private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
