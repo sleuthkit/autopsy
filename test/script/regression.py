@@ -142,7 +142,7 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-            print("Total ingest time was " + test_data.total_ingest_time)
+        
         Reports.write_html_foot(test_config.html_log)
         
         if test_config.jenkins:
@@ -182,7 +182,7 @@ class TestRunner(object):
         except sqlite3.OperationalError as e:
             print("Ingest did not run properly.",
             "Make sure no other instances of Autopsy are open and try again.")
-            sys.exit()
+            sys.exit(1)
 
         # merges logs into a single log for later diff / rebuild
         copy_logs(test_data)
@@ -211,8 +211,21 @@ class TestRunner(object):
         print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
-        test_data.overall_passed = (test_data.html_report_passed and
-        test_data.errors_diff_passed and test_data.db_diff_passed)
+        
+        # run time test only for the specific jenkins test
+        if test_data.main_config.timing: 
+            if test_data.main_config.timing:
+                old_time_path = test_data.get_run_time_path()
+                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+                test_data.run_time_passed = passed
+            print("Run time test passed: ", test_data.run_time_passed)
+            test_data.overall_passed = (test_data.html_report_passed and
+            test_data.errors_diff_passed and test_data.db_diff_passed and
+            test_data.run_time_passed)
+        # otherwise, do the usual
+        else:
+            test_data.overall_passed = (test_data.html_report_passed and
+            test_data.errors_diff_passed and test_data.db_diff_passed)
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
@@ -394,6 +407,7 @@ class TestData(object):
         html_report_passed: a boolean, did the HTML report diff pass?
         errors_diff_passed: a boolean, did the error diff pass?
         db_diff_passed: a boolean, did the db diff pass?
+        run_time_passed: a boolean, did the run time test pass?
         overall_passed: a boolean, did the test pass?
         total_test_time: a String representation of the test duration
         start_date: a String representation of this TestData's start date
@@ -445,6 +459,7 @@ class TestData(object):
         self.html_report_passed = False
         self.errors_diff_passed = False
         self.db_diff_passed = False
+        self.run_time_passed = False
         self.overall_passed = False
         # Ingest info
         self.total_test_time = ""
@@ -527,6 +542,11 @@ class TestData(object):
         """
         return self._get_path_to_file(file_type, "DBDump.txt")
 
+    def get_run_time_path(self):
+        """Get the path to the run time storage file."
+        """
+        return os.path.join("..", "input")
+
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
 
@@ -569,6 +589,7 @@ class TestConfiguration(object):
         timeout: a Nat, the amount of time before killing the test
         ant: a listof_String, the ant command to run the tests
         jenkins: a boolean, is this test running through a Jenkins job?
+        timing: are we doing a running time test?
     """
 
     def __init__(self, args):
@@ -596,6 +617,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         self.jenkins = False
+        self.timing = False
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -639,6 +661,10 @@ class TestConfiguration(object):
                     self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
             else:
                 self.jenkins = False
+            if parsed_config.getElementsByTagName("timing"):
+                self.timing = True
+            else:
+                self.timing = False
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -729,6 +755,7 @@ class TestResultsDiffer(object):
             passed = TestResultsDiffer._html_report_diff(gold_report_path,
             output_report_path)
             test_data.html_report_passed = passed
+            
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -847,6 +874,33 @@ class TestResultsDiffer(object):
         else:
             return (0, 0)
 
+    def _run_time_diff(test_data, old_time_path):
+        """ Compare run times for this run, and the run previous.
+        
+        Args:
+            test_data: the TestData
+            old_time_path: path to the log containing the run time from a previous test
+        """
+        # read in time
+        file = open(old_time_path + '/' + test_data.image + "_time.txt", "r")
+        line = file.readline()
+        oldtime = int(line[:line.find("ms")].replace(',', ''))
+        file.close()
+        
+        newtime = test_data.total_ingest_time
+        newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
+
+        # run the test, 5% tolerance
+        if oldtime * 1.05 >=  newtime: # new run was faster
+            return True
+        else: # old run was faster
+            print("The last run took: " + str(oldtime))
+            print("This run took: " + str(newtime))
+            diff = ((newtime / oldtime) * 100) - 100
+            diff = str(diff)[:str(diff).find('.') + 3]
+            print("This run took " + diff + "% longer to run than the last run.") 
+            return False
+
     # Split a string into an array of string of the given size
     def _split(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
@@ -864,7 +918,10 @@ class Reports(object):
             Reports._generate_csv(test_data.main_config.global_csv, test_data)
         else:
             Reports._generate_csv(test_data.main_config.csv, test_data)
-
+        
+        if test_data.main_config.timing:
+            Reports._write_time(test_data)
+            
     def _generate_html(test_data):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
@@ -1121,6 +1178,18 @@ class Reports(object):
             output = "|".join(titles)
             output += "\n"
             csv.write(output)
+
+    def _write_time(test_data):
+        """Write out the time ingest took. For jenkins purposes.
+
+        Args:
+            test_data: the TestData
+        """
+        filename = test_data.image + "_time.txt"
+        new_file = open(filename, "w")
+        new_file.write(test_data.total_ingest_time)
+        new_file.close()
+        shutil.copy(new_file.name, test_data.main_config.input_dir)
 
     def _get_num_memory_errors(type, test_data):
         """Get the number of OutOfMemory errors and Exceptions.
