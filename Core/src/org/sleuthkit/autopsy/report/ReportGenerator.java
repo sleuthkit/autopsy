@@ -1315,6 +1315,11 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
+            case TSK_EXT_MISMATCH_DETECTED:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
+                break;    
             default:
                 return null;
         }
@@ -1643,6 +1648,10 @@ import org.sleuthkit.datamodel.TskData;
                      orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                      orderedRowData.add(getFileUniquePath(getObjectID()));
                      break;
+                case TSK_EXT_MISMATCH_DETECTED:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
 
