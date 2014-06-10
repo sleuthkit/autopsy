@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
@@ -54,6 +53,7 @@ final class IngestScheduler {
 //    private volatile boolean cancellingAllTasks = false; TODO: Uncomment this with related code, if desired
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
+    private final IngestTask.ProgressSnapshots taskProgressSnapShots = new IngestTask.ProgressSnapshots();    
     // The following five collections lie at the heart of the scheduler.
     //
     // The pending tasks queues are used to schedule tasks for an ingest job. If 
@@ -130,7 +130,7 @@ final class IngestScheduler {
     }
 
     synchronized private void scheduleDataSourceIngestTask(IngestJob job) throws InterruptedException {
-        DataSourceIngestTask task = new DataSourceIngestTask(job);
+        DataSourceIngestTask task = new DataSourceIngestTask(job, taskProgressSnapShots);
         tasksInProgress.add(task);
         try {
             // Should not block, queue is (theoretically) unbounded.
@@ -145,7 +145,7 @@ final class IngestScheduler {
     synchronized private void scheduleFileIngestTasks(IngestJob job) throws InterruptedException {
         List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
         for (AbstractFile firstLevelFile : topLevelFiles) {
-            FileIngestTask task = new FileIngestTask(job, firstLevelFile);
+            FileIngestTask task = new FileIngestTask(job, firstLevelFile, taskProgressSnapShots);
             if (shouldEnqueueFileTask(task)) {
                 tasksInProgress.add(task);
                 pendingRootDirectoryTasks.add(task);
@@ -221,7 +221,7 @@ final class IngestScheduler {
                     for (Content child : directory.getChildren()) {
                         if (child instanceof AbstractFile) {
                             AbstractFile file = (AbstractFile) child;
-                            FileIngestTask childTask = new FileIngestTask(directoryTask.getIngestJob(), file);
+                            FileIngestTask childTask = new FileIngestTask(directoryTask.getIngestJob(), file, taskProgressSnapShots);
                             if (file.hasChildren()) {
                                 // Found a subdirectory, put the task in the 
                                 // pending directory tasks queue.
@@ -314,7 +314,7 @@ final class IngestScheduler {
 
     void scheduleAdditionalFileIngestTask(IngestJob job, AbstractFile file) throws InterruptedException {
         if (enabled) {
-            FileIngestTask task = new FileIngestTask(job, file);
+            FileIngestTask task = new FileIngestTask(job, file, taskProgressSnapShots);
             if (shouldEnqueueFileTask(task)) {
                 // Send the file task directly to file tasks queue, no need to
                 // update the pending root directory or pending directory tasks 

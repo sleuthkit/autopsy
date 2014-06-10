@@ -201,7 +201,7 @@ final class IngestJob {
     void process(DataSourceIngestTask task) throws InterruptedException {
         if (!isCancelled() && !dataSourceIngestPipeline.isEmpty()) {
             List<IngestModuleError> errors = new ArrayList<>();
-            errors.addAll(dataSourceIngestPipeline.process(task.getDataSource(), dataSourceIngestProgress));
+            errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress));
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
@@ -231,7 +231,7 @@ final class IngestJob {
                     }
                 }
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(pipeline.process(file));
+                errors.addAll(pipeline.process(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }
