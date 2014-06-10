@@ -63,7 +63,7 @@ final class IngestJob {
     Content getDataSource() {
         return dataSource;
     }
-    
+
     boolean shouldProcessUnallocatedSpace() {
         return processUnallocatedSpace;
     }
@@ -208,6 +208,11 @@ final class IngestJob {
         }
         if (dataSourceIngestProgress != null) {
             dataSourceIngestProgress.finish();
+            // This is safe because this method will be called at most once per
+            // ingest job and finish() will not be called while that single 
+            // data source ingest task has not been reported complete by this
+            // code to the ingest scheduler.
+            dataSourceIngestProgress = null;
         }        
         ingestTaskScheduler.notifyTaskCompleted(task);
     }
@@ -217,27 +222,25 @@ final class IngestJob {
             FileIngestPipeline pipeline = fileIngestPipelines.take();
             if (!pipeline.isEmpty()) {
                 AbstractFile file = task.getFile();
-                if (file != null) {
-                    synchronized (this) {
-                        ++processedFiles;
-                        if (processedFiles <= estimatedFilesToProcess) {
-                            fileIngestProgress.progress(file.getName(), (int) processedFiles);
-                        } else {
-                            fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
-                        }
+                synchronized (this) {
+                    ++processedFiles;
+                    if (processedFiles <= estimatedFilesToProcess) {
+                        fileIngestProgress.progress(file.getName(), (int) processedFiles);
+                    } else {
+                        fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
                     }
-                    List<IngestModuleError> errors = new ArrayList<>();
-                    errors.addAll(pipeline.process(file));
-                    if (!errors.isEmpty()) {
-                        logIngestModuleErrors(errors);
-                    }
+                }
+                List<IngestModuleError> errors = new ArrayList<>();
+                errors.addAll(pipeline.process(file));
+                if (!errors.isEmpty()) {
+                    logIngestModuleErrors(errors);
                 }
             }
             fileIngestPipelines.put(pipeline);
         }
         ingestTaskScheduler.notifyTaskCompleted(task);
     }
-    
+
     void finish() {
         List<IngestModuleError> errors = new ArrayList<>();
         while (!fileIngestPipelines.isEmpty()) {
@@ -247,6 +250,9 @@ final class IngestJob {
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
         }
+        if (dataSourceIngestProgress != null) {
+            dataSourceIngestProgress.finish();
+        }        
         if (fileIngestProgress != null) {
             fileIngestProgress.finish();
         }

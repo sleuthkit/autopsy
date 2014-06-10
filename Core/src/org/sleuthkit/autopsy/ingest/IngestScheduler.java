@@ -334,10 +334,14 @@ final class IngestScheduler {
     }
 
     void notifyTaskCompleted(IngestTask task) {
+        boolean jobIsCompleted;
         IngestJob job = task.getIngestJob();
-        if (ingestJobIsComplete(job)) {
-            // The lock obtained by ingestJobIsComplete() is released and does
-            // not need to be acquired for the job shut down.
+        synchronized (this) {
+            tasksInProgress.remove(task);
+            jobIsCompleted = ingestJobIsComplete(job);
+        }
+        if (jobIsCompleted) {
+            // The lock does not need to be held for the job shut down.
             finishIngestJob(job);
             // TODO: Uncomment this code to make sure that there is no more work
             // being done by the ingest threads. The wait() call is in 
