@@ -33,16 +33,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * InjestJobs store all settings and data associated with the user selecting a
- * datasource and running a set of ingest modules on it. 
+ * IngestJob encapsulates the settings, ingest module pipelines, and progress
+ * bars that are used to process a data source when a user chooses to run a set
+ * of ingest modules on the data source.
  */
 final class IngestJob {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static final AtomicLong nextIngestJobId = new AtomicLong(0L);
     private static final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
-    private static final DataSourceIngestTaskScheduler dataSourceTaskScheduler = DataSourceIngestTaskScheduler.getInstance();
-    private static final FileIngestTaskScheduler fileTaskScheduler = FileIngestTaskScheduler.getInstance();
+    private static final IngestTaskScheduler ingestTaskScheduler = IngestTaskScheduler.getInstance();
     private final long id;
     private final Content dataSource;
     private final boolean processUnallocatedSpace;
@@ -108,8 +108,10 @@ final class IngestJob {
 
     /**
      * Create the file and data source pipelines.
-     * @param ingestModuleTemplates
-     * @throws InterruptedException 
+     *
+     * @param ingestModuleTemplates Ingest module templates to use to populate
+     * the pipelines.
+     * @throws InterruptedException
      */
     private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
         IngestJobContext context = new IngestJobContext(this);
@@ -120,6 +122,12 @@ final class IngestJob {
         }
     }
 
+    /**
+     * Check the data source and file ingest pipeline queues to see if at least
+     * one pipeline exists.
+     *
+     * @return True or false.
+     */
     private boolean hasNonEmptyPipeline() {
         if (dataSourceIngestPipeline.isEmpty() && fileIngestPipelines.peek().isEmpty()) {
             return false;
@@ -128,41 +136,35 @@ final class IngestJob {
     }
 
     /**
-     * Start both the data source and file ingest pipelines
-     * @return
-     * @throws InterruptedException 
+     * Start both the data source and file ingest pipelines.
+     *
+     * @return A collection of ingest module start up errors, empty on success.
+     * @throws InterruptedException
      */
     private List<IngestModuleError> start() throws InterruptedException {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
+            // Start the progress bars before scheduling the tasks to make sure
+            // the progress bar will be available as soon as the task begin to 
+            // be processed.
             if (!dataSourceIngestPipeline.isEmpty()) {
-                // Start the data source ingest progress bar before scheduling the
-                // data source task to make sure the progress bar will be available 
-                // as soon as the task begins to be processed.
                 startDataSourceIngestProgressBar();
-                dataSourceTaskScheduler.scheduleTask(this, dataSource);
+                ingestTaskScheduler.scheduleDataSourceIngestTask(this, dataSource);
             }
-
             if (!fileIngestPipelines.peek().isEmpty()) {
-                // Start the file ingest progress bar before scheduling the file
-                // ingest tasks to make sure the progress bar will be available 
-                // as soon as the tasks begin to be processed.
                 startFileIngestProgressBar();
-                if (!fileTaskScheduler.tryScheduleTasks(this, dataSource)) {
-                    fileIngestProgress.finish();
-                }
+                ingestTaskScheduler.scheduleFileIngestTasks(this, dataSource);
             }
         }
         return errors;
     }
 
-    
     /**
      * Startup each of the file and data source ingest modules to collect
      * possible errors.
-     * 
+     *
      * @return
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
     private List<IngestModuleError> startUpIngestPipelines() throws InterruptedException {
         List<IngestModuleError> errors = new ArrayList<>();
@@ -228,10 +230,9 @@ final class IngestJob {
                 logIngestModuleErrors(errors);
             }
         }
-        dataSourceTaskScheduler.notifyTaskCompleted(task);
+        ingestTaskScheduler.notifyTaskCompleted(task);
         dataSourceIngestProgress.finish();
-
-        if (!fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+        if (!ingestTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
             finish();
         }
     }
@@ -239,41 +240,40 @@ final class IngestJob {
     void process(FileIngestTask task) throws InterruptedException {
         if (!isCancelled()) {
             AbstractFile file = task.getFile();
-            synchronized (this) {
-                ++processedFiles;
-                if (processedFiles <= estimatedFilesToProcess) {
-                    fileIngestProgress.progress(file.getName(), (int) processedFiles);
-                } else {
-                    fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
+            if (file != null) {
+                synchronized (this) {
+                    ++processedFiles;
+                    if (processedFiles <= estimatedFilesToProcess) {
+                        fileIngestProgress.progress(file.getName(), (int) processedFiles);
+                    } else {
+                        fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
+                    }
+                }
+                FileIngestPipeline pipeline = fileIngestPipelines.take();
+                List<IngestModuleError> errors = new ArrayList<>();
+                errors.addAll(pipeline.process(file));
+                fileIngestPipelines.put(pipeline);
+                if (!errors.isEmpty()) {
+                    logIngestModuleErrors(errors);
                 }
             }
-            FileIngestPipeline pipeline = fileIngestPipelines.take();
-            List<IngestModuleError> errors = new ArrayList<>();
-            errors.addAll(pipeline.process(file));
-            fileIngestPipelines.put(pipeline);
-            if (!errors.isEmpty()) {
-                logIngestModuleErrors(errors);
-            }
         }
-        fileTaskScheduler.notifyTaskCompleted(task);
-
-        if (!fileTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            while (!fileIngestPipelines.isEmpty()) {
-                FileIngestPipeline pipeline = fileIngestPipelines.poll();
-                errors.addAll(pipeline.shutDown());
-            }
-            if (!errors.isEmpty()) {
-                logIngestModuleErrors(errors);
-            }
-            fileIngestProgress.finish();
-            if (!dataSourceTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
-                finish();
-            }
+        ingestTaskScheduler.notifyTaskCompleted(task);
+        if (!ingestTaskScheduler.hasIncompleteTasksForIngestJob(this)) {
+            finish();
         }
     }
 
     private void finish() {
+        List<IngestModuleError> errors = new ArrayList<>();
+        while (!fileIngestPipelines.isEmpty()) {
+            FileIngestPipeline pipeline = fileIngestPipelines.poll();
+            errors.addAll(pipeline.shutDown());
+        }
+        if (!errors.isEmpty()) {
+            logIngestModuleErrors(errors);
+        }
+        fileIngestProgress.finish();
         ingestJobsById.remove(id);
         if (!isCancelled()) {
             IngestManager.getInstance().fireIngestJobCompleted(id);

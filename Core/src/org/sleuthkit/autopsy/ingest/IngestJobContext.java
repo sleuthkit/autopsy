@@ -63,7 +63,7 @@ public final class IngestJobContext {
     public void scheduleFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
             try {
-                FileIngestTaskScheduler.getInstance().scheduleTask(ingestJob, file);
+                IngestTaskScheduler.getInstance().scheduleFileIngestTask(ingestJob, file);
             } catch (InterruptedException ex) {
                 // Ultimately, this method is called by ingest task execution
                 // threads running ingest module code. Handle the unexpected
