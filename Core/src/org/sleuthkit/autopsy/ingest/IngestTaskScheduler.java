@@ -23,6 +23,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,10 +43,10 @@ final class IngestTaskScheduler {
     private static final IngestTaskScheduler instance = new IngestTaskScheduler();
     private static final Logger logger = Logger.getLogger(IngestTaskScheduler.class.getName());
     private static final int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-    private final LinkedBlockingQueue<DataSourceIngestTask> dataSourceTasks = new LinkedBlockingQueue<>();
+    private final BlockingQueue<DataSourceIngestTask> dataSourceTasks = new LinkedBlockingQueue<>();
     private final TreeSet<FileIngestTask> rootDirectoryTasks = new TreeSet<>(new RootDirectoryTaskComparator()); // Guarded by this
     private final List<FileIngestTask> directoryTasks = new ArrayList<>();  // Guarded by this
-    private final LinkedBlockingQueue<FileIngestTask> fileTasks = new LinkedBlockingQueue<>();
+    private final BlockingDeque<FileIngestTask> fileTasks = new LinkedBlockingDeque<>();
     private final List<IngestTask> tasksInProgress = new ArrayList<>();  // Guarded by this 
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
@@ -226,14 +229,13 @@ final class IngestTaskScheduler {
 
     private synchronized void enqueueFileTask(FileIngestTask task) throws InterruptedException {
         tasksInProgress.add(task);
-        try {
-            // Should not block, queue is (theoretically) unbounded.
-            fileTasks.put(task);
-        } catch (InterruptedException ex) {
-            tasksInProgress.remove(task);
-            Logger.getLogger(IngestTaskScheduler.class.getName()).log(Level.FINE, "Interruption of unexpected block on tasks queue", ex); //NON-NLS
-            throw ex;
-        }
+        // Should not block, queue is (theoretically) unbounded.
+        /* add to top of list because we had one image that had a folder with
+         * lots of zip files in a folder.  This queue had thousands of entries because 
+         * it just kept on getting bigger and bigger. So focus on pushing out 
+         * the ZIP file contents out of the queue to try to keep it small.
+         */
+        fileTasks.addFirst(task);
     }
 
     synchronized void notifyTaskCompleted(IngestTask task) {
@@ -386,8 +388,8 @@ final class IngestTaskScheduler {
 
         @Override
         public IngestTask getNextTask() throws InterruptedException {
-            FileIngestTask task = fileTasks.take();
-            updateFileTaskQueues();
+            FileIngestTask task = fileTasks.takeFirst();
+            updateFileTaskQueues(); 
             return task;
         }
     }
