@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
 import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
@@ -49,7 +51,7 @@ public class IngestManager {
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private static final IngestManager instance = new IngestManager();
+    private static IngestManager instance = null;
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final IngestMonitor ingestMonitor = new IngestMonitor();
@@ -69,7 +71,15 @@ public class IngestManager {
      *
      * @returns A singleton IngestManager object.
      */
-    public static IngestManager getInstance() {
+    public synchronized static IngestManager getInstance() {
+        if (instance == null) {
+            // Two stage construction to avoid allowing "this" reference to 
+            // escape from the constructor via the property change listener.
+            // This is to ensure that a partially constructed ingest manager is
+            // not published to other threads.
+            instance = new IngestManager();
+            instance.subscribeToCaseEvents();
+        }
         return instance;
     }
 
@@ -79,27 +89,25 @@ public class IngestManager {
      */
     private IngestManager() {
         startDataSourceIngestThread();
-        
+
         numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
         if ((numberOfFileIngestThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
             numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
             UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
         }
-        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads);        
+        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads);
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
     }
 
     /**
-     * Signals to the ingest manager that it can go about finding the top
-     * component for the ingest messages in box. Called by the custom installer
-     * for this package once the window system is initialized.
+     * Called by the custom installer for this package once the window system is
+     * initialized, allowing the ingest manager to get the top component used to
+     * display ingest messages.
      */
     void initIngestMessageInbox() {
-        if (ingestMessageBox == null) {
-            ingestMessageBox = IngestMessageTopComponent.findInstance();
-        }
+        ingestMessageBox = IngestMessageTopComponent.findInstance();
     }
 
     /**
@@ -124,7 +132,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestTaskScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestScheduler.getInstance().getDataSourceIngestTaskQueue()));
         dataSourceIngestThreads.put(threadId, handle);
     }
 
@@ -134,7 +142,7 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestTaskScheduler.getInstance().getFileIngestTaskQueue()));
+        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestScheduler.getInstance().getFileIngestTaskQueue()));
         fileIngestThreads.put(threadId, handle);
     }
 
@@ -154,9 +162,35 @@ public class IngestManager {
         long taskId = nextThreadId.incrementAndGet();
         Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobsThread(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
         startIngestJobThreads.put(taskId, task);
+    }
 
+    private void subscribeToCaseEvents() {
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                    if (event.getNewValue() != null) {
+                        handleCaseOpened();
+                    } else {
+                        handleCaseClosed();
+                    }
+                }
+            }
+        });
+    }
+
+    void handleCaseOpened() {
+        IngestScheduler.getInstance().setEnabled(true);
         if (ingestMessageBox != null) {
-            ingestMessageBox.restoreMessages();
+            ingestMessageBox.clearMessages();
+        }
+    }
+
+    void handleCaseClosed() {
+        IngestScheduler.getInstance().setEnabled(false);
+        cancelAllIngestJobs();
+        if (ingestMessageBox != null) {
+            ingestMessageBox.clearMessages();
         }
     }
 
@@ -166,7 +200,7 @@ public class IngestManager {
      * @return True if any ingest jobs are in progress, false otherwise.
      */
     public boolean isIngestRunning() {
-        return IngestJob.ingestJobsAreRunning();
+        return IngestScheduler.getInstance().ingestJobsAreRunning();
     }
 
     public void cancelAllIngestJobs() {
@@ -186,7 +220,7 @@ public class IngestManager {
         }
 
         // Cancel all the jobs already created.
-        IngestJob.cancelAllIngestJobs();
+        IngestScheduler.getInstance().cancelAllIngestJobs();
     }
 
     /**
@@ -432,7 +466,7 @@ public class IngestManager {
                     }
 
                     // Start an ingest job for the data source.
-                    List<IngestModuleError> errors = IngestJob.startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = IngestScheduler.getInstance().startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
                     if (!errors.isEmpty()) {
                         // Report the errors to the user. They have already been logged.
                         StringBuilder moduleStartUpErrors = new StringBuilder();
