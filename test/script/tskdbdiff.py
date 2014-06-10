@@ -280,6 +280,10 @@ def replace_id(line, table):
         table: a map from object ids to file paths.
     """
 
+    report_index = line.find('"INSERT INTO reports"')
+    if (report_index != 1):
+        return ""
+
     files_index = line.find('INSERT INTO "tsk_files"')
     path_index = line.find('INSERT INTO "tsk_files_path"')
     object_index = line.find('INSERT INTO "tsk_objects"')
