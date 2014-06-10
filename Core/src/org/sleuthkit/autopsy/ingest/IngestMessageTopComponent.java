@@ -57,7 +57,6 @@ import org.sleuthkit.datamodel.Content;
     public IngestMessageTopComponent() {
         initComponents();
         customizeComponents();
-        registerListeners();
         setName(NbBundle.getMessage(IngestMessageTopComponent.class, "CTL_IngestMessageTopComponent"));
         setToolTipText(NbBundle.getMessage(IngestMessageTopComponent.class, "HINT_IngestMessageTopComponent"));
         //putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
@@ -208,32 +207,6 @@ import org.sleuthkit.datamodel.Content;
         // TODO read your settings according to their version
     }
 
-    private void registerListeners() {
-        //handle case change
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    Case oldCase = (Case) evt.getOldValue();
-                    if (oldCase == null) //nothing to do, new case had been opened
-                    {
-                        return;
-                    }
-                    //stop workers if running
-                    if (manager == null) {
-                        manager = IngestManager.getInstance();
-                    }
-                    try {
-                        manager.cancelAllIngestJobs();
-                    } finally {
-                        //clear inbox 
-                        clearMessages();
-                    }
-                }
-            }
-        });
-    }
-
     private void customizeComponents() {
         //custom GUI setup not done by builder
         messagePanel = new IngestMessageMainPanel();
@@ -329,10 +302,6 @@ import org.sleuthkit.datamodel.Content;
          ingestDialog.setImage(image);
          ingestDialog.display();    
          */
-    }
-
-    public void restoreMessages() {
-        //componentShowing();
     }
 
     public Action[] getActions() {
