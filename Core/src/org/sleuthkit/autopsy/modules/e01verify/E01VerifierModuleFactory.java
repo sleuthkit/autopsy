@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ewfverify;
+package org.sleuthkit.autopsy.modules.e01verify;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -31,10 +31,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * of Expert Witness Format (EWF), i.e., .e01 files .
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
+public class E01VerifierModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return NbBundle.getMessage(EwfVerifyIngestModule.class,
+        return NbBundle.getMessage(E01VerifyIngestModule.class,
                 "EwfVerifyIngestModule.moduleName.text");
     }
 
@@ -45,7 +45,7 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(EwfVerifyIngestModule.class,
+        return NbBundle.getMessage(E01VerifyIngestModule.class,
                 "EwfVerifyIngestModule.moduleDesc.text");
     }
 
@@ -61,6 +61,6 @@ public class EwfVerifierModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new EwfVerifyIngestModule();
+        return new E01VerifyIngestModule();
     }
 }
