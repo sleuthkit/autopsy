@@ -31,6 +31,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 
 /**
@@ -45,7 +46,13 @@ public final class OpenLogFolderAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            File logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
+            File logDir;
+            if (Case.isCaseOpen()) {
+                logDir = new File(Case.getCurrentCase().getLogDirectoryPath());
+            }
+            else {
+                logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
+            }
             if (logDir.exists() == false) {
                 NotifyDescriptor d =
                         new NotifyDescriptor.Message(
