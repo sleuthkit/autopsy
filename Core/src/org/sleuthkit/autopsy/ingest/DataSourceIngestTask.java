@@ -22,8 +22,8 @@ import org.sleuthkit.datamodel.Content;
 
 final class DataSourceIngestTask extends IngestTask {
         
-    DataSourceIngestTask(IngestJob job) {
-        super(job);
+    DataSourceIngestTask(IngestJob job, ProgressSnapshots snapshots) {
+        super(job, snapshots);
     }
         
     Content getDataSource() {
@@ -31,7 +31,8 @@ final class DataSourceIngestTask extends IngestTask {
     }    
     
     @Override
-    void execute() throws InterruptedException {
+    void execute(long threadId) throws InterruptedException {
+        super.execute(threadId);
         getIngestJob().process(this);
     }
 }

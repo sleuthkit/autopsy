@@ -82,13 +82,15 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process(Content dataSource, ProgressHandle progress) {
+    List<IngestModuleError> process(DataSourceIngestTask task, ProgressHandle progress) {
         List<IngestModuleError> errors = new ArrayList<>();
+        Content dataSource = task.getDataSource();
         for (DataSourceIngestModuleDecorator module : modules) {
             try {
                 progress.setDisplayName(NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.displayName",
                         module.getDisplayName(), dataSource.getName()));
+                task.updateProgressStatus(module.getDisplayName(), null);
                 module.process(dataSource, new DataSourceIngestModuleProgress(progress));
             } catch (Exception ex) {
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
