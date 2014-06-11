@@ -49,11 +49,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-
-    // The detector. Swap out with a different implementation of FileTypeDetectionInterface as needed.
-    // If desired in the future to be more knowledgable about weird files or rare formats, we could 
-    // actually have a list of detectors which are called in order until a match is found.
-    private FileTypeDetectionInterface detector = new TikaFileTypeDetector();
+    private TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
 
     private static class IngestJobTotals {
         long matchTime = 0;
@@ -106,14 +102,14 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
         try {
             long startTime = System.currentTimeMillis();
-            FileTypeDetectionInterface.FileIdInfo fileId = detector.attemptMatch(abstractFile);
+            String mimeType = tikaDetector.attemptMatch(abstractFile);
             addToTotals(jobId, (System.currentTimeMillis() - startTime)); //add match time
 
-            if (!fileId.type.isEmpty()) {
+            if (mimeType != null) {
                 // add artifact
-                BlackboardArtifact bart = abstractFile.getGenInfoArtifact();
-                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileId.type);
-                bart.addAttribute(batt);
+                BlackboardArtifact getInfoArt = abstractFile.getGenInfoArtifact();
+                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), mimeType);
+                getInfoArt.addAttribute(batt);
 
                 // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
             }
@@ -161,7 +157,13 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * @return true if detectable
      */
     public static boolean isMimeTypeDetectable(String mimeType) {
-        FileTypeDetectionInterface detector = new TikaFileTypeDetector();
+        /* This is an awkward place for this method because it is used only
+         * by the file extension mismatch panel.  But, it works.  
+         * We probabl dont' want to expose the tika class as the public
+         * method to do this and a single class just for this method
+         * seems a bit silly.
+         */
+        TikaFileTypeDetector detector = new TikaFileTypeDetector();
         return detector.isMimeTypeDetectable(mimeType);
     }
 }

@@ -365,7 +365,7 @@ public class FileManager implements Closeable {
 
 
         if (localFile.isDirectory()) {
-            //create virtual folder
+            //create virtual folder (we don't have a notion of a 'local folder')
             final VirtualDirectory childVd = tskCase.addVirtualDirectory(parentVd.getId(), localFile.getName(), trans);
             if (childVd != null && addProgressUpdater != null) {
                 addProgressUpdater.fileAdded(childVd);

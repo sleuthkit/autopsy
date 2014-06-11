@@ -25,47 +25,41 @@ import org.apache.tika.mime.MimeTypes;
 
 import org.sleuthkit.datamodel.AbstractFile;
 
-class TikaFileTypeDetector implements FileTypeDetectionInterface {
+
+class TikaFileTypeDetector {
 
     private static Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
-
-    @Override
-    public FileTypeDetectionInterface.FileIdInfo attemptMatch(AbstractFile abstractFile) {
-        try {
-            FileTypeDetectionInterface.FileIdInfo ret = new FileTypeDetectionInterface.FileIdInfo();
-            final int maxBytesInitial = 100; //how many bytes to read on first pass
-            byte buffer[] = new byte[maxBytesInitial];
-            int len = abstractFile.read(buffer, 0, maxBytesInitial);
+    private final int BUFFER_SIZE = 64 * 1024; //how many bytes to pass in
+    private byte buffer[] = new byte[BUFFER_SIZE];
             
-            boolean found = false;
+    /**
+     * 
+     * @param abstractFile
+     * @return mime type of detected format or null
+     */
+    public synchronized String attemptMatch(AbstractFile abstractFile) {
+        try {
+            int len = abstractFile.read(buffer, 0, BUFFER_SIZE);
+            
+            // the xml detection in Tika tries to parse the entire file and throws exceptions
+            // for files that are not valid XML
             try {
-                // the xml detection in Tika tries to parse the entire file and throws exceptions
-                // for files that are not complete
-                try {
-                    String tagHeader = new String(buffer, 0, 5);
-                    if (tagHeader.equals("<?xml")) { //NON-NLS
-                        ret.type = "text/xml"; //NON-NLS
-                        found = true;
-                    }
+                String tagHeader = new String(buffer, 0, 5);
+                if (tagHeader.equals("<?xml")) { //NON-NLS    
+                    return "text/xml"; //NON-NLS
                 }
-                catch (IndexOutOfBoundsException e) {
-                    // do nothing
-                } 
-                
-                if (found == false) {
-                    String mimetype = tikaInst.detect(buffer);
-                    // Remove tika's name out of the general types like msoffice and ooxml
-                    ret.type = mimetype.replace("tika-", ""); //NON-NLS
-                }
-            } catch (Exception ex) {
-                //do nothing
             }
+            catch (IndexOutOfBoundsException e) {
+                // do nothing
+            } 
 
-            return ret;
-
+            String mimetype = tikaInst.detect(buffer, abstractFile.getName());
+            // Remove tika's name out of the general types like msoffice and ooxml
+            return mimetype.replace("tika-", ""); //NON-NLS
         } catch (Exception ex) {
-            return new FileTypeDetectionInterface.FileIdInfo();
+            //do nothing
         }
+        return null;
     }
 
     /**
@@ -76,7 +70,6 @@ class TikaFileTypeDetector implements FileTypeDetectionInterface {
      * @param mimeType Full string of mime type, e.g. "text/html"
      * @return true if detectable
      */
-    @Override
     public boolean isMimeTypeDetectable(String mimeType) {
         boolean ret = false;
 
