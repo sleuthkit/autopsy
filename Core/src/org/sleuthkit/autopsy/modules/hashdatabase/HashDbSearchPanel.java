@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -153,7 +153,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 
             },
             new String [] {
-                    NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.hashTable.columnModel.title0")
+                "MD5 Hashes"
             }
         ) {
             Class[] types = new Class [] {

@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -32,9 +32,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JFrame;
 import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb.KnownFilesType;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDbManagerException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
  * Instances of this class allow a user to create a new hash database and

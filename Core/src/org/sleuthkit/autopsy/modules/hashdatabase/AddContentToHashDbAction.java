@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,7 +34,7 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**

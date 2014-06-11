@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.util.ArrayList;
 import java.util.List;

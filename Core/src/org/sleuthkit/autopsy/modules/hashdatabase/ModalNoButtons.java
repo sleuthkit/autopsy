@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -26,7 +26,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * This class exists as a stop-gap measure to force users to have an indexed database.
@@ -93,19 +93,17 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         CANCEL_BUTTON = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setMaximumSize(new java.awt.Dimension(519, 130));
         setMinimumSize(new java.awt.Dimension(519, 130));
         setModal(true);
-        setPreferredSize(new java.awt.Dimension(519, 130));
         setResizable(false);
 
         GO_GET_COFFEE_LABEL.setDisplayedMnemonic('H');
         org.openide.awt.Mnemonics.setLocalizedText(GO_GET_COFFEE_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.GO_GET_COFFEE_LABEL.text")); // NOI18N
 
-        CURRENTLYON_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
+        CURRENTLYON_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTLYON_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTLYON_LABEL.text")); // NOI18N
 
-        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
+        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(CANCEL_BUTTON, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CANCEL_BUTTON.text")); // NOI18N

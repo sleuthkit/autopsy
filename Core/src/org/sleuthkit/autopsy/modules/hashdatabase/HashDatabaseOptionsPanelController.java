@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.hashdatabase;
+package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
     categoryName = "#OptionsCategory_Name_HashDatabase",
-iconBase = "org/sleuthkit/autopsy/hashdatabase/options_icon.png",
+iconBase = "org/sleuthkit/autopsy/modules/hashdatabase/options_icon.png",
 position = 3,
 keywords = "#OptionsCategory_Keywords_HashDatabase",
 keywordsCategory = "HashDatabase",
