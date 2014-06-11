@@ -24,14 +24,15 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
@@ -61,7 +62,7 @@ final class IngestScheduler {
     // interleaved in these queues. Data source tasks go into a simple FIFO 
     // queue that is consumed by the ingest threads. File tasks are "shuffled" 
     // through root directory (priority queue), directory (LIFO), and file tasks 
-    // queues (FIFO). If a file task makes it into the pending file tasks queue,
+    // queues (LIFO). If a file task makes it into the pending file tasks queue,
     // it is consumed by the ingest threads. 
     //
     // The "tasks in progress" list is used to determine when an ingest job is 
@@ -73,7 +74,7 @@ final class IngestScheduler {
     private final LinkedBlockingQueue<DataSourceIngestTask> pendingDataSourceTasks = new LinkedBlockingQueue<>();
     private final TreeSet<FileIngestTask> pendingRootDirectoryTasks = new TreeSet<>(new RootDirectoryTaskComparator()); // Guarded by this
     private final List<FileIngestTask> pendingDirectoryTasks = new ArrayList<>();  // Guarded by this
-    private final LinkedBlockingQueue<FileIngestTask> pendingFileTasks = new LinkedBlockingQueue<>();
+    private final BlockingDeque<FileIngestTask> pendingFileTasks = new LinkedBlockingDeque<>();
     private final List<IngestTask> tasksInProgress = new ArrayList<>();  // Guarded by this 
 
     synchronized static IngestScheduler getInstance() {
@@ -301,11 +302,16 @@ final class IngestScheduler {
         return true;
     }
 
-    synchronized private void addToPendingFileTasksQueue(FileIngestTask task) throws InterruptedException {
+    synchronized private void addToPendingFileTasksQueue(FileIngestTask task) throws IllegalStateException {
         try {
             // Should not block, queue is (theoretically) unbounded.
-            pendingFileTasks.put(task);
-        } catch (InterruptedException ex) {
+            /* add to top of list because we had one image that had a folder with
+             * lots of zip files.  This queue had thousands of entries because
+             * it just kept on getting bigger and bigger. So focus on pushing out
+             * the ZIP file contents out of the queue to try to keep it small.
+             */
+            pendingFileTasks.addFirst(task);
+        } catch (IllegalStateException ex) {
             tasksInProgress.remove(task);
             Logger.getLogger(IngestScheduler.class.getName()).log(Level.SEVERE, "Interruption of unexpected block on pending file tasks queue", ex); //NON-NLS
             throw ex;
@@ -545,7 +551,7 @@ final class IngestScheduler {
 
         @Override
         public IngestTask getNextTask() throws InterruptedException {
-            FileIngestTask task = pendingFileTasks.take();
+            FileIngestTask task = pendingFileTasks.takeFirst();
             updatePendingFileTasksQueues();
             return task;
         }
