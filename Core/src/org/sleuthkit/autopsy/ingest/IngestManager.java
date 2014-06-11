@@ -203,6 +203,10 @@ public class IngestManager {
         return IngestScheduler.getInstance().ingestJobsAreRunning();
     }
 
+    List<IngestTask.ProgressSnapshot> getIngestTaskProgressSnapshots() {
+        return IngestScheduler.getInstance().getIngestTaskProgressSnapshots();
+    }
+        
     public void cancelAllIngestJobs() {
         // Stop creating new ingest jobs.
         for (Future<Void> handle : startIngestJobThreads.values()) {
@@ -417,7 +421,7 @@ public class IngestManager {
             return -1;
         }
     }
-
+    
     /**
      * Creates ingest jobs.
      */

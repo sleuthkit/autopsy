@@ -358,6 +358,10 @@ final class IngestScheduler {
         return !ingestJobsById.isEmpty();
     }
 
+    List<IngestTask.ProgressSnapshot> getIngestTaskProgressSnapshots() {
+        return taskProgressSnapShots.getSnapshots();
+    }
+    
     synchronized void cancelIngestJob(IngestJob job) {
         long jobId = job.getId();
         removeAllPendingTasksForJob(pendingRootDirectoryTasks, jobId);

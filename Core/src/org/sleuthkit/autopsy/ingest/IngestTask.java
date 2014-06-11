@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,17 +48,19 @@ class IngestTask {
         this.threadId = threadId;
     }
     
-    static final class ProgressSnapshot {
+    public static final class ProgressSnapshot {
         private final long threadId;
         private final Content dataSource;
         private final String ingestModuleDisplayName;
         private final AbstractFile file;
+        private final LocalTime startTime;
         
         private ProgressSnapshot(long threadId, Content dataSource, String ingestModuleDisplayName, AbstractFile file) {
             this.threadId = threadId;
             this.dataSource = dataSource;
             this.ingestModuleDisplayName = ingestModuleDisplayName;
             this.file = file;
+            startTime = LocalTime.now();
         }
         
         long getThreadId() {
@@ -68,12 +71,16 @@ class IngestTask {
             return dataSource;
         }
         
-        String getModule() {
+        String getModuleDisplayName() {
             return ingestModuleDisplayName;
         }
         
         AbstractFile getFile() {
             return file;
+        }
+        
+        LocalTime getStartTime() {
+            return startTime;
         }
     }
     

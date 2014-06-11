@@ -26,24 +26,26 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.SystemAction;
-import org.sleuthkit.autopsy.ingest.IngestProgressSnapShotDialog;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 @ActionID(
-        category = "Tools",
-        id = "org.sleuthkit.autopsy.actions.ShowIngestProgressSnapshotAction")
+        category = "Help",
+        id = "org.sleuthkit.autopsy.actions.ShowIngestProgressSnapshotAction"
+)
 @ActionRegistration(
-        displayName = "#CTL_ShowIngestProgressSnapshotAction", lazy=false)
-@ActionReference(path = "Menu/Tools", position = 800, separatorBefore = 550)
+        displayName = "#CTL_ShowIngestProgressSnapshotAction",
+        lazy=false
+)
+@ActionReference(path = "Menu/Help", position = 1125)
 @Messages("CTL_ShowIngestProgressSnapshotAction=Get Ingest Progress Snapshot")
 public final class ShowIngestProgressSnapshotAction extends SystemAction implements ActionListener {
 
-    // RJCTODO: Bundle
-//    private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
-    private static final String ACTION_NAME = "Get Ingest Progress Snapshot";
-        
+    private static final String ACTION_NAME = NbBundle.getMessage(ShowIngestProgressSnapshotAction.class, "ShowIngestProgressSnapshotAction.actionName.text");
+
     public ShowIngestProgressSnapshotAction() {
         setEnabled(false);
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
@@ -56,8 +58,8 @@ public final class ShowIngestProgressSnapshotAction extends SystemAction impleme
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        IngestProgressSnapShotDialog dialog = new IngestProgressSnapShotDialog();
-        dialog.display();
+        IngestProgressSnapshotDialog dialog = new IngestProgressSnapshotDialog();
+        dialog.setVisible(true);
     }
 
     @Override
@@ -67,6 +69,6 @@ public final class ShowIngestProgressSnapshotAction extends SystemAction impleme
 
     @Override
     public HelpCtx getHelpCtx() {
-        return HelpCtx.DEFAULT_HELP;        
+        return HelpCtx.DEFAULT_HELP;
     }
 }

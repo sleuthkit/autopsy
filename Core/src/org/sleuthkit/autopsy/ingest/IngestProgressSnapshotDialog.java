@@ -23,35 +23,32 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 
-public class IngestProgressSnapShotDialog extends JDialog {
+/**
+ * A dialog that displays ingest task progress snapshots.
+ */
+public final class IngestProgressSnapshotDialog extends JDialog {
 
-    // RJCTODO
-//    private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
-    private static final String TITLE = "Ingest Progress Snapshot";
-    private static Dimension DIMENSIONS = new Dimension(500, 300);
-
-    public IngestProgressSnapShotDialog(JFrame frame, String title, boolean modal) {
-        super(frame, title, modal);
-    }
-
-    public IngestProgressSnapShotDialog() {
-        this(new JFrame(TITLE), TITLE, false);
-    }
+    private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestTaskProgressSnapshotsDialog.title.text");
+    private static final Dimension DIMENSIONS = new Dimension(500, 300);
 
     /**
-     * Shows the Ingest dialog.
+     * Constructs a non-modal instance of the dialog with its own frame.
      */
-    public void display() {
+    public IngestProgressSnapshotDialog() {
+        super((JFrame) WindowManager.getDefault().getMainWindow(), TITLE, false);
+        setResizable(true);
         setLayout(new BorderLayout());
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(DIMENSIONS);
         int w = this.getSize().width;
         int h = this.getSize().height;
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        add(new IngestProgressSnapShotPanel());
+        add(new IngestProgressSnapshotPanel(this));
         pack();
         setResizable(false);
-        setVisible(true);        
+        setVisible(true);
     }
 }
