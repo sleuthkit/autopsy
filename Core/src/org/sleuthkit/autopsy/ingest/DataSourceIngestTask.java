@@ -21,16 +21,13 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.Content;
 
 final class DataSourceIngestTask extends IngestTask {
-    
-    private final Content dataSource;
-    
-    DataSourceIngestTask(IngestJob ingestJob, Content dataSource) {
-        super(ingestJob);
-        this.dataSource = dataSource;                        
+        
+    DataSourceIngestTask(IngestJob job) {
+        super(job);
     }
         
     Content getDataSource() {
-        return dataSource;
+        return getIngestJob().getDataSource();
     }    
     
     @Override
