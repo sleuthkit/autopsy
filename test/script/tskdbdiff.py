@@ -242,7 +242,7 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
-                line = replace_id(line, id_path_table)
+                line = normalize_db_entry(line, id_path_table)
                 db_log.write('%s\n' % line)
             # Now sort the file    
             
@@ -272,36 +272,34 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
-def replace_id(line, table):
-    """Remove the object id from a line.
+def normalize_db_entry(line, table):
+    """ Make testing more consistent and reasonable by doctoring certain db entries.
 
     Args:
         line: a String, the line to remove the object id from.
         table: a map from object ids to file paths.
     """
 
-    report_index = line.find('"INSERT INTO reports"')
-    if (report_index != 1):
-        return ""
-
     files_index = line.find('INSERT INTO "tsk_files"')
     path_index = line.find('INSERT INTO "tsk_files_path"')
     object_index = line.find('INSERT INTO "tsk_objects"')
+    report_index = line.find('INSERT INTO "reports"')
     parens = line[line.find('(') + 1 : line.find(')')]
     fields_list = parens.replace(" ", "").split(',')
     
+    # remove object ID
     if (files_index != -1):
         obj_id = fields_list[0]
         path = table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
-    
+    # remove object ID
     elif (path_index != -1):
         obj_id = fields_list[0]
         path = table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
         return newLine
-    
+    #remove object ID
     elif (object_index != -1):
         obj_id = fields_list[0]
         parent_id = fields_list[1]
@@ -314,7 +312,12 @@ def replace_id(line, table):
         except Exception as e: 
             # objects table has things that aren't files. if lookup fails, don't replace anything.
             return line
-    
+    # remove time-based information, ie Test_6/11/14 -> Test    
+    elif (report_index != -1):
+        fields_list[1] = "AutopsyTestCase"
+        fields_list[2] = "0"
+        newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list) + ');')
+        return newLine
     else:
         return line
 
