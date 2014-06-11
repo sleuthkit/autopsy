@@ -3,7 +3,7 @@
  *
  * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- *
+ *s
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -136,7 +136,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             lastFile = file;
 
             final Dimension dims = DataContentViewerMedia.this.getSize();
-            logger.info("setting node on media viewer"); //NON-NLS
+            //logger.info("setting node on media viewer"); //NON-NLS
             if (imagePanelInited && containsExt(file.getName(), imageExtensions)) {
                 imagePanel.showImageFx(file, dims);
                 this.switchPanels(false);
