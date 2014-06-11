@@ -31,7 +31,7 @@ import org.openide.windows.WindowManager;
  */
 public final class IngestProgressSnapshotDialog extends JDialog {
 
-    private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestTaskProgressSnapshotsDialog.title.text");
+    private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestProgressSnapshotDialog.title.text");
     private static final Dimension DIMENSIONS = new Dimension(500, 300);
 
     /**
