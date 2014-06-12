@@ -77,7 +77,7 @@ final class FileIngestPipeline {
         for (FileIngestModuleDecorator module : modules) {
             try {
                 module.startUp(context);
-            } catch (Exception ex) {
+            } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
@@ -98,7 +98,7 @@ final class FileIngestPipeline {
             try {
                 task.updateProgressStatus(module.getDisplayName(), file);
                 module.process(file);
-            } catch (Exception ex) {
+            } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
             if (context.isJobCancelled()) {

@@ -18,15 +18,15 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 class IngestTask {
-    
+
     private final IngestJob job;
     private final ProgressSnapshots snapshots;
     private long threadId;
@@ -39,58 +39,68 @@ class IngestTask {
     IngestJob getIngestJob() {
         return job;
     }
-    
+
     void updateProgressStatus(String ingestModuleDisplayName, AbstractFile file) {
         snapshots.update(new ProgressSnapshot(threadId, job.getDataSource(), ingestModuleDisplayName, file));
     }
-        
+
     void execute(long threadId) throws InterruptedException {
         this.threadId = threadId;
     }
-    
+
     public static final class ProgressSnapshot {
+
         private final long threadId;
         private final Content dataSource;
         private final String ingestModuleDisplayName;
         private final AbstractFile file;
-        private final LocalTime startTime;
-        
+        private final Date startTime;
+        // TODO: Restore when we go to Java 8
+//        private final LocalTime startTime;
+
         private ProgressSnapshot(long threadId, Content dataSource, String ingestModuleDisplayName, AbstractFile file) {
             this.threadId = threadId;
             this.dataSource = dataSource;
             this.ingestModuleDisplayName = ingestModuleDisplayName;
             this.file = file;
-            startTime = LocalTime.now();
+            startTime = new Date();
+            // TODO: Restore when we go to Java 8
+//            startTime = LocalTime.now();
         }
-        
+
         long getThreadId() {
             return threadId;
         }
-        
+
         Content getDataSource() {
             return dataSource;
         }
-        
+
         String getModuleDisplayName() {
             return ingestModuleDisplayName;
         }
-        
+
         AbstractFile getFile() {
             return file;
         }
-        
-        LocalTime getStartTime() {
+
+        Date getStartTime() {
             return startTime;
-        }
+        }                
+        // TODO: Restore when we go to Java 8
+//        LocalTime getStartTime() {
+//            return startTime;
+//        }
     }
-    
+
     static final class ProgressSnapshots {
+
         private final ConcurrentHashMap<Long, IngestTask.ProgressSnapshot> snapshots = new ConcurrentHashMap<>(); // Maps ingest thread ids to progress snapshots.    
-    
+
         void update(ProgressSnapshot snapshot) {
             snapshots.put(snapshot.getThreadId(), snapshot);
         }
-        
+
         List<ProgressSnapshot> getSnapshots() {
             return new ArrayList(snapshots.values());
         }
