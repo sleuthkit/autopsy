@@ -75,7 +75,7 @@ final class DataSourceIngestPipeline {
         for (DataSourceIngestModuleDecorator module : modules) {
             try {
                 module.startUp(context);
-            } catch (Exception ex) {
+            } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
@@ -92,7 +92,7 @@ final class DataSourceIngestPipeline {
                         module.getDisplayName(), dataSource.getName()));
                 task.updateProgressStatus(module.getDisplayName(), null);
                 module.process(dataSource, new DataSourceIngestModuleProgress(progress));
-            } catch (Exception ex) {
+            } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
             if (context.isJobCancelled()) {

@@ -20,14 +20,13 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.time.Duration;
-import java.time.LocalTime;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.sleuthkit.datamodel.AbstractFile;
 
 public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
@@ -133,8 +132,12 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapshot.getStartTime();
                     break;
                 case 5:
-                    long elapsedTime = Duration.between(snapshot.getStartTime(), LocalTime.now()).toMillis();
-                    cellValue = DurationFormatUtils.formatDurationHMS(elapsedTime);
+                    Date now = new Date();
+                    long elapsedTime = now.getTime() - snapshot.getStartTime().getTime();
+                    cellValue = DurationFormatUtils.formatDurationHMS(elapsedTime);                    
+                    // TODO: Restore when we go to Java 8
+//                    long elapsedTime = Duration.between(snapshot.getStartTime(), LocalTime.now()).toMillis();
+//                    cellValue = DurationFormatUtils.formatDurationHMS(elapsedTime);
                     break;
                 default:
                     cellValue = null;
