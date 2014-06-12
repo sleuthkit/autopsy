@@ -1317,7 +1317,10 @@ import org.sleuthkit.datamodel.TskData;
                 break;
             case TSK_EXT_MISMATCH_DETECTED:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"),
+                        "Extension",
+                        "MIME Type",
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")}));
                 break;    
             default:
                 return null;
@@ -1647,8 +1650,17 @@ import org.sleuthkit.datamodel.TskData;
                      orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                      orderedRowData.add(getFileUniquePath(getObjectID()));
                      break;
-                case TSK_EXT_MISMATCH_DETECTED:
-                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                case TSK_EXT_MISMATCH_DETECTED:   
+                    AbstractFile file = skCase.getAbstractFileById(getObjectID());
+                    orderedRowData.add(file.getName());
+                    orderedRowData.add(file.getNameExtension());
+                    List<BlackboardAttribute> attrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+                    if (!attrs.isEmpty()) {
+                        orderedRowData.add(attrs.get(0).getValueString());
+                    } else {
+                        orderedRowData.add("");
+                    }                   
+                    orderedRowData.add(file.getUniquePath());
                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
