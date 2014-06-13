@@ -256,7 +256,8 @@ class ReportKML implements GeneralReportModule {
                     FileOutputStream writer = new FileOutputStream(reportPath);
                     outputter.output(kmlDocument, writer);
                     writer.close();
-                    Case.getCurrentCase().addReport(reportPath, "KML Report", "");                                
+                    Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+                                                                                    "ReportKML.genReport.srcModuleName.text"), "");
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
                 } catch (TskCoreException ex) {
