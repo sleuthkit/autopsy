@@ -142,7 +142,7 @@ class Chrome extends Extract {
                                                          ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((Long.valueOf(result.get("last_visit_time").toString())) / 10000000))); //NON-NLS
+                                                         (Long.valueOf(result.get("last_visit_time").toString()) / 1000000)- Long.valueOf("11644473600"))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
@@ -272,7 +272,6 @@ class Chrome extends Extract {
                     BlackboardArtifact bbart = bookmarkFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     //TODO Revisit usage of deprecated constructor as per TSK-583
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", (date / 10000000)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
                                                                                  "Chrome.parentModuleName"), url));
@@ -281,7 +280,7 @@ class Chrome extends Extract {
                                                                                  "Chrome.parentModuleName"), name));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"), (date / 10000000)));
+                                                                                 "Chrome.parentModuleName"), (date/1000000) - Long.valueOf("11644473600")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
                                                                                  "Chrome.parentModuleName"),
@@ -356,7 +355,8 @@ class Chrome extends Extract {
                                                          ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((Long.valueOf(result.get("last_access_utc").toString())) / 10000000))); //NON-NLS
+                                                         (Long.valueOf(result.get("last_access_utc").toString()) / 1000000)- Long.valueOf("11644473600"))); //NON-NLS
+                                                         
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
@@ -444,9 +444,8 @@ class Chrome extends Extract {
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
-                Long time = (Long.valueOf(result.get("start_time").toString())); //NON-NLS
-                String Tempdate = time.toString();
-                time = Long.valueOf(Tempdate) / 10000000;
+                Long time = (Long.valueOf(result.get("start_time").toString()) / 1000000)- Long.valueOf("11644473600"); //NON-NLS
+                
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", time));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
@@ -521,7 +520,7 @@ class Chrome extends Extract {
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 1000000)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((Long.valueOf(result.get("last_visit_time").toString())) / 1000000))); //NON-NLS
+                                                         (Long.valueOf(result.get("last_visit_time").toString()) / 1000000)- Long.valueOf("11644473600"))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
