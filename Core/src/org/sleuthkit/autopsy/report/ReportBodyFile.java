@@ -152,7 +152,10 @@ import org.sleuthkit.datamodel.*;
                     if (out != null) {
                         out.flush();
                         out.close();
-                        Case.getCurrentCase().addReport(reportPath, "TSK Body File", "");                                
+                        Case.getCurrentCase().addReport(reportPath,
+                                                        NbBundle.getMessage(this.getClass(),
+                                                                            "ReportBodyFile.generateReport.srcModuleName.text"), "");
+
                     }
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
