@@ -132,7 +132,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        Future<?> handle = dataSourceIngestThreadPool.submit(new ExecuteIngestTasksThread(threadId, IngestScheduler.getInstance().getDataSourceIngestTaskQueue()));
         dataSourceIngestThreads.put(threadId, handle);
     }
 
@@ -142,7 +142,7 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(IngestScheduler.getInstance().getFileIngestTaskQueue()));
+        Future<?> handle = fileIngestThreadPool.submit(new ExecuteIngestTasksThread(threadId, IngestScheduler.getInstance().getFileIngestTaskQueue()));
         fileIngestThreads.put(threadId, handle);
     }
 
@@ -203,6 +203,10 @@ public class IngestManager {
         return IngestScheduler.getInstance().ingestJobsAreRunning();
     }
 
+    List<IngestTask.ProgressSnapshot> getIngestTaskProgressSnapshots() {
+        return IngestScheduler.getInstance().getIngestTaskProgressSnapshots();
+    }
+        
     public void cancelAllIngestJobs() {
         // Stop creating new ingest jobs.
         for (Future<Void> handle : startIngestJobThreads.values()) {
@@ -417,7 +421,7 @@ public class IngestManager {
             return -1;
         }
     }
-
+    
     /**
      * Creates ingest jobs.
      */
@@ -511,9 +515,11 @@ public class IngestManager {
      */
     private class ExecuteIngestTasksThread implements Runnable {
 
-        private IngestTaskQueue tasks;
+        private final long threadId;
+        private final IngestTaskQueue tasks;
 
-        ExecuteIngestTasksThread(IngestTaskQueue tasks) {
+        ExecuteIngestTasksThread(long threadId, IngestTaskQueue tasks) {
+            this.threadId = threadId;
             this.tasks = tasks;
         }
 
@@ -522,7 +528,7 @@ public class IngestManager {
             while (true) {
                 try {
                     IngestTask task = tasks.getNextTask(); // Blocks.
-                    task.execute();
+                    task.execute(threadId);
                 } catch (InterruptedException ex) {
                     break;
                 }

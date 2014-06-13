@@ -29,8 +29,8 @@ final class FileIngestTask extends IngestTask {
 
     private final AbstractFile file;
 
-    FileIngestTask(IngestJob job, AbstractFile file) {
-        super(job);
+    FileIngestTask(IngestJob job, AbstractFile file, ProgressSnapshots snapshots) {
+        super(job, snapshots);
         this.file = file;
     }
 
@@ -39,7 +39,8 @@ final class FileIngestTask extends IngestTask {
     }
 
     @Override
-    void execute() throws InterruptedException {
+    void execute(long threadId) throws InterruptedException {
+        super.execute(threadId);
         getIngestJob().process(this);
     }
 

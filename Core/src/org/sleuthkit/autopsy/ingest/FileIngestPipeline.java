@@ -77,7 +77,7 @@ final class FileIngestPipeline {
         for (FileIngestModuleDecorator module : modules) {
             try {
                 module.startUp(context);
-            } catch (Exception ex) {
+            } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
@@ -91,12 +91,14 @@ final class FileIngestPipeline {
      * @param file File to analyze
      * @return List of errors or empty list if no errors
      */
-    List<IngestModuleError> process(AbstractFile file) {
+    List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
+        AbstractFile file = task.getFile();
         for (FileIngestModuleDecorator module : modules) {
             try {
+                task.updateProgressStatus(module.getDisplayName(), file);
                 module.process(file);
-            } catch (Exception ex) {
+            } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
             if (context.isJobCancelled()) {
