@@ -149,28 +149,27 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
                     // don't let them add the hash for an empty file to the DB
-                    if (md5Hash.toLowerCase().equals("d41d8cd98f00b204e9800998ecf8427e")) {
-                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)");
+                    if (md5Hash.toLowerCase().equals("d41d8cd98f00b204e9800998ecf8427e")) { //NON-NLS
+                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)"); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
                                 "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",
                                 file.getName()),
                                 NbBundle.getMessage(this.getClass(),
-                                "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
+                                                    "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr1.text"),
                                 JOptionPane.ERROR_MESSAGE);
                         continue;
                     }
                     try {
                         hashSet.addHashes(file);
                     } catch (TskCoreException ex) {
-                        //noinspection HardCodedStringLiteral
-                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);
+                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
                                 "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
                                 file.getName()),
                                 NbBundle.getMessage(this.getClass(),
-                                "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
+                                                    "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr2.text"),
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
@@ -183,7 +182,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                             .getMessage(this.getClass(),
                             "AddContentToHashDbAction.addFilesToHashSet.file")),
                             NbBundle.getMessage(this.getClass(),
-                            "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr"),
+                                                "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr3.text"),
                             JOptionPane.ERROR_MESSAGE);
                     break;
                 }
