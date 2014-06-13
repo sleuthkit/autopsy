@@ -63,8 +63,8 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private MessageTableModel tableModel;
     private MessageTableRenderer renderer;
     private IngestMessageMainPanel mainPanel;
-    private static Font visitedFont = new Font("Arial", Font.PLAIN, 12);
-    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 12);
+    private static Font visitedFont = new Font("Arial", Font.PLAIN, 12); //NON-NLS
+    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 12); //NON-NLS
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
@@ -132,7 +132,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         jScrollPane1.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        messageTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N NON-NLS
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);

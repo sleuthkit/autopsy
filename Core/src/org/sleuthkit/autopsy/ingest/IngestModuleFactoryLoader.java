@@ -67,21 +67,21 @@ final class IngestModuleFactoryLoader {
         }
 
         // Kick out the sample module factories.
-        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory");
-        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory");
+        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory"); //NON-NLS
+        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory"); //NON-NLS
 
         // Do the core ingest module ordering hack described above.
         ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
             {
-                add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory");
-                add("org.sleuthkit.autopsy.ewfverify.EwfVerifierModuleFactory");
-                add("org.sleuthkit.autopsy.hashdatabase.HashLookupModuleFactory");
-                add("org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory");
-                add("org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory");
-                add("org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory");
-                add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory");
-                add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory");
-                add("org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory");
+                add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.ewfverify.EwfVerifierModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.hashdatabase.HashLookupModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
+                add("org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory"); //NON-NLS
             }
         };
         List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();
