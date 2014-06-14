@@ -177,7 +177,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
     private static class IngestMessagesButton extends JButton {
 
         private static final int fontSize = 9;
-        private static final Font messagesFont = new java.awt.Font("Tahoma", Font.PLAIN, fontSize); //NON-NLS
+//        private static final Font messagesFont = new java.awt.Font("Tahoma", Font.PLAIN, fontSize); //NON-NLS
         private int messages = 0;
 
         @Override
@@ -188,6 +188,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
                 return;
             }
             //paint text
+            Font messagesFont = new java.awt.Font(g.getFont().getName(), Font.PLAIN, fontSize);
             String messageStr = Integer.toString(messages);
             final int len = messageStr.length();
             g.setFont(messagesFont);
