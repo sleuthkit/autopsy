@@ -114,7 +114,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N NON-NLS
+        outputViewPane.setFont(outputViewPane.getFont().deriveFont(11.0f));
         outputViewPane.setMinimumSize(new java.awt.Dimension(700, 20));
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
         jScrollPane1.setViewportView(outputViewPane);

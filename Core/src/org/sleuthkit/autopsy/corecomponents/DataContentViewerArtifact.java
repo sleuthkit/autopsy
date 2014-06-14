@@ -106,7 +106,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             jPanel1.setPreferredSize(new java.awt.Dimension(622, 424));
 
             outputViewPane.setEditable(false);
-            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N NON-NLS
+            outputViewPane.setFont(outputViewPane.getFont().deriveFont(11.0f));
             outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(outputViewPane);
 
