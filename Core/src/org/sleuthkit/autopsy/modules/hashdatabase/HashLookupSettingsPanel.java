@@ -483,7 +483,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel6.text")); // NOI18N
 
-        jButton3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
+//        jButton3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
+        jButton3.setFont(jButton3.getFont().deriveFont(14.0f));
         org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton3.text")); // NOI18N
 
         setMinimumSize(new java.awt.Dimension(700, 500));
