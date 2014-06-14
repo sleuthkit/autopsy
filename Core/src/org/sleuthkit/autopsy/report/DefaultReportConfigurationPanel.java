@@ -41,7 +41,7 @@ public class DefaultReportConfigurationPanel extends javax.swing.JPanel {
 
         infoLabel = new javax.swing.JLabel();
 
-        infoLabel.setFont(new java.awt.Font("Tahoma", 2, 11)); // NOI18N NON-NLS
+        infoLabel.setFont(new java.awt.Font(infoLabel.getFont().getName(), 2, 11));
         org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(DefaultReportConfigurationPanel.class, "DefaultReportConfigurationPanel.infoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
