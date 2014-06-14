@@ -101,8 +101,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
         jLabel2 = new javax.swing.JLabel();
         caseDirTextField = new javax.swing.JTextField();
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
+//        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(14.0f));
 
         org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseNameLabel.text_1")); // NOI18N
 
