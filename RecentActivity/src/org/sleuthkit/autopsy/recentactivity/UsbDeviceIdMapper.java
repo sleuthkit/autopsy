@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -82,7 +84,8 @@ class UsbDeviceIdMapper {
         key = vID + "0000";
         if (devices.containsKey(key)) {
             USBInfo info = devices.get(key);
-            return new USBInfo(info.getVendor(), "Product: " + pID);
+            return new USBInfo(info.getVendor(),
+                               NbBundle.getMessage(this.getClass(), "UsbDeviceIdMapper.parseAndLookup.text", pID));
         }
         
         return new USBInfo(null, null);
