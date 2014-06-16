@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
@@ -114,7 +113,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(outputViewPane.getFont().deriveFont(11.0f));
+        outputViewPane.setFont(new java.awt.Font(outputViewPane.getFont().getName(), Font.PLAIN, 11));
         outputViewPane.setMinimumSize(new java.awt.Dimension(700, 20));
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
         jScrollPane1.setViewportView(outputViewPane);

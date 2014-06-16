@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -130,7 +129,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         jPanel1.setPreferredSize(new java.awt.Dimension(502, 424));
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(outputViewPane.getFont().deriveFont(11.0f));
+        outputViewPane.setFont(new java.awt.Font(outputViewPane.getFont().getName(), Font.PLAIN, 11));
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
         jScrollPane1.setViewportView(outputViewPane);
 
