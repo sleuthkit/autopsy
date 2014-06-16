@@ -25,6 +25,7 @@
 
 package org.sleuthkit.autopsy.directorytree;
 
+import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
@@ -60,8 +61,8 @@ class ImageDetailsPanel extends javax.swing.JPanel {
         imgHashLabel = new javax.swing.JLabel();
         imgHashValue = new javax.swing.JLabel();
 
+        imageInfoLabel.setFont(new java.awt.Font(imageInfoLabel.getFont().getName(), Font.BOLD, 18));
         imageInfoLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imageInfoLabel.text")); // NOI18N
-        imageInfoLabel.setFont(imageInfoLabel.getFont().deriveFont(18.0f));
 
         imgNameLabel.setText(org.openide.util.NbBundle.getMessage(ImageDetailsPanel.class, "ImageDetailsPanel.imgNameLabel.text")); // NOI18N
 
