@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -367,7 +368,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     @Override
-    public void setNode(Node selectedNode) {
+    public void setNode(final Node selectedNode) {
         if (this.rootNode != null) {
             this.rootNode.removeNodeListener(dummyNodeListener);
         }
@@ -390,6 +391,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (selectedNode != null) {
             int childrenCount = selectedNode.getChildren().getNodesCount();
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
+
+            //if there is only one child, select it to be displayed in the content viewer
+            if (childrenCount == 1) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            explorerManager.setSelectedNodes(selectedNode.getChildren().getNodes());
+                        } catch (PropertyVetoException ex) {
+                            logger.log(Level.INFO, "node selection vetoed");
+                        }
+                    }
+                });
+            }
         }
         this.numberMatchLabel.setVisible(true);
     }
