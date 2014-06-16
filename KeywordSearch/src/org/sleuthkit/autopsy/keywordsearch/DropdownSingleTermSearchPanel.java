@@ -151,7 +151,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        keywordTextField.setFont(new java.awt.Font(keywordTextField.getFont().getName(), Font.PLAIN, 14));
+        keywordTextField.setFont(keywordTextField.getFont().deriveFont(Font.PLAIN, 14));
         keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
         keywordTextField.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(192, 192, 192), 1, true));
         keywordTextField.setMinimumSize(new java.awt.Dimension(2, 25));
