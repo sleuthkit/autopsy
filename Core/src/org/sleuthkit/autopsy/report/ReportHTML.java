@@ -803,7 +803,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
      */
     private void writeIndex() {
         Writer indexOut = null;
-        String indexFilePath = path + "index.html";
+        String indexFilePath = path + "index.html"; //NON-NLS
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
@@ -821,7 +821,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             index.append("</frameset>\n"); //NON-NLS
             index.append("</html>"); //NON-NLS
             indexOut.write(index.toString());
-            Case.getCurrentCase().addReport(indexFilePath, "HTML Report", "");
+            Case.getCurrentCase().addReport(indexFilePath, NbBundle.getMessage(this.getClass(),
+                                                                               "ReportHTML.writeIndex.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex); //NON-NLS
         } catch (TskCoreException ex) {

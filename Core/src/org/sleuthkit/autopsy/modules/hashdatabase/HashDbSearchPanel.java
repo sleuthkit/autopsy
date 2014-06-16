@@ -153,7 +153,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 
             },
             new String [] {
-                "MD5 Hashes"
+                    NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.hashTable.defaultModel.title.text")
             }
         ) {
             Class[] types = new Class [] {
