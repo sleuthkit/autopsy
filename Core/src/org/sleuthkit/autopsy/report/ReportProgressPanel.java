@@ -20,10 +20,7 @@ package org.sleuthkit.autopsy.report;
 
 import org.openide.util.NbBundle;
 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Desktop;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -289,12 +286,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
 
-        reportLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N NON-NLS
+        reportLabel.setFont(new java.awt.Font(reportLabel.getFont().getName(), Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(new java.awt.Font("Tahoma", 2, 10)); // NOI18N NON-NLS
+        processingLabel.setFont(new java.awt.Font(processingLabel.getFont().getName(), Font.ITALIC, 10));
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N

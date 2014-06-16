@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
 
-import java.awt.Component;
+import java.awt.*;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -101,8 +101,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
         jLabel2 = new javax.swing.JLabel();
         caseDirTextField = new javax.swing.JTextField();
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N NON-NLS
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
+        jLabel1.setFont(new java.awt.Font(jLabel1.getFont().getName(), Font.BOLD, 14));
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle
+                .getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseNameLabel.text_1")); // NOI18N
 
