@@ -107,7 +107,6 @@ import java.awt.event.ActionListener;
 
         lastInumValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.lastInumValue.text")); // NOI18N
 
-//        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N NON-NLS
         genInfoLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.genInfoLabel.text")); // NOI18N
         genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(18.0f));
 
@@ -211,7 +210,6 @@ import java.awt.event.ActionListener;
         detailInfoPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         detailInfoPanel.setPreferredSize(new java.awt.Dimension(516, 293));
 
-//        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N NON-NLS
         jLabel1.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.jLabel1.text")); // NOI18N
         jLabel1.setFont(jLabel1.getFont().deriveFont(18.0f));
 

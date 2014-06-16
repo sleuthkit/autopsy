@@ -67,7 +67,6 @@ class VolumeDetailsPanel extends javax.swing.JPanel {
 
         lengthLabel.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.lengthLabel.text")); // NOI18N
 
-//        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 18)); //NON-NLS
         jLabel1.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.jLabel1.text")); // NOI18N
         jLabel1.setFont(jLabel1.getFont().deriveFont(18.0f));
 
