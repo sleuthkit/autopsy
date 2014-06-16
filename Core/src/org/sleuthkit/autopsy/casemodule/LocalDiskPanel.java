@@ -386,9 +386,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             
             String localDiskString = value.toString();
             if(localDiskString.equals(LOADING)) {
-                Font font = new Font(label.getFont().getName(), Font.ITALIC, label.getFont().getSize()); 
                 label.setText(LOADING);
-                label.setFont(font);
+                label.setFont(label.getFont().deriveFont(Font.ITALIC));
                 label.setBackground(Color.GRAY);
             } else {
                 label.setText(value.toString());

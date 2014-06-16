@@ -73,7 +73,7 @@ import java.awt.*;
 
         examinerLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.examinerLabel.text")); // NOI18N
 
-        optionalLabel.setFont(new java.awt.Font(optionalLabel.getFont().getName(), Font.BOLD, 14));
+        optionalLabel.setFont(optionalLabel.getFont().deriveFont(Font.BOLD, 14));
         optionalLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.optionalLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

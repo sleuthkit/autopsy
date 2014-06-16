@@ -213,7 +213,7 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addContainerGap(62, Short.MAX_VALUE))
         );
 
-        titleLabel.setFont(new java.awt.Font(titleLabel.getFont().getName(), Font.BOLD, 12));
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle
                 .getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
 
