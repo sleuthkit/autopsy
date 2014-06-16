@@ -112,7 +112,8 @@ import org.sleuthkit.datamodel.TskCoreException;
         try {
             out = new FileOutputStream(reportPath);
             wb.write(out);
-            Case.getCurrentCase().addReport(reportPath, "Excel Report", "");            
+            Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+                                                                            "ReportExcel.endReport.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
         } catch (TskCoreException ex) {
