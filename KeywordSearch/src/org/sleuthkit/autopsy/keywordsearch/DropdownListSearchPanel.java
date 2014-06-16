@@ -238,7 +238,6 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             }
         });
 
-//        ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N NON-NLS
         ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont((10.0f)));
         ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
