@@ -404,7 +404,9 @@ public class IngestManager {
      */
     void postIngestMessage(IngestMessage message) {
         if (ingestMessageBox != null) {
-            ingestMessageBox.displayMessage(message);
+            if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
+                ingestMessageBox.displayMessage(message);
+            }
         }
     }
 
