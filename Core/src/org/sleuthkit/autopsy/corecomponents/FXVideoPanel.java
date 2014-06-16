@@ -270,14 +270,18 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         /* clean up or start the worker threads */
         @Override
         protected void done() {
+            mediaPane.setProgressLabelText("");
             try {
                 super.get(); //block and get all exceptions thrown while doInBackground()
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
+                mediaPane.setProgressLabelText("media buffering was canceled");
             } catch (InterruptedException ex) {
                 logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
+                mediaPane.setProgressLabelText("media buffering was interrupted");
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
+                mediaPane.setProgressLabelText("Error writing video to disk");
             } finally {
                 progress.finish();
                 if (!this.isCancelled()) {
