@@ -19,9 +19,7 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -238,7 +236,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             }
         });
 
-        ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont((10.0f)));
+        ingestIndexLabel.setFont(new java.awt.Font(ingestIndexLabel.getFont().getName(), Font.PLAIN, 10));
         ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
