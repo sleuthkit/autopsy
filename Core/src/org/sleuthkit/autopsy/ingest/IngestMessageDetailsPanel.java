@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -123,9 +123,11 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setEditable(false);
         messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
         messageDetailsPane.setBorder(null);
-        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-        messageDetailsPane.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N NON-NLS
-        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
+        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class,
+                                                                               "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
+        messageDetailsPane.setFont(new java.awt.Font(messageDetailsPane.getFont().getName(), Font.PLAIN, 10));
+        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class,
+                                                                               "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
         jScrollPane1.setViewportView(messageDetailsPane);
 
         jToolBar1.setFloatable(false);
