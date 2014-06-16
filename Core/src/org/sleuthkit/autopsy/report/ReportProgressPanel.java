@@ -294,7 +294,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(new java.awt.Font(processingLabel.getFont().getName(), 2, 10)); // NOI18N NON-NLS
+        processingLabel.setFont(new java.awt.Font(processingLabel.getFont().getName(), 2, 10));
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
