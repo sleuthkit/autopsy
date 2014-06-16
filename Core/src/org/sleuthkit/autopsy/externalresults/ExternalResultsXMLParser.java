@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ErrorInfo;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.Content;
@@ -115,7 +117,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
     /**
      * Constructor.
      *
-     * @param importFilePath Full path of the results file to be parsed.
+     * @param resultsFilePath Full path of the results file to be parsed.
      */
     public ExternalResultsXMLParser(Content dataSource, String resultsFilePath) {
         this.dataSource = dataSource;
@@ -140,12 +142,14 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
                     parseArtifacts(rootElem);
                     parseReports(rootElem);
                 } else {
-                    String errorMessage = String.format("Did not find %s root element of %s", TagNames.ROOT_ELEM.toString(), this.resultsFilePath);
+                    String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                              "ExternalResultsXMLParser.parse.errMsg1.text",
+                                                              TagNames.ROOT_ELEM.toString(), this.resultsFilePath);
                     recordError(errorMessage);
                 }
             }
         } catch (Exception ex) {
-            String errorMessage = String.format("Error parsing %s", this.resultsFilePath);
+            String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsXMLParser.parse.errMsg2.text", this.resultsFilePath);
             recordError(errorMessage, ex);
         }
         return this.resultsData;
@@ -220,8 +224,9 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
             }
             final String value = valueElem.getTextContent();
             if (value.isEmpty()) {
-                String errorMessage = String.format("Found %s element that has no content in %s",
-                        TagNames.VALUE_ELEM.toString(), this.resultsFilePath);
+                String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                          "ExternalResultsXMLParser.parseArtifactAttributes.errMsg1.text",
+                                                          TagNames.VALUE_ELEM.toString(), this.resultsFilePath);
                 recordError(errorMessage);
                 continue;
             }
@@ -246,10 +251,11 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
                 && !valueType.equals(AttributeValues.VALUE_TYPE_DOUBLE.toString())
                 && !valueType.equals(AttributeValues.VALUE_TYPE_INT32.toString()) 
                 && !valueType.equals(AttributeValues.VALUE_TYPE_INT64.toString())) {
-            String errorMessage = String.format("Found unrecognized value %s for %s attribute of %s element",
-                    valueType,
-                    AttributeNames.TYPE_ATTR.toString(),
-                    TagNames.VALUE_ELEM.toString());
+            String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                      "ExternalResultsXMLParser.parseAttributeValueType.errMsg1.text",
+                                                      valueType,
+                                                      AttributeNames.TYPE_ATTR.toString(),
+                                                      TagNames.VALUE_ELEM.toString());
             this.recordError(errorMessage);
             valueType = "";
         }
@@ -285,7 +291,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
     private String getElementAttributeValue(Element element, String attributeName) {
         final String attributeValue = element.getAttribute(attributeName);
         if (attributeValue.isEmpty()) {
-            logger.log(Level.SEVERE, "Found {0} element missing {1} attribute in {2}", new Object[]{
+            logger.log(Level.SEVERE, "Found {0} element missing {1} attribute in {2}", new Object[]{ //NON-NLS
                 element.getTagName(),
                 attributeName,
                 this.resultsFilePath});
@@ -299,17 +305,18 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         if (childElement != null) {
             content = childElement.getTextContent();
             if (content.isEmpty()) {
-                String errorMessage = String.format("Found %s element with %s child element that has no content in %s",
-                        parentElement.getTagName(),
-                        childElementTagName,
-                        this.resultsFilePath);
+                String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                          "ExternalResultsXMLParser.getChildElementContent.errMsg1.text",
+                                                          parentElement.getTagName(),
+                                                          childElementTagName,
+                                                          this.resultsFilePath);
                 this.recordError(errorMessage);
             }
         } else if (required) {
-            String errorMessage = String.format("Found %s element missing %s child element in %s",
-                    parentElement.getTagName(),
-                    childElementTagName,
-                    this.resultsFilePath);
+            String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsXMLParser.getChildElementContent.errMsg2.text",
+                                                      parentElement.getTagName(),
+                                                      childElementTagName,
+                                                      this.resultsFilePath);
             this.recordError(errorMessage);
         }
         return content;
@@ -321,10 +328,10 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         if (childNodes.getLength() > 0) {
             childElem = (Element) childNodes.item(0);
             if (childNodes.getLength() > 1) {
-                String errorMessage = String.format("Found multiple %s child elements for %s element in %s, ignoring all but first occurrence",
-                        childElementTagName,
-                        parentElement.getTagName(),
-                        this.resultsFilePath);
+                String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsXMLParser.getChildElement.errMsg1.text",
+                                                          childElementTagName,
+                                                          parentElement.getTagName(),
+                                                          this.resultsFilePath);
                 this.recordError(errorMessage);
             }
         }

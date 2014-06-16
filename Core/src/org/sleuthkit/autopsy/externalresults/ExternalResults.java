@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.externalresults;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -43,10 +45,12 @@ final public class ExternalResults {
 
     Artifact addArtifact(String type, String sourceFilePath) {
         if (type.isEmpty()) {
-            throw new IllegalArgumentException("type argument is empty");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ExternalResults.addArtifact.exception.msg1.text"));
         }
         if (sourceFilePath.isEmpty()) {
-            throw new IllegalArgumentException("source argument is empty");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ExternalResults.addArtifact.exception.msg2.text"));
         }
         Artifact artifact = new Artifact(type, sourceFilePath);
         artifacts.add(artifact);
@@ -59,10 +63,12 @@ final public class ExternalResults {
 
     void addReport(String localPath, String sourceModuleName, String reportName) {
         if (localPath.isEmpty()) {
-            throw new IllegalArgumentException("localPath argument is empty");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ExternalResults.addReport.exception.msg1.text"));
         }
         if (sourceModuleName.isEmpty()) {
-            throw new IllegalArgumentException("sourceModuleName argument is empty");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ExternalResults.addReport.exception.msg2.text"));
         }
         Report report = new Report(localPath, sourceModuleName, reportName);
         reports.add(report);
@@ -74,10 +80,12 @@ final public class ExternalResults {
 
     void addDerivedFile(String localPath, String parentPath) {
         if (localPath.isEmpty()) {
-            throw new IllegalArgumentException("localPath argument is empty");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ExternalResults.addDerivedFile.exception.msg1.text"));
         }
         if (parentPath.isEmpty()) {
-            throw new IllegalArgumentException("parentPath argument is empty");
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(this.getClass(), "ExternalResults.addDerivedFile.exception.msg2.text"));
         }
         DerivedFile file = new DerivedFile(localPath, parentPath);
         derivedFiles.add(file);
@@ -108,13 +116,16 @@ final public class ExternalResults {
 
         void addAttribute(String type, String value, String valueType, String sourceModule) {
             if (type.isEmpty()) {
-                throw new IllegalArgumentException("type argument is empty");
+                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                       "ExternalResults.Artifact.addAttribute.exception.msg1.text"));
             }
             if (value.isEmpty()) {
-                throw new IllegalArgumentException("value argument is empty");
+                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                       "ExternalResults.Artifact.addAttribute.exception.msg2.text"));
             }
             if (valueType.isEmpty()) {
-                throw new IllegalArgumentException("value type argument is empty");
+                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                       "ExternalResults.Artifact.addAttribute.exception.msg3.text"));
             }
             attributes.add(new ArtifactAttribute(type, value, valueType, sourceModule));
         }

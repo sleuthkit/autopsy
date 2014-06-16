@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ErrorInfo;
@@ -95,18 +97,24 @@ public final class ExternalResultsImporter {
                                     "", "", "", ""); // Not currently providing derivation info for derived files from external processes.
                             IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(derivedFile));
                         } else {
-                            String errorMessage = String.format("Could not import derived file at %s, parent file %s not found", localPath, parentFilePath);
+                            String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                                      "ExternalResultsImporter.importDerivedFiles.errMsg1.text",
+                                                                      localPath, parentFilePath);
                             ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
                             this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                         }
                     }
                 } else {
-                    String errorMessage = String.format("Could not import derived file at %s, file does not exist", localPath);
+                    String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                              "ExternalResultsImporter.importDerivedFiles.errMsg2.text",
+                                                              localPath);
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
                     this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                 }
             } catch (TskCoreException ex) {
-                String errorMessage = String.format("Could not import derived file at %s, error querying/updating case database", localPath);
+                String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                          "ExternalResultsImporter.importDerivedFiles.errMsg3.text",
+                                                          localPath);
                 ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage, ex);
                 this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage, ex));
             }
@@ -150,7 +158,8 @@ public final class ExternalResultsImporter {
                                 attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), doubleValue));
                                 break;
                             default:
-                                String errorMessage = String.format("Could not import %s attribute, value = %s, for %s artifact from %s, unrecognized attribute value type: %s",
+                                String errorMessage = String.format(NbBundle.getMessage(this.getClass(),
+                                                                                        "ExternalResultsImporter.importArtifacts.caseErrMsg1.text"),
                                         attributeData.getType(), attributeData.getValue(),
                                         artifactData.getType(), artifactData.getSourceFilePath(),
                                         attributeData.getValueType());
@@ -165,12 +174,16 @@ public final class ExternalResultsImporter {
                         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
                     }
                 } else {
-                    String errorMessage = String.format("Could not import %s artifact from %s, source file not found", artifactData.getType(), artifactData.getSourceFilePath());
+                    String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                              "ExternalResultsImporter.importArtifacts.errMsg1.text",
+                                                              artifactData.getType(), artifactData.getSourceFilePath());
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
                     this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                 }
             } catch (TskCoreException ex) {
-                String errorMessage = String.format("Could not import %s artifact from %s, error updating case database", artifactData.getType(), artifactData.getSourceFilePath());
+                String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                          "ExternalResultsImporter.importArtifacts.errMsg2.text",
+                                                          artifactData.getType(), artifactData.getSourceFilePath());
                 ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage, ex);
                 this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage, ex));
             }
@@ -185,12 +198,12 @@ public final class ExternalResultsImporter {
                 if (reportFile.exists()) {
                     Case.getCurrentCase().addReport(reportPath, report.getSourceModuleName(), report.getReportName());
                 } else {
-                    String errorMessage = String.format("Could not import report at %s, file does not exist", reportPath);
+                    String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsImporter.importReports.errMsg1.text", reportPath);
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
                     this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                 }
             } catch (TskCoreException ex) {
-                String errorMessage = String.format("Could not import report at %s, error updating case database", reportPath);
+                String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsImporter.importReports.errMsg2.text", reportPath);
                 ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage, ex);
                 this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage, ex));
             }
@@ -213,7 +226,7 @@ public final class ExternalResultsImporter {
         if (!files.isEmpty()) {
             file = files.get(0);
             if (files.size() > 1) {
-                String errorMessage = String.format("Parent file path %s is ambiguous, using first file found", filePath);
+                String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsImporter.findFileInCaseDatabase.errMsg1.text", filePath);
                 this.recordError(errorMessage);
             }
         }
@@ -230,13 +243,15 @@ public final class ExternalResultsImporter {
                 Path pathRelative = pathBase.relativize(path);
                 relativePath = pathRelative.toString();
             } catch (IllegalArgumentException ex) {
-                String errorMessage = String.format("Did not convert %s to relative path, not in a subdirectory of case directory %s",
-                        localPath, caseDirectoryPath);
+                String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                          "ExternalResultsImporter.getPathRelativeToCaseFolder.errMsg1.text",
+                                                          localPath, caseDirectoryPath);
                 this.recordError(errorMessage, ex);
             }
         } else {
-            String errorMessage = String.format("Expected %s to be an absolute path to a file in a subdirectory of case directory %s",
-                    localPath, caseDirectoryPath);
+            String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                      "ExternalResultsImporter.getPathRelativeToCaseFolder.errMsg2.text",
+                                                      localPath, caseDirectoryPath);
             this.recordError(errorMessage);
         }
         return relativePath;
