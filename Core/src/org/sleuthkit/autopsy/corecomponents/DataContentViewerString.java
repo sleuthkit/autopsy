@@ -129,7 +129,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         jPanel1.setPreferredSize(new java.awt.Dimension(502, 424));
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font(outputViewPane.getFont().getName(), Font.PLAIN, 11));
+        outputViewPane.setFont(outputViewPane.getFont().deriveFont(Font.PLAIN, 11));
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
         jScrollPane1.setViewportView(outputViewPane);
 
