@@ -114,7 +114,7 @@ class NameSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        noteNameLabel.setFont(new java.awt.Font(noteNameLabel.getFont().getName(), Font.PLAIN, 10));
+        noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(Font.PLAIN, 10));
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
