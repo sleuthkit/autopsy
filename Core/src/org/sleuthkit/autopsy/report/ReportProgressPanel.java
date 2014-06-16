@@ -286,12 +286,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
 
-        reportLabel.setFont(new java.awt.Font(reportLabel.getFont().getName(), Font.BOLD, 11));
+        reportLabel.setFont(reportLabel.getFont().deriveFont(Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(new java.awt.Font(processingLabel.getFont().getName(), Font.ITALIC, 10));
+        processingLabel.setFont(processingLabel.getFont().deriveFont(Font.ITALIC, 10));
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N

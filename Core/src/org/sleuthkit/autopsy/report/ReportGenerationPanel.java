@@ -168,7 +168,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
         reportScrollPane.setViewportView(reportPanel);
 
-        titleLabel.setFont(new java.awt.Font(titleLabel.getFont().getName(), Font.BOLD, 11));
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(0, 0, 0));
