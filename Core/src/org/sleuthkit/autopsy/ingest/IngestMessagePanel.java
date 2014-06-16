@@ -130,7 +130,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         jScrollPane1.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font(messageTable.getFont().getName(), 0, 12));
+        messageTable.setFont(new java.awt.Font(messageTable.getFont().getName(), Font.PLAIN, 12));
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
