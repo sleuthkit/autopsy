@@ -124,7 +124,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
         messageDetailsPane.setBorder(null);
         messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-//        messageDetailsPane.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N NON-NLS
         messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
         messageDetailsPane.setFont(messageDetailsPane.getFont().deriveFont(10.0f));
         jScrollPane1.setViewportView(messageDetailsPane);
