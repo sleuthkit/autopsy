@@ -113,7 +113,6 @@ class NameSearchPanel extends javax.swing.JPanel {
             }
         });
 
-//        noteNameLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); //NON-NLS
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
         noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(10.0f));
 
