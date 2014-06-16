@@ -63,8 +63,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
     private MessageTableModel tableModel;
     private MessageTableRenderer renderer;
     private IngestMessageMainPanel mainPanel;
-    private static Font visitedFont = new Font("Arial", Font.PLAIN, 12); //NON-NLS
-    private static Font notVisitedFont = new Font("Arial", Font.BOLD, 12); //NON-NLS
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
@@ -132,7 +130,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         jScrollPane1.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N NON-NLS
+        messageTable.setFont(messageTable.getFont().deriveFont(Font.PLAIN, 12));
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
@@ -869,7 +867,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             cell.setHorizontalAlignment(SwingConstants.CENTER);
             
             // increase the font size
-            cell.setFont(new Font("", Font.PLAIN, 16));
+            cell.setFont(cell.getFont().deriveFont(Font.PLAIN, 16));
             
             final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
             if (messageGroup != null) {
@@ -901,6 +899,9 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             
             Component cell = super.getTableCellRendererComponent(
                     table, value, false, false, row, column);
+
+            Font visitedFont = cell.getFont().deriveFont(Font.PLAIN, 12);
+            Font notVisitedFont = cell.getFont().deriveFont(Font.BOLD, 12);
             
             if (column == 3) {
                 String subject = (String)value;

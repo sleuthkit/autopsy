@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,7 +168,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
         reportScrollPane.setViewportView(reportPanel);
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N NON-NLS
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(0, 0, 0));

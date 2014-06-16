@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -100,10 +101,10 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         GO_GET_COFFEE_LABEL.setDisplayedMnemonic('H');
         org.openide.awt.Mnemonics.setLocalizedText(GO_GET_COFFEE_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.GO_GET_COFFEE_LABEL.text")); // NOI18N
 
-        CURRENTLYON_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
+        CURRENTLYON_LABEL.setFont(CURRENTLYON_LABEL.getFont().deriveFont(Font.PLAIN, 14));
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTLYON_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTLYON_LABEL.text")); // NOI18N
 
-        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N NON-NLS
+        CURRENTDB_LABEL.setFont(CURRENTDB_LABEL.getFont().deriveFont(Font.PLAIN, 14));
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(CANCEL_BUTTON, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CANCEL_BUTTON.text")); // NOI18N
