@@ -24,6 +24,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JCheckBox;
@@ -113,8 +114,8 @@ class NameSearchPanel extends javax.swing.JPanel {
             }
         });
 
+        noteNameLabel.setFont(new java.awt.Font(noteNameLabel.getFont().getName(), Font.PLAIN, 10));
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
-        noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(10.0f));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
