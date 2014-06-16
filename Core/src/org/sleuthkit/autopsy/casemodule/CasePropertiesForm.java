@@ -25,6 +25,7 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Map;
@@ -191,7 +192,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePropLabel.setFont(new java.awt.Font("Tahoma", 1, 24)); //NON-NLS
+        casePropLabel.setFont(casePropLabel.getFont().deriveFont(Font.BOLD, 24));
         casePropLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         casePropLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.casePropLabel.text")); // NOI18N
 
@@ -213,10 +214,11 @@ class CasePropertiesForm extends javax.swing.JPanel{
             }
         });
 
-        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); //NON-NLS
-        genInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
+        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(Font.BOLD, 14));
+        genInfoLabel.setText(
+                org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); //NON-NLS
+        imgInfoLabel.setFont(imgInfoLabel.getFont().deriveFont(Font.BOLD, 14));
         imgInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imgInfoLabel.text")); // NOI18N
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N

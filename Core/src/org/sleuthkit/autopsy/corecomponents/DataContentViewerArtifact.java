@@ -19,8 +19,7 @@
 
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -106,7 +105,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             jPanel1.setPreferredSize(new java.awt.Dimension(622, 424));
 
             outputViewPane.setEditable(false);
-            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N NON-NLS
+            outputViewPane.setFont(outputViewPane.getFont().deriveFont(Font.PLAIN, 11));
             outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(outputViewPane);
 

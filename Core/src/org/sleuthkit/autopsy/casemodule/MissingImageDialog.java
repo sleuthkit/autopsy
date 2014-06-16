@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
@@ -214,8 +213,9 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addContainerGap(62, Short.MAX_VALUE))
         );
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N NON-NLS
-        org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
+        org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle
+                .getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(102, 102, 102));
 

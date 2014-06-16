@@ -1185,7 +1185,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
         } catch (Exception ex) {
-            String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString());
+            String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString()); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
         }
     }    

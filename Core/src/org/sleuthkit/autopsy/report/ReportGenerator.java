@@ -1318,8 +1318,8 @@ import org.sleuthkit.datamodel.TskData;
             case TSK_EXT_MISMATCH_DETECTED:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"),
-                        "Extension",
-                        "MIME Type",
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.extension.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")}));
                 break;    
             default:

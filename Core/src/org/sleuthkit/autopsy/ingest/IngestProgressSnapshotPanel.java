@@ -26,6 +26,7 @@ import javax.swing.JDialog;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
@@ -79,7 +80,18 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private class SnapshotsTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Thread ID", "Data Source", "Ingest Module", "File", "Start Time", "Elapsed Time (H:M:S)"};
+        private final String[] columnNames = {NbBundle.getMessage(this.getClass(),
+                                                                  "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.threadID"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.dataSource"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.ingestModule"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.file"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.startTime"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.elapsedTime")};
         private List<IngestTask.ProgressSnapshot> snapshots;
 
         private SnapshotsTableModel() {
