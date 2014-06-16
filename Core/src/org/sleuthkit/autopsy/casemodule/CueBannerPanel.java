@@ -101,10 +101,10 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        createNewLabel.setFont(new java.awt.Font(createNewLabel.getFont().getName(), Font.PLAIN, 13));
+        createNewLabel.setFont(createNewLabel.getFont().deriveFont(Font.PLAIN, 13));
         createNewLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewLabel.text")); // NOI18N
 
-        openRecentLabel.setFont(new java.awt.Font(openRecentLabel.getFont().getName(), Font.PLAIN, 13));
+        openRecentLabel.setFont(openRecentLabel.getFont().deriveFont(Font.PLAIN, 13));
         openRecentLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentLabel.text")); // NOI18N
 
         openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N NON-NLS
@@ -120,7 +120,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openLabel.setFont(new java.awt.Font(openLabel.getFont().getName(), Font.PLAIN, 13));
+        openLabel.setFont(openLabel.getFont().deriveFont(Font.PLAIN, 13));
         openLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openLabel.text")); // NOI18N
 
         javax.swing.GroupLayout editorPanelLayout = new javax.swing.GroupLayout(editorPanel);
