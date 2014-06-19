@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import javax.swing.DefaultComboBoxModel;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
@@ -29,6 +30,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     AutopsyOptionsPanel(AutopsyOptionsPanelController controller) {
         initComponents();
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(new Integer[]{1, 2, 4, 8, 16}));
+        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", Runtime.getRuntime().availableProcessors()));
         // TODO listen to changes in form fields and call controller.changed()
     }
 

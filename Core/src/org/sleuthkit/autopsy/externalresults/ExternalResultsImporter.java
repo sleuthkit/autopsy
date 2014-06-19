@@ -158,8 +158,8 @@ public final class ExternalResultsImporter {
                                 attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), doubleValue));
                                 break;
                             default:
-                                String errorMessage = String.format(NbBundle.getMessage(this.getClass(),
-                                                                                        "ExternalResultsImporter.importArtifacts.caseErrMsg1.text"),
+                                String errorMessage = NbBundle.getMessage(this.getClass(),
+                                                                          "ExternalResultsImporter.importArtifacts.caseErrMsg1.text",
                                         attributeData.getType(), attributeData.getValue(),
                                         artifactData.getType(), artifactData.getSourceFilePath(),
                                         attributeData.getValueType());

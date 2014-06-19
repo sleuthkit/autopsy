@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -29,7 +27,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.SystemAction;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 @ActionID(
@@ -45,16 +42,6 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 public final class ShowIngestProgressSnapshotAction extends SystemAction implements ActionListener {
 
     private static final String ACTION_NAME = NbBundle.getMessage(ShowIngestProgressSnapshotAction.class, "ShowIngestProgressSnapshotAction.actionName.text");
-
-    public ShowIngestProgressSnapshotAction() {
-        setEnabled(false);
-        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                setEnabled(IngestManager.getInstance().isIngestRunning());
-            }
-        });
-    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
