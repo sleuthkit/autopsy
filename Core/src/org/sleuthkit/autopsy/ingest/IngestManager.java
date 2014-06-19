@@ -632,7 +632,7 @@ public class IngestManager {
         IngestThreadActivitySnapshot(long threadId) {
             this.threadId = threadId;
             startTime = new Date();
-            this.activity = "Idle";
+            this.activity = NbBundle.getMessage(this.getClass(), "IngestManager.IngestThreadActivitySnapshot.idleThread");
             this.dataSourceName = "";
             this.fileName = "";
         }
