@@ -180,10 +180,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean hasDataSourceIngestPipeline() {
-        if (dataSourceIngestPipeline.isEmpty()) {
-            return false;
-        }
-        return true;
+        return (dataSourceIngestPipeline.isEmpty() == false);
     }
 
     /**
@@ -192,10 +189,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean hasFileIngestPipeline() {
-        if (fileIngestPipelines.peek().isEmpty()) {
-            return false;
-        }
-        return true;
+        return (fileIngestPipelines.peek().isEmpty() == false);
     }
 
     void process(DataSourceIngestTask task) throws InterruptedException {
@@ -206,7 +200,7 @@ final class IngestJob {
                 logIngestModuleErrors(errors);
             }
         }
-        if (dataSourceIngestProgress != null) {
+        if (null != dataSourceIngestProgress) {
             dataSourceIngestProgress.finish();
             // This is safe because this method will be called at most once per
             // ingest job and finish() will not be called while that single 
