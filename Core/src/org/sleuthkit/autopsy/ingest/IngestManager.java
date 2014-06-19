@@ -50,6 +50,7 @@ public class IngestManager {
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
+    private static final int MAX_ERROR_MESSAGE_POSTS = 200;
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static IngestManager instance = null;
     private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
@@ -63,6 +64,7 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, Future<Void>> startIngestJobThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> dataSourceIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final ConcurrentHashMap<Long, Future<?>> fileIngestThreads = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
+    private final AtomicLong ingestErrorMessagePosts = new AtomicLong(0L);
     private volatile IngestMessageTopComponent ingestMessageBox;
     private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
 
@@ -155,10 +157,10 @@ public class IngestManager {
     }
 
     synchronized void startIngestJobs(final List<Content> dataSources, final List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
-        if (!isIngestRunning() && ingestMessageBox != null) {
-            ingestMessageBox.clearMessages();
+        if (!isIngestRunning()) {
+            clearIngestMessageBox();
         }
-
+    
         long taskId = nextThreadId.incrementAndGet();
         Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobsThread(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
         startIngestJobThreads.put(taskId, task);
@@ -181,19 +183,22 @@ public class IngestManager {
 
     void handleCaseOpened() {
         IngestScheduler.getInstance().setEnabled(true);
-        if (ingestMessageBox != null) {
-            ingestMessageBox.clearMessages();
-        }
+        clearIngestMessageBox();
     }
 
     void handleCaseClosed() {
         IngestScheduler.getInstance().setEnabled(false);
         cancelAllIngestJobs();
+        clearIngestMessageBox();
+    }
+
+    private void clearIngestMessageBox() {
         if (ingestMessageBox != null) {
             ingestMessageBox.clearMessages();
         }
+        ingestErrorMessagePosts.set(0);        
     }
-
+    
     /**
      * Test if any ingest jobs are in progress.
      *
@@ -206,7 +211,7 @@ public class IngestManager {
     List<IngestTask.ProgressSnapshot> getIngestTaskProgressSnapshots() {
         return IngestScheduler.getInstance().getIngestTaskProgressSnapshots();
     }
-        
+
     public void cancelAllIngestJobs() {
         // Stop creating new ingest jobs.
         for (Future<Void> handle : startIngestJobThreads.values()) {
@@ -406,6 +411,17 @@ public class IngestManager {
         if (ingestMessageBox != null) {
             if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
                 ingestMessageBox.displayMessage(message);
+            } else {
+                long errorPosts = ingestErrorMessagePosts.incrementAndGet();
+                if (errorPosts <= MAX_ERROR_MESSAGE_POSTS) {
+                    ingestMessageBox.displayMessage(message);
+                } else if (errorPosts == MAX_ERROR_MESSAGE_POSTS + 1) {
+                    IngestMessage errorMessageLimitReachedMessage = IngestMessage.createErrorMessage(
+                            "Ingest Manager",
+                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.subject"),
+                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.msg", MAX_ERROR_MESSAGE_POSTS));
+                    ingestMessageBox.displayMessage(errorMessageLimitReachedMessage);
+                }
             }
         }
     }
@@ -423,7 +439,7 @@ public class IngestManager {
             return -1;
         }
     }
-    
+
     /**
      * Creates ingest jobs.
      */
@@ -496,7 +512,7 @@ public class IngestManager {
                         notifyMessage.append("\n\n");
                         JOptionPane.showMessageDialog(null, notifyMessage.toString(),
                                 NbBundle.getMessage(this.getClass(),
-                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
+                                        "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
                     }
                     progress.progress(++dataSourceProcessed);
 
