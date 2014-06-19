@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.Content;
  */
 final class DataSourceIngestPipeline {
 
+    private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobContext context;
     private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
@@ -82,7 +83,7 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process(DataSourceIngestTask task, ProgressHandle progress) {
+    List<IngestModuleError> process(DataSourceIngestTask task, ProgressHandle progress, long threadId) {
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = task.getDataSource();
         for (DataSourceIngestModuleDecorator module : modules) {
@@ -90,7 +91,7 @@ final class DataSourceIngestPipeline {
                 progress.setDisplayName(NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.displayName",
                         module.getDisplayName(), dataSource.getName()));
-                task.updateProgressStatus(module.getDisplayName(), null);
+                ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(dataSource, new DataSourceIngestModuleProgress(progress));
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
@@ -99,6 +100,7 @@ final class DataSourceIngestPipeline {
                 break;
             }
         }
+        ingestManager.setIngestTaskProgressCompleted(task);
         return errors;
     }
 

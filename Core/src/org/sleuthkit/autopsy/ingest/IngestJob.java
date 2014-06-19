@@ -180,10 +180,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean hasDataSourceIngestPipeline() {
-        if (dataSourceIngestPipeline.isEmpty()) {
-            return false;
-        }
-        return true;
+        return (dataSourceIngestPipeline.isEmpty() == false);
     }
 
     /**
@@ -192,21 +189,18 @@ final class IngestJob {
      * @return True or false.
      */
     boolean hasFileIngestPipeline() {
-        if (fileIngestPipelines.peek().isEmpty()) {
-            return false;
-        }
-        return true;
+        return (fileIngestPipelines.peek().isEmpty() == false);
     }
 
-    void process(DataSourceIngestTask task) throws InterruptedException {
+    void process(DataSourceIngestTask task, long threadId) throws InterruptedException {
         if (!isCancelled() && !dataSourceIngestPipeline.isEmpty()) {
             List<IngestModuleError> errors = new ArrayList<>();
-            errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress));
+            errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress, threadId));
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
         }
-        if (dataSourceIngestProgress != null) {
+        if (null != dataSourceIngestProgress) {
             dataSourceIngestProgress.finish();
             // This is safe because this method will be called at most once per
             // ingest job and finish() will not be called while that single 
@@ -217,7 +211,7 @@ final class IngestJob {
         ingestTaskScheduler.notifyTaskCompleted(task);
     }
 
-    void process(FileIngestTask task) throws InterruptedException {
+    void process(FileIngestTask task, long threadId) throws InterruptedException {
         if (!isCancelled()) {
             FileIngestPipeline pipeline = fileIngestPipelines.take();
             if (!pipeline.isEmpty()) {
@@ -231,7 +225,7 @@ final class IngestJob {
                     }
                 }
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(pipeline.process(task));
+                errors.addAll(pipeline.process(task, threadId));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }

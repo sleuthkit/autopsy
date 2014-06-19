@@ -18,21 +18,15 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.Content;
-
 final class DataSourceIngestTask extends IngestTask {
         
-    DataSourceIngestTask(IngestJob job, ProgressSnapshots snapshots) {
-        super(job, snapshots);
+    DataSourceIngestTask(IngestJob job) {
+        super(job);
     }
         
-    Content getDataSource() {
-        return getIngestJob().getDataSource();
-    }    
-    
     @Override
     void execute(long threadId) throws InterruptedException {
-        super.execute(threadId);
-        getIngestJob().process(this);
+        super.setThreadId(threadId);
+        getIngestJob().process(this, threadId);
     }
 }
