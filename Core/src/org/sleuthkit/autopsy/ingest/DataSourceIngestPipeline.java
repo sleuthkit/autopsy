@@ -83,7 +83,7 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process(DataSourceIngestTask task, ProgressHandle progress, long threadId) {
+    List<IngestModuleError> process(DataSourceIngestTask task, ProgressHandle progress) {
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = task.getDataSource();
         for (DataSourceIngestModuleDecorator module : modules) {

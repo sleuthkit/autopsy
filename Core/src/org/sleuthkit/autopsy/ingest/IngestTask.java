@@ -22,11 +22,13 @@ import org.sleuthkit.datamodel.Content;
 
 abstract class IngestTask {
 
+    private final static long NOT_SET = Long.MIN_VALUE;
     private final IngestJob job;
     private long threadId;
 
     IngestTask(IngestJob job) {
         this.job = job;
+        threadId = NOT_SET;
     }
 
     IngestJob getIngestJob() {
@@ -41,7 +43,7 @@ abstract class IngestTask {
         return threadId;
     }
     
-    void setThreadId(long threadId) throws InterruptedException {
+    void setThreadId(long threadId) {
         this.threadId = threadId;
     }    
     

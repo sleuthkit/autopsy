@@ -92,7 +92,7 @@ final class FileIngestPipeline {
      * @param file File to analyze
      * @return List of errors or empty list if no errors
      */
-    List<IngestModuleError> process(FileIngestTask task, long threadId) {
+    List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
         AbstractFile file = task.getFile();
         for (FileIngestModuleDecorator module : modules) {

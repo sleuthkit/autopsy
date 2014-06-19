@@ -192,10 +192,10 @@ final class IngestJob {
         return (fileIngestPipelines.peek().isEmpty() == false);
     }
 
-    void process(DataSourceIngestTask task, long threadId) throws InterruptedException {
+    void process(DataSourceIngestTask task) throws InterruptedException {
         if (!isCancelled() && !dataSourceIngestPipeline.isEmpty()) {
             List<IngestModuleError> errors = new ArrayList<>();
-            errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress, threadId));
+            errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress));
             if (!errors.isEmpty()) {
                 logIngestModuleErrors(errors);
             }
@@ -211,7 +211,7 @@ final class IngestJob {
         ingestTaskScheduler.notifyTaskCompleted(task);
     }
 
-    void process(FileIngestTask task, long threadId) throws InterruptedException {
+    void process(FileIngestTask task) throws InterruptedException {
         if (!isCancelled()) {
             FileIngestPipeline pipeline = fileIngestPipelines.take();
             if (!pipeline.isEmpty()) {
@@ -225,7 +225,7 @@ final class IngestJob {
                     }
                 }
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(pipeline.process(task, threadId));
+                errors.addAll(pipeline.process(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }

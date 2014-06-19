@@ -41,7 +41,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     void execute(long threadId) throws InterruptedException {
         super.setThreadId(threadId);
-        getIngestJob().process(this, threadId);
+        getIngestJob().process(this);
     }
 
     @Override
