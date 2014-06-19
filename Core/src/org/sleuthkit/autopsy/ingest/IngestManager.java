@@ -250,7 +250,6 @@ public class IngestManager {
         }
         return snapshot;
     }
->>>>>>> upstream/develop
 
     public void cancelAllIngestJobs() {
         // Stop creating new ingest jobs.
