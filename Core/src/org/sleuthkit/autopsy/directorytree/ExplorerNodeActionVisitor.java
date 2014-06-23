@@ -202,7 +202,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 // error handler if no volume matches
                 JLabel error = new JLabel(
                         NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.volDetail.noVolMatchErr"));
-                error.setFont(new Font("Arial", Font.BOLD, 24)); //NON-NLS
+                error.setFont(error.getFont().deriveFont(Font.BOLD, 24));
                 popUpWindow.add(error);
             }
 
@@ -273,7 +273,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 // error handler if no volume matches
                 JLabel error = new JLabel(
                         NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.imgDetail.noVolMatchesErr"));
-                error.setFont(new Font("Arial", Font.BOLD, 24)); //NON-NLS
+                error.setFont(error.getFont().deriveFont(Font.BOLD, 24));
                 popUpWindow.add(error);
             }
 

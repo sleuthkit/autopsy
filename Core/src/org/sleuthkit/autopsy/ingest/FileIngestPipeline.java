@@ -30,8 +30,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 final class FileIngestPipeline {
 
+    private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobContext context;
-    private List<FileIngestModuleDecorator> modules = new ArrayList<>();
+    private final List<FileIngestModuleDecorator> modules = new ArrayList<>();
 
     FileIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
         this.context = context;
@@ -96,7 +97,7 @@ final class FileIngestPipeline {
         AbstractFile file = task.getFile();
         for (FileIngestModuleDecorator module : modules) {
             try {
-                task.updateProgressStatus(module.getDisplayName(), file);
+                ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(file);
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
@@ -109,6 +110,7 @@ final class FileIngestPipeline {
         if (!context.isJobCancelled()) {
             IngestManager.getInstance().fireFileIngestDone(file.getId());
         }
+        ingestManager.setIngestTaskProgressCompleted(task);
         return errors;
     }
 
