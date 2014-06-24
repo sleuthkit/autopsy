@@ -90,7 +90,7 @@ abstract class Extract {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error while trying to add an artifact: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
         }
     }
 
