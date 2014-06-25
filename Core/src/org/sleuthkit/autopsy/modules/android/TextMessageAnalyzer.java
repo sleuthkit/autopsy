@@ -91,13 +91,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 
                 BlackboardArtifact bba;               
                 String address; // may be phone number, or other addresses
-                String date;//unix time
+                
                 String type; // message received in inbox = 1, message sent = 2
                 String subject;//message subject
                 String body; //message body
                 while (resultSet.next()) {
                     address = resultSet.getString("address");
-                    date = resultSet.getString("date");
+                    Long date = Long.valueOf(resultSet.getString("date")) / 1000;
                     type = resultSet.getString("type");
                     subject = resultSet.getString("subject");
                     body = resultSet.getString("body");

@@ -79,51 +79,51 @@ class CacheLocationAnalyzer {
             InputStream inputStream = new FileInputStream(file);
             AbstractFile f = skCase.getAbstractFileById(fId);
             BlackboardArtifact bba;
-            String timestamp; // unix time
+            
             String latitude; 
             String longitude; 
             String confidence;
             String accuracy; //measure of how accurate the gps location is.
 
-            bytes = new byte[(int) 2]; // version
+            bytes = new byte[2]; // version
             inputStream.read(bytes);
-            bytes = new byte[(int) 2];
+            bytes = new byte[2];
             inputStream.read(bytes); //number of location entries
             int iterations = new BigInteger(bytes).intValue();
             
             for (int i = 0; i < iterations; i++) { //loop through every entry
-                bytes = new byte[(int) 2];
+                bytes = new byte[2];
                 inputStream.read(bytes);
-                bytes = new byte[(int) 1];
+                bytes = new byte[1];
                 inputStream.read(bytes);
                 while (new BigInteger(bytes).intValue() != 0) //pass through non important values until the start of accuracy(around 7-10 bytes)
                 {
                     inputStream.read(bytes);
                 }
-                bytes = new byte[(int) 3];
+                bytes = new byte[3];
                 inputStream.read(bytes);
                 if (new BigInteger(bytes).intValue()<=0){//This refers to a location that could not be calculated.
-                    bytes = new byte[(int) 28]; //read rest of the row's bytes
+                    bytes = new byte[28]; //read rest of the row's bytes
                     inputStream.read(bytes);
                     continue;
                 } 
                 accuracy=""+new BigInteger(bytes).intValue(); 
                 
-                bytes = new byte[(int) 4];
+                bytes = new byte[4];
                 inputStream.read(bytes);
                 confidence=""+new BigInteger(bytes).intValue();
                 
-                bytes = new byte[(int) 8];
+                bytes = new byte[8];
                 inputStream.read(bytes);
                 latitude=""+toDouble(bytes);
                 
-                bytes = new byte[(int) 8];
+                bytes = new byte[8];
                 inputStream.read(bytes);
                 longitude= ""+toDouble(bytes);
                 
-                bytes = new byte[(int) 8];
+                bytes = new byte[8];
                 inputStream.read(bytes);
-                timestamp = ""+new BigInteger(bytes).intValue();
+                Long timestamp = new BigInteger(bytes).longValue();
                 
                 bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),moduleName,latitude));

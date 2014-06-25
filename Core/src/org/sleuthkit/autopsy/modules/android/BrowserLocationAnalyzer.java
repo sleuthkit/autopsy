@@ -92,17 +92,15 @@ class BrowserLocationAnalyzer {
                         "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;");
 
                 BlackboardArtifact bba;
-                String timestamp; // unix time
+                Long timestamp; // unix time
                 String latitude; 
                 String longitude; 
-                String accuracy; //measure of how accurate the gps location is.
-
+                
 
                 while (resultSet.next()) {
-                    timestamp = resultSet.getString("timestamp");
+                    timestamp = Long.valueOf(resultSet.getString("timestamp")) / 1000;
                     latitude= resultSet.getString("latitude");
                     longitude = resultSet.getString("longitude");
-                    accuracy = resultSet.getString("accuracy");
 
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),moduleName,latitude));

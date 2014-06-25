@@ -91,14 +91,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 
                 BlackboardArtifact bba;
                 String conv_id; // seems to wrap around the message found in payload after decoding from base-64
-                String create_time; // unix time
                 String direction; // 1 incoming, 2 outgoing
                 String payload; // seems to be a base64 message wrapped by the conv_id
               
 
                 while (resultSet.next()) {
                     conv_id = resultSet.getString("conv_id");
-                    create_time = resultSet.getString("create_time");
+                    Long create_time = Long.valueOf(resultSet.getString("create_time")) / 1000;
                     direction = resultSet.getString("direction");
                     payload = resultSet.getString("payload");
 

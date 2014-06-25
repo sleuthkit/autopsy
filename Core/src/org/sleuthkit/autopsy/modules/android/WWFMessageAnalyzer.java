@@ -88,14 +88,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 
                 BlackboardArtifact bba;
                 String message; // WWF Message
-                String created_at; // unix time
                 String user_id; // the ID of the user who sent the message.
                 String game_id; // ID of the game which the the message was sent.
               
 
                 while (resultSet.next()) {
                     message = resultSet.getString("message");
-                    created_at = resultSet.getString("created_at");
+                    Long created_at = Long.valueOf(resultSet.getString("created_at")) / 1000;
                     user_id = resultSet.getString("user_id");
                     game_id = resultSet.getString("game_id");
 
@@ -105,10 +104,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), moduleName, game_id));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName,message));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,"Words With Friends Message" ));
-
                 }
-
-
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e);
             } finally {
@@ -123,8 +119,5 @@ import org.sleuthkit.datamodel.TskCoreException;
         } catch (Exception e) {
              logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e);
         }
-
     }
-
-
 }

@@ -90,26 +90,34 @@ import org.sleuthkit.datamodel.TskCoreException;
                         "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;");
 
                 BlackboardArtifact bba;
-                String name; // name of person dialed or called. null if unregistered
-                String number; //string phone number
-                String duration; //duration of call in seconds
-                String date; // Unix time
-                String type; // 1 incoming, 2 outgoing, 3 missed
 
                 while (resultSet.next()) {
-                    name = resultSet.getString("name");
-                    number = resultSet.getString("number");
-                    duration = resultSet.getString("duration");
-                    date = resultSet.getString("date");
-                    type = resultSet.getString("type");
+                    // name of person dialed or called. null if unregistered
+                    String name = resultSet.getString("name");
+                    String number = resultSet.getString("number");
+                    //duration of call in seconds
+                    Long duration = Long.valueOf(resultSet.getString("duration"));
+                    Long date = Long.valueOf(resultSet.getString("date")) / 1000;
+                    
+                    String direction = "";
+                    switch (Integer.valueOf(resultSet.getString("type"))) {
+                        case 1:
+                            direction = "Incoming";
+                            break;
+                        case 2:
+                            direction = "Outgoing";
+                            break;
+                        case 3:
+                            direction = "Missed";
+                            break;
+                    }
 
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),moduleName, number));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration+date));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, type));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
-
                 }
             } catch (Exception e) {
                  logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
@@ -125,7 +133,5 @@ import org.sleuthkit.datamodel.TskCoreException;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
         }
-
     }
-
 }

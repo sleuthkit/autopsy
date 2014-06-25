@@ -91,28 +91,27 @@ class GoogleMapLocationAnalyzer {
                         "Select time,dest_lat,dest_lng,dest_title,dest_address,source_lat,source_lng FROM destination_history;");
 
                 BlackboardArtifact bba;
-                String time; // unix time
-                String dest_lat;
-                String dest_lng;
-                String dest_title; // name of the location
-                String dest_address;
-                String source_lat;
-                String source_lng;
+                
+
 
                 while (resultSet.next()) {
-                    time = resultSet.getString("time");
-                    dest_lat = resultSet.getString("dest_lat");
-                    dest_lng = resultSet.getString("dest_lng");
-                    dest_title = resultSet.getString("dest_title");
-                    dest_address = resultSet.getString("dest_address");
-                    source_lat = resultSet.getString("source_lat");
-                    source_lng = resultSet.getString("source_lng");
+                    Long time = Long.valueOf(resultSet.getString("time")) / 1000;
+                    String dest_lat = resultSet.getString("dest_lat");
+                    String dest_lng = resultSet.getString("dest_lng");
+                    String dest_title = resultSet.getString("dest_title");
+                    String dest_address = resultSet.getString("dest_address");
+                    String source_lat = resultSet.getString("source_lat");
+                    String source_lng = resultSet.getString("source_lng");
                     
                     //add periods 6 decimal places before the end.
-                    if(dest_lat.length()>6)dest_lat =  dest_lat.substring(0, dest_lat.length()-6) + "." + dest_lat.substring(dest_lat.length()-6, dest_lat.length()) ;
-                    if(dest_lng.length()>6)dest_lng =  dest_lng.substring(0, dest_lng.length()-6) + "." + dest_lng.substring(dest_lng.length()-6, dest_lng.length())  ;
-                    if(source_lat.length()>6)source_lat = source_lat.substring(0, source_lat.length()-6) + "." + source_lat.substring(source_lat.length()-6, source_lat.length()) ;
-                    if(source_lng.length()>6)source_lng = source_lng.substring(0, source_lng.length()-6) + "." + source_lng.substring(source_lng.length()-6, source_lng.length()) ;
+                    if(dest_lat.length()>6)
+                        dest_lat =  dest_lat.substring(0, dest_lat.length()-6) + "." + dest_lat.substring(dest_lat.length()-6, dest_lat.length()) ;
+                    if(dest_lng.length()>6)
+                        dest_lng =  dest_lng.substring(0, dest_lng.length()-6) + "." + dest_lng.substring(dest_lng.length()-6, dest_lng.length())  ;
+                    if(source_lat.length()>6)
+                        source_lat = source_lat.substring(0, source_lat.length()-6) + "." + source_lat.substring(source_lat.length()-6, source_lat.length()) ;
+                    if(source_lng.length()>6)
+                        source_lng = source_lng.substring(0, source_lng.length()-6) + "." + source_lng.substring(source_lng.length()-6, source_lng.length()) ;
                     
 //                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);//src
 //                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, "Source"));
@@ -140,10 +139,6 @@ class GoogleMapLocationAnalyzer {
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, dest_title));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(), moduleName, dest_address));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "Google Maps History"));
-                      
-                      
-                      
-                     
                      
                 }
 
@@ -161,7 +156,5 @@ class GoogleMapLocationAnalyzer {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Google map locations to the Blackboard", e);
         }
-
     }
-
 }
