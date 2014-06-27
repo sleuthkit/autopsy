@@ -560,11 +560,18 @@ public class DataResultFilterNode extends FilterNode {
                         final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
                         // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
                         Node newSelection = children.findChild(dataModelNode.getName());
-                        try {
-                            sourceEm.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
-                        } catch (PropertyVetoException ex) {
-                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
+                        
+                        /* We got null here when we were viewing a ZIP file in the Views -> Archives area and double clicking on
+                         * it got to this code.  It tried to find the child in the tree and didn't find it. An exception was
+                         * then thrown from setting the selected node to be null. 
+                         */
+                        if (newSelection != null) {
+                            try {
+                                sourceEm.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                            } catch (PropertyVetoException ex) {
+                                Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                                logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
+                            }
                         }
                     }
                 }

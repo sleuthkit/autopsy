@@ -854,7 +854,7 @@ import org.sleuthkit.datamodel.TskData;
                                                 "GROUP BY list"); //NON-NLS
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
-                String list = listsRs.getString("list");
+                String list = listsRs.getString("list"); //NON-NLS
                 if(list.isEmpty()) {
                     list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
                 }
@@ -1001,7 +1001,7 @@ import org.sleuthkit.datamodel.TskData;
                                                 "GROUP BY list"); //NON-NLS
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
-                lists.add(listsRs.getString("list"));
+                lists.add(listsRs.getString("list")); //NON-NLS
             }
             
             for (TableReportModule module : tableModules) {
