@@ -18,7 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
+import java.util.List;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
@@ -75,5 +79,52 @@ public class FileTypesNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.desc"),
                 getName()));
         return s;
+    }
+
+    /**
+     *
+     */
+    static class FileTypesChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
+
+        private SleuthkitCase skCase;
+        private FileTypeExtensionFilters.RootFilter filter;
+
+        /**
+         *
+         * @param skCase
+         * @param filter Is null for root node
+         */
+        public FileTypesChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
+            super();
+            this.skCase = skCase;
+            this.filter = filter;
+        }
+
+        @Override
+        protected boolean createKeys(List<FileTypeExtensionFilters.SearchFilterInterface> list) {
+            // root node
+            if (filter == null) {
+                list.addAll(Arrays.asList(FileTypeExtensionFilters.RootFilter.values()));
+            }
+            // document and executable has another level of nodes
+            else if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER)) {
+                list.addAll(Arrays.asList(FileTypeExtensionFilters.DocumentFilter.values()));
+            } else if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER)) {
+                list.addAll(Arrays.asList(FileTypeExtensionFilters.ExecutableFilter.values()));
+            }
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(FileTypeExtensionFilters.SearchFilterInterface key) {
+            // make new nodes for the sub-nodes
+            if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER.getName())) {
+                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER);
+            } else if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
+                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER);
+            } else {
+                return new FileTypeNode(key, skCase);
+            }
+        }
     }
 }
