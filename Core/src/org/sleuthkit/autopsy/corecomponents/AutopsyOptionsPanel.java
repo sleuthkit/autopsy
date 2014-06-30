@@ -30,7 +30,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     AutopsyOptionsPanel(AutopsyOptionsPanelController controller) {
         initComponents();
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(new Integer[]{1, 2, 4, 6, 8, 12, 16}));
-        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", Runtime.getRuntime().availableProcessors() - 2));
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", availableProcessors > 2 ? availableProcessors - 2 : 1));
         // TODO listen to changes in form fields and call controller.changed()
     }
 
