@@ -40,11 +40,11 @@ public class Utilities {
          * method that sets consistent styles for all viewers and takes font
          * size as an argument.
          */
-        styleSheet.addRule("body {font-family:Arial;font-size:14pt;}"); //NON-NLS
-        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}"); //NON-NLS
-        styleSheet.addRule("li {font-family:Arial;font-size:14pt;}"); //NON-NLS
-        styleSheet.addRule("td {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;}"); //NON-NLS
-        styleSheet.addRule("th {font-family:Arial;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}"); //NON-NLS
-        styleSheet.addRule("p {font-family:Arial;font-size:14pt;}"); //NON-NLS
+        styleSheet.addRule("body {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;}"); //NON-NLS
+        styleSheet.addRule("p {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;}"); //NON-NLS
+        styleSheet.addRule("li {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;}"); //NON-NLS
+        styleSheet.addRule("td {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;}"); //NON-NLS
+        styleSheet.addRule("th {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}"); //NON-NLS
+        styleSheet.addRule("p {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;}"); //NON-NLS
     }
 }
