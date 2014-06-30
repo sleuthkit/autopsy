@@ -269,9 +269,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     public void cancel() {
-        HashDbManager.getInstance().loadLastSavedConfiguration();
+        /* Revert back to last settings only if the user could have
+         * made changes.  Doing this while ingest is running causes
+         * hash dbs to be closed while they are still being used. 
+         */
+        if (IngestManager.getInstance().isIngestRunning() == false) {
+            HashDbManager.getInstance().loadLastSavedConfiguration();
+        }
     }
-
+    
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
             hashSetManager.removeHashDatabaseInternal(hashDb);
