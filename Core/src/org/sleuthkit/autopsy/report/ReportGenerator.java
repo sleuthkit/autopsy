@@ -845,7 +845,11 @@ import org.sleuthkit.datamodel.TskData;
     private void writeKeywordHits(List<TableReportModule> tableModules, String comment, HashSet<String> tagNamesFilter) {
         ResultSet listsRs = null;
         try {
-            // Query for keyword lists
+            // Query for keyword lists-only so that we can tell modules what lists
+            // will exist for their index.
+            // @@@ There is a bug in here.  We should use the tags in the below code
+            // so that we only report the lists that we will later provide with real
+            // hits.  If no keyord hits are tagged, then we make the page for nothing.
             listsRs = skCase.runQuery("SELECT att.value_text AS list " + //NON-NLS
                                                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
                                                 "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
@@ -854,7 +858,7 @@ import org.sleuthkit.datamodel.TskData;
                                                 "GROUP BY list"); //NON-NLS
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
-                String list = listsRs.getString("list");
+                String list = listsRs.getString("list"); //NON-NLS
                 if(list.isEmpty()) {
                     list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
                 }
@@ -883,7 +887,7 @@ import org.sleuthkit.datamodel.TskData;
         
         ResultSet rs = null;
         try {
-            // Query for keywords
+            // Query for keywords, grouped by list
             rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name " + //NON-NLS
                                            "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
                                            "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
@@ -1001,7 +1005,7 @@ import org.sleuthkit.datamodel.TskData;
                                                 "GROUP BY list"); //NON-NLS
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
-                lists.add(listsRs.getString("list"));
+                lists.add(listsRs.getString("list")); //NON-NLS
             }
             
             for (TableReportModule module : tableModules) {

@@ -456,7 +456,7 @@ public class IngestManager {
                     ingestMessageBox.displayMessage(message);
                 } else if (errorPosts == MAX_ERROR_MESSAGE_POSTS + 1) {
                     IngestMessage errorMessageLimitReachedMessage = IngestMessage.createErrorMessage(
-                            "Ingest Manager",
+                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.title"),
                             NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.subject"),
                             NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.msg", MAX_ERROR_MESSAGE_POSTS));
                     ingestMessageBox.displayMessage(errorMessageLimitReachedMessage);

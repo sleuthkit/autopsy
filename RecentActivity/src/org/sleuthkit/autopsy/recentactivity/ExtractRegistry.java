@@ -452,24 +452,26 @@ class ExtractRegistry extends Extract {
                                                                          NbBundle.getMessage(this.getClass(),
                                                                                              "ExtractRegistry.parentModuleName.noSpace"), usbMtime));
                                 String dev = artnode.getAttribute("dev"); //NON-NLS
+                                String make = "";
                                 String model = dev; 
                                 if (dev.toLowerCase().contains("vid")) { //NON-NLS
                                     USBInfo info = extrctr.parseAndLookup(dev);
                                     if (info.getVendor() != null) {
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
-                                                                                 NbBundle.getMessage(this.getClass(),
-                                                                                                     "ExtractRegistry.parentModuleName.noSpace"), info.getVendor()));
+                                        make = info.getVendor();
                                     }
                                     if (info.getProduct() != null) {
                                         model = info.getProduct();
                                     }
                                 }
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
+                                        NbBundle.getMessage(this.getClass(),
+                                                "ExtractRegistry.parentModuleName.noSpace"), make));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), model));
+                                        NbBundle.getMessage(this.getClass(),
+                                                "ExtractRegistry.parentModuleName.noSpace"), model));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), value));
+                                        NbBundle.getMessage(this.getClass(),
+                                                "ExtractRegistry.parentModuleName.noSpace"), value));
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS

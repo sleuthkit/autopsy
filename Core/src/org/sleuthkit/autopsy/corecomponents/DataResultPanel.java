@@ -400,7 +400,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                         try {
                             explorerManager.setSelectedNodes(selectedNode.getChildren().getNodes());
                         } catch (PropertyVetoException ex) {
-                            logger.log(Level.INFO, "node selection vetoed");
+                            logger.log(Level.INFO, "node selection vetoed"); //NON-NLS
                         }
                     }
                 });
