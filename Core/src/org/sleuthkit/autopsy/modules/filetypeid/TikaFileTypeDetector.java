@@ -29,7 +29,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 class TikaFileTypeDetector {
 
     private static Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
-    private final int BUFFER_SIZE = 64 * 1024; //how many bytes to pass in
+//    private final int BUFFER_SIZE = 64 * 1024; //how many bytes to pass in
+    private final int BUFFER_SIZE = 100; //how many bytes to pass in
     private byte buffer[] = new byte[BUFFER_SIZE];
             
     /**
@@ -53,7 +54,8 @@ class TikaFileTypeDetector {
                 // do nothing
             } 
 
-            String mimetype = tikaInst.detect(buffer, abstractFile.getName());
+//            String mimetype = tikaInst.detect(buffer, abstractFile.getName());
+            String mimetype = tikaInst.detect(buffer);
             // Remove tika's name out of the general types like msoffice and ooxml
             return mimetype.replace("tika-", ""); //NON-NLS
         } catch (Exception ex) {
