@@ -172,7 +172,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this); // RJCTODO: In the old code, this returns null, why?
+            return v.visit(this);
         }
 
         @Override
