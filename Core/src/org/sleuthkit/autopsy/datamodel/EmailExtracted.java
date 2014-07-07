@@ -134,12 +134,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
             Map<String, String> parsed = new HashMap<>();
             String[] split = path.split(MAIL_PATH_SEPARATOR);
             if (split.length < 4) {
-                logger.log(Level.WARNING, "Unexpected number of tokens (count={0}) when parsing email path, will use defaults", split.length); //NON-NLS
                 parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
                 parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
                 return parsed;
             }
-
             parsed.put(MAIL_ACCOUNT, split[2]);
             parsed.put(MAIL_FOLDER, split[3]);
             return parsed;
