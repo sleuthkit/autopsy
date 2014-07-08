@@ -28,9 +28,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 class TikaFileTypeDetector {
 
-    private static Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
+    private static final Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
     private final int BUFFER_SIZE = 64 * 1024; //how many bytes to pass in
-    private byte buffer[] = new byte[BUFFER_SIZE];
+    private final byte buffer[] = new byte[BUFFER_SIZE];
             
     /**
      * 
@@ -39,12 +39,19 @@ class TikaFileTypeDetector {
      */
     public synchronized String attemptMatch(AbstractFile abstractFile) {
         try {
+            byte buf[];
             int len = abstractFile.read(buffer, 0, BUFFER_SIZE);
+            if (len < BUFFER_SIZE) {
+                buf = new byte[len];
+                System.arraycopy(buffer, 0, buf, 0, len);
+            } else {
+                buf = buffer;
+            }
             
             // the xml detection in Tika tries to parse the entire file and throws exceptions
             // for files that are not valid XML
             try {
-                String tagHeader = new String(buffer, 0, 5);
+                String tagHeader = new String(buf, 0, 5);
                 if (tagHeader.equals("<?xml")) { //NON-NLS    
                     return "text/xml"; //NON-NLS
                 }
@@ -53,7 +60,7 @@ class TikaFileTypeDetector {
                 // do nothing
             } 
 
-            String mimetype = tikaInst.detect(buffer, abstractFile.getName());
+            String mimetype = tikaInst.detect(buf, abstractFile.getName());
             // Remove tika's name out of the general types like msoffice and ooxml
             return mimetype.replace("tika-", ""); //NON-NLS
         } catch (Exception ex) {

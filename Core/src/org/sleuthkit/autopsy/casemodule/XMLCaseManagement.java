@@ -659,7 +659,7 @@ import org.xml.sax.SAXException;
             // set the case Directory and Name
             setCaseDirPath(file.getParent());
             String fullFileName = file.getName();
-            String fileName = fullFileName.substring(0, fullFileName.indexOf(".")); // remove the extension
+            String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
             setName(fileName);
         }
     }

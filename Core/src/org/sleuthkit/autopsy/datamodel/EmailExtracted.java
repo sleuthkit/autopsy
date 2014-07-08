@@ -31,7 +31,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
@@ -47,12 +46,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
-
 /**
- * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree
+ * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
  * Email messages are grouped into parent folders, and the folders are grouped
  * into parent accounts if TSK_PATH is available to define the relationship
- * structure for every message
+ * structure for every message.
  */
 public class EmailExtracted implements AutopsyVisitableItem {
 
@@ -72,6 +70,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
     
     private final class EmailResults extends Observable {
+        
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
         
         EmailResults() {
@@ -131,17 +130,14 @@ public class EmailExtracted implements AutopsyVisitableItem {
             }
         }
     
-
         private  Map<String, String> parsePath(String path) {
             Map<String, String> parsed = new HashMap<>();
             String[] split = path.split(MAIL_PATH_SEPARATOR);
             if (split.length < 4) {
-                logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: {0}, will use defaults", split.length); //NON-NLS
                 parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
                 parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
                 return parsed;
             }
-
             parsed.put(MAIL_ACCOUNT, split[2]);
             parsed.put(MAIL_FOLDER, split[3]);
             return parsed;
@@ -152,85 +148,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
     }
-
-    /**
-     * Mail root node showing all emails
-     */
-//    public class FlatRootNode extends DisplayableItemNode {
-//
-//        public FlatRootNode() {
-//            super(Children.create(new FlatRootFactory(), true), Lookups.singleton(DISPLAY_NAME));
-//            super.setName(LABEL_NAME);
-//            super.setDisplayName(DISPLAY_NAME);
-//            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
-//            initArtifacts();
-//        }
-//
-//        @Override
-//        public boolean isLeafTypeNode() {
-//            return false;
-//        }
-//
-//        @Override
-//        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-//            //return v.visit(this);
-//            return null;
-//        }
-//
-//        @Override
-//        protected Sheet createSheet() {
-//            Sheet s = super.createSheet();
-//            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-//            if (ss == null) {
-//                ss = Sheet.createPropertiesSet();
-//                s.put(ss);
-//            }
-//
-//            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
-//                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
-//                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
-//                    getName()));
-//            return s;
-//        }
-//    }
-//
-//    /**
-//     * Mail root child node showing flattened emails
-//     */
-//    private class FlatRootFactory extends ChildFactory<BlackboardArtifact> {
-//
-//        private FlatRootFactory() {
-//            super();
-//        }
-//
-//        @Override
-//        protected boolean createKeys(List<BlackboardArtifact> list) {
-//            //flatten all emails            
-//            List<BlackboardArtifact> tempList = new ArrayList<>();
-//            for (String account : accounts.keySet()) {
-//                Map<String, List<Long>> folders = accounts.get(account);
-//                for (String folder : folders.keySet()) {
-//                    List<Long> messages = folders.get(folder);
-//                    for (long l : messages) {
-//                        try {
-//                            //TODO: bulk artifact gettings
-//                            tempList.add(skCase.getBlackboardArtifact(l));
-//                        } catch (TskException ex) {
-//                            logger.log(Level.WARNING, "Error creating mail messages nodes", ex); //NON-NLS
-//                        }
-//                    }
-//                }
-//            }
-//
-//            list.addAll(tempList);
-//            return true;
-//        }
-//
-//        @Override
-//        protected Node createNodeForKey(BlackboardArtifact artifact) {
-//            return new BlackboardArtifactNode(artifact);
-//        }
-//    }
 
     /**
      * Mail root node grouping all mail accounts, supports account-> folder
@@ -344,7 +261,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Account node representation
      */
     public class AccountNode extends DisplayableItemNode implements Observer {
-        private String accountName;
+        
+        private final String accountName;
         
         public AccountNode(String accountName) {
             super(Children.create(new FolderFactory(accountName), true), Lookups.singleton(accountName));
@@ -397,7 +315,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
      */
     private class FolderFactory extends ChildFactory<String> implements Observer {
 
-        private String accountName;
+        private final String accountName;
 
         private FolderFactory(String accountName) {
             super();
@@ -426,13 +344,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Node representing mail folder
      */
     public class FolderNode extends DisplayableItemNode implements Observer {
-        private String accountName;
-        private String folderName;
+        
+        private final String accountName;
+        private final String folderName;
         
         public FolderNode(String accountName, String folderName) {
             super(Children.create(new MessageFactory(accountName, folderName), true), Lookups.singleton(accountName));
             super.setName(folderName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png"); //NON-NLS
+            this.accountName = accountName;
+            this.folderName = folderName;
             updateDisplayName();
             emailResults.addObserver(this);
         }
@@ -480,8 +401,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
      */
     private class MessageFactory extends ChildFactory<Long> implements Observer {
 
-        private String accountName;
-        private String folderName;
+        private final String accountName;
+        private final String folderName;
 
         private MessageFactory(String accountName, String folderName) {
             super();
