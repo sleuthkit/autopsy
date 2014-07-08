@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.android;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -34,30 +35,23 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
- class WWFMessageAnalyzer {
-    private Connection connection = null;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
-    private String dbPath = "";
-    private long fileId = 0;
-    private java.io.File jFile = null;
-    private String moduleName= AndroidModuleFactory.getModuleName();
+class WWFMessageAnalyzer {
+
+    private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(WWFMessageAnalyzer.class.getName());
-    public void findWWFMessages() {
+
+    public static void findWWFMessages() {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name ='WordsFramework' "); //get exact file names
-            if (absFiles.isEmpty()) {
-                return;
-            }
-            for (AbstractFile AF : absFiles) {
+
+            for (AbstractFile abstractFile : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF,jFile);
-                    dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    findWWFMessagesInDB(dbPath, fileId);
+                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
+                    ContentUtils.writeToFile(abstractFile, jFile);
+
+                    findWWFMessagesInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing WWF messages", e);
                 }
@@ -66,7 +60,12 @@ import org.sleuthkit.datamodel.TskCoreException;
             logger.log(Level.SEVERE, "Error finding WWF messages", e);
         }
     }
-     private void findWWFMessagesInDB(String DatabasePath, long fId) {
+
+    private static void findWWFMessagesInDB(String DatabasePath, AbstractFile f) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        Statement statement = null;
+
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -75,49 +74,43 @@ import org.sleuthkit.datamodel.TskCoreException;
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-             logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e);
+            return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            try {
-                resultSet = statement.executeQuery(
-                        "SELECT message,created_at,user_id,game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;");
+            resultSet = statement.executeQuery(
+                    "SELECT message,created_at,user_id,game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;");
 
-                BlackboardArtifact bba;
-                String message; // WWF Message
-                String user_id; // the ID of the user who sent the message.
-                String game_id; // ID of the game which the the message was sent.
-              
+            String message; // WWF Message
+            String user_id; // the ID of the user who sent the message.
+            String game_id; // ID of the game which the the message was sent.
 
-                while (resultSet.next()) {
-                    message = resultSet.getString("message");
-                    Long created_at = Long.valueOf(resultSet.getString("created_at")) / 1000;
-                    user_id = resultSet.getString("user_id");
-                    game_id = resultSet.getString("game_id");
+            while (resultSet.next()) {
+                message = resultSet.getString("message");
+                Long created_at = Long.valueOf(resultSet.getString("created_at")) / 1000;
+                user_id = resultSet.getString("user_id");
+                game_id = resultSet.getString("game_id");
 
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, created_at));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, user_id));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), moduleName, game_id));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName,message));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,"Words With Friends Message" ));
-                }
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e);
-            } finally {
-                try {
-                    resultSet.close();
-                    statement.close();
-                    connection.close();
-                } catch (Exception e) {
-                     logger.log(Level.SEVERE, "Error closing database", e);
-                }
+                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, created_at));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, user_id));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), moduleName, game_id));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, message));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "Words With Friends Message"));
             }
         } catch (Exception e) {
-             logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                statement.close();
+                connection.close();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error closing database", e);
+            }
         }
     }
 }

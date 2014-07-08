@@ -43,7 +43,7 @@ public class KMLFileCreator {
     private SleuthkitCase skCase;
     private String reportPath;
 
-    public void CreateKML() {
+    public void createKml() {
 
         reportPath = Case.getCurrentCase().getTempDirectory() + "ReportKML.kml"; //NON-NLS
         String reportPath2 = Case.getCurrentCase().getTempDirectory() + "ReportKML.txt"; //NON-NLS
@@ -127,7 +127,6 @@ public class KMLFileCreator {
                 /*
                  * Step 2: add in Style elements
                  */
-
                 // Style
                 Element style = new Element("Style", ns); //NON-NLS
                 style.setAttribute("id", "redIcon"); //NON-NLS
@@ -202,7 +201,6 @@ public class KMLFileCreator {
             }
         } catch (TskCoreException ex) {
         }
-
 
     }
 }

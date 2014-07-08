@@ -34,19 +34,18 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+class TextMessageAnalyzer {
 
- class TextMessageAnalyzer {
-     private Connection connection = null;
+    private Connection connection = null;
     private ResultSet resultSet = null;
     private Statement statement = null;
     private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
     List<AbstractFile> absFiles;
-    private String moduleName= iOSModuleFactory.getModuleName();
+    private String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
-    
-    
+
     void findTexts() {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -56,8 +55,8 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
             for (AbstractFile AF : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(),AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    ContentUtils.writeToFile(AF,jFile);
+                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    ContentUtils.writeToFile(AF, jFile);
                     dbPath = jFile.toString(); //path of file as string
                     fileId = AF.getId();
                     findTextsInDB(dbPath, fileId);
@@ -69,7 +68,8 @@ import org.sleuthkit.datamodel.TskCoreException;
             logger.log(Level.SEVERE, "Error finding text messages", e);
         }
     }
-     private void findTextsInDB(String DatabasePath, long fId) {
+
+    private void findTextsInDB(String DatabasePath, long fId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -89,7 +89,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                 resultSet = statement.executeQuery(
                         "Select address,date,type,subject,body FROM sms;");
 
-                BlackboardArtifact bba;               
+                BlackboardArtifact bba;
                 String address; // may be phone number, or other addresses
                 String date;//unix time
                 String type; // message received in inbox = 1, message sent = 2
@@ -101,26 +101,26 @@ import org.sleuthkit.datamodel.TskCoreException;
                     type = resultSet.getString("type");
                     subject = resultSet.getString("subject");
                     body = resultSet.getString("body");
-                    
+
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, address));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, type));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,"SMS Message" ));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "SMS Message"));
 
                 }
 
             } catch (Exception e) {
-               logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
+                logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
             } finally {
                 try {
                     resultSet.close();
                     statement.close();
                     connection.close();
                 } catch (Exception e) {
-                   logger.log(Level.SEVERE, "Error closing database", e);
+                    logger.log(Level.SEVERE, "Error closing database", e);
                 }
             }
         } catch (Exception e) {
@@ -129,5 +129,4 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     }
 
-    
 }

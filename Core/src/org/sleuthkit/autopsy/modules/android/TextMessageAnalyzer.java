@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.android;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -34,33 +35,21 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+class TextMessageAnalyzer {
 
- class TextMessageAnalyzer {
-     private Connection connection = null;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
-    private String dbPath = "";
-    private long fileId = 0;
-    private java.io.File jFile = null;
-    List<AbstractFile> absFiles;
-    private String moduleName= AndroidModuleFactory.getModuleName();
+    private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
-    
-    
-    void findTexts() {
+
+    public static void findTexts() {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //get exact file name
-            if (absFiles.isEmpty()) {
-                return;
-            }
-            for (AbstractFile AF : absFiles) {
+            List<AbstractFile> absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //get exact file name
+
+            for (AbstractFile abstractFile : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF,jFile);
-                    dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    findTextsInDB(dbPath, fileId);
+                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
+                    ContentUtils.writeToFile(abstractFile, jFile);
+                    findTextsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing text messages", e);
                 }
@@ -69,7 +58,12 @@ import org.sleuthkit.datamodel.TskCoreException;
             logger.log(Level.SEVERE, "Error finding text messages", e);
         }
     }
-     private void findTextsInDB(String DatabasePath, long fId) {
+
+    private static void findTextsInDB(String DatabasePath, AbstractFile f) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        Statement statement = null;
+
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -79,55 +73,50 @@ import org.sleuthkit.datamodel.TskCoreException;
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
             logger.log(Level.SEVERE, "Error opening database", e);
+            return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            try {
-                resultSet = statement.executeQuery(
-                        "Select address,date,type,subject,body FROM sms;");
+            resultSet = statement.executeQuery(
+                    "Select address,date,type,subject,body FROM sms;");
 
-                BlackboardArtifact bba;               
-                String address; // may be phone number, or other addresses
-                
-                String type; // message received in inbox = 1, message sent = 2
-                String subject;//message subject
-                String body; //message body
-                while (resultSet.next()) {
-                    address = resultSet.getString("address");
-                    Long date = Long.valueOf(resultSet.getString("date")) / 1000;
-                    type = resultSet.getString("type");
-                    subject = resultSet.getString("subject");
-                    body = resultSet.getString("body");
-                    
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, address));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, type));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,"SMS Message" ));
+            String address; // may be phone number, or other addresses
 
+            String direction; // message received in inbox = 1, message sent = 2
+            String subject;//message subject
+            String body; //message body
+            while (resultSet.next()) {
+                address = resultSet.getString("address");
+                Long date = Long.valueOf(resultSet.getString("date")) / 1000;
+                if (resultSet.getString("type").equals("1")) {
+                    direction = "Incoming";
+                } else {
+                    direction = "Outgoing";
                 }
+                subject = resultSet.getString("subject");
+                body = resultSet.getString("body");
 
-            } catch (Exception e) {
-               logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
-            } finally {
-                try {
-                    resultSet.close();
-                    statement.close();
-                    connection.close();
-                } catch (Exception e) {
-                   logger.log(Level.SEVERE, "Error closing database", e);
-                }
+                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, address));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "SMS Message"));
             }
+
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                statement.close();
+                connection.close();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error closing database", e);
+            }
         }
-
     }
-
-    
 }

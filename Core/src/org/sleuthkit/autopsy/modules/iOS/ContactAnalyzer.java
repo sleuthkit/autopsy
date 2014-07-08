@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+
 class ContactAnalyzer {
 
     private Connection connection = null;
@@ -47,7 +48,7 @@ class ContactAnalyzer {
     private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
-    private String moduleName= iOSModuleFactory.getModuleName();
+    private String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
 
     public void findContacts() {
@@ -62,19 +63,19 @@ class ContactAnalyzer {
             for (AbstractFile AF : absFiles) {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                     //jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), i+".txt");
-                     ContentUtils.writeToFile(AF,jFile);
+                    //jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), i+".txt");
+                    ContentUtils.writeToFile(AF, jFile);
                     //copyFileUsingStreams(AF,jFile);
                     //copyFileUsingStream(AF,jFile);
                     dbPath = jFile.toString(); //path of file as string
                     fileId = AF.getId();
                     //findContactsInDB(dbPath, fileId);
                 } catch (Exception e) {
-                     logger.log(Level.SEVERE, "Error parsing Contacts", e);
+                    logger.log(Level.SEVERE, "Error parsing Contacts", e);
                 }
             }
         } catch (TskCoreException e) {
-             logger.log(Level.SEVERE, "Error finding Contacts", e);
+            logger.log(Level.SEVERE, "Error finding Contacts", e);
         }
     }
 
@@ -112,7 +113,7 @@ class ContactAnalyzer {
                         + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n"
                         + "ORDER BY name_raw_contact.display_name ASC;");
 
-                BlackboardArtifact bba;               
+                BlackboardArtifact bba;
                 bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 String name;
                 String oldName = "";
@@ -136,23 +137,23 @@ class ContactAnalyzer {
                 }
 
             } catch (Exception e) {
-                 logger.log(Level.SEVERE, "Error parsing Contacts to Blackboard", e);
+                logger.log(Level.SEVERE, "Error parsing Contacts to Blackboard", e);
             } finally {
                 try {
                     resultSet.close();
                     statement.close();
                     connection.close();
                 } catch (Exception e) {
-                     logger.log(Level.SEVERE, "Error closing database", e);
+                    logger.log(Level.SEVERE, "Error closing database", e);
                 }
             }
         } catch (Exception e) {
-             logger.log(Level.SEVERE, "Error parsing Contacts to Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing Contacts to Blackboard", e);
         }
 
     }
 
- public static void copyFileUsingStream(AbstractFile file, File jFile) throws IOException {
+    public static void copyFileUsingStream(AbstractFile file, File jFile) throws IOException {
         InputStream is = new ReadContentInputStream(file);
         OutputStream os = new FileOutputStream(jFile);
         byte[] buffer = new byte[8192];
@@ -160,9 +161,9 @@ class ContactAnalyzer {
         try {
             while ((length = is.read(buffer)) != -1) {
                 os.write(buffer, 0, length);
-                System.out.println(length);           
+                System.out.println(length);
                 os.flush();
-     
+
             }
 
         } finally {
@@ -170,27 +171,29 @@ class ContactAnalyzer {
             os.close();
         }
     }
-  public static void copyFileUsingStreams(AbstractFile file, File jFile) {  
-        InputStream istream;  
-        OutputStream ostream=null;  
-        int c;  
-        final int EOF = -1;  
-        istream = new ReadContentInputStream(file);  
+
+    public static void copyFileUsingStreams(AbstractFile file, File jFile) {
+        InputStream istream;
+        OutputStream ostream = null;
+        int c;
+        final int EOF = -1;
+        istream = new ReadContentInputStream(file);
         //File outFile =  new File("Data.txt");          
-      //  System.out.println("Type characters to write in File – Press Ctrl+z to end ");  
-        try {  
-            ostream = new FileOutputStream(jFile);  
-            while ((c = istream.read()) != EOF)  
-                ostream.write(c);  
-        } catch (IOException e) {  
-            System.out.println("Error: " + e.getMessage());  
-        } finally {  
-            try {  
-                istream.close();  
-                ostream.close();  
-            } catch (IOException e) {  
-                System.out.println("File did not close");  
-            }  
-        }  
-    }  
+        //  System.out.println("Type characters to write in File – Press Ctrl+z to end ");  
+        try {
+            ostream = new FileOutputStream(jFile);
+            while ((c = istream.read()) != EOF) {
+                ostream.write(c);
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        } finally {
+            try {
+                istream.close();
+                ostream.close();
+            } catch (IOException e) {
+                System.out.println("File did not close");
+            }
+        }
+    }
 }

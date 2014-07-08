@@ -45,17 +45,13 @@ class AndroidIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-
-
         services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(), "Started {0}"));
-
 
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
 
         try {
-            ContactAnalyzer FindContacts = new ContactAnalyzer();
-            FindContacts.findContacts();
+            ContactAnalyzer.findContacts();
             progressBar.progress(1);
             if (context.isJobCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -63,9 +59,9 @@ class AndroidIngestModule implements DataSourceIngestModule {
         } catch (Exception e) {
             errors.add("Error getting Contacts");
         }
+
         try {
-            CallLogAnalyzer FindCallLogs = new CallLogAnalyzer();
-            FindCallLogs.findCallLogs();
+            CallLogAnalyzer.findCallLogs();
             progressBar.progress(2);
             if (context.isJobCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -73,9 +69,9 @@ class AndroidIngestModule implements DataSourceIngestModule {
         } catch (Exception e) {
             errors.add("Error getting Call Logs");
         }
+
         try {
-            TextMessageAnalyzer FindTexts = new TextMessageAnalyzer();
-            FindTexts.findTexts();
+            TextMessageAnalyzer.findTexts();
             progressBar.progress(3);
             if (context.isJobCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -83,9 +79,9 @@ class AndroidIngestModule implements DataSourceIngestModule {
         } catch (Exception e) {
             errors.add("Error getting Text Messages");
         }
+
         try {
-            TangoMessageAnalyzer FindTangoMessages = new TangoMessageAnalyzer();
-            FindTangoMessages.findTangoMessages();
+            TangoMessageAnalyzer.findTangoMessages();
             progressBar.progress(4);
             if (context.isJobCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -93,9 +89,9 @@ class AndroidIngestModule implements DataSourceIngestModule {
         } catch (Exception e) {
             errors.add("Error getting Tango Messages");
         }
+
         try {
-            WWFMessageAnalyzer FindWWFMessages = new WWFMessageAnalyzer();
-            FindWWFMessages.findWWFMessages();
+            WWFMessageAnalyzer.findWWFMessages();
             progressBar.progress(5);
             if (context.isJobCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -103,40 +99,43 @@ class AndroidIngestModule implements DataSourceIngestModule {
         } catch (Exception e) {
             errors.add("Error getting Words with Friends Messages");
         }
+
         try {
-            GoogleMapLocationAnalyzer FindGoogleMapLocations = new GoogleMapLocationAnalyzer();
-            FindGoogleMapLocations.findGeoLocations();
+            GoogleMapLocationAnalyzer.findGeoLocations();
             progressBar.progress(6);
             if (context.isJobCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add( "Error getting Google Map Locations");
+            errors.add("Error getting Google Map Locations");
         }
+
         try {
-            BrowserLocationAnalyzer FindBrowserLocations = new BrowserLocationAnalyzer();
-            FindBrowserLocations.findGeoLocations();
+            BrowserLocationAnalyzer.findGeoLocations();
             progressBar.progress(7);
+            if (context.isJobCancelled()) {
+                return IngestModule.ProcessResult.OK;
+            }
         } catch (Exception e) {
             errors.add("Error getting Browser Locations");
         }
-        if (context.isJobCancelled()) {
-            return IngestModule.ProcessResult.OK;
-        }
+
         try {
-            CacheLocationAnalyzer FindCacheLocations = new CacheLocationAnalyzer();
-            FindCacheLocations.findGeoLocations();
+            CacheLocationAnalyzer.findGeoLocations();
             progressBar.progress(8);
         } catch (Exception e) {
             errors.add("Error getting Cache Locations");
         }
+
+        /* I'm not sure why we have this in here since we have a KML report module ...
         try {
-            KMLFileCreator KMLFileCreator = new KMLFileCreator();
-            KMLFileCreator.CreateKML();
+            KMLFileCreator kMLFileCreator = new KMLFileCreator();
+            kMLFileCreator.createKml();
             progressBar.progress(9);
         } catch (Exception e) {
             errors.add("Error creating KML");
         }
+         */
 
         // create the final message for inbox
         StringBuilder errorMessage = new StringBuilder();
@@ -151,19 +150,17 @@ class AndroidIngestModule implements DataSourceIngestModule {
             errorMessage.append("</ul>\n"); //NON-NLS
 
             if (errors.size() == 1) {
-                errorMsgSubject =  "One error was found";
+                errorMsgSubject = "One error was found";
             } else {
-                errorMsgSubject = "errors found: " +errors.size();
+                errorMsgSubject = "errors found: " + errors.size();
             }
         } else {
-            errorMessage.append( "No errors");
-            errorMsgSubject ="No errors";
+            errorMessage.append("No errors");
+            errorMsgSubject = "No errors";
         }
-        final IngestMessage msg = IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(),"Ingest Finished");
+        final IngestMessage msg = IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(), "Ingest Finished");
         services.postMessage(msg);
 
         return IngestModule.ProcessResult.OK;
     }
-
-
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.android;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -35,34 +36,25 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 class BrowserLocationAnalyzer {
-    
-    private Connection connection = null;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
-    private String dbPath = "";
-    private long fileId = 0;
-    private java.io.File jFile = null;
-    private String moduleName= AndroidModuleFactory.getModuleName();
+
+    private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(BrowserLocationAnalyzer.class.getName());
-    
-    public void findGeoLocations() {
-        List<AbstractFile> absFiles;
+
+    public static void findGeoLocations() {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name LIKE 'CachedGeoposition%.db'"); //get exact file names
-            if (absFiles.isEmpty()) {
-                return;
-            }
-            for (AbstractFile AF : absFiles) {
+            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name LIKE 'CachedGeoposition%.db'"); //get exact file names
+
+            for (AbstractFile abstractFile : abstractFiles) {
                 try {
-                    if (AF.getSize() ==0) continue;
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF,jFile);
-                    dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    findGeoLocationsInDB(dbPath, fileId);
+                    if (abstractFile.getSize() == 0) {
+                        continue;
+                    }
+                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
+                    ContentUtils.writeToFile(abstractFile, jFile);
+                    findGeoLocationsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
-                   logger.log(Level.SEVERE, "Error parsing Browser Location files", e);
+                    logger.log(Level.SEVERE, "Error parsing Browser Location files", e);
                 }
             }
         } catch (TskCoreException e) {
@@ -71,7 +63,10 @@ class BrowserLocationAnalyzer {
         }
     }
 
-    private void findGeoLocationsInDB(String DatabasePath, long fId) {
+    private static void findGeoLocationsInDB(String DatabasePath, AbstractFile f) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        Statement statement = null;
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -81,50 +76,38 @@ class BrowserLocationAnalyzer {
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
             logger.log(Level.SEVERE, "Error connecting to sql database", e);
+            return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            try {
-                resultSet = statement.executeQuery(
-                        "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;");
+            resultSet = statement.executeQuery(
+                    "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;");
 
-                BlackboardArtifact bba;
-                Long timestamp; // unix time
-                String latitude; 
-                String longitude; 
-                
+            while (resultSet.next()) {
+                Long timestamp = Long.valueOf(resultSet.getString("timestamp")) / 1000;
+                double latitude = Double.valueOf(resultSet.getString("latitude"));
+                double longitude = Double.valueOf(resultSet.getString("longitude"));
 
-                while (resultSet.next()) {
-                    timestamp = Long.valueOf(resultSet.getString("timestamp")) / 1000;
-                    latitude= resultSet.getString("latitude");
-                    longitude = resultSet.getString("longitude");
-
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),moduleName,latitude));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),moduleName, longitude));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),moduleName, timestamp));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),moduleName, "Browser Location History"));
-                  //  bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy)); 
-                    
-
-                }
-
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error Putting artifacts to Blackboard", e);
-            } finally {
-                try {
-                    resultSet.close();
-                    statement.close();
-                    connection.close();
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error closing database", e);
-                }
+                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, latitude));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, longitude));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, timestamp));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "Browser Location History"));
+                //  bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy)); 
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error Putting artifacts to Blackboard", e);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                statement.close();
+                connection.close();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error closing database", e);
+            }
         }
+
     }
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.android;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -35,31 +36,21 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
- class TangoMessageAnalyzer {
-    private Connection connection = null;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
-    private String dbPath = "";
-    private long fileId = 0;
-    private java.io.File jFile = null;
-    private String moduleName= AndroidModuleFactory.getModuleName();
+class TangoMessageAnalyzer {
+
+    private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TangoMessageAnalyzer.class.getName());
-    
-    public void findTangoMessages() {
+
+    public static void findTangoMessages() {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name ='tc.db' "); //get exact file names
-            if (absFiles.isEmpty()) {
-                return;
-            }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile abstractFile : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF,jFile);
-                    dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    findTangoMessagesInDB(dbPath, fileId);
+                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
+                    ContentUtils.writeToFile(abstractFile, jFile);
+                    findTangoMessagesInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Tango messages", e);
                 }
@@ -67,9 +58,13 @@ import org.sleuthkit.datamodel.TskCoreException;
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Error finding Tango messages", e);
         }
-        
     }
-    private void findTangoMessagesInDB(String DatabasePath, long fId) {
+
+    private static void findTangoMessagesInDB(String DatabasePath, AbstractFile f) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        Statement statement = null;
+
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -79,63 +74,60 @@ import org.sleuthkit.datamodel.TskCoreException;
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
             logger.log(Level.SEVERE, "Error opening database", e);
+            return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            try {
-                resultSet = statement.executeQuery(
-                        "Select conv_id, create_time,direction,payload FROM messages ORDER BY create_time DESC;");
+            resultSet = statement.executeQuery(
+                    "Select conv_id, create_time,direction,payload FROM messages ORDER BY create_time DESC;");
 
-                BlackboardArtifact bba;
-                String conv_id; // seems to wrap around the message found in payload after decoding from base-64
-                String direction; // 1 incoming, 2 outgoing
-                String payload; // seems to be a base64 message wrapped by the conv_id
-              
+            String conv_id; // seems to wrap around the message found in payload after decoding from base-64
+            String direction; // 1 incoming, 2 outgoing
+            String payload; // seems to be a base64 message wrapped by the conv_id
 
-                while (resultSet.next()) {
-                    conv_id = resultSet.getString("conv_id");
-                    Long create_time = Long.valueOf(resultSet.getString("create_time")) / 1000;
-                    direction = resultSet.getString("direction");
-                    payload = resultSet.getString("payload");
-
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, create_time));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, decodeMessage(conv_id,payload)));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,"Tango Message" ));
-
+            while (resultSet.next()) {
+                conv_id = resultSet.getString("conv_id");
+                Long create_time = Long.valueOf(resultSet.getString("create_time")) / 1000;
+                if (resultSet.getString("direction").equals("1")) {
+                    direction = "Incoming";
+                } else {
+                    direction = "Outgoing";
                 }
+                payload = resultSet.getString("payload");
 
-            } catch (Exception e) {
-               logger.log(Level.SEVERE, "Error parsing Tango messages to the Blackboard", e);
-            } finally {
-                try {
-                    resultSet.close();
-                    statement.close();
-                    connection.close();
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error closing database", e);
-                }
+                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, create_time));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, decodeMessage(conv_id, payload)));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "Tango Message"));
+
             }
+
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Tango messages to the Blackboard", e);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                statement.close();
+                connection.close();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error closing database", e);
+            }
         }
     }
 
-   //take the message string which is wrapped by a certain string, and return the text enclosed.
-   private String decodeMessage(String wrapper, String message)
-   {
-       String result= "";
-       byte[] decoded = Base64.decodeBase64(message);
-        try{
-        String Z= new String (decoded,"UTF-8");
-        result = Z.split(wrapper)[1];
-        }catch(Exception e){
+    //take the message string which is wrapped by a certain string, and return the text enclosed.
+    private static String decodeMessage(String wrapper, String message) {
+        String result = "";
+        byte[] decoded = Base64.decodeBase64(message);
+        try {
+            String Z = new String(decoded, "UTF-8");
+            result = Z.split(wrapper)[1];
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Error decoding a Tango message", e);
-        }     
-       return result;
-   }
+        }
+        return result;
+    }
 }

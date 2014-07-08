@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.android;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -34,18 +35,12 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
- class CallLogAnalyzer {
+class CallLogAnalyzer {
 
-    private Connection connection = null;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
-    private String dbPath = "";
-    private long fileId = 0;
-    private java.io.File jFile = null;
-    private String moduleName= AndroidModuleFactory.getModuleName();
+    private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
-    
-    public void findCallLogs() {
+
+    public static void findCallLogs() {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -53,13 +48,12 @@ import org.sleuthkit.datamodel.TskCoreException;
             if (absFiles.isEmpty()) {
                 return;
             }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile abstractFile : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF,jFile);
-                    dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    findCallLogsInDB(dbPath, fileId);
+                    File jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
+                    ContentUtils.writeToFile(abstractFile, jFile);
+
+                    findCallLogsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Call logs", e);
                 }
@@ -69,7 +63,11 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
     }
 
-    private void findCallLogsInDB(String DatabasePath, long fId) {
+    private static void findCallLogsInDB(String DatabasePath, AbstractFile f) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        Statement statement = null;
+
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -78,60 +76,57 @@ import org.sleuthkit.datamodel.TskCoreException;
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-             logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e);
+            return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            try {
-                resultSet = statement.executeQuery(
-                        "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;");
+            resultSet = statement.executeQuery(
+                    "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;");
 
-                BlackboardArtifact bba;
+            BlackboardArtifact bba;
 
-                while (resultSet.next()) {
-                    // name of person dialed or called. null if unregistered
-                    String name = resultSet.getString("name");
-                    String number = resultSet.getString("number");
-                    //duration of call in seconds
-                    Long duration = Long.valueOf(resultSet.getString("duration"));
-                    Long date = Long.valueOf(resultSet.getString("date")) / 1000;
-                    
-                    String direction = "";
-                    switch (Integer.valueOf(resultSet.getString("type"))) {
-                        case 1:
-                            direction = "Incoming";
-                            break;
-                        case 2:
-                            direction = "Outgoing";
-                            break;
-                        case 3:
-                            direction = "Missed";
-                            break;
-                    }
+            while (resultSet.next()) {
+                // name of person dialed or called. null if unregistered
+                String name = resultSet.getString("name");
+                String number = resultSet.getString("number");
+                //duration of call in seconds
+                Long duration = Long.valueOf(resultSet.getString("duration"));
+                Long date = Long.valueOf(resultSet.getString("date")) / 1000;
 
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),moduleName, number));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration+date));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
+                String direction = "";
+                switch (Integer.valueOf(resultSet.getString("type"))) {
+                    case 1:
+                        direction = "Incoming";
+                        break;
+                    case 2:
+                        direction = "Outgoing";
+                        break;
+                    case 3:
+                        direction = "Missed";
+                        break;
                 }
-            } catch (Exception e) {
-                 logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
-            } finally {
-                try {
-                    resultSet.close();
-                    statement.close();
-                    connection.close();
-                } catch (Exception e) {
-                     logger.log(Level.SEVERE, "Error closing the database", e);
-                }
+
+                bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, number));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration + date));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                statement.close();
+                connection.close();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error closing the database", e);
+            }
         }
+
     }
 }

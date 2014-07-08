@@ -145,8 +145,60 @@ class ReportKML implements GeneralReportModule {
                         // lat lon path name
                     }
                 }
+                
+                for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)) {
+                    lat = 0;
+                    lon = 0;
+                    for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) //latitude
+                        {
+                            lat = attribute.getValueDouble();
+                        }
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) //longitude
+                        {
+                            lon = attribute.getValueDouble();
+                        }
+                    }
+                    if (lon != 0 && lat != 0) {
+                        out.write(lat + ";" + lon + "\n");
+                    }
+                }
+                for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)) {
+                    lat = 0;
+                    lon = 0;
+                    double destlat = 0;
+                    double destlon = 0;
+                    String name = "";
+                    for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()) //latitude
+                        {
+                            lat = attribute.getValueDouble();
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID()) //longitude
+                        {
+                            destlat = attribute.getValueDouble();
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID()) //longitude
+                        {
+                            lon = attribute.getValueDouble();
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID()) //longitude 
+                        {
+                            destlon = attribute.getValueDouble();
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()) //longitude 
+                        {
+                            name = attribute.getValueString();
+                        }
+
+                    }
+                    if (lon != 0 && lat != 0) {
+                        out.write(lat + ";" + lon + ";;" + name + "\n");
+                    }
+                    if (destlat != 0 && destlon != 0) {
+                        out.write(destlat + ";" + destlon + ";;" + name + "\n");
+                    }
+                }
+                
                 out.flush();
                 out.close();
+                
                 progressPanel.increment();
                 /*
                  * Step 1: generate XML stub

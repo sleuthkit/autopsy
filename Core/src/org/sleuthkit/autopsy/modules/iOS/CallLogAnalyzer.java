@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
- class CallLogAnalyzer {
+class CallLogAnalyzer {
 
     private Connection connection = null;
     private ResultSet resultSet = null;
@@ -42,9 +42,9 @@ import org.sleuthkit.datamodel.TskCoreException;
     private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
-    private String moduleName= iOSModuleFactory.getModuleName();
+    private String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
-    
+
     public void findCallLogs() {
         List<AbstractFile> absFiles;
         try {
@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             for (AbstractFile AF : absFiles) {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    ContentUtils.writeToFile(AF,jFile);
+                    ContentUtils.writeToFile(AF, jFile);
                     dbPath = jFile.toString(); //path of file as string
                     fileId = AF.getId();
                     findCallLogsInDB(dbPath, fileId);
@@ -78,7 +78,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-             logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e);
         }
 
         Case currentCase = Case.getCurrentCase();
@@ -104,22 +104,22 @@ import org.sleuthkit.datamodel.TskCoreException;
                     type = resultSet.getString("type");
 
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),moduleName, number));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, number));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration+date));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration + date));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, type));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
 
                 }
             } catch (Exception e) {
-                 logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
+                logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
             } finally {
                 try {
                     resultSet.close();
                     statement.close();
                     connection.close();
                 } catch (Exception e) {
-                     logger.log(Level.SEVERE, "Error closing the database", e);
+                    logger.log(Level.SEVERE, "Error closing the database", e);
                 }
             }
         } catch (Exception e) {

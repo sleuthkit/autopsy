@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 
-@ServiceProvider(service = IngestModuleFactory.class) //  
+//@ServiceProvider(service = IngestModuleFactory.class) //  
 public class iOSModuleFactory extends IngestModuleFactoryAdapter {
 
     private static final String VERSION_NUMBER = "1.0.0";
