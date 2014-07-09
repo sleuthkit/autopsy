@@ -95,6 +95,9 @@ class ReportKML implements GeneralReportModule {
         progressPanel.increment();
 
 
+        // @@@ BC: I don't get why we do this in two passes.  
+        // Why not just print the coordinates as we find them and make some utility methods to do the printing?
+        // Should pull out time values for all of these points and store in TimeSpan element
         try {
 
             BufferedWriter out = null;
@@ -163,12 +166,14 @@ class ReportKML implements GeneralReportModule {
                         out.write(lat + ";" + lon + "\n");
                     }
                 }
+                
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)) {
                     lat = 0;
                     lon = 0;
                     double destlat = 0;
                     double destlon = 0;
                     String name = "";
+                    String location = "";
                     for (BlackboardAttribute attribute : artifact.getAttributes()) {
                         if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()) //latitude
                         {
@@ -185,14 +190,22 @@ class ReportKML implements GeneralReportModule {
                         } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()) //longitude 
                         {
                             name = attribute.getValueString();
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()) //longitude 
+                        {
+                            location = attribute.getValueString();
                         }
-
                     }
+                    
+                    // @@@ Shoudl do something more fancy with these in KML and store them as a single point. 
+                    String display = name;
+                    if (display.isEmpty()) 
+                        display = location;
+                    
                     if (lon != 0 && lat != 0) {
-                        out.write(lat + ";" + lon + ";;" + name + "\n");
+                        out.write(lat + ";" + lon + ";;" + display + " (Start)\n");
                     }
                     if (destlat != 0 && destlon != 0) {
-                        out.write(destlat + ";" + destlon + ";;" + name + "\n");
+                        out.write(destlat + ";" + destlon + ";;" + display + " (End)\n");
                     }
                 }
                 
@@ -257,28 +270,33 @@ class ReportKML implements GeneralReportModule {
                 String line = reader.readLine();
                 while (line != null) {
                     String[] lineParts = line.split(";");
-                    if (lineParts.length == 4) {
+                    if (lineParts.length > 1) {
                         String coordinates = lineParts[1].trim() + "," + lineParts[0].trim(); //lat,lon
                         // Placemark
                         Element placemark = new Element("Placemark", ns); //NON-NLS
                         document.addContent(placemark);
 
-                        // name
-                        Element pmName = new Element("name", ns); //NON-NLS
-                        pmName.setText(lineParts[3].trim());
-                        placemark.addContent(pmName);
+                        if (lineParts.length == 4) {
+                            // name
+                            Element pmName = new Element("name", ns); //NON-NLS
+                            pmName.setText(lineParts[3].trim());
+                            placemark.addContent(pmName);
 
-                        // Path
-                        Element pmPath = new Element("Path", ns); //NON-NLS
-                        pmPath.setText(lineParts[2].trim());
-                        placemark.addContent(pmPath);
+                            String savedPath = lineParts[2].trim();
+                            if (savedPath.isEmpty() == false) {
+                                // Path
+                                Element pmPath = new Element("Path", ns); //NON-NLS
+                                pmPath.setText(savedPath);
+                                placemark.addContent(pmPath);
 
-                        // description
-                        Element pmDescription = new Element("description", ns); //NON-NLS
-                        String xml = "<![CDATA[  \n" + " <img src='file:///" + lineParts[2].trim() + "' width='400' /><br/&gt;  \n"; //NON-NLS
-                        StringEscapeUtils.unescapeXml(xml);
-                        pmDescription.setText(xml);
-                        placemark.addContent(pmDescription);
+                                // description
+                                Element pmDescription = new Element("description", ns); //NON-NLS
+                                String xml = "<![CDATA[  \n" + " <img src='file:///" + savedPath + "' width='400' /><br/&gt;  \n"; //NON-NLS
+                                StringEscapeUtils.unescapeXml(xml);
+                                pmDescription.setText(xml);
+                                placemark.addContent(pmDescription);
+                            }
+                        }
 
                         // styleUrl
                         Element pmStyleUrl = new Element("styleUrl", ns); //NON-NLS
@@ -296,6 +314,7 @@ class ReportKML implements GeneralReportModule {
                         pmPoint.addContent(pmCoordinates);
 
                     }
+                    
                     // read the next line
                     line = reader.readLine();
                 }

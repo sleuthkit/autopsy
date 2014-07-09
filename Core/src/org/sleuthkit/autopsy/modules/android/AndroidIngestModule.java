@@ -45,7 +45,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(), "Started {0}"));
+        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(), "Started Analysis"));
 
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
@@ -127,16 +127,6 @@ class AndroidIngestModule implements DataSourceIngestModule {
             errors.add("Error getting Cache Locations");
         }
 
-        /* I'm not sure why we have this in here since we have a KML report module ...
-        try {
-            KMLFileCreator kMLFileCreator = new KMLFileCreator();
-            kMLFileCreator.createKml();
-            progressBar.progress(9);
-        } catch (Exception e) {
-            errors.add("Error creating KML");
-        }
-         */
-
         // create the final message for inbox
         StringBuilder errorMessage = new StringBuilder();
         String errorMsgSubject;
@@ -158,8 +148,8 @@ class AndroidIngestModule implements DataSourceIngestModule {
             errorMessage.append("No errors");
             errorMsgSubject = "No errors";
         }
-        final IngestMessage msg = IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(), "Ingest Finished");
-        services.postMessage(msg);
+
+        services.postMessage(IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(), "Finished Analysis: " + errorMsgSubject, errorMessage.toString()));
 
         return IngestModule.ProcessResult.OK;
     }
