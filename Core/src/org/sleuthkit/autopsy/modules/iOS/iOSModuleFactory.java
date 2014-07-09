@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.iOS;
 
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -28,9 +29,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 //@ServiceProvider(service = IngestModuleFactory.class) //  
 public class iOSModuleFactory extends IngestModuleFactoryAdapter {
-
-    private static final String VERSION_NUMBER = "1.0.0";
-
     static String getModuleName() {
         return NbBundle.getMessage(iOSModuleFactory.class, "iOSModuleFactory.moduleName");
     }
@@ -47,7 +45,7 @@ public class iOSModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleVersionNumber() {
-        return VERSION_NUMBER;
+        return Version.getVersion();
     }
 
     @Override
