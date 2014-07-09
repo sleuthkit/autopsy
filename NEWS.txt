@@ -1,3 +1,17 @@
+---------------- VERSION 3.1.0  --------------
+Numerous changes have gone into this long-awaited major release.
+
+Improvements:
+- Multi-threaded pipelines
+- File type ingest module
+- File extension mismatch ingest module
+- Android ingest module
+- KML report module
+- Tags can be deleted
+- Hash databases can be created and maintained
+
+
+
 ---------------- VERSION 3.0.10  --------------
 Bug Fixes:
 - Fixed 64-bit CRT dlls.  No other logic changes. 
