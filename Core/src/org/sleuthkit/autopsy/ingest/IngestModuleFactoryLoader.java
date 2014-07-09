@@ -26,6 +26,15 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
+import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.android.AndroidModuleFactory;
+import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
+import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
+import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
+import org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory;
 
 /**
  * Looks up loaded ingest module factories using the NetBeans global lookup.
@@ -67,21 +76,22 @@ final class IngestModuleFactoryLoader {
         }
 
         // Kick out the sample module factories.
-        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleIngestModuleFactory"); //NON-NLS
-        moduleFactoriesByClass.remove("org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory"); //NON-NLS
+        moduleFactoriesByClass.remove(SampleIngestModuleFactory.class.getCanonicalName());
+        moduleFactoriesByClass.remove(SampleExecutableIngestModuleFactory.class.getCanonicalName());
 
         // Do the core ingest module ordering hack described above.
         ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
             {
                 add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.ewfverify.EwfVerifierModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.hashdatabase.HashLookupModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory"); //NON-NLS
+                add(HashLookupModuleFactory.class.getCanonicalName());
+                add(FileTypeIdModuleFactory.class.getCanonicalName());
+                add(ArchiveFileExtractorModuleFactory.class.getCanonicalName());
+                add(ExifParserModuleFactory.class.getCanonicalName());
                 add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
                 add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory"); //NON-NLS
+                add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
+                add(E01VerifierModuleFactory.class.getCanonicalName());
+                add(AndroidModuleFactory.class.getCanonicalName());
             }
         };
         List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();

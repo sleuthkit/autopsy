@@ -44,12 +44,12 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
+        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashDbIngestModule.moduleName");
     }
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleDescription");
+        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashDbIngestModule.moduleDescription");
     }
 
     @Override

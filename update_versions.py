@@ -631,18 +631,18 @@ def print_version_updates(modules):
         versions = module.versions
         if module.ret == COMPATIBLE:
             output = (module.name + ":\n")
+            output += ("\tMajor Release:\tNo Change.\n")            
             output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].increment()) + "\n")
-            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
-            output += ("\tRelease:\tNo Change.\n")
+            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")   
             output += ("\n")
             print(output)
             sys.stdout.flush()
             f.write(output)
         elif module.ret == NON_COMPATIBLE:
             output = (module.name + ":\n")
+            output += ("\Major Release:\t" + str(versions[2]) + "\t->\t" + str(versions[2] + 1) + "\n")
             output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].overflow()) + "\n")
             output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
-            output += ("\tRelease:\t" + str(versions[2]) + "\t->\t" + str(versions[2] + 1) + "\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
@@ -650,9 +650,9 @@ def print_version_updates(modules):
         elif module.ret == ERROR:
             output = (module.name + ":\n")
             output += ("\t*Unable to detect necessary changes\n")
+            output += ("\Major Release:\t\t" + str(versions[2]) + "\n")
             output += ("\tSpecification:\t" + str(versions[0]) + "\n")
             output += ("\tImplementation:\t" + str(versions[1]) + "\n")
-            output += ("\tRelease:\t\t" + str(versions[2]) + "\n")
             output += ("\n")
             print(output)
             f.write(output)
@@ -669,14 +669,14 @@ def print_version_updates(modules):
             f.write(output)
         elif module.ret is None:
             output = ("Added " + module.name + ":\n")
+            if module.release() != 1 and module.release() != 0:
+                output += ("Major Release:\t\t" + str(module.release()) + "\t->\t" + "1\n")
+                output += ("\n")
             if module.spec() != "1.0" and module.spec() != "0.0":
                 output += ("\tSpecification:\t" + str(module.spec()) + "\t->\t" + "1.0\n")
                 output += ("\n")
             if module.impl() != 1:
                 output += ("\tImplementation:\t" + str(module.impl()) + "\t->\t" + "1\n")
-                output += ("\n")
-            if module.release() != 1 and module.release() != 0:
-                output += ("Release:\t\t" + str(module.release()) + "\t->\t" + "1\n")
                 output += ("\n")
             print(output)
             sys.stdout.flush()
