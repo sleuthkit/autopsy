@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 
 import org.openide.util.NbBundle;

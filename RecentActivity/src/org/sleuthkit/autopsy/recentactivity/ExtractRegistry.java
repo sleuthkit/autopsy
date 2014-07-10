@@ -148,7 +148,7 @@ class ExtractRegistry extends Extract {
         try {
             logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt"); //NON-NLS
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
         
         UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
@@ -179,7 +179,7 @@ class ExtractRegistry extends Extract {
                 }
             } 
             catch (TskCoreException | IOException ex) {
-                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                logger.log(Level.SEVERE, null, ex);
             }
             
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal); //NON-NLS
@@ -222,7 +222,7 @@ class ExtractRegistry extends Extract {
                             sb.append(s).append("\n");
                         }
                     } catch (IOException ex) {
-                        java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.log(Level.SEVERE, null, ex);
                     } finally {
                         try {
                             input.close();
@@ -238,10 +238,10 @@ class ExtractRegistry extends Extract {
                     this.addErrorMessage(NbBundle.getMessage(this.getClass(),
                                                              "ExtractRegistry.analyzeRegFiles.errMsg.errReadingRegFile",
                                                              this.getName(), regOutputFiles.fullPlugins));
-                    java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.log(Level.SEVERE, null, ex);
                 } catch (TskCoreException ex) {
                     // TODO - add error message here?
-                    java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.log(Level.SEVERE, null, ex);
                 }
             }
             
@@ -254,7 +254,7 @@ class ExtractRegistry extends Extract {
                 logFile.close();
             }
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
     
