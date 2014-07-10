@@ -140,7 +140,7 @@ import org.sleuthkit.datamodel.TskException;
             errorList.clear();
            
             //lock DB for writes in this thread
-            SleuthkitCase.acquireExclusiveLock();
+            SleuthkitCase.dbWriteLock();
              
             addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
             dirFetcher = new Thread( new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
@@ -167,7 +167,7 @@ import org.sleuthkit.datamodel.TskException;
             postProcess();
             
             // unclock the DB 
-            SleuthkitCase.releaseExclusiveLock();
+            SleuthkitCase.dbWriteUnlock();
         }
 
         /**
