@@ -112,6 +112,7 @@ final class IngestScheduler {
                 ingestJobsById.put(jobId, job);
                 IngestManager.getInstance().fireIngestJobStarted(jobId);
                 scheduleIngestTasks(job);
+                logger.log(Level.INFO, "Ingest job {0} started", jobId);
             }
         }
         return errors;
@@ -435,10 +436,13 @@ final class IngestScheduler {
 
     private void finishIngestJob(IngestJob job) {
         job.finish();
-        ingestJobsById.remove(job.getId());
+        long jobId = job.getId();
+        ingestJobsById.remove(jobId);
         if (!job.isCancelled()) {
+            logger.log(Level.INFO, "Ingest job {0} completed", jobId);            
             IngestManager.getInstance().fireIngestJobCompleted(job.getId());
         } else {
+            logger.log(Level.INFO, "Ingest job {0} cancelled", jobId);            
             IngestManager.getInstance().fireIngestJobCancelled(job.getId());
         }
     }
