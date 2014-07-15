@@ -28,6 +28,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.JythonIngestModuleFactory.JythonIngestModuleFactoryException;
 import org.sleuthkit.autopsy.modules.android.AndroidModuleFactory;
 import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
@@ -107,6 +108,13 @@ final class IngestModuleFactoryLoader {
             orderedModuleFactories.add(nonCoreFactory);
         }
 
+        // RJCTODO:
+        try {
+            orderedModuleFactories.add(new JythonIngestModuleFactory("C:\\autopsy\\Core\\src\\org\\sleuthkit\\autopsy\\examples\\SampleJythonFileIngestModule.py", ""));
+        } catch (JythonIngestModuleFactoryException ex) {
+            // RJCTODO
+        }
+        
         return orderedModuleFactories;
     }
 }
