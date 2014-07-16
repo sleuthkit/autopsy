@@ -31,7 +31,6 @@ import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.JythonIngestModuleFactory.JythonIngestModuleFactoryException;
 import org.sleuthkit.autopsy.modules.android.AndroidModuleFactory;
 import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
