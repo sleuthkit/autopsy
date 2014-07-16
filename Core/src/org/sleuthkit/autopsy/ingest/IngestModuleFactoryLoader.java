@@ -24,7 +24,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
+import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
@@ -44,8 +47,11 @@ final class IngestModuleFactoryLoader {
 
     private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
     private static IngestModuleFactoryLoader instance;
+    private final PythonInterpreter interpreter;
+    private int instanceNumber;
 
     private IngestModuleFactoryLoader() {
+        interpreter = new PythonInterpreter();
     }
 
     synchronized static IngestModuleFactoryLoader getInstance() {
@@ -108,13 +114,19 @@ final class IngestModuleFactoryLoader {
             orderedModuleFactories.add(nonCoreFactory);
         }
 
-        // RJCTODO:
+        // RJCTODO: Replace hard-coding with discovery
         try {
-            orderedModuleFactories.add(new JythonIngestModuleFactory("C:\\autopsy\\Core\\src\\org\\sleuthkit\\autopsy\\examples\\SampleJythonFileIngestModule.py", ""));
-        } catch (JythonIngestModuleFactoryException ex) {
-            // RJCTODO
+            interpreter.execfile("C:\\autopsy\\Core\\src\\org\\sleuthkit\\autopsy\\examples\\SampleJythonIngestModule.py");
+            String instanceName = "ingestModuleFactory" + "_" + instanceNumber++;
+            this.interpreter.exec(instanceName + " = " + "SampleJythonIngestModuleFactory" + "()");
+            IngestModuleFactory factory = (IngestModuleFactory)this.interpreter.get(instanceName).__tojava__(IngestModuleFactory.class);
+            orderedModuleFactories.add(factory);
+        } catch (Exception ex) {
+            // RJCTODO: Do error different handling
+            // Jython exceptions apparently don't support getMessage()
+            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(ex.toString(), NotifyDescriptor.ERROR_MESSAGE));
         }
-        
+
         return orderedModuleFactories;
     }
 }

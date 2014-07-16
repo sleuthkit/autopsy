@@ -171,7 +171,7 @@ public class IngestManager {
         if (!isIngestRunning()) {
             clearIngestMessageBox();
         }
-    
+
         long taskId = nextThreadId.incrementAndGet();
         Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobsThread(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
         startIngestJobThreads.put(taskId, task);
@@ -207,9 +207,9 @@ public class IngestManager {
         if (ingestMessageBox != null) {
             ingestMessageBox.clearMessages();
         }
-        ingestErrorMessagePosts.set(0);        
+        ingestErrorMessagePosts.set(0);
     }
-    
+
     /**
      * Test if any ingest jobs are in progress.
      *
@@ -226,7 +226,7 @@ public class IngestManager {
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), ingestModuleDisplayName, task.getDataSource(), task.getFile()));
     }
-        
+
     void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
     }
@@ -562,6 +562,9 @@ public class IngestManager {
             } catch (InterruptedException ex) {
                 // Reset interrupted status.
                 Thread.currentThread().interrupt();
+            } catch (Exception ex) {
+                // RJCTODO: Handle this, on develop branch perhaps
+                logger.log(Level.SEVERE, "Failed to create ingest job", ex); //NON-NLS
             } finally {
                 progress.finish();
                 startIngestJobThreads.remove(threadId);
