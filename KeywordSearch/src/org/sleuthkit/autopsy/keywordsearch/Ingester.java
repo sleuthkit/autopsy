@@ -186,12 +186,6 @@ class Ingester {
      * Visitor used to create param list to send to SOLR index.
      */
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
-
-        private SleuthkitCase curCase = null;
-        
-        GetContentFieldsV() {
-            curCase = Case.getCurrentCase().getSleuthkitCase();
-        }
         
         @Override
         protected Map<String, String> defaultVisit(Content cntnt) {
@@ -246,7 +240,7 @@ class Ingester {
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
             long dataSourceId = -1;
             try {
-                dataSourceId = curCase.getFileDataSource(af);
+                dataSourceId = Case.getCurrentCase().getSleuthkitCase().getFileDataSource(af);
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId()); //NON-NLS
