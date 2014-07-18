@@ -54,6 +54,16 @@ final class IngestModuleFactoryLoader {
         return instance;
     }
 
+    /**
+     * Get the currently available set of ingest module factories. The factories
+     * are not cached between calls since NetBeans modules with classes labeled
+     * as IngestModuleFactory service providers and/or Python scripts defining
+     * classes derived from IngestModuleFactory may be added or removed between
+     * invocations.
+     *
+     * @return A list of objects that implement the IngestModuleFactory
+     * interface.
+     */
     synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         // Discover the ingest module factories, making sure that there are no
         // duplicate module display names. The duplicates requirement could be
