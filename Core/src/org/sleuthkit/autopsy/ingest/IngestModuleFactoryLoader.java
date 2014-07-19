@@ -78,15 +78,16 @@ final class IngestModuleFactoryLoader {
         HashMap<String, IngestModuleFactory> moduleFactoriesByClass = new HashMap<>();
         Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
         for (IngestModuleFactory factory : factories) {
-            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
-            moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
-            moduleDisplayNames.add(factory.getModuleDisplayName());
             if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
+                moduleDisplayNames.add(factory.getModuleDisplayName());
+                moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
+                logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
+            } else {
                 // Not popping up a message box to keep this class UI-indepdent.
                 logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
             }
         }
-
+        
         // Kick out the sample module factories.
         moduleFactoriesByClass.remove(SampleIngestModuleFactory.class.getCanonicalName());
         moduleFactoriesByClass.remove(SampleExecutableIngestModuleFactory.class.getCanonicalName());
