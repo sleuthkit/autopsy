@@ -72,6 +72,8 @@ final class IngestModuleFactoryLoader {
         // temporarily  hard-coding ordering of module factories until the 
         // module configuration file is reworked, so the discovered factories 
         // are initially mapped by class name.
+        
+        // make map of factory name to factory
         HashSet<String> moduleDisplayNames = new HashSet<>();
         HashMap<String, IngestModuleFactory> moduleFactoriesByClass = new HashMap<>();
         Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
@@ -104,11 +106,17 @@ final class IngestModuleFactoryLoader {
                 add(AndroidModuleFactory.class.getCanonicalName());
             }
         };
+        
+        // make the ordered list of factories, starting with the core
+        // modules. Remove the core factories from the map.
         List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();
         for (String className : coreModuleOrdering) {
             IngestModuleFactory coreFactory = moduleFactoriesByClass.remove(className);
             if (coreFactory != null) {
                 orderedModuleFactories.add(coreFactory);
+            }
+            else {
+                logger.log(Level.SEVERE, "Core factory " + coreFactory + " not loaded");
             }
         }
 
