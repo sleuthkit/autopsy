@@ -38,15 +38,15 @@ final class FileIngestPipeline {
         this.context = context;
 
         // Create an ingest module instance from each file ingest module 
-        // template. Put the modules in a map of module class names to module 
-        // instances to facilitate loading the modules into the pipeline in the 
-        // sequence indicated by the ordered list of module class names that 
-        // will be obtained from the file ingest pipeline configuration.
-        Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
+        // template. 
+        // current code uses the order pased in.
+        // Commented out code relied on the XML configuration file for ordering.
+        //Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
                 FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
-                modulesByClass.put(module.getClassName(), module);
+                modules.add(module);
+                //modulesByClass.put(module.getClassName(), module);
             }
         }
 
@@ -54,15 +54,19 @@ final class FileIngestPipeline {
         // data source ingest pipeline configuration, adding any additional 
         // modules found in the global lookup, but not mentioned in the 
         // configuration, to the end of the pipeline in arbitrary order.
-        List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getFileIngestPipelineConfig();
+        /*List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getFileIngestPipelineConfig();
         for (String moduleClassName : pipelineConfig) {
             if (modulesByClass.containsKey(moduleClassName)) {
                 modules.add(modulesByClass.remove(moduleClassName));
+            }
+            else {
+                // @@@ add error message to flag renamed / removed modules
             }
         }
         for (FileIngestModuleDecorator module : modulesByClass.values()) {
             modules.add(module);
         }
+        */
     }
 
     boolean isEmpty() {
