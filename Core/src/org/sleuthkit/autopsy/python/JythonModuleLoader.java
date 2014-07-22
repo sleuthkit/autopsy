@@ -41,12 +41,12 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory;
 
 /**
- * Looks up loaded ingest module factories using the NetBeans global lookup.
+ * Finds and loads Autopsy modules written using the Jython variant of the
+ * Python scripting language.
  */
-final class IngestModuleFactoryLoader {
+final class JythonModuleLoader {
 
     private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
-    private static IngestModuleFactoryLoader instance;
     private final PythonInterpreter interpreter;
     private int instanceNumber;
 
@@ -127,7 +127,7 @@ final class IngestModuleFactoryLoader {
         // RJCTODO: Replace hard-coding with discovery
         try {
             String pathToPythonScript = "C:\\autopsy\\Core\\src\\org\\sleuthkit\\autopsy\\examples\\SampleJythonIngestModule.py";
-            this.interpreter.execfile(pathToPythonScript);   
+            this.interpreter.execfile(pathToPythonScript);
             String factoryClassName = pathToPythonScript.substring(pathToPythonScript.lastIndexOf("\\") + 1);
             factoryClassName = factoryClassName.substring(0, factoryClassName.indexOf("."));
             String instanceName = "ingestModuleFactory" + "_" + instanceNumber++;

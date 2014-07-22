@@ -117,3 +117,5 @@ class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
     def createFileIngestModule(self, ingestOptions):
         return SampleJythonFileIngestModule()
 
+if __name__ == "__main__":
+    print "Howdy!"
