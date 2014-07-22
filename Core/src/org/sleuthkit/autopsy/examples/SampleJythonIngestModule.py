@@ -57,8 +57,8 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 			return IngestModule.ProcessResult.OK;
 
 		#Post a message to the ingest messages in box.
-		# message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, "SampleJythonDataSourceIngestModule", "Found %d files" % fileCount)
-		# IngestServices.getInstance().postMessage(message)
+		message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
+		IngestServices.getInstance().postMessage(message)
 
 		return IngestModule.ProcessResult.OK;
 
@@ -72,7 +72,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
 		# If the file has a txt extension, post an artifact to the blackboard.
 		if file.getName().endswith("txt"):
 			art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-			att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), "SampleJythonFileIngestModule", "Text file")
+			att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), "Sample Jython File Ingest Module", "Text file")
 			art.addAttribute(att)
 
 			# Read the contents of the file.
@@ -85,9 +85,9 @@ class SampleJythonFileIngestModule(FileIngestModule):
 				len = inputStream.read(buffer)
 
 			# Send the size of the file to the ingest messages in box. 
-			#msgText = "Size of %s is %d bytes" % ((file.getName(), totLen))
-			#message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, "SampleJythonFileIngestModule", msgText)
-			#ingestServices = IngestServices.getInstance().postMessage(message)
+			msgText = "Size of %s is %d bytes" % ((file.getName(), totLen))
+			message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, "Sample Jython File IngestModule", msgText)
+			ingestServices = IngestServices.getInstance().postMessage(message)
 
 		return IngestModule.ProcessResult.OK
 
@@ -116,6 +116,3 @@ class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
 
     def createFileIngestModule(self, ingestOptions):
         return SampleJythonFileIngestModule()
-
-if __name__ == "__main__":
-    print "Howdy!"

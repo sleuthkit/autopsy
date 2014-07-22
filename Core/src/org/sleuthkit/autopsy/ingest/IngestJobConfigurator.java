@@ -70,7 +70,7 @@ public final class IngestJobConfigurator {
 
         // Get the ingest module factories discovered by the ingest module 
         // loader.
-        List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getInstance().getIngestModuleFactories();
+        List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
         HashSet<String> loadedModuleNames = new HashSet<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());

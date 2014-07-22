@@ -16,130 +16,84 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ingest;
+package org.sleuthkit.autopsy.python;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.Scanner;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Lookup;
-import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
-import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
-import org.sleuthkit.autopsy.modules.android.AndroidModuleFactory;
-import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
-import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
-import org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
  * Python scripting language.
  */
-final class JythonModuleLoader {
+public final class JythonModuleLoader {
 
-    private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
-    private final PythonInterpreter interpreter;
-    private int instanceNumber;
-
-    private IngestModuleFactoryLoader() {
-        interpreter = new PythonInterpreter();
-    }
-
-    synchronized static IngestModuleFactoryLoader getInstance() {
-        if (instance == null) {
-            instance = new IngestModuleFactoryLoader();
-        }
-        return instance;
-    }
+    private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName()); // RJCTODO: Need this?
 
     /**
      * Get the currently available set of ingest module factories. The factories
-     * are not cached between calls since NetBeans modules with classes labeled
-     * as IngestModuleFactory service providers and/or Python scripts defining
-     * classes derived from IngestModuleFactory may be added or removed between
+     * are not cached between calls since Python scripts defining classes
+     * derived from IngestModuleFactory may be added or removed between
      * invocations.
      *
      * @return A list of objects that implement the IngestModuleFactory
      * interface.
      */
-    synchronized List<IngestModuleFactory> getIngestModuleFactories() {
-        // Discover the ingest module factories, making sure that there are no
-        // duplicate module display names. The duplicates requirement could be
-        // eliminated if the enabled/disabled modules setting was by factory 
-        // class name instead of module display name. Also note that that we are 
-        // temporarily  hard-coding ordering of module factories until the 
-        // module configuration file is reworked, so the discovered factories 
-        // are initially mapped by class name.
-        HashSet<String> moduleDisplayNames = new HashSet<>();
-        HashMap<String, IngestModuleFactory> moduleFactoriesByClass = new HashMap<>();
-        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
-        for (IngestModuleFactory factory : factories) {
-            logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
-            moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
-            moduleDisplayNames.add(factory.getModuleDisplayName());
-            if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
-                // Not popping up a message box to keep this class UI-indepdent.
-                logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
+    public static List<IngestModuleFactory> getIngestModuleFactories() {
+        List<IngestModuleFactory> factories = new ArrayList<>();
+        File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
+        File[] files = pythonModulesDir.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
+                for (File script : pythonScripts) {
+                    try {
+                        Scanner fileScanner = new Scanner(script);
+                        while (fileScanner.hasNextLine()) {
+                            String line = fileScanner.nextLine();
+                            if (line.startsWith("class ") && (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory"))) {
+                                String className = line.substring(6, line.indexOf("("));
+                                factories.add((IngestModuleFactory) createObjectFromScript(script, className, IngestModuleFactory.class));
+                            }
+                        }
+                    } catch (FileNotFoundException ex) {
+                        //RJCTODO
+                    }
+                }
             }
         }
+        return factories;
+    }
 
-        // Kick out the sample module factories.
-        moduleFactoriesByClass.remove(SampleIngestModuleFactory.class.getCanonicalName());
-        moduleFactoriesByClass.remove(SampleExecutableIngestModuleFactory.class.getCanonicalName());
-
-        // Do the core ingest module ordering hack described above.
-        ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
-            {
-                add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
-                add(HashLookupModuleFactory.class.getCanonicalName());
-                add(FileTypeIdModuleFactory.class.getCanonicalName());
-                add(ArchiveFileExtractorModuleFactory.class.getCanonicalName());
-                add(ExifParserModuleFactory.class.getCanonicalName());
-                add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
-                add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
-                add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
-                add(E01VerifierModuleFactory.class.getCanonicalName());
-                add(AndroidModuleFactory.class.getCanonicalName());
-            }
-        };
-        List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();
-        for (String className : coreModuleOrdering) {
-            IngestModuleFactory coreFactory = moduleFactoriesByClass.remove(className);
-            if (coreFactory != null) {
-                orderedModuleFactories.add(coreFactory);
-            }
-        }
-
-        // Add in any non-core factories discovered. Order is not guaranteed!
-        for (IngestModuleFactory nonCoreFactory : moduleFactoriesByClass.values()) {
-            orderedModuleFactories.add(nonCoreFactory);
-        }
-
-        // RJCTODO: Replace hard-coding with discovery
+    private static Object createObjectFromScript(File script, String className, Class clazz) {
         try {
-            String pathToPythonScript = "C:\\autopsy\\Core\\src\\org\\sleuthkit\\autopsy\\examples\\SampleJythonIngestModule.py";
-            this.interpreter.execfile(pathToPythonScript);
-            String factoryClassName = pathToPythonScript.substring(pathToPythonScript.lastIndexOf("\\") + 1);
-            factoryClassName = factoryClassName.substring(0, factoryClassName.indexOf("."));
-            String instanceName = "ingestModuleFactory" + "_" + instanceNumber++;
-            this.interpreter.exec(instanceName + " = " + factoryClassName + "Factory()");
-            IngestModuleFactory factory = this.interpreter.get(instanceName, IngestModuleFactory.class);
-            orderedModuleFactories.add(factory);
+            PythonInterpreter interpreter = new PythonInterpreter(); // RJCTODO: Does a new one need to be created each time?
+            interpreter.execfile(script.getAbsolutePath());
+            interpreter.exec("obj = " + className + "()");
+            return interpreter.get("obj", clazz);
         } catch (Exception ex) {
             // RJCTODO: Do error different handling
             // Jython exceptions apparently don't support getMessage()
             DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(ex.toString(), NotifyDescriptor.ERROR_MESSAGE));
-        }
+            return null;
 
-        return orderedModuleFactories;
+        }
+    }
+
+    private static class PythonScriptFileFilter implements FilenameFilter {
+
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".py");
+        }
     }
 }
