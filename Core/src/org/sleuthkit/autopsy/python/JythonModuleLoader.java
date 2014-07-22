@@ -24,6 +24,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.python.util.PythonInterpreter;
@@ -62,7 +63,15 @@ public final class JythonModuleLoader {
                             String line = fileScanner.nextLine();
                             if (line.startsWith("class ") && (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory"))) {
                                 String className = line.substring(6, line.indexOf("("));
-                                factories.add((IngestModuleFactory) createObjectFromScript(script, className, IngestModuleFactory.class));
+                                try {
+                                    factories.add((IngestModuleFactory) createObjectFromScript(script, className, IngestModuleFactory.class));
+                                } catch (Exception ex) {
+                                    // RJCTODO: Improve
+                                    String msg = String.format("Failed to load %s from %s", className, script.getName());
+                                    logger.log(Level.SEVERE, msg, ex);
+                                    msg += ", see log for details";
+                                    DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(msg, NotifyDescriptor.ERROR_MESSAGE));
+                                }
                             }
                         }
                     } catch (FileNotFoundException ex) {
@@ -75,18 +84,10 @@ public final class JythonModuleLoader {
     }
 
     private static Object createObjectFromScript(File script, String className, Class clazz) {
-        try {
-            PythonInterpreter interpreter = new PythonInterpreter(); // RJCTODO: Does a new one need to be created each time?
-            interpreter.execfile(script.getAbsolutePath());
-            interpreter.exec("obj = " + className + "()");
-            return interpreter.get("obj", clazz);
-        } catch (Exception ex) {
-            // RJCTODO: Do error different handling
-            // Jython exceptions apparently don't support getMessage()
-            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(ex.toString(), NotifyDescriptor.ERROR_MESSAGE));
-            return null;
-
-        }
+        PythonInterpreter interpreter = new PythonInterpreter(); // RJCTODO: Does a new one need to be created each time?
+        interpreter.execfile(script.getAbsolutePath());
+        interpreter.exec("obj = " + className + "()");
+        return interpreter.get("obj", clazz);
     }
 
     private static class PythonScriptFileFilter implements FilenameFilter {
