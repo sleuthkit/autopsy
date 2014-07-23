@@ -77,12 +77,11 @@ final class IngestModuleFactoryLoader {
         // hash map of display names to discovered factories and a hash set of
         // display names.
         HashSet<String> moduleDisplayNames = new HashSet<>();
-        HashMap<String, IngestModuleFactory> moduleFactoriesByClass = new HashMap<>();
-        Collection<? extends IngestModuleFactory> factories = Lookup.getDefault().lookupAll(IngestModuleFactory.class);
-        for (IngestModuleFactory factory : factories) {
+        HashMap<String, IngestModuleFactory> javaFactoriesByClass = new HashMap<>();
+        for (IngestModuleFactory factory : Lookup.getDefault().lookupAll(IngestModuleFactory.class)) {
             if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
                 moduleDisplayNames.add(factory.getModuleDisplayName());
-                moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
+                javaFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
                 logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
             } else {
                 logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
@@ -93,16 +92,17 @@ final class IngestModuleFactoryLoader {
         }
 
         // Kick out the sample ingest module factories implemented in Java.
-        moduleFactoriesByClass.remove(SampleIngestModuleFactory.class.getCanonicalName());
-        moduleFactoriesByClass.remove(SampleExecutableIngestModuleFactory.class.getCanonicalName());
+        javaFactoriesByClass.remove(SampleIngestModuleFactory.class.getCanonicalName());
+        javaFactoriesByClass.remove(SampleExecutableIngestModuleFactory.class.getCanonicalName());
 
-        // Make the ordered list of core ingest module factories (remove the 
-        // core factories from the map).
-        List<IngestModuleFactory> orderedModuleFactories = new ArrayList<>();
+        // Add the core ingest module factories in the desired order, removing
+        // the core factories from the map so that the map will only contain 
+        // non-core modules after this loop.
+        List<IngestModuleFactory> factories = new ArrayList<>();
         for (String className : coreModuleOrdering) {
-            IngestModuleFactory coreFactory = moduleFactoriesByClass.remove(className);
+            IngestModuleFactory coreFactory = javaFactoriesByClass.remove(className);
             if (coreFactory != null) {
-                orderedModuleFactories.add(coreFactory);
+                factories.add(coreFactory);
             } else {
                 logger.log(Level.SEVERE, "Core factory {0} not loaded", coreFactory);
             }
@@ -110,14 +110,14 @@ final class IngestModuleFactoryLoader {
 
         // Add any remaining non-core factories discovered. Order is not 
         // guaranteed!
-        orderedModuleFactories.addAll(moduleFactoriesByClass.values());
+        factories.addAll(javaFactoriesByClass.values());
 
         // Add any ingest module factories implemented using Jython. Order is 
         // not guaranteed! 
         for (IngestModuleFactory factory : JythonModuleLoader.getIngestModuleFactories()) {
             if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
                 moduleDisplayNames.add(factory.getModuleDisplayName());
-                orderedModuleFactories.add(factory);
+                factories.add(factory);
                 logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
             } else {
                 logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
@@ -127,6 +127,6 @@ final class IngestModuleFactoryLoader {
             }
         }
 
-        return orderedModuleFactories;
+        return factories;
     }
 }
