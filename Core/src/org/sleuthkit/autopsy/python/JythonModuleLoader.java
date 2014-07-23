@@ -33,6 +33,7 @@ import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.report.GeneralReportModule;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
@@ -40,19 +41,30 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
  */
 public final class JythonModuleLoader {
 
-    private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName()); // RJCTODO: Need this?
+    private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName());
 
     /**
-     * Get the currently available set of ingest module factories. The factories
-     * are not cached between calls since Python scripts defining classes
-     * derived from IngestModuleFactory may be added or removed between
-     * invocations.
+     * Get ingest module factories implemented using Jython.
      *
      * @return A list of objects that implement the IngestModuleFactory
      * interface.
      */
     public static List<IngestModuleFactory> getIngestModuleFactories() {
-        List<IngestModuleFactory> factories = new ArrayList<>();
+        return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
+    }
+
+    /**
+     * Get general report modules implemented using Jython.
+     *
+     * @return A list of objects that implement the GeneralReportModule
+     * interface.
+     */
+    public static List<GeneralReportModule> getGeneralReportModules() {
+        return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
+    }
+
+    private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class interfaceClass) {
+        List<T> objects = new ArrayList<>();
         File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
         File[] files = pythonModulesDir.listFiles();
         for (File file : files) {
@@ -63,10 +75,10 @@ public final class JythonModuleLoader {
                         Scanner fileScanner = new Scanner(script);
                         while (fileScanner.hasNextLine()) {
                             String line = fileScanner.nextLine();
-                            if (line.startsWith("class ") && (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory"))) {
+                            if (line.startsWith("class ") && filter.accept(line)) {
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    factories.add((IngestModuleFactory) createObjectFromScript(script, className, IngestModuleFactory.class));
+                                    objects.add((T) createObjectFromScript(script, className, interfaceClass));
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
@@ -84,29 +96,29 @@ public final class JythonModuleLoader {
                 }
             }
         }
-        return factories;
+        return objects;
     }
-
+        
     private static Object createObjectFromScript(File script, String className, Class interfaceClass) {
         // Make a "fresh" interpreter every time to avoid name collisions, etc.
         PythonInterpreter interpreter = new PythonInterpreter();
-        
+
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
         // with it.
         interpreter.exec("import sys");
         String path = Matcher.quoteReplacement(script.getParent());
         interpreter.exec("sys.path.append('" + path + "')");
-        
+
         // Execute the script and create an instance of the desired class.
         interpreter.execfile(script.getAbsolutePath());
         interpreter.exec("obj = " + className + "()");
         Object obj = interpreter.get("obj", interfaceClass);
-        
+
         // Remove the directory where the Python script resides from the Python
         // module search path.
         interpreter.exec("sys.path.remove('" + path + "')");
-                
+
         return obj;
     }
 
@@ -116,5 +128,25 @@ public final class JythonModuleLoader {
         public boolean accept(File dir, String name) {
             return name.endsWith(".py");
         }
+    }
+    
+    private static interface LineFilter {
+        
+        boolean accept(String line);
+    }
+    
+    private static class IngestModuleFactoryDefFilter implements LineFilter {
+
+        @Override
+        public boolean accept(String line) {
+            return (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory"));           
+        }        
+    }
+    
+    private static class GeneralReportModuleDefFilter implements LineFilter {
+        @Override
+        public boolean accept(String line) {
+            return (line.contains("GeneralReportModuleAdapter") || line.contains("GeneralReportModule"));           
+        }                
     }
 }
