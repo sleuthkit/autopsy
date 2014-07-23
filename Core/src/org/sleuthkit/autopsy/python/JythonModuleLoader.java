@@ -27,7 +27,9 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.util.NbBundle;
 import org.python.util.PythonInterpreter;
+import org.sleuthkit.autopsy.actions.OpenPythonModulesFolderAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
@@ -66,16 +68,18 @@ public final class JythonModuleLoader {
                                 try {
                                     factories.add((IngestModuleFactory) createObjectFromScript(script, className, IngestModuleFactory.class));
                                 } catch (Exception ex) {
-                                    // RJCTODO: Improve
-                                    String msg = String.format("Failed to load %s from %s", className, script.getName());
-                                    logger.log(Level.SEVERE, msg, ex);
-                                    msg += ", see log for details";
-                                    DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(msg, NotifyDescriptor.ERROR_MESSAGE));
+                                    logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
+                                    DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
+                                            NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.errorMessages.failedToLoadModule", className, script.getAbsolutePath()),
+                                            NotifyDescriptor.ERROR_MESSAGE));
                                 }
                             }
                         }
                     } catch (FileNotFoundException ex) {
-                        //RJCTODO
+                        logger.log(Level.SEVERE, String.format("Failed to open %s", script.getAbsolutePath()), ex); //NON-NLS
+                        DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
+                                NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.errorMessages.failedToOpenModule", script.getAbsolutePath()),
+                                NotifyDescriptor.ERROR_MESSAGE));
                     }
                 }
             }

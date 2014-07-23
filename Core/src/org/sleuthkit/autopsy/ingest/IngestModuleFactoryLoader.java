@@ -24,7 +24,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
@@ -82,9 +85,10 @@ final class IngestModuleFactoryLoader {
                 moduleFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
                 logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
             } else {
-                // RJCTODO: change this
-                // Not popping up a message box to keep this class UI-indepdent.
                 logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
+                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
+                        NbBundle.getMessage(IngestModuleFactoryLoader.class, "IngestModuleFactoryLoader.errorMessages.duplicateDisplayName", factory.getModuleDisplayName()),
+                        NotifyDescriptor.ERROR_MESSAGE));
             }
         }
 
@@ -116,12 +120,13 @@ final class IngestModuleFactoryLoader {
                 orderedModuleFactories.add(factory);
                 logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
             } else {
-                // RJCTODO: change this
-                // Not popping up a message box to keep this class UI-indepdent.
                 logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
-            }            
+                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
+                        NbBundle.getMessage(IngestModuleFactoryLoader.class, "IngestModuleFactoryLoader.errorMessages.duplicateDisplayName", factory.getModuleDisplayName()),
+                        NotifyDescriptor.ERROR_MESSAGE));
+            }
         }
-        
+
         return orderedModuleFactories;
     }
 }

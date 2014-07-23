@@ -532,7 +532,6 @@ public class IngestManager {
                 // Reset interrupted status.
                 Thread.currentThread().interrupt();
             } catch (Exception ex) {
-                // RJCTODO: Handle this, on develop branch perhaps
                 logger.log(Level.SEVERE, "Failed to create ingest job", ex); //NON-NLS
             } finally {
                 progress.finish();
