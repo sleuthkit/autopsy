@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -86,11 +87,27 @@ public final class JythonModuleLoader {
         return factories;
     }
 
-    private static Object createObjectFromScript(File script, String className, Class clazz) {
-        PythonInterpreter interpreter = new PythonInterpreter(); // RJCTODO: Does a new one need to be created each time?
+    private static Object createObjectFromScript(File script, String className, Class interfaceClass) {
+        // Make a "fresh" interpreter every time to avoid name collisions, etc.
+        PythonInterpreter interpreter = new PythonInterpreter();
+        
+        // Add the directory where the Python script resides to the Python
+        // module search path to allow the script to use other scripts bundled
+        // with it.
+        interpreter.exec("import sys");
+        String path = Matcher.quoteReplacement(script.getParent());
+        interpreter.exec("sys.path.append('" + path + "')");
+        
+        // Execute the script and create an instance of the desired class.
         interpreter.execfile(script.getAbsolutePath());
         interpreter.exec("obj = " + className + "()");
-        return interpreter.get("obj", clazz);
+        Object obj = interpreter.get("obj", interfaceClass);
+        
+        // Remove the directory where the Python script resides from the Python
+        // module search path.
+        interpreter.exec("sys.path.remove('" + path + "')");
+                
+        return obj;
     }
 
     private static class PythonScriptFileFilter implements FilenameFilter {
