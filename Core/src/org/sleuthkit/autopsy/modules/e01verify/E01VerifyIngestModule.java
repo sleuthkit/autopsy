@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.modules.e01verify;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.xml.bind.DatatypeConverter;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -31,9 +34,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.openide.util.NbBundle;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness
@@ -95,7 +95,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         }
 
         // Skip images that are not E01
-        if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
+        if (img == null || img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             img = null;
             logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
