@@ -341,7 +341,7 @@ We recommend that you:
 -# Review the ingest module code for thread safety (especially look for static member variables).
 
 
-The following table provide a mapping of the methods of the old abstract classes to 
+The following table provides a mapping of the methods of the old abstract classes to 
 the new interfaces:
 
 Old method | New Method |
