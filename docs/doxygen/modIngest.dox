@@ -3,8 +3,21 @@
 
 \section ingest_modules_getting_started Getting Started
 
-This page describes how to develop ingest modules.  It assumes you have 
-already set up your development environment as described in \ref mod_dev_page.
+This page describes how to develop ingest modules using either Java or Jython.  It assumes you have 
+already set up your Java development environment as described in \ref mod_dev_page.  Note that the Jython JAR file
+has been added to the Autopsy-Core NetBeans project as a wrapped JAR.
+
+Ingest modules developed using Java can be added directly to your private copy of the source code, but if you
+want to share your module with others, it should be developed as a NetBeans module. You can then distribute the module
+and users can install it in Autopsy using the NetBeans Plugin Manager accessed through Autopsy's Tools -> Plugins menu item.  
+The user will go to the Downloaded tab, push the Add Plugins... button to navigate to and select your NetBeans Module file,
+and then push the Install button to complete the installation.
+ 
+Ingest modules developed using Jython are installed in Autopsy by placing them in their own subdirectory of the python_modules
+directory. A window into the python_modules directory can be opened through the Autopsy's Tools -> Python Plugins menu item. 
+Create a folder in this directory and create or place your Python scripts in this folder.  
+
+\section ingest_module_types Ingest Module Types
   
 Ingest modules analyze data from a data source (e.g., a disk image or a folder 
 of logical files). There are two types of ingest modules in Autopsy: 
@@ -12,7 +25,9 @@ of logical files). There are two types of ingest modules in Autopsy:
 - Data-source-level ingest modules
 - File-level ingest modules
 
-The difference between these two types of modules is that data-source-level modules are called once and passed in a reference to a data source to analyze and file-level ingest modules are called for each file and passed in the file to analyze. Here are some guidelines for choosing the type of your ingest module:
+The difference between these two types of modules is what gets passed in to their process() methods during a data source ingest. 
+The process() method of a data-source-level module is called once per ingest is passed a reference to the data source.
+The process() method of a file-level ingest module is called for each file in the data source and is passed in a reference to the current file. Here are some guidelines for choosing the type of your ingest module:
 
 - Your module should be a data-source-level ingest module if it only needs to 
 retrieve and analyze a small subset of the files present in a data source and it can find those files based on data in the database (such as file names).  
