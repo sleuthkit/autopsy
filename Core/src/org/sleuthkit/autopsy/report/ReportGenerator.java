@@ -121,9 +121,9 @@ import org.sleuthkit.datamodel.TskData;
             for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     TableReportModule module = entry.getKey();
-                    String moduleFilePath = module.getFilePath();
-                    if (moduleFilePath != null) {
-                        tableProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    String reportFilePath = module.getRelativeFilePath();
+                    if (reportFilePath != null) {
+                        tableProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     }
                     else {
                         tableProgress.put(module, panel.addReport(module.getName(), null));                        
@@ -136,9 +136,9 @@ import org.sleuthkit.datamodel.TskData;
             for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     GeneralReportModule module = entry.getKey();
-                    String moduleFilePath = module.getFilePath();
-                    if (moduleFilePath != null) {
-                        generalProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    String reportFilePath = module.getRelativeFilePath();
+                    if (reportFilePath != null) {
+                        generalProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     }
                     else {
                         generalProgress.put(module, panel.addReport(module.getName(), null));                        
@@ -151,9 +151,9 @@ import org.sleuthkit.datamodel.TskData;
             for(Entry<FileReportModule, Boolean> entry : fileListModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     FileReportModule module = entry.getKey();
-                    String moduleFilePath = module.getFilePath();
-                    if (moduleFilePath != null) {
-                        fileProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    String reportFilePath = module.getRelativeFilePath();
+                    if (reportFilePath != null) {
+                        fileProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     }
                     else {
                         fileProgress.put(module, panel.addReport(module.getName(), null));                        
