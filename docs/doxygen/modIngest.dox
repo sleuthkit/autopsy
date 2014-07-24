@@ -3,7 +3,7 @@
 
 \section ingest_modules_getting_started Getting Started
 
-This page describes how to develop ingest modules using either Java or Jython.  It assumes you have 
+This page describes how to develop ingest modules using either Java or Python (Jython).  It assumes you have 
 already set up your Java development environment as described in \ref mod_dev_page.  Note that the Jython JAR file
 has been added to the Autopsy-Core NetBeans project as a wrapped JAR.
 
@@ -26,8 +26,8 @@ of logical files). There are two types of ingest modules in Autopsy:
 - File-level ingest modules
 
 The difference between these two types of modules is what gets passed in to their process() methods during a data source ingest. 
-The process() method of a data-source-level module is called once per ingest is passed a reference to the data source.
-The process() method of a file-level ingest module is called for each file in the data source and is passed in a reference to the current file. Here are some guidelines for choosing the type of your ingest module:
+The process() method of a data-source-level module is called once per ingest and receives a reference to the data source.
+The process() method of a file-level ingest module is called for each file in the data source and receives a reference to the current file. Here are some guidelines for choosing the type of your ingest module:
 
 - Your module should be a data-source-level ingest module if it only needs to 
 retrieve and analyze a small subset of the files present in a data source and it can find those files based on data in the database (such as file names).  
@@ -86,26 +86,22 @@ covers how you can use the factory to provide options to the user.
 To make writing a simple factory easier, Autopsy provides an adapter class that implements the "optional" methods in the interface. 
 Our basic factory will use the adapter. 
 
--# Create a class either manually or using the NetBeans wizards. Edit the class to extend org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter. NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. 
--# Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleFactory interface for details on what each method needs to do. You can also refer to org.sleuthkit.autopsy.examples.SampleIngestModuleFactory as an example.  
--# Add a NetBeans ServiceProvider annotation so that the factory is found at run time: 
+-# Define a new class that extends (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter. If you are using Java, NetBeans will likely complain that you have not implemented the necessary methods and you can use its "hints" to automatically generate stubs for them. 
+-# Use the documentation for the org.sleuthkit.autopsy.ingest.IngestModuleFactory interface for details on what each method needs to do. You can also refer to org.sleuthkit.autopsy.examples.SampleIngestModuleFactory or the code in org.sleuthkit.autopsy.examples.ingestmodule.py as an example.  
+-# If you are using Java, import org.openide.util.lookup.ServiceProvider and add a dependency on the NetBeans Lookup 
+API module to the NetBeans module that contains your ingest module. Then add a NetBeans ServiceProvider annotation so that the factory is found at run time: 
 \code
 @ServiceProvider(service = IngestModuleFactory.class)
 \endcode
 
-You will also need to import org.openide.util.lookup.ServiceProvider and add a dependency on the NetBeans Lookup 
-API module to the NetBeans module that contains your ingest module.
-
-At this point, you should be able to compile your NetBeans module and run it. When you add a data source, 
-you should see the module in the list of ingest modules.  If you don't see it, double check that you either implemented org.sleuthkit.autopsy.ingest.IngestModuleFactory 
-or extended org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter and that you added the service provider annotation. 
-
+At this point, when you add a data source to an Autopsy case, you should see the module in the list of ingest modules.  If you don't see it, double check that you either implemented org.sleuthkit.autopsy.ingest.IngestModuleFactory 
+or extended or inherited org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter. If using Java, make sure that you added the service provider annotation. 
 
 
 \subsection ingest_modules_implementing_ingestmodule Understanding the IngestModule Interface
 
 Data source and file ingest modules have similar APIs. The main difference is what data gets passed 
-to the methods.  Let's first cover the common concepts. 
+to the process() method.  Let's first cover the common concepts. 
 
 Both modules implement the org.sleuthkit.autopsy.ingest.IngestModule interface, which defines a module initialization method:
 - org.sleuthkit.autopsy.ingest.IngestModule.startUp() 
@@ -123,17 +119,14 @@ interfaces both extend org.sleuthkit.autopsy.ingest.IngestModule.
 \subsection ingest_modules_implementing_datasourceingestmodule Creating a Data Source Ingest Module
 
 To create a data source ingest module:
--# Make a new Java class either manually or 
-using the NetBeans wizards. 
--# Make the class implement 
-org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  
--# The NetBeans IDE 
+-# Define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  If you are using Java, the NetBeans IDE 
 will complain that you have not implemented one or more of the required methods.
-You can use its "hints" to automatically generate stubs for the missing methods.  Use this page and the 
+You can use its "hints" to automatically generate stubs for the missing methods.  
+-# Use this page and the 
 documentation for the org.sleuthkit.autopsy.ingest.IngestModule and 
 org.sleuthkit.autopsy.ingest.DataSourceIngestModule interfaces for guidance on 
 what each method needs to do.  Or you can copy the code from  
-org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule and use it as a 
+org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule or org.sleuthkit.autopsy.examples.ingestmodule.py and use it as a 
 template for your module.  
 
 All data source ingest modules must implement the single method defined by the 
@@ -155,7 +148,7 @@ The best way to do that is using one of the findFiles() methods of the
 org.sleuthkit.autopsy.casemodule.services.FileManager class.  See 
 \ref mod_dev_other_services for more details. 
 
-The final step to getting the basic ingest module working is to configure your factory class to create instances of it. To do this, you will need to change the isDataSourceIngestModuleFactory() method to return true and have the createDataSourceIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to:
+The final step to getting the basic ingest module working is to configure your factory class to create instances of it. To do this, you will need to change the isDataSourceIngestModuleFactory() method to return true and have the createDataSourceIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to this Java code:
 
 \code
     @Override
@@ -173,17 +166,15 @@ The final step to getting the basic ingest module working is to configure your f
 \subsection ingest_modules_implementing_fileingestmodule Creating a File Ingest Module
 
 To create a file ingest module:
--# Make a new Java class either manually or 
-using the NetBeans wizards. 
--# Make the class implement 
-org.sleuthkit.autopsy.ingest.FileIngestModule.  
--# The NetBeans IDE 
+-# Define a new class that implements (Java) or inherits (Jython)
+org.sleuthkit.autopsy.ingest.FileIngestModule. If you are using Java, the NetBeans IDE 
 will complain that you have not implemented one or more of the required methods. 
-You can use its "hints" to automatically generate stubs for the missing methods.  Use this page and the 
+You can use its "hints" to automatically generate stubs for the missing methods.  
+-# Use this page and the 
 documentation for the org.sleuthkit.autopsy.ingest.IngestModule and 
 org.sleuthkit.autopsy.ingest.FileIngestModule interfaces for guidance on what 
 each method needs to do.  Or you can copy the code from  
-org.sleuthkit.autopsy.examples.SampleFileIngestModule and use it as a 
+org.sleuthkit.autopsy.examples.SampleFileIngestModule or org.sleuthkit.autopsy.examples.ingestmodule.py and use it as a 
 template for your module.  
 
 All file ingest modules must implement the two methods defined by the 
@@ -198,7 +189,7 @@ each file Autopsy feeds into the pipeline of which the module instance is a part
 process() method receives a reference to a org.sleuthkit.datamodel.AbstractFile 
 object. 
 
-The final step to getting the basic ingest module working is to configure your factory class to create instances of it. To do this, you will need to change the isFileIngestModuleFactory() method to return true and have the createFileIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to:
+The final step to getting the basic ingest module working is to configure your factory class to create instances of it. To do this, you will need to change the isFileIngestModuleFactory() method to return true and have the createFileIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to this Java code:
 
 \code
     @Override
@@ -337,7 +328,7 @@ ingest job settings panel. When a module instance runs, it gets the relevant
 databases from the hash databases manager. 
 - You are responsible for having the ingest job options panel update itself if the global settings change (i.e. if a new item is added that must be listed on the ingest panel). 
 
-\section ingest_modules_api_migration Migrating Ingest Modules to the Current API
+\section ingest_modules_api_migration Migrating Older Java Ingest Modules to the Current API
 
 This section is a guide for module developers who wrote modules for the 3.0 API.  These API changes occurred so that 
 we could make parallel pipelines of the file-level ingest modules.   This section assumes you've read the above description of the new API.
