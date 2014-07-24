@@ -1,7 +1,7 @@
 /*! \page mod_report_page Developing Report Modules
 
 \section report_summary Summary
-Report modules allow you to create different report types.  Autopsy comes with modules to generate HTML and Excel artifact reports, a tab delimited File report, and a body file for timeline creation.  You can made additional modules to create custom output formats. 
+Report modules allow you to create different report types.  Autopsy comes with modules to generate HTML and Excel artifact reports, a tab delimited File report, a Keyhole Markup Language (KML) report for Google Earth data, and a body file for timeline creation.  You can made additional modules to create custom output formats. 
 
 There are three types of reporting modules that differ in how the data is organized. 
 - General report modules are free form and you are allowed to organize the output however you want.  
@@ -25,44 +25,43 @@ To create a table report module, start off by creating a class and implementing 
 
 \section report_create_module_all All Report Modules
 All report modules will need to override the following methods:
-- org.sleuthkit.autopsy.report.ReportModule::getName()
-- org.sleuthkit.autopsy.report.ReportModule::getDescription()
-- org.sleuthkit.autopsy.report.ReportModule::getExtension()
-- org.sleuthkit.autopsy.report.ReportModule::getFilePath()
+- org.sleuthkit.autopsy.report.ReportModule.getName()
+- org.sleuthkit.autopsy.report.ReportModule.getDescription()
+- org.sleuthkit.autopsy.report.ReportModule.getRelativeFilePath()
 
 These will be called by Autopsy to set up the configuration panels and other information.
 
 \subsection report_create_module_table Table Report Modules
 If you implement TableReportModule, you should override the methods:
-- org.sleuthkit.autopsy.report.TableReportModule::startReport(String path)
-- org.sleuthkit.autopsy.report.TableReportModule::endReport()
-- org.sleuthkit.autopsy.report.TableReportModule::startDataType(String title)
-- org.sleuthkit.autopsy.report.TableReportModule::endDataType()
-- org.sleuthkit.autopsy.report.TableReportModule::startSet(String setName)
-- org.sleuthkit.autopsy.report.TableReportModule::endSet()
-- org.sleuthkit.autopsy.report.TableReportModule::addSetIndex(List<String> sets)
-- org.sleuthkit.autopsy.report.TableReportModule::addSetElement(String elementName)
-- org.sleuthkit.autopsy.report.TableReportModule::startTable(List<String> titles)
-- org.sleuthkit.autopsy.report.TableReportModule::endTable()
-- org.sleuthkit.autopsy.report.TableReportModule::addRow(List<String> row)
-- org.sleuthkit.autopsy.report.TableReportModule::dateToString(long date)
+- org.sleuthkit.autopsy.report.TableReportModule.startReport(String path)
+- org.sleuthkit.autopsy.report.TableReportModule.endReport()
+- org.sleuthkit.autopsy.report.TableReportModule.startDataType(String title)
+- org.sleuthkit.autopsy.report.TableReportModule.endDataType()
+- org.sleuthkit.autopsy.report.TableReportModule.startSet(String setName)
+- org.sleuthkit.autopsy.report.TableReportModule.endSet()
+- org.sleuthkit.autopsy.report.TableReportModule.addSetIndex(List<String> sets)
+- org.sleuthkit.autopsy.report.TableReportModule.addSetElement(String elementName)
+- org.sleuthkit.autopsy.report.TableReportModule.startTable(List<String> titles)
+- org.sleuthkit.autopsy.report.TableReportModule.endTable()
+- org.sleuthkit.autopsy.report.TableReportModule.addRow(List<String> row)
+- org.sleuthkit.autopsy.report.TableReportModule.dateToString(long date)
 
 When generating table module reports, Autopsy will iterate through a list of user selected data, and call methods such as addRow(List<String> row) for every "row" of data it finds, or startTable(List<String> titles) for every new category it finds. Developers are guaranteed that every start of a data type, set, or table will be followed by an appropriate end. The focus for a table report module should be to take the given information and display it in a user friendly format. See org.sleuthkit.autopsy.report.ReportExcel for an example.
 
 \subsection report_create_module_file File Report Modules
 If you implement FileReportModule, the overriden methods will be:
-- org.sleuthkit.autopsy.report.FileReportModule::startReport(String path)
-- org.sleuthkit.autopsy.report.FileReportModule::endReport()
-- org.sleuthkit.autopsy.report.FileReportModule::startTable(List<FileReportDataTypes> headers)
-- org.sleuthkit.autopsy.report.FileReportModule::endTable()
-- org.sleuthkit.autopsy.report.FileReportModule::addRow(AbstractFile toAdd, List<FileReportDataTypes> columns)
+- org.sleuthkit.autopsy.report.FileReportModule.startReport(String path)
+- org.sleuthkit.autopsy.report.FileReportModule.endReport()
+- org.sleuthkit.autopsy.report.FileReportModule.startTable(List<FileReportDataTypes> headers)
+- org.sleuthkit.autopsy.report.FileReportModule.endTable()
+- org.sleuthkit.autopsy.report.FileReportModule.addRow(AbstractFile toAdd, List<FileReportDataTypes> columns)
 
 As when generating table module reports, Autopsy will iterate through a list of user selected data (which are represented by FileReportDataTypes), and call addRow(AbstractFile toAdd, List<FileReportDataTypes> columns) for every abstract file in the case. Developers are guaranteed that the order of method calls will be startReport(), startTable(List<FileReportDataTypes> headers), addRow(AbstractFile toAdd, List<FileReportDataTypes> columns), AbstractFile toAdd, List<FileReportDataTypes> columns),..., endTable(), endReport().
 
 \subsection report_create_module_general General Report Modules
 If you implement GeneralReportModule, the overriden methods will be:
-- org.sleuthkit.autopsy.report.GeneralReportModule::generateReport(String reportPath, ReportProgressPanel progressPanel)
-- org.sleuthkit.autopsy.report.GeneralReportModule::getConfigurationPanel()
+- org.sleuthkit.autopsy.report.GeneralReportModule.generateReport(String reportPath, ReportProgressPanel progressPanel)
+- org.sleuthkit.autopsy.report.GeneralReportModule.getConfigurationPanel()
 
 For general report modules, Autopsy will simply call the generateReport(String reportPath, ReportProgressPanel progressPanel) method and leave it up to the module to aquire and report data in its desired format.  The only requirements are that the module saves to the given report path and updates the org.sleuthkit.autopsy.report.ReportProgressPanel as the report progresses.
 

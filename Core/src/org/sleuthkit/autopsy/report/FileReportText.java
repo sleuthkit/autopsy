@@ -129,12 +129,7 @@ import org.sleuthkit.datamodel.AbstractFile;
     }
 
     @Override
-    public String getExtension() {
-        return ".txt"; //NON-NLS
-    }
-
-    @Override
-    public String getFilePath() {
+    public String getRelativeFilePath() {
         return FILE_NAME;
     }
 }
