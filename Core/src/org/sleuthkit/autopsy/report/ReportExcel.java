@@ -23,10 +23,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -66,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     @Override
     public void startReport(String path) {        
         // Set the path and save it for when the report is written to disk.
-        this.reportPath = path + getFilePath();
+        this.reportPath = path + getRelativeFilePath();
                 
         // Make a workbook.
         wb = new XSSFWorkbook();
@@ -294,13 +292,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     }
 
     @Override
-    public String getExtension() {
-        return ".xlsx"; //NON-NLS
-    }
-
-    @Override
-    public String getFilePath() {
-        return NbBundle.getMessage(this.getClass(), "ReportExcel.getFilePath.text");
+    public String getRelativeFilePath() {
+        return "Excel.xlsx"; //NON-NLS
     }
     
     /**

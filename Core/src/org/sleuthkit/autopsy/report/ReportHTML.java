@@ -32,8 +32,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -80,7 +78,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     private Writer out;
     
 
-    private ReportBranding reportBranding;
+    private final ReportBranding reportBranding;
     
     // Get the default instance of this report
     public static synchronized ReportHTML getDefault() {
@@ -321,7 +319,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public void startDataType(String name, String description) {
         String title = dataTypeToFileName(name);
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8")); //NON-NLS
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + ".html"), "UTF-8")); //NON-NLS
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "File not found: {0}", ex); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
@@ -736,7 +734,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     
     @Override
-    public String getFilePath() {
+    public String getRelativeFilePath() {
         return "HTML Report" + File.separator + "index.html"; //NON-NLS
     }
 
@@ -749,12 +747,6 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public String getDescription() {
         return NbBundle.getMessage(this.getClass(), "ReportHTML.getDesc.text");
-    }
-
-    
-    @Override
-    public String getExtension() {
-        return ".html"; //NON-NLS
     }
     
     /**
