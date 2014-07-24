@@ -334,8 +334,7 @@ There are three big changes to make in your module:
 
 
 We recommend that you:
--# Create a new factory class and move over the UI panels, configuration code, and standard methods (name, description, version, etc.).
---# You'll probably want the name in the ingest module code, so you should also store the name in a package-wide static member variable.
+-# Create a new factory class and move over the UI panels, configuration code, and standard methods (name, description, version, etc.). You'll probably want the name in the ingest module code, so you should also store the name in a package-wide static member variable.
 -# Get the factory to compile and work. You can do basic testing by running Autopsy and verifying that you see your module and its panels. 
 -# Change your old ingest module to implement the new interface and adjust it (see the name changes below). Then update the factory to create it. 
 -# Review the ingest module code for thread safety (especially look for static member variables).
