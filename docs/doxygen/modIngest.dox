@@ -280,7 +280,7 @@ org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show().
 \section ingest_modules_making_options User Options
 
 Autopsy allows a module to provide two levels of configuration:
-- When an ingest job is being configured, the user can choose settings that are unique to that ingest job / pipeline.  For example, to enable a hash set.
+- When an ingest job is being configured, the user can choose settings that are unique to that ingest job / pipeline.  For example, to enable a certain hash set.
 - The user can configure global settings that apply to all jobs. For example, to add or delete a hash set.
 
 To provide either or both of these options to the user, we need to implement methods defined in the IngestModuleFactory interface.  You can either add them to your class that extends the IngestModuleFactoryAdapter or decide to simply implement the interface.
@@ -359,7 +359,7 @@ IngestModuleAbstract.saveAdvancedConfiguration() | IngestModuleGlobalSetttingsPa
 N/A | IngestModuleFactory.getDefaultIngestJobSettings() |
 IngestModuleAbstract.hasSimpleConfiguration() | IngestModuleFactory.hasIngestJobSettingsPanel() |
 IngestModuleAbstract.getSimpleConfiguration() | IngestModuleFactory.getIngestJobSettingsPanel() |
-IngestModuleAbstract.saveSimpleConfiguration() | N/A, Autopsy will call IngestModuleIngestJobSettingsPanel.getSettings() and save the settings for the current context |
+IngestModuleAbstract.saveSimpleConfiguration() | N/A |
 N/A | IngestModuleIngestJobSettingsPanel.getSettings()  |
 N/A | IngestModuleFactory.isDataSourceIngestModuleFactory() |
 N/A | IngestModuleFactory.createDataSourceIngestModule() |
