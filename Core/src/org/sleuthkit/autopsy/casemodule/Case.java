@@ -140,6 +140,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
+    
+    // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
+    private boolean hasData = false;
 
     /**
      * Constructor for the Case class
@@ -795,11 +798,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public Long[] getImageIDs() {
         Set<Long> ids = getImagePaths(db).keySet();
+        hasData = (ids.size() > 0);
         return ids.toArray(new Long[ids.size()]);
     }
 
     public List<Image> getImages() throws TskCoreException {
-        return db.getImages();
+        List<Image> list = db.getImages();
+        hasData = (list.size() > 0);
+        return list;
     }
 
     /**
@@ -818,7 +824,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public List<Content> getRootObjects() {
         try {
-            return db.getRootObjects();
+            List<Content> list = db.getRootObjects();
+            hasData = (list.size() > 0);
+            return list;
         } catch (TskException ex) {
             throw new RuntimeException(NbBundle.getMessage(this.getClass(), "Case.exception.errGetRootObj"), ex);
         }
@@ -1113,7 +1121,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
             CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-            if (toChangeTo.getRootObjectsCount() > 0) {
+            if (toChangeTo.hasData()) {
                 // open all top components
                 CoreComponentControl.openCoreWindows();
             } else {
@@ -1160,7 +1168,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     //delete image helper
     private void doDeleteImage() {
         // no more image left in this case
-        if (currentCase.getRootObjectsCount() == 0) {
+        if (currentCase.hasData()) {
             // close all top components
             CoreComponentControl.closeCoreWindows();
         }
@@ -1193,4 +1201,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
     }    
+    
+    /**
+     * Returns if the case has data in it yet. 
+     * @return 
+     */
+    public boolean hasData() {
+        // false is also the initial value, so make the DB trip if it is still false
+        if (!hasData) {
+            hasData = (getRootObjectsCount() > 0);
+        }
+        return hasData;
+    }
 }

@@ -349,7 +349,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Case currentCase = Case.getCurrentCase();
 
                 // close the top component if there's no image in this case
-                if (currentCase.getRootObjectsCount() == 0) {
+                if (currentCase.hasData() == false) {
                     //this.close();
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
@@ -483,7 +483,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public boolean canClose() {
-        return !Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0; // only allow this window to be closed when there's no case opened or no image in this case
+        return !Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
     }
 
     /**

@@ -1161,7 +1161,7 @@ public class Timeline extends CallableSystemAction implements Presenter.Toolbar,
         skCase = currentCase.getSleuthkitCase();
 
         try {
-            if (currentCase.getRootObjectsCount() == 0) {
+            if (currentCase.hasData() == false) {
                 logger.log(Level.INFO, "Error creating timeline, there are no data sources. "); //NON-NLS
             } else {
 
