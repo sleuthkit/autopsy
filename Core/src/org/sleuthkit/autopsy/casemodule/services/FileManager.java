@@ -39,7 +39,6 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
-import org.sleuthkit.datamodel.Transaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.sleuthkit.datamodel.VirtualDirectory;
