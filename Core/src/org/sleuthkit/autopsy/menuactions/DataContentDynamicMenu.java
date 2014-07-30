@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 
         defaultItem.addActionListener(new OpenTopComponentAction(contentWin));
 
-        if (!Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0) {
+        if (!Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false) {
             defaultItem.setEnabled(false); // disable the menu items when no case is opened
         } else {
             defaultItem.setEnabled(true); // enable the menu items when there's a case opened / created

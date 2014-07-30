@@ -148,7 +148,7 @@ class ExtractRegistry extends Extract {
         try {
             logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt"); //NON-NLS
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
         
         UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
@@ -179,7 +179,7 @@ class ExtractRegistry extends Extract {
                 }
             } 
             catch (TskCoreException | IOException ex) {
-                java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                logger.log(Level.SEVERE, null, ex);
             }
             
             logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal); //NON-NLS
@@ -191,7 +191,7 @@ class ExtractRegistry extends Extract {
             
             // parse the autopsy-specific output
             if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
-                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile.getId(), usbMapper) == false) {
+                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile, usbMapper) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                                 this.getName(), regFileName));
@@ -222,7 +222,7 @@ class ExtractRegistry extends Extract {
                             sb.append(s).append("\n");
                         }
                     } catch (IOException ex) {
-                        java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.log(Level.SEVERE, null, ex);
                     } finally {
                         try {
                             input.close();
@@ -238,10 +238,10 @@ class ExtractRegistry extends Extract {
                     this.addErrorMessage(NbBundle.getMessage(this.getClass(),
                                                              "ExtractRegistry.analyzeRegFiles.errMsg.errReadingRegFile",
                                                              this.getName(), regOutputFiles.fullPlugins));
-                    java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.log(Level.SEVERE, null, ex);
                 } catch (TskCoreException ex) {
                     // TODO - add error message here?
-                    java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.log(Level.SEVERE, null, ex);
                 }
             }
             
@@ -254,7 +254,7 @@ class ExtractRegistry extends Extract {
                 logFile.close();
             }
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(ExtractRegistry.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
     
@@ -371,7 +371,14 @@ class ExtractRegistry extends Extract {
     }
     
     // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
-    private boolean parseAutopsyPluginOutput(String regRecord, long orgId, UsbDeviceIdMapper extrctr) {
+    /**
+     * 
+     * @param regRecord
+     * @param regFile File object for registry that we are parsing (to make blackboard artifacts with)
+     * @param extrctr
+     * @return 
+     */
+    private boolean parseAutopsyPluginOutput(String regRecord, AbstractFile regFile, UsbDeviceIdMapper extrctr) {
         FileInputStream fstream = null;
         try {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
@@ -447,7 +454,7 @@ class ExtractRegistry extends Extract {
                                 Long usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
                                 usbMtime = Long.valueOf(usbMtime.toString());
 
-                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+                                BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                                                                          NbBundle.getMessage(this.getClass(),
                                                                                              "ExtractRegistry.parentModuleName.noSpace"), usbMtime));
@@ -494,7 +501,7 @@ class ExtractRegistry extends Extract {
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                                                                          NbBundle.getMessage(this.getClass(),
                                                                                              "ExtractRegistry.parentModuleName.noSpace"), itemMtime));
-                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
@@ -526,7 +533,7 @@ class ExtractRegistry extends Extract {
                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                                                                              NbBundle.getMessage(this.getClass(),
                                                                                                  "ExtractRegistry.parentModuleName.noSpace"), installtime));
-                                    BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                    BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                     bbart.addAttributes(bbattributes);
                                 } catch (TskCoreException ex) {
                                     logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
@@ -537,7 +544,7 @@ class ExtractRegistry extends Extract {
                             String name = artnode.getAttribute("name"); //NON-NLS
                             
                             try {
-                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                                BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                                 // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
                                 if (mtime != null) {
                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),

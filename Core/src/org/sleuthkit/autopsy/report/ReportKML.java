@@ -369,14 +369,8 @@ class ReportKML implements GeneralReportModule {
     }
 
     @Override
-    public String getFilePath() {
-        return NbBundle.getMessage(this.getClass(), "ReportKML.getFilePath.text");
-    }
-
-    @Override
-    public String getExtension() {
-        String ext = ".txt"; //NON-NLS
-        return ext;
+    public String getRelativeFilePath() {
+        return "ReportKML.kml";
     }
 
     @Override

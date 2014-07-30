@@ -177,14 +177,8 @@ import org.sleuthkit.datamodel.*;
     }
 
     @Override
-    public String getFilePath() {
+    public String getRelativeFilePath() {
         return NbBundle.getMessage(this.getClass(), "ReportBodyFile.getFilePath.text");
-    }
-
-    @Override
-    public String getExtension() {
-        String ext = ".txt"; //NON-NLS
-        return ext;
     }
 
     @Override

@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;

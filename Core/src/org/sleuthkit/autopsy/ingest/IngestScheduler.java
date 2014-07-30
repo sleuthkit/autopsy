@@ -30,7 +30,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -39,6 +38,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Creates ingest jobs and their constituent ingest tasks, enabled the tasks for
@@ -112,6 +112,7 @@ final class IngestScheduler {
                 ingestJobsById.put(jobId, job);
                 IngestManager.getInstance().fireIngestJobStarted(jobId);
                 scheduleIngestTasks(job);
+                logger.log(Level.INFO, "Ingest job {0} started", jobId);
             }
         }
         return errors;
@@ -435,10 +436,13 @@ final class IngestScheduler {
 
     private void finishIngestJob(IngestJob job) {
         job.finish();
-        ingestJobsById.remove(job.getId());
+        long jobId = job.getId();
+        ingestJobsById.remove(jobId);
         if (!job.isCancelled()) {
+            logger.log(Level.INFO, "Ingest job {0} completed", jobId);            
             IngestManager.getInstance().fireIngestJobCompleted(job.getId());
         } else {
+            logger.log(Level.INFO, "Ingest job {0} cancelled", jobId);            
             IngestManager.getInstance().fireIngestJobCancelled(job.getId());
         }
     }

@@ -43,7 +43,7 @@ public class KeywordSearch {
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
     private static final Logger TIKA_LOGGER = Logger.getLogger("Tika"); //NON-NLS
-    private static final Logger logger = Logger.getLogger(Case.class.getName());
+    private static final org.sleuthkit.autopsy.coreutils.Logger logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(Case.class.getName());
     public enum QueryType {
         LITERAL, REGEX
     };
