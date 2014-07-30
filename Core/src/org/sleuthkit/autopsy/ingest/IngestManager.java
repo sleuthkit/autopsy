@@ -288,7 +288,7 @@ public class IngestManager {
         /**
          * Property change event fired when the ingest of a file is completed.
          * The old value of the PropertyChangeEvent is the Autopsy object ID of
-         * the file. The new value is null or an AbstractFile for that ID.
+         * the file. The new value is the AbstractFile for that ID.
          */
         FILE_DONE,
     };
@@ -378,15 +378,6 @@ public class IngestManager {
      */
     void fireIngestJobCancelled(long ingestJobId) {
         fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestJobEventPublisher, IngestJobEvent.CANCELLED, ingestJobId, null));
-    }
-
-    /**
-     * Fire an ingest event signifying the ingest of a file is completed.
-     *
-     * @param fileId The object id of file.
-     */
-    void fireFileIngestDone(long fileId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, fileId, null));
     }
 
     /**
