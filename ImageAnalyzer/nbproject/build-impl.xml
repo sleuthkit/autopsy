@@ -3,16 +3,19 @@
 *** GENERATED FROM project.xml - DO NOT EDIT  ***
 ***         EDIT ../build.xml INSTEAD         ***
 -->
-<project name="com.basistech.imageanalysis-impl" basedir="..">
-    <fail message="Please build using Ant 1.7.1 or higher.">
+<project name="org.sleuthkit.autopsy.imageanalyzer-impl" basedir="..">
+   <fail message="Please build using Ant 1.7.1 or higher.">
         <condition>
             <not>
                 <antversion atleast="1.7.1"/>
             </not>
         </condition>
     </fail>
-    <property file="nbproject/private/platform-private.properties"/>
-    <property file="nbproject/platform.properties"/>
+    <property file="nbproject/private/suite-private.properties"/>
+    <property file="nbproject/suite.properties"/>
+    <fail unless="suite.dir">You must set 'suite.dir' to point to your containing module suite</fail>
+    <property file="${suite.dir}/nbproject/private/platform-private.properties"/>
+    <property file="${suite.dir}/nbproject/platform.properties"/>
     <macrodef name="property" uri="http://www.netbeans.org/ns/nb-module-project/2">
         <attribute name="name"/>
         <attribute name="value"/>
