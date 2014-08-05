@@ -1,0 +1,6 @@
+.list-cell:odd {
+    -fx-background-color: transparent; /* derive(-fx-control-inner-background,-5%); */
+}
+.list-cell:even {
+    -fx-background-color: transparent; /* derive(-fx-control-inner-background,-5%); */
+}

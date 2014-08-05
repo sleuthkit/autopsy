@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<fx:root type="javafx.scene.layout.BorderPane" id="BorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
+  <bottom>
+    <HBox fillHeight="true" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color:&#10;        linear-gradient(to bottom, derive(-fx-base,-30%), derive(-fx-base,-60%)),&#10;        linear-gradient(to bottom, derive(-fx-base,65%) 2%, derive(-fx-base,-20%) 95%);&#10;">
+      <children>
+        <Button id="controlbutton" fx:id="controlButton" contentDisplay="TEXT_ONLY" mnemonicParsing="false" prefHeight="-1.0" prefWidth="-1.0" text="&gt;" HBox.hgrow="NEVER" />
+        <Region prefHeight="16.0" prefWidth="16.0" HBox.hgrow="NEVER" />
+        <Label text="Time:" HBox.hgrow="NEVER" />
+        <Slider fx:id="timeSlider" prefHeight="21.0" prefWidth="315.0" HBox.hgrow="ALWAYS" />
+        <Label id="timeLable" fx:id="timeLabel" text="Label" HBox.hgrow="NEVER" />
+        <Region prefHeight="16.0" prefWidth="16.0" HBox.hgrow="NEVER" />
+        <Label text="Volume:" visible="false" HBox.hgrow="NEVER" />
+        <Slider fx:id="volumeSlider" prefHeight="21.0" prefWidth="100.0" visible="false" HBox.hgrow="SOMETIMES" />
+      </children>
+      <padding>
+        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+      </padding>
+    </HBox>
+  </bottom>
+</fx:root>
