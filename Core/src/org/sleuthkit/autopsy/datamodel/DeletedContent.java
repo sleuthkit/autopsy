@@ -226,6 +226,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
+                    queryList.remove(queryList.size() - 1);
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
@@ -236,7 +237,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                     });
                 }
 
-                queryList.remove(queryList.size() - 1);
                 list.addAll(queryList);
                 return true;
             }
