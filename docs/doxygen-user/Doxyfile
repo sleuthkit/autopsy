@@ -52,7 +52,7 @@ PROJECT_LOGO           =
 # If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = doxygen_docs
+OUTPUT_DIRECTORY       = user-docs
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create
 # 4096 sub-directories (in 2 levels) under the output directory of each output
@@ -662,6 +662,7 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = main.dox \
+                         quick_start.dox \
                          image_viewer.dox
 
 # This tag can be used to specify the character encoding of the source files
@@ -872,7 +873,7 @@ GENERATE_HTML          = YES
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be
 # put in front of it. If left blank `html' will be used as the default path.
 
-HTML_OUTPUT            = user-docs/3.1
+HTML_OUTPUT            = 3.1
 
 # The HTML_FILE_EXTENSION tag can be used to specify the file extension for
 # each generated HTML page (for example: .htm,.php,.asp). If it is left blank

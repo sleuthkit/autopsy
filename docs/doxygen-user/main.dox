@@ -4,8 +4,24 @@
 Overview
 -----
 
-Autopsy is an open source desktop digital forensics platform. This document is the user help guide.  It is a work in progress. We are moving documentation from the JavaHelp system to this document. The following topics are available here:
+Autopsy is an open source desktop digital forensics platform. This document is the user help guide.  It is a work in progress. We are moving documentation from the JavaHelp system to this document. 
 
+Note that Autopsy 3 is a complete rewrite from Autopsy 2 and none of this document is relevant to Autopsy 2.
+
+Installation
+-----
+The current version of Autopsy 3 runs only on Microsoft Windows.  
+We have gotten it to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
+
+
+The Windows installer is self contained and will place everything in the needed places. Simply follow the standard prompts for target installation directory. 
+
+
+Help Topics
+-------
+The following topics are available here:
+
+- \subpage quick_start_page
 - \subpage image_viewer_page
 
 If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
