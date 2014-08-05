@@ -19,19 +19,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaTopComponent;
-import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
-import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined;
-import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.imageanalyzer.actions.AddDrawableTagAction;
-import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imageanalyzer.actions.SwingMenuItemAdapter;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -75,6 +62,19 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.EurekaTopComponent;
+import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
+import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
+import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined;
+import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.imageanalyzer.actions.AddDrawableTagAction;
+import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imageanalyzer.actions.SwingMenuItemAdapter;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -351,7 +351,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         if (Objects.equals(fileID, this.fileID) == false) {
             this.fileID = fileID;
             disposeContent();
-            if (this.fileID == null) {
+            if (this.fileID == null || Case.isCaseOpen() == false) {
                 Category.unregisterListener(this);
                 TagUtils.unregisterListener(this);
                 file = null;

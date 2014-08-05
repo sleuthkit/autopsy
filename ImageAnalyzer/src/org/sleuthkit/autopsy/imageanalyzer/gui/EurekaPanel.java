@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
-import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -28,6 +26,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 
 /** JFXPanel derived class that contains Eureka GUI. */
 public class EurekaPanel extends JFXPanel {
@@ -73,28 +73,29 @@ public class EurekaPanel extends JFXPanel {
     public void initScene() {
 
         if (sceneInited == false) {
+            controller = EurekaController.getDefault();
+            this.navPanel = new NavPanel(controller);
+            this.groupPane = new GroupPane(controller);
+            this.metaDataTable = new MetaDataPane(controller);
+
+            VBox leftPane = new VBox();
+            leftPane.getChildren().addAll(navPanel, SummaryTablePane.getDefault());
+
+            this.splitPane = new SplitPane();
+            this.centralStack = new StackPane(splitPane);
+
+            SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
+            SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
+            SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
+            splitPane.getItems().addAll(leftPane, groupPane, metaDataTable);
+            splitPane.setDividerPositions(0.0, 1.0);
+
+            BorderPane borderPane = new BorderPane(centralStack, EurekaToolbar.getDefault(), null, new StatusBar(controller), null);
+
+            this.fullUIStack = new StackPane(borderPane);
+            EurekaController.getDefault().setStacks(fullUIStack, centralStack);
+
             Platform.runLater(() -> {
-                controller = EurekaController.getDefault();
-                this.navPanel = new NavPanel(controller);
-                this.groupPane = new GroupPane(controller);
-                this.metaDataTable = new MetaDataPane(controller);
-
-                VBox leftPane = new VBox();
-                leftPane.getChildren().addAll(navPanel, SummaryTablePane.getDefault());
-
-                this.splitPane = new SplitPane();
-                this.centralStack = new StackPane(splitPane);
-
-                SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
-                SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
-                SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
-                splitPane.getItems().addAll(leftPane, groupPane, metaDataTable);
-                splitPane.setDividerPositions(0.0, 1.0);
-
-                BorderPane borderPane = new BorderPane(centralStack, EurekaToolbar.getDefault(), null, new StatusBar(controller), null);
-
-                this.fullUIStack = new StackPane(borderPane);
-                EurekaController.getDefault().setStacks(fullUIStack, centralStack);
                 myScene = new Scene(fullUIStack);
                 setScene(myScene);
 

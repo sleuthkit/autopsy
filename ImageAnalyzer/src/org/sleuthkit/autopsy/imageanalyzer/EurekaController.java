@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imageanalyzer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -167,7 +168,9 @@ public class EurekaController implements FileUpdateListener {
     private final ReadOnlyObjectWrapper<GroupViewState> viewState = new ReadOnlyObjectWrapper<>();
 
     private void setViewState(GroupViewState newViewState) {
-        viewState.set(newViewState);
+        Platform.runLater(() -> {
+            viewState.set(newViewState);
+        });
     }
 
     public ReadOnlyObjectProperty<GroupViewState> viewState() {
@@ -225,7 +228,7 @@ public class EurekaController implements FileUpdateListener {
     private EurekaController() {
 
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
-            if (newValue && !oldValue) {
+            if (newValue && !oldValue && Case.existsCurrentCase() && EurekaModule.isCaseStale(Case.getCurrentCase())) {
                 queueTask(new CopyAnalyzedFiles());
             }
         });
@@ -288,7 +291,7 @@ public class EurekaController implements FileUpdateListener {
     synchronized public void pushGroup(GroupViewState viewState, boolean force) {
         final GroupViewState currentViewState = getViewState();
 
-        if (force || currentViewState.equals(viewState) == false) {
+        if (force || Objects.equals(currentViewState, viewState) == false) {
             historyStack.push(currentViewState);
             setViewState(viewState);
             if (viewState.equals(forwardStack.peek())) {
@@ -337,6 +340,7 @@ public class EurekaController implements FileUpdateListener {
      * message. */
     public final void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
+            setViewState(null);
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (listeningEnabled.get() == false) {
                     replaceNotification(fullUIStackPane,
@@ -502,6 +506,8 @@ public class EurekaController implements FileUpdateListener {
         selectionModel.clearSelection();
         Platform.runLater(() -> {
             viewState.set(null);
+            historyStack.clear();
+            forwardStack.clear();
         });
 
         EurekaToolbar.getDefault().reset();
@@ -780,9 +786,9 @@ public class EurekaController implements FileUpdateListener {
                 db.commitTransaction(tr, true);
 
             } catch (TskCoreException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
+                Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
+                Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
             }
 
             progressHandle.finish();
