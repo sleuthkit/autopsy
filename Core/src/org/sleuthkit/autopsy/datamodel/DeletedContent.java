@@ -236,7 +236,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                         }
                     });
                 }
-
                 list.addAll(queryList);
                 return true;
             }
