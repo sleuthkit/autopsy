@@ -1,0 +1,15 @@
+/*! \mainpage Autopsy User's Guide 
+
+
+Overview
+-----
+
+Autopsy is an open source desktop digital forensics platform. This document is the user help guide.  It is a work in progress. We are moving documentation from the JavaHelp system to this document. The following topics are available here:
+
+- \subpage image_viewer_page
+
+If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
+
+*/
+
+
