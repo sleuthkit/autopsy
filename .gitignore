@@ -63,6 +63,7 @@ genfiles.properties
 *~
 /netbeans-plat
 /docs/doxygen/doxygen_docs
+/docs/doxygen-user/user-docs
 /jdiff-javadocs/*
 /jdiff-logs/*
 /gen_version.txt
@@ -71,3 +72,5 @@ Core/src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html
 Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
 /test/script/myconfig.xml
 /test/script/*/*.xml
+.DS_Store
+.*.swp
