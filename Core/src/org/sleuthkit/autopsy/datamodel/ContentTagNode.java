@@ -97,8 +97,8 @@ class ContentTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                 "",
                 file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filesize.name"),
-                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filesize.displayName"),
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
                 "",
                 content.getSize()));
         return propertySheet;
