@@ -18,13 +18,25 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.control.SplitPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
-import org.sleuthkit.autopsy.imageanalyzer.gui.EurekaPanel;
+import org.sleuthkit.autopsy.imageanalyzer.gui.EurekaToolbar;
+import org.sleuthkit.autopsy.imageanalyzer.gui.GroupPane;
+import org.sleuthkit.autopsy.imageanalyzer.gui.MetaDataPane;
+import org.sleuthkit.autopsy.imageanalyzer.gui.StatusBar;
+import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
+import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 
 /**
  * Top component which displays eureka interface.
@@ -50,6 +62,26 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
 
     private final Lookup lookup;
 
+    private final EurekaController controller = EurekaController.getDefault();
+
+    private SplitPane splitPane;
+
+    private StackPane centralStack;
+
+    private BorderPane borderPane = new BorderPane();
+
+    private StackPane fullUIStack;
+
+    private MetaDataPane metaDataTable;
+
+    private GroupPane groupPane;
+
+    private NavPanel navPanel;
+
+    private VBox leftPane;
+
+    private Scene myScene;
+
     public EurekaTopComponent() {
 
         setName(Bundle.CTL_EurekaTopComponent());
@@ -58,12 +90,30 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
         // ...and initialization of lookup variable
         lookup = (ExplorerUtils.createLookup(em, getActionMap()));
         initComponents();
+        Platform.runLater(() -> {
+            fullUIStack = new StackPane();
+            myScene = new Scene(fullUIStack);
+            eurekaJFXPanel.setScene(myScene);
+            groupPane = new GroupPane(controller);
+            centralStack = new StackPane(groupPane);
+            fullUIStack.getChildren().add(borderPane);
+            splitPane = new SplitPane();
+            borderPane.setCenter(splitPane);
+            borderPane.setTop(EurekaToolbar.getDefault());
+            borderPane.setBottom(new StatusBar(controller));
 
-        ((EurekaPanel) eurekaJFXPanel).initScene();
-    }
+            metaDataTable = new MetaDataPane(controller);
 
-    public EurekaPanel getEurekaJFXPanel() {
-        return (EurekaPanel) eurekaJFXPanel;
+            navPanel = new NavPanel(controller);
+            leftPane = new VBox(navPanel, SummaryTablePane.getDefault());
+            SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
+            SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
+            SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
+            splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
+            splitPane.setDividerPositions(0.0, 1.0);
+
+            EurekaController.getDefault().setStacks(fullUIStack, centralStack);
+        });
     }
 
     /**
@@ -75,7 +125,7 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
     private void initComponents() {
 
         listView1 = new org.openide.explorer.view.ListView();
-        eurekaJFXPanel = new EurekaPanel();
+        eurekaJFXPanel = new JFXPanel();
 
         listView1.setMaximumSize(new java.awt.Dimension(0, 0));
         listView1.setMinimumSize(new java.awt.Dimension(0, 0));

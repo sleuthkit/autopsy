@@ -505,8 +505,9 @@ public class DrawableDB {
             updateGroupStmt.execute();
         } catch (SQLException ex) {
             Exceptions.printStackTrace(ex);
+        } finally {
+            dbWriteUnlock();
         }
-        dbWriteUnlock();
     }
 
     public boolean removeFile(long id) {

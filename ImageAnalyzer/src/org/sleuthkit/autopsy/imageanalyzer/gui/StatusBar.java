@@ -83,11 +83,13 @@ public class StatusBar extends AnchorPane {
             });
         });
 
-        staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable listening to ingest in Tools | Options | Image /Video Analyzer , after ingest is complete to update."));
+        Platform.runLater(() -> {
+            staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable listening to ingest in Tools | Options | Image /Video Analyzer , after ingest is complete to update."));
+        });
         staleLabel.visibleProperty().bind(controller.stale());
     }
 
-    StatusBar(EurekaController controller) {
+    public StatusBar(EurekaController controller) {
         this.controller = controller;
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml"));
         fxmlLoader.setRoot(this);
