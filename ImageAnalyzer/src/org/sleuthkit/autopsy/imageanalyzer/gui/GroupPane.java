@@ -34,7 +34,6 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -474,7 +473,7 @@ public class GroupPane extends BorderPane implements GroupView {
             }
         });
 
-        Platform.runLater(() -> {
+//        Platform.runLater(() -> {
             ActionUtils.configureButton(nextGroupAction, nextButton);
             final EventHandler<ActionEvent> onAction = nextButton.getOnAction();
             nextButton.setOnAction((ActionEvent event) -> {
@@ -485,7 +484,7 @@ public class GroupPane extends BorderPane implements GroupView {
 
             ActionUtils.configureButton(forwardAction, forwardButton);
             ActionUtils.configureButton(backAction, backButton);
-        });
+//        });
 
         nextGroupAction.disabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             nextButton.setEffect(newValue ? null : DROP_SHADOW);

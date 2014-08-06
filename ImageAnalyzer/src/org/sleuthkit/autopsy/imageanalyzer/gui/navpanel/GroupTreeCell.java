@@ -1,9 +1,6 @@
 package org.sleuthkit.autopsy.imageanalyzer.gui.navpanel;
 
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.scene.Node;
 import javafx.scene.control.OverrunStyle;
@@ -12,6 +9,8 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 
 /** A {@link Node} in the tree that listens to its associated group. Manages
  * visual representation of TreeNode in Tree. Listens to properties of group
@@ -45,18 +44,11 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 //this TreeNode has a group so append counts to name ...
                 setText(name + " (" + getNumerator() + getDenominator() + ")");
 
-
                 //if number of files in this group changes (eg file is recategorized), update counts
-                tNode.getGroup().fileIds().addListener(new InvalidationListener() {
-                    @Override
-                    public void invalidated(Observable o) {
-                        Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                setText(name + " (" + getNumerator() + getDenominator() + ")");
-                            }
-                        });
-                    }
+                tNode.getGroup().fileIds().addListener((Observable o) -> {
+                    Platform.runLater(() -> {
+                        setText(name + " (" + getNumerator() + getDenominator() + ")");
+                    });
                 });
 
                 //... and use icon corresponding to group type
@@ -74,8 +66,8 @@ class GroupTreeCell extends TreeCell<TreeNode> {
     synchronized private String getNumerator() {
         try {
             final String numerator = (getItem().getGroup().groupKey.getAttribute() != DrawableAttribute.HASHSET)
-                    ? getItem().getGroup().getFilesWithHashSetHitsCount() + "/"
-                    : "";
+                                     ? getItem().getGroup().getFilesWithHashSetHitsCount() + "/"
+                                     : "";
             return numerator;
         } catch (NullPointerException ex) {
             return "";

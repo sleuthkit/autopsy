@@ -89,7 +89,7 @@ public class StatusBar extends AnchorPane {
         staleLabel.visibleProperty().bind(controller.stale());
     }
 
-    StatusBar(EurekaController controller) {
+    public StatusBar(EurekaController controller) {
         this.controller = controller;
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml"));
         fxmlLoader.setRoot(this);

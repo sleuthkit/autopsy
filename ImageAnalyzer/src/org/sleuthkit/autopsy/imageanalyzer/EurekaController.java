@@ -841,7 +841,7 @@ public class EurekaController implements FileUpdateListener {
                 files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + "and fs_obj_id = " + this.obj_id);
                 progressHandle.switchToDeterminate(files.size());
 
-                updateProgress(0.0);
+//                updateProgress(0.0);
 
                 //do in transaction
                 DrawableDB.DrawableTransaction tr = db.beginTransaction();
@@ -856,14 +856,14 @@ public class EurekaController implements FileUpdateListener {
                     units++;
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);
-                    updateProgress(prog - 1 / (double) files.size());
-                    updateMessage(f.getName());
+//                    updateProgress(prog - 1 / (double) files.size());
+//                    updateMessage(f.getName());
                 }
 
                 progressHandle.finish();
                 progressHandle = ProgressHandleFactory.createHandle("commiting image/video database");
-                updateMessage("commiting image/video database");
-                updateProgress(1.0);
+//                updateMessage("commiting image/video database");
+//                updateProgress(1.0);
 
                 progressHandle.start();
                 db.commitTransaction(tr, false);
@@ -876,8 +876,8 @@ public class EurekaController implements FileUpdateListener {
 
             progressHandle.finish();
 
-            updateMessage("");
-            updateProgress(-1.0);
+//            updateMessage("");
+//            updateProgress(-1.0);
         }
     }
 }

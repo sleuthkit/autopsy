@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import java.net.URL;
 import java.util.Collection;
 import java.util.ResourceBundle;
@@ -38,6 +35,9 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Displays summary statistics (counts) for each group */
@@ -80,7 +80,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
 
         tableView.getColumns().setAll(catColumn, countColumn);
 
-        //register for category events
+//        //register for category events
         Category.registerListener(this);
     }
 

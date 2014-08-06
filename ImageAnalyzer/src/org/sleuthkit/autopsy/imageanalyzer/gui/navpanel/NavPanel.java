@@ -18,17 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui.navpanel;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName;
-import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.PATH;
-import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.TAGS;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -56,13 +44,23 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName;
+import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.PATH;
+import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.TAGS;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- * Display two trees. one shows all folders (groups) and calls out folders with
- * images. the user can select folders with images to see them in the main
- * GroupListPane The other shows folders with hash set hits.
+/** Display two trees. one shows all folders (groups) and calls out folders
+ * with images. the user can select folders with images to see them in the
+ * main GroupPane The other shows folders with hash set hits.
  */
 public class NavPanel extends BorderPane {
 
@@ -72,18 +70,14 @@ public class NavPanel extends BorderPane {
     @FXML
     private URL location;
 
-    /**
-     * TreeView for folders with hash hits
-     */
+    /** TreeView for folders with hash hits */
     @FXML
     private TreeView<TreeNode> hashTree;
 
     @FXML
     private TabPane navTabPane;
 
-    /**
-     * TreeView for all folders
-     */
+    /** TreeView for all folders */
     @FXML
     private TreeView<TreeNode> navTree;
 
@@ -102,6 +96,8 @@ public class NavPanel extends BorderPane {
     private GroupTreeItem navTreeRoot;
 
     private GroupTreeItem hashTreeRoot;
+
+    private final EurekaController controller;
 
     public NavPanel(EurekaController controller) {
         this.controller = controller;
@@ -138,23 +134,11 @@ public class NavPanel extends BorderPane {
 
         hashTree.setCellFactory((TreeView<TreeNode> p) -> new GroupTreeCell());
 
-        activeTreeProperty.addListener(new InvalidationListener() {
-            private void setSelectedGroupProperty() {
-                final TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
-                if (selectedItem != null && selectedItem.getValue() != null && selectedItem.getValue().getGroup() != null) {
-                    controller.pushGroup(GroupViewState.tile(selectedItem.getValue().getGroup()), false);
-                } else {
-//                    selectedGroupProperty.set(selectedItem.getValue().getGroup());
-                }
-            }
-
-            @Override
-            public void invalidated(Observable o) {
-                setSelectedGroupProperty();
-                activeTreeProperty.get().getSelectionModel().selectedItemProperty().addListener((Observable o1) -> {
-                    setSelectedGroupProperty();
-                });
-            }
+        activeTreeProperty.addListener((Observable o) -> {
+            updateControllersGroup();
+            activeTreeProperty.get().getSelectionModel().selectedItemProperty().addListener((Observable o1) -> {
+                updateControllersGroup();
+            });
         });
 
         this.activeTreeProperty.set(navTree);
@@ -190,69 +174,17 @@ public class NavPanel extends BorderPane {
                 setFocusedGroup(newValue.getGroup());
             }
         });
-        parentProperty().addListener(new RebuildTreeListener());
-
     }
 
-    private final EurekaController controller;
-
-    synchronized private void rebuildNavTree() {
-        navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
-
-        ObservableList<Grouping> groups = controller.getGroupManager().getAnalyzedGroups();
-
-        for (Grouping g : groups) {
-            insertIntoNavTree(g);
+    private void updateControllersGroup() {
+        final TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
+        if (selectedItem != null && selectedItem.getValue() != null && selectedItem.getValue().getGroup() != null) {
+            controller.pushGroup(GroupViewState.tile(selectedItem.getValue().getGroup()), false);
         }
-
-        Platform.runLater(() -> {
-            navTree.setRoot(navTreeRoot);
-            navTreeRoot.setExpanded(true);
-        });
     }
 
-    synchronized private void resortHashTree() {
+    private void resortHashTree() {
         hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
-    }
-
-    synchronized private void rebuildHashTree() {
-        hashTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().getSelectedItem());
-        //TODO: can we do this as db query?
-        List<String> hashSetNames = controller.getGroupManager().findValuesForAttribute(DrawableAttribute.HASHSET, GroupSortBy.NONE);
-        for (String name : hashSetNames) {
-            try {
-                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey(DrawableAttribute.HASHSET, name));
-
-                for (Long fileId : fileIDsInGroup) {
-
-                    DrawableFile file = controller.getFileFromId(fileId);
-                    Collection<GroupKey> groupKeysForFile;
-                    if (controller.getGroupManager().getGroupBy() == DrawableAttribute.TAGS) {
-                        Collection<TagName> tagNames = (Collection<TagName>) file.getValueOfAttribute(DrawableAttribute.TAGS);
-                        groupKeysForFile = new ArrayList<>();
-                        for (TagName tn : tagNames) {
-                            groupKeysForFile.add(new GroupKey(DrawableAttribute.TAGS, tn));
-                        }
-                    } else {
-                        groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
-                    }
-
-                    for (GroupKey k : groupKeysForFile) {
-                        final Grouping groupForKey = controller.getGroupManager().getGroupForKey(k);
-                        if (groupForKey != null) {
-                            insertIntoHashTree(groupForKey);
-                        }
-                    }
-                }
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        }
-        Platform.runLater(() -> {
-            hashTree.setRoot(hashTreeRoot);
-            hashTreeRoot.setExpanded(true);
-        });
-
     }
 
     private void insertIntoHashTree(Grouping g) {
@@ -260,11 +192,9 @@ public class NavPanel extends BorderPane {
         hashTreeRoot.insert(g.groupKey.getValueDisplayName(), g, false);
     }
 
-    /**
-     * Set the tree to the passed in group
+    /** Set the tree to the passed in group
      *
-     * @param grouping
-     */
+     * @param grouping */
     public void setFocusedGroup(Grouping grouping) {
 
         List<String> path = groupingToPath(grouping);
@@ -282,7 +212,6 @@ public class NavPanel extends BorderPane {
                 if (row != -1) {
                     activeTreeProperty.get().getSelectionModel().select(treeItemForGroup);
                     activeTreeProperty.get().scrollTo(row);
-
                 }
             });
         }
@@ -360,16 +289,64 @@ public class NavPanel extends BorderPane {
                 hashTree.setRoot(hashTreeRoot);
                 hashTreeRoot.setExpanded(true);
             });
-
         }
     }
 
-    private class RebuildTreeListener implements InvalidationListener {
+    //these are not used anymore, but could be usefull at some point
+    //TODO: remove them or find a use and undeprecate
+    @Deprecated
+    private void rebuildNavTree() {
+        navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
 
-        @Override
-        public void invalidated(Observable o) {
-            rebuildHashTree();
-            rebuildNavTree();
+        ObservableList<Grouping> groups = controller.getGroupManager().getAnalyzedGroups();
+
+        for (Grouping g : groups) {
+            insertIntoNavTree(g);
         }
+
+        Platform.runLater(() -> {
+            navTree.setRoot(navTreeRoot);
+            navTreeRoot.setExpanded(true);
+        });
+    }
+
+    @Deprecated
+    private void rebuildHashTree() {
+        hashTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().getSelectedItem());
+        //TODO: can we do this as db query?
+        List<String> hashSetNames = controller.getGroupManager().findValuesForAttribute(DrawableAttribute.HASHSET, GroupSortBy.NONE);
+        for (String name : hashSetNames) {
+            try {
+                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey(DrawableAttribute.HASHSET, name));
+
+                for (Long fileId : fileIDsInGroup) {
+
+                    DrawableFile file = controller.getFileFromId(fileId);
+                    Collection<GroupKey> groupKeysForFile;
+                    if (controller.getGroupManager().getGroupBy() == DrawableAttribute.TAGS) {
+                        Collection<TagName> tagNames = (Collection<TagName>) file.getValueOfAttribute(DrawableAttribute.TAGS);
+                        groupKeysForFile = new ArrayList<>();
+                        for (TagName tn : tagNames) {
+                            groupKeysForFile.add(new GroupKey(DrawableAttribute.TAGS, tn));
+                        }
+                    } else {
+                        groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
+                    }
+
+                    for (GroupKey k : groupKeysForFile) {
+                        final Grouping groupForKey = controller.getGroupManager().getGroupForKey(k);
+                        if (groupForKey != null) {
+                            insertIntoHashTree(groupForKey);
+                        }
+                    }
+                }
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        Platform.runLater(() -> {
+            hashTree.setRoot(hashTreeRoot);
+            hashTreeRoot.setExpanded(true);
+        });
     }
 }
