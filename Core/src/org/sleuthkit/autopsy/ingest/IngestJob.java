@@ -193,46 +193,54 @@ final class IngestJob {
     }
 
     void process(DataSourceIngestTask task) throws InterruptedException {
-        if (!isCancelled() && !dataSourceIngestPipeline.isEmpty()) {
-            List<IngestModuleError> errors = new ArrayList<>();
-            errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress));
-            if (!errors.isEmpty()) {
-                logIngestModuleErrors(errors);
-            }
-        }
-        if (null != dataSourceIngestProgress) {
-            dataSourceIngestProgress.finish();
-            // This is safe because this method will be called at most once per
-            // ingest job and finish() will not be called while that single 
-            // data source ingest task has not been reported complete by this
-            // code to the ingest scheduler.
-            dataSourceIngestProgress = null;
-        }        
-        ingestTaskScheduler.notifyTaskCompleted(task);
-    }
-
-    void process(FileIngestTask task) throws InterruptedException {
-        if (!isCancelled()) {
-            FileIngestPipeline pipeline = fileIngestPipelines.take();
-            if (!pipeline.isEmpty()) {
-                AbstractFile file = task.getFile();
-                synchronized (this) {
-                    ++processedFiles;
-                    if (processedFiles <= estimatedFilesToProcess) {
-                        fileIngestProgress.progress(file.getName(), (int) processedFiles);
-                    } else {
-                        fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
-                    }
-                }
+        try {
+            if (!isCancelled() && !dataSourceIngestPipeline.isEmpty()) {
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(pipeline.process(task));
+                errors.addAll(dataSourceIngestPipeline.process(task, dataSourceIngestProgress));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }
             }
-            fileIngestPipelines.put(pipeline);
+            if (null != dataSourceIngestProgress) {
+                dataSourceIngestProgress.finish();
+                // This is safe because this method will be called at most once per
+                // ingest job and finish() will not be called while that single 
+                // data source ingest task has not been reported complete by this
+                // code to the ingest scheduler.
+                dataSourceIngestProgress = null;
+            }   
         }
-        ingestTaskScheduler.notifyTaskCompleted(task);
+        finally {
+            ingestTaskScheduler.notifyTaskCompleted(task);
+        }
+    }
+
+    void process(FileIngestTask task) throws InterruptedException {
+        try {
+            if (!isCancelled()) {
+                FileIngestPipeline pipeline = fileIngestPipelines.take();
+                if (!pipeline.isEmpty()) {
+                    AbstractFile file = task.getFile();
+                    synchronized (this) {
+                        ++processedFiles;
+                        if (processedFiles <= estimatedFilesToProcess) {
+                            fileIngestProgress.progress(file.getName(), (int) processedFiles);
+                        } else {
+                            fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
+                        }
+                    }
+                    List<IngestModuleError> errors = new ArrayList<>();
+                    errors.addAll(pipeline.process(task));
+                    if (!errors.isEmpty()) {
+                        logIngestModuleErrors(errors);
+                    }
+                }
+                fileIngestPipelines.put(pipeline);
+            }
+        }
+        finally {
+            ingestTaskScheduler.notifyTaskCompleted(task);
+        }
     }
 
     void finish() {
