@@ -11,7 +11,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
     def getDescription(self):
         return "A sample Jython report module"
 
-    def getFilePath(self):
+    def getRelativeFilePath(self):
         return "sampleReport.txt"
 
     def generateReport(self, reportPath, progressBar):
