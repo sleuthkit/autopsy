@@ -51,7 +51,7 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
     public AboutWindowPanel() {
         about = new ImageIcon(org.netbeans.core.startup.Splash.loadContent(true));
         initComponents();
-        jLabel1.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,
                 "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
                     getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild(), Version.getBuildType().toString()}));
@@ -67,8 +67,7 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        logoLabel = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         copyright = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -78,23 +77,20 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
 
         setBackground(new java.awt.Color(255, 255, 255));
 
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setIcon(about);
-        jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jLabel1.addMouseListener(new java.awt.event.MouseAdapter() {
+        logoLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        logoLabel.setIcon(about);
+        logoLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        logoLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel1MouseClicked(evt);
+                logoLabelMouseClicked(evt);
             }
         });
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel1.setLayout(new java.awt.GridBagLayout());
-
         jScrollPane3.setBorder(null);
 
-        copyright.setBorder(null);
-        copyright.setContentType("text/html"); // NOI18N NON-NLS
         copyright.setEditable(false);
+        copyright.setBorder(null);
+        copyright.setContentType("text/html"); // NOI18N
         copyright.setText(org.openide.util.NbBundle.getBundle(AboutWindowPanel.class).getString("LBL_Copyright")); // NOI18N
         copyright.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -103,12 +99,12 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
         });
         jScrollPane3.setViewportView(copyright);
 
-        description.setContentType("text/html"); // NOI18N NON-NLS
         description.setEditable(false);
+        description.setContentType("text/html"); // NOI18N
         jScrollPane2.setViewportView(description);
 
         verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
-        verboseLoggingButton.setText(NbBundle.getMessage(this.getClass(), "AboutWindowPanel.actVerboseLogging.text"));
+        verboseLoggingButton.setText("Activate verbose logging");
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 activateVerboseLogging(evt);
@@ -130,10 +126,9 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
+                    .addComponent(logoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -145,15 +140,13 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
-                .addGap(32, 32, 32)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
+                .addComponent(logoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, Short.MAX_VALUE)
                 .addComponent(verboseLoggingButton)
-                .addGap(0, 0, 0)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jButton2)
                 .addContainerGap())
@@ -168,7 +161,7 @@ private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     closeDialog();
 }//GEN-LAST:event_jButton2ActionPerformed
 
-private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel1MouseClicked
+private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_logoLabelMouseClicked
     try {
         url = new URL(NbBundle.getMessage(AboutWindowPanel.class, "URL_ON_IMG")); // NOI18N
         showUrl();
@@ -176,7 +169,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
         //ignore
     }
     url = null;
-}//GEN-LAST:event_jLabel1MouseClicked
+}//GEN-LAST:event_logoLabelMouseClicked
 
     private void activateVerboseLogging(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_activateVerboseLogging
         startVerboseLogging();
@@ -186,10 +179,9 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     private javax.swing.JTextPane copyright;
     private javax.swing.JTextPane description;
     private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JLabel logoLabel;
     private javax.swing.JButton verboseLoggingButton;
     // End of variables declaration//GEN-END:variables
 
