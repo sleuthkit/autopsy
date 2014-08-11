@@ -39,7 +39,6 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
@@ -62,7 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * with images. the user can select folders with images to see them in the
  * main GroupPane The other shows folders with hash set hits.
  */
-public class NavPanel extends BorderPane {
+public class NavPanel extends TabPane {
 
     @FXML
     private ResourceBundle resources;
@@ -113,7 +112,7 @@ public class NavPanel extends BorderPane {
         assert navTree != null : "fx:id=\"navTree\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'.";
 
-        VBox.setVgrow(this, Priority.SOMETIMES);
+        VBox.setVgrow(this, Priority.ALWAYS);
 
         navTree.setShowRoot(false);
         hashTree.setShowRoot(false);
@@ -168,6 +167,13 @@ public class NavPanel extends BorderPane {
                 }
             }
         });
+
+        for (Grouping g : controller.getGroupManager().getAnalyzedGroups()) {
+            insertIntoNavTree(g);
+            if (g.getFilesWithHashSetHitsCount() > 0) {
+                insertIntoHashTree(g);
+            }
+        }
 
         controller.viewState().addListener((ObservableValue<? extends GroupViewState> observable, GroupViewState oldValue, GroupViewState newValue) -> {
             if (newValue != null && newValue.getGroup() != null) {
