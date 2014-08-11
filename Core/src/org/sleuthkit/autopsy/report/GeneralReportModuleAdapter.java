@@ -33,7 +33,9 @@ public abstract class GeneralReportModuleAdapter implements GeneralReportModule 
     public abstract String getDescription();
 
     @Override
-    public abstract String getRelativeFilePath();
+    public String getRelativeFilePath() {
+        return null;
+    }
 
     @Override
     public abstract void generateReport(String reportPath, ReportProgressPanel progressPanel);
