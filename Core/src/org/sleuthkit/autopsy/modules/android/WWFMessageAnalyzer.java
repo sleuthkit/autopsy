@@ -88,7 +88,6 @@ class WWFMessageAnalyzer {
 
             while (resultSet.next()) {
                 message = resultSet.getString("message");
-//                new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss z").
                 Long created_at = resultSet.getLong("datetime");
                 user_id = resultSet.getString("user_id");
                 game_id = resultSet.getString("game_id");
