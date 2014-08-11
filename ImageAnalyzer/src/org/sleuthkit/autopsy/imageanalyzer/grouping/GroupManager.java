@@ -44,6 +44,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
 import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
 import org.sleuthkit.autopsy.imageanalyzer.LoggedTask;
+import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined;
+import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
@@ -74,12 +76,15 @@ public class GroupManager {
     private final Map<GroupKey, Grouping> groupMap = new HashMap<>();
 
     /** list of all analyzed groups */
+    @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> analyzedGroups = FXCollections.observableArrayList();
 
     /** list of unseen groups */
+    @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> unSeenGroups = FXCollections.observableArrayList();
 
     /** sorted list of unseen groups */
+    @ThreadConfined(type = ThreadType.JFX)
     private final SortedList<Grouping> sortedUnSeenGroups = unSeenGroups.sorted();
 
     private ReGroupTask groupByTask;
@@ -100,6 +105,7 @@ public class GroupManager {
         return analyzedGroups;
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     public SortedList<Grouping> getUnSeenGroups() {
         return sortedUnSeenGroups;
     }
@@ -542,14 +548,19 @@ public class GroupManager {
             if (groupByTask != null) {
                 groupByTask.cancel(true);
             }
-            sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(groupBy, sortOrder));
+            Platform.runLater(() -> {
+                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(groupBy, sortOrder));
+            });
+
             groupByTask = new ReGroupTask(groupBy, sortBy, sortOrder);
             controller.submitBGTask(groupByTask);
         } else {
             // just resort the list of groups
             setSortBy(sortBy);
             setSortOrder(sortOrder);
-            sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(groupBy, sortOrder));
+            Platform.runLater(() -> {
+                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(groupBy, sortOrder));
+            });
         }
     }
 

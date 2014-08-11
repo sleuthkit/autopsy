@@ -17,6 +17,6 @@ public @interface ThreadConfined {
 
     public enum ThreadType {
 
-        ANY, UI, NOT_UI
+        ANY, UI, JFX, AWT, NOT_UI
     }
 }

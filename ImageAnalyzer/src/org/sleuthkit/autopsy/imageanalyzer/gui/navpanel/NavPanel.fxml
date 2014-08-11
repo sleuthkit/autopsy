@@ -6,9 +6,8 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<fx:root id="BorderPane" maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="200.0" prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-  <center>
-    <TabPane fx:id="navTabPane" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE">
+
+    <fx:root fx:id="navTabPane" maxHeight="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" type="TabPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
       <tabs>
         <Tab fx:id="navTab" text="Contents">
           <content>
@@ -63,6 +62,4 @@
           </graphic>
         </Tab>
       </tabs>
-    </TabPane>
-  </center>
-</fx:root>
+    </fx:root>
