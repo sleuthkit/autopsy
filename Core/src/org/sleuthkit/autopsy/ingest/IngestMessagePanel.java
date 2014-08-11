@@ -60,14 +60,14 @@ import java.util.logging.Level;
  */
 class IngestMessagePanel extends JPanel implements TableModelListener {
 
-    private MessageTableModel tableModel;
+    private final MessageTableModel tableModel;
     private MessageTableRenderer renderer;
-    private IngestMessageMainPanel mainPanel;
-    private static Color ERROR_COLOR = new Color(255, 90, 90);
+    private final IngestMessageMainPanel mainPanel;
+    private static final Color ERROR_COLOR = new Color(255, 90, 90);
     private volatile int lastRowSelected = -1;
     private volatile long totalMessages = 0;
     private static final Logger logger = Logger.getLogger(IngestMessagePanel.class.getName());
-    private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
+    private static final PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
     static final String TOTAL_NUM_MESSAGES_CHANGED = "TOTAL_NUM_MESSAGES_CHANGED"; // total number of messages changed NON-NLS
     static final String MESSAGES_BOX_CLEARED = "MESSAGES_BOX_CLEARED"; // all messaged in inbox were cleared NON-NLS
     static final String TOTAL_NUM_NEW_MESSAGES_CHANGED = "TOTAL_NUM_NEW_MESSAGES_CHANGED"; // total number of new messages changed NON-NLS
@@ -365,29 +365,18 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
     private class MessageTableModel extends AbstractTableModel {
 
-        private String[] columnNames = new String[]{
+        private final String[] columnNames = new String[]{
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.module"),
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.num"),
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.new"),
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.subject"),
                 NbBundle.getMessage(this.getClass(), "IngestMessagePanel.MsgTableMod.colNames.timestamp")};
-        private List<TableEntry> messageData = new ArrayList<>();
+        private final List<TableEntry> messageData = new ArrayList<>();
         //for keeping track of messages to group, per module, by uniqness
-        private Map<String, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<>();
+        private final Map<String, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<>();
         private boolean chronoSort = true; //chronological sort default
         private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per module with same uniqness
-        private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
-
-        MessageTableModel() {
-            init();
-        }
-
-        private void init() {
-            List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getInstance().getIngestModuleFactories();                       
-            for (IngestModuleFactory factory : moduleFactories) {
-                groupings.put(factory.getModuleDisplayName(), new HashMap<String, List<IngestMessageGroup>>());
-            }
-        }
+        private final Logger logger = Logger.getLogger(MessageTableModel.class.getName());
 
         @Override
         public int getColumnCount() {
@@ -520,7 +509,10 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             IngestMessageGroup messageGroup = null;
             if (moduleName != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
                 //not a manager message, a data message, then group
-                final Map<String, List<IngestMessageGroup>> groups = groupings.get(moduleName);
+                if (!groupings.containsKey(moduleName)) {
+                    groupings.put(moduleName, new HashMap<String, List<IngestMessageGroup>>());                    
+                }
+                final Map<String, List<IngestMessageGroup>> groups = groupings.get(moduleName);                
                 //groups for this uniqueness
                 final String uniqueness = m.getUniqueKey();
                 List<IngestMessageGroup> uniqGroups = groups.get(uniqueness);
@@ -606,7 +598,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         public synchronized void clearMessages() {
             messageData.clear();
             groupings.clear();
-            init();
             fireTableDataChanged();
         }
 
@@ -706,7 +697,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         static final Color HIGH_PRI_COLOR = new Color(180, 180, 211);
         static final Color MED_PRI_COLOR = new Color(199, 199, 222);
         static final Color LOW_PRI_COLOR = new Color(221, 221, 235);
-        private List<IngestMessage> messages;
+        private final List<IngestMessage> messages;
 
         IngestMessageGroup(IngestMessage message) {
             messages = new ArrayList<>();
@@ -817,9 +808,9 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
      */
     private class MessageTableRenderer extends DefaultTableCellRenderer {
         
-        private TableCellRenderer booleanRenderer = new BooleanRenderer();
-        private TableCellRenderer defaultRenderer = new DefaultRenderer();
-        private TableCellRenderer dateRenderer = new DateRenderer();
+        private final TableCellRenderer booleanRenderer = new BooleanRenderer();
+        private final TableCellRenderer defaultRenderer = new DefaultRenderer();
+        private final TableCellRenderer dateRenderer = new DateRenderer();
         protected int rowSelected;
 
         public void setRowSelected(int rowSelected) {
@@ -853,7 +844,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             
             boolean boolVal;
             if (value instanceof Boolean) {
-                boolVal = ((Boolean)value).booleanValue();
+                boolVal = ((Boolean)value);
             } else {
                 throw new RuntimeException(NbBundle.getMessage(this.getClass(),
                                                                "IngestMessagePanel.BooleanRenderer.exception.nonBoolVal.msg"));

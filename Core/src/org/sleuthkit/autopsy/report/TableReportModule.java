@@ -112,7 +112,7 @@ import java.util.List;
     
     /**
      * Returns a String date, created by the module. All date values will query
-     * the module for it's interpretation of the date before sending it a row 
+     * the module for its interpretation of the date before sending it a row 
      * with the date value.
      * 
      * @param date long date as long

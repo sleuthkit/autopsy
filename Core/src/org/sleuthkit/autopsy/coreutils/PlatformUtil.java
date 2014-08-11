@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class PlatformUtil {
 
+    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules";    
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -101,6 +102,15 @@ public class PlatformUtil {
      */
     public static String getUserModulesPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + "modules";
+    }
+
+    /**
+     * Get root path where the user Python modules are installed.
+     *
+     * @return Absolute path to the Python modules root directory.
+     */
+    public static String getUserPythonModulesPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + PYTHON_MODULES_SUBDIRECTORY;
     }
 
     /**
