@@ -52,30 +52,34 @@ final class IngestScheduler {
     private final AtomicLong nextIngestJobId = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
     private volatile boolean enabled = false;
-//    private volatile boolean cancellingAllTasks = false; TODO: Uncomment this with related code, if desired
+    //    private volatile boolean cancellingAllTasks = false; TODO: Uncomment this with related code, if desired
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
+    
     // The following five collections lie at the heart of the scheduler.
-    //
     // The pending tasks queues are used to schedule tasks for an ingest job. If 
     // multiple jobs are scheduled, tasks from different jobs may become 
-    // interleaved in these queues. Data source tasks go into a simple FIFO 
-    // queue that is consumed by the ingest threads. File tasks are "shuffled" 
+    // interleaved in these queues. 
+
+    // FIFO queue for data source-level tasks. 
+    private final LinkedBlockingQueue<DataSourceIngestTask> pendingDataSourceTasks = new LinkedBlockingQueue<>(); // Guarded by this
+    
+    // File tasks are "shuffled" 
     // through root directory (priority queue), directory (LIFO), and file tasks 
     // queues (LIFO). If a file task makes it into the pending file tasks queue,
     // it is consumed by the ingest threads. 
-    //
-    // The "tasks in progress" list is used to determine when an ingest job is 
-    // completed and should be shut down, i.e., the job should shut down its 
-    // ingest pipelines and finish its progress bars. Tasks stay in the "tasks
-    // in progress" list either until discarded by the scheduler or the ingest 
-    // thread that is working on the task notifies the scheduler that the task 
-    // is completed. 
-    private final LinkedBlockingQueue<DataSourceIngestTask> pendingDataSourceTasks = new LinkedBlockingQueue<>();
     private final TreeSet<FileIngestTask> pendingRootDirectoryTasks = new TreeSet<>(new RootDirectoryTaskComparator()); // Guarded by this
     private final List<FileIngestTask> pendingDirectoryTasks = new ArrayList<>();  // Guarded by this
-    private final BlockingDeque<FileIngestTask> pendingFileTasks = new LinkedBlockingDeque<>();
-    private final List<IngestTask> tasksInProgress = new ArrayList<>();  // Guarded by this 
+    private final BlockingDeque<FileIngestTask> pendingFileTasks = new LinkedBlockingDeque<>(); // Not guarded
+    
+    // The "tasks in progress" list has:
+    // - File and data source tasks that are running
+    // - File tasks that are in the pending file queue
+    // It is used to determine when a job is done.  It has both pending and running
+    // tasks because we do not lock the 'pendingFileTasks' and a task needs to be in
+    // at least one of the pending or inprogress lists at all times before it is completed. 
+    // files are added to this when the are added to pendingFilesTasks and removed when they complete
+    private final List<IngestTask> tasksInProgressAndPending = new ArrayList<>();  // Guarded by this 
 
     synchronized static IngestScheduler getInstance() {
         if (instance == null) {
@@ -133,12 +137,12 @@ final class IngestScheduler {
 
     synchronized private void scheduleDataSourceIngestTask(IngestJob job) throws InterruptedException {
         DataSourceIngestTask task = new DataSourceIngestTask(job);
-        tasksInProgress.add(task);
+        tasksInProgressAndPending.add(task);
         try {
             // Should not block, queue is (theoretically) unbounded.
             pendingDataSourceTasks.put(task);
         } catch (InterruptedException ex) {
-            tasksInProgress.remove(task);
+            tasksInProgressAndPending.remove(task);
             Logger.getLogger(IngestScheduler.class.getName()).log(Level.SEVERE, "Interruption of unexpected block on pending data source tasks queue", ex); //NON-NLS
             throw ex;
         }
@@ -149,7 +153,6 @@ final class IngestScheduler {
         for (AbstractFile firstLevelFile : topLevelFiles) {
             FileIngestTask task = new FileIngestTask(job, firstLevelFile);
             if (shouldEnqueueFileTask(task)) {
-                tasksInProgress.add(task);
                 pendingRootDirectoryTasks.add(task);
             }
         }
@@ -212,9 +215,7 @@ final class IngestScheduler {
                 if (shouldEnqueueFileTask(directoryTask)) {
                     addToPendingFileTasksQueue(directoryTask);
                     tasksEnqueuedForDirectory = true;
-                } else {
-                    tasksInProgress.remove(directoryTask);
-                }
+                } 
 
                 // If the directory contains subdirectories or files, try to 
                 // enqueue tasks for them as well. 
@@ -227,13 +228,11 @@ final class IngestScheduler {
                             if (file.hasChildren()) {
                                 // Found a subdirectory, put the task in the 
                                 // pending directory tasks queue.
-                                tasksInProgress.add(childTask);
                                 pendingDirectoryTasks.add(childTask);
                                 tasksEnqueuedForDirectory = true;
                             } else if (shouldEnqueueFileTask(childTask)) {
                                 // Found a file, put the task directly into the
                                 // pending file tasks queue.
-                                tasksInProgress.add(childTask);
                                 addToPendingFileTasksQueue(childTask);
                                 tasksEnqueuedForDirectory = true;
                             }
@@ -304,6 +303,7 @@ final class IngestScheduler {
     }
 
     synchronized private void addToPendingFileTasksQueue(FileIngestTask task) throws IllegalStateException {
+        tasksInProgressAndPending.add(task);
         try {
             // Should not block, queue is (theoretically) unbounded.
             /* add to top of list because we had one image that had a folder with
@@ -313,7 +313,7 @@ final class IngestScheduler {
              */
             pendingFileTasks.addFirst(task);
         } catch (IllegalStateException ex) {
-            tasksInProgress.remove(task);
+            tasksInProgressAndPending.remove(task);
             Logger.getLogger(IngestScheduler.class.getName()).log(Level.SEVERE, "Interruption of unexpected block on pending file tasks queue", ex); //NON-NLS
             throw ex;
         }
@@ -326,7 +326,6 @@ final class IngestScheduler {
                 // Send the file task directly to file tasks queue, no need to
                 // update the pending root directory or pending directory tasks 
                 // queues.
-                tasksInProgress.add(task);
                 addToPendingFileTasksQueue(task);
             }
         }
@@ -344,7 +343,7 @@ final class IngestScheduler {
         boolean jobIsCompleted;
         IngestJob job = task.getIngestJob();
         synchronized (this) {
-            tasksInProgress.remove(task);
+            tasksInProgressAndPending.remove(task);
             jobIsCompleted = ingestJobIsComplete(job);
         }
         if (jobIsCompleted) {
@@ -382,7 +381,7 @@ final class IngestScheduler {
         while (iterator.hasNext()) {
             IngestTask task = (IngestTask) iterator.next();
             if (task.getIngestJob().getId() == jobId) {
-                tasksInProgress.remove((IngestTask) task);
+                tasksInProgressAndPending.remove((IngestTask) task);
                 iterator.remove();
             }
         }
@@ -420,13 +419,13 @@ final class IngestScheduler {
     synchronized private <T> void removeAllPendingTasks(Collection<T> taskQueue) {
         Iterator<T> iterator = taskQueue.iterator();
         while (iterator.hasNext()) {
-            tasksInProgress.remove((IngestTask) iterator.next());
+            tasksInProgressAndPending.remove((IngestTask) iterator.next());
             iterator.remove();
         }
     }
 
     synchronized private boolean ingestJobIsComplete(IngestJob job) {
-        for (IngestTask task : tasksInProgress) {
+        for (IngestTask task : tasksInProgressAndPending) {
             if (task.getIngestJob().getId() == job.getId()) {
                 return false;
             }

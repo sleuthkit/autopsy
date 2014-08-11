@@ -31,17 +31,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.datamodel.Content;
-import javax.swing.JOptionPane;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Manages the execution of ingest jobs.
@@ -288,7 +288,7 @@ public class IngestManager {
         /**
          * Property change event fired when the ingest of a file is completed.
          * The old value of the PropertyChangeEvent is the Autopsy object ID of
-         * the file, and the new value is set to null.
+         * the file. The new value is the AbstractFile for that ID.
          */
         FILE_DONE,
     };
@@ -383,10 +383,10 @@ public class IngestManager {
     /**
      * Fire an ingest event signifying the ingest of a file is completed.
      *
-     * @param fileId The object id of file.
+     * @param file The file that is completed.
      */
-    void fireFileIngestDone(long fileId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, fileId, null));
+    void fireFileIngestDone(AbstractFile file) {
+        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, file.getId(), file));
     }
 
     /**

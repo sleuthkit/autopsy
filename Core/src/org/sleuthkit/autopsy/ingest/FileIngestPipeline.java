@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -112,7 +110,7 @@ final class FileIngestPipeline {
         }
         file.close();
         if (!context.isJobCancelled()) {
-            IngestManager.getInstance().fireFileIngestDone(file.getId());
+            IngestManager.getInstance().fireFileIngestDone(file);
         }
         ingestManager.setIngestTaskProgressCompleted(task);
         return errors;
