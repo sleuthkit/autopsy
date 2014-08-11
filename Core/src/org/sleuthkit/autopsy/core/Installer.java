@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,25 +18,26 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * Wrapper over Installers in packages in Core module This is the main
- * registered installer in the MANIFEST.MF
+ * Wrapper over Installers in packages in Core module. This is the main
+ * registered installer in the MANIFEST.MF.
  */
 public class Installer extends ModuleInstall {
 
-    private List<ModuleInstall> packageInstallers;
+    private final List<ModuleInstall> packageInstallers;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static volatile boolean javaFxInit = false;
 
@@ -87,13 +88,11 @@ public class Installer extends ModuleInstall {
     public Installer() {
         logger.log(Level.INFO, "core installer created"); //NON-NLS
         javaFxInit = false;
-        packageInstallers = new ArrayList<ModuleInstall>();
-
+        packageInstallers = new ArrayList<>();
         packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
-
     }
 
     /**
@@ -128,23 +127,26 @@ public class Installer extends ModuleInstall {
         }
     }
 
+    private static void ensurePythonModulesFolderExists() {
+        File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
+        pythonModulesDir.mkdir();
+    }
+    
     @Override
     public void restored() {
-        super.restored();
-
-        logger.log(Level.INFO, "restored()"); //NON-NLS
-
+        super.restored();        
+        ensurePythonModulesFolderExists();        
         initJavaFx();
-
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " restored()"); //NON-NLS
             try {
                 mi.restored();
+                logger.log(Level.INFO, "{0} restore succeeded", mi.getClass().getName()); //NON-NLS
             } catch (Exception e) {
-                logger.log(Level.WARNING, "", e);
+                String msg = mi.getClass().getName() + " restore failed"; 
+                logger.log(Level.WARNING, msg, e);
             }
         }
-
+        logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS        
     }
 
     @Override
@@ -153,7 +155,7 @@ public class Installer extends ModuleInstall {
 
         logger.log(Level.INFO, "validate()"); //NON-NLS
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " validate()"); //NON-NLS
+            logger.log(Level.INFO, "{0} validate()", mi.getClass().getName()); //NON-NLS
             try {
                 mi.validate();
             } catch (Exception e) {
@@ -169,16 +171,13 @@ public class Installer extends ModuleInstall {
         logger.log(Level.INFO, "uninstalled()"); //NON-NLS
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " uninstalled()"); //NON-NLS
+            logger.log(Level.INFO, "{0} uninstalled()", mi.getClass().getName()); //NON-NLS
             try {
                 mi.uninstalled();
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }
         }
-
-
-
     }
 
     @Override
@@ -193,7 +192,7 @@ public class Installer extends ModuleInstall {
         }
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " close()"); //NON-NLS
+            logger.log(Level.INFO, "{0} close()", mi.getClass().getName()); //NON-NLS
             try {
                 mi.close();
             } catch (Exception e) {
