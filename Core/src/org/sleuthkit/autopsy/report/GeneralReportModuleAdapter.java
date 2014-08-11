@@ -33,14 +33,7 @@ public abstract class GeneralReportModuleAdapter implements GeneralReportModule 
     public abstract String getDescription();
 
     @Override
-    public String getExtension() {
-        return null;
-    }
-
-    // This is actually the report file name. It will be appended to a path to a
-    // reports directory.
-    @Override
-    public abstract String getFilePath();
+    public abstract String getRelativeFilePath();
 
     @Override
     public abstract void generateReport(String reportPath, ReportProgressPanel progressPanel);
