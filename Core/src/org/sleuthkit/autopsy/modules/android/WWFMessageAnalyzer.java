@@ -80,7 +80,7 @@ class WWFMessageAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "SELECT message,created_at,user_id,game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;");
+                    "SELECT message,strftime('%s' ,created_at) as datetime,user_id,game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;");
 
             String message; // WWF Message
             String user_id; // the ID of the user who sent the message.
@@ -88,7 +88,7 @@ class WWFMessageAnalyzer {
 
             while (resultSet.next()) {
                 message = resultSet.getString("message");
-                Long created_at = Long.valueOf(resultSet.getString("created_at")) / 1000;
+                Long created_at = resultSet.getLong("datetime");
                 user_id = resultSet.getString("user_id");
                 game_id = resultSet.getString("game_id");
 
