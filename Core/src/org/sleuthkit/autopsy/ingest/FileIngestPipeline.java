@@ -23,8 +23,8 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * A file ingest pipeline composed of a sequence of file ingest modules
- * constructed from ingest module templates.
+ * This class manages a sequence of file ingest modules. It starts them, 
+ * shuts them down, and runs a file through them. 
  */
 final class FileIngestPipeline {
 

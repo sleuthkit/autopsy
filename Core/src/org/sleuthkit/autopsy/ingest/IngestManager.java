@@ -197,12 +197,12 @@ public class IngestManager {
         return IngestScheduler.getInstance().ingestJobsAreRunning();
     }
 
-    void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), ingestModuleDisplayName, task.getDataSource()));
+    void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {    
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
     }
 
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), ingestModuleDisplayName, task.getDataSource(), task.getFile()));
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile()));
     }
 
     void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
@@ -615,31 +615,42 @@ public class IngestManager {
         private final String activity;
         private final String dataSourceName;
         private final String fileName;
+        private final long jobId;
 
+        // nothing is running on the thread
         IngestThreadActivitySnapshot(long threadId) {
             this.threadId = threadId;
             startTime = new Date();
             this.activity = NbBundle.getMessage(this.getClass(), "IngestManager.IngestThreadActivitySnapshot.idleThread");
             this.dataSourceName = "";
             this.fileName = "";
+            this.jobId = 0;
         }
 
-        IngestThreadActivitySnapshot(long threadId, String activity, Content dataSource) {
+        // data souce thread
+        IngestThreadActivitySnapshot(long threadId, long jobId, String activity, Content dataSource) {
             this.threadId = threadId;
+            this.jobId = jobId;
             startTime = new Date();
             this.activity = activity;
             this.dataSourceName = dataSource.getName();
-            this.fileName = "";
+            this.fileName = "";    
         }
-
-        IngestThreadActivitySnapshot(long threadId, String activity, Content dataSource, AbstractFile file) {
+        
+        // file ingest thread
+        IngestThreadActivitySnapshot(long threadId, long jobId, String activity, Content dataSource, AbstractFile file) {
             this.threadId = threadId;
+            this.jobId = jobId;
             startTime = new Date();
             this.activity = activity;
             this.dataSourceName = dataSource.getName();
             this.fileName = file.getName();
         }
 
+        long getJobId() {
+            return jobId;
+        }
+        
         long getThreadId() {
             return threadId;
         }

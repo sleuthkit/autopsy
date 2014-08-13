@@ -18,28 +18,36 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestJob.IngestJobStats;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.IngestJobSchedulerStats;
 
 public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private final JDialog parent;
     private final IngestThreadActivitySnapshotsTableModel threadActivityTableModel;
+    private final IngestJobTableModel jobTableModel;
 
     IngestProgressSnapshotPanel(JDialog parent) {
         this.parent = parent;
         threadActivityTableModel = new IngestThreadActivitySnapshotsTableModel();
+        jobTableModel = new IngestJobTableModel();
         initComponents();
         customizeComponents();
     }
 
     private void customizeComponents() {
         threadActivitySnapshotsTable.setModel(threadActivityTableModel);
+        jobsTable.setModel(jobTableModel);
 
         int width = snapshotsScrollPane.getPreferredSize().width;
         for (int i = 0; i < threadActivitySnapshotsTable.getColumnCount(); ++i) {
@@ -76,7 +84,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         private final String[] columnNames = {NbBundle.getMessage(this.getClass(),
             "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.threadID"),
-            NbBundle.getMessage(this.getClass(),
+            NbBundle.getMessage(this.getClass(),        
             "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.activity"),
             NbBundle.getMessage(this.getClass(),
             "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.dataSource"),
@@ -85,7 +93,8 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             NbBundle.getMessage(this.getClass(),
             "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.startTime"),
             NbBundle.getMessage(this.getClass(),
-            "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.elapsedTime")};
+            "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.elapsedTime"),
+            "Job ID"};
         private List<IngestManager.IngestThreadActivitySnapshot> snapshots;
 
         private IngestThreadActivitySnapshotsTableModel() {
@@ -137,6 +146,80 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     long elapsedTime = now.getTime() - snapshot.getStartTime().getTime();
                     cellValue = DurationFormatUtils.formatDurationHMS(elapsedTime);
                     break;
+                case 6:
+                    cellValue = snapshot.getJobId();
+                    break;
+                default:
+                    cellValue = null;
+                    break;
+            }
+            return cellValue;
+        }
+    }
+    
+    private class IngestJobTableModel extends AbstractTableModel {
+
+        private final String[] columnNames = {"Job ID", 
+            "Data Source", "Start", "Files/Sec", "In Progress", "Files Queued", "Dir Queued", "Root Queued", "DS Queued"};
+        private List<IngestJobSchedulerStats> schedStats;
+
+        private IngestJobTableModel() {
+            refresh();
+        }
+
+        private void refresh() {
+            schedStats = IngestScheduler.getInstance().getJobStats();
+            fireTableDataChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            return schedStats.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columnNames[col];
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            IngestJobSchedulerStats schedStat = schedStats.get(rowIndex);
+            Object cellValue;
+            switch (columnIndex) {
+                case 0:
+                    cellValue = schedStat.getJobId();
+                    break;
+                case 1:
+                    cellValue = schedStat.getDataSource();
+                    break;
+                case 2:
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+                    cellValue = dateFormat.format(new Date(schedStat.ingestJobStats.getStartTime()));
+                    break;
+                case 3:
+                    cellValue = schedStat.ingestJobStats.getSpeed();
+                    break;
+                case 4:
+                    cellValue = schedStat.getRunningListSize();
+                    break;
+                case 5:
+                    cellValue = schedStat.getFileQueueSize();
+                    break;
+                case 6:
+                    cellValue = schedStat.getDirQueueSize();
+                    break;
+                case 7:
+                    cellValue = schedStat.getRootQueueSize();
+                    break;
+                case 8:
+                    cellValue = schedStat.getDsQueueSize();
+                    break;
                 default:
                     cellValue = null;
                     break;
@@ -156,6 +239,8 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         snapshotsScrollPane = new javax.swing.JScrollPane();
         threadActivitySnapshotsTable = new javax.swing.JTable();
+        jobsScrollPane = new javax.swing.JScrollPane();
+        jobsTable = new javax.swing.JTable();
         refreshButton = new javax.swing.JButton();
         closeButton = new javax.swing.JButton();
         fileProcessedPerSecondLabel = new javax.swing.JLabel();
@@ -169,6 +254,16 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             }
         ));
         snapshotsScrollPane.setViewportView(threadActivitySnapshotsTable);
+
+        jobsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jobsScrollPane.setViewportView(jobsTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(IngestProgressSnapshotPanel.class, "IngestProgressSnapshotPanel.refreshButton.text")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
@@ -199,7 +294,8 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(refreshButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(closeButton)))
+                        .addComponent(closeButton))
+                    .addComponent(jobsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 881, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -209,7 +305,9 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(snapshotsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
+                .addComponent(snapshotsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 155, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jobsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 155, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
@@ -228,6 +326,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
         threadActivityTableModel.refresh();
+        jobTableModel.refresh();
         IngestManager.ProcessedFilesSnapshot snapshot = IngestManager.getInstance().getProcessedFilesSnapshot();
         Date now = new Date();
         long elapsedTime = now.getTime() - snapshot.getStartTime().getTime();
@@ -238,6 +337,8 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JLabel fileProcessedPerSecondLabel;
+    private javax.swing.JScrollPane jobsScrollPane;
+    private javax.swing.JTable jobsTable;
     private javax.swing.JButton refreshButton;
     private javax.swing.JScrollPane snapshotsScrollPane;
     private javax.swing.JTable threadActivitySnapshotsTable;

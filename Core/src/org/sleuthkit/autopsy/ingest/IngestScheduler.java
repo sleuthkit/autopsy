@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -32,13 +33,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestJob.IngestJobStats;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Creates ingest jobs and their constituent ingest tasks, enabled the tasks for
@@ -364,6 +366,12 @@ final class IngestScheduler {
         return !ingestJobsById.isEmpty();
     }
 
+    /**
+     * Clears the queues for the job.  If job is complete, finish it up.  Otherwise,
+     * this will exit and the last worker thread will finish / clean up.
+     * 
+     * @param job 
+     */
     synchronized void cancelIngestJob(IngestJob job) {
         long jobId = job.getId();
         removeAllPendingTasksForJob(pendingRootDirectoryTasks, jobId);
@@ -376,6 +384,25 @@ final class IngestScheduler {
         }
     }
 
+    /**
+     * Return the number of tasks in the queue for the given job ID
+     * @param <T>
+     * @param queue
+     * @param jobId
+     * @return 
+     */
+    <T> int countJobsInCollection(Collection<T> queue, long jobId) {
+        Iterator<T> iterator = queue.iterator();
+        int count = 0;
+        while (iterator.hasNext()) {
+            IngestTask task = (IngestTask) iterator.next();
+            if (task.getIngestJob().getId() == jobId) {
+                count++;
+            }
+        }
+        return count;
+    }
+    
     synchronized private <T> void removeAllPendingTasksForJob(Collection<T> taskQueue, long jobId) {
         Iterator<T> iterator = taskQueue.iterator();
         while (iterator.hasNext()) {
@@ -433,6 +460,10 @@ final class IngestScheduler {
         return true;
     }
 
+    /**
+     * Called after all work is completed to free resources. 
+     * @param job 
+     */
     private void finishIngestJob(IngestJob job) {
         job.finish();
         long jobId = job.getId();
@@ -558,5 +589,91 @@ final class IngestScheduler {
             updatePendingFileTasksQueues();
             return task;
         }
+    }
+    
+    /**
+     * Stores basic stats for a given job
+     */
+    class IngestJobSchedulerStats {
+        IngestJobStats ingestJobStats;
+        private long jobId;
+        private String dataSource;
+        private long rootQueueSize;
+        private long dirQueueSize;
+        private long fileQueueSize;
+        private long dsQueueSize;
+        private long runningListSize;
+        
+        IngestJobSchedulerStats(IngestJob job) {
+            ingestJobStats = job.getStats();
+            jobId = job.getId();
+            dataSource = job.getDataSource().getName();
+            rootQueueSize = countJobsInCollection(pendingRootDirectoryTasks, jobId);
+            dirQueueSize = countJobsInCollection(pendingDirectoryTasks, jobId);
+            fileQueueSize = countJobsInCollection(pendingFileTasks, jobId);
+            dsQueueSize = countJobsInCollection(pendingDataSourceTasks, jobId);
+            runningListSize = countJobsInCollection(tasksInProgressAndPending, jobId) - fileQueueSize - dsQueueSize;
+        }
+
+        /**
+         * @return the jobId
+         */
+        protected long getJobId() {
+            return jobId;
+        }
+
+        /**
+         * @return the dataSource
+         */
+        protected String getDataSource() {
+            return dataSource;
+        }
+
+        /**
+         * @return the rootQueueSize
+         */
+        protected long getRootQueueSize() {
+            return rootQueueSize;
+        }
+
+        /**
+         * @return the dirQueueSize
+         */
+        protected long getDirQueueSize() {
+            return dirQueueSize;
+        }
+
+        /**
+         * @return the fileQueueSize
+         */
+        protected long getFileQueueSize() {
+            return fileQueueSize;
+        }
+
+        /**
+         * @return the dsQueueSize
+         */
+        protected long getDsQueueSize() {
+            return dsQueueSize;
+        }
+
+        /**
+         * @return the runningListSize
+         */
+        protected long getRunningListSize() {
+            return runningListSize;
+        }
+    }
+    
+    /**
+     * Get basic performance / stats on all running jobs
+     * @return 
+     */
+    synchronized List<IngestJobSchedulerStats> getJobStats() {
+        List<IngestJobSchedulerStats> stats = new ArrayList<>();
+        for (IngestJob job : Collections.list(ingestJobsById.elements())) {
+            stats.add(new IngestJobSchedulerStats(job));
+        }
+        return stats;
     }
 }
