@@ -531,6 +531,8 @@ public class IngestManager {
             } catch (InterruptedException ex) {
                 // Reset interrupted status.
                 Thread.currentThread().interrupt();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Failed to create ingest job", ex); //NON-NLS
             } finally {
                 progress.finish();
                 startIngestJobsTasks.remove(threadId);

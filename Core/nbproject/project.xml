@@ -234,6 +234,10 @@
                 <binary-origin>release/modules/ext/xmpcore.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jython.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jython.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
             </class-path-extension>

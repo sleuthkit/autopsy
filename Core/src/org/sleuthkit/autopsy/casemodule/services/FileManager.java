@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
@@ -36,13 +35,13 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.Transaction;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * Abstraction to facilitate access to files and directories.
@@ -267,7 +266,7 @@ public class FileManager implements Closeable {
             rootsToAdd.add(localFile);
         }
 
-        Transaction trans = tskCase.createTransaction();
+        CaseDbTransaction trans = tskCase.beginTransaction();
         // make a virtual top-level directory for this set of files/dirs
         final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir(trans);
 
@@ -295,8 +294,6 @@ public class FileManager implements Closeable {
             trans.commit();
         } catch (TskCoreException ex) {
             trans.rollback();
-        } finally {
-            trans.close();
         }
         return fileSetRootDir;
     }
@@ -309,7 +306,7 @@ public class FileManager implements Closeable {
      *
      * @throws TskCoreException
      */
-    private VirtualDirectory addLocalFileSetRootDir(Transaction trans) throws TskCoreException {
+    private VirtualDirectory addLocalFileSetRootDir(CaseDbTransaction trans) throws TskCoreException {
 
         VirtualDirectory created = null;
 
@@ -343,7 +340,7 @@ public class FileManager implements Closeable {
      * directory.
      * @throws TskCoreException
      */
-    private AbstractFile addLocalDirInt(Transaction trans, VirtualDirectory parentVd,
+    private AbstractFile addLocalDirInt(CaseDbTransaction trans, VirtualDirectory parentVd,
             java.io.File localFile, FileAddProgressUpdater addProgressUpdater) throws TskCoreException {
 
         if (tskCase == null) {
@@ -399,7 +396,7 @@ public class FileManager implements Closeable {
      *                          due to a critical system error or of the file
      *                          manager has already been closed
      */
-    private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile, Transaction trans) throws TskCoreException {
+    private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile, CaseDbTransaction trans) throws TskCoreException {
 
         if (tskCase == null) {
             throw new TskCoreException(

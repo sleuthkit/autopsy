@@ -135,39 +135,29 @@ import org.sleuthkit.datamodel.TskException;
          * @throws Exception
          */
         @Override
-        public void run() {
-             
-            errorList.clear();
-           
-            //lock DB for writes in this thread
-            SleuthkitCase.acquireExclusiveLock();
-             
-            addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            dirFetcher = new Thread( new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
-          
+        public void run() {             
+            errorList.clear();           
             try {
-                progressMonitor.setIndeterminate(true);
-                progressMonitor.setProgress(0);
-               
-                dirFetcher.start();
-                
-                addImageProcess.run(new String[]{this.imagePath});
-                
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
-                //critical core/system error and process needs to be interrupted
-                hasCritError = true;
-                errorList.add(ex.getMessage());
-            } catch (TskDataException ex) {
-                logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
-                errorList.add(ex.getMessage());
-            } 
-
-            // handle addImage done
-            postProcess();
-            
-            // unclock the DB 
-            SleuthkitCase.releaseExclusiveLock();
+                currentCase.getSleuthkitCase().acquireExclusiveLock();
+                addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
+                dirFetcher = new Thread( new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
+                try {
+                    progressMonitor.setIndeterminate(true);
+                    progressMonitor.setProgress(0);
+                    dirFetcher.start();
+                    addImageProcess.run(new String[]{this.imagePath});
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
+                    hasCritError = true;
+                    errorList.add(ex.getMessage());
+                } catch (TskDataException ex) {
+                    logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
+                    errorList.add(ex.getMessage());
+                } 
+                postProcess();
+            } finally {
+                currentCase.getSleuthkitCase().releaseExclusiveLock();
+            }
         }
 
         /**

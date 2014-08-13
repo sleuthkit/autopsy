@@ -36,6 +36,7 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
  final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
@@ -69,6 +70,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             modules.add(module);
         }
         
+        for (GeneralReportModule module : JythonModuleLoader.getGeneralReportModules()) {
+            generalModules.add(module);
+            modules.add(module);
+        }
+                
         for (FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
             fileModules.add(module);
             modules.add(module);
