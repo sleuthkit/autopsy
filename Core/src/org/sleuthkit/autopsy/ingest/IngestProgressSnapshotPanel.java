@@ -19,16 +19,13 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestJob.IngestJobStats;
 import org.sleuthkit.autopsy.ingest.IngestScheduler.IngestJobSchedulerStats;
 
 public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
