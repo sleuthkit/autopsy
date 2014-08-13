@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -42,10 +41,6 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author brianc
- */
 public class PerformancePanel extends javax.swing.JDialog {
 
     /**
