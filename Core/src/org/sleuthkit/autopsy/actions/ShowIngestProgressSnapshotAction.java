@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
         lazy=false
 )
 @ActionReference(path = "Menu/Help", position = 1125)
-@Messages("CTL_ShowIngestProgressSnapshotAction=Get Ingest Progress Snapshot")
+@Messages("CTL_ShowIngestProgressSnapshotAction=Ingest Status Details")
 public final class ShowIngestProgressSnapshotAction extends SystemAction implements ActionListener {
 
     private static final String ACTION_NAME = NbBundle.getMessage(ShowIngestProgressSnapshotAction.class, "ShowIngestProgressSnapshotAction.actionName.text");

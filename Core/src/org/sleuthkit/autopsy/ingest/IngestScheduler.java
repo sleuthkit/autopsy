@@ -595,14 +595,14 @@ final class IngestScheduler {
      * Stores basic stats for a given job
      */
     class IngestJobSchedulerStats {
-        IngestJobStats ingestJobStats;
-        private long jobId;
-        private String dataSource;
-        private long rootQueueSize;
-        private long dirQueueSize;
-        private long fileQueueSize;
-        private long dsQueueSize;
-        private long runningListSize;
+        private final IngestJobStats ingestJobStats;
+        private final long jobId;
+        private final String dataSource;
+        private final long rootQueueSize;
+        private final long dirQueueSize;
+        private final long fileQueueSize;
+        private final long dsQueueSize;
+        private final long runningListSize;
         
         IngestJobSchedulerStats(IngestJob job) {
             ingestJobStats = job.getStats();
@@ -615,53 +615,36 @@ final class IngestScheduler {
             runningListSize = countJobsInCollection(tasksInProgressAndPending, jobId) - fileQueueSize - dsQueueSize;
         }
 
-        /**
-         * @return the jobId
-         */
         protected long getJobId() {
             return jobId;
         }
 
-        /**
-         * @return the dataSource
-         */
         protected String getDataSource() {
             return dataSource;
         }
 
-        /**
-         * @return the rootQueueSize
-         */
         protected long getRootQueueSize() {
             return rootQueueSize;
         }
 
-        /**
-         * @return the dirQueueSize
-         */
         protected long getDirQueueSize() {
             return dirQueueSize;
         }
 
-        /**
-         * @return the fileQueueSize
-         */
         protected long getFileQueueSize() {
             return fileQueueSize;
         }
 
-        /**
-         * @return the dsQueueSize
-         */
         protected long getDsQueueSize() {
             return dsQueueSize;
         }
 
-        /**
-         * @return the runningListSize
-         */
         protected long getRunningListSize() {
             return runningListSize;
+        }
+
+        protected IngestJobStats getIngestJobStats() {
+            return ingestJobStats;
         }
     }
     

@@ -23,7 +23,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -198,12 +200,18 @@ public class IngestManager {
         return IngestScheduler.getInstance().ingestJobsAreRunning();
     }
 
+    
+    /**
+     * Called each time a module in a data source pipeline starts
+     * @param task
+     * @param ingestModuleDisplayName 
+     */
     void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
     }
 
     /**
-     * Called each time a task proceeds to the next module in the pipeline
+     * Called each time a module in a file ingest pipeline starts
      * @param task
      * @param ingestModuleDisplayName 
      */
@@ -215,6 +223,10 @@ public class IngestManager {
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
+    /**
+     * Called each time a data source ingest task completes
+     * @param task 
+     */
     void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
     }
@@ -234,7 +246,15 @@ public class IngestManager {
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
     
+    /**
+     * Internal method to update the times associated with each module. 
+     * @param moduleName
+     * @param duration 
+     */
     private void incrementModuleRunTime(String moduleName, Long duration) {
+        if (moduleName.equals("IDLE"))
+            return;
+        
         synchronized (ingestModuleRunTimes) {
             Long prevTimeL = ingestModuleRunTimes.get(moduleName);
             long prevTime = 0;
@@ -245,19 +265,26 @@ public class IngestManager {
             ingestModuleRunTimes.put(moduleName, prevTime);    
         }
     }
+    
+    /**
+     * Return the list of run times for each module
+     * @return Map of module name to run time (in milliseconds)
+     */
+    Map<String, Long> getModuleRunTimes() {
+        synchronized (ingestModuleRunTimes) {
+            Map<String, Long> times = new HashMap<>(ingestModuleRunTimes);
+            return times;
+        }
+    }
 
+    /**
+     * Get the stats on current state of each thread
+     * @return 
+     */
     List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
         return new ArrayList(ingestThreadActivitySnapshots.values());
     }
 
-    ProcessedFilesSnapshot getProcessedFilesSnapshot() {
-        ProcessedFilesSnapshot snapshot;
-        synchronized (processedFilesSnapshotLock) {
-            snapshot = processedFilesSnapshot;
-            processedFilesSnapshot = new ProcessedFilesSnapshot();
-        }
-        return snapshot;
-    }
 
     public void cancelAllIngestJobs() {
         // Stop creating new ingest jobs.
