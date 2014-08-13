@@ -65,6 +65,7 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, Future<Void>> startIngestJobsTasks = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
     private final AtomicLong ingestErrorMessagePosts = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots = new ConcurrentHashMap<>(); // Maps ingest thread ids to progress ingestThreadActivitySnapshots.    
+    private final ConcurrentHashMap<String, Long> ingestModuleRunTimes = new ConcurrentHashMap<>();
     private final Object processedFilesSnapshotLock = new Object();
     private ProcessedFilesSnapshot processedFilesSnapshot = new ProcessedFilesSnapshot();
     private volatile IngestMessageTopComponent ingestMessageBox;
@@ -197,22 +198,51 @@ public class IngestManager {
         return IngestScheduler.getInstance().ingestJobsAreRunning();
     }
 
-    void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {    
+    void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
     }
 
+    /**
+     * Called each time a task proceeds to the next module in the pipeline
+     * @param task
+     * @param ingestModuleDisplayName 
+     */
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile()));
+        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
+        
+        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
     }
 
+    /**
+     * Called when a file ingest pipeline is complete for a given file
+     * @param task 
+     */
     void setIngestTaskProgressCompleted(FileIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
+        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
+        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
         synchronized (processedFilesSnapshotLock) {
             processedFilesSnapshot.incrementProcessedFilesCount();
+        }
+        
+        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
+    }
+    
+    private void incrementModuleRunTime(String moduleName, Long duration) {
+        synchronized (ingestModuleRunTimes) {
+            Long prevTimeL = ingestModuleRunTimes.get(moduleName);
+            long prevTime = 0;
+            if (prevTimeL != null) {
+                prevTime = prevTimeL;
+            }
+            prevTime += duration;
+            ingestModuleRunTimes.put(moduleName, prevTime);    
         }
     }
 
