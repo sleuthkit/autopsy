@@ -240,7 +240,7 @@ class Ingester {
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
             long dataSourceId = -1;
             try {
-                dataSourceId = Case.getCurrentCase().getSleuthkitCase().getFileDataSource(af);
+                dataSourceId = af.getDataSource().getId();
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId()); //NON-NLS

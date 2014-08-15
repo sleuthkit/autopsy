@@ -27,14 +27,14 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A data source ingest pipeline composed of a sequence of data source ingest
- * modules constructed from ingest module templates.
+ * This class manages a sequence of data source ingest modules. It starts them, 
+ * shuts them down, and runs them in sequential order. 
  */
 final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobContext context;
-    private List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
+    private final List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
     DataSourceIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
         this.context = context;

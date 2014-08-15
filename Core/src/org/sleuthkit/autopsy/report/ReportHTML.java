@@ -959,7 +959,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             String caseName = currentCase.getName();
             String caseNumber = currentCase.getNumber();
             String examiner = currentCase.getExaminer();
-            int imagecount = currentCase.getImageIDs().length;
+            int imagecount;
+            try {
+                imagecount = currentCase.getDataSources().size();
+            } catch (TskCoreException ex) {
+                imagecount = 0;
+            }
             
             StringBuilder summary = new StringBuilder();
             boolean running = false;
@@ -1005,22 +1010,22 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.imageInfoHeading"));
             summary.append("<div class=\"info\">\n"); //NON-NLS
             try {
-                Image[] images = new Image[imagecount];
-                for(int i=0; i<imagecount; i++) {
-                    images[i] = skCase.getImageById(currentCase.getImageIDs()[i]);
-                }
-                for(Image img : images) {
-                    summary.append("<p>").append(img.getName()).append("</p>\n"); //NON-NLS
-                    summary.append("<table>\n"); //NON-NLS
-                    summary.append("<tr><td>").append( //NON-NLS
-                            NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
-                           .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n"); //NON-NLS
-                    for(String imgPath : img.getPaths()) {
+                for (Content c : currentCase.getDataSources()) {
+                    summary.append("<p>").append(c.getName()).append("</p>\n"); //NON-NLS
+                    if (c instanceof Image) {
+                        Image img = (Image) c;
+                    
+                        summary.append("<table>\n"); //NON-NLS
                         summary.append("<tr><td>").append( //NON-NLS
-                                NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
-                               .append("</td><td>").append(imgPath).append("</td></tr>\n"); //NON-NLS
+                                NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
+                               .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n"); //NON-NLS
+                        for(String imgPath : img.getPaths()) {
+                            summary.append("<tr><td>").append( //NON-NLS
+                                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
+                                   .append("</td><td>").append(imgPath).append("</td></tr>\n"); //NON-NLS
+                        }
+                        summary.append("</table>\n"); //NON-NLS
                     }
-                    summary.append("</table>\n"); //NON-NLS
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get image information for the HTML report."); //NON-NLS

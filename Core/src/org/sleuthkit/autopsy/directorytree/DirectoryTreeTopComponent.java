@@ -356,7 +356,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // if there's at least one image, load the image and open the top component
                     List<Object> items = new ArrayList<>();
                     final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-                    items.add(new DataSources(tskCase));
+                    items.add(new DataSources());
                     items.add(new Views(tskCase));
                     items.add(new Results(tskCase));
                     items.add(new Reports());

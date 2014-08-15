@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,36 +16,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import java.awt.Desktop;
+package org.sleuthkit.autopsy.diagnostics;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.net.URI;
+import javax.swing.JDialog;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
         category = "Help",
-        id = "org.sleuthkit.autopsy.imageanalyzer.actions.OpenHelpAction"
+        id = "org.sleuthkit.autopsy.diagnostics.PerformancePanelAction"
 )
 @ActionRegistration(
-        displayName = "#CTL_OpenHelpAction"
+        displayName = "#CTL_PerformancePanelAction"
 )
-@ActionReference(path = "Menu/Help", position = 350)
-@Messages("CTL_OpenHelpAction=Image / Video Analyzer Help")
-public final class OpenHelpAction implements ActionListener {
+@ActionReference(path = "Menu/Help", position = 1437)
+@Messages("CTL_PerformancePanelAction=Performance Diagnostics")
+public final class PerformancePanelAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        try {
-            Desktop.getDesktop().browse(URI.create("http://sleuthkit.org/autopsy/docs/user-docs/"));
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        JDialog dialog = new PerformancePanel();
+        dialog.setVisible(true);
     }
 }
