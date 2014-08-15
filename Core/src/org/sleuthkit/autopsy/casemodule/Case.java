@@ -37,6 +37,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -786,50 +787,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public static PropertyChangeSupport getPropertyChangeSupport() {
         return pcs;
     }
-
-    String getImagePaths(Long imgID) {
-        return getImagePaths(db).get(imgID);
-    }
-
-    /**
-     * get all the image id in this case
-     *
-     * @return imageIDs
-     */
-    public Long[] getImageIDs() {
-        Set<Long> ids = getImagePaths(db).keySet();
-        hasData = (ids.size() > 0);
-        return ids.toArray(new Long[ids.size()]);
-    }
-
-    public List<Image> getImages() throws TskCoreException {
-        List<Image> list = db.getImages();
-        hasData = (list.size() > 0);
-        return list;
-    }
-
-    /**
-     * Count the root objects.
-     *
-     * @return The number of total root objects in this case.
-     */
-    public int getRootObjectsCount() {
-        return getRootObjects().size();
-    }
-
+    
     /**
      * Get the data model Content objects in the root of this case's hierarchy.
      *
      * @return a list of the root objects
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<Content> getRootObjects() {
-        try {
-            List<Content> list = db.getRootObjects();
-            hasData = (list.size() > 0);
-            return list;
-        } catch (TskException ex) {
-            throw new RuntimeException(NbBundle.getMessage(this.getClass(), "Case.exception.errGetRootObj"), ex);
-        }
+    public List<Content> getDataSources() throws TskCoreException {    
+        List<Content> list = db.getRootObjects();
+        hasData = (list.size() > 0);
+        return list;
     }
 
     /**
@@ -838,16 +806,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return time zones the set of time zones
      */
     public Set<TimeZone> getTimeZone() {
-        Set<TimeZone> timezones = new HashSet<TimeZone>();
-        for (Content c : getRootObjects()) {
-            try {
-                final Image image = c.getImage();
-                if (image != null) {
+        Set<TimeZone> timezones = new HashSet<>();
+        try {
+            for (Content c : getDataSources()) {
+                final Content dataSource = c.getDataSource();
+                if ((dataSource != null) && (dataSource instanceof Image)) {
+                    Image image = (Image)dataSource;
                     timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
                 }
-            } catch (TskException ex) {
-                logger.log(Level.INFO, "Error getting time zones", ex); //NON-NLS
             }
+        } catch (TskCoreException ex) {
+            logger.log(Level.INFO, "Error getting time zones", ex); //NON-NLS
         }
         return timezones;
     }
@@ -1209,7 +1178,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public boolean hasData() {
         // false is also the initial value, so make the DB trip if it is still false
         if (!hasData) {
-            hasData = (getRootObjectsCount() > 0);
+            try {
+                hasData = (getDataSources().size() > 0);
+            } catch (TskCoreException ex) {
+            }
         }
         return hasData;
     }

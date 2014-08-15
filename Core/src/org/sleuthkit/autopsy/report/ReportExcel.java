@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -341,7 +342,13 @@ import org.sleuthkit.datamodel.TskCoreException;
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.numImages"));
-        row.createCell(1).setCellValue(currentCase.getImageIDs().length);
+        int numImages;
+        try {
+            numImages = currentCase.getDataSources().size();
+        } catch (TskCoreException ex) {
+            numImages = 0;
+        }
+        row.createCell(1).setCellValue(numImages);
         ++rowIndex;
         
         sheet.autoSizeColumn(0);

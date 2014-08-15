@@ -511,8 +511,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
          */
         UnallocStruct(Volume volu) {
             try {
-                this.ImageName = volu.getImage().getName();
-                this.ImageId = volu.getImage().getId();
+                this.ImageName = volu.getDataSource().getName();
+                this.ImageId = volu.getDataSource().getId();
                 this.VolumeId = volu.getId();
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Unable to properly create ExtractUnallocAction, extraction may be incomplete", tce); //NON-NLS

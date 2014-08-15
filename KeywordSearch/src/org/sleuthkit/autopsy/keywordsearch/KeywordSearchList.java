@@ -318,8 +318,7 @@ abstract class KeywordSearchList {
     }
 
     boolean addList(String name, List<Keyword> newList) {
-        boolean isLocked = this.lockedLists.contains(name);
-        return addList(name, newList, true, isLocked);
+        return addList(name, newList, true, true);
     }
 
     boolean addList(KeywordList list) {
