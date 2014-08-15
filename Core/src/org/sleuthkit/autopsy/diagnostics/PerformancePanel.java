@@ -34,9 +34,11 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -302,24 +304,27 @@ public class PerformancePanel extends javax.swing.JDialog {
                 return;
             }
                 
-            List<Image> images;
+            List<Content> dataSources;
             try {
-                images = curCase.getImages();
+                dataSources = curCase.getDataSources();
             } catch (TskCoreException ex) {
                 setImgLabel("No Images In Case");
                 setStatusMsg("");
                 return;
             }
-            
-            if (images.isEmpty()) {
+            Image image = null;
+            for (Content c : dataSources) {
+                if (c instanceof Image) {
+                    image = (Image)c;
+                }
+            }
+            if (image == null) {
                 setImgLabel("No Images In Case");
                 setStatusMsg("");
                 return;
             }
             
             long start = new Date().getTime();
-
-            Image image = images.get(0);
 
             byte[] buf = new byte[4096];
             long bytesRead = 0;
@@ -375,22 +380,26 @@ public class PerformancePanel extends javax.swing.JDialog {
                 return;
             }
                 
-            List<Image> images;
+            List<Content> dataSources;
             try {
-                images = curCase.getImages();
+                dataSources = curCase.getDataSources();
             } catch (TskCoreException ex) {
                 setFileReadLabel("No Images In Case");
                 setStatusMsg("");
                 return;
             }
-            
-            if (images.isEmpty()) {
+            Image image = null;
+            for (Content c : dataSources) {
+                if (c instanceof Image) {
+                    image = (Image)c;
+                }
+            }
+            if (image == null) {
                 setFileReadLabel("No Images In Case");
                 setStatusMsg("");
                 return;
             }
-
-            Image image = images.get(0);
+            
             File file = new File(image.getPaths()[0]);
             if (file.exists() == false) {
                 setFileReadLabel("Image Path Doesn't Exist");

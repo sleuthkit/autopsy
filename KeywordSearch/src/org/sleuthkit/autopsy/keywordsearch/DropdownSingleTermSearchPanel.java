@@ -151,7 +151,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        keywordTextField.setFont(keywordTextField.getFont().deriveFont(Font.PLAIN, 14));
+        keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N
         keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
         keywordTextField.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(192, 192, 192), 1, true));
         keywordTextField.setMinimumSize(new java.awt.Dimension(2, 25));
@@ -167,7 +167,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
             }
         });
 
-        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N NON-NLS
+        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -176,10 +176,10 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         });
 
         queryTypeButtonGroup.add(exactRadioButton);
+        exactRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(exactRadioButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.exactRadioButton.text")); // NOI18N
 
         queryTypeButtonGroup.add(substringRadioButton);
-        substringRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(substringRadioButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.substringRadioButton.text")); // NOI18N
 
         queryTypeButtonGroup.add(regexRadioButton);

@@ -67,11 +67,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
             // get the information that needed
             Case currentCase = Case.getCurrentCase();
-            String caseName = currentCase.getName();
             String crDate = currentCase.getCreatedDate();
             String caseDir = currentCase.getCaseDirectory();
-            int totalImage = currentCase.getRootObjectsCount();
-
+            
             // put the image paths information into hashmap
             Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
 
