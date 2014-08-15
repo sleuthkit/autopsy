@@ -45,8 +45,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(E01VerifyIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getInstance();
-    private Image img;
-    private String imgName;
+
     private MessageDigest messageDigest;
     private boolean verified = false;
     private boolean skipped = false;
@@ -61,42 +60,33 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         verified = false;
-        img = null;
-        imgName = "";
         storedHash = "";
         calculatedHash = "";
 
-        if (messageDigest == null) {
-            try {
-                messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
-            } catch (NoSuchAlgorithmException ex) {
-                logger.log(Level.WARNING, "Error getting md5 algorithm", ex); //NON-NLS
-                throw new RuntimeException(
-                        NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.startUp.exception.failGetMd5"));
-            }
-        } else {
-            messageDigest.reset();
+        try {
+            messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
+        } catch (NoSuchAlgorithmException ex) {
+            logger.log(Level.WARNING, "Error getting md5 algorithm", ex); //NON-NLS
+            throw new RuntimeException(
+                    NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.startUp.exception.failGetMd5"));
         }
     }
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
-        imgName = dataSource.getName();
-        try {
-            img = dataSource.getImage();
-        } catch (TskCoreException ex) {
-            img = null;
-            logger.log(Level.SEVERE, "Failed to get image from Content.", ex); //NON-NLS
-            services.postMessage(IngestMessage.createMessage( MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
+        String imgName = dataSource.getName();
+        if (!(dataSource instanceof Image)) {
+            logger.log(Level.INFO, "Skipping disk image image {0}", imgName); //NON-NLS
+            services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                    "EwfVerifyIngestModule.process.errProcImg",
+                    "EwfVerifyIngestModule.process.skipNonEwf",
                     imgName)));
-            return ProcessResult.ERROR;
+            return ProcessResult.OK;
         }
+        Image img = (Image)dataSource;
 
         // Skip images that are not E01
-        if (img == null || img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
-            img = null;
+        if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),

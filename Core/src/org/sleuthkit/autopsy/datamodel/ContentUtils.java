@@ -130,8 +130,9 @@ public final class ContentUtils {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
-                final Image image = c.getImage();
-                if (image != null) {
+                final Content dataSource = c.getDataSource();
+                if ((dataSource != null) && (dataSource instanceof Image)) {
+                    Image image = (Image)dataSource;
                     return TimeZone.getTimeZone(image.getTimeZone());
                 } else {
                     //case such as top level VirtualDirectory
