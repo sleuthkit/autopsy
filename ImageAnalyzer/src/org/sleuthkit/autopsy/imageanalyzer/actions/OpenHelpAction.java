@@ -43,7 +43,7 @@ public final class OpenHelpAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Desktop.getDesktop().browse(URI.create("http://www.google.com"));
+            Desktop.getDesktop().browse(URI.create("http://sleuthkit.org/autopsy/docs/user-docs/"));
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
