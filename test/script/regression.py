@@ -37,7 +37,6 @@ import smtplib
 import re
 import zipfile
 import zlib
-import srcupdater
 from regression_utils import *
 import shutil
 import ntpath
@@ -146,7 +145,7 @@ class TestRunner(object):
         Reports.write_html_foot(test_config.html_log)
         
         if test_config.jenkins:
-            setupAttachments(Errors.errors_out, test_config)
+            copyErrorFiles(Errors.errors_out, test_config)
 
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
@@ -1888,7 +1887,7 @@ def find_file_in_dir(dir, name, ext):
     except:
         raise DirNotFoundException(dir)
 
-def setupAttachments(attachments, test_config):
+def copyErrorFiles(attachments, test_config):
     """Move email attachments to the location specified in the config file.
        Used for Jenkins build.
        
