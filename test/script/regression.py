@@ -16,6 +16,7 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
+
 from tskdbdiff import TskDbDiff, TskDbDiffException
 import codecs
 import datetime
@@ -85,6 +86,18 @@ COMMON_LOG = "AutopsyErrors.txt"
 
 Day = 0
 
+def usage():
+	print ("-f PATH single file")
+	print ("-r rebuild")
+	print ("-l PATH path to config file")
+	print ("-u Ignore unallocated space")
+	print ("-k Do not delete SOLR index")
+	print ("-v verbose mode")
+	print ("-e ARG Enable exception mode with given string")
+	print ("-h help")
+	print ("-fr Do not download new images each time")
+
+
 #----------------------#
 #        Main          #
 #----------------------#
@@ -92,10 +105,12 @@ def main():
     """Parse the command-line arguments, create the configuration, and run the tests."""
     args = Args()
     parse_result = args.parse()
-    test_config = TestConfiguration(args)
     # The arguments were given wrong:
     if not parse_result:
         return
+    test_config = TestConfiguration(args)
+
+    # Download images unless they asked not to
     if(not args.fr):
         antin = ["ant"]
         antin.append("-f")
@@ -1674,7 +1689,7 @@ class Args(object):
                 except:
                     print("Error: No exception string given.")
             elif arg == "-h" or arg == "--help":
-                print(usage())
+                usage()
                 return False
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
