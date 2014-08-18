@@ -55,7 +55,7 @@ public final class OpenAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen() && fxInited && Case.getCurrentCase().getRootObjectsCount() > 0;
+        return Case.isCaseOpen() && fxInited && Case.getCurrentCase().hasData();
     }
 
     /** Returns the toolbar component of this action
