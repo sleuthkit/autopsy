@@ -256,6 +256,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             boolean hasChildren = false;
 
             if (selectedNode != null) {
+                // @@@ This just did a DB round trip to get the count and the results were not saved...
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
 

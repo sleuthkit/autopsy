@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -45,15 +46,20 @@ final class IngestJob {
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines = new LinkedBlockingQueue<>();
     private long estimatedFilesToProcess = 0L; // Guarded by this
     private long processedFiles = 0L; // Guarded by this
+    // Contains names of files that are being run. Used to keep progress bar up to date. 
+    private final List<String> filesInProgress = new ArrayList<>(); // Guarded by this. 
     private DataSourceIngestPipeline dataSourceIngestPipeline;
     private ProgressHandle dataSourceIngestProgress;
     private ProgressHandle fileIngestProgress;
     private volatile boolean cancelled = false;
+    private long startTime;
+
 
     IngestJob(long id, Content dataSource, boolean processUnallocatedSpace) {
         this.id = id;
         this.dataSource = dataSource;
         this.processUnallocatedSpace = processUnallocatedSpace;
+        startTime = new Date().getTime();
     }
 
     long getId() {
@@ -139,20 +145,14 @@ final class IngestJob {
         dataSourceIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
-                if (dataSourceIngestProgress != null) {
-                    dataSourceIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.cancelling",
-                            displayName));
-                }
-                IngestScheduler.getInstance().cancelIngestJob(IngestJob.this);
+                handleCancelFromProgressBar();
                 return true;
             }
         });
         dataSourceIngestProgress.start();
         dataSourceIngestProgress.switchToIndeterminate();
     }
-
+    
     private void startFileIngestProgressBar() {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.fileIngest.displayName",
@@ -160,18 +160,41 @@ final class IngestJob {
         fileIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
-                if (fileIngestProgress != null) {
-                    fileIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
-                            displayName));
-                }
-                IngestScheduler.getInstance().cancelIngestJob(IngestJob.this);
+                handleCancelFromProgressBar();
                 return true;
             }
         });
         estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
         fileIngestProgress.start();
         fileIngestProgress.switchToDeterminate((int) estimatedFilesToProcess);
+    }
+    
+    /**
+     * Common steps to cancel a job, regardless of what progress bar was
+     * used to cancel the job. 
+     */
+    private void handleCancelFromProgressBar() {
+        cancel();
+        
+        if (fileIngestProgress != null) {
+            final String displayName = NbBundle.getMessage(this.getClass(),
+                "IngestJob.progress.fileIngest.displayName",
+                dataSource.getName());
+            fileIngestProgress.setDisplayName(
+                    NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
+                    displayName));
+        }
+        
+        if (dataSourceIngestProgress != null) {
+            final String displayName = NbBundle.getMessage(this.getClass(),
+                "IngestJob.progress.dataSourceIngest.initialDisplayName",
+                dataSource.getName());
+            dataSourceIngestProgress.setDisplayName(
+                    NbBundle.getMessage(this.getClass(),
+                    "IngestJob.progress.cancelling",
+                    displayName));
+        }
+        IngestScheduler.getInstance().cancelIngestJob(IngestJob.this);
     }
 
     /**
@@ -192,6 +215,11 @@ final class IngestJob {
         return (fileIngestPipelines.peek().isEmpty() == false);
     }
 
+    /**
+     * Executes the data source ingest module pipeline for the data source in the task
+     * @param task
+     * @throws InterruptedException 
+     */
     void process(DataSourceIngestTask task) throws InterruptedException {
         try {
             if (!isCancelled() && !dataSourceIngestPipeline.isEmpty()) {
@@ -201,6 +229,8 @@ final class IngestJob {
                     logIngestModuleErrors(errors);
                 }
             }
+            
+            // all data source ingest jobs are done for this task, so shut down progress bar
             if (null != dataSourceIngestProgress) {
                 dataSourceIngestProgress.finish();
                 // This is safe because this method will be called at most once per
@@ -215,6 +245,12 @@ final class IngestJob {
         }
     }
 
+    
+    /**
+     * Executes the file ingest module pipeline for the file in the task
+     * @param task
+     * @throws InterruptedException 
+     */
     void process(FileIngestTask task) throws InterruptedException {
         try {
             if (!isCancelled()) {
@@ -228,11 +264,24 @@ final class IngestJob {
                         } else {
                             fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
                         }
+                        filesInProgress.add(file.getName());
                     }
+                    
                     List<IngestModuleError> errors = new ArrayList<>();
                     errors.addAll(pipeline.process(task));
                     if (!errors.isEmpty()) {
                         logIngestModuleErrors(errors);
+                    }
+                    
+                    // update the progress bar in case this file was being displayed
+                    synchronized (this) {
+                        filesInProgress.remove(file.getName());
+                        if (filesInProgress.size() > 0) {
+                            fileIngestProgress.progress(filesInProgress.get(0));
+                        }
+                        else {
+                            fileIngestProgress.progress("");
+                        }
                     }
                 }
                 fileIngestPipelines.put(pipeline);
@@ -243,6 +292,10 @@ final class IngestJob {
         }
     }
 
+    /**
+     * Shutdown pipelines and progress bars
+     * 
+     */
     void finish() {
         List<IngestModuleError> errors = new ArrayList<>();
         while (!fileIngestPipelines.isEmpty()) {
@@ -252,9 +305,13 @@ final class IngestJob {
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
         }
+        
+        // NOTE: Nothing to do for datasource ingest modules -- no shutdown method
+
         if (dataSourceIngestProgress != null) {
             dataSourceIngestProgress.finish();
-        }        
+        }
+        
         if (fileIngestProgress != null) {
             fileIngestProgress.finish();
         }
@@ -272,5 +329,64 @@ final class IngestJob {
 
     void cancel() {
         cancelled = true;
+    }
+    
+    /**
+     * Stores basic info for a given ingest job.
+     */
+    class IngestJobStats {
+        private final long startTime;
+        private final long processedFiles;
+        private final long estimatedFilesToProcess;
+        private final long snapShotTime;
+        
+        IngestJobStats () {
+            synchronized (IngestJob.this) {
+                this.startTime = IngestJob.this.startTime;
+                this.processedFiles = IngestJob.this.processedFiles;
+                this.estimatedFilesToProcess = IngestJob.this.estimatedFilesToProcess;
+                snapShotTime = new Date().getTime();
+            }
+        }
+        
+        /**
+         * Get files per second throughput since job started
+         * @return 
+         */
+        double getSpeed() {
+            return (double)processedFiles / ((snapShotTime - startTime)/1000);
+        }
+        
+        long getStartTime() {
+            return startTime;
+        }
+        
+        /**
+         * Get time these stats were collected
+         * @return 
+         */
+        long getSnapshotTime() {
+            return snapShotTime;
+        }
+        
+        /**
+         * Number of files processed by job so far
+         * @return 
+         */
+        long getFilesProcessed() {
+            return processedFiles;
+        }
+        
+        long getFilesEstimated() {
+            return estimatedFilesToProcess;
+        }
+    }
+    
+    /**
+     * Get some basic performance stats on this job
+     * @return 
+     */
+    IngestJobStats getStats() {
+        return new IngestJobStats();
     }
 }

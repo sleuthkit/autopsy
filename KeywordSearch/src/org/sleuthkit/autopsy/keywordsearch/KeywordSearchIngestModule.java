@@ -132,7 +132,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         logger.log(Level.INFO, "Initializing instance {0}", instanceNum); //NON-NLS
         initialized = false;       
-        jobId = context.getJobId();        
+        jobId = context.getJobId();  
+        dataSourceId = context.getDataSource().getId();
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
         tikaFormatDetector = new Tika();
         ingester = Server.getIngester();
@@ -211,13 +212,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());  //NON-NLS
             putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
             return ProcessResult.OK;
-        }
-        try {
-            //add data source id of the file to the set, keeping track of images being ingested
-            dataSourceId = caseHandle.getFileDataSource(abstractFile);
-
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting image id of file processed by keyword search: " + abstractFile.getName(), ex); //NON-NLS
         }
 
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
@@ -484,6 +478,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
+            // @@@ Could use Blackboard instead of doing this again
             //use Tika to detect the format
             String detectedFormat = null;
             InputStream is = null;
@@ -502,10 +497,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     }
                 }
             }
-
-            // @@@ Add file type signature to blackboard here
-
-            //logger.log(Level.INFO, "Detected format: " + aFile.getName() + " " + detectedFormat);
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...

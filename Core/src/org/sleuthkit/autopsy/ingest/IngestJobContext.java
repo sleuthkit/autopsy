@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Provides an instance of an ingest module with services specific to the ingest
@@ -33,6 +34,14 @@ public final class IngestJobContext {
 
     IngestJobContext(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
+    }
+    
+    /**
+     * 
+     * @return The data source that this ingest job is associated with.
+     */
+    public Content getDataSource() {
+        return ingestJob.getDataSource();
     }
 
     /**

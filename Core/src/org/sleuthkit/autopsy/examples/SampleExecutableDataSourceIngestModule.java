@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -111,9 +112,16 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
                 String resultsFilePath = outputDirPath + File.separator + String.format("job_%d_results.xml", jobId);
                 boolean haveRealExecutable = false;
                 if (haveRealExecutable) {
-                    String dataSourcePath = dataSource.getImage().getPaths()[0];
-                    ExecUtil executor = new ExecUtil();
-                    executor.execute("some.exe", dataSourcePath, resultsFilePath);
+                    if (dataSource instanceof Image) {
+                        Image image = (Image)dataSource;
+                        String dataSourcePath = image.getPaths()[0];
+                        ExecUtil executor = new ExecUtil();
+                        executor.execute("some.exe", dataSourcePath, resultsFilePath);
+                    }
+                    // not a disk image
+                    else {
+                        return ProcessResult.OK;
+                    }
                 } else {
                     generateSimulatedResults(resultsFilePath);
                 }
@@ -129,7 +137,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
                     IngestServices.getInstance().postMessage(IngestMessage.createErrorMessage(moduleName, "External Results Import Error", errorInfo.getMessage()));
                 }
                 progressBar.progress(2);
-            } catch (TskCoreException | InterruptedException | ParserConfigurationException | TransformerException | IOException ex) {
+            } catch (InterruptedException | ParserConfigurationException | TransformerException | IOException ex) {
                 Logger logger = IngestServices.getInstance().getLogger(moduleName);
                 logger.log(Level.SEVERE, "Failed to simulate analysis and results import", ex);  //NON-NLS
                 return ProcessResult.ERROR;

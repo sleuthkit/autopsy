@@ -218,16 +218,12 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
-            </class-path-extension>			
-            <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.7.15-M1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.7.15-M1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jython.jar</runtime-relative-path>
-                <binary-origin>C:\autopsy\Core\release\modules\ext\jython.jar</binary-origin>
+                <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.6.2.jar</runtime-relative-path>
@@ -236,6 +232,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/xmpcore.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmpcore.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jython.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jython.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>

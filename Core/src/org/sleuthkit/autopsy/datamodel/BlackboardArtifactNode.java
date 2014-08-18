@@ -183,24 +183,24 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         sourcePath));
             }
         } else {
-            String dataSource = "";
+            String dataSourceStr = "";
             try {
-                Image image = associated.getImage();
-                if (image != null) {
-                    dataSource = image.getName();
+                Content dataSource = associated.getDataSource();
+                if (dataSource != null) {
+                    dataSourceStr = dataSource.getName();
                 } else {
-                    dataSource = getRootParentName();
+                    dataSourceStr = getRootParentName();
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
             }
             
-            if (dataSource.isEmpty() == false) {
+            if (dataSourceStr.isEmpty() == false) {
                 ss.put(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.name"),
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
                         NO_DESCR,
-                        dataSource));
+                        dataSourceStr));
             }
         }
 
