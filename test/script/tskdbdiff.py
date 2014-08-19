@@ -398,5 +398,9 @@ def main():
 
 
 if __name__ == "__main__":
+    if sys.hexversion < 0x03000000:
+        print("Python 3 required")
+        sys.exit(1)
+
     sys.exit(main())
 

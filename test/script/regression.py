@@ -1931,6 +1931,11 @@ class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
 
 if __name__ == "__main__":
+
+    if sys.hexversion < 0x03000000:
+        print("Python 3 required")
+        sys.exit(1)
+
     global SYS
     if _platform == "linux" or _platform == "linux2":
         SYS = OS.LINUX
