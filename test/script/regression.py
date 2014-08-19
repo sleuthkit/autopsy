@@ -158,9 +158,10 @@ class TestRunner(object):
             time.sleep(10)
         
         Reports.write_html_foot(test_config.html_log)
-        
-        if test_config.jenkins:
-            copyErrorFiles(Errors.errors_out, test_config)
+       
+        # This code was causing errors with paths, so its disabled 
+        #if test_config.jenkins:
+        #    copyErrorFiles(Errors.errors_out, test_config)
 
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
