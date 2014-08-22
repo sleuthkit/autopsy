@@ -873,8 +873,8 @@ class TestResultsDiffer(object):
             unordered list in the html report files, or (0, 0) if the
             lenghts are the same.
         """
-        gold_file = open(gold_path)
-        output_file = open(output_path)
+        gold_file = open(gold_path, encoding='utf-8')
+        output_file = open(output_path, encoding='utf-8')
         goldHtml = gold_file.read()
         outputHtml = output_file.read()
         goldHtml = goldHtml[goldHtml.find("<ul>"):]
