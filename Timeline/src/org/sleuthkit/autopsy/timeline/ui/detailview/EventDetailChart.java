@@ -235,7 +235,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
 
                 chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new AbstractAction("Place Marker") {
                     {
-                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/advancedtimeline/images/marker.png", 16, 16, true, true, true)));
+                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true)));
                     }
 
                     @Override

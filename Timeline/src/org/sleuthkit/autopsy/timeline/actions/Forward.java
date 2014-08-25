@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  */
 public class Forward extends AbstractAction {
 
-    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/advancedtimeline/images/arrow.png", 16, 16, true, true, true);
+    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/arrow.png", 16, 16, true, true, true);
 
     private final TimeLineController controller;
 

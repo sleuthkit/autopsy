@@ -72,7 +72,7 @@ public enum FileSystemTypes implements EventType {
     private FileSystemTypes(String displayName, String iconBase) {
         this.displayName = displayName;
         this.iconBase = iconBase;
-        this.image = new Image("org/sleuthkit/autopsy/advancedtimeline/images/" + iconBase, true);
+        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true);
     }
 
     @Override

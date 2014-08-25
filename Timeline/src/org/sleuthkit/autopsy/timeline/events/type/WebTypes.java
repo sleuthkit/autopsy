@@ -160,7 +160,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
         this.shortExtractor = shortExtractor;
         this.medExtractor = medExtractor;
         this.longExtractor = longExtractor;
-        this.image = new Image("org/sleuthkit/autopsy/advancedtimeline/images/" + iconBase, true);
+        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true);
     }
 
     @Override

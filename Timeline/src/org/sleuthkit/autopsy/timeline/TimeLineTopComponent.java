@@ -42,6 +42,9 @@ import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.ui.StatusBar;
@@ -51,9 +54,6 @@ import org.sleuthkit.autopsy.timeline.ui.VisualizationPanel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
-import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
-import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * TopComponent for the advanced timeline module.
@@ -68,8 +68,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
 @Messages({
     "CTL_TimeLineTopComponentAction=TimeLineTopComponent",
-    "CTL_TimeLineTopComponent=TimeLine Window",
-    "HINT_TimeLineTopComponent=This is a TimeLine window"
+    "CTL_TimeLineTopComponent=Timeline Window",
+    "HINT_TimeLineTopComponent=This is a Timeline window"
 })
 public final class TimeLineTopComponent extends TopComponent implements ExplorerManager.Provider, TimeLineUI {
 
@@ -136,11 +136,11 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             filterTab.setClosable(false);
             filterTab.setContent(filtersPanel);
-            filterTab.setGraphic(new ImageView("org/sleuthkit/autopsy/advancedtimeline/images/funnel.png"));
+            filterTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/funnel.png"));
 
             eventsTab.setClosable(false);
             eventsTab.setContent(navPanel);
-            eventsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/advancedtimeline/images/timeline_marker.png"));
+            eventsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png"));
 
             tabPane.getTabs().addAll(filterTab, eventsTab);
             VBox.setVgrow(tabPane, Priority.ALWAYS);

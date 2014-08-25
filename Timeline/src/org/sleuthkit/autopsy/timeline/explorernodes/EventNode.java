@@ -49,13 +49,13 @@ class EventNode extends DisplayableItemNode {
     EventNode(TimeLineEvent eventById, AbstractFile file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(eventById, file, artifact));
         this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/advancedtimeline/images/" + e.getType().getIconBase());
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase());
     }
 
     EventNode(TimeLineEvent eventById, AbstractFile file) {
         super(Children.LEAF, Lookups.fixed(eventById, file));
         this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/advancedtimeline/images/" + e.getType().getIconBase());
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase());
     }
 
     @Override

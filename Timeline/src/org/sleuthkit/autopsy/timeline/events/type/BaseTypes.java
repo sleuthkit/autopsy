@@ -93,7 +93,7 @@ public enum BaseTypes implements EventType {
     private BaseTypes(String displayName, String iconBase) {
         this.displayName = displayName;
         this.iconBase = iconBase;
-        this.image = new Image("org/sleuthkit/autopsy/advancedtimeline/images/" + iconBase, true);
+        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true);
     }
 
     @Override

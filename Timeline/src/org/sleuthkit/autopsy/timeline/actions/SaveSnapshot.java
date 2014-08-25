@@ -36,10 +36,10 @@ import javafx.stage.DirectoryChooser;
 import javafx.util.Pair;
 import javax.imageio.ImageIO;
 import org.controlsfx.control.action.AbstractAction;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -118,7 +118,7 @@ public class SaveSnapshot extends AbstractAction {
         }
 
         //copy css
-        try (InputStream resource = this.getClass().getResourceAsStream("/org/sleuthkit/autopsy/advancedtimeline/index.css")) {
+        try (InputStream resource = this.getClass().getResourceAsStream("/org/sleuthkit/autopsy/timeline/index.css")) {
             Files.copy(resource, Paths.get(outFolder.getPath(), "index.css"));
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "failed to copy css file", ex);
