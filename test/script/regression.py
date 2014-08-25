@@ -16,6 +16,7 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
+
 from tskdbdiff import TskDbDiff, TskDbDiffException
 import codecs
 import datetime
@@ -37,7 +38,6 @@ import smtplib
 import re
 import zipfile
 import zlib
-import srcupdater
 from regression_utils import *
 import shutil
 import ntpath
@@ -86,6 +86,18 @@ COMMON_LOG = "AutopsyErrors.txt"
 
 Day = 0
 
+def usage():
+	print ("-f PATH single file")
+	print ("-r rebuild")
+	print ("-l PATH path to config file")
+	print ("-u Ignore unallocated space")
+	print ("-k Do not delete SOLR index")
+	print ("-v verbose mode")
+	print ("-e ARG Enable exception mode with given string")
+	print ("-h help")
+	print ("-fr Do not download new images each time")
+
+
 #----------------------#
 #        Main          #
 #----------------------#
@@ -93,10 +105,12 @@ def main():
     """Parse the command-line arguments, create the configuration, and run the tests."""
     args = Args()
     parse_result = args.parse()
-    test_config = TestConfiguration(args)
     # The arguments were given wrong:
     if not parse_result:
         return
+    test_config = TestConfiguration(args)
+
+    # Download images unless they asked not to
     if(not args.fr):
         antin = ["ant"]
         antin.append("-f")
@@ -144,9 +158,10 @@ class TestRunner(object):
             time.sleep(10)
         
         Reports.write_html_foot(test_config.html_log)
-        
-        if test_config.jenkins:
-            setupAttachments(Errors.errors_out, test_config)
+       
+        # This code was causing errors with paths, so its disabled 
+        #if test_config.jenkins:
+        #    copyErrorFiles(Errors.errors_out, test_config)
 
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
@@ -858,8 +873,8 @@ class TestResultsDiffer(object):
             unordered list in the html report files, or (0, 0) if the
             lenghts are the same.
         """
-        gold_file = open(gold_path)
-        output_file = open(output_path)
+        gold_file = open(gold_path, encoding='utf-8')
+        output_file = open(output_path, encoding='utf-8')
         goldHtml = gold_file.read()
         outputHtml = output_file.read()
         goldHtml = goldHtml[goldHtml.find("<ul>"):]
@@ -1675,7 +1690,7 @@ class Args(object):
                 except:
                     print("Error: No exception string given.")
             elif arg == "-h" or arg == "--help":
-                print(usage())
+                usage()
                 return False
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
@@ -1888,7 +1903,7 @@ def find_file_in_dir(dir, name, ext):
     except:
         raise DirNotFoundException(dir)
 
-def setupAttachments(attachments, test_config):
+def copyErrorFiles(attachments, test_config):
     """Move email attachments to the location specified in the config file.
        Used for Jenkins build.
        
@@ -1917,6 +1932,11 @@ class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
 
 if __name__ == "__main__":
+
+    if sys.hexversion < 0x03000000:
+        print("Python 3 required")
+        sys.exit(1)
+
     global SYS
     if _platform == "linux" or _platform == "linux2":
         SYS = OS.LINUX

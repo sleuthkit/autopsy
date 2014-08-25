@@ -1,3 +1,5 @@
+# Requires python3
+
 import re
 import sqlite3
 import subprocess
@@ -8,9 +10,7 @@ import datetime
 import sys
 
 class TskDbDiff(object):
-    """Represents the differences between the gold and output databases.
-
-    Contains methods to compare two databases.
+    """Compares two TSK/Autospy SQLite databases.
 
     Attributes:
         gold_artifacts:
@@ -31,13 +31,14 @@ class TskDbDiff(object):
         """Constructor for TskDbDiff.
 
         Args:
-            output_db_path: a pathto_File, the output database
-            gold_db_path: a pathto_File, the gold database
-            output_dir: (optional) a pathto_Dir, the location where the generated files will be put.
-            gold_bb_dump: (optional) a pathto_File, the location where the gold blackboard dump is located
-            gold_dump: (optional) a pathto_File, the location where the gold non-blackboard dump is located
-            verbose: (optional) a boolean, should the diff results be printed to stdout?
+            output_db_path: path to output database (non-gold standard)
+            gold_db_path: path to gold database
+            output_dir: (optional) Path to folder where generated files will be put.
+            gold_bb_dump: (optional) path to file where the gold blackboard dump is located
+            gold_dump: (optional) path to file where the gold non-blackboard dump is located
+            verbose: (optional) a boolean, if true, diff results are sent to stdout. 
         """
+
         self.output_db_file = output_db
         self.gold_db_file = gold_db
         self.output_dir = output_dir
@@ -57,21 +58,28 @@ class TskDbDiff(object):
         Raises:
             TskDbDiffException: if an error occurs while diffing or dumping the database
         """
+
         self._init_diff()
+
         # generate the gold database dumps if necessary
         if self._generate_gold_dump:
             TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump)
         if self._generate_gold_bb_dump:
             TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump)
 
-        # generate the output database dumps
-        TskDbDiff.dump_output_db(self.output_db_file, self._dump, self._bb_dump)
+        # generate the output database dumps (both DB and BB)
+        TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump)
+        TskDbDiff._dump_output_db_bb(self.output_db_file, self._bb_dump)
 
+        # Compare non-BB
         dump_diff_pass = self._diff(self._dump, self.gold_dump, self._dump_diff)
+
+        # Compare BB
         bb_dump_diff_pass = self._diff(self._bb_dump, self.gold_bb_dump, self._bb_dump_diff)
 
         self._cleanup_diff()
         return dump_diff_pass, bb_dump_diff_pass
+
 
     def _init_diff(self):
         """Set up the necessary files based on the arguments given at construction"""
@@ -91,6 +99,7 @@ class TskDbDiff(object):
             self.gold_bb_dump = TskDbDiff._get_tmp_file("GoldSortedData", ".txt")
             self.gold_dump = TskDbDiff._get_tmp_file("GoldDBDump", ".txt")
 
+
     def _cleanup_diff(self):
         if self.output_dir is None:
             #cleanup temp files
@@ -100,29 +109,40 @@ class TskDbDiff(object):
                 os.remove(self._dump_diff)
             if os.path.isfile(self._bb_dump_diff):
                 os.remove(self._bb_dump_diff)
+
         if self.gold_bb_dump is None:
             os.remove(self.gold_bb_dump)
             os.remove(self.gold_dump)
+
 
     def _diff(self, output_file, gold_file, diff_path):
         """Compare two text files.
 
         Args:
-            output_file: a pathto_File, the output text file
-            gold_file: a pathto_File, the input text file
+            output_file: a pathto_File, the latest text file
+            gold_file: a pathto_File, the gold text file
+            diff_path: The file to write the differences to
+        Returns False if different
         """
-        if(not os.path.isfile(output_file)):
+
+        if (not os.path.isfile(output_file)):
             return False
+
+        if (not os.path.isfile(gold_file)):
+            return False
+
+        # It is faster to read the contents in and directly compare
         output_data = codecs.open(output_file, "r", "utf_8").read()
         gold_data = codecs.open(gold_file, "r", "utf_8").read()
-
-        if (not(gold_data == output_data)):
-            diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", gold_file, output_file]
-            subprocess.call(dffcmdlst, stdout = diff_file)
-            return False
-        else:
+        if (gold_data == output_data):
             return True
+
+        # If they are different, invoke 'diff'
+        diff_file = codecs.open(diff_path, "wb", "utf_8")
+        dffcmdlst = ["diff", gold_file, output_file]
+        subprocess.call(dffcmdlst, stdout = diff_file)
+        return False
+
 
     def _dump_output_db_bb(db_file, bb_dump_file):
         """Dumps sorted text results to the given output location.
@@ -134,12 +154,15 @@ class TskDbDiff(object):
             db_file: a pathto_File, the output database.
             bb_dump_file: a pathto_File, the sorted dump file to write to
         """
+
         unsorted_dump = TskDbDiff._get_tmp_file("dump_data", ".txt")
         conn = sqlite3.connect(db_file)
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
         conn.row_factory = sqlite3.Row
+
         artifact_cursor = conn.cursor()
-        # Get the list of all artifacts
+
+        # Get the list of all artifacts (along with type and associated file)
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
         artifact_cursor.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
         database_log = codecs.open(unsorted_dump, "wb", "utf_8")
@@ -148,9 +171,11 @@ class TskDbDiff(object):
         counter = 0
         artifact_count = 0
         artifact_fail = 0
+
         # Cycle through artifacts
         try:
             while (row != None):
+
                 # File Name and artifact type
                 if(row["parent_path"] != None):
                     database_log.write(row["parent_path"] + row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
@@ -166,22 +191,14 @@ class TskDbDiff(object):
                     art_id = str(row["artifact_id"])
                     attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
                     attributes = attribute_cursor.fetchall()
-                except sqlite3.Error as e:
-                    msg = "Attributes in artifact id (in output DB)# " + str(row["artifact_id"]) + " encountered an error: " + str(e) +" .\n"
-                    print("Attributes in artifact id (in output DB)# ", str(row["artifact_id"]), " encountered an error: ", str(e))
-                    print() 
-                    looptry = False
-                    artifact_fail += 1
-                    database_log.write('Error Extracting Attributes')
-                    database_log.close()
-                    raise TskDbDiffException(msg)
                 
-                # Print attributes
-                if(looptry == True):
+                    # Print attributes
                     if (len(attributes) == 0):
+                       # @@@@ This should be </artifact> 
                        database_log.write(' <artifact/>\n')
                        row = artifact_cursor.fetchone()
                        continue
+
                     src = attributes[0][0]
                     for attr in attributes:
                         attr_value_index = 3 + attr["value_type"]
@@ -191,8 +208,10 @@ class TskDbDiff(object):
                                 numvals += 1
                         if(numvals > 1):
                             msg = "There were too many values for attribute type: " + attr["display_name"] + " for artifact with id #" + str(row["artifact_id"]) + ".\n"
+
                         if(not attr["source"] == src):
                             msg = "There were inconsistent sources for artifact with id #" + str(row["artifact_id"]) + ".\n"
+
                         try:
                             attr_value_as_string = str(attr[attr_value_index])
                             #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
@@ -203,7 +222,21 @@ class TskDbDiff(object):
                         except IOError as e:
                             print("IO error")
                             raise TskDbDiffException("Unexpected IO error while writing to database log." + str(e))
-                
+
+                except sqlite3.Error as e:
+                    msg = "Attributes in artifact id (in output DB)# " + str(row["artifact_id"]) + " encountered an error: " + str(e) +" .\n"
+                    print("Attributes in artifact id (in output DB)# ", str(row["artifact_id"]), " encountered an error: ", str(e))
+                    print() 
+                    looptry = False
+                    artifact_fail += 1
+                    database_log.write('Error Extracting Attributes')
+                    database_log.close()
+                    raise TskDbDiffException(msg)
+                finally:
+                    attribute_cursor.close()
+
+               
+                # @@@@ This should be </artifact> 
                 database_log.write(' <artifact/>\n')
                 row = artifact_cursor.fetchone()
 
@@ -213,13 +246,13 @@ class TskDbDiff(object):
             raise TskDbDiffException("Unexpected error while dumping blackboard database: " + str(e))
         finally:
             database_log.close()
-            attribute_cursor.close()
             artifact_cursor.close()
             conn.close()
         
         # Now sort the file
         srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
         subprocess.call(srtcmdlst)
+
 
     def _dump_output_db_nonbb(db_file, dump_file):
         """Dumps a database to a text file.
@@ -230,11 +263,18 @@ class TskDbDiff(object):
             db_file: a pathto_File, the database file to dump
             dump_file: a pathto_File, the location to dump the non-blackboard database items
         """
+
+        # Make a copy that we can modify
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
+        #print (backup_db_file)
+        # We sometimes get situations with messed up permissions
+        os.chmod (backup_db_file, 0o777)
+
         conn = sqlite3.connect(backup_db_file)
         id_path_table = build_id_table(conn.cursor())
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
+
         # Delete the blackboard tables
         conn.execute("DROP TABLE blackboard_artifacts")
         conn.execute("DROP TABLE blackboard_attributes")
@@ -253,6 +293,7 @@ class TskDbDiff(object):
         # cleanup the backup
         os.remove(backup_db_file)
 
+
     def dump_output_db(db_file, dump_file, bb_dump_file):
         """Dumps the given database to text files for later comparison.
 
@@ -263,6 +304,7 @@ class TskDbDiff(object):
         """
         TskDbDiff._dump_output_db_nonbb(db_file, dump_file)
         TskDbDiff._dump_output_db_bb(db_file, bb_dump_file)
+
 
     def _get_tmp_file(base, ext):
         time = datetime.datetime.now().time().strftime("%H%M%f")
@@ -356,5 +398,9 @@ def main():
 
 
 if __name__ == "__main__":
+    if sys.hexversion < 0x03000000:
+        print("Python 3 required")
+        sys.exit(1)
+
     sys.exit(main())
 

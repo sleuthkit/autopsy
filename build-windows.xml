@@ -345,13 +345,12 @@
     <target name="add-ai-shortcuts" description="Configure installer to have desktop short cuts">
         <echo message="Adding desktop/menu shortcuts..."/>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico"/>
+            <arg line='/edit ${aip-path} /NewShortcut -name "${app.title} ${app.version}" -dir DesktopFolder -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico'/>
         </exec>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico"/>
+            <arg line='/edit ${aip-path} /NewShortcut -name "${app.title} ${app.version}" -dir SHORTCUTDIR -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico'/>
         </exec>
     </target>
-
     
     <target name="ai-build" description="Build the installer based on properties set by 32/64 targets.">
         <antcall target="add-ai-files" inheritAll="true" />

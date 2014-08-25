@@ -34,8 +34,6 @@
 /Ingest/nbproject/*
 !/Ingest/nbproject/project.xml
 !/Ingest/nbproject/project.properties
-/branding_spear
-/installer_spear
 */genfiles.properties
 genfiles.properties
 /branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
@@ -55,9 +53,14 @@ genfiles.properties
 /test/script/ScriptLog.txt
 /test/script/__pycache__/
 /test/script/*.pyc
+/test/script/DBDump-Diff.txt
+/test/script/DBDump.txt
+/test/script/SortedData-Diff.txt
+/test/script/SortedData.txt
 /test/build/
 /test/dist/
 /test/nbproject/*
+
 !/Testing/nbproject/project.xml
 !/Testing/nbproject/project.properties
 *~

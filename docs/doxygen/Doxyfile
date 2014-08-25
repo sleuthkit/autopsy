@@ -675,14 +675,10 @@ INPUT                  = main.dox \
                          native_libs.dox \
                          ../../Core/src \
                          ../../CoreLibs/src \
-                         ../../ExifParser/src \
-                         ../../HashDatabase/src \
                          ../../KeywordSearch/src \
                          ../../RecentActivity/src \
-                         ../../ScalpelCarver/src \
-                         ../../SevenZip/src \
+#../../ScalpelCarver/src \
                          ../../Testing/src \
-                         ../../Timeline/src \
                          ../../thunderbirdparser/src
 
 # This tag can be used to specify the character encoding of the source files
