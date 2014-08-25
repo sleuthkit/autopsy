@@ -107,7 +107,7 @@ public class TimeLineResultView implements TimeLineView {
         if (selectedEventIDs.equals(newSelectedEventIDs) == false) {
             selectedEventIDs = newSelectedEventIDs;
             final EventRootNode root = new EventRootNode(
-                    NbBundle.getMessage(this.getClass(), "AdvTimeline.node.root"), selectedEventIDs,
+                    NbBundle.getMessage(this.getClass(), "Timeline.node.root"), selectedEventIDs,
                     filteredEvents);
 
             //this must be in edt or exception is thrown

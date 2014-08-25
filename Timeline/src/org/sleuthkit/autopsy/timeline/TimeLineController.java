@@ -661,18 +661,18 @@ public class TimeLineController {
     synchronized int showOutOfDateConfirmation() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                                              NbBundle.getMessage(TimeLineController.class,
-                                                                 "AdvTimeline.propChg.confDlg.timelineOOD.msg"),
+                                                                 "Timeline.propChg.confDlg.timelineOOD.msg"),
                                              NbBundle.getMessage(TimeLineController.class,
-                                                                 "AdvTimeline.propChg.confDlg.timelineOOD.details"),
+                                                                 "Timeline.propChg.confDlg.timelineOOD.details"),
                                              JOptionPane.YES_NO_OPTION);
     }
 
     synchronized int showIngestConfirmation() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                                              NbBundle.getMessage(TimeLineController.class,
-                                                                 "AdvTimeline.initTimeline.confDlg.genBeforeIngest.msg"),
+                                                                 "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
                                              NbBundle.getMessage(TimeLineController.class,
-                                                                 "AdvTimeline.initTimeline.confDlg.genBeforeIngest.details"),
+                                                                 "Timeline.initTimeline.confDlg.genBeforeIngest.details"),
                                              JOptionPane.YES_NO_OPTION);
     }
 
