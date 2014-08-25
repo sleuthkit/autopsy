@@ -34,7 +34,7 @@ public class IntervalUtils {
         Interval trange = null;
         for (DateTime t : times) {
             if (trange == null) {
-                trange = new Interval(t.getMillis(), t.getMillis() + 1000,DateTimeZone.UTC);
+                trange = new Interval(t.getMillis(), t.getMillis() + 1000, DateTimeZone.UTC);
             } else {
                 trange = extendInterval(trange, t.getMillis());
             }
@@ -43,24 +43,11 @@ public class IntervalUtils {
     }
 
     static public Interval span(Interval range, final Interval range2) {
-        return new Interval(Math.min(range.getStartMillis(), range2.getStartMillis()), Math.max(range.getEndMillis(), range2.getEndMillis()),DateTimeZone.UTC);
+        return new Interval(Math.min(range.getStartMillis(), range2.getStartMillis()), Math.max(range.getEndMillis(), range2.getEndMillis()), DateTimeZone.UTC);
     }
 
     static public Interval extendInterval(Interval range, final Long eventTime) {
-        return new Interval(Math.min(range.getStartMillis(), eventTime), Math.max(range.getEndMillis(), eventTime + 1),DateTimeZone.UTC);
-    }
-
-    /**
-     * @param timeRange
-     *
-     * @return
-     *
-     * @deprecated Moved to
-     * {@link org.sleuthkit.autopsy.timeline.visualization.RangeDivisionInfo#getRangeDivisionInfo}
-     */
-    @Deprecated
-    public static RangeDivisionInfo getRangeDivisionInfo(Interval timeRange) {
-        return RangeDivisionInfo.getRangeDivisionInfo(timeRange);
+        return new Interval(Math.min(range.getStartMillis(), eventTime), Math.max(range.getEndMillis(), eventTime + 1), DateTimeZone.UTC);
     }
 
     public static DateTime middleOf(Interval interval) {

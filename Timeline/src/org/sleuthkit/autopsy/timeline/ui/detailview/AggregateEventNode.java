@@ -43,7 +43,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.utils.ColorUtilities;
+import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
 public class AggregateEventNode extends StackPane {

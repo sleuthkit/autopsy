@@ -16,18 +16,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.utils;
+package org.sleuthkit.autopsy.coreutils;
 
+import java.util.Deque;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 
-/**
+/** A simple extension to SimpleListProperty to add a stack api
  *
- */
+ * TODO: this really should not extend SimpleListProperty but should delegate an
+ * appropriate observable implementation while implementing the {@link Deque}
+ * interface */
 public class ObservableStack<T> extends SimpleListProperty<T> {
 
     public ObservableStack() {
-        super(FXCollections.synchronizedObservableList(FXCollections.observableArrayList()));
+        super(FXCollections.<T>synchronizedObservableList(FXCollections.<T>observableArrayList()));
     }
 
     public void push(T item) {
@@ -55,5 +58,4 @@ public class ObservableStack<T> extends SimpleListProperty<T> {
             }
         }
     }
-
 }
