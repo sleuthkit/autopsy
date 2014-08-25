@@ -118,20 +118,8 @@
             </module-dependencies>
             <public-packages/>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.0.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.0.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jcip-annotations.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-pool2-2.0-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-pool2-2.0-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-pool2-2.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-pool2-2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.7.8-SNAPSHOT.jar</runtime-relative-path>
@@ -140,10 +128,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations-src.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jcip-annotations-src.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-pool2-2.0-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-pool2-2.0-javadoc.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

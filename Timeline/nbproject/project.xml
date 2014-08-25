@@ -113,10 +113,6 @@
                 <binary-origin>release/modules/ext/joda-time-2.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.0.6_20.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.0.6_20.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-common-8.0-r2-20140616.080113-115.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jfxtras-common-8.0-r2-20140616.080113-115.jar</binary-origin>
             </class-path-extension>
