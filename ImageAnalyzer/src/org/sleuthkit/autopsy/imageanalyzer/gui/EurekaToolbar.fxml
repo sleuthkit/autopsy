@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+  <items>
+    <Label text="Group By:">
+      <labelFor>
+        <ComboBox fx:id="groupByBox" editable="false" />
+      </labelFor>
+    </Label>
+    <fx:reference source="groupByBox" />
+    <Region prefHeight="-1.0" prefWidth="20.0" />
+    <Label text="Sort By:">
+      <labelFor>
+        <ComboBox fx:id="sortByBox" />
+      </labelFor>
+    </Label>
+    <HBox id="HBox" fx:id="sortControlGroup" alignment="CENTER" spacing="5.0">
+      <children>
+        <fx:reference source="sortByBox" />
+        <VBox alignment="CENTER_LEFT" prefHeight="-1.0" prefWidth="-1.0" spacing="2.0">
+          <children>
+            <RadioButton fx:id="ascRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="true" text="Ascending">
+              <graphic>
+                <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                    <Image url="@../images/arrow_up.png" />
+                  </image>
+                </ImageView>
+              </graphic>
+              <toggleGroup>
+                <ToggleGroup fx:id="orderGroup" />
+              </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="descRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="false" text="Descending" toggleGroup="$orderGroup">
+              <graphic>
+                <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                    <Image url="@../images/arrow_down.png" />
+                  </image>
+                </ImageView>
+              </graphic>
+            </RadioButton>
+          </children>
+        </VBox>
+      </children>
+    </HBox>
+    <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
+    <CheckBox fx:id="onlyAnalyzedCheckBox" allowIndeterminate="false" indeterminate="false" mnemonicParsing="false" prefWidth="16.0" selected="true" text="only analyzed groups" underline="false" visible="false" />
+    <Label contentDisplay="RIGHT" text="Apply to Selected Files:" textOverrun="ELLIPSIS" />
+    <SplitMenuButton id="tagSplitMenu" fx:id="tagSelectedMenuButton" disable="true" mnemonicParsing="false" text="Follow Up" textOverrun="ELLIPSIS">
+      <items>
+        <MenuItem mnemonicParsing="false" text="Action 1" />
+        <MenuItem mnemonicParsing="false" text="Action 2" />
+      </items>
+    </SplitMenuButton>
+    <SplitMenuButton id="catSplitMenu" fx:id="catSelectedMenuButton" disable="true" mnemonicParsing="false" text="Cat-0">
+      <items>
+        <MenuItem mnemonicParsing="false" text="Action 1" />
+        <MenuItem mnemonicParsing="false" text="Action 2" />
+      </items>
+    </SplitMenuButton>
+    <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
+    <Label text="Thumbnail Size (px):">
+      <labelFor>
+        <Slider fx:id="sizeSlider" blockIncrement="100.0" majorTickUnit="100.0" max="300.0" min="100.0" minorTickCount="0" orientation="HORIZONTAL" prefHeight="-1.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
+      </labelFor>
+    </Label>
+    <fx:reference source="sizeSlider" />
+  </items>
+</fx:root>

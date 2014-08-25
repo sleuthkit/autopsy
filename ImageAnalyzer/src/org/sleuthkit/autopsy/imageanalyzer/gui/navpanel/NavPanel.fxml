@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+
+    <fx:root fx:id="navTabPane" maxHeight="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" type="TabPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+      <tabs>
+        <Tab fx:id="navTab" text="Contents">
+          <content>
+            <AnchorPane prefHeight="-1.0" prefWidth="-1.0">
+              <children>
+                <TreeView fx:id="navTree" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" style="" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+              </children>
+            </AnchorPane>
+          </content>
+          <graphic>
+            <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+              <image>
+                <Image url="@../../images/folder-tree.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Tab>
+        <Tab fx:id="hashTab" text="Hash Hits">
+          <content>
+            <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
+              <children>
+                <BorderPane prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <center>
+                    <TreeView fx:id="hashTree" prefHeight="-1.0" prefWidth="-1.0" />
+                  </center>
+                  <top>
+                    <ToolBar>
+                      <items>
+                        <Label text="Sort By:" />
+                        <ComboBox fx:id="sortByBox">
+                          <items>
+                            <FXCollections fx:factory="observableArrayList">
+                              <String fx:value="Item 1" />
+                              <String fx:value="Item 2" />
+                              <String fx:value="Item 3" />
+                            </FXCollections>
+                          </items>
+                        </ComboBox>
+                      </items>
+                    </ToolBar>
+                  </top>
+                </BorderPane>
+              </children>
+            </AnchorPane>
+          </content>
+          <graphic>
+            <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+              <image>
+                <Image url="@../../images/hashset_hits.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Tab>
+      </tabs>
+    </fx:root>
