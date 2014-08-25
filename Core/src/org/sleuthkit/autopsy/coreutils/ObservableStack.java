@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imageanalyzer;
+package org.sleuthkit.autopsy.coreutils;
 
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
@@ -27,7 +27,7 @@ import javafx.collections.FXCollections;
 public class ObservableStack<T> extends SimpleListProperty<T> {
 
     public ObservableStack() {
-        super(FXCollections.synchronizedObservableList(FXCollections.observableArrayList()));
+        super(FXCollections.<T>synchronizedObservableList(FXCollections.<T>observableArrayList()));
     }
 
     public void push(T item) {

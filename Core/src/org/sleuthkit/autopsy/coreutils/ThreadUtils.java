@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imageanalyzer;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
@@ -45,11 +45,13 @@ public class ThreadUtils {
         final AtomicReference<E> ref = new AtomicReference<>();
         final AtomicReference<Exception> except = new AtomicReference<>();
         try {
-            SwingUtilities.invokeAndWait(() -> {
-                try {
-                    ref.set(r.call());
-                } catch (Exception e) {
-                    except.set(e);
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    try {
+                        ref.set(r.call());
+                    } catch (Exception e) {
+                        except.set(e);
+                    }
                 }
             });
         } catch (InterruptedException | InvocationTargetException ex) {

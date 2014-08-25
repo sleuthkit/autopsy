@@ -10,7 +10,7 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.imageanalyzer.ThreadConfined;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 

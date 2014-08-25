@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.IconCache;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.imageanalyzer.ThreadUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;

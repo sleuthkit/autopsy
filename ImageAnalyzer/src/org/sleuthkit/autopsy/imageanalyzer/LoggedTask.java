@@ -18,14 +18,14 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
-import org.sleuthkit.autopsy.imageanalyzer.progress.ProgressAdapter;
 import java.util.logging.Level;
 import javafx.concurrent.Task;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.progress.ProgressAdapter;
 
 /**
- *
+ * Simple Extension of Task that logs state changes
  */
 public abstract class LoggedTask<T> extends Task<T> implements Cancellable, ProgressAdapter {
 

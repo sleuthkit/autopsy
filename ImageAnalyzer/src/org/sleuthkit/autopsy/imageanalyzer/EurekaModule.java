@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
@@ -188,5 +189,4 @@ public class EurekaModule {
             EurekaTc.requestActive();
         }
     }
-
 }

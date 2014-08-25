@@ -1,4 +1,4 @@
-package org.sleuthkit.autopsy.imageanalyzer;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
