@@ -529,22 +529,14 @@ public class TimeLineController {
         return peek;
     }
 
-    @Deprecated
-    synchronized public void popZoomUpTo(ZoomParams zCrumb) {
-        ZoomParams popped = historyStack.peek();
+ 
 
-        while (popped.equals(zCrumb) == false) {
-            popped = historyStack.pop();
-        }
-        pushZoom(zCrumb);
-    }
-
-    synchronized private void pushZoom(ZoomParams zCrumb, boolean force) {
+    synchronized private void pushZoom(ZoomParams zCrumb) {
         final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
 
-        if (force || currentZoom.equals(zCrumb) == false) {
+        if ( currentZoom.equals(zCrumb) == false) {
             historyStack.push(currentZoom);
-            filteredEvents.requestZoomState(zCrumb, force);
+            filteredEvents.requestZoomState(zCrumb, false);
             if (zCrumb.equals(forwardStack.peek())) {
                 forwardStack.pop();
             } else {
@@ -553,9 +545,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized private void pushZoom(ZoomParams zCrumb) {
-        pushZoom(zCrumb, false);
-    }
+  
 
     public void selectTimeAndType(Interval interval, EventType type) {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
