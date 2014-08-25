@@ -118,16 +118,8 @@
             </module-dependencies>
             <public-packages/>
             <class-path-extension>
-                <runtime-relative-path>ext/jcip-annotations.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcip-annotations.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.7.8-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.7.8-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jcip-annotations-src.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcip-annotations-src.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

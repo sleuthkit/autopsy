@@ -58,7 +58,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.util.Callback;
 import javax.swing.SortOrder;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.ThreadUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 
 /**
  * This singleton acts as the controller for the Filters. It creates filters
