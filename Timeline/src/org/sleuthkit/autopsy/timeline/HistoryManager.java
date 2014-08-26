@@ -36,11 +36,11 @@ public class HistoryManager<T> {
 
     private final ReadOnlyObjectWrapper<T> currentState = new ReadOnlyObjectWrapper<>();
 
-    public ReadOnlyObjectWrapper<T> getCurrentState() {
+    public ReadOnlyObjectWrapper<T> currentState() {
         return currentState;
     }
 
-    public T currentState() {
+    public T getCurrentState() {
         return currentState.get();
     }
 
@@ -78,7 +78,7 @@ public class HistoryManager<T> {
         return peek;
     }
 
-    synchronized private void advance(T newState) {
+    synchronized public void advance(T newState) {
 
         if (currentState.equals(newState) == false) {
             historyStack.push(currentState.get());

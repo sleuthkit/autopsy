@@ -46,12 +46,12 @@ import org.openide.windows.WindowManager;
  */
 public class ProgressWindow extends JFrame {
 
-    private final SwingWorker<?,?> worker;
+    private final SwingWorker<?, ?> worker;
 
     /**
      * Creates new form TimelineProgressDialog
      */
-    public ProgressWindow(Component parent, boolean modal, SwingWorker<?,?> worker) {
+    public ProgressWindow(Component parent, boolean modal, SwingWorker<?, ?> worker) {
         super();
         initComponents();
 
@@ -60,18 +60,13 @@ public class ProgressWindow extends JFrame {
         setAlwaysOnTop(modal);
 
         //set icon the same as main app
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
-            }
+        SwingUtilities.invokeLater(() -> {
+            setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         });
 
-
         //progressBar.setIndeterminate(true);
-
-        setName("Advanced Timeline");
-        setTitle("Generating Advanced Timeline data");
+        setName("Timeline");
+        setTitle("Generating Timeline data");
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -89,66 +84,42 @@ public class ProgressWindow extends JFrame {
     }
 
     public void updateProgress(final int progress) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-                progressBar.setValue(progress);
-            }
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setValue(progress);
         });
     }
 
     public void updateProgress(final int progress, final String message) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-                progressBar.setValue(progress);
-                progressBar.setString(message);
-            }
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setValue(progress);
+            progressBar.setString(message);
         });
     }
 
     public void updateProgress(final String message) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-                progressBar.setString(message);
-            }
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setString(message);
         });
     }
 
     public void setProgressTotal(final int total) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressBar.setIndeterminate(false);
-                progressBar.setMaximum(total);
-                progressBar.setStringPainted(true);
-
-            }
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setIndeterminate(false);
+            progressBar.setMaximum(total);
+            progressBar.setStringPainted(true);
         });
     }
 
     public void updateHeaderMessage(final String headerMessage) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressHeader.setText(headerMessage);
-
-            }
+        SwingUtilities.invokeLater(() -> {
+            progressHeader.setText(headerMessage);
         });
     }
 
     public void setIndeterminate() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressBar.setIndeterminate(true);
-                progressBar.setStringPainted(true);
-
-            }
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setIndeterminate(true);
+            progressBar.setStringPainted(true);
         });
     }
 
@@ -206,17 +177,14 @@ public class ProgressWindow extends JFrame {
     }//GEN-LAST:event_closeDialog
 
     public void cancel() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (isVisible()) {
-                    int showConfirmDialog = JOptionPane.showConfirmDialog(ProgressWindow.this, "Do you want to cancel time line creation?", "Cancel timeline creation?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
-                        close();
-                    }
-                } else {
+        SwingUtilities.invokeLater(() -> {
+            if (isVisible()) {
+                int showConfirmDialog = JOptionPane.showConfirmDialog(ProgressWindow.this, "Do you want to cancel time line creation?", "Cancel timeline creation?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (showConfirmDialog == JOptionPane.YES_OPTION) {
                     close();
                 }
+            } else {
+                close();
             }
         });
     }
