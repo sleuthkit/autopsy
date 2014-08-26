@@ -546,6 +546,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             player.setOnPaused(NOT_PLAY_LISTENER);
             player.setOnStopped(NOT_PLAY_LISTENER);
             player.setOnPlaying(PLAY_LISTENER);
+            player.setOnEndOfMedia(END_LISTENER);
 
             player.currentTimeProperty().addListener(TIME_LISTENER);
 
