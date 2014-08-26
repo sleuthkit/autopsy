@@ -33,16 +33,15 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -89,6 +88,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         /*
          * Reads the artifacts of specified type, grouped by Set, and loads into the interestingItemsMap
          */
+        @SuppressWarnings("deprecation")
         private void loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE artType) {
             if (skCase == null) {
                 return;   

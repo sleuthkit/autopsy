@@ -22,7 +22,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -227,7 +226,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return name;
     }
-    
+    @SuppressWarnings("deprecation")
     private static String getHashSetHitsForFile(AbstractFile content) {
         ResultSet rs = null;
         String strList = "";
@@ -237,20 +236,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-            
-//            ArrayList<BlackboardArtifact> artList = content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
-//            for (BlackboardArtifact art : artList) {
-//                List<BlackboardAttribute> atrList = art.getAttributes();
-//                int i = 0;
-//                for (BlackboardAttribute att : atrList) {            
-//                    if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {                        
-//                        if (i++ > 0) {
-//                            strList += ", ";
-//                        }     
-//                        strList += att.getValueString();
-//                    }
-//                }
-//            }
             
             String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
                     + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
@@ -266,14 +251,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
                 strList += rs.getString("value_text"); //NON-NLS
             }
-        }
-        catch (SQLException ex) {
+        } catch (SQLException ex) {
             logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-        }
-//      catch (TskCoreException ex) {
-//          logger.log(Level.WARNING, "TskCore Exception occurred: ", ex);
-//      }                
-        finally {
+        } finally {
             if (rs != null) {
                 try {
                     skCase.closeRunQuery(rs);
