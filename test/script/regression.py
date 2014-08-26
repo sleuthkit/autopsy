@@ -158,9 +158,10 @@ class TestRunner(object):
             time.sleep(10)
         
         Reports.write_html_foot(test_config.html_log)
-        
-        if test_config.jenkins:
-            copyErrorFiles(Errors.errors_out, test_config)
+       
+        # This code was causing errors with paths, so its disabled 
+        #if test_config.jenkins:
+        #    copyErrorFiles(Errors.errors_out, test_config)
 
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
@@ -872,8 +873,8 @@ class TestResultsDiffer(object):
             unordered list in the html report files, or (0, 0) if the
             lenghts are the same.
         """
-        gold_file = open(gold_path)
-        output_file = open(output_path)
+        gold_file = open(gold_path, encoding='utf-8')
+        output_file = open(output_path, encoding='utf-8')
         goldHtml = gold_file.read()
         outputHtml = output_file.read()
         goldHtml = goldHtml[goldHtml.find("<ul>"):]
@@ -1931,6 +1932,11 @@ class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)
 
 if __name__ == "__main__":
+
+    if sys.hexversion < 0x03000000:
+        print("Python 3 required")
+        sys.exit(1)
+
     global SYS
     if _platform == "linux" or _platform == "linux2":
         SYS = OS.LINUX
