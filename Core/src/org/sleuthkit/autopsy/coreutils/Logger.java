@@ -22,7 +22,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.SimpleFormatter;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -135,13 +138,6 @@ public final class Logger extends java.util.logging.Logger {
         addHandler(userFriendlyLogFile);
     }
 
-    @Override
-    public void logrb(Level level, String sourceClass, String sourceMethod, String bundleName, String message, Throwable thrown) {
-        logUserFriendlyOnly(level, message, thrown);
-        removeHandler(userFriendlyLogFile);
-        super.logrb(level, sourceClass, sourceMethod, bundleName, message, thrown);
-        addHandler(userFriendlyLogFile);
-    }
 
     private void logUserFriendlyOnly(Level level, String message, Throwable thrown) {
         removeHandler(developersLogFile);
