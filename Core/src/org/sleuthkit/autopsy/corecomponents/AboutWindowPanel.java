@@ -25,6 +25,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -42,19 +44,27 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 /**
  * Custom "About" window panel.
  */
-public class AboutWindowPanel extends JPanel implements HyperlinkListener {
+public final class AboutWindowPanel extends JPanel implements HyperlinkListener {
+
+    private static final Logger Logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
 
     private URL url = null;
+
     private Icon about;
+
     private boolean verboseLogging;
 
     public AboutWindowPanel() {
-        about = new ImageIcon(org.netbeans.core.startup.Splash.loadContent(true));
+        try {
+            about = new ImageIcon(new URL("nbdocs:/org/netbeans/core/startup/splash.gif"));
+        } catch (MalformedURLException ex) {
+            Logger.log(Level.INFO, "failed to load aout window image", ex);
+        }
         initComponents();
         logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,
-                "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
-                    getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild(), Version.getBuildType().toString()}));
+                                                                 "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
+                                                                                                 getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild(), Version.getBuildType().toString()}));
         description.addHyperlinkListener(this);
         copyright.addHyperlinkListener(this);
         copyright.setBackground(getBackground());
@@ -63,6 +73,7 @@ public class AboutWindowPanel extends JPanel implements HyperlinkListener {
         }
 
     }
+
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -256,11 +267,11 @@ private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         return System.getProperty("file.encoding", //NON-NLS
                                   NbBundle.getMessage(AboutWindowPanel.class, "ProductInformationPanel.propertyUnknown.text"));
     }
-    
+
     public void setCopyright(String text) {
         copyright.setText(text);
     }
-    
+
     @Override
     public void hyperlinkUpdate(HyperlinkEvent event) {
         if (HyperlinkEvent.EventType.ENTERED == event.getEventType()) {
@@ -269,19 +280,20 @@ private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             url = null;
         }
     }
-    
+
     /**
      * Activate verbose logging for Sleuth Kit
      */
     public void startVerboseLogging() {
         verboseLogging = true;
         String logPath = PlatformUtil.getUserDirectory() + File.separator + "sleuthkit.txt"; //NON-NLS
-        
+
         SleuthkitJNI.startVerboseLogging(logPath);
     }
-    
+
     /**
      * Checks if verbose logging has been enabled.
+     *
      * @return true if verbose logging has been enabled.
      */
     public boolean verboseLoggingIsSet() {
