@@ -91,28 +91,26 @@ public class FilteredEventsModel {
 
     public FilteredEventsModel(EventsRepository repo, ObjectProperty<ZoomParams> currentStateProperty) {
         this.repo = repo;
-        requestedZoomParamters.bind(currentStateProperty);
-//        currentStateProperty.set(new ZoomParams(new Interval(repo.getMinTime(), repo.getMaxTime(), DateTimeZone.UTC), EventTypeZoomLevel.BASE_TYPE,
-//                                                Filter.getDefaultFilter(),
-//                                                DescriptionLOD.SHORT,
-//                                                EnumSet.noneOf(ZoomParams.Field.class)));
-
         requestedZoomParamters.addListener((Observable observable) -> {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
-            if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-                    || zoomParams.getDescrLOD().equals(requestedLOD.get()) == false
-                    || zoomParams.getFilter().equals(requestedFilter.get()) == false
-                    || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
+            if (zoomParams != null) {
+                if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
+                        || zoomParams.getDescrLOD().equals(requestedLOD.get()) == false
+                        || zoomParams.getFilter().equals(requestedFilter.get()) == false
+                        || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
 
 //                requestedZoomParamters.set(zoomParams);
-                requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                requestedFilter.set(zoomParams.getFilter().copyOf());
-                requestedTimeRange.set(zoomParams.getTimeRange());
-                requestedLOD.set(zoomParams.getDescrLOD());
+                    requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
+                    requestedFilter.set(zoomParams.getFilter().copyOf());
+                    requestedTimeRange.set(zoomParams.getTimeRange());
+                    requestedLOD.set(zoomParams.getDescrLOD());
+                }
             }
         });
-        this.requestedTimeRange.set(getSpanningInterval());
+
+        requestedZoomParamters.bind(currentStateProperty);
+//        this.requestedTimeRange.set(getSpanningInterval());
     }
 
     public Interval getBoundingEventsInterval() {

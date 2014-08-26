@@ -66,13 +66,12 @@ public class HistoryManager<T> {
 
     synchronized public T retreat() {
 
-        final T peek = historyStack.peek();
+        final T peek = historyStack.pop();
 
         if (peek != null && peek.equals(currentState.get()) == false) {
             forwardStack.push(currentState.get());
             currentState.set(peek);
-        } else if (peek != null && peek.equals(currentState)) {
-            historyStack.pop();
+        } else if (peek != null && peek.equals(currentState.get())) {
             return retreat();
         }
         return peek;

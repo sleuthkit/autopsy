@@ -155,4 +155,9 @@ public class ZoomParams {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "zoom state: " + getTimeRange().toString();
+    }
+
 }
