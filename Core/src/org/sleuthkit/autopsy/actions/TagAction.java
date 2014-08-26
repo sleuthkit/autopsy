@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
      * Derived classes should call this method any time a tag is created, updated
      * or deleted outside of an actionPerformed() call.
      */
+     @SuppressWarnings("deprecation")
     protected void refreshDirectoryTree() {
         
         /* Note: this is a hack.  In an ideal world, TagsManager would fire events so 

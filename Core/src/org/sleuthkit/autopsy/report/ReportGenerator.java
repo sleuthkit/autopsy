@@ -36,18 +36,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -540,6 +539,7 @@ import org.sleuthkit.datamodel.TskData;
         /**
          * Make table for tagged files
          */
+        @SuppressWarnings("deprecation")
         private void makeContentTagsTables() {
             // Check for cancellaton.
             removeCancelledTableReportModules();
@@ -638,6 +638,7 @@ import org.sleuthkit.datamodel.TskData;
         /**
          * Generate the tables for the tagged artifacts
          */
+        @SuppressWarnings("deprecation")
         private void makeBlackboardArtifactTagsTables() {
             // Check for cancellaton.
             removeCancelledTableReportModules();
@@ -1686,7 +1687,8 @@ import org.sleuthkit.datamodel.TskData;
      * @param artifactId
      * @return hash set of tag display names
      * @throws SQLException 
-     */    
+     */
+     @SuppressWarnings("deprecation")
     private HashSet<String> getUniqueTagNames(long artifactId) throws SQLException {
         HashSet<String> uniqueTagNames = new HashSet<>();
         ResultSet tagNameRows = skCase.runQuery("SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
@@ -1694,6 +1696,7 @@ import org.sleuthkit.datamodel.TskData;
         while (tagNameRows.next()) {
             uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
         }
+        skCase.closeRunQuery(tagNameRows);
         return uniqueTagNames;
     }    
     
