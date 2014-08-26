@@ -29,7 +29,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Searches for FsContent Files with the same MD5 hash as the given Node's
@@ -37,7 +36,7 @@ import org.sleuthkit.datamodel.FsContent;
  * specific Content attached; it is manually programmed into a Node's available
  * actions.
  */
-class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
+public class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
     private AbstractFile file;
