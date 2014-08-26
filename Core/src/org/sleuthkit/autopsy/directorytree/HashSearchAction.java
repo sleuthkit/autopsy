@@ -19,27 +19,34 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
+import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbSearchAction;
 
 /**
  * Action to lookup the interface and call the real action in HashDatabase.
- * The real action, HashDbSearchAction, implements HashSearchProvider, and should
- * be the only instance of it.
+ * The real action, HashDbSearchAction, implements HashSearchProvider, and
+ * should be the only instance of it.
+ *
+ * //TODO: HashDBSearchAction needs a public constructor and a service
+ * registration annotation for the lookup technique to work
  */
+@Immutable
 public class HashSearchAction extends AbstractAction {
-    Node contentNode;
-    
+
+    private final Node contentNode;
+
     public HashSearchAction(String title, Node contentNode) {
         super(title);
         this.contentNode = contentNode;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        HashSearchProvider searcher = Lookup.getDefault().lookup(HashSearchProvider.class);
+        //HashSearchProvider searcher = Lookup.getDefault().lookup(HashSearchProvider.class);
+        //TODO: HashDBSearchAction needs a public constructor and a service registration annotation for the above technique to work
+        HashDbSearchAction searcher = HashDbSearchAction.getDefault();
         searcher.search(contentNode);
     }
-    
 }
