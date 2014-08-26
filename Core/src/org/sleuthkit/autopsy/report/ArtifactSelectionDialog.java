@@ -67,8 +67,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         try {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
+          
 
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
             artifacts.removeAll(doNotReport);
@@ -98,11 +97,10 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         artifactList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-                JList list = (JList) evt.getSource();
-                int index = list.locationToIndex(evt.getPoint());
+                int index = artifactList.locationToIndex(evt.getPoint());
                 BlackboardArtifact.ARTIFACT_TYPE type = model.getElementAt(index);
                 artifactStates.put(type, !artifactStates.get(type));
-                list.repaint();
+                artifactList.repaint();
             }
         });
     }

@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -171,7 +170,7 @@ public class PerformancePanel extends javax.swing.JDialog {
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
         // TODO add your handling code here:
         startButton.setEnabled(false);
-        SwingWorker worker = new PerformanceTestWorker();
+        SwingWorker<?,?> worker = new PerformanceTestWorker();
         worker.execute();
         
     }//GEN-LAST:event_startButtonActionPerformed
@@ -191,14 +190,14 @@ public class PerformancePanel extends javax.swing.JDialog {
     private javax.swing.JLabel statusLabel;
     // End of variables declaration//GEN-END:variables
 
-    class PerformanceTestWorker extends SwingWorker {
+    class PerformanceTestWorker extends SwingWorker<Void, Void> {
         private long cpuStats;
         private long imgReadStats;
         private long dbStats;
         private long fileReadStats;
         
         @Override
-        protected Object doInBackground() throws Exception {
+        protected Void doInBackground() throws Exception {
             setCpuLabel("");
             setImgLabel("");
             setDbLabel("");

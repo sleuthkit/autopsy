@@ -63,7 +63,7 @@ public final class JythonModuleLoader {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
 
-    private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class interfaceClass) {
+    private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
         List<T> objects = new ArrayList<>();
         File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
         File[] files = pythonModulesDir.listFiles();
@@ -78,7 +78,7 @@ public final class JythonModuleLoader {
                             if (line.startsWith("class ") && filter.accept(line)) {
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    objects.add((T) createObjectFromScript(script, className, interfaceClass));
+                                    objects.add( createObjectFromScript(script, className, interfaceClass));
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
@@ -99,7 +99,7 @@ public final class JythonModuleLoader {
         return objects;
     }
         
-    private static Object createObjectFromScript(File script, String className, Class interfaceClass) {
+    private static <T> T createObjectFromScript(File script, String className, Class<T> interfaceClass) {
         // Make a "fresh" interpreter every time to avoid name collisions, etc.
         PythonInterpreter interpreter = new PythonInterpreter();
 
@@ -113,7 +113,7 @@ public final class JythonModuleLoader {
         // Execute the script and create an instance of the desired class.
         interpreter.execfile(script.getAbsolutePath());
         interpreter.exec("obj = " + className + "()");
-        Object obj = interpreter.get("obj", interfaceClass);
+        T obj = interpreter.get("obj", interfaceClass);
 
         // Remove the directory where the Python script resides from the Python
         // module search path.

@@ -36,7 +36,6 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -95,11 +94,11 @@ final class ReportVisualPanel2 extends JPanel {
         tagsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-                JList list = (JList) evt.getSource();
-                int index = list.locationToIndex(evt.getPoint());
+              
+                int index = tagsList.locationToIndex(evt.getPoint());
                 String value = tagsModel.getElementAt(index);
                 tagStates.put(value, !tagStates.get(value));
-                list.repaint();
+                tagsList.repaint();
                 updateFinishButton();
             }
         });
@@ -111,8 +110,7 @@ final class ReportVisualPanel2 extends JPanel {
         try {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
+          
 
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
 

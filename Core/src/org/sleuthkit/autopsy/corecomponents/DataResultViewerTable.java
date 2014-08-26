@@ -28,10 +28,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -48,6 +44,7 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
@@ -60,7 +57,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
-    private Set<Property> propertiesAcc = new LinkedHashSet<>();
+    private Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
 
@@ -152,7 +149,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param parent Node with at least one child to get properties from
      * @return Properties,
      */
-    private Node.Property[] getChildPropertyHeaders(Node parent) {
+    private Node.Property<?>[] getChildPropertyHeaders(Node parent) {
         Node firstChild = parent.getChildren().getNodeAt(0);
 
         if (firstChild == null) {
@@ -227,7 +224,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 break;
             }
             for (PropertySet ps : child.getPropertySets()) {
-                final Property[] props = ps.getProperties();
+                final Property<?>[] props = ps.getProperties();
                 final int propsNum = props.length;
                 for (int j = 0; j < propsNum; ++j) {
                     propertiesAcc.add(props[j]);
@@ -309,9 +306,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         propertiesAcc.clear();
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property> props = new ArrayList<>(propertiesAcc);
+        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         if (props.size() > 0) {
-            Node.Property prop = props.remove(0);
+            Node.Property<?> prop = props.remove(0);
             ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
 
@@ -409,7 +406,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
             PropertySet[] propertySets = child.getPropertySets();
             if (propertySets.length > 0) {
-                Property[] properties = propertySets[0].getProperties();
+                Property<?>[] properties = propertySets[0].getProperties();
                 rowValues[rowCount] = new Object[properties.length];
                 for (int j = 0; j < properties.length; ++j) {
                     try {
@@ -446,7 +443,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @return max the maximum width of the column
      */
     @SuppressWarnings("rawtypes")
-    private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, List<Node.Property> header, Object[][] table) {
+    private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, List<Node.Property<?>> header, Object[][] table) {
         // set the tree (the node / names column) width
         String headerName = header.get(index - 1).getDisplayName();
 
