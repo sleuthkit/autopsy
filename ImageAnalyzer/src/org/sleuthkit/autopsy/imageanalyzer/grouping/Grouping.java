@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.grouping;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -72,7 +72,7 @@ public class Grouping {
             filesWithHashSetHitsCount = 0;
             for (Long fileID : fileIds()) {
                 try {
-                    long artcount = EurekaController.getDefault().getSleuthKitCase().getBlackboardArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+                    long artcount = ImageAnalyzerController.getDefault().getSleuthKitCase().getBlackboardArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
                     if (artcount > 0) {
                         filesWithHashSetHitsCount++;
                     }

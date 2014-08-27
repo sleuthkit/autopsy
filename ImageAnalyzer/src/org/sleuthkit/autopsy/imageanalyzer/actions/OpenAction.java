@@ -31,7 +31,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
 
 @ActionID(category = "Tools",
@@ -89,7 +89,7 @@ public final class OpenAction extends CallableSystemAction {
 
             switch (answer) {
                 case JOptionPane.YES_OPTION:
-                    EurekaController.getDefault().setListeningEnabled(true);
+                    ImageAnalyzerController.getDefault().setListeningEnabled(true);
                 //fall through
                 case JOptionPane.NO_OPTION:
                     EurekaModule.openTopComponent();

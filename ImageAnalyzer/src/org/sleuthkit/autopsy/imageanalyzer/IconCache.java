@@ -84,7 +84,7 @@ public class IconCache {
 
     public Image get(Long fileID) {
         try {
-            return get(EurekaController.getDefault().getFileFromId(fileID));
+            return get(ImageAnalyzerController.getDefault().getFileFromId(fileID));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             return null;

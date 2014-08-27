@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline;
+package org.sleuthkit.autopsy.coreutils;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -38,51 +38,51 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class HistoryManager<T> {
-    
+
     @GuardedBy("this")
     private final ObservableStack<T> historyStack = new ObservableStack<>();
-    
+
     @GuardedBy("this")
     private final ObservableStack<T> forwardStack = new ObservableStack<>();
-    
+
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<T> currentState = new ReadOnlyObjectWrapper<>();
-    
+
     @GuardedBy("this")
     private final ReadOnlyBooleanWrapper canAdvance = new ReadOnlyBooleanWrapper();
-    
+
     @GuardedBy("this")
     private final ReadOnlyBooleanWrapper canRetreat = new ReadOnlyBooleanWrapper();
-    
+
     synchronized public T getCurrentState() {
         return currentState.get();
     }
-    
+
     synchronized public boolean canAdvance() {
         return canAdvance.get();
     }
-    
+
     synchronized public boolean canRetreat() {
         return canRetreat.get();
     }
-    
+
     synchronized public ReadOnlyObjectProperty<T> currentState() {
         return currentState.getReadOnlyProperty();
     }
-    
+
     synchronized public ReadOnlyBooleanProperty getCanAdvance() {
         return canAdvance.getReadOnlyProperty();
     }
-    
+
     synchronized public ReadOnlyBooleanProperty getCanRetreat() {
         return canRetreat.getReadOnlyProperty();
     }
-    
+
     public HistoryManager(T initialState) {
         this();
         currentState.set(initialState);
     }
-    
+
     public HistoryManager() {
         canAdvance.bind(forwardStack.emptyProperty().not());
         canRetreat.bind(historyStack.emptyProperty().not());
@@ -96,7 +96,7 @@ public class HistoryManager<T> {
      */
     synchronized public T advance() {
         final T peek = forwardStack.peek();
-        
+
         if (peek != null && peek.equals(currentState.get()) == false) {
             historyStack.push(currentState.get());
             currentState.set(peek);
@@ -113,7 +113,7 @@ public class HistoryManager<T> {
      */
     synchronized public T retreat() {
         final T peek = historyStack.pop();
-        
+
         if (peek != null && peek.equals(currentState.get()) == false) {
             forwardStack.push(currentState.get());
             currentState.set(peek);
@@ -147,11 +147,9 @@ public class HistoryManager<T> {
             }
         }
     }
-    
+
     public void clear() {
-        historyStack.clear();
-        forwardStack.clear();
-        currentState.set(null);
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
@@ -162,17 +160,17 @@ public class HistoryManager<T> {
      * the {@link Deque} interface
      */
     private static class ObservableStack<T> extends SimpleListProperty<T> {
-        
+
         public ObservableStack() {
             super(FXCollections.<T>synchronizedObservableList(FXCollections.<T>observableArrayList()));
         }
-        
+
         public void push(T item) {
             synchronized (this) {
                 add(0, item);
             }
         }
-        
+
         public T pop() {
             synchronized (this) {
                 if (isEmpty()) {
@@ -182,7 +180,7 @@ public class HistoryManager<T> {
                 }
             }
         }
-        
+
         public T peek() {
             synchronized (this) {
                 if (isEmpty()) {

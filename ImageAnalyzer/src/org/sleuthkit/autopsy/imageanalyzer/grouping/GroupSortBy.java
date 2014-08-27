@@ -27,7 +27,7 @@ import javax.swing.SortOrder;
 import static javax.swing.SortOrder.ASCENDING;
 import static javax.swing.SortOrder.DESCENDING;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.TAGS;
 import org.sleuthkit.datamodel.TagName;
@@ -49,8 +49,8 @@ public enum GroupSortBy implements ComparatorProvider {
                 @Override
                 public <A extends Comparable> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
                     return (A v1, A v2) -> {
-                        Grouping g1 = EurekaController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
-                        Grouping g2 = EurekaController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
+                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
+                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
                         return getGrpComparator(attr, sortOrder).compare(g1, g2);
                     };
                 }
@@ -132,8 +132,8 @@ public enum GroupSortBy implements ComparatorProvider {
         @Override
         public <A extends Comparable> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
             return (A v1, A v2) -> {
-                Grouping g1 = EurekaController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
-                Grouping g2 = EurekaController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
+                Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
+                Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
 
                         return getGrpComparator(attr, sortOrder).compare(g1, g2);
                     };

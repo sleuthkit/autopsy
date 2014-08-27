@@ -33,7 +33,7 @@ public class AutopsyListener {
 
     private static final Logger LOGGER = Logger.getLogger(AutopsyListener.class.getName());
 
-    private final EurekaController controller = EurekaController.getDefault();
+    private final ImageAnalyzerController controller = ImageAnalyzerController.getDefault();
 
     private final PropertyChangeListener ingestJobEventListener = new IngestJobEventListener();
 

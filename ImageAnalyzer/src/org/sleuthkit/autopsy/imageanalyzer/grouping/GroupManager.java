@@ -41,7 +41,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
 import org.sleuthkit.autopsy.imageanalyzer.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -69,7 +69,7 @@ public class GroupManager {
 
     private DrawableDB db;
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
     /** map from {@link GroupKey}s to {@link  Grouping}s. All groups (even not
      * fully analyzed or not visible groups could be in this map */
@@ -116,7 +116,7 @@ public class GroupManager {
      * @param db
      * @param controller
      */
-    public GroupManager(EurekaController controller) {
+    public GroupManager(ImageAnalyzerController controller) {
         this.controller = controller;
     }
 
@@ -340,7 +340,7 @@ public class GroupManager {
         List<Long> files = new ArrayList<>();
         try {
 
-            final SleuthkitCase sleuthkitCase = EurekaController.getDefault().getSleuthKitCase();
+            final SleuthkitCase sleuthkitCase = ImageAnalyzerController.getDefault().getSleuthKitCase();
             String query = "SELECT obj_id FROM blackboard_attributes,blackboard_artifacts WHERE "
                     + "attribute_type_id=" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"

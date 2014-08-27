@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
@@ -53,11 +53,11 @@ public class CategorizeAction extends AddTagAction {
 
     private static final Logger LOGGER = Logger.getLogger(CategorizeAction.class.getName());
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
     public CategorizeAction() {
         super();
-        this.controller = EurekaController.getDefault();
+        this.controller = ImageAnalyzerController.getDefault();
     }
 
     static public Menu getPopupMenu() {

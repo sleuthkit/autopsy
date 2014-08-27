@@ -24,7 +24,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import org.controlsfx.control.action.AbstractAction;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 
 /**
  *
@@ -33,18 +33,18 @@ public class Forward extends AbstractAction {
 
     private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/arrow.png", 16, 16, true, true, true);
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
-    public Forward(EurekaController controller) {
+    public Forward(ImageAnalyzerController controller) {
         super("Forward");
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;
-        disabledProperty().bind(controller.getForwardStack().sizeProperty().isEqualTo(0));
+        disabledProperty().bind(controller.getCanAdvance().not());
     }
 
     @Override
     public void handle(ActionEvent ae) {
-        controller.goForward();
+        controller.advance();
     }
 }

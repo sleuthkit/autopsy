@@ -62,7 +62,7 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
 
     private final Lookup lookup;
 
-    private final EurekaController controller = EurekaController.getDefault();
+    private final ImageAnalyzerController controller = ImageAnalyzerController.getDefault();
 
     private SplitPane splitPane;
 
@@ -112,7 +112,7 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
             splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
             splitPane.setDividerPositions(0.0, 1.0);
 
-            EurekaController.getDefault().setStacks(fullUIStack, centralStack);
+            ImageAnalyzerController.getDefault().setStacks(fullUIStack, centralStack);
         });
     }
 

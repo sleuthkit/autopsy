@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.filtering;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.FilterSet;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AtomicFilter;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AttributeFilter;
@@ -342,7 +342,7 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
                             //default is make one == filter per attribute value in db
                             final AttributeFilter attributeFilter = getFilterForAttr(attr);
                             //TODO: FILE_COUNT is arbitrarty but maybe better than NONE, we can include file counts in labels in future
-                            List<? extends Object> vals = EurekaController.getDefault().getGroupManager().findValuesForAttribute(attr, GroupSortBy.FILE_COUNT, SortOrder.DESCENDING);
+                            List<? extends Object> vals = ImageAnalyzerController.getDefault().getGroupManager().findValuesForAttribute(attr, GroupSortBy.FILE_COUNT, SortOrder.DESCENDING);
                             addFilterForAttrValues(vals, attributeFilter, comparison);
                     }
                 }

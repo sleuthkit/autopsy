@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
@@ -82,7 +82,7 @@ public class AddDrawableTagAction extends AddTagAction {
             protected Void doInBackground() throws Exception {
                 for (Long fileID : selectedFiles) {
                     try {
-                        DrawableFile file = EurekaController.getDefault().getFileFromId(fileID);
+                        DrawableFile file = ImageAnalyzerController.getDefault().getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment});
                         Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
                     } catch (IllegalStateException ex) {
@@ -93,7 +93,7 @@ public class AddDrawableTagAction extends AddTagAction {
                     }
 
                     //make sure rest of ui  hears category change.
-                    EurekaController.getDefault().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+                    ImageAnalyzerController.getDefault().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
 
                    
                 }

@@ -42,7 +42,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
 import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.IconCache;
@@ -108,7 +108,7 @@ public class EurekaToolbar extends ToolBar {
             orderProperty.set(SortOrder.DESCENDING);
         }
 
-        EurekaController.getDefault().getGroupManager().regroup(groupByBox.getSelectionModel().getSelectedItem(), sortByBox.getSelectionModel().getSelectedItem(), getSortOrder(), false);
+        ImageAnalyzerController.getDefault().getGroupManager().regroup(groupByBox.getSelectionModel().getSelectedItem(), sortByBox.getSelectionModel().getSelectedItem(), getSortOrder(), false);
     };
 
     synchronized public SortOrder getSortOrder() {
@@ -186,7 +186,7 @@ public class EurekaToolbar extends ToolBar {
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
         groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
-        groupByBox.disableProperty().bind(EurekaController.getDefault().regroupDisabled());
+        groupByBox.disableProperty().bind(ImageAnalyzerController.getDefault().regroupDisabled());
         groupByBox.setCellFactory((listView) -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
 

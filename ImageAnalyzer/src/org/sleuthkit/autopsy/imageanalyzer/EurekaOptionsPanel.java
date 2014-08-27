@@ -94,7 +94,7 @@ final class EurekaOptionsPanel extends javax.swing.JPanel {
     /** {@inheritDoc } */
     void store() {
         EurekaPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
-        EurekaController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
+        ImageAnalyzerController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
         if (Case.isCaseOpen()) {
             new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(EurekaModule.MODULE_NAME, PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         }

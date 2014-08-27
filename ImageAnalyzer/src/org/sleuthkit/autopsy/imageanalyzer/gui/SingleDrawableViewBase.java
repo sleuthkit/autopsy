@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.EurekaTopComponent;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
@@ -272,7 +272,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                             SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
                         }
                     }
-                    EurekaController.getDefault().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+                    ImageAnalyzerController.getDefault().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }
@@ -285,7 +285,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         if (fileID != null) {
             if (file == null || file.getId() != fileID) {
                 try {
-                    file = EurekaController.getDefault().getFileFromId(fileID);
+                    file = ImageAnalyzerController.getDefault().getFileFromId(fileID);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileID, ex);
                     return null;

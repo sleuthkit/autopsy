@@ -94,7 +94,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.EurekaTopComponent;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
@@ -186,7 +186,7 @@ public class GroupPane extends BorderPane implements GroupView {
 
     private final NextUnseenGroup nextGroupAction;
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
     private ContextMenu contextMenu;
 
@@ -205,7 +205,7 @@ public class GroupPane extends BorderPane implements GroupView {
     @ThreadConfined(type = ThreadType.UI)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
 
-    public GroupPane(EurekaController controller) {
+    public GroupPane(ImageAnalyzerController controller) {
         this.controller = controller;
         nextGroupAction = new NextUnseenGroup(controller);
         backAction = new Back(controller);

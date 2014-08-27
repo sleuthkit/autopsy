@@ -28,14 +28,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 
 /**
  *
  */
 public class StatusBar extends AnchorPane {
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
     @FXML
     private ResourceBundle resources;
@@ -89,7 +89,7 @@ public class StatusBar extends AnchorPane {
         staleLabel.visibleProperty().bind(controller.stale());
     }
 
-    public StatusBar(EurekaController controller) {
+    public StatusBar(ImageAnalyzerController controller) {
         this.controller = controller;
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml"));
         fxmlLoader.setRoot(this);

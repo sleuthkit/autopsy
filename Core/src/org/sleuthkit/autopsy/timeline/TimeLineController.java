@@ -169,7 +169,6 @@ public class TimeLineController  {
     @GuardedBy("this")
     private final ZoomParams InitialZoomState;
 
-    /** list based stack to hold history, 'top' is at index 0; */
     @GuardedBy("this")
     private final HistoryManager<ZoomParams> historyManager = new HistoryManager<>();
 

@@ -24,7 +24,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import org.controlsfx.control.action.AbstractAction;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 
 /**
  *
@@ -33,18 +33,18 @@ public class Back extends AbstractAction {
 
     private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/arrow-180.png", 16, 16, true, true, true);
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
-    public Back(EurekaController controller) {
+    public Back(ImageAnalyzerController controller) {
         super("Back");
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;
-        disabledProperty().bind(controller.getHistoryStack().sizeProperty().isEqualTo(0));
+        disabledProperty().bind(controller.getCanRetreat().not());
     }
 
     @Override
     public void handle(ActionEvent ae) {
-        controller.goBack();
+        controller.retreat();
     }
 }

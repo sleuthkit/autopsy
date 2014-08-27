@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
@@ -30,9 +30,9 @@ import org.controlsfx.control.action.AbstractAction;
  */
 public class NextUnseenGroup extends AbstractAction {
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
-    public NextUnseenGroup(EurekaController controller) {
+    public NextUnseenGroup(ImageAnalyzerController controller) {
         super("Next Unseen group");
         this.controller = controller;
         setGraphic(new ImageView("/org/sleuthkit/autopsy/imageanalyzer/images/control-double.png"));
@@ -48,7 +48,7 @@ public class NextUnseenGroup extends AbstractAction {
             controller.getGroupManager().markGroupSeen(controller.viewState().get().getGroup());
         }
         if (controller.getGroupManager().getUnSeenGroups().size() > 0) {
-            controller.pushGroup(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)), false);
+            controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
         }
     }
 }

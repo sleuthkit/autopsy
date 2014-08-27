@@ -1,0 +1,49 @@
+app.icon=branding/core/core.jar/org/netbeans/core/startup/frame48.gif
+### Title of the application
+app.title=Autopsy
+### lowercase version of above
+app.name=${branding.token}
+### if left unset, version will default to today's date
+app.version=3.1.0
+### Build type isn't used at this point, but it may be useful
+### Must be one of: DEVELOPMENT, RELEASE
+#build.type=RELEASE
+build.type=DEVELOPMENT
+<<<<<<< HEAD
+project.org.sleuthkit.autopsy.imageanalyzer=ImageAnalyzer
+project.org.sleuthkit.autopsy.advancedtimeline=Timeline
+=======
+>>>>>>> advanced_timeline
+update_versions=false
+#custom JVM options
+#Note: can be higher on 64 bit systems, should be in sync with build.xml
+# for Japanese version add:  -J-Duser.language=ja
+run.args.extra=-J-Xms24m -J-XX:MaxPermSize=128M -J-Xverify:none
+auxiliary.org-netbeans-modules-apisupport-installer.license-type=apache.v2
+auxiliary.org-netbeans-modules-apisupport-installer.os-linux=false
+auxiliary.org-netbeans-modules-apisupport-installer.os-macosx=false
+auxiliary.org-netbeans-modules-apisupport-installer.os-solaris=false
+auxiliary.org-netbeans-modules-apisupport-installer.os-windows=true
+auxiliary.org-netbeans-modules-apisupport-installer.pack200-enabled=false
+modules=\
+    ${project.org.sleuthkit.autopsy.keywordsearch}:\
+    ${project.org.sleuthkit.autopsy.recentactivity}:\
+    ${project.org.sleuthkit.autopsy.testing}:\
+    ${project.org.sleuthkit.autopsy.thunderbirdparser}:\
+    ${project.org.sleuthkit.autopsy.core}:\
+    ${project.org.sleuthkit.autopsy.corelibs}:\
+<<<<<<< HEAD
+    ${project.org.sleuthkit.autopsy.scalpel}:\
+    ${project.org.sleuthkit.autopsy.imageanalyzer}:\
+    ${project.org.sleuthkit.autopsy.advancedtimeline}
+=======
+    ${project.org.sleuthkit.autopsy.scalpel}:
+>>>>>>> advanced_timeline
+project.org.sleuthkit.autopsy.core=Core
+project.org.sleuthkit.autopsy.corelibs=CoreLibs
+project.org.sleuthkit.autopsy.keywordsearch=KeywordSearch
+project.org.sleuthkit.autopsy.recentactivity=RecentActivity
+project.org.sleuthkit.autopsy.testing=Testing
+project.org.sleuthkit.autopsy.thunderbirdparser=thunderbirdparser
+project.org.sleuthkit.autopsy.scalpel=ScalpelCarver
+

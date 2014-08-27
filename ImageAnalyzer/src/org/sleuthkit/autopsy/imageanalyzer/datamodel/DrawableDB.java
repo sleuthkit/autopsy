@@ -41,7 +41,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
 import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.CATEGORY;
@@ -118,7 +118,7 @@ public class DrawableDB {
 
     private GroupManager manager;
 
-    private EurekaController controller;
+    private ImageAnalyzerController controller;
 
     private final String dbPath;
 
@@ -258,7 +258,7 @@ public class DrawableDB {
      *
      * @return
      */
-    public static DrawableDB getDrawableDB(String dbPath, EurekaController controller) {
+    public static DrawableDB getDrawableDB(String dbPath, ImageAnalyzerController controller) {
 
         try {
             DrawableDB drawableDB = new DrawableDB(dbPath + File.separator + "drawable.db");

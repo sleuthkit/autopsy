@@ -64,7 +64,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ObservableStack;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
@@ -78,6 +77,8 @@ import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imageanalyzer.progress.ProgressAdapterBase;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.timeline.HistoryManager;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -86,96 +87,79 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Acts as the controller in GroupManager - GroupListPane - EurekaController MVC
- * Trio
+ * Acts as the controller in GroupManager - GroupListPane -
+ * ImageAnalyzerController MVC Trio
  *
  * Connects different parts of Eureka together and is hub for flow of control.
  */
-public class EurekaController implements FileUpdateListener {
-
-    private static final Logger LOGGER = Logger.getLogger(EurekaController.class.getName());
-
+public class ImageAnalyzerController implements FileUpdateListener {
+    
+    private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerController.class.getName());
+    
     private final Region infoOverLayBackground = new Region() {
         {
             setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
             setOpacity(.4);
         }
     };
-
-    private static EurekaController instance;
-
-    public static synchronized EurekaController getDefault() {
+    
+    private static ImageAnalyzerController instance;
+    
+    public static synchronized ImageAnalyzerController getDefault() {
         if (instance == null) {
-            instance = new EurekaController();
+            instance = new ImageAnalyzerController();
         }
         return instance;
     }
-
-    /** list based stack to hold history, 'top' is at index 0; */
-    @javax.annotation.concurrent.GuardedBy("this")
-    private final ObservableStack<GroupViewState> historyStack = new ObservableStack<>();
-
-    @javax.annotation.concurrent.GuardedBy("this")
-    private final ObservableStack<GroupViewState> forwardStack = new ObservableStack<>();
-
+    
+    @GuardedBy("this")
+    private final HistoryManager<GroupViewState> historyManager = new HistoryManager<>();
+    
     private final ReadOnlyBooleanWrapper listeningEnabled = new ReadOnlyBooleanWrapper(false);
-
+    
     private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
-
+    
     private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
-
+    
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
-
+    
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
-
+    
     private final FileIDSelectionModel selectionModel = FileIDSelectionModel.getInstance();
-
+    
     private DBWorkerThread dbWorkerThread;
-
+    
     private DrawableDB db;
-
+    
     private final GroupManager groupManager = new GroupManager(this);
-
+    
     private StackPane fullUIStackPane;
-
+    
     private StackPane centralStackPane;
-
+    
     private Node infoOverlay;
-
-    synchronized public ObservableStack<GroupViewState> getHistoryStack() {
-        return historyStack;
-    }
-
-    synchronized public ObservableStack<GroupViewState> getForwardStack() {
-        return forwardStack;
-    }
-
+    
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
     }
-
+    
     public void setMetaDataCollapsed(Boolean metaDataCollapsed) {
         this.metaDataCollapsed.set(metaDataCollapsed);
     }
-
+    
     private GroupViewState getViewState() {
-        return viewState.get();
+        return historyManager.getCurrentState();
     }
-
+    
     public ReadOnlyBooleanProperty regroupDisabled() {
         return regroupDisabled.getReadOnlyProperty();
     }
-
-    private final ReadOnlyObjectWrapper<GroupViewState> viewState = new ReadOnlyObjectWrapper<>();
-
-    private void setViewState(GroupViewState newViewState) {
-        Platform.runLater(() -> {
-            viewState.set(newViewState);
-        });
-    }
-
+    
+    
+   
+    
     public ReadOnlyObjectProperty<GroupViewState> viewState() {
-        return viewState.getReadOnlyProperty();
+        return historyManager.currentState();
     }
 
     /**
@@ -185,30 +169,32 @@ public class EurekaController implements FileUpdateListener {
     @GuardedBy("bgTasks")
     private final SimpleListProperty<Future<?>> bgTasks = new SimpleListProperty<>(FXCollections.observableArrayList());
 
-    /** an executor to submit async ui related background tasks to. */
+    /**
+     * an executor to submit async ui related background tasks to.
+     */
     final ExecutorService bgTaskExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build());
-
+    
     public synchronized FileIDSelectionModel getSelectionModel() {
-
+        
         return selectionModel;
     }
-
+    
     public GroupManager getGroupManager() {
         return groupManager;
     }
-
+    
     public void setListeningEnabled(boolean enabled) {
         listeningEnabled.set(enabled);
     }
-
+    
     ReadOnlyBooleanProperty listeningEnabled() {
         return listeningEnabled.getReadOnlyProperty();
     }
-
+    
     boolean isListeningEnabled() {
         return listeningEnabled.get();
     }
-
+    
     void setStale(Boolean b) {
         Platform.runLater(() -> {
             stale.set(b);
@@ -217,36 +203,37 @@ public class EurekaController implements FileUpdateListener {
             new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(EurekaModule.MODULE_NAME, PerCaseProperties.STALE, b.toString());
         }
     }
-
+    
     public ReadOnlyBooleanProperty stale() {
         return stale.getReadOnlyProperty();
     }
-
+    
     boolean isStale() {
         return stale.get();
     }
-
-    private EurekaController() {
-
+    
+    private ImageAnalyzerController() {
+        
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
             if (newValue && !oldValue && Case.existsCurrentCase() && EurekaModule.isCaseStale(Case.getCurrentCase())) {
                 queueTask(new CopyAnalyzedFiles());
             }
         });
-
+        
         groupManager.getAnalyzedGroups().addListener((Observable o) -> {
             checkForGroups();
         });
-
+        
         groupManager.getUnSeenGroups().addListener((Observable observable) -> {
             if (groupManager.getUnSeenGroups().size() > 0 && (getViewState() == null || getViewState().getGroup() == null)) {
+                
                 setViewState(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)));
             }
         });
         regroupDisabled.addListener((Observable observable) -> {
             checkForGroups();
         });
-
+        
         IngestManager.getInstance().addIngestModuleEventListener((evt) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
@@ -256,10 +243,12 @@ public class EurekaController implements FileUpdateListener {
 //        metaDataCollapsed.bind(EurekaToolbar.getDefault().showMetaDataProperty());
     }
 
-    /** submit a background {@link Task} to be queued for execution
-     * by the thread pool.
+    /**
+     * submit a background {@link Task} to be queued for execution by the thread
+     * pool.
      *
-     * @param task */
+     * @param task
+     */
     public void submitBGTask(final Task<?> task) {
         //listen to task state and remove task from list of tasks once it is 'done'
         task.stateProperty().addListener((observableState, oldState, newState) -> {
@@ -268,7 +257,7 @@ public class EurekaController implements FileUpdateListener {
                 case SCHEDULED:
                 case RUNNING:
                     break;
-
+                
                 case FAILED:
                     LOGGER.log(Level.WARNING, "task :" + task.getTitle() + " failed", task.getException());
                 case CANCELLED:
@@ -281,91 +270,70 @@ public class EurekaController implements FileUpdateListener {
                     break;
             }
         });
-
+        
         synchronized (bgTasks) {
             bgTasks.add(task);
         }
-
+        
         bgTaskExecutor.execute(task);
     }
 
-    synchronized public void pushGroup(GroupViewState viewState, boolean force) {
-        final GroupViewState currentViewState = getViewState();
-
-        if (force || Objects.equals(currentViewState, viewState) == false) {
-            historyStack.push(currentViewState);
-            setViewState(viewState);
-            if (viewState.equals(forwardStack.peek())) {
-                forwardStack.pop();
-            } else {
-                forwardStack.clear();
-            }
-        }
+    synchronized public ReadOnlyBooleanProperty getCanAdvance() {
+        return historyManager.getCanAdvance();
     }
 
-    synchronized public GroupViewState goForward() {
-
-        final GroupViewState currentZoom = getViewState();
-
-        final GroupViewState fpeek = forwardStack.peek();
-
-        if (fpeek != null && currentZoom.equals(fpeek) == false) {
-            historyStack.push(currentZoom);
-            setViewState(fpeek);
-            forwardStack.pop();
-        }
-        return fpeek;
+    synchronized public ReadOnlyBooleanProperty getCanRetreat() {
+        return historyManager.getCanRetreat();
     }
 
-    synchronized public GroupViewState goBack() {
-        final GroupViewState currentZoom = getViewState();
-        final GroupViewState peek = historyStack.peek();
-
-        if (peek != null && peek.equals(currentZoom) == false) {
-            forwardStack.push(currentZoom);
-            setViewState(historyStack.pop());
-        } else if (peek != null && peek.equals(currentZoom)) {
-            historyStack.pop();
-            return goBack();
-        }
-        return peek;
+    synchronized public void advance(GroupViewState viewState) {
+        historyManager.advance(viewState);
     }
 
+    synchronized public GroupViewState advance() {
+        return historyManager.advance();
+    }
+    
+    synchronized public GroupViewState retreat() {
+        return historyManager.retreat();
+    }
+    
     private void updateRegroupDisabled() {
         regroupDisabled.set(getFileUpdateQueueSizeProperty().get() > 0 || IngestManager.getInstance().isIngestRunning());
     }
 
-    /** Check if there are any fully analyzed groups available
-     * from the GroupManager and remove blocking progress spinners if there
-     * are. If there aren't, add a blocking progress spinner with appropriate
-     * message. */
+    /**
+     * Check if there are any fully analyzed groups available from the
+     * GroupManager and remove blocking progress spinners if there are. If there
+     * aren't, add a blocking progress spinner with appropriate message.
+     */
     public final void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
             setViewState(null);
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (listeningEnabled.get() == false) {
                     replaceNotification(fullUIStackPane,
-                                        new NoGroupsDialog("No groups are fully analyzed but listening to ingest is disabled. "
-                                                + " No groups will be available until ingest is finished and listening is re-enabled."));
+                            new NoGroupsDialog("No groups are fully analyzed but listening to ingest is disabled. "
+                                    + " No groups will be available until ingest is finished and listening is re-enabled."));
                 } else {
                     replaceNotification(fullUIStackPane,
-                                        new NoGroupsDialog("No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
-                                                           new ProgressIndicator()));
+                            new NoGroupsDialog("No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
+                                    new ProgressIndicator()));
                 }
-
+                
             } else if (getFileUpdateQueueSizeProperty().get() > 0) {
                 replaceNotification(fullUIStackPane,
-                                    new NoGroupsDialog("No groups are fully analyzed yet, but image / video data is still being populated.  Please Wait.",
-                                                       new ProgressIndicator()));
+                        new NoGroupsDialog("No groups are fully analyzed yet, but image / video data is still being populated.  Please Wait.",
+                                new ProgressIndicator()));
             } else if (db != null && db.countAllFiles() <= 0) { // there are no files in db
                 replaceNotification(fullUIStackPane,
-                                    new NoGroupsDialog("There are no images/videos in the added datasources."));
-
+                        new NoGroupsDialog("There are no images/videos in the added datasources."));
+                
             } else if (!groupManager.isRegrouping()) {
                 replaceNotification(centralStackPane,
-                                    new NoGroupsDialog("There are no fully analyzed groups to display:"
-                                            + "  the current Group By setting resulted in no groups, "
-                                            + "or no groups are fully analyzed but ingest is not running."));
+                        new NoGroupsDialog("There are no fully analyzed groups to display:"
+                                + "  the current Group By setting resulted in no groups, "
+                                + "or no groups are fully analyzed but ingest is not running."));
             }
 //            else {
 //                replaceNotification(fullUIStackPane,
@@ -379,7 +347,7 @@ public class EurekaController implements FileUpdateListener {
             clearNotification();
         }
     }
-
+    
     private void clearNotification() {
         //remove the ingest spinner
         if (fullUIStackPane != null) {
@@ -390,26 +358,26 @@ public class EurekaController implements FileUpdateListener {
             centralStackPane.getChildren().remove(infoOverlay);
         }
     }
-
+    
     private void replaceNotification(StackPane stackPane, Node newNode) {
         clearNotification();
-
+        
         infoOverlay = new StackPane(infoOverLayBackground, newNode);
         if (stackPane != null) {
             stackPane.getChildren().add(infoOverlay);
         }
     }
-
+    
     private void restartWorker() {
         if (dbWorkerThread != null) {
             dbWorkerThread.cancelAllTasks();
         }
         dbWorkerThread = new DBWorkerThread();
-
+        
         getFileUpdateQueueSizeProperty().addListener((o) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
-
+        
         Thread th = new Thread(dbWorkerThread);
         th.setDaemon(false); // we want it to go away when it is done
         th.start();
@@ -421,7 +389,7 @@ public class EurekaController implements FileUpdateListener {
      * @param c
      */
     public synchronized void setCase(Case c) {
-
+        
         this.db = DrawableDB.getDrawableDB(c.getCaseDirectory(), this);
         db.addUpdatedFileListener(this);
         setListeningEnabled(EurekaModule.isEnabledforCase(c));
@@ -430,7 +398,7 @@ public class EurekaController implements FileUpdateListener {
         // if we add this line icons are made as files are analyzed rather than on demand.
         // db.addUpdatedFileListener(IconCache.getDefault());
         restartWorker();
-
+        
         groupManager.setDB(db);
         SummaryTablePane.getDefault().handleCategoryChanged(Collections.EMPTY_LIST);
     }
@@ -449,12 +417,12 @@ public class EurekaController implements FileUpdateListener {
                 for (final long fileId : fileIDs) {
                     //get grouping(s) this file would be in
                     Set<GroupKey> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
-
+                    
                     for (GroupKey gk : groupsForFile) {
                         groupManager.removeFromGroup(gk, fileId);
                     }
                 }
-
+                
                 break;
             case FILE_UPDATED:
 
@@ -473,7 +441,7 @@ public class EurekaController implements FileUpdateListener {
 
                     //get grouping(s) this file would be in
                     Set<GroupKey> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
-
+                    
                     for (GroupKey gk : groupsForFile) {
                         Grouping g = groupManager.getGroupForKey(gk);
 
@@ -490,7 +458,7 @@ public class EurekaController implements FileUpdateListener {
                         }
                     }
                 }
-
+                
                 Category.fireChange(fileIDs);
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);
@@ -506,11 +474,10 @@ public class EurekaController implements FileUpdateListener {
         LOGGER.info("resetting EurekaControler to initial state.");
         selectionModel.clearSelection();
         Platform.runLater(() -> {
-            viewState.set(null);
-            historyStack.clear();
-            forwardStack.clear();
+        
+            historyManager.clear();
         });
-
+        
         EurekaToolbar.getDefault().reset();
         groupManager.clear();
         if (db != null) {
@@ -531,21 +498,21 @@ public class EurekaController implements FileUpdateListener {
         }
         dbWorkerThread.addTask(innerTask);
     }
-
+    
     public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
         return db.getFileFromID(fileID);
     }
-
+    
     public void setStacks(StackPane fullUIStack, StackPane centralStack) {
         fullUIStackPane = fullUIStack;
         this.centralStackPane = centralStack;
         Platform.runLater(this::checkForGroups);
     }
-
+    
     public final ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
         return queueSizeProperty.getReadOnlyProperty();
     }
-
+    
     public ReadOnlyIntegerProperty bgTaskQueueSizeProperty() {
         return bgTasks.sizeProperty();
     }
@@ -584,7 +551,7 @@ public class EurekaController implements FileUpdateListener {
             workQueue.add(it);
             queueSizeProperty.set(workQueue.size());
         }
-
+        
         @Override
         public void run() {
             // nearly infinite loop waiting for tasks
@@ -598,17 +565,17 @@ public class EurekaController implements FileUpdateListener {
                     if (it.cancelled == false) {
                         it.run();
                     }
-
+                    
                     queueSizeProperty.set(workQueue.size());
-
+                    
                 } catch (InterruptedException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-
+                
             }
         }
     }
-
+    
     public SleuthkitCase getSleuthKitCase() throws IllegalStateException {
         if (Case.isCaseOpen()) {
             return Case.getCurrentCase().getSleuthkitCase();
@@ -621,13 +588,13 @@ public class EurekaController implements FileUpdateListener {
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
     static public abstract class InnerTask extends ProgressAdapterBase implements Runnable {
-
+        
         protected volatile boolean cancelled = false;
-
+        
         public void cancel() {
             updateState(Worker.State.CANCELLED);
         }
-
+        
         protected boolean isCancelled() {
             return getState() == Worker.State.CANCELLED;
         }
@@ -637,14 +604,14 @@ public class EurekaController implements FileUpdateListener {
      * Abstract base class for tasks associated with an obj id in the database
      */
     static private abstract class TaskWithID extends InnerTask {
-
+        
         protected Long obj_id;    // id of image or file
 
         public TaskWithID(Long id) {
             super();
             this.obj_id = id;
         }
-
+        
         public Long getId() {
             return obj_id;
         }
@@ -658,7 +625,7 @@ public class EurekaController implements FileUpdateListener {
      * of the update tasks.
      */
     class MarkAllFilesAsAnalyzed extends InnerTask {
-
+        
         @Override
         public void run() {
             db.markAllFilesAnalyzed();
@@ -670,9 +637,9 @@ public class EurekaController implements FileUpdateListener {
      * task that updates one file in database with results from ingest
      */
     class UpdateFile extends InnerTask {
-
+        
         private final AbstractFile file;
-
+        
         public UpdateFile(AbstractFile f) {
             super();
             this.file = f;
@@ -692,9 +659,9 @@ public class EurekaController implements FileUpdateListener {
      * task that updates one file in database with results from ingest
      */
     class RemoveFile extends InnerTask {
-
+        
         private final AbstractFile file;
-
+        
         public RemoveFile(AbstractFile f) {
             super();
             this.file = f;
@@ -709,23 +676,24 @@ public class EurekaController implements FileUpdateListener {
         }
     }
 
-    /** Task that runs when eureka listening is (re) enabled.
+    /**
+     * Task that runs when eureka listening is (re) enabled.
      *
      * Uses the presence of TSK_FILE_TYPE_SIG attributes as a approximation to
      * 'analyzed'. Grabs all files with supported image/video mime types, and
-     * adds
-     * them to the Drawable DB */
+     * adds them to the Drawable DB
+     */
     class CopyAnalyzedFiles extends InnerTask {
-
+        
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(EurekaModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
-
+        
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
-
+        
         @Override
         public void run() {
             progressHandle.start();
             updateMessage("populating analyzed image/video database");
-
+            
             try {
                 //grap all files with supported mime types
                 final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " or tsk_files.obj_id in (select tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
@@ -735,7 +703,7 @@ public class EurekaController implements FileUpdateListener {
                         + " and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
                         + " and blackboard_attributes.value_text in ('" + StringUtils.join(EurekaModule.getSupportedMimes(), "','") + "'))");
                 progressHandle.switchToDeterminate(files.size());
-
+                
                 updateProgress(0.0);
 
                 //do in transaction
@@ -749,7 +717,7 @@ public class EurekaController implements FileUpdateListener {
                     }
                     final Boolean hasMimeType = EurekaModule.hasSupportedMimeType(f);
                     final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
-
+                    
                     if (known) {
                         db.removeFile(f.getId(), tr);  //remove known files
                     } else {
@@ -769,64 +737,67 @@ public class EurekaController implements FileUpdateListener {
                             }
                         }
                     }
-
+                    
                     units++;
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);
                     updateProgress(prog - 1 / (double) files.size());
                     updateMessage(f.getName());
                 }
-
+                
                 progressHandle.finish();
-
+                
                 progressHandle = ProgressHandleFactory.createHandle("commiting image/video database");
                 updateMessage("commiting image/video database");
                 updateProgress(1.0);
-
+                
                 progressHandle.start();
                 db.commitTransaction(tr, true);
-
+                
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
             }
-
+            
             progressHandle.finish();
-
+            
             updateMessage(
                     "");
             updateProgress(
                     -1.0);
             setStale(false);
         }
-
+        
     }
 
-    /** task that does pre-ingest copy over of files from a new datasource
-     * with
+    /**
+     * task that does pre-ingest copy over of files from a new datasource with
      * (uses fs_obj_id to identify files from new datasource) *
      *
      * TODO: create methods to simplify progress value/text updates to both
-     * netbeans and eureka progress/status */
+     * netbeans and eureka progress/status
+     */
     class PrePopulateDataSourceFiles extends TaskWithID {
 
-        /** @TODO: for initial grab is there any better way than by
-         * extension?
+        /**
+         * @TODO: for initial grab is there any better way than by extension?
          *
          * in file_done listener we look at file type id attributes and fall
-         * back on jpeg signatures and extensions to check for supported
-         * images */
+         * back on jpeg signatures and extensions to check for supported images
+         */
         // (name like '.jpg' or name like '.png' ...)
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(EurekaModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
-
+        
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
-
+        
         public PrePopulateDataSourceFiles(Long id) {
             super(id);
         }
 
-        /** Copy files from a newly added data source into the DB */
+        /**
+         * Copy files from a newly added data source into the DB
+         */
         @Override
         public void run() {
             progressHandle.start();
@@ -843,7 +814,6 @@ public class EurekaController implements FileUpdateListener {
                 progressHandle.switchToDeterminate(files.size());
 
 //                updateProgress(0.0);
-
                 //do in transaction
                 DrawableDB.DrawableTransaction tr = db.beginTransaction();
                 int units = 0;
@@ -860,7 +830,7 @@ public class EurekaController implements FileUpdateListener {
 //                    updateProgress(prog - 1 / (double) files.size());
 //                    updateMessage(f.getName());
                 }
-
+                
                 progressHandle.finish();
                 progressHandle = ProgressHandleFactory.createHandle("commiting image/video database");
 //                updateMessage("commiting image/video database");
@@ -868,13 +838,13 @@ public class EurekaController implements FileUpdateListener {
 
                 progressHandle.start();
                 db.commitTransaction(tr, false);
-
+                
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
             }
-
+            
             progressHandle.finish();
 
 //            updateMessage("");

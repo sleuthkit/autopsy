@@ -43,7 +43,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName;
@@ -96,9 +96,9 @@ public class NavPanel extends TabPane {
 
     private GroupTreeItem hashTreeRoot;
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
-    public NavPanel(EurekaController controller) {
+    public NavPanel(ImageAnalyzerController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "NavPanel.fxml");
     }
@@ -185,7 +185,7 @@ public class NavPanel extends TabPane {
     private void updateControllersGroup() {
         final TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem.getValue() != null && selectedItem.getValue().getGroup() != null) {
-            controller.pushGroup(GroupViewState.tile(selectedItem.getValue().getGroup()), false);
+            controller.advance(GroupViewState.tile(selectedItem.getValue().getGroup()));
         }
     }
 

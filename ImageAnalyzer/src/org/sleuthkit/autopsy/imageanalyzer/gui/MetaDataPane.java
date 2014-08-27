@@ -46,7 +46,7 @@ import javafx.util.Callback;
 import javafx.util.Pair;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
@@ -59,7 +59,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
-    private final EurekaController controller;
+    private final ImageAnalyzerController controller;
 
     private Long fileID;
 
@@ -213,7 +213,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
         }
     }
 
-    public MetaDataPane(EurekaController controller) {
+    public MetaDataPane(ImageAnalyzerController controller) {
         this.controller = controller;
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
