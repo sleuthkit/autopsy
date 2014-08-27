@@ -18,16 +18,23 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
-import org.sleuthkit.autopsy.coreutils.ObservableStack;
 
 /**
+ * A basic history implementation. Keeps a history (and forward) stack of state
+ * objects of type <T>. exposes current state and availability of
+ * advance/retreat operations via methods and JFX {@link  Property}s
  *
+ * @param <T> the type of objects used to represent the
+ * current/historical/future states
  */
 @ThreadSafe
 public class HistoryManager<T> {
@@ -47,6 +54,10 @@ public class HistoryManager<T> {
     @GuardedBy("this")
     private final ReadOnlyBooleanWrapper canRetreat = new ReadOnlyBooleanWrapper();
 
+    synchronized public T getCurrentState() {
+        return currentState.get();
+    }
+
     synchronized public boolean canAdvance() {
         return canAdvance.get();
     }
@@ -57,10 +68,6 @@ public class HistoryManager<T> {
 
     synchronized public ReadOnlyObjectProperty<T> currentState() {
         return currentState.getReadOnlyProperty();
-    }
-
-    synchronized public T getCurrentState() {
-        return currentState.get();
     }
 
     synchronized public ReadOnlyBooleanProperty getCanAdvance() {
@@ -81,6 +88,12 @@ public class HistoryManager<T> {
         canRetreat.bind(historyStack.emptyProperty().not());
     }
 
+    /**
+     * advance through the forward states by one, and put the current state in
+     * the history. Is a no-op if there are no forward states.
+     *
+     * @return the state advanced to, or null if there were no forward states.
+     */
     synchronized public T advance() {
         final T peek = forwardStack.peek();
 
@@ -92,6 +105,12 @@ public class HistoryManager<T> {
         return peek;
     }
 
+    /**
+     * retreat through the history states by one, and add the current state to
+     * the forward states. Is a no-op if there are no history states.
+     *
+     * @return the state retreated to, or null if there were no history states.
+     */
     synchronized public T retreat() {
         final T peek = historyStack.pop();
 
@@ -104,7 +123,18 @@ public class HistoryManager<T> {
         return peek;
     }
 
-    synchronized public void advance(T newState) {
+    /**
+     * put the current state in the history and advance to the given state. It
+     * is a no-op if the current state is equal to the given state as determined
+     * by invoking the equals method. Throws away any forward states.
+     *
+     * @param newState the new state to advance to
+     * @throws IllegalArgumentException if the newState is null
+     */
+    synchronized public void advance(T newState) throws IllegalArgumentException {
+        if (newState == null) {
+            throw new IllegalArgumentException("newState must be non-null");
+        }
         if (currentState.equals(newState) == false) {
             if (currentState.get() != null) {
                 historyStack.push(currentState.get());
@@ -118,4 +148,43 @@ public class HistoryManager<T> {
         }
     }
 
+    /**
+     * A simple extension to SimpleListProperty to add a stack api
+     *
+     * TODO: this really should not extend SimpleListProperty but should
+     * delegate to an appropriate observable implementation while implementing
+     * the {@link Deque} interface
+     */
+    private static class ObservableStack<T> extends SimpleListProperty<T> {
+
+        public ObservableStack() {
+            super(FXCollections.<T>synchronizedObservableList(FXCollections.<T>observableArrayList()));
+        }
+
+        public void push(T item) {
+            synchronized (this) {
+                add(0, item);
+            }
+        }
+
+        public T pop() {
+            synchronized (this) {
+                if (isEmpty()) {
+                    return null;
+                } else {
+                    return remove(0);
+                }
+            }
+        }
+
+        public T peek() {
+            synchronized (this) {
+                if (isEmpty()) {
+                    return null;
+                } else {
+                    return get(0);
+                }
+            }
+        }
+    }
 }
