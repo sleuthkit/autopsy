@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
 
 /**
- * TopComponent for the advanced timeline module.
+ * TopComponent for the timeline feature.
  */
 @ConvertAsProperties(
         dtd = "-//org.sleuthkit.autopsy.timeline//TimeLine//EN",
