@@ -18,42 +18,70 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.coreutils.ObservableStack;
 
 /**
  *
  */
+@ThreadSafe
 public class HistoryManager<T> {
 
-    /** list based stack to hold history, 'top' is at index 0; */
     @GuardedBy("this")
     private final ObservableStack<T> historyStack = new ObservableStack<>();
 
     @GuardedBy("this")
     private final ObservableStack<T> forwardStack = new ObservableStack<>();
 
+    @GuardedBy("this")
     private final ReadOnlyObjectWrapper<T> currentState = new ReadOnlyObjectWrapper<>();
 
-    public ReadOnlyObjectWrapper<T> currentState() {
-        return currentState;
+    @GuardedBy("this")
+    private final ReadOnlyBooleanWrapper canAdvance = new ReadOnlyBooleanWrapper();
+
+    @GuardedBy("this")
+    private final ReadOnlyBooleanWrapper canRetreat = new ReadOnlyBooleanWrapper();
+
+    synchronized public boolean canAdvance() {
+        return canAdvance.get();
     }
 
-    public T getCurrentState() {
+    synchronized public boolean canRetreat() {
+        return canRetreat.get();
+    }
+
+    synchronized public ReadOnlyObjectProperty<T> currentState() {
+        return currentState.getReadOnlyProperty();
+    }
+
+    synchronized public T getCurrentState() {
         return currentState.get();
     }
 
-    synchronized public ObservableStack<T> getHistoryStack() {
-        return historyStack;
+    synchronized public ReadOnlyBooleanProperty getCanAdvance() {
+        return canAdvance.getReadOnlyProperty();
     }
 
-    synchronized public ObservableStack<T> getForwardStack() {
-        return forwardStack;
+    synchronized public ReadOnlyBooleanProperty getCanRetreat() {
+        return canRetreat.getReadOnlyProperty();
+    }
+
+    public HistoryManager(T initialState) {
+        this();
+        currentState.set(initialState);
+    }
+
+    public HistoryManager() {
+        canAdvance.bind(forwardStack.emptyProperty().not());
+        canRetreat.bind(historyStack.emptyProperty().not());
     }
 
     synchronized public T advance() {
-
         final T peek = forwardStack.peek();
 
         if (peek != null && peek.equals(currentState.get()) == false) {
@@ -65,7 +93,6 @@ public class HistoryManager<T> {
     }
 
     synchronized public T retreat() {
-
         final T peek = historyStack.pop();
 
         if (peek != null && peek.equals(currentState.get()) == false) {
@@ -78,9 +105,10 @@ public class HistoryManager<T> {
     }
 
     synchronized public void advance(T newState) {
-
         if (currentState.equals(newState) == false) {
-            historyStack.push(currentState.get());
+            if (currentState.get() != null) {
+                historyStack.push(currentState.get());
+            }
             currentState.set(newState);
             if (newState.equals(forwardStack.peek())) {
                 forwardStack.pop();

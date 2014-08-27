@@ -40,11 +40,11 @@ public class Back extends AbstractAction {
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;
-        disabledProperty().bind(controller.getHistoryStack().emptyProperty());
+        disabledProperty().bind(controller.getCanRetreat().not());
     }
 
     @Override
     public void handle(ActionEvent ae) {
-        controller.goBack();
+        controller.retreat();
     }
 }

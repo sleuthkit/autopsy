@@ -63,7 +63,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ObservableStack;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -91,7 +90,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * </li>
  * <ul>
  */
-public class TimeLineController {
+public class TimeLineController  {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
@@ -174,16 +173,6 @@ public class TimeLineController {
     @GuardedBy("this")
     private final HistoryManager<ZoomParams> historyManager = new HistoryManager<>();
 
-  
-
-    synchronized public ObservableStack<ZoomParams> getHistoryStack() {
-        return historyManager.getHistoryStack();
-    }
-
-    synchronized public ObservableStack<ZoomParams> getForwardStack() {
-        return historyManager.getForwardStack();
-    }
-
     //all members should be access with the intrinsict lock of this object held
     //selected events (ie shown in the result viewer)
     @GuardedBy("this")
@@ -216,6 +205,13 @@ public class TimeLineController {
         return needsHistogramRebuild.getReadOnlyProperty();
     }
 
+    synchronized public ReadOnlyBooleanProperty getCanAdvance() {
+        return historyManager.getCanAdvance();
+    }
+
+    synchronized public ReadOnlyBooleanProperty getCanRetreat() {
+        return historyManager.getCanRetreat();
+    }
     private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
 
     public TimeLineController() {
@@ -227,8 +223,8 @@ public class TimeLineController {
                                           EventTypeZoomLevel.BASE_TYPE,
                                           Filter.getDefaultFilter(),
                                           DescriptionLOD.SHORT);
-        historyManager.currentState().set(InitialZoomState);
-      
+        historyManager.advance(InitialZoomState);
+
         //persistent listener instances
         caseListener = new AutopsyCaseListener();
     }
@@ -244,7 +240,7 @@ public class TimeLineController {
 
     public void zoomOutToActivity() {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
-        pushZoom(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
+        advance(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
     }
 
     boolean rebuildRepo() {
@@ -353,6 +349,7 @@ public class TimeLineController {
             LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex);
         }
     }
+
     @SuppressWarnings("deprecation")
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
@@ -452,28 +449,28 @@ public class TimeLineController {
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
+            advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
         } else if (currentZoom.hasTypeZoomLevel(typeZoomeLevel) == false) {
-            pushZoom(currentZoom.withTypeZoomLevel(typeZoomeLevel));
+            advance(currentZoom.withTypeZoomLevel(typeZoomeLevel));
         }
     }
 
     synchronized public void pushTimeRange(Interval timeRange) {
-//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withTimeRange(timeRange));
+            advance(InitialZoomState.withTimeRange(timeRange));
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            pushZoom(currentZoom.withTimeRange(timeRange));
+            advance(currentZoom.withTimeRange(timeRange));
         }
     }
 
     synchronized public void pushDescrLOD(DescriptionLOD newLOD) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withDescrLOD(newLOD));
+            advance(InitialZoomState.withDescrLOD(newLOD));
         } else if (currentZoom.hasDescrLOD(newLOD) == false) {
-            pushZoom(currentZoom.withDescrLOD(newLOD));
+            advance(currentZoom.withDescrLOD(newLOD));
         }
     }
 
@@ -481,70 +478,36 @@ public class TimeLineController {
         timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withTimeAndType(timeRange, typeZoom));
+            advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(timeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
-            pushZoom(currentZoom.withTimeAndType(timeRange, typeZoom));
+            advance(currentZoom.withTimeAndType(timeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            pushZoom(currentZoom.withTimeRange(timeRange));
+            advance(currentZoom.withTimeRange(timeRange));
         } else if (currentZoom.hasTypeZoomLevel(typeZoom) == false) {
-            pushZoom(currentZoom.withTypeZoomLevel(typeZoom));
+            advance(currentZoom.withTypeZoomLevel(typeZoom));
         }
     }
 
     synchronized public void pushFilters(Filter filter) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withFilter(filter.copyOf()));
+            advance(InitialZoomState.withFilter(filter.copyOf()));
         } else if (currentZoom.hasFilter(filter) == false) {
-            pushZoom(currentZoom.withFilter(filter.copyOf()));
+            advance(currentZoom.withFilter(filter.copyOf()));
         }
     }
 
-    synchronized public ZoomParams goForward() {
+    synchronized public ZoomParams advance() {
         return historyManager.advance();
-//
-//        final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-//
-//        final ZoomParams fpeek = forwardStack.peek();
-//
-//        if (fpeek != null && currentZoom.equals(fpeek) == false) {
-//            historyStack.push(currentZoom);
-//            filteredEvents.requestZoomState(fpeek, false);
-//            forwardStack.pop();
-//        }
-//        return fpeek;
+
     }
 
-    synchronized public ZoomParams goBack() {
-
+    synchronized public ZoomParams retreat() {
         return historyManager.retreat();
-//        final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-//        final ZoomParams peek = historyStack.peek();
-//
-//        if (peek != null && peek.equals(currentZoom) == false) {
-//            forwardStack.push(currentZoom);
-//            filteredEvents.requestZoomState(historyStack.pop(), false);
-//        } else if (peek != null && peek.equals(currentZoom)) {
-//            historyStack.pop();
-//            return goBack();
-//        }
-//        return peek;
     }
 
-    synchronized private void pushZoom(ZoomParams newState) {
-
+    synchronized private void advance(ZoomParams newState) {
         historyManager.advance(newState);
-//        final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-//
-//        if (currentZoom.equals(zCrumb) == false) {
-//            historyStack.push(currentZoom);
-//            filteredEvents.requestZoomState(zCrumb, false);
-//            if (zCrumb.equals(forwardStack.peek())) {
-//                forwardStack.pop();
-//            } else {
-//                forwardStack.clear();
-//            }
-//        }
     }
 
     public void selectTimeAndType(Interval interval, EventType type) {

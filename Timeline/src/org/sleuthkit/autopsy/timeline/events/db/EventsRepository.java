@@ -32,7 +32,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -104,7 +104,7 @@ public class EventsRepository {
         return modelInstance;
     }
 
-    public EventsRepository(ObjectProperty<ZoomParams> currentStateProperty) {
+    public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         //TODO: we should check that case is open, or get passed a case object/directory -jm
         this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
 

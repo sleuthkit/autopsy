@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javafx.beans.Observable;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javax.annotation.concurrent.GuardedBy;
@@ -89,7 +88,7 @@ public class FilteredEventsModel {
     @GuardedBy("this")
     private final EventsRepository repo;
 
-    public FilteredEventsModel(EventsRepository repo, ObjectProperty<ZoomParams> currentStateProperty) {
+    public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.repo = repo;
         requestedZoomParamters.addListener((Observable observable) -> {
             final ZoomParams zoomParams = requestedZoomParamters.get();
@@ -100,7 +99,6 @@ public class FilteredEventsModel {
                         || zoomParams.getFilter().equals(requestedFilter.get()) == false
                         || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
 
-//                requestedZoomParamters.set(zoomParams);
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter().copyOf());
                     requestedTimeRange.set(zoomParams.getTimeRange());
@@ -110,7 +108,6 @@ public class FilteredEventsModel {
         });
 
         requestedZoomParamters.bind(currentStateProperty);
-//        this.requestedTimeRange.set(getSpanningInterval());
     }
 
     public Interval getBoundingEventsInterval() {
