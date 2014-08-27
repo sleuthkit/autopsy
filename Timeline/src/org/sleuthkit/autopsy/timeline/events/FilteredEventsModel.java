@@ -19,10 +19,10 @@
 package org.sleuthkit.autopsy.timeline.events;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javax.annotation.concurrent.GuardedBy;
@@ -88,14 +88,26 @@ public class FilteredEventsModel {
     @GuardedBy("this")
     private final EventsRepository repo;
 
-    public FilteredEventsModel(EventsRepository repo) {
+    public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.repo = repo;
-        requestedZoomParamters.set(new ZoomParams(new Interval(repo.getMinTime(), repo.getMaxTime(), DateTimeZone.UTC),
-                                                  EventTypeZoomLevel.BASE_TYPE,
-                                                  Filter.getDefaultFilter(),
-                                                  DescriptionLOD.SHORT,
-                                                  EnumSet.noneOf(ZoomParams.Field.class)));
-        this.requestedTimeRange.set(getSpanningInterval());
+        requestedZoomParamters.addListener((Observable observable) -> {
+            final ZoomParams zoomParams = requestedZoomParamters.get();
+
+            if (zoomParams != null) {
+                if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
+                        || zoomParams.getDescrLOD().equals(requestedLOD.get()) == false
+                        || zoomParams.getFilter().equals(requestedFilter.get()) == false
+                        || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
+
+                    requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
+                    requestedFilter.set(zoomParams.getFilter().copyOf());
+                    requestedTimeRange.set(zoomParams.getTimeRange());
+                    requestedLOD.set(zoomParams.getDescrLOD());
+                }
+            }
+        });
+
+        requestedZoomParamters.bind(currentStateProperty);
     }
 
     public Interval getBoundingEventsInterval() {
@@ -233,18 +245,18 @@ public class FilteredEventsModel {
         return requestedTypeZoom.get();
     }
 
-    synchronized public void requestZoomState(ZoomParams zCrumb, boolean force) {
-        if (force
-                || zCrumb.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-                || zCrumb.getDescrLOD().equals(requestedLOD.get()) == false
-                || zCrumb.getFilter().equals(requestedFilter.get()) == false
-                || zCrumb.getTimeRange().equals(requestedTimeRange.get()) == false) {
-
-            requestedZoomParamters.set(zCrumb);
-            requestedTypeZoom.set(zCrumb.getTypeZoomLevel());
-            requestedFilter.set(zCrumb.getFilter().copyOf());
-            requestedTimeRange.set(zCrumb.getTimeRange());
-            requestedLOD.set(zCrumb.getDescrLOD());
-        }
-    }
+//    synchronized public void requestZoomState(ZoomParams zCrumb, boolean force) {
+//        if (force
+//                || zCrumb.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
+//                || zCrumb.getDescrLOD().equals(requestedLOD.get()) == false
+//                || zCrumb.getFilter().equals(requestedFilter.get()) == false
+//                || zCrumb.getTimeRange().equals(requestedTimeRange.get()) == false) {
+//
+//            requestedZoomParamters.set(zCrumb);
+//            requestedTypeZoom.set(zCrumb.getTypeZoomLevel());
+//            requestedFilter.set(zCrumb.getFilter().copyOf());
+//            requestedTimeRange.set(zCrumb.getTimeRange());
+//            requestedLOD.set(zCrumb.getDescrLOD());
+//        }
+//    }
 }

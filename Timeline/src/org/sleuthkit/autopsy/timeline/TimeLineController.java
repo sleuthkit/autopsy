@@ -63,7 +63,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ObservableStack;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -91,7 +90,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * </li>
  * <ul>
  */
-public class TimeLineController {
+public class TimeLineController  {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
@@ -172,18 +171,7 @@ public class TimeLineController {
 
     /** list based stack to hold history, 'top' is at index 0; */
     @GuardedBy("this")
-    private final ObservableStack<ZoomParams> historyStack = new ObservableStack<>();
-
-    @GuardedBy("this")
-    private final ObservableStack<ZoomParams> forwardStack = new ObservableStack<>();
-
-    synchronized public ObservableStack<ZoomParams> getHistoryStack() {
-        return historyStack;
-    }
-
-    synchronized public ObservableStack<ZoomParams> getForwardStack() {
-        return forwardStack;
-    }
+    private final HistoryManager<ZoomParams> historyManager = new HistoryManager<>();
 
     //all members should be access with the intrinsict lock of this object held
     //selected events (ie shown in the result viewer)
@@ -217,21 +205,28 @@ public class TimeLineController {
         return needsHistogramRebuild.getReadOnlyProperty();
     }
 
+    synchronized public ReadOnlyBooleanProperty getCanAdvance() {
+        return historyManager.getCanAdvance();
+    }
+
+    synchronized public ReadOnlyBooleanProperty getCanRetreat() {
+        return historyManager.getCanRetreat();
+    }
     private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
 
     public TimeLineController() {
         //initalize repository and filteredEvents on creation
-        eventsRepository = new EventsRepository();
+        eventsRepository = new EventsRepository(historyManager.currentState());
 
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                                           EventTypeZoomLevel.BASE_TYPE,
                                           Filter.getDefaultFilter(),
                                           DescriptionLOD.SHORT);
-        filteredEvents.requestZoomState(InitialZoomState, true);
+        historyManager.advance(InitialZoomState);
+
         //persistent listener instances
         caseListener = new AutopsyCaseListener();
-
     }
 
     /** @return a shared events model */
@@ -245,7 +240,7 @@ public class TimeLineController {
 
     public void zoomOutToActivity() {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
-        pushZoom(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
+        advance(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
     }
 
     boolean rebuildRepo() {
@@ -355,6 +350,7 @@ public class TimeLineController {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         try (ResultSet runQuery = sleuthkitCase.runQuery("select Max(artifact_id) as max_id from blackboard_artifacts")) {
@@ -453,28 +449,28 @@ public class TimeLineController {
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
+            advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
         } else if (currentZoom.hasTypeZoomLevel(typeZoomeLevel) == false) {
-            pushZoom(currentZoom.withTypeZoomLevel(typeZoomeLevel));
+            advance(currentZoom.withTypeZoomLevel(typeZoomeLevel));
         }
     }
 
     synchronized public void pushTimeRange(Interval timeRange) {
-//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withTimeRange(timeRange));
+            advance(InitialZoomState.withTimeRange(timeRange));
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            pushZoom(currentZoom.withTimeRange(timeRange));
+            advance(currentZoom.withTimeRange(timeRange));
         }
     }
 
     synchronized public void pushDescrLOD(DescriptionLOD newLOD) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withDescrLOD(newLOD));
+            advance(InitialZoomState.withDescrLOD(newLOD));
         } else if (currentZoom.hasDescrLOD(newLOD) == false) {
-            pushZoom(currentZoom.withDescrLOD(newLOD));
+            advance(currentZoom.withDescrLOD(newLOD));
         }
     }
 
@@ -482,79 +478,36 @@ public class TimeLineController {
         timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withTimeAndType(timeRange, typeZoom));
+            advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(timeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
-            pushZoom(currentZoom.withTimeAndType(timeRange, typeZoom));
+            advance(currentZoom.withTimeAndType(timeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            pushZoom(currentZoom.withTimeRange(timeRange));
+            advance(currentZoom.withTimeRange(timeRange));
         } else if (currentZoom.hasTypeZoomLevel(typeZoom) == false) {
-            pushZoom(currentZoom.withTypeZoomLevel(typeZoom));
+            advance(currentZoom.withTypeZoomLevel(typeZoom));
         }
     }
 
     synchronized public void pushFilters(Filter filter) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
-            pushZoom(InitialZoomState.withFilter(filter.copyOf()));
+            advance(InitialZoomState.withFilter(filter.copyOf()));
         } else if (currentZoom.hasFilter(filter) == false) {
-            pushZoom(currentZoom.withFilter(filter.copyOf()));
+            advance(currentZoom.withFilter(filter.copyOf()));
         }
     }
 
-    synchronized public ZoomParams goForward() {
+    synchronized public ZoomParams advance() {
+        return historyManager.advance();
 
-        final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-
-        final ZoomParams fpeek = forwardStack.peek();
-
-        if (fpeek != null && currentZoom.equals(fpeek) == false) {
-            historyStack.push(currentZoom);
-            filteredEvents.requestZoomState(fpeek, false);
-            forwardStack.pop();
-        }
-        return fpeek;
     }
 
-    synchronized public ZoomParams goBack() {
-        final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-        final ZoomParams peek = historyStack.peek();
-
-        if (peek != null && peek.equals(currentZoom) == false) {
-            forwardStack.push(currentZoom);
-            filteredEvents.requestZoomState(historyStack.pop(), false);
-        } else if (peek != null && peek.equals(currentZoom)) {
-            historyStack.pop();
-            return goBack();
-        }
-        return peek;
+    synchronized public ZoomParams retreat() {
+        return historyManager.retreat();
     }
 
-    @Deprecated
-    synchronized public void popZoomUpTo(ZoomParams zCrumb) {
-        ZoomParams popped = historyStack.peek();
-
-        while (popped.equals(zCrumb) == false) {
-            popped = historyStack.pop();
-        }
-        pushZoom(zCrumb);
-    }
-
-    synchronized private void pushZoom(ZoomParams zCrumb, boolean force) {
-        final ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-
-        if (force || currentZoom.equals(zCrumb) == false) {
-            historyStack.push(currentZoom);
-            filteredEvents.requestZoomState(zCrumb, force);
-            if (zCrumb.equals(forwardStack.peek())) {
-                forwardStack.pop();
-            } else {
-                forwardStack.clear();
-            }
-        }
-    }
-
-    synchronized private void pushZoom(ZoomParams zCrumb) {
-        pushZoom(zCrumb, false);
+    synchronized private void advance(ZoomParams newState) {
+        historyManager.advance(newState);
     }
 
     public void selectTimeAndType(Interval interval, EventType type) {

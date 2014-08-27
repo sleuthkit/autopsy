@@ -50,6 +50,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
@@ -67,12 +68,11 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
- * This class provides access to the Advanced Timeline SQLite database. This
+ * This class provides access to the  Timeline SQLite database. This
  * class borrows a lot of ideas and techniques from {@link  SleuthkitCase},
  * Creating an abstract base class for sqlite databases, or using a higherlevel
  * persistence api may make sense in the future.

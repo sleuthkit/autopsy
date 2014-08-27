@@ -40,11 +40,11 @@ public class Forward extends AbstractAction {
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;
-        disabledProperty().bind(controller.getForwardStack().sizeProperty().isEqualTo(0));
+        disabledProperty().bind(controller.getCanAdvance().not());
     }
 
     @Override
     public void handle(ActionEvent ae) {
-        controller.goForward();
+        controller.advance();
     }
 }

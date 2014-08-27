@@ -32,11 +32,14 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -47,8 +50,6 @@ import org.sleuthkit.autopsy.timeline.events.type.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -103,7 +104,7 @@ public class EventsRepository {
         return modelInstance;
     }
 
-    public EventsRepository() {
+    public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         //TODO: we should check that case is open, or get passed a case object/directory -jm
         this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
 
@@ -118,7 +119,7 @@ public class EventsRepository {
         }).build(CacheLoader.from(eventDB::getAggregatedEvents));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
-        this.modelInstance = new FilteredEventsModel(this);
+        this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
     }
 
   
