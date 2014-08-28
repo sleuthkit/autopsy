@@ -62,6 +62,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
+import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -170,7 +171,7 @@ public class TimeLineController  {
     private final ZoomParams InitialZoomState;
 
     @GuardedBy("this")
-    private final HistoryManager<ZoomParams> historyManager = new HistoryManager<>();
+    private final History<ZoomParams> historyManager = new History<>();
 
     //all members should be access with the intrinsict lock of this object held
     //selected events (ie shown in the result viewer)
