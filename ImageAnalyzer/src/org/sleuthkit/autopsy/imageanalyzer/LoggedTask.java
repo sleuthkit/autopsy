@@ -22,12 +22,11 @@ import java.util.logging.Level;
 import javafx.concurrent.Task;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.progress.ProgressAdapter;
 
 /**
  * Simple Extension of Task that logs state changes
  */
-public abstract class LoggedTask<T> extends Task<T> implements Cancellable, ProgressAdapter {
+public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
 
     private static final Logger LOGGER = Logger.getLogger(LoggedTask.class.getName());
     private final String taskName;

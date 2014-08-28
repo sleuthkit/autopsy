@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
+import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,11 @@ import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
@@ -76,7 +81,6 @@ import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import org.sleuthkit.autopsy.imageanalyzer.gui.EurekaToolbar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
-import org.sleuthkit.autopsy.imageanalyzer.progress.ProgressAdapterBase;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -210,7 +214,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
 
     private ImageAnalyzerController() {
 
-        listeningEnabled.addListener((observable, oldValue, newValue) -> {
+        listeningEnabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue && !oldValue && Case.existsCurrentCase() && ImageAnalyzerModule.isCaseStale(Case.getCurrentCase())) {
                 queueTask(new CopyAnalyzedFiles());
             }
@@ -230,10 +234,10 @@ public class ImageAnalyzerController implements FileUpdateListener {
             checkForGroups();
         });
 
-        IngestManager.getInstance().addIngestModuleEventListener((evt) -> {
+        IngestManager.getInstance().addIngestModuleEventListener((PropertyChangeEvent evt) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
-        IngestManager.getInstance().addIngestJobEventListener((evt) -> {
+        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
 //        metaDataCollapsed.bind(EurekaToolbar.getDefault().showMetaDataProperty());
@@ -248,7 +252,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
     @SuppressWarnings("fallthrough")
     public void submitBGTask(final Task<?> task) {
         //listen to task state and remove task from list of tasks once it is 'done'
-        task.stateProperty().addListener((observableState, oldState, newState) -> {
+        task.stateProperty().addListener((ObservableValue<? extends Worker.State> observableState, Worker.State oldState, Worker.State newState) -> {
             switch (newState) {
                 case READY:
                 case SCHEDULED:
@@ -370,7 +374,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
         }
         dbWorkerThread = new DBWorkerThread();
 
-        getFileUpdateQueueSizeProperty().addListener((o) -> {
+        getFileUpdateQueueSizeProperty().addListener((Observable o) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
 
@@ -512,6 +516,55 @@ public class ImageAnalyzerController implements FileUpdateListener {
         return bgTasks.sizeProperty();
     }
 
+    /**
+     *
+     */
+    public static abstract class ProgressBase {
+
+        public double getProgress() {
+            return progress.get();
+        }
+
+        public final void updateProgress(Double workDone) {
+            this.progress.set(workDone);
+        }
+
+        public String getMessage() {
+            return message.get();
+        }
+
+        public final void updateMessage(String Status) {
+            this.message.set(Status);
+        }
+        SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
+        SimpleDoubleProperty progress = new SimpleDoubleProperty(this, "pregress");
+        SimpleStringProperty message = new SimpleStringProperty(this, "status");
+
+        public SimpleDoubleProperty progressProperty() {
+            return progress;
+        }
+
+        public SimpleStringProperty messageProperty() {
+            return message;
+        }
+
+        public Worker.State getState() {
+            return state.get();
+        }
+
+        protected void updateState(Worker.State newState) {
+            state.set(newState);
+        }
+
+        public ReadOnlyObjectProperty<Worker.State> stateProperty() {
+            return new ReadOnlyObjectWrapper<>(state.get());
+        }
+
+        public ProgressBase() {
+            super();
+        }
+    }
+
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
     //TODO: concept seems like  the controller deal with how much work to do at a given time
     // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)
@@ -582,7 +635,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
     /**
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    static public abstract class InnerTask extends ProgressAdapterBase implements Runnable {
+    static public abstract class InnerTask extends ProgressBase implements Runnable {
 
         protected volatile boolean cancelled = false;
 
@@ -613,6 +666,24 @@ public class ImageAnalyzerController implements FileUpdateListener {
     }
 
     /**
+     * Abstract base class for tasks associated with a file in the database
+     */
+    static private abstract class TaskWithFile extends InnerTask {
+
+        private final AbstractFile file;
+
+        public AbstractFile getFile() {
+            return file;
+        }
+
+        public TaskWithFile(AbstractFile f) {
+            super();
+            this.file = f;
+        }
+
+    }
+
+    /**
      * Task to mark all unanalyzed files in the DB as analyzed. Just to make
      * sure that all are displayed. Added because there were rare cases where
      * something failed and a file was never marked as analyzed and therefore
@@ -631,13 +702,10 @@ public class ImageAnalyzerController implements FileUpdateListener {
     /**
      * task that updates one file in database with results from ingest
      */
-    class UpdateFile extends InnerTask {
-
-        private final AbstractFile file;
+    class UpdateFile extends TaskWithFile {
 
         public UpdateFile(AbstractFile f) {
-            super();
-            this.file = f;
+            super(f);
         }
 
         /**
@@ -645,7 +713,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
          */
         @Override
         public void run() {
-            DrawableFile<?> drawableFile = DrawableFile.create(file, true);
+            DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
             db.updateFile(drawableFile);
         }
     }
@@ -653,13 +721,10 @@ public class ImageAnalyzerController implements FileUpdateListener {
     /**
      * task that updates one file in database with results from ingest
      */
-    class RemoveFile extends InnerTask {
-
-        private final AbstractFile file;
+    class RemoveFile extends TaskWithFile {
 
         public RemoveFile(AbstractFile f) {
-            super();
-            this.file = f;
+            super(f);
         }
 
         /**
@@ -667,7 +732,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
          */
         @Override
         public void run() {
-            boolean removeFile = db.removeFile(file.getId());
+            boolean removeFile = db.removeFile(getFile().getId());
         }
     }
 
@@ -798,17 +863,14 @@ public class ImageAnalyzerController implements FileUpdateListener {
             progressHandle.start();
             updateMessage("prepopulating image/video database");
 
-            /* Get all "drawable" files, based on extension. After ingest we
-             * use
-             * file type id module and if necessary jpeg signature matching
-             * to
+            /* Get all "drawable" files, based on extension. After ingest we use
+             * file type id module and if necessary jpeg signature matching to
              * add remove files */
             final List<AbstractFile> files;
             try {
                 files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + "and fs_obj_id = " + this.obj_id);
                 progressHandle.switchToDeterminate(files.size());
 
-//                updateProgress(0.0);
                 //do in transaction
                 DrawableDB.DrawableTransaction tr = db.beginTransaction();
                 int units = 0;
@@ -822,14 +884,10 @@ public class ImageAnalyzerController implements FileUpdateListener {
                     units++;
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);
-//                    updateProgress(prog - 1 / (double) files.size());
-//                    updateMessage(f.getName());
                 }
 
                 progressHandle.finish();
                 progressHandle = ProgressHandleFactory.createHandle("commiting image/video database");
-//                updateMessage("commiting image/video database");
-//                updateProgress(1.0);
 
                 progressHandle.start();
                 db.commitTransaction(tr, false);
@@ -841,9 +899,6 @@ public class ImageAnalyzerController implements FileUpdateListener {
             }
 
             progressHandle.finish();
-
-//            updateMessage("");
-//            updateProgress(-1.0);
         }
     }
 }
