@@ -69,7 +69,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;

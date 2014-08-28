@@ -61,7 +61,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.actions.Back;

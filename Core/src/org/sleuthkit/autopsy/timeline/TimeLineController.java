@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

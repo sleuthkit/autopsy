@@ -40,10 +40,10 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
-import org.sleuthkit.autopsy.imageanalyzer.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
@@ -609,7 +609,7 @@ public class GroupManager {
                 return null;
             }
 
-            groupProgress = ProgressHandleFactory.createHandle(getTaskName(), this);
+            groupProgress = ProgressHandleFactory.createHandle(getTitle(), this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();

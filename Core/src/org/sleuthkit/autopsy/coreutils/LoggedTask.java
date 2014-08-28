@@ -16,28 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imageanalyzer;
+package org.sleuthkit.autopsy.coreutils;
 
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.concurrent.Task;
 import org.openide.util.Cancellable;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Simple Extension of Task that logs state changes
+ * extension of Task that logs state changes
  */
 public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
 
     private static final Logger LOGGER = Logger.getLogger(LoggedTask.class.getName());
-    private final String taskName;
-    private final Boolean logStateChanges;
 
-    public String getTaskName() {
-        return taskName;
-    }
+    private final boolean logStateChanges;
 
-    public LoggedTask(String taskName, Boolean logStateChanges) {
-        this.taskName = taskName;
+    public LoggedTask(String taskName, boolean logStateChanges) {
+        updateTitle(taskName);
         this.logStateChanges = logStateChanges;
     }
 
@@ -45,14 +41,14 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
     protected void cancelled() {
         super.cancelled();
         if (logStateChanges) {
-            LOGGER.log(Level.WARNING, "{0} cancelled!", taskName);
+            LOGGER.log(Level.WARNING, "{0} cancelled!", getTitle());
         }
     }
 
     @Override
     protected void failed() {
         super.failed();
-        LOGGER.log(Level.SEVERE, taskName + " failed", getException());
+        LOGGER.log(Level.SEVERE, getTitle() + " failed!", getException());
 
     }
 
@@ -60,15 +56,20 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
     protected void scheduled() {
         super.scheduled();
         if (logStateChanges) {
-            LOGGER.log(Level.INFO, "{0} scheduled", taskName);
+            LOGGER.log(Level.INFO, "{0} scheduled", getTitle());
         }
     }
 
     @Override
     protected void succeeded() {
         super.succeeded();
+        try {
+            get();
+        } catch (InterruptedException | ExecutionException ex) {
+            LOGGER.log(Level.SEVERE, getTitle() + " threw unexpected exception: ", ex);
+        }
         if (logStateChanges) {
-            LOGGER.log(Level.INFO, "{0} succeeded", taskName);
+            LOGGER.log(Level.INFO, "{0} succeeded", getTitle());
         }
     }
 }

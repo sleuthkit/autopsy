@@ -76,7 +76,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.timeline.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;

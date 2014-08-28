@@ -61,7 +61,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
