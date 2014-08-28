@@ -156,7 +156,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
     }
 
     @Override
-    public DrawableFile getFile() {
+    public DrawableFile<?> getFile() {
         if (fileID != null) {
             if (file == null || file.getId() != fileID) {
                 try {

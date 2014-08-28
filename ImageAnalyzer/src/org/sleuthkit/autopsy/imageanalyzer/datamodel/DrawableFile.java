@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
-    public static DrawableFile create(AbstractFile abstractFileById, boolean b) {
+    public static <T extends AbstractFile> DrawableFile<T> create(T abstractFileById, boolean b) {
         if (EurekaModule.isVideoFile(abstractFileById)) {
             return new VideoFile(abstractFileById, b);
         } else {
@@ -68,7 +68,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public static DrawableFile create(Long id, boolean b) throws TskCoreException, IllegalStateException {
+    public static DrawableFile<?> create(Long id, boolean b) throws TskCoreException, IllegalStateException {
 
         AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
         if (EurekaModule.isVideoFile(abstractFileById)) {
@@ -135,15 +135,15 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return new ArrayList<>();
     }
 
-    public ObservableList<Pair<DrawableAttribute, ? extends Object>> getAttributesList() {
-        final ObservableList<Pair<DrawableAttribute, ? extends Object>> attributeList = FXCollections.observableArrayList();
-        for (DrawableAttribute attr : DrawableAttribute.getValues()) {
+    public ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> getAttributesList() {
+        final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributeList = FXCollections.observableArrayList();
+        for (DrawableAttribute<?> attr : DrawableAttribute.getValues()) {
             attributeList.add(new Pair<>(attr, getValueOfAttribute(attr)));
         }
         return attributeList;
     }
 
-    public Object getValueOfAttribute(DrawableAttribute attr) {
+    public Object getValueOfAttribute(DrawableAttribute<?> attr) {
         switch (attr.attrName) {
             case OBJ_ID:
                 return file.getId();
@@ -328,6 +328,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return this.file;
     }
 
+    @SuppressWarnings("unchecked")
     private void updateHashSetHits() {
         hashHitSetNames.setAll((Collection<? extends String>) getValuesOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
     }
