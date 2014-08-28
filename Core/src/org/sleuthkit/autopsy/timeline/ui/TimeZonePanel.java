@@ -27,7 +27,7 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**

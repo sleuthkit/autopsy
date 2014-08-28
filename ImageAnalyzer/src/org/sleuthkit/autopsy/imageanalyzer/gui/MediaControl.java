@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;

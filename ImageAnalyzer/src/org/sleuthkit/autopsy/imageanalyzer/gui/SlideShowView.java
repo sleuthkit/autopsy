@@ -47,7 +47,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;

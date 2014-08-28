@@ -60,8 +60,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.joda.time.DateTime;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -70,7 +71,6 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * FXML Controller class for a {@link EventDetailChart} based implementation of

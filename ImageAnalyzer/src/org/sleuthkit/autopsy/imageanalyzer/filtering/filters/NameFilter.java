@@ -4,7 +4,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.filtering.filters;
 
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import java.net.URL;
 import java.util.ResourceBundle;

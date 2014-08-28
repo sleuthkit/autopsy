@@ -40,7 +40,7 @@ import javafx.scene.layout.AnchorPane;
 import javax.swing.SortOrder;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;

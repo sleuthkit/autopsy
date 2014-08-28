@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imageanalyzer;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -35,6 +35,9 @@ import org.openide.util.Exceptions;
  */
 public class FXMLConstructor {
 
+    private FXMLConstructor() {
+    }
+    
     private static final CachingClassLoader CACHING_CLASS_LOADER = new CachingClassLoader((FXMLLoader.getDefaultClassLoader()));
 
     static public void construct(Node n, String fxmlFileName) {
@@ -65,7 +68,7 @@ public class FXMLConstructor {
      */
     static public class CachingClassLoader extends ClassLoader {
 
-        private final Map<String, Class> classes = new HashMap<String, Class>();
+        private final Map<String, Class<?>> classes = new HashMap<>();
 
         private final ClassLoader parent;
 

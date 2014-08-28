@@ -96,7 +96,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;

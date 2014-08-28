@@ -60,8 +60,10 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.coreutils.ColorUtilities;
+import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.actions.Back;
@@ -70,9 +72,7 @@ import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
-import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * FXML Controller class for a {@link StackedBarChart<String,Number>} based
