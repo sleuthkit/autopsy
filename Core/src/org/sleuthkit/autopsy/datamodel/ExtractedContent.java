@@ -139,8 +139,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
         }

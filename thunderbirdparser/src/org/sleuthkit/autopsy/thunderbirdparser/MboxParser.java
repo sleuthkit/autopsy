@@ -283,7 +283,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             }
         }
         
-        Attachment attach = new Attachment();
+        EmailMessage.Attachment attach = new EmailMessage.Attachment();
         attach.setName(filename);
         attach.setLocalPath(ThunderbirdMboxFileIngestModule.getRelModuleOutputPath() 
                 + File.separator + uniqueFilename);

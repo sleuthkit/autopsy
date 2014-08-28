@@ -20,12 +20,11 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Cursor;
 import java.awt.EventQueue;
-import java.beans.PropertyVetoException;
-import java.io.IOException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.PropertyVetoException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -33,14 +32,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
-import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
@@ -50,16 +45,24 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
+import org.openide.util.NbBundle;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
+import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -72,9 +75,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent;
-import org.sleuthkit.autopsy.datamodel.Reports;
 
 /**
  * Top component which displays something.
@@ -631,7 +631,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                     Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                     if (treeNode != null) {
-                        OriginalNode origin = treeNode.getLookup().lookup(OriginalNode.class);
+                        DirectoryTreeFilterNode.OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
                         if (origin == null) {
                             return;
                         }
@@ -767,7 +767,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             logger.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
             return;
         }
-        OriginalNode imagesNodeOrig = dataSourcesFilterNode.getLookup().lookup(OriginalNode.class);
+        DirectoryTreeFilterNode.OriginalNode imagesNodeOrig = dataSourcesFilterNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
 
         if (imagesNodeOrig == null) {
             logger.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree"); //NON-NLS

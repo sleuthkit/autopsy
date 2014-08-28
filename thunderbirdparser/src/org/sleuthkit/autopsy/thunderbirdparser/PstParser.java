@@ -214,7 +214,7 @@ class PstParser {
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 
-                Attachment attachment = new Attachment();
+                EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
                 long crTime = attach.getCreationTime().getTime() / 1000;
                 long mTime = attach.getModificationTime().getTime() / 1000;
