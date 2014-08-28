@@ -29,113 +29,83 @@ import static javax.swing.SortOrder.DESCENDING;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.TAGS;
-import org.sleuthkit.datamodel.TagName;
 
-/** enum of possible properties to sort groups by. This is the model for the
- * drop down in {@link  EurekaToolbar} as well as each enum value having the
- * stategy ({@link  Comparator}) for sorting the groups */
+/**
+ * enum of possible properties to sort groups by. This is the model for the drop
+ * down in {@link  EurekaToolbar} as well as each enum value having the stategy
+ * ({@link  Comparator}) for sorting the groups
+ */
 public enum GroupSortBy implements ComparatorProvider {
 
-    /** sort the groups by the number of files in each
-     * sort the groups by the number of files in each */
+    /**
+     * sort the groups by the number of files in each sort the groups by the
+     * number of files in each
+     */
     FILE_COUNT("Group Size", true, "folder-open-image.png") {
                 @Override
-        public Comparator<Grouping> getGrpComparator(DrawableAttribute attr, final SortOrder sortOrder) {
-                    Comparator<Grouping> comparingInt = Comparator.comparingInt(Grouping::getSize);
-            return sortOrder == ASCENDING ? comparingInt : comparingInt.reversed();
-        }
+                public Comparator<Grouping> getGrpComparator(final SortOrder sortOrder) {
+                    return applySortOrder(sortOrder, Comparator.comparingInt(Grouping::getSize));
+                }
 
                 @Override
-                public <A extends Comparable> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
+                public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
                     return (A v1, A v2) -> {
                         Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
                         Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
-                        return getGrpComparator(attr, sortOrder).compare(g1, g2);
+                        return getGrpComparator(sortOrder).compare(g1, g2);
                     };
                 }
             },
-    /** sort
-     * the groups by the natural order of the grouping value ( eg group them by
-     * path alphabetically ) */
+    /**
+     * sort the groups by the natural order of the grouping value ( eg group
+     * them by path alphabetically )
+     */
     GROUP_BY_VALUE("Group Name", true, "folder-rename.png") {
                 @Override
-        public Comparator<Grouping> getGrpComparator(final DrawableAttribute attr, final SortOrder sortOrder) {
-            return (Grouping o1, Grouping o2) -> {
-
-                        final Comparable c1 = o1.groupKey.getValue();
-                        final Comparable c2 = o2.groupKey.getValue();
-                        final boolean isTags = attr.attrName == TAGS;
-
-                switch (sortOrder) {
-                    case ASCENDING:
-                        return c1.compareTo(c2);
-                    case DESCENDING:
-                        return c1.compareTo(c2) * -1;
-                    default: //unsorted
-                        return 0;
-                }
-            };
-        }
-
-        @Override
-        public <A extends Comparable> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
-            return (A o1, A o2) -> {
-                Comparable c1;
-                Comparable c2;
-                switch (attr.attrName) {
-                    case TAGS:
-                        c1 = ((TagName) o1).getDisplayName();
-                        c2 = ((TagName) o2).getDisplayName();
-                        break;
-                    default:
-                        c1 = (Comparable) o1;
-                        c2 = (Comparable) o2;
+                public Comparator<Grouping> getGrpComparator(final SortOrder sortOrder) {
+                    return applySortOrder(sortOrder, Comparator.comparing((Grouping t) -> t.groupKey.getValue()));
                 }
 
-                        switch (sortOrder) {
-                            case ASCENDING:
-                                return c1.compareTo(c2);
-                            case DESCENDING:
-                                return c1.compareTo(c2) * -1;
-                            default: //unsorted
-                                return 0;
-                        }
-                    };
+                @Override
+                public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
+                    return applySortOrder(sortOrder, Comparator.<A>naturalOrder());
                 }
             },
-    /** don't sort the groups just use what ever
-     * order they come in (ingest
-     * order) */
-    /** don't sort the groups just use what ever order they come
-     * in (ingest
-     * order) */
+    /**
+     * don't sort the groups just use what ever order they come in (ingest
+     * order)
+     */
+    /**
+     * don't sort the groups just use what ever order they come in (ingest
+     * order)
+     */
     NONE("None", false, "prohibition.png") {
                 @Override
-        public Comparator<Grouping> getGrpComparator(DrawableAttribute attr, SortOrder sortOrder) {
-            return new NoOpComparator<>();
-        }
+                public Comparator<Grouping> getGrpComparator(SortOrder sortOrder) {
+                    return new NoOpComparator<>();
+                }
 
                 @Override
-                public <A extends Comparable> Comparator<A> getValueComparator(DrawableAttribute<A> attr, final SortOrder sortOrder) {
+                public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, final SortOrder sortOrder) {
                     return new NoOpComparator<>();
                 }
             },
-    /** sort
-     * the groups by some priority metric to be determined and implemented */
+    /**
+     * sort the groups by some priority metric to be determined and implemented
+     */
     PRIORITY("Priority", false, "hashset_hits.png") {
                 @Override
-        public Comparator<Grouping> getGrpComparator(DrawableAttribute attr, SortOrder sortOrder) {
-            return Comparator.nullsLast(Comparator.comparingDouble(Grouping::getHashHitDensity).thenComparing(Grouping::getSize).reversed());
-        }
+                public Comparator<Grouping> getGrpComparator(SortOrder sortOrder) {
+                    return Comparator.nullsLast(Comparator.comparingDouble(Grouping::getHashHitDensity).thenComparing(Grouping::getSize).reversed());
+                }
 
-        @Override
-        public <A extends Comparable> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
-            return (A v1, A v2) -> {
-                Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
-                Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
+                @Override
+                public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
+                    return (A v1, A v2) -> {
+                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
+                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
 
-                        return getGrpComparator(attr, sortOrder).compare(g1, g2);
+                        return getGrpComparator(sortOrder).compare(g1, g2);
                     };
                 }
             };
@@ -181,6 +151,18 @@ public enum GroupSortBy implements ComparatorProvider {
         return sortOrderEnabled;
     }
 
+    private static <T> Comparator<T> applySortOrder(final SortOrder sortOrder, Comparator<T> comparingInt) {
+        switch (sortOrder) {
+            case ASCENDING:
+                return comparingInt;
+            case DESCENDING:
+                return comparingInt.reversed();
+            case UNSORTED:
+            default:
+                return new NoOpComparator<>();
+        }
+    }
+
     private static class NoOpComparator<A> implements Comparator<A> {
 
         @Override
@@ -190,13 +172,14 @@ public enum GroupSortBy implements ComparatorProvider {
     }
 }
 
-/** * implementers of this interface must provide a method to compare
+/**
+ * * implementers of this interface must provide a method to compare
  * ({@link  Comparable}) values and Groupings based on an
  * {@link DrawableAttribute} and a {@link SortOrder}
  */
 interface ComparatorProvider {
 
-    <A extends Comparable> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder);
+    <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder);
 
-    <A> Comparator<Grouping> getGrpComparator(DrawableAttribute<A> attr, SortOrder sortOrder);
+    Comparator<Grouping> getGrpComparator(SortOrder sortOrder);
 }

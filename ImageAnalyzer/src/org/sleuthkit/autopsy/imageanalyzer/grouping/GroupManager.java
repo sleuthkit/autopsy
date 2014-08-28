@@ -71,19 +71,27 @@ public class GroupManager {
 
     private final ImageAnalyzerController controller;
 
-    /** map from {@link GroupKey}s to {@link  Grouping}s. All groups (even not
-     * fully analyzed or not visible groups could be in this map */
-    private final Map<GroupKey, Grouping> groupMap = new HashMap<>();
+    /**
+     * map from {@link GroupKey}s to {@link  Grouping}s. All groups (even not
+     * fully analyzed or not visible groups could be in this map
+     */
+    private final Map<GroupKey<?>, Grouping> groupMap = new HashMap<>();
 
-    /** list of all analyzed groups */
+    /**
+     * list of all analyzed groups
+     */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> analyzedGroups = FXCollections.observableArrayList();
 
-    /** list of unseen groups */
+    /**
+     * list of unseen groups
+     */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> unSeenGroups = FXCollections.observableArrayList();
 
-    /** sorted list of unseen groups */
+    /**
+     * sorted list of unseen groups
+     */
     @ThreadConfined(type = ThreadType.JFX)
     private final SortedList<Grouping> sortedUnSeenGroups = unSeenGroups.sorted();
 
@@ -92,7 +100,7 @@ public class GroupManager {
     /* --- current grouping/sorting attributes --- */
     private volatile GroupSortBy sortBy = GroupSortBy.NONE;
 
-    private volatile DrawableAttribute groupBy = DrawableAttribute.PATH;
+    private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
 
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
 
@@ -129,17 +137,19 @@ public class GroupManager {
      * @returna a set of {@link GroupKey}s representing the group(s) the given
      * file is a part of
      */
-    public Set<GroupKey> getGroupKeysForFile(DrawableFile file) {
-        Set<GroupKey> resultSet = new HashSet();
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile<?> file) {
+        Set<GroupKey<?>> resultSet = new HashSet<>();
         final Object valueOfAttribute = file.getValueOfAttribute(groupBy);
-        List<? extends Comparable> vals;
+
+        List<? extends Comparable<?>> vals;
         if (valueOfAttribute instanceof List<?>) {
-            vals = (List<? extends Comparable>) valueOfAttribute;
+            vals = (List<? extends Comparable<?>>) valueOfAttribute;
         } else {
-            vals = Collections.singletonList((Comparable) valueOfAttribute);
+            vals = Collections.singletonList((Comparable<?>) valueOfAttribute);
         }
-        for (Comparable val : vals) {
-            final GroupKey groupKey = new GroupKey(groupBy, val);
+        for (Comparable<?> val : vals) {
+            final GroupKey<?> groupKey = new GroupKey(groupBy, val);
             resultSet.add(groupKey);
         }
         return resultSet;
@@ -149,26 +159,27 @@ public class GroupManager {
      * using the current groupBy set for this manager, find groupkeys for all
      * the groups the given file is a part of
      *
-     * @param file
+ 
      *
-     * @returna a set of {@link GroupKey}s representing the group(s) the given
+     * @return a a set of {@link GroupKey}s representing the group(s) the given
      * file is a part of
      */
-    public Set<GroupKey> getGroupKeysForFileID(Long fileID) {
-        Set<GroupKey> resultSet = new HashSet();
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
+        Set<GroupKey<?>> resultSet = new HashSet<>();
         try {
-            DrawableFile file = db.getFileFromID(fileID);
+            DrawableFile<?> file = db.getFileFromID(fileID);
             final Object valueOfAttribute = file.getValueOfAttribute(groupBy);
 
-            List<? extends Comparable> vals;
+            List<? extends Comparable<?>> vals;
             if (valueOfAttribute instanceof List<?>) {
-                vals = (List<? extends Comparable>) valueOfAttribute;
+                vals = (List<? extends Comparable<?>>) valueOfAttribute;
             } else {
-                vals = Collections.singletonList((Comparable) valueOfAttribute);
+                vals = Collections.singletonList((Comparable<?>) valueOfAttribute);
             }
 
-            for (Comparable val : vals) {
-                final GroupKey groupKey = new GroupKey(groupBy, val);
+            for (Comparable<?> val : vals) {
+                final GroupKey<?> groupKey = new GroupKey(groupBy, val);
                 resultSet.add(groupKey);
             }
         } catch (TskCoreException ex) {
@@ -181,9 +192,9 @@ public class GroupManager {
      * @param groupKey
      *
      * @return return the Grouping (if it exists) for the given GroupKey, or
-     *         null if no group exists for that key.
+     * null if no group exists for that key.
      */
-    public Grouping getGroupForKey(GroupKey groupKey) {
+    public Grouping getGroupForKey(GroupKey<?> groupKey) {
         synchronized (groupMap) {
             return groupMap.get(groupKey);
         }
@@ -238,7 +249,7 @@ public class GroupManager {
      * TODO: check if a group already exists for that key and ... (do what?add
      * files to it?) -jm
      */
-    public Grouping makeGroup(GroupKey groupKey, List<Long> files) {
+    public Grouping makeGroup(GroupKey<?> groupKey, List<Long> files) {
         List<Long> newFiles = files == null ? new ArrayList<>() : files;
 
         Grouping g = new Grouping(groupKey, newFiles);
@@ -259,9 +270,9 @@ public class GroupManager {
      * no-op
      *
      * @param groupKey the value of groupKey
-     * @param fileID   the value of file
+     * @param fileID the value of file
      */
-    public synchronized void removeFromGroup(GroupKey groupKey, final Long fileID) {
+    public synchronized void removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
         final Grouping group = getGroupForKey(groupKey);
         if (group != null) {
@@ -269,7 +280,7 @@ public class GroupManager {
         }
     }
 
-    public synchronized void populateAnalyzedGroup(final GroupKey groupKey, List<Long> filesInGroup) {
+    public synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, List<Long> filesInGroup) {
         populateAnalyzedGroup(groupKey, filesInGroup, null);
     }
 
@@ -280,7 +291,7 @@ public class GroupManager {
      * @param groupKey
      * @param filesInGroup
      */
-    private synchronized void populateAnalyzedGroup(final GroupKey groupKey, List<Long> filesInGroup, ReGroupTask task) {
+    private synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, List<Long> filesInGroup, ReGroupTask task) {
 
         /* if this is not part of a regroup task or it is but the task is not
          * cancelled...
@@ -308,9 +319,9 @@ public class GroupManager {
      * @param groupKey
      *
      * @return null if this group is not analyzed or a list of file ids in this
-     *         group if they are all analyzed
+     * group if they are all analyzed
      */
-    public List<Long> checkAnalyzed(final GroupKey groupKey) {
+    public List<Long> checkAnalyzed(final GroupKey<?> groupKey) {
         try {
             /* for attributes other than path we can't be sure a group is fully
              * analyzed because we don't know all the files that will be a part
@@ -391,7 +402,7 @@ public class GroupManager {
      *
      * @return
      */
-    public <A extends Comparable> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
         try {
             List<A> values;
             switch (groupBy.attrName) {
@@ -433,11 +444,11 @@ public class GroupManager {
      *
      * @return
      */
-    public <A extends Comparable> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy) {
+    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy) {
         return findValuesForAttribute(groupBy, sortBy, SortOrder.ASCENDING);
     }
 
-    public List<Long> getFileIDsInGroup(GroupKey groupKey) throws TskCoreException {
+    public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
         switch (groupKey.getAttribute().attrName) {
             //these cases get special treatment
             case CATEGORY:
@@ -513,11 +524,11 @@ public class GroupManager {
         this.sortBy = sortBy;
     }
 
-    public DrawableAttribute getGroupBy() {
+    public DrawableAttribute<?> getGroupBy() {
         return groupBy;
     }
 
-    public void setGroupBy(DrawableAttribute groupBy) {
+    public void setGroupBy(DrawableAttribute<?> groupBy) {
         this.groupBy = groupBy;
     }
 
@@ -531,15 +542,14 @@ public class GroupManager {
 
     /**
      * regroup all files in the database using given {@link  DrawableAttribute}
-     * see
-     * {@link ReGroupTask} for more details.
+     * see {@link ReGroupTask} for more details.
      *
      * @param groupBy
      * @param sortBy
      * @param sortOrder
-     * @param force     true to force a full db query regroup
+     * @param force true to force a full db query regroup
      */
-    public void regroup(final DrawableAttribute groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
+    public void regroup(final DrawableAttribute<?> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
         //only re-query the db if the group by attribute changed or it is forced
         if (groupBy != getGroupBy() || force == true) {
             setGroupBy(groupBy);
@@ -549,7 +559,7 @@ public class GroupManager {
                 groupByTask.cancel(true);
             }
             Platform.runLater(() -> {
-                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(groupBy, sortOrder));
+                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator( sortOrder));
             });
 
             groupByTask = new ReGroupTask(groupBy, sortBy, sortOrder);
@@ -559,7 +569,7 @@ public class GroupManager {
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(groupBy, sortOrder));
+                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator( sortOrder));
             });
         }
     }
@@ -568,6 +578,7 @@ public class GroupManager {
      * Task to query database for files in sorted groups and build
      * {@link Groupings} for them
      */
+    @SuppressWarnings({"unchecked","rawtypes"})
     private class ReGroupTask extends LoggedTask<Void> {
 
         private ProgressHandle groupProgress;
@@ -606,13 +617,13 @@ public class GroupManager {
             groupMap.clear();
 
             //get a list of group key vals
-            final List<Comparable> vals = findValuesForAttribute(groupBy, sortBy, sortOrder);
+            final List<Comparable<?>> vals = findValuesForAttribute(groupBy, sortBy, sortOrder);
 
             groupProgress.start(vals.size());
 
             int p = 0;
             //for each key value
-            for (final Comparable val : vals) {
+            for (final Comparable<?> val : vals) {
                 if (isCancelled()) {
                     return null;//abort
                 }
@@ -621,7 +632,7 @@ public class GroupManager {
                 updateProgress(p, vals.size());
                 groupProgress.progress("regrouping files by " + groupBy.attrName.name() + " : " + val, p);
                 //check if this group is analyzed
-                final GroupKey groupKey = new GroupKey(groupBy, val);
+                final GroupKey<?> groupKey = new GroupKey<>(groupBy, val);
 
                 List<Long> checkAnalyzed = checkAnalyzed(groupKey);
                 if (checkAnalyzed != null) { // != null => the group is analyzed, so add it to the ui
@@ -639,8 +650,6 @@ public class GroupManager {
                 groupProgress.finish();
                 groupProgress = null;
             }
-
-//            controller.checkForGroups();
         }
     }
 }

@@ -328,7 +328,7 @@ public class NavPanel extends TabPane {
                 for (Long fileId : fileIDsInGroup) {
 
                     DrawableFile file = controller.getFileFromId(fileId);
-                    Collection<GroupKey> groupKeysForFile;
+                    Collection<GroupKey<?>> groupKeysForFile;
                     if (controller.getGroupManager().getGroupBy() == DrawableAttribute.TAGS) {
                         Collection<TagName> tagNames = (Collection<TagName>) file.getValueOfAttribute(DrawableAttribute.TAGS);
                         groupKeysForFile = new ArrayList<>();

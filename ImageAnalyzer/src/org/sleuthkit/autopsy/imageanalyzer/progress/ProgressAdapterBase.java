@@ -48,7 +48,7 @@ public abstract class ProgressAdapterBase implements ProgressAdapter {
         this.message.set(Status);
     }
 
-    SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty(Worker.State.READY);
+    SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
 
     SimpleDoubleProperty progress = new SimpleDoubleProperty(this, "pregress");
 

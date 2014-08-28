@@ -54,7 +54,9 @@ import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** */
+/**
+ *
+ */
 public class MetaDataPane extends AnchorPane implements Category.CategoryListener, TagUtils.TagListener, DrawableView {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
@@ -73,18 +75,18 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
     private URL location;
 
     @FXML
-    private TableColumn<Pair<DrawableAttribute, ? extends Object>, DrawableAttribute> attributeColumn;
+    private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, DrawableAttribute<?>> attributeColumn;
 
     @FXML
-    private TableView<Pair<DrawableAttribute, ? extends Object>> tableView;
+    private TableView<Pair<DrawableAttribute<?>, ? extends Object>> tableView;
 
     @FXML
-    private TableColumn<Pair<DrawableAttribute, ? extends Object>, String> valueColumn;
+    private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, String> valueColumn;
 
     @FXML
     private BorderPane imageBorder;
 
-    private DrawableFile file;
+    private DrawableFile<?> file;
 
     @Override
     public Long getFileID() {
@@ -103,31 +105,24 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setPlaceholder(new Label("Select a file to show its details here."));
 
-        attributeColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<DrawableAttribute, ?>, DrawableAttribute> param) -> new SimpleObjectProperty<>(param.getValue().getKey()));
-        attributeColumn.setCellFactory(new Callback<TableColumn<Pair<DrawableAttribute, ? extends Object>, DrawableAttribute>, TableCell<Pair<DrawableAttribute, ? extends Object>, DrawableAttribute>>() {
-
+        attributeColumn.setCellValueFactory((param) -> new SimpleObjectProperty<>(param.getValue().getKey()));
+        attributeColumn.setCellFactory((param) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, DrawableAttribute<?>>() {
             @Override
-            public TableCell<Pair<DrawableAttribute, ? extends Object>, DrawableAttribute> call(TableColumn<Pair<DrawableAttribute, ? extends Object>, DrawableAttribute> param) {
-                return new TableCell<Pair<DrawableAttribute, ? extends Object>, DrawableAttribute>() {
-
-                    @Override
-                    protected void updateItem(DrawableAttribute item, boolean empty) {
-                        super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
-                        if (item != null) {
-                            setText(item.getDisplayName());
-                            setGraphic(new ImageView(item.getIcon()));
-                        } else {
-                            setGraphic(null);
-                            setText(null);
-                        }
-                    }
-                };
+            protected void updateItem(DrawableAttribute<?> item, boolean empty) {
+                super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
+                if (item != null) {
+                    setText(item.getDisplayName());
+                    setGraphic(new ImageView(item.getIcon()));
+                } else {
+                    setGraphic(null);
+                    setText(null);
+                }
             }
         });
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
-        valueColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<DrawableAttribute, ?>, String> p) -> {
+        valueColumn.setCellValueFactory((p) -> {
             if (p.getValue().getKey() == DrawableAttribute.TAGS) {
                 return new SimpleStringProperty(TagUtils.collectionToString((Collection<TagName>) p.getValue().getValue()));
             } else {
@@ -135,24 +130,17 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
             }
         });
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
-        valueColumn.setCellFactory(new Callback<TableColumn<Pair<DrawableAttribute, ? extends Object>, String>, TableCell<Pair<DrawableAttribute, ? extends Object>, String>>() {
+        valueColumn.setCellFactory((p) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, String>() {
             @Override
-            public TableCell<Pair<DrawableAttribute, ? extends Object>, String> call(TableColumn<Pair<DrawableAttribute, ? extends Object>, String> p) {
-                return new TableCell<Pair<DrawableAttribute, ? extends Object>, String>() {
-
-                    @Override
-                    public void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-
-                        if (!isEmpty()) {
-                            Text text = new Text(item);
-                            text.wrappingWidthProperty().bind(getTableColumn().widthProperty());
-                            setGraphic(text);
-                        } else {
-                            setGraphic(null);
-                        }
-                    }
-                };
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!isEmpty()) {
+                    Text text = new Text(item);
+                    text.wrappingWidthProperty().bind(getTableColumn().widthProperty());
+                    setGraphic(text);
+                } else {
+                    setGraphic(null);
+                }
             }
         });
 
@@ -229,7 +217,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
 
     public void updateUI() {
         final Image icon = getFile().getIcon();
-        final ObservableList attributesList = getFile().getAttributesList();
+        final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributesList = getFile().getAttributesList();
 
         Platform.runLater(() -> {
             imageView.setImage(icon);

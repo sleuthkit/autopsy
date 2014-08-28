@@ -245,6 +245,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
      *
      * @param task
      */
+    @SuppressWarnings("fallthrough")
     public void submitBGTask(final Task<?> task) {
         //listen to task state and remove task from list of tasks once it is 'done'
         task.stateProperty().addListener((observableState, oldState, newState) -> {
@@ -253,7 +254,6 @@ public class ImageAnalyzerController implements FileUpdateListener {
                 case SCHEDULED:
                 case RUNNING:
                     break;
-
                 case FAILED:
                     LOGGER.log(Level.WARNING, "task :" + task.getTitle() + " failed", task.getException());
                 case CANCELLED:
@@ -283,7 +283,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
     }
 
     synchronized public void advance(GroupViewState newState) {
-        if (viewState().get() == null ||( viewState().get().getGroup() != newState.getGroup())) {
+        if (viewState().get() == null || (viewState().get().getGroup() != newState.getGroup())) {
             historyManager.advance(newState);
         }
     }
@@ -398,7 +398,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
         restartWorker();
 
         groupManager.setDB(db);
-        SummaryTablePane.getDefault().handleCategoryChanged(Collections.EMPTY_LIST);
+        SummaryTablePane.getDefault().handleCategoryChanged(Collections.emptyList());
     }
 
     /**
@@ -414,9 +414,9 @@ public class ImageAnalyzerController implements FileUpdateListener {
             case FILE_REMOVED:
                 for (final long fileId : fileIDs) {
                     //get grouping(s) this file would be in
-                    Set<GroupKey> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
+                    Set<GroupKey<?>> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
 
-                    for (GroupKey gk : groupsForFile) {
+                    for (GroupKey<?> gk : groupsForFile) {
                         groupManager.removeFromGroup(gk, fileId);
                     }
                 }
@@ -438,9 +438,9 @@ public class ImageAnalyzerController implements FileUpdateListener {
                 for (final long fileId : fileIDs) {
 
                     //get grouping(s) this file would be in
-                    Set<GroupKey> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
+                    Set<GroupKey<?>> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
 
-                    for (GroupKey gk : groupsForFile) {
+                    for (GroupKey<?> gk : groupsForFile) {
                         Grouping g = groupManager.getGroupForKey(gk);
 
                         //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
@@ -496,7 +496,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
         dbWorkerThread.addTask(innerTask);
     }
 
-    public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
+    public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
         return db.getFileFromID(fileID);
     }
 
@@ -523,7 +523,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
         private volatile boolean cancelled = false;
 
         // list of tasks to run
-        private final BlockingQueue<InnerTask> workQueue = new LinkedBlockingQueue();
+        private final BlockingQueue<InnerTask> workQueue = new LinkedBlockingQueue<>();
 
         /**
          * Cancel all of the queued up tasks and the currently scheduled task.
@@ -647,7 +647,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
          */
         @Override
         public void run() {
-            DrawableFile drawableFile = DrawableFile.create(file, true);
+            DrawableFile<?> drawableFile = DrawableFile.create(file, true);
             db.updateFile(drawableFile);
         }
     }
