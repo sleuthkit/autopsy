@@ -18,22 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.filtering;
 
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.FilterSet;
-import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AtomicFilter;
-import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AttributeFilter;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
-import org.sleuthkit.autopsy.imageanalyzer.LoggedTask;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
-import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
-import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AbstractFilter;
-import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.NameFilter;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -47,18 +31,28 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.AnchorPane;
-import javafx.util.Callback;
 import javax.swing.SortOrder;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
+import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AbstractFilter;
+import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AtomicFilter;
+import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AttributeFilter;
+import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.FilterSet;
+import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.NameFilter;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
 
 /**
  * This singleton acts as the controller for the Filters. It creates filters
@@ -86,13 +80,10 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
      * clear/reset state
      */
     public void clear() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                db = null;
-                filterSet.clear();
-                attrFilterMap.clear();
-            }
+        Platform.runLater(() -> {
+            db = null;
+            filterSet.clear();
+            attrFilterMap.clear();
         });
     }
     /**
@@ -110,7 +101,7 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
         return filterSet;
     }
     /* top level filter */
-    private FilterSet filterSet = new FilterSet();
+    private final FilterSet filterSet = new FilterSet();
     /**
      * {@link Service} to (re)build filterset based on values in the database
      */
@@ -132,12 +123,7 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
 
         filtersList.setItems(filterSet.subFilters);
 
-        filtersList.setCellFactory(new Callback<ListView<AttributeFilter>, ListCell<AttributeFilter>>() {
-            @Override
-            public ListCell<AttributeFilter> call(ListView<AttributeFilter> p) {
-                return new FilterPaneListCell();
-            }
-        });
+        filtersList.setCellFactory((ListView<AttributeFilter> p) -> new FilterPaneListCell());
         for (final DrawableAttribute attr : DrawableAttribute.getValues()) {
             if (attr != DrawableAttribute.NAME && attr != DrawableAttribute.CREATED_TIME && attr != DrawableAttribute.MODIFIED_TIME) {
                 final AttributeFilter attrFilter = new AttributeFilter(attr);
@@ -240,11 +226,8 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
         for (final Object val : vals) {
             if (attributeFilter.containsSubFilterForValue(val) == false) {
                 final AtomicFilter filter = new AtomicFilter(attributeFilter.getAttribute(), filterComparison, val);
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        attributeFilter.subFilters.add(filter);
-                    }
+                Platform.runLater(() -> {
+                    attributeFilter.subFilters.add(filter);
                 });
 
                 filter.active.addListener(filterForwardingListener);
@@ -269,18 +252,14 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
         @Override
         protected void updateItem(final AttributeFilter item, final boolean empty) {
             super.updateItem(item, empty);
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    if (empty || item == null) {
-                        setGraphic(null);
-                    } else {
-                        setGraphic(filterPane);
-                        filterPane.setFilter(item);
-                    }
+            Platform.runLater(() -> {
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(filterPane);
+                    filterPane.setFilter(item);
                 }
             });
-
 
         }
     }
@@ -300,12 +279,9 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
 
             @Override
             protected Void call() throws Exception {
-                ThreadUtils.runAndWait(new Runnable() {
-                    @Override
-                    public void run() {
-                        filterSet.subFilters.clear();
-                        attrFilterMap.clear();
-                    }
+                Platform.runLater(() -> {
+                    filterSet.subFilters.clear();
+                    attrFilterMap.clear();
                 });
 
                 LOGGER.log(Level.INFO, "rebuilding filters started");
@@ -316,11 +292,8 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
                         case NAME:
                             final AttributeFilter nameFilter = getFilterForAttr(attr);
                             final NameFilter filter = new NameFilter();
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    nameFilter.subFilters.add(filter);
-                                }
+                            Platform.runLater(() -> {
+                                nameFilter.subFilters.add(filter);
                             });
 
                             filter.active.addListener(filterForwardingListener);
