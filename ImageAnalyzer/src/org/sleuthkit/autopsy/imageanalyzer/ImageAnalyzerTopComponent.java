@@ -31,7 +31,7 @@ import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
-import org.sleuthkit.autopsy.imageanalyzer.gui.EurekaToolbar;
+import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.GroupPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.MetaDataPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.StatusBar;
@@ -99,7 +99,7 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);
-            borderPane.setTop(EurekaToolbar.getDefault());
+            borderPane.setTop(Toolbar.getDefault());
             borderPane.setBottom(new StatusBar(controller));
 
             metaDataTable = new MetaDataPane(controller);

@@ -84,8 +84,8 @@ public class DrawableTile extends SingleDrawableViewBase implements Category.Cat
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
 
-        imageView.fitHeightProperty().bind(EurekaToolbar.getDefault().sizeSliderValue());
-        imageView.fitWidthProperty().bind(EurekaToolbar.getDefault().sizeSliderValue());
+        imageView.fitHeightProperty().bind(Toolbar.getDefault().sizeSliderValue());
+        imageView.fitWidthProperty().bind(Toolbar.getDefault().sizeSliderValue());
 
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
             setEffect(Objects.equals(newValue, fileID) ? LAST_SELECTED_EFFECT : null);

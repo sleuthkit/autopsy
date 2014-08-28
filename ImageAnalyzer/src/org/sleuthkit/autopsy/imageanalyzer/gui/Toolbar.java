@@ -42,20 +42,21 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
 import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.IconCache;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Controller for the Eureka ToolBar */
-public class EurekaToolbar extends ToolBar {
+/**
+ * Controller for the  ToolBar
+ */
+public class Toolbar extends ToolBar {
 
     private static final int SIZE_SLIDER_DEFAULT = 100;
 
@@ -97,7 +98,7 @@ public class EurekaToolbar extends ToolBar {
     @FXML
     private SplitMenuButton tagSelectedMenuButton;
 
-    private static EurekaToolbar instance;
+    private static Toolbar instance;
 
     private final SimpleObjectProperty<SortOrder> orderProperty = new SimpleObjectProperty<>(SortOrder.ASCENDING);
 
@@ -122,9 +123,9 @@ public class EurekaToolbar extends ToolBar {
         return sizeSlider.valueProperty();
     }
 
-    static synchronized public EurekaToolbar getDefault() {
+    static synchronized public Toolbar getDefault() {
         if (instance == null) {
-            instance = new EurekaToolbar();
+            instance = new Toolbar();
         }
         return instance;
     }
@@ -143,10 +144,15 @@ public class EurekaToolbar extends ToolBar {
         assert tagSelectedMenuButton != null : "fx:id=\"tagSelectedMenubutton\" was not injected: check your FXML file 'EurekaToolbar.fxml'.";
 
         FileIDSelectionModel.getInstance().getSelected().addListener((Observable o) -> {
-            ThreadUtils.runNowOrLater(() -> {
+            Runnable r = () -> {
                 tagSelectedMenuButton.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
                 catSelectedMenuButton.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
-            });
+            };
+            if (Platform.isFxApplicationThread()) {
+                r.run();
+            } else {
+                Platform.runLater(r);
+            }
         });
 
         tagSelectedMenuButton.setOnAction((ActionEvent t) -> {
@@ -221,7 +227,7 @@ public class EurekaToolbar extends ToolBar {
         });
     }
 
-    private EurekaToolbar() {
-        FXMLConstructor.construct(this, "EurekaToolbar.fxml");
+    private Toolbar() {
+        FXMLConstructor.construct(this, "Toolbar.fxml");
     }
 }

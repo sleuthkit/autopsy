@@ -78,7 +78,7 @@ import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
-import org.sleuthkit.autopsy.imageanalyzer.gui.EurekaToolbar;
+import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -240,7 +240,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
         IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
-//        metaDataCollapsed.bind(EurekaToolbar.getDefault().showMetaDataProperty());
+//        metaDataCollapsed.bind(Toolbar.getDefault().showMetaDataProperty());
     }
 
     /**
@@ -477,7 +477,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
             historyManager.clear();
         });
 
-        EurekaToolbar.getDefault().reset();
+        Toolbar.getDefault().reset();
         groupManager.clear();
         if (db != null) {
             db.closeDBCon();

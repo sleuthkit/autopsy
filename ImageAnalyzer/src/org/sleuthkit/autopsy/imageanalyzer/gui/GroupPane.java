@@ -363,8 +363,8 @@ public class GroupPane extends BorderPane implements GroupView {
         flashAnimation.setAutoReverse(true);
 
         //configure gridView cell properties
-        gridView.cellHeightProperty().bind(EurekaToolbar.getDefault().sizeSliderValue().add(75));
-        gridView.cellWidthProperty().bind(EurekaToolbar.getDefault().sizeSliderValue().add(75));
+        gridView.cellHeightProperty().bind(Toolbar.getDefault().sizeSliderValue().add(75));
+        gridView.cellWidthProperty().bind(Toolbar.getDefault().sizeSliderValue().add(75));
         gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
 
         //configure toolbar properties
