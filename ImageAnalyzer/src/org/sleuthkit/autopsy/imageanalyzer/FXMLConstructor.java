@@ -16,15 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.coreutils;
+package org.sleuthkit.autopsy.imageanalyzer;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 
 /**
@@ -35,27 +37,33 @@ import org.openide.util.Exceptions;
  */
 public class FXMLConstructor {
 
-    private FXMLConstructor() {
-    }
-    
+
     private static final CachingClassLoader CACHING_CLASS_LOADER = new CachingClassLoader((FXMLLoader.getDefaultClassLoader()));
 
     static public void construct(Node n, String fxmlFileName) {
-        FXMLLoader fxmlLoader = new FXMLLoader(n.getClass().getResource(fxmlFileName));
-        fxmlLoader.setRoot(n);
-        fxmlLoader.setController(n);
-        fxmlLoader.setClassLoader(CACHING_CLASS_LOADER);
+        final String name = "nbresloc:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
+        System.out.println(name);
 
         try {
-            fxmlLoader.load();
-        } catch (IOException exception) {
+            FXMLLoader fxmlLoader = new FXMLLoader(new URL(name)); //systemResource);
+            fxmlLoader.setRoot(n);
+            fxmlLoader.setController(n);
+            fxmlLoader.setClassLoader(CACHING_CLASS_LOADER);
+
             try {
-                fxmlLoader.setClassLoader(FXMLLoader.getDefaultClassLoader());
                 fxmlLoader.load();
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+            } catch (IOException exception) {
+                try {
+                    fxmlLoader.setClassLoader(FXMLLoader.getDefaultClassLoader());
+                    fxmlLoader.load();
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
+        } catch (MalformedURLException ex) {
+            Exceptions.printStackTrace(ex);
         }
+
     }
 
     /**

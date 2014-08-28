@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.imageanalyzer.filtering;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.FilterRow;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AtomicFilter;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.UnionFilter;
-import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import java.net.URL;
 import java.util.Map;
 import java.util.ResourceBundle;

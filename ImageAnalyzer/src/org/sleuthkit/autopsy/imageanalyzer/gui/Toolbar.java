@@ -42,7 +42,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
 import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.IconCache;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;

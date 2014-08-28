@@ -35,8 +35,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.coreutils.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -110,7 +110,9 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
                 }
             }
             Platform.runLater(() -> {
-                tableView.setItems(data);
+                if (tableView != null) {
+                    tableView.setItems(data);
+                }
             });
         }
     }
