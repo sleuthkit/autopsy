@@ -42,10 +42,10 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
@@ -159,7 +159,7 @@ public class GroupManager {
      * using the current groupBy set for this manager, find groupkeys for all
      * the groups the given file is a part of
      *
- 
+     *
      *
      * @return a a set of {@link GroupKey}s representing the group(s) the given
      * file is a part of
@@ -559,7 +559,7 @@ public class GroupManager {
                 groupByTask.cancel(true);
             }
             Platform.runLater(() -> {
-                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator( sortOrder));
+                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
             });
 
             groupByTask = new ReGroupTask(groupBy, sortBy, sortOrder);
@@ -569,7 +569,7 @@ public class GroupManager {
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator( sortOrder));
+                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
             });
         }
     }
@@ -578,7 +578,7 @@ public class GroupManager {
      * Task to query database for files in sorted groups and build
      * {@link Groupings} for them
      */
-    @SuppressWarnings({"unchecked","rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private class ReGroupTask extends LoggedTask<Void> {
 
         private ProgressHandle groupProgress;
@@ -609,7 +609,7 @@ public class GroupManager {
                 return null;
             }
 
-            groupProgress = ProgressHandleFactory.createHandle(getTitle(), this);
+            groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.name() + " sorted by " + sortBy.name() + " in " + sortOrder.name() + " order", this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
