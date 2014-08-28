@@ -22,7 +22,7 @@ import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.FilterSet;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AtomicFilter;
 import org.sleuthkit.autopsy.imageanalyzer.filtering.filters.AttributeFilter;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 import org.sleuthkit.autopsy.imageanalyzer.LoggedTask;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;

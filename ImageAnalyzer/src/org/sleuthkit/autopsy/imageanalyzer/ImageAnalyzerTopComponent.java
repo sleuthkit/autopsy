@@ -54,7 +54,7 @@ import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
     "CTL_EurekaTopComponent=Image/Video Analysis",
     "HINT_EurekaTopComponent=This is a Image/Video Analysis window"
 })
-public final class EurekaTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
+public final class ImageAnalyzerTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "EurekaTopComponent";
 
@@ -82,7 +82,7 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
 
     private Scene myScene;
 
-    public EurekaTopComponent() {
+    public ImageAnalyzerTopComponent() {
 
         setName(Bundle.CTL_EurekaTopComponent());
         setToolTipText(Bundle.HINT_EurekaTopComponent());
@@ -93,7 +93,7 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
         Platform.runLater(() -> {
             fullUIStack = new StackPane();
             myScene = new Scene(fullUIStack);
-            eurekaJFXPanel.setScene(myScene);
+            jfxPanel.setScene(myScene);
             groupPane = new GroupPane(controller);
             centralStack = new StackPane(groupPane);
             fullUIStack.getChildren().add(borderPane);
@@ -124,29 +124,21 @@ public final class EurekaTopComponent extends TopComponent implements ExplorerMa
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        listView1 = new org.openide.explorer.view.ListView();
-        eurekaJFXPanel = new JFXPanel();
-
-        listView1.setMaximumSize(new java.awt.Dimension(0, 0));
-        listView1.setMinimumSize(new java.awt.Dimension(0, 0));
-        listView1.setPreferredSize(new java.awt.Dimension(0, 0));
+        jfxPanel = new JFXPanel();
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(eurekaJFXPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
-            .addComponent(listView1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jfxPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(eurekaJFXPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
-            .addComponent(listView1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jfxPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javafx.embed.swing.JFXPanel eurekaJFXPanel;
-    private org.openide.explorer.view.ListView listView1;
+    private javafx.embed.swing.JFXPanel jfxPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override

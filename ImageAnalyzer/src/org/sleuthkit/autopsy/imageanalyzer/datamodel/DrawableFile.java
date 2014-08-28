@@ -35,7 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.WIDTH;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -61,7 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
     public static <T extends AbstractFile> DrawableFile<T> create(T abstractFileById, boolean b) {
-        if (EurekaModule.isVideoFile(abstractFileById)) {
+        if (ImageAnalyzerModule.isVideoFile(abstractFileById)) {
             return new VideoFile(abstractFileById, b);
         } else {
             return new ImageFile(abstractFileById, b);
@@ -71,7 +71,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     public static DrawableFile<?> create(Long id, boolean b) throws TskCoreException, IllegalStateException {
 
         AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
-        if (EurekaModule.isVideoFile(abstractFileById)) {
+        if (ImageAnalyzerModule.isVideoFile(abstractFileById)) {
             return new VideoFile(abstractFileById, b);
         } else {
             return new ImageFile(abstractFileById, b);

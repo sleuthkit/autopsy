@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 
 @ActionID(category = "Tools",
           id = "org.sleuthkit.autopsy.imageanalyzer.OpenAction")
@@ -79,7 +79,7 @@ public final class OpenAction extends CallableSystemAction {
         }
         final Case currentCase = Case.getCurrentCase();
 
-        if (EurekaModule.isCaseStale(currentCase)) {
+        if (ImageAnalyzerModule.isCaseStale(currentCase)) {
             //case is stale, ask what to do
             int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), "The image / video databse may be out of date. "
                                                        + "Do you want to update and listen for further ingest results?\n"
@@ -92,7 +92,7 @@ public final class OpenAction extends CallableSystemAction {
                     ImageAnalyzerController.getDefault().setListeningEnabled(true);
                 //fall through
                 case JOptionPane.NO_OPTION:
-                    EurekaModule.openTopComponent();
+                    ImageAnalyzerModule.openTopComponent();
                     break;
                 case JOptionPane.CANCEL_OPTION:
                     break; //do nothing
@@ -100,7 +100,7 @@ public final class OpenAction extends CallableSystemAction {
             }
         } else {
             //case is not stale, just open it
-            EurekaModule.openTopComponent();
+            ImageAnalyzerModule.openTopComponent();
         }
     }
 

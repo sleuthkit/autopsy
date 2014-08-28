@@ -52,17 +52,17 @@ import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Displays the files of a group one at a time. Designed to be embedded in a
- * GroupPane.
- * TODO: Extract a subclass for video files in slideshow mode-jm
- * TODO: reduce coupling to GroupPane */
+/**
+ * Displays the files of a group one at a time. Designed to be embedded in a
+ * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
+ * TODO: reduce coupling to GroupPane
+ */
 public class SlideShowView extends SingleDrawableViewBase implements TagUtils.TagListener, Category.CategoryListener {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
@@ -306,8 +306,10 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
     }
 
-    /** @return supplemental text to include in the label, specifically:
-     *          "image x of y" */
+    /**
+     * @return supplemental text to include in the label, specifically: "image x
+     * of y"
+     */
     private String getSupplementalText() {
         return " ( " + (groupPane.getGrouping().fileIds().indexOf(fileID) + 1) + " of " + groupPane.getGrouping().fileIds().size() + " in group )";
     }
@@ -318,9 +320,15 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
         final Category category = super.updateCategoryBorder();
         ToggleButton toggleForCategory = getToggleForCategory(category);
 
-        ThreadUtils.runNowOrLater(() -> {
+        Runnable r = () -> {
             toggleForCategory.setSelected(true);
-        });
+        };
+        if (Platform.isFxApplicationThread()) {
+            r.run();
+        } else {
+            Platform.runLater(r);
+        }
+
         return category;
     }
 

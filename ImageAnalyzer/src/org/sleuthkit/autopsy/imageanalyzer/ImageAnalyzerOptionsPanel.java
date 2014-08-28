@@ -24,9 +24,9 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /** The Image/Video Analyzer panel in the NetBeans provided Options Dialogs
  * accessed via Tool -> Options */
-final class EurekaOptionsPanel extends javax.swing.JPanel {
+final class ImageAnalyzerOptionsPanel extends javax.swing.JPanel {
 
-    EurekaOptionsPanel(EurekaOptionsPanelController controller) {
+    ImageAnalyzerOptionsPanel(ImageAnalyzerOptionsPanelController controller) {
         initComponents();
 
         IngestManager.getInstance().addIngestJobEventListener(evt -> {
@@ -53,9 +53,9 @@ final class EurekaOptionsPanel extends javax.swing.JPanel {
         enabledByDefaultBox = new javax.swing.JCheckBox();
         enabledForCaseBox = new javax.swing.JCheckBox();
 
-        org.openide.awt.Mnemonics.setLocalizedText(enabledByDefaultBox, org.openide.util.NbBundle.getMessage(EurekaOptionsPanel.class, "EurekaOptionsPanel.enabledByDefaultBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(enabledByDefaultBox, org.openide.util.NbBundle.getMessage(ImageAnalyzerOptionsPanel.class, "ImageAnalyzerOptionsPanel.enabledByDefaultBox.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(enabledForCaseBox, org.openide.util.NbBundle.getMessage(EurekaOptionsPanel.class, "EurekaOptionsPanel.enabledForCaseBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(enabledForCaseBox, org.openide.util.NbBundle.getMessage(ImageAnalyzerOptionsPanel.class, "ImageAnalyzerOptionsPanel.enabledForCaseBox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -81,10 +81,10 @@ final class EurekaOptionsPanel extends javax.swing.JPanel {
 
     /** {@inheritDoc} */
     void load() {
-        enabledByDefaultBox.setSelected(EurekaPreferences.isEnabledByDefault());
+        enabledByDefaultBox.setSelected(ImageAnalyzerPreferences.isEnabledByDefault());
         if (Case.isCaseOpen() && IngestManager.getInstance().isIngestRunning() == false) {
             enabledForCaseBox.setEnabled(true);
-            enabledForCaseBox.setSelected(EurekaModule.isEnabledforCase(Case.getCurrentCase()));
+            enabledForCaseBox.setSelected(ImageAnalyzerModule.isEnabledforCase(Case.getCurrentCase()));
         } else {
             enabledForCaseBox.setEnabled(false);
             enabledForCaseBox.setSelected(enabledByDefaultBox.isSelected());
@@ -93,10 +93,10 @@ final class EurekaOptionsPanel extends javax.swing.JPanel {
 
     /** {@inheritDoc } */
     void store() {
-        EurekaPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
+        ImageAnalyzerPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
         ImageAnalyzerController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
         if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(EurekaModule.MODULE_NAME, PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
+            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         }
     }
 

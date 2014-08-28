@@ -33,9 +33,9 @@ import org.openide.util.Lookup;
         keywordsCategory = "Options"
 )
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_Options=Image / Video Analzyer", "OptionsCategory_Keywords_Options=image video analyzer category "})
-public final class EurekaOptionsPanelController extends OptionsPanelController {
+public final class ImageAnalyzerOptionsPanelController extends OptionsPanelController {
 
-    private EurekaOptionsPanel panel;
+    private ImageAnalyzerOptionsPanel panel;
 
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
@@ -90,9 +90,9 @@ public final class EurekaOptionsPanelController extends OptionsPanelController {
         pcs.removePropertyChangeListener(l);
     }
 
-    private EurekaOptionsPanel getPanel() {
+    private ImageAnalyzerOptionsPanel getPanel() {
         if (panel == null) {
-            panel = new EurekaOptionsPanel(this);
+            panel = new ImageAnalyzerOptionsPanel(this);
         }
         return panel;
     }

@@ -196,7 +196,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
             stale.set(b);
         });
         if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(EurekaModule.MODULE_NAME, PerCaseProperties.STALE, b.toString());
+            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.STALE, b.toString());
         }
     }
 
@@ -211,7 +211,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
     private ImageAnalyzerController() {
 
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
-            if (newValue && !oldValue && Case.existsCurrentCase() && EurekaModule.isCaseStale(Case.getCurrentCase())) {
+            if (newValue && !oldValue && Case.existsCurrentCase() && ImageAnalyzerModule.isCaseStale(Case.getCurrentCase())) {
                 queueTask(new CopyAnalyzedFiles());
             }
         });
@@ -283,9 +283,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
     }
 
     synchronized public void advance(GroupViewState newState) {
-        if (viewState().get() == null || (viewState().get().getGroup() != newState.getGroup())) {
-            historyManager.advance(newState);
-        }
+        historyManager.advance(newState);
     }
 
     synchronized public GroupViewState advance() {
@@ -307,7 +305,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
      */
     public final void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
-            advance(null);
+//            advance(GroupViewState.tile(null));
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (listeningEnabled.get() == false) {
                     replaceNotification(fullUIStackPane,
@@ -390,13 +388,13 @@ public class ImageAnalyzerController implements FileUpdateListener {
 
         this.db = DrawableDB.getDrawableDB(c.getCaseDirectory(), this);
         db.addUpdatedFileListener(this);
-        setListeningEnabled(EurekaModule.isEnabledforCase(c));
-        setStale(EurekaModule.isCaseStale(c));
+        setListeningEnabled(ImageAnalyzerModule.isEnabledforCase(c));
+        setStale(ImageAnalyzerModule.isCaseStale(c));
 
         // if we add this line icons are made as files are analyzed rather than on demand.
         // db.addUpdatedFileListener(IconCache.getDefault());
         restartWorker();
-
+        historyManager.clear();
         groupManager.setDB(db);
         SummaryTablePane.getDefault().handleCategoryChanged(Collections.emptyList());
     }
@@ -682,7 +680,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
      */
     class CopyAnalyzedFiles extends InnerTask {
 
-        final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(EurekaModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
+        final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageAnalyzerModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
@@ -698,7 +696,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
                         + " and blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
                         + " and blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
                         + " and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
-                        + " and blackboard_attributes.value_text in ('" + StringUtils.join(EurekaModule.getSupportedMimes(), "','") + "'))");
+                        + " and blackboard_attributes.value_text in ('" + StringUtils.join(ImageAnalyzerModule.getSupportedMimes(), "','") + "'))");
                 progressHandle.switchToDeterminate(files.size());
 
                 updateProgress(0.0);
@@ -712,14 +710,14 @@ public class ImageAnalyzerController implements FileUpdateListener {
                         progressHandle.finish();
                         break;
                     }
-                    final Boolean hasMimeType = EurekaModule.hasSupportedMimeType(f);
+                    final Boolean hasMimeType = ImageAnalyzerModule.hasSupportedMimeType(f);
                     final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
                     if (known) {
                         db.removeFile(f.getId(), tr);  //remove known files
                     } else {
                         if (hasMimeType == null) {
-                            if (EurekaModule.isSupported(f)) {
+                            if (ImageAnalyzerModule.isSupported(f)) {
                                 //no mime type but supported => not add as not analyzed
                                 db.updatefile(DrawableFile.create(f, false), tr);
                             } else {
@@ -784,7 +782,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
          * back on jpeg signatures and extensions to check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
-        final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(EurekaModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
+        final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageAnalyzerModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 

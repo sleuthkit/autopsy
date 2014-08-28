@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.util.Objects;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -31,7 +32,9 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * A basic history implementation. Keeps a history (and forward) stack of state
  * objects of type <T>. exposes current state and availability of
- * advance/retreat operations via methods and JFX {@link  Property}s
+ * advance/retreat operations via methods and JFX {@link  Property}s. Null is not
+ * a valid state, and will only be the current state before the first call to
+ * advance.
  *
  * @param <T> the type of objects used to represent the
  * current/historical/future states
@@ -117,6 +120,7 @@ public class History<T> {
         if (pop != null && pop.equals(currentState.get()) == false) {
             forwardStack.push(currentState.get());
             currentState.set(pop);
+            return pop;
         } else if (pop != null && pop.equals(currentState.get())) {
             return retreat();
         }
@@ -129,9 +133,11 @@ public class History<T> {
      * by invoking the equals method. Throws away any forward states.
      *
      * @param newState the new state to advance to
+     * @throws IllegalArgumentException if newState == null
      */
     synchronized public void advance(T newState) throws IllegalArgumentException {
-        if (currentState.equals(newState) == false) {
+
+        if (newState != null && Objects.equals(currentState.get(), newState) == false) {
             if (currentState.get() != null) {
                 historyStack.push(currentState.get());
             }

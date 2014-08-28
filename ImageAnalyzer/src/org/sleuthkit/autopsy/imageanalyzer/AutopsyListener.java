@@ -110,10 +110,10 @@ public class AutopsyListener {
                     AbstractFile file = (AbstractFile) evt.getNewValue();
                     if (controller.isListeningEnabled()) {
 
-                        if (EurekaModule.isSupportedAndNotKnown(file)) {
+                        if (ImageAnalyzerModule.isSupportedAndNotKnown(file)) {
                             //this file should be included and we don't already know about it from hash sets (NSRL)
                             controller.queueTask(controller.new UpdateFile(file));
-                        } else if (EurekaModule.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                        } else if (ImageAnalyzerModule.getAllSupportedExtensions().contains(file.getNameExtension())) {
                             //doing this check results in fewer tasks queued up, and faster completion of db update
                             //this file would have gotten scooped up in initial grab, but actually we don't need it
                             controller.queueTask(controller.new RemoveFile(file));
@@ -142,7 +142,7 @@ public class AutopsyListener {
 
                     } else { // case is closing
                         //close eureka window
-                        SwingUtilities.invokeLater(EurekaModule::closeTopComponent);
+                        SwingUtilities.invokeLater(ImageAnalyzerModule::closeTopComponent);
                         controller.reset();
                     }
                     break;

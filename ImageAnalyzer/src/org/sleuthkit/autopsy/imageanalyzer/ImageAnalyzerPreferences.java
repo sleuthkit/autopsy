@@ -25,9 +25,9 @@ import org.openide.util.NbPreferences;
 /**
  *
  */
-public class EurekaPreferences {
+public class ImageAnalyzerPreferences {
 
-    private static final Preferences preferences = NbPreferences.forModule(EurekaPreferences.class);
+    private static final Preferences preferences = NbPreferences.forModule(ImageAnalyzerPreferences.class);
 
     static final String ENABLED_BY_DEFAULT = "enabled_by_default";
 

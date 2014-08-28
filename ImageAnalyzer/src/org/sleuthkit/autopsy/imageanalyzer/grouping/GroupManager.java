@@ -42,7 +42,7 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaModule;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 import org.sleuthkit.autopsy.imageanalyzer.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
@@ -364,7 +364,7 @@ public class GroupManager {
                 while (rs.next()) {
                     long id = rs.getLong("obj_id");
                     try {
-                        if (EurekaModule.isSupportedAndNotKnown(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id))) {
+                        if (ImageAnalyzerModule.isSupportedAndNotKnown(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id))) {
                             files.add(id);
                         }
                     } catch (TskCoreException ex) {
@@ -474,7 +474,7 @@ public class GroupManager {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && EurekaModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                        if (ct.getContent() instanceof AbstractFile && ImageAnalyzerModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -486,7 +486,7 @@ public class GroupManager {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && EurekaModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                    if (ct.getContent() instanceof AbstractFile && ImageAnalyzerModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
                         files.add(ct.getContent().getId());
                     }
                 }
@@ -504,7 +504,7 @@ public class GroupManager {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && EurekaModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                if (ct.getContent() instanceof AbstractFile && ImageAnalyzerModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
                     files.add(ct.getContent().getId());
                 }
             }

@@ -44,11 +44,11 @@ import org.sleuthkit.datamodel.TskData;
 /** static definitions and utilities for the Eureka Module
  *
  */
-public class EurekaModule {
+public class ImageAnalyzerModule {
 
-    static private final Logger LOGGER = Logger.getLogger(EurekaModule.class.getName());
+    static private final Logger LOGGER = Logger.getLogger(ImageAnalyzerModule.class.getName());
 
-    static final String MODULE_NAME = EurekaModule.class.getSimpleName();
+    static final String MODULE_NAME = ImageAnalyzerModule.class.getSimpleName();
 
     static private final Set<String> videoExtensions
             = Sets.newHashSet("aaf", "3gp", "asf", "avi", "m1v", "m2v", "m4v", "mp4",
@@ -69,13 +69,13 @@ public class EurekaModule {
         return Collections.unmodifiableSet(supportedMimes);
     }
 
-    private EurekaModule() {
+    private ImageAnalyzerModule() {
     }
 
     static boolean isEnabledforCase(Case c) {
         if (c != null) {
-            String enabledforCaseProp = new PerCaseProperties(c).getConfigSetting(EurekaModule.MODULE_NAME, PerCaseProperties.ENABLED);
-            return StringUtils.isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : EurekaPreferences.isEnabledByDefault();
+            String enabledforCaseProp = new PerCaseProperties(c).getConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.ENABLED);
+            return StringUtils.isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageAnalyzerPreferences.isEnabledByDefault();
         } else {
             return false;
         }
@@ -83,7 +83,7 @@ public class EurekaModule {
 
     public static boolean isCaseStale(Case c) {
         if (c != null) {
-            String stale = new PerCaseProperties(c).getConfigSetting(EurekaModule.MODULE_NAME, PerCaseProperties.STALE);
+            String stale = new PerCaseProperties(c).getConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.STALE);
             return StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : false;
         } else {
             return false;
@@ -151,7 +151,7 @@ public class EurekaModule {
      *         'known', else false
      */
     static public boolean isSupportedAndNotKnown(AbstractFile abstractFile) {
-        return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && EurekaModule.isSupported(abstractFile);
+        return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && ImageAnalyzerModule.isSupported(abstractFile);
     }
 
     //TODO: this doesn ot really belong here, move it to EurekaController? Module?
@@ -177,7 +177,7 @@ public class EurekaModule {
 //            }
 //        }
 //        timeLineController.openTimeLine();
-        final EurekaTopComponent EurekaTc = (EurekaTopComponent) WindowManager.getDefault().findTopComponent("EurekaTopComponent");
+        final ImageAnalyzerTopComponent EurekaTc = (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("EurekaTopComponent");
         if (EurekaTc != null) {
             WindowManager.getDefault().isTopComponentFloating(EurekaTc);
             Mode mode = WindowManager.getDefault().findMode("timeline");

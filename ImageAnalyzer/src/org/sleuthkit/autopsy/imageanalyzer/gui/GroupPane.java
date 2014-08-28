@@ -95,7 +95,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaTopComponent;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
@@ -115,13 +115,14 @@ import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** A GroupPane displays the contents of a {@link Grouping}. It support both a
+/**
+ * A GroupPane displays the contents of a {@link Grouping}. It support both a
  * {@link  TilePane} based view and a {@link  SlideShowView} view by swapping out
  * its internal components.
  *
- * TODO: review for synchronization issues.
- * TODO: Extract the The TilePane instance to a separate class analogous to
- * the SlideShow */
+ * TODO: review for synchronization issues. TODO: Extract the The TilePane
+ * instance to a separate class analogous to the SlideShow
+ */
 public class GroupPane extends BorderPane implements GroupView {
 
     private static final Logger LOGGER = Logger.getLogger(GroupPane.class.getName());
@@ -129,7 +130,7 @@ public class GroupPane extends BorderPane implements GroupView {
     private static final DropShadow DROP_SHADOW = new DropShadow(10, Color.BLUE);
 
     private static final Timeline flashAnimation = new Timeline(new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 1, Interpolator.LINEAR)),
-                                                                new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 15, Interpolator.LINEAR))
+            new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 15, Interpolator.LINEAR))
     );
 
     private static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
@@ -192,16 +193,22 @@ public class GroupPane extends BorderPane implements GroupView {
 
     private Integer selectionAnchorIndex;
 
-    /** the current GroupViewMode of this GroupPane */
+    /**
+     * the current GroupViewMode of this GroupPane
+     */
     private final SimpleObjectProperty<GroupViewMode> groupViewMode = new SimpleObjectProperty<>(GroupViewMode.TILE);
 
-    /** the grouping this pane is currently the view for */
+    /**
+     * the grouping this pane is currently the view for
+     */
     private final ReadOnlyObjectWrapper<Grouping> grouping = new ReadOnlyObjectWrapper<>();
 
-    /** map from fileIDs to their assigned cells in the tile view. This is used
+    /**
+     * map from fileIDs to their assigned cells in the tile view. This is used
      * to determine whether fileIDs are visible or are offscreen. No entry
      * indicates the given fileID is not displayed on screenDrawableCells
-     * responsible for adding and removing themselves from this map */
+     * responsible for adding and removing themselves from this map
+     */
     @ThreadConfined(type = ThreadType.UI)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
 
@@ -290,17 +297,23 @@ public class GroupPane extends BorderPane implements GroupView {
         globalSelectionModel.clearAndSelectAll(getGrouping().fileIds());
     }
 
-    /** reset the text and icons to represent the currently filtered files */
+    /**
+     * reset the text and icons to represent the currently filtered files
+     */
     protected void resetHeaderString() {
-        int size = grouping.get().getSize();
-        int hashHitCount = grouping.get().getFilesWithHashSetHitsCount();
-        String groupName;
-        if (grouping.get().groupKey.getAttribute() == DrawableAttribute.TAGS) {
-            groupName = ((TagName) grouping.get().groupKey.getValue()).getDisplayName();
+        if (grouping.get() == null) {
+            groupLabel.setText("");
         } else {
-            groupName = grouping.get().groupKey.getValue().toString();
+            int size = grouping.get().getSize();
+            int hashHitCount = grouping.get().getFilesWithHashSetHitsCount();
+            String groupName;
+            if (grouping.get().groupKey.getAttribute() == DrawableAttribute.TAGS) {
+                groupName = ((TagName) grouping.get().groupKey.getValue()).getDisplayName();
+            } else {
+                groupName = grouping.get().groupKey.getValue().toString();
+            }
+            groupLabel.setText(StringUtils.defaultIfBlank(groupName, Grouping.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files");
         }
-        groupLabel.setText(StringUtils.defaultIfBlank(groupName, Grouping.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files");
     }
 
     ContextMenu getContextMenu() {
@@ -311,9 +324,11 @@ public class GroupPane extends BorderPane implements GroupView {
         return grouping.getReadOnlyProperty();
     }
 
-    /** called automatically during constructor by FXMLConstructor.
+    /**
+     * called automatically during constructor by FXMLConstructor.
      *
-     * checks that FXML loading went ok and performs additional setup */
+     * checks that FXML loading went ok and performs additional setup
+     */
     @FXML
     void initialize() {
         assert gridView != null : "fx:id=\"tilePane\" was not injected: check your FXML file 'GroupPane.fxml'.";
@@ -325,12 +340,22 @@ public class GroupPane extends BorderPane implements GroupView {
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
 
         grouping.addListener((o) -> {
-            //when the assigned group changes, reset the scroll ar to the top
+            //when the assigned group changes, reset the scroll at to the top
             getScrollBar().ifPresent((scrollBar) -> {
                 scrollBar.setValue(0);
             });
+
+            //set the embeded header
+            resetHeaderString();
             //and assign fileIDs to gridView
-            gridView.setItems(grouping.get().fileIds());
+            if (grouping.get() == null) {
+                gridView.getItems().clear();
+            } else {
+                gridView.setItems(grouping.get().fileIds());
+                grouping.get().fileIds().addListener((Observable p) -> {
+                    resetHeaderString();
+                });
+            }
         });
 
         //configure flashing glow animation on next unseen group button
@@ -434,7 +459,7 @@ public class GroupPane extends BorderPane implements GroupView {
                 final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
                 extractMenuItem.setOnAction((ActionEvent t) -> {
                     SwingUtilities.invokeLater(() -> {
-                        TopComponent etc = WindowManager.getDefault().findTopComponent(EurekaTopComponent.PREFERRED_ID);
+                        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageAnalyzerTopComponent.PREFERRED_ID);
                         ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
                     });
                 });
@@ -474,16 +499,16 @@ public class GroupPane extends BorderPane implements GroupView {
         });
 
 //        Platform.runLater(() -> {
-            ActionUtils.configureButton(nextGroupAction, nextButton);
-            final EventHandler<ActionEvent> onAction = nextButton.getOnAction();
-            nextButton.setOnAction((ActionEvent event) -> {
-                flashAnimation.stop();
-                nextButton.setEffect(null);
-                onAction.handle(event);
-            });
+        ActionUtils.configureButton(nextGroupAction, nextButton);
+        final EventHandler<ActionEvent> onAction = nextButton.getOnAction();
+        nextButton.setOnAction((ActionEvent event) -> {
+            flashAnimation.stop();
+            nextButton.setEffect(null);
+            onAction.handle(event);
+        });
 
-            ActionUtils.configureButton(forwardAction, forwardButton);
-            ActionUtils.configureButton(backAction, backButton);
+        ActionUtils.configureButton(forwardAction, forwardButton);
+        ActionUtils.configureButton(backAction, backButton);
 //        });
 
         nextGroupAction.disabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
@@ -583,11 +608,6 @@ public class GroupPane extends BorderPane implements GroupView {
         } else {
             if (this.grouping.get() != viewState.getGroup()) {
                 this.grouping.set(viewState.getGroup());
-                //set the embeded header
-                resetHeaderString();
-                grouping.get().fileIds().addListener((Observable o) -> {
-                    resetHeaderString();
-                });
 
             }
 
@@ -732,8 +752,8 @@ public class GroupPane extends BorderPane implements GroupView {
             Long lastSelectFileId = globalSelectionModel.lastSelectedProperty().get();
 
             int lastSelectedIndex = lastSelectFileId != null
-                                    ? grouping.get().fileIds().indexOf(lastSelectFileId)
-                                    : Optional.ofNullable(selectionAnchorIndex).orElse(0);
+                    ? grouping.get().fileIds().indexOf(lastSelectFileId)
+                    : Optional.ofNullable(selectionAnchorIndex).orElse(0);
 
             final Integer columns = getPrefColumns();
 

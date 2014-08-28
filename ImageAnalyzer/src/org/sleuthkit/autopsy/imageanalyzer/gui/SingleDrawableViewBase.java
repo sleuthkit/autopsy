@@ -63,7 +63,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.EurekaTopComponent;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
@@ -199,7 +199,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                 final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
                 extractMenuItem.setOnAction((ActionEvent t) -> {
                     SwingUtilities.invokeLater(() -> {
-                        TopComponent etc = WindowManager.getDefault().findTopComponent(EurekaTopComponent.PREFERRED_ID);
+                        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageAnalyzerTopComponent.PREFERRED_ID);
                         ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
                     });
                 });
