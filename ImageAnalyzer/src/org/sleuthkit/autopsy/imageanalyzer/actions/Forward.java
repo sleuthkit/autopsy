@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 /**
  *
  */
+//TODO: This and the corresponding timeline action are identical except for the type of the controller...  abstract something! -jm
 public class Forward extends AbstractAction {
 
     private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/arrow.png", 16, 16, true, true, true);

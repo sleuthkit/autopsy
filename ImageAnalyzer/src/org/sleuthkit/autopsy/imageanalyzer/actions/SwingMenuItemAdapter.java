@@ -26,6 +26,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
 
+//TODO: move this into CoreUtils? -jm
 public class SwingMenuItemAdapter extends MenuItem {
 
     JMenuItem jMenuItem;
