@@ -49,6 +49,7 @@ class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction(
             NbBundle.getMessage(DirectoryTreeFilterNode.class, "DirectoryTreeFilterNode.action.collapseAll.text"));
+
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
 
     /**
@@ -56,8 +57,8 @@ class DirectoryTreeFilterNode extends FilterNode {
      */
     DirectoryTreeFilterNode(Node arg, boolean createChildren) {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
-                new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
-                arg.getLookup()));
+              new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
+                              arg.getLookup()));
     }
 
     @Override
@@ -88,6 +89,7 @@ class DirectoryTreeFilterNode extends FilterNode {
      * Right click action for the nodes in the directory tree.
      *
      * @param popup
+     *
      * @return
      */
     @Override
@@ -114,13 +116,13 @@ class DirectoryTreeFilterNode extends FilterNode {
             //ingest action
             actions.add(new AbstractAction(
                     NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog();
-                        ingestDialog.setDataSources(Collections.<Content>singletonList(content));
-                        ingestDialog.display();
-                    }
-                });
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog();
+                            ingestDialog.setDataSources(Collections.<Content>singletonList(content));
+                            ingestDialog.display();
+                        }
+                    });
         }
 
         //check if delete actions should be added
@@ -147,17 +149,18 @@ class DirectoryTreeFilterNode extends FilterNode {
 
         return actions;
     }
-}
 
-class OriginalNode {
+    //FIXME: this seems like a big hack -jm
+    public static class OriginalNode {
 
-    private Node original;
+        private final Node original;
 
-    OriginalNode(Node original) {
-        this.original = original;
-    }
+        OriginalNode(Node original) {
+            this.original = original;
+        }
 
-    Node getNode() {
-        return original;
+        Node getNode() {
+            return original;
+        }
     }
 }

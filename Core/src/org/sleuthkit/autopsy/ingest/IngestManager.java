@@ -282,7 +282,7 @@ public class IngestManager {
      * @return 
      */
     List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
-        return new ArrayList(ingestThreadActivitySnapshots.values());
+        return new ArrayList<>(ingestThreadActivitySnapshots.values());
     }
 
 
@@ -393,6 +393,7 @@ public class IngestManager {
      * addIngestModuleEventListener().
      * @param listener The PropertyChangeListener to register.
      */
+    @Deprecated
     public static void addPropertyChangeListener(final PropertyChangeListener listener) {
         instance.ingestJobEventPublisher.addPropertyChangeListener(listener);
         instance.ingestModuleEventPublisher.addPropertyChangeListener(listener);
@@ -405,6 +406,7 @@ public class IngestManager {
      * removeIngestModuleEventListener().
      * @param listener The PropertyChangeListener to unregister.
      */
+    @Deprecated
     public static void removePropertyChangeListener(final PropertyChangeListener listener) {
         instance.ingestJobEventPublisher.removePropertyChangeListener(listener);
         instance.ingestModuleEventPublisher.removePropertyChangeListener(listener);

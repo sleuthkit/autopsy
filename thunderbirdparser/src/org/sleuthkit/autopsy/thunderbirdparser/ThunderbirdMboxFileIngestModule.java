@@ -29,9 +29,9 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -301,9 +301,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @param abstractFile
      * @return
      */
-    private List<AbstractFile> handleAttachments(List<Attachment> attachments, AbstractFile abstractFile) {
+    private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile) {
         List<AbstractFile> files = new ArrayList<>();
-        for (Attachment attach : attachments) {
+        for (EmailMessage.Attachment attach : attachments) {
             String filename = attach.getName();
             long crTime = attach.getCrTime();
             long mTime = attach.getmTime();

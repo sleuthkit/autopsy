@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import org.openide.util.NbBundle;
-
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -33,6 +31,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+import org.openide.util.NbBundle;
 
 /**
  * Visual component of the File Report Configuration panel of the Report Wizard.
@@ -78,11 +77,11 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
         optionsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-                JList list = (JList) evt.getSource();
-                int index = list.locationToIndex(evt.getPoint());
+               
+                int index = optionsList.locationToIndex(evt.getPoint());
                 FileReportDataTypes value = model.getElementAt(index);
                 optionStates.put(value, !optionStates.get(value));
-                list.repaint();
+                optionsList.repaint();
                 boolean anySelected = anySelected();
                 deselectAllButton.setEnabled(anySelected);
                 wizPanel.setFinish(anySelected);

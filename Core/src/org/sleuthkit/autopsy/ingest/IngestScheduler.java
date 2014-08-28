@@ -49,31 +49,39 @@ import org.sleuthkit.datamodel.TskData;
 final class IngestScheduler {
 
     private static final Logger logger = Logger.getLogger(IngestScheduler.class.getName());
+
     private static final int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
+
     private static IngestScheduler instance = null;
+
     private final AtomicLong nextIngestJobId = new AtomicLong(0L);
+
     private final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
+
     private volatile boolean enabled = false;
+
     //    private volatile boolean cancellingAllTasks = false; TODO: Uncomment this with related code, if desired
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
+
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
-    
+
     // The following five collections lie at the heart of the scheduler.
     // The pending tasks queues are used to schedule tasks for an ingest job. If 
     // multiple jobs are scheduled, tasks from different jobs may become 
     // interleaved in these queues. 
-
     // FIFO queue for data source-level tasks. 
     private final LinkedBlockingQueue<DataSourceIngestTask> pendingDataSourceTasks = new LinkedBlockingQueue<>(); // Guarded by this
-    
+
     // File tasks are "shuffled" 
     // through root directory (priority queue), directory (LIFO), and file tasks 
     // queues (LIFO). If a file task makes it into the pending file tasks queue,
     // it is consumed by the ingest threads. 
     private final TreeSet<FileIngestTask> pendingRootDirectoryTasks = new TreeSet<>(new RootDirectoryTaskComparator()); // Guarded by this
+
     private final List<FileIngestTask> pendingDirectoryTasks = new ArrayList<>();  // Guarded by this
+
     private final BlockingDeque<FileIngestTask> pendingFileTasks = new LinkedBlockingDeque<>(); // Not guarded
-    
+
     // The "tasks in progress" list has:
     // - File and data source tasks that are running
     // - File tasks that are in the pending file queue
@@ -100,12 +108,15 @@ final class IngestScheduler {
     /**
      * Creates an ingest job for a data source.
      *
-     * @param dataSource The data source to ingest.
-     * @param ingestModuleTemplates The ingest module templates to use to create
-     * the ingest pipelines for the job.
+     * @param dataSource              The data source to ingest.
+     * @param ingestModuleTemplates   The ingest module templates to use to
+     *                                create
+     *                                the ingest pipelines for the job.
      * @param processUnallocatedSpace Whether or not the job should include
-     * processing of unallocated space.
+     *                                processing of unallocated space.
+     *
      * @return A collection of ingest module start up errors, empty on success.
+     *
      * @throws InterruptedException
      */
     List<IngestModuleError> startIngestJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
@@ -217,7 +228,7 @@ final class IngestScheduler {
                 if (shouldEnqueueFileTask(directoryTask)) {
                     addToPendingFileTasksQueue(directoryTask);
                     tasksEnqueuedForDirectory = true;
-                } 
+                }
 
                 // If the directory contains subdirectories or files, try to 
                 // enqueue tasks for them as well. 
@@ -308,9 +319,11 @@ final class IngestScheduler {
         tasksInProgressAndPending.add(task);
         try {
             // Should not block, queue is (theoretically) unbounded.
-            /* add to top of list because we had one image that had a folder with
-             * lots of zip files.  This queue had thousands of entries because
-             * it just kept on getting bigger and bigger. So focus on pushing out
+            /* add to top of list because we had one image that had a folder
+             * with
+             * lots of zip files. This queue had thousands of entries because
+             * it just kept on getting bigger and bigger. So focus on pushing
+             * out
              * the ZIP file contents out of the queue to try to keep it small.
              */
             pendingFileTasks.addFirst(task);
@@ -367,10 +380,11 @@ final class IngestScheduler {
     }
 
     /**
-     * Clears the queues for the job.  If job is complete, finish it up.  Otherwise,
+     * Clears the queues for the job. If job is complete, finish it up.
+     * Otherwise,
      * this will exit and the last worker thread will finish / clean up.
-     * 
-     * @param job 
+     *
+     * @param job
      */
     synchronized void cancelIngestJob(IngestJob job) {
         long jobId = job.getId();
@@ -386,10 +400,12 @@ final class IngestScheduler {
 
     /**
      * Return the number of tasks in the queue for the given job ID
+     *
      * @param <T>
      * @param queue
      * @param jobId
-     * @return 
+     *
+     * @return
      */
     <T> int countJobsInCollection(Collection<T> queue, long jobId) {
         Iterator<T> iterator = queue.iterator();
@@ -402,13 +418,13 @@ final class IngestScheduler {
         }
         return count;
     }
-    
-    synchronized private <T> void removeAllPendingTasksForJob(Collection<T> taskQueue, long jobId) {
-        Iterator<T> iterator = taskQueue.iterator();
+
+    synchronized private void removeAllPendingTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
+        Iterator<? extends IngestTask> iterator = taskQueue.iterator();
         while (iterator.hasNext()) {
-            IngestTask task = (IngestTask) iterator.next();
+            IngestTask task = iterator.next();
             if (task.getIngestJob().getId() == jobId) {
-                tasksInProgressAndPending.remove((IngestTask) task);
+                tasksInProgressAndPending.remove(task);
                 iterator.remove();
             }
         }
@@ -461,18 +477,19 @@ final class IngestScheduler {
     }
 
     /**
-     * Called after all work is completed to free resources. 
-     * @param job 
+     * Called after all work is completed to free resources.
+     *
+     * @param job
      */
     private void finishIngestJob(IngestJob job) {
         job.finish();
         long jobId = job.getId();
         ingestJobsById.remove(jobId);
         if (!job.isCancelled()) {
-            logger.log(Level.INFO, "Ingest job {0} completed", jobId);            
+            logger.log(Level.INFO, "Ingest job {0} completed", jobId);
             IngestManager.getInstance().fireIngestJobCompleted(job.getId());
         } else {
-            logger.log(Level.INFO, "Ingest job {0} cancelled", jobId);            
+            logger.log(Level.INFO, "Ingest job {0} cancelled", jobId);
             IngestManager.getInstance().fireIngestJobCancelled(job.getId());
         }
     }
@@ -496,16 +513,24 @@ final class IngestScheduler {
 
                 LAST, LOW, MEDIUM, HIGH
             }
+
             static final List<Pattern> LAST_PRI_PATHS = new ArrayList<>();
+
             static final List<Pattern> LOW_PRI_PATHS = new ArrayList<>();
+
             static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<>();
+
             static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<>();
-            /* prioritize root directory folders based on the assumption that we are
-             * looking for user content. Other types of investigations may want different
+            /* prioritize root directory folders based on the assumption that we
+             * are
+             * looking for user content. Other types of investigations may want
+             * different
              * priorities. */
 
-            static /* prioritize root directory folders based on the assumption that we are
-             * looking for user content. Other types of investigations may want different
+            static /* prioritize root directory
+             * folders based on the assumption that we are
+             * looking for user content. Other types of investigations may want
+             * different
              * priorities. */ {
                 // these files have no structure, so they go last
                 //unalloc files are handled as virtual files in getPriority()
@@ -530,6 +555,7 @@ final class IngestScheduler {
              * Get the enabled priority for a given file.
              *
              * @param abstractFile
+             *
              * @return
              */
             static AbstractFilePriority.Priority getPriority(final AbstractFile abstractFile) {
@@ -590,20 +616,28 @@ final class IngestScheduler {
             return task;
         }
     }
-    
+
     /**
      * Stores basic stats for a given job
      */
     class IngestJobSchedulerStats {
+
         private final IngestJobStats ingestJobStats;
+
         private final long jobId;
+
         private final String dataSource;
+
         private final long rootQueueSize;
+
         private final long dirQueueSize;
+
         private final long fileQueueSize;
+
         private final long dsQueueSize;
+
         private final long runningListSize;
-        
+
         IngestJobSchedulerStats(IngestJob job) {
             ingestJobStats = job.getStats();
             jobId = job.getId();
@@ -647,10 +681,11 @@ final class IngestScheduler {
             return ingestJobStats;
         }
     }
-    
+
     /**
      * Get basic performance / stats on all running jobs
-     * @return 
+     *
+     * @return
      */
     synchronized List<IngestJobSchedulerStats> getJobStats() {
         List<IngestJobSchedulerStats> stats = new ArrayList<>();

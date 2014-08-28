@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -30,15 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.event.DocumentEvent;
 import javax.swing.ListCellRenderer;
+import javax.swing.event.DocumentEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -48,9 +48,13 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
     static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
+
     private AddImageWizardChooseDataSourcePanel wizPanel;
+
     private JPanel currentPanel;
+
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
+
     List<String> coreDSPTypes = new ArrayList<>();
 
     /**
@@ -65,6 +69,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         customInit();
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void customInit() {
 
         typePanel.setLayout(new BorderLayout());
@@ -94,6 +99,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         }
 
         typeComboBox.setRenderer(new ComboboxSeparatorRenderer(typeComboBox.getRenderer()) {
+
             @Override
             protected boolean addSeparatorAfter(JList list, Object value, int index) {
                 return (index == coreDSPTypes.size() - 1);
@@ -159,7 +165,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * Returns the currently selected DS Processor
      *
      * @return DataSourceProcessor the DataSourceProcessor corresponding to the
-     * data source type selected in the combobox
+     *         data source type selected in the combobox
      */
     protected DataSourceProcessor getCurrentDSProcessor() {
         // get the type of the currently selected panel and then look up 
@@ -297,16 +303,20 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
     }
 
+    @SuppressWarnings("rawtypes")
     public abstract class ComboboxSeparatorRenderer implements ListCellRenderer {
 
         private ListCellRenderer delegate;
+
         private JPanel separatorPanel = new JPanel(new BorderLayout());
+
         private JSeparator separator = new JSeparator();
 
         public ComboboxSeparatorRenderer(ListCellRenderer delegate) {
             this.delegate = delegate;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component comp = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

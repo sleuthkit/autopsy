@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -74,7 +73,7 @@ public final class ExternalResultsImporter {
         importDerivedFiles(results);
         importArtifacts(results);
         importReports(results);
-        List<ErrorInfo> importErrors = new ArrayList(this.errors);
+        List<ErrorInfo> importErrors = new ArrayList<>(this.errors);
         this.errors.clear();
         return importErrors;
     }

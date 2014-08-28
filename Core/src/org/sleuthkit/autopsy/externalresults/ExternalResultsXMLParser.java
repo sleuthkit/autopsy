@@ -21,10 +21,9 @@ package org.sleuthkit.autopsy.externalresults;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ErrorInfo;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.Content;
 import org.w3c.dom.Document;
@@ -198,7 +197,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
                 if (!type.isEmpty()) {
                     // Get the source file of the artifact and the attributes,
                     // if any.
-                    final String sourceFilePath = this.getChildElementContent((Element) artifactElem, TagNames.SOURCE_FILE_ELEM.toString(), true);
+                    final String sourceFilePath = this.getChildElementContent( artifactElem, TagNames.SOURCE_FILE_ELEM.toString(), true);
                     if (!sourceFilePath.isEmpty()) {
                         ExternalResults.Artifact artifact = this.resultsData.addArtifact(type, sourceFilePath);
                         parseArtifactAttributes(artifactElem, artifact);

@@ -18,17 +18,11 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.List;
-import org.sleuthkit.autopsy.datamodel.VolumeNode;
-import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.explorer.ExplorerManager;
@@ -36,38 +30,44 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
+import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.AccountNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted.FolderNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.TypeNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.TypeNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileTypeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
+import org.sleuthkit.autopsy.datamodel.FileTypeNode;
+import org.sleuthkit.autopsy.datamodel.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetNameNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.TermNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.ListNode;
-import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.TermNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -87,13 +87,15 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public class DataResultFilterNode extends FilterNode {
 
     private ExplorerManager sourceEm;
+
     private final DisplayableItemNodeVisitor<List<Action>> getActionsDIV;
+
     private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV;
 
     /**
-     * 
+     *
      * @param node Root node to be passed to DataResult viewers
-     * @param em ExplorerManager for component that is creating the node
+     * @param em   ExplorerManager for component that is creating the node
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
@@ -107,6 +109,7 @@ public class DataResultFilterNode extends FilterNode {
      * table and the output view.
      *
      * @param popup
+     *
      * @return actions
      */
     @Override
@@ -118,7 +121,6 @@ public class DataResultFilterNode extends FilterNode {
         actions.addAll(originalNode.accept(getActionsDIV));
 
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
-
         return actions.toArray(new Action[actions.size()]);
     }
 
@@ -135,7 +137,7 @@ public class DataResultFilterNode extends FilterNode {
         if ((original instanceof DisplayableItemNode) == false) {
             return null;
         }
-        
+
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         return originalNode.accept(getPreferredActionsDIV);
     }
@@ -175,8 +177,7 @@ public class DataResultFilterNode extends FilterNode {
             //set up actions for artifact node based on its Content object
             //TODO all actions need to be consolidated in single place!
             //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
-            // TODO UPDATE: There is now a DataModelActionsFactory utility; also tags are no longer artifacts so conditionals
-            // can be removed.
+            // TODO UPDATE: There is now a DataModelActionsFactory utility;
 
             List<Action> actions = new ArrayList<>();
 
@@ -188,7 +189,7 @@ public class DataResultFilterNode extends FilterNode {
             final int artifactTypeID = ba.getArtifactTypeID();
 
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                    || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() ) {
+                    || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actions.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
             } else {
@@ -203,117 +204,50 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
             }
-            File f = ban.getLookup().lookup(File.class);
-            LayoutFile lf = null;
-            AbstractFile locF = null;
-            Directory d = null;
-            VirtualDirectory vd = null;
-            if (f != null) {
-                final FileNode fn = new FileNode(f);
-                actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), fn));
-                actions.add(new ExternalViewerAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), fn));
-                actions.add(null); // creates a menu separator
-                actions.add(ExtractAction.getInstance());
-                actions.add(new HashSearchAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.searchFilesSameMd5.text"), fn));
-
-                //add file/result tag if itself is not a tag
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
-                        && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                    actions.add(null); // creates a menu separator
-                    actions.add(AddContentTagAction.getInstance());
-                    actions.add(AddBlackboardArtifactTagAction.getInstance());
-                    actions.addAll(ContextMenuExtensionPoint.getActions());
-                }
+            Content c = ban.getLookup().lookup(File.class);
+            Node n = null;
+            boolean md5Action = false;
+            if (c != null) {
+                n = new FileNode((AbstractFile) c);
+                md5Action = true;
+            } else if ((c = ban.getLookup().lookup(Directory.class)) != null) {
+                n = new DirectoryNode((Directory) c);
+            } else if ((c = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
+                n = new VirtualDirectoryNode((VirtualDirectory) c);
+            } else if ((c = ban.getLookup().lookup(LayoutFile.class)) != null) {
+                n = new LayoutFileNode((LayoutFile) c);
+            } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
+                    || (c = ban.getLookup().lookup(DerivedFile.class)) != null) {
+                n = new LocalFileNode((AbstractFile) c);
             }
-            if ((d = ban.getLookup().lookup(Directory.class)) != null) {
-                DirectoryNode dn = new DirectoryNode(d);
+            if (n != null) {
                 actions.add(null); // creates a menu separator
                 actions.add(new NewWindowViewAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), dn));
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), n));
                 actions.add(new ExternalViewerAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), dn));
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
                 actions.add(null); // creates a menu separator
                 actions.add(ExtractAction.getInstance());
-
-                //add file/result tag if itself is not a tag
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
-                        && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                    actions.add(null); // creates a menu separator
-                    actions.add(AddContentTagAction.getInstance());
-                    actions.add(AddBlackboardArtifactTagAction.getInstance());
-                    actions.addAll(ContextMenuExtensionPoint.getActions());
+                if (md5Action) {
+                    actions.add(new HashSearchAction(
+                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.searchFilesSameMd5.text"), n));
                 }
+                actions.add(null); // creates a menu separator
+                actions.add(AddContentTagAction.getInstance());
+                actions.add(AddBlackboardArtifactTagAction.getInstance());
+                actions.addAll(ContextMenuExtensionPoint.getActions());
             }
-            if ((vd = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
-                VirtualDirectoryNode dn = new VirtualDirectoryNode(vd);
-                actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), dn));
-                actions.add(new ExternalViewerAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), dn));
-                actions.add(null); // creates a menu separator
-                actions.add(ExtractAction.getInstance());
-
-                //add file/result tag if itself is not a tag
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
-                        && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                    actions.add(null); // creates a menu separator
-                    actions.add(AddContentTagAction.getInstance());
-                    actions.add(AddBlackboardArtifactTagAction.getInstance());
-                    actions.addAll(ContextMenuExtensionPoint.getActions());
-                }
-            } else if ((lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
-                LayoutFileNode lfn = new LayoutFileNode(lf);
-                actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), lfn));
-                actions.add(new ExternalViewerAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), lfn));
-                actions.add(null); // creates a menu separator
-                actions.add(ExtractAction.getInstance());
-
-                //add tag if itself is not a tag
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
-                        && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                    actions.add(null); // creates a menu separator
-                    actions.add(AddContentTagAction.getInstance());
-                    actions.add(AddBlackboardArtifactTagAction.getInstance());
-                    actions.addAll(ContextMenuExtensionPoint.getActions());
-                }
-            } else if ((locF = ban.getLookup().lookup(LocalFile.class)) != null
-                    || (locF = ban.getLookup().lookup(DerivedFile.class)) != null) {
-                final LocalFileNode locfn = new LocalFileNode(locF);
-                actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), locfn));
-                actions.add(new ExternalViewerAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), locfn));
-                actions.add(null); // creates a menu separator
-                actions.add(ExtractAction.getInstance());
-
-                //add tag if itself is not a tag
-                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()
-                        && artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getTypeID()) {
-                    actions.add(null); // creates a menu separator
-                    actions.add(AddContentTagAction.getInstance());
-                    actions.add(AddBlackboardArtifactTagAction.getInstance());
-                    actions.addAll(ContextMenuExtensionPoint.getActions());
-                }
-            }
-
             return actions;
         }
+
+      
 
         @Override
         public List<Action> visit(Reports.ReportsListNode ditem) {
             // The base class Action is "Collapse All", inappropriate.
             return null;
         }
-                
+
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
@@ -355,8 +289,8 @@ public class DataResultFilterNode extends FilterNode {
         }
     }
 
-    /* 
-     * Action for double-click / preferred action on nodes.   
+    /*
+     * Action for double-click / preferred action on nodes.
      */
     private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction> {
 
@@ -389,7 +323,7 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(HashsetNameNode hhsn) {
             return openChild(hhsn);
         }
-        
+
         @Override
         public AbstractAction visit(InterestingHits.RootNode iarn) {
             return openChild(iarn);
@@ -399,7 +333,7 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(InterestingHits.SetNameNode iasn) {
             return openChild(iasn);
         }
-        
+
         @Override
         public AbstractAction visit(EmailExtracted.RootNode eern) {
             return openChild(eern);
@@ -465,16 +399,14 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(Tags.BlackboardArtifactTagTypeNode node) {
             return openChild(node);
         }
-                
+
         @Override
         public AbstractAction visit(DirectoryNode dn) {
             if (dn.getDisplayName().equals(DirectoryNode.DOTDOTDIR)) {
                 return openParent(dn);
-            } 
-            else if (dn.getDisplayName().equals(DirectoryNode.DOTDIR) == false) {
+            } else if (dn.getDisplayName().equals(DirectoryNode.DOTDIR) == false) {
                 return openChild(dn);
-            } 
-            else {
+            } else {
                 return null;
             }
         }
@@ -488,8 +420,7 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(FileNode fn) {
             if (fn.hasContentChildren()) {
                 return openChild(fn);
-            } 
-            else {
+            } else {
                 return null;
             }
         }
@@ -498,8 +429,7 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(LocalFileNode dfn) {
             if (dfn.hasContentChildren()) {
                 return openChild(dfn);
-            } 
-            else {
+            } else {
                 return null;
             }
         }
@@ -533,16 +463,19 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(Reports.ReportNode reportNode) {
             return reportNode.getPreferredAction();
         }
-        
+
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return null;
         }
 
         /**
-         * Tell the originating ExplorerManager to display the given dataModelNode. 
+         * Tell the originating ExplorerManager to display the given
+         * dataModelNode.
+         *
          * @param dataModelNode Original (non-filtered) dataModelNode to open
-         * @return 
+         *
+         * @return
          */
         private AbstractAction openChild(final AbstractNode dataModelNode) {
             // get the current selection from the directory tree explorer manager,
@@ -560,10 +493,13 @@ public class DataResultFilterNode extends FilterNode {
                         final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
                         // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
                         Node newSelection = children.findChild(dataModelNode.getName());
-                        
-                        /* We got null here when we were viewing a ZIP file in the Views -> Archives area and double clicking on
-                         * it got to this code.  It tried to find the child in the tree and didn't find it. An exception was
-                         * then thrown from setting the selected node to be null. 
+
+                        /* We got null here when we were viewing a ZIP file in
+                         * the Views -> Archives area and double clicking on
+                         * it got to this code. It tried to find the child in
+                         * the tree and didn't find it. An exception was
+                         * then thrown from setting the selected node to be
+                         * null.
                          */
                         if (newSelection != null) {
                             try {
@@ -579,9 +515,12 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         /**
-         * Tell the originating ExplorerManager to display the parent of the given node. 
+         * Tell the originating ExplorerManager to display the parent of the
+         * given node.
+         *
          * @param node Original (non-filtered) node to open
-         * @return 
+         *
+         * @return
          */
         private AbstractAction openParent(AbstractNode node) {
             // @@@ Why do we ignore node?

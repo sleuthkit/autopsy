@@ -19,19 +19,19 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Dialog;
-import org.openide.util.NbBundle;
 import org.netbeans.core.actions.AboutAction;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle;
 
 /**
  * Action to open custom implementation of the "About" window from the Help menu.
  */
 @ActionID(id = "org.sleuthkit.autopsy.corecomponents.AboutWindowAction", category = "Help")
-@ActionRegistration(displayName = "#CTL_CustomAboutAction", iconInMenu = true)
+@ActionRegistration(displayName = "#CTL_CustomAboutAction", iconInMenu = true, lazy = false)
 @ActionReference(path = "Menu/Help", name = "org-sleuthkit-autopsy-corecomponents-CustomAboutAction", position = 3000)
 public class AboutWindowAction extends AboutAction {
 

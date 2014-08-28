@@ -58,7 +58,6 @@ final class FileTypeIdModuleSettingsPanel extends IngestModuleIngestJobSettingsP
         skipKnownCheckBox.setSelected(true);
         skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.text")); // NOI18N
         skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.toolTipText")); // NOI18N
-        skipKnownCheckBox.setLabel(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.text")); // NOI18N
         skipKnownCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipKnownCheckBoxActionPerformed(evt);
