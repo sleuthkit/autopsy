@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.datamodel;
 
-import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,6 +35,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
+import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -143,7 +143,6 @@ public enum Category implements Comparable<Category> {
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                //                        EurekaTileSelectionModel.getInstance().clearAndSelectAll(getTiles().toArray(new DrawableTile[getTiles().size()]));
                 new CategorizeAction().addTag(Category.this.getTagName(), "");
                 catSelectedMenuButton.setText(Category.this.getDisplayName());
                 catSelectedMenuButton.setOnAction(this);

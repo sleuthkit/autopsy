@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -93,7 +92,7 @@ import org.sleuthkit.datamodel.TskData;
  * Acts as the controller in GroupManager - GroupListPane -
  * ImageAnalyzerController MVC Trio
  *
- * Connects different parts of Eureka together and is hub for flow of control.
+ * Connects different parts of ImageAnalyzer together and is hub for flow of control.
  */
 public class ImageAnalyzerController implements FileUpdateListener {
 
@@ -471,7 +470,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
      * reset the state of the controller (eg if the case is closed)
      */
     public synchronized void reset() {
-        LOGGER.info("resetting EurekaControler to initial state.");
+        LOGGER.info("resetting ImageAnalyzerControler to initial state.");
         selectionModel.clearSelection();
         Platform.runLater(() -> {
             historyManager.clear();
@@ -737,7 +736,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
     }
 
     /**
-     * Task that runs when eureka listening is (re) enabled.
+     * Task that runs when image analyzer listening is (re) enabled.
      *
      * Uses the presence of TSK_FILE_TYPE_SIG attributes as a approximation to
      * 'analyzed'. Grabs all files with supported image/video mime types, and
@@ -836,7 +835,7 @@ public class ImageAnalyzerController implements FileUpdateListener {
      * (uses fs_obj_id to identify files from new datasource) *
      *
      * TODO: create methods to simplify progress value/text updates to both
-     * netbeans and eureka progress/status
+     * netbeans and ImageAnalyzer progress/status
      */
     class PrePopulateDataSourceFiles extends TaskWithID {
 

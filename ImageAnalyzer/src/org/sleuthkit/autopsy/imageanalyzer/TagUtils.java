@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Contains static methods for dealing with Tags in Eureka
+ * Contains static methods for dealing with Tags in ImageAnalyzer
  */
 public class TagUtils {
 
@@ -134,7 +134,7 @@ public class TagUtils {
     /**
      *
      * @param tn            the value of tn
-     * @param eurekaToolbar the value of eurekaToolbar
+     
      */
     static public MenuItem createSelTagMenuItem(final TagName tn, final SplitMenuButton tagSelectedMenuButton) {
         final MenuItem menuItem = new MenuItem(tn.getDisplayName(), new ImageView(DrawableAttribute.TAGS.getIcon()));

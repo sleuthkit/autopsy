@@ -31,32 +31,32 @@ import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
-import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.GroupPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.MetaDataPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.StatusBar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
+import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 
 /**
- * Top component which displays eureka interface.
+ * Top component which displays ImageAnalyzer interface.
  */
 @ConvertAsProperties(
-        dtd = "-//org.sleuthkit.autopsy.imageanalyzer//Eureka//EN",
+        dtd = "-//org.sleuthkit.autopsy.imageanalyzer//ImageAnalyzer//EN",
         autostore = false)
 @TopComponent.Description(
-        preferredID = "EurekaTopComponent",
+        preferredID = "ImageAnalyzerTopComponent",
         //iconBase = "org/sleuthkit/autopsy/imageanalyzer/images/lightbulb.png",
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
 @Messages({
-    "CTL_EurekaAction=Image/Video Analysis",
-    "CTL_EurekaTopComponent=Image/Video Analysis",
-    "HINT_EurekaTopComponent=This is a Image/Video Analysis window"
+    "CTL_ImageAnalyzerAction=Image/Video Analysis",
+    "CTL_ImageAnalyzerTopComponent=Image/Video Analysis",
+    "HINT_ImageAnalyzerTopComponent=This is a Image/Video Analysis window"
 })
 public final class ImageAnalyzerTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
-    public final static String PREFERRED_ID = "EurekaTopComponent";
+    public final static String PREFERRED_ID = "ImageAnalyzerTopComponent";
 
     private final ExplorerManager em = new ExplorerManager();
 
@@ -84,8 +84,8 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
 
     public ImageAnalyzerTopComponent() {
 
-        setName(Bundle.CTL_EurekaTopComponent());
-        setToolTipText(Bundle.HINT_EurekaTopComponent());
+        setName(Bundle.CTL_ImageAnalyzerTopComponent());
+        setToolTipText(Bundle.HINT_ImageAnalyzerTopComponent());
 
         // ...and initialization of lookup variable
         lookup = (ExplorerUtils.createLookup(em, getActionMap()));

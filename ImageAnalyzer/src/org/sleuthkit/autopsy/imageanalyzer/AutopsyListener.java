@@ -98,7 +98,7 @@ public class AutopsyListener {
                     /* we could listen to DATA events and progressivly update
                      * files, and get data from DataSource ingest modules, but
                      * given that most modules don't post new artifacts in the
-                     * events and eureka would have to query for them, without
+                     * events and we would have to query for them, without
                      * knowing which are the new ones, we just ignore these
                      * events for now. The relevant data should all be captured
                      * by file done event, anyways -jm */
@@ -141,14 +141,14 @@ public class AutopsyListener {
                         controller.setCase(newCase);
 
                     } else { // case is closing
-                        //close eureka window
+                        //close window
                         SwingUtilities.invokeLater(ImageAnalyzerModule::closeTopComponent);
                         controller.reset();
                     }
                     break;
 
                 case DATA_SOURCE_ADDED:
-                    //copy all file data to eureka databse
+                    //copy all file data to drawable databse
                     Content newDataSource = (Content) evt.getNewValue();
                     if (controller.isListeningEnabled()) {
                         controller.queueTask(controller.new PrePopulateDataSourceFiles(newDataSource.getId()));

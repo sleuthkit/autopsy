@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  *
  * The {@link OnStart} annotation tells NetBeans to invoke this class's
- * {@link EurekaModule#run()} method
+ * {@link ImageAnalyzerModule#run()} method
  */
 @org.openide.modules.OnStart
 public class OnStart implements Runnable {
@@ -34,17 +34,17 @@ public class OnStart implements Runnable {
     static private final Logger LOGGER = Logger.getLogger(OnStart.class.getName());
 
     /**
-     * make sure that the eureka listeners get setup as early as possible, and
+     * make sure that the ImageAnalyzer listeners get setup as early as possible, and
      * do other setup stuff.
      *
      * This method is invoked by virtue of the {@link OnStart} annotation on the
-     * {@link EurekaModule} class
+     * {@link ImageAnalyzerModule} class
      */
     @Override
     public void run() {
         Platform.setImplicitExit(false);
 
-        LOGGER.info("setting up eureka listeners");
+        LOGGER.info("setting up ImageAnalyzer listeners");
 
         IngestManager.getInstance().addIngestJobEventListener(AutopsyListener.getDefault().getIngestJobEventListener());
         IngestManager.getInstance().addIngestModuleEventListener(AutopsyListener.getDefault().getIngestModuleEventListener());

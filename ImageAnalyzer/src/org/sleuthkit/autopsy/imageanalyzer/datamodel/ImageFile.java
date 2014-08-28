@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.datamodel;
 
-import org.sleuthkit.autopsy.imageanalyzer.IconCache;
-import org.sleuthkit.autopsy.imageanalyzer.gui.Fitable;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -31,12 +29,14 @@ import javafx.scene.image.ImageView;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.IconCache;
+import org.sleuthkit.autopsy.imageanalyzer.gui.Fitable;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Eureka data model object that represents an image file. It is a
+ * ImageAnalyzer data model object that represents an image file. It is a
  * wrapper(/decorator?/adapter?) around {@link AbstractFile} and provides
  * methods to get an icon sized and a full sized {@link  Image}.
  *

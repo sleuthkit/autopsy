@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
 @Messages("CTL_OpenAction=Analyze Images/Videos")
 public final class OpenAction extends CallableSystemAction {
 
-    private final String EUREKA = "Analyze Images/Videos";
+    private final String Analyze_Images_Videos = "Analyze Images/Videos";
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
@@ -64,7 +64,7 @@ public final class OpenAction extends CallableSystemAction {
     @Override
     public Component getToolbarPresenter() {
         JButton toolbarButton = new JButton(this);
-        toolbarButton.setText(EUREKA);
+        toolbarButton.setText(Analyze_Images_Videos);
         toolbarButton.addActionListener(this);
 
         return toolbarButton;
@@ -106,7 +106,7 @@ public final class OpenAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return EUREKA;
+        return Analyze_Images_Videos;
     }
 
     @Override

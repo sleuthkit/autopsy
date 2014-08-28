@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
@@ -35,13 +34,14 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-/** static definitions and utilities for the Eureka Module
+/** static definitions and utilities for the ImageAnalyzer module
  *
  */
 public class ImageAnalyzerModule {
@@ -154,15 +154,15 @@ public class ImageAnalyzerModule {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && ImageAnalyzerModule.isSupported(abstractFile);
     }
 
-    //TODO: this doesn ot really belong here, move it to EurekaController? Module?
+    //TODO: this doesn ot really belong here, move it to ImageAnalyzerController? Module?
     @ThreadConfined(type = ThreadConfined.ThreadType.UI)
     public static void closeTopComponent() {
-        final TopComponent etc = WindowManager.getDefault().findTopComponent("EurekaTopComponent");
+        final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
         if (etc != null) {
             try {
                 etc.close();
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "failed to close EurekaTopComponent", e);
+                LOGGER.log(Level.SEVERE, "failed to close ImageAnalyzerTopComponent", e);
             }
         }
     }
@@ -177,16 +177,16 @@ public class ImageAnalyzerModule {
 //            }
 //        }
 //        timeLineController.openTimeLine();
-        final ImageAnalyzerTopComponent EurekaTc = (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("EurekaTopComponent");
-        if (EurekaTc != null) {
-            WindowManager.getDefault().isTopComponentFloating(EurekaTc);
+        final ImageAnalyzerTopComponent tc=  (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
+        if (tc != null) {
+            WindowManager.getDefault().isTopComponentFloating(tc);
             Mode mode = WindowManager.getDefault().findMode("timeline");
             if (mode != null) {
-                mode.dockInto(EurekaTc);
+                mode.dockInto(tc);
 
             }
-            EurekaTc.open();
-            EurekaTc.requestActive();
+            tc.open();
+            tc.requestActive();
         }
     }
 }

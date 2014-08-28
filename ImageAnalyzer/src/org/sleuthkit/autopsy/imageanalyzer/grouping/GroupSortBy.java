@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 
 /**
  * enum of possible properties to sort groups by. This is the model for the drop
- * down in {@link  EurekaToolbar} as well as each enum value having the stategy
+ * down in Toolbar as well as each enum value having the stategy
  * ({@link  Comparator}) for sorting the groups
  */
 public enum GroupSortBy implements ComparatorProvider {
