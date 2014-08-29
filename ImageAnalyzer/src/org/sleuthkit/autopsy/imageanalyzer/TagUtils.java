@@ -27,7 +27,6 @@ import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.image.ImageView;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -92,25 +91,7 @@ public class TagUtils {
         }
     }
 
-    /**
-     * convert a collection of TagNames to a 'pretty' string by concatenating
-     * their displaynames separated by a semi-colons
-     *
-     * Collection<TagName> => "tagname1, tagname2, tagname3"
-     *
-     * @param tagNames
-     *
-     * @return
-     */
-    static public String collectionToString(Collection<TagName> tagNames) {
-        ArrayList<Object> stringNames = new ArrayList<>();
-        for (TagName tn : tagNames) {
-            stringNames.add(tn.getDisplayName());
-        }
-        final String join = StringUtils.join(stringNames, "; ");
-        return join;
-    }
-
+   
     public static void fireChange(Collection<Long> ids) {
         synchronized (listeners) {
             for (TagListener list : listeners) {

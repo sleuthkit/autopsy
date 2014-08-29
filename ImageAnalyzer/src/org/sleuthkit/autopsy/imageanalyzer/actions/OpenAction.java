@@ -71,6 +71,7 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     @Override
+    @SuppressWarnings("fallthrough")
     public void performAction() {
 
         //check case
@@ -96,7 +97,6 @@ public final class OpenAction extends CallableSystemAction {
                     break;
                 case JOptionPane.CANCEL_OPTION:
                     break; //do nothing
-
             }
         } else {
             //case is not stale, just open it

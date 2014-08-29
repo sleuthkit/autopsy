@@ -18,17 +18,14 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -40,10 +37,11 @@ import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 
 public class MediaControl extends BorderPane implements Fitable {
 
-    private MediaPlayer mp;
+    private final MediaPlayer mp;
 
     private MediaView mediaView;
 
@@ -86,84 +84,70 @@ public class MediaControl extends BorderPane implements Fitable {
         mediaView.fitWidthProperty().bind(this.widthProperty());
         setCenter(mediaView);
 
-        controlButton.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e) {
-                try {
-                    Status status = mp.getStatus();
+        controlButton.setOnAction((ActionEvent e) -> {
+            try {
+                Status status = mp.getStatus();
 
-                    if (status == Status.UNKNOWN || status == Status.HALTED) {
-                        // don't do anything in these states
-                        return;
-                    }
-
-                    if (status == Status.PAUSED
-                            || status == Status.READY
-                            || status == Status.STOPPED) {
-                        // rewind the movie if we're sitting at the end
-                        if (atEndOfMedia) {
-                            mp.seek(mp.getStartTime());
-                            atEndOfMedia = false;
-                        }
-                        mp.play();
-                    } else {
-                        mp.pause();
-                    }
-                } catch (Exception ex) {
-                    Logger.getAnonymousLogger().log(Level.SEVERE, "message", ex);
+                if (status == Status.UNKNOWN || status == Status.HALTED) {
+                    // don't do anything in these states
+                    return;
                 }
-            }
-        });
-        mp.currentTimeProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                updateValues();
-            }
-        });
 
-        mp.setOnPlaying(new Runnable() {
-            public void run() {
-                if (stopRequested) {
-                    mp.pause();
-                    stopRequested = false;
+                if (status == Status.PAUSED
+                        || status == Status.READY
+                        || status == Status.STOPPED) {
+                    // rewind the movie if we're sitting at the end
+                    if (atEndOfMedia) {
+                        mp.seek(mp.getStartTime());
+                        atEndOfMedia = false;
+                    }
+                    mp.play();
                 } else {
-                    controlButton.setText("||");
+                    mp.pause();
                 }
+            } catch (Exception ex) {
+                Logger.getAnonymousLogger().log(Level.SEVERE, "message", ex);
+            }
+        });
+        mp.currentTimeProperty().addListener((Observable ov) -> {
+            updateValues();
+        });
+
+        mp.setOnPlaying(() -> {
+            if (stopRequested) {
+                mp.pause();
+                stopRequested = false;
+            } else {
+                controlButton.setText("||");
             }
         });
 
-        mp.setOnPaused(new Runnable() {
-            public void run() {
-                System.out.println("onPaused");
-                controlButton.setText(">");
-            }
+        mp.setOnPaused(() -> {
+            System.out.println("onPaused");
+            controlButton.setText(">");
         });
 
-        mp.setOnReady(new Runnable() {
-            public void run() {
-                duration = mp.getMedia().getDuration();
-                updateValues();
-            }
+        mp.setOnReady(() -> {
+            duration = mp.getMedia().getDuration();
+            updateValues();
         });
 
         mp.setCycleCount(repeat ? MediaPlayer.INDEFINITE : 1);
-        mp.setOnEndOfMedia(new Runnable() {
-            public void run() {
-                if (!repeat) {
-                    controlButton.setText(">");
-                    stopRequested = true;
-                    atEndOfMedia = true;
-                }
+        mp.setOnEndOfMedia(() -> {
+            if (!repeat) {
+                controlButton.setText(">");
+                stopRequested = true;
+                atEndOfMedia = true;
             }
         });
 
         // Add time slider
         timeSlider.setMinWidth(50);
         timeSlider.setMaxWidth(Double.MAX_VALUE);
-        timeSlider.valueProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                if (timeSlider.isValueChanging()) {
-                    // multiply duration by percentage calculated by slider position
-                    mp.seek(duration.multiply(timeSlider.getValue() / 100.0));
-                }
+        timeSlider.valueProperty().addListener((Observable ov) -> {
+            if (timeSlider.isValueChanging()) {
+                // multiply duration by percentage calculated by slider position
+                mp.seek(duration.multiply(timeSlider.getValue() / 100.0));
             }
         });
 
@@ -171,11 +155,9 @@ public class MediaControl extends BorderPane implements Fitable {
         volumeSlider.setPrefWidth(70);
         volumeSlider.setMaxWidth(Region.USE_PREF_SIZE);
         volumeSlider.setMinWidth(30);
-        volumeSlider.valueProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                if (volumeSlider.isValueChanging()) {
-                    mp.setVolume(volumeSlider.getValue() / 100.0);
-                }
+        volumeSlider.valueProperty().addListener((Observable ov) -> {
+            if (volumeSlider.isValueChanging()) {
+                mp.setVolume(volumeSlider.getValue() / 100.0);
             }
         });
 
@@ -189,21 +171,19 @@ public class MediaControl extends BorderPane implements Fitable {
 
     protected void updateValues() {
         if (timeLabel != null && timeSlider != null && volumeSlider != null) {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    Duration currentTime = mp.getCurrentTime();
-                    timeLabel.setText(formatTime(currentTime, duration));
-                    timeSlider.setDisable(duration.isUnknown());
-                    if (!timeSlider.isDisabled()
-                            && duration.greaterThan(Duration.ZERO)
-                            && !timeSlider.isValueChanging()) {
-                        timeSlider.setValue(currentTime.divide(duration).toMillis()
-                                * 100.0);
-                    }
-                    if (!volumeSlider.isValueChanging()) {
-                        volumeSlider.setValue((int) Math.round(mp.getVolume()
-                                * 100));
-                    }
+            Platform.runLater(() -> {
+                Duration currentTime = mp.getCurrentTime();
+                timeLabel.setText(formatTime(currentTime, duration));
+                timeSlider.setDisable(duration.isUnknown());
+                if (!timeSlider.isDisabled()
+                        && duration.greaterThan(Duration.ZERO)
+                        && !timeSlider.isValueChanging()) {
+                    timeSlider.setValue(currentTime.divide(duration.toMillis()).toMillis()
+                            * 100.0);
+                }
+                if (!volumeSlider.isValueChanging()) {
+                    volumeSlider.setValue((int) Math.round(mp.getVolume()
+                            * 100));
                 }
             });
         }
@@ -296,5 +276,4 @@ public class MediaControl extends BorderPane implements Fitable {
     public BooleanProperty preserveRatioProperty() {
         return mediaView.preserveRatioProperty();
     }
-
 }

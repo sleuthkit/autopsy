@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui.navpanel;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,16 +28,21 @@ import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 
-/** A node in the nav/hash tree. Manages inserts and removals. Has parents
- * and children. Does not have graphical properties these are configured in
+/**
+ * A node in the nav/hash tree. Manages inserts and removals. Has parents and
+ * children. Does not have graphical properties these are configured in
  * {@link GroupTreeCell}. Each GroupTreeItem has a TreeNode which has a path
- * segment and may or may not have a group */
+ * segment and may or may not have a group
+ */
 class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeItem> {
 
-    /** maps a path segment to the child item of this item with that path
-     * segment */
+    /**
+     * maps a path segment to the child item of this item with that path segment
+     */
     private Map<String, GroupTreeItem> childMap = new HashMap<>();
-    /** the comparator if any used to sort the children of this item */
+    /**
+     * the comparator if any used to sort the children of this item
+     */
     private TreeNodeComparators comp;
 
     public GroupTreeItem(String t, Grouping g, TreeNodeComparators comp) {
@@ -44,9 +50,11 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         this.comp = comp;
     }
 
-    /** Returns the full absolute path of this level in the tree
+    /**
+     * Returns the full absolute path of this level in the tree
      *
-     * @return the full absolute path of this level in the tree */
+     * @return the full absolute path of this level in the tree
+     */
     public String getAbsolutePath() {
         if (getParent() != null) {
             return ((GroupTreeItem) getParent()).getAbsolutePath() + getValue().getPath() + "/";
@@ -55,10 +63,11 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         }
     }
 
-    /** Recursive method to add a grouping at a given path.
+    /**
+     * Recursive method to add a grouping at a given path.
      *
      * @param path Full path (or subset not yet added) to add
-     * @param g    Group to add
+     * @param g Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
     void insert(String path, Grouping g, Boolean tree) {
@@ -115,10 +124,11 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         }
     }
 
-    /** Recursive method to add a grouping at a given path.
+    /**
+     * Recursive method to add a grouping at a given path.
      *
      * @param path Full path (or subset not yet added) to add
-     * @param g    Group to add
+     * @param g Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
     void insert(List<String> path, Grouping g, Boolean tree) {
@@ -223,7 +233,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
 
             Platform.runLater(() -> {
                 synchronized (parent.getChildren()) {
-                    parent.getChildren().removeAll(GroupTreeItem.this);
+                    parent.getChildren().removeAll(Collections.singleton(GroupTreeItem.this));
                 }
             });
 

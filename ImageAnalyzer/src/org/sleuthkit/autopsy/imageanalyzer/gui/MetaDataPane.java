@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imageanalyzer.gui;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -42,8 +43,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.text.Text;
-import javafx.util.Callback;
 import javafx.util.Pair;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
@@ -51,7 +52,6 @@ import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -123,11 +123,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
         valueColumn.setCellValueFactory((p) -> {
-            if (p.getValue().getKey() == DrawableAttribute.TAGS) {
-                return new SimpleStringProperty(TagUtils.collectionToString((Collection<TagName>) p.getValue().getValue()));
-            } else {
-                return new SimpleStringProperty(p.getValue().getValue().toString());
-            }
+            return new SimpleStringProperty(StringUtils.join((Collection<?>) p.getValue().getValue(), ";"));
         });
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
         valueColumn.setCellFactory((p) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, String>() {
@@ -143,8 +139,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
                 }
             }
         });
-
-        tableView.getColumns().setAll(attributeColumn, valueColumn);
+        tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         //listen for selection change
         controller.getSelectionModel().lastSelectedProperty().addListener((observable, oldFileID, newFileID) -> {

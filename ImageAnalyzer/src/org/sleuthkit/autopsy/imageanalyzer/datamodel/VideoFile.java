@@ -106,12 +106,12 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    Number getWidth() {
+    Double getWidth() {
         try {
-            return getMedia().getWidth();
+            return (double) getMedia().getWidth();
         } catch (IOException | MediaException ex) {
 //            Exceptions.printStackTrace(ex);
-            return -1;
+            return -1.0;
         }
     }
 
@@ -121,12 +121,12 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    Number getHeight() {
+    Double getHeight() {
         try {
-            return getMedia().getHeight();
+            return (double) getMedia().getHeight();
         } catch (IOException | MediaException ex) {
 //            Exceptions.printStackTrace(ex);
-            return -1;
+            return -1.0;
         }
     }
 }

@@ -22,80 +22,87 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.TagName;
 
-/** psuedo-enum of attributes to filter, sort, and group on. They
- * mostly correspond to the columns in the db.
+/**
+ * psuedo-enum of attributes to filter, sort, and group on. They mostly
+ * correspond to the columns in the db.
  *
  * TODO: Review and refactor DrawableAttribute related code with an eye to usage
  * of type paramaters and multivalued attributes
  */
-public class DrawableAttribute<T> {
+public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> NAME
-            = new DrawableAttribute<>(AttributeName.NAME, "Name", true, "folder-rename.png");
+            = new DrawableAttribute<>( AttributeName.NAME, "Name", true, "folder-rename.png", f -> Collections.singleton(f.getName()));
 
     public final static DrawableAttribute<Boolean> ANALYZED
-            = new DrawableAttribute<>(AttributeName.ANALYZED, "Analyzed", true, "");
+            = new DrawableAttribute<>( AttributeName.ANALYZED, "Analyzed", true, "", f -> Collections.singleton(f.isAnalyzed()));
 
-    /** since categories are really just tags in autopsy, they are not dealt
-     * with in the DrawableDB. they have special code in various places
-     * to make this transparent.
+    /**
+     * since categories are really just tags in autopsy, they are not dealt with
+     * in the DrawableDB. they have special code in various places to make this
+     * transparent.
      *
      * //TODO: this had lead to awkward hard to maintain code, and little
      * advantage. move categories into DrawableDB
      */
     public final static DrawableAttribute<Category> CATEGORY
-            = new DrawableAttribute<>(AttributeName.CATEGORY, "Category", false, "category-icon.png");
+            = new DrawableAttribute<>( AttributeName.CATEGORY, "Category", false, "category-icon.png", f -> Collections.singleton(f.getCategory()));
 
-    public final static DrawableAttribute<Collection<TagName>> TAGS
-            = new DrawableAttribute<>(AttributeName.TAGS, "Tags", false, "tag_red.png");
+    public final static DrawableAttribute<TagName> TAGS
+            = new DrawableAttribute<>( AttributeName.TAGS, "Tags", false, "tag_red.png", DrawableFile::getTagNames);
 
     public final static DrawableAttribute<String> PATH
-            = new DrawableAttribute<>(AttributeName.PATH, "Path", true, "folder_picture.png");
+            = new DrawableAttribute<>( AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getParentPath()));
 
     public final static DrawableAttribute<Long> CREATED_TIME
-            = new DrawableAttribute<>(AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png");
+            = new DrawableAttribute<>( AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(f.getCrtime()));
 
     public final static DrawableAttribute<Long> MODIFIED_TIME
-            = new DrawableAttribute<>(AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png");
+            = new DrawableAttribute<>( AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(f.getMtime()));
 
     public final static DrawableAttribute<String> MAKE
-            = new DrawableAttribute<>(AttributeName.MAKE, "Camera Make", true, "camera.png");
+            = new DrawableAttribute<>( AttributeName.MAKE, "Camera Make", true, "camera.png", f -> Collections.singleton(f.getMake()));
 
     public final static DrawableAttribute<String> MODEL
-            = new DrawableAttribute<>(AttributeName.MODEL, "Camera Model", true, "camera.png");
+            = new DrawableAttribute<>( AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
 
     //TODO: should this be DrawableAttribute<Collection<String>>?
     public final static DrawableAttribute<String> HASHSET
-            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", false, "hashset_hits.png");
+            = new DrawableAttribute<>( AttributeName.HASHSET, "Hashset", false, "hashset_hits.png", DrawableFile::getHashHitSetNames);
 
     public final static DrawableAttribute<Long> OBJ_ID
-            = new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID", true, "");
+            = new DrawableAttribute<>( AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));
 
-    public final static DrawableAttribute<Number> WIDTH
-            = new DrawableAttribute<>(AttributeName.WIDTH, "Width", true, "arrow-resize.png");
+    public final static DrawableAttribute<Double> WIDTH
+            = new DrawableAttribute<>(AttributeName.WIDTH, "Width", true, "arrow-resize.png", f -> Collections.singleton(f.getWidth()));
 
-    public final static DrawableAttribute<Number> HEIGHT
-            = new DrawableAttribute<>(AttributeName.HEIGHT, "Height", true, "arrow-resize-090.png");
+    public final static DrawableAttribute<Double> HEIGHT
+            = new DrawableAttribute<>( AttributeName.HEIGHT, "Height", true, "arrow-resize-090.png", f -> Collections.singleton(f.getHeight()));
 
     final private static List< DrawableAttribute<?>> groupables
             = Arrays.asList(PATH, HASHSET, CATEGORY, TAGS, MAKE, MODEL);
 
     final private static List<DrawableAttribute<?>> values
             = Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
-                            MODIFIED_TIME, HASHSET, CATEGORY, MAKE, MODEL, OBJ_ID,
-                            WIDTH, HEIGHT);
+                    MODIFIED_TIME, HASHSET, CATEGORY, MAKE, MODEL, OBJ_ID,
+                    WIDTH, HEIGHT);
 
-    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName) {
+    private final Function<DrawableFile<?>, Collection<T>> extractor;
+
+
+    private DrawableAttribute( AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile<?>, Collection<T>> extractor) {
         this.attrName = name;
         this.displayName = new ReadOnlyStringWrapper(displayName);
         this.isDBColumn = isDBColumn;
         this.imageName = imageName;
+        this.extractor = extractor;
     }
 
     private Image icon;
@@ -137,5 +144,9 @@ public class DrawableAttribute<T> {
 
         NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME, MODIFIED_TIME, MAKE,
         MODEL, HASHSET, OBJ_ID, WIDTH, HEIGHT;
+    }
+
+    public Collection<T> getValue(DrawableFile<?> f) {
+        return extractor.apply(f);
     }
 }

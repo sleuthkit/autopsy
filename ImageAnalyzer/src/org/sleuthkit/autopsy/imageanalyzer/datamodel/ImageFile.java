@@ -80,21 +80,21 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    Number getWidth() {
+    Double getWidth() {
         final Image fullSizeImage = getFullSizeImage();
         if (fullSizeImage != null) {
             return fullSizeImage.getWidth();
         }
-        return -1;
+        return -1.0;
     }
 
     @Override
-    Number getHeight() {
+    Double getHeight() {
         final Image fullSizeImage = getFullSizeImage();
         if (fullSizeImage != null) {
             return fullSizeImage.getHeight();
         }
-        return -1;
+        return -1.0;
     }
 
     @Override

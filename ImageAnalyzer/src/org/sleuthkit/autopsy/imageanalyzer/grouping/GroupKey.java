@@ -27,11 +27,11 @@ import org.sleuthkit.datamodel.TagName;
  * key identifying information of a {@link Grouping}. Used to look up groups in
  * {@link Map}s and from the db.
  */
-public class GroupKey<T> implements Comparable<GroupKey<Comparable<T>>> {
+public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>> {
 
-    private final Comparable<T> val;
+    private final T val;
 
-    public Comparable<T> getValue() {
+    public T getValue() {
         return val;
     }
 
@@ -41,7 +41,7 @@ public class GroupKey<T> implements Comparable<GroupKey<Comparable<T>>> {
 
     private final DrawableAttribute<T> attr;
 
-    public GroupKey(DrawableAttribute<T> attr, Comparable<T> val) {
+    public GroupKey(DrawableAttribute<T> attr, T val) {
         this.attr = attr;
         this.val = val;
     }
@@ -62,7 +62,7 @@ public class GroupKey<T> implements Comparable<GroupKey<Comparable<T>>> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final GroupKey<T> other = (GroupKey<T>) obj;
+        final GroupKey<?> other = (GroupKey<?>) obj;
         if (!Objects.equals(this.val, other.val)) {
             return false;
         }
@@ -73,9 +73,9 @@ public class GroupKey<T> implements Comparable<GroupKey<Comparable<T>>> {
     }
 
     @Override
-    public int compareTo(GroupKey<Comparable<T>> o) {
+    public int compareTo(GroupKey<T> o) {
         if (val instanceof Comparable) {
-            return ((Comparable) val).compareTo(o.val);
+            return ((Comparable<T>) val).compareTo(o.val);
         } else {
             return Integer.compare(val.hashCode(), o.val.hashCode());
         }
