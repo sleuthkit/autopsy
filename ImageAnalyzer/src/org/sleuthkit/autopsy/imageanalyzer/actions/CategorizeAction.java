@@ -18,13 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +32,13 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -82,11 +82,11 @@ public class CategorizeAction extends AddTagAction {
                 for (Long fileID : selectedFiles) {
 
                     try {
-                        DrawableFile file = controller.getFileFromId(fileID);
+                        DrawableFile<?> file = controller.getFileFromId(fileID);
 
                         Category oldCat = file.getCategory();
                         // remove file from old category group
-                        controller.getGroupManager().removeFromGroup(new GroupKey(DrawableAttribute.CATEGORY, oldCat), fileID);
+                        controller.getGroupManager().removeFromGroup(new GroupKey<>(DrawableAttribute.CATEGORY, oldCat), fileID);
 
                         //remove old category tag if necessary
                         List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);

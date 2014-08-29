@@ -86,15 +86,14 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
             attrFilterMap.clear();
         });
     }
+
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     /**
      * listen to changes in individual filters and forward to external listeners
      * via the pcs
      */
-    private final ChangeListener filterForwardingListener = new ChangeListener<Object>() {
-        @Override
-        public void changed(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
-            pcs.firePropertyChange(new PropertyChangeEvent(observable, FILTER_STATE_CHANGED, oldValue, newValue));
-        }
+    private final ChangeListener filterForwardingListener = (ChangeListener<Object>) (ObservableValue<? extends Object> observable, Object oldValue, Object newValue) -> {
+        pcs.firePropertyChange(new PropertyChangeEvent(observable, FILTER_STATE_CHANGED, oldValue, newValue));
     };
 
     public FilterSet getFilterSet() {
@@ -106,7 +105,7 @@ public class FiltersPanel extends AnchorPane implements FileUpdateListener {
      * {@link Service} to (re)build filterset based on values in the database
      */
     private final RebuildFiltersService rebuildFiltersService = new RebuildFiltersService();
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
 
     /**
      * register a {@link PropertyChangeListener}

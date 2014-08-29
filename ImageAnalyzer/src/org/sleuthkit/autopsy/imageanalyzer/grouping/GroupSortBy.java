@@ -50,8 +50,8 @@ public enum GroupSortBy implements ComparatorProvider {
                 @Override
                 public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
                     return (A v1, A v2) -> {
-                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
-                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
+                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v1));
+                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v2));
                         return getGrpComparator(sortOrder).compare(g1, g2);
                     };
                 }
@@ -63,7 +63,7 @@ public enum GroupSortBy implements ComparatorProvider {
     GROUP_BY_VALUE("Group Name", true, "folder-rename.png") {
                 @Override
                 public Comparator<Grouping> getGrpComparator(final SortOrder sortOrder) {
-                    return applySortOrder(sortOrder, Comparator.comparing((Grouping t) -> t.groupKey.getValue()));
+                    return applySortOrder(sortOrder, Comparator.comparing(t -> t.groupKey.getValueDisplayName()));
                 }
 
                 @Override
@@ -102,8 +102,8 @@ public enum GroupSortBy implements ComparatorProvider {
                 @Override
                 public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
                     return (A v1, A v2) -> {
-                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v1));
-                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey(attr, v2));
+                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v1));
+                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v2));
 
                         return getGrpComparator(sortOrder).compare(g1, g2);
                     };

@@ -57,18 +57,18 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imageanalyzer.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imageanalyzer.actions.SwingMenuItemAdapter;
@@ -134,7 +134,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
     static private ContextMenu contextMenu;
 
-    protected DrawableFile file;
+    protected DrawableFile<?> file;
 
     protected Long fileID;
 
@@ -281,7 +281,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     }
 
     @Override
-    public DrawableFile getFile() {
+    public DrawableFile<?> getFile() {
         if (fileID != null) {
             if (file == null || file.getId() != fileID) {
                 try {

@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
-    public static <T extends AbstractFile> DrawableFile<T> create(T abstractFileById, boolean b) {
+    public static DrawableFile<?> create(AbstractFile abstractFileById, boolean b) {
         if (ImageAnalyzerModule.isVideoFile(abstractFileById)) {
             return new VideoFile(abstractFileById, b);
         } else {
@@ -218,14 +218,19 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                             switch (attr.getValueType()) {
                                 case BYTE:
                                     vals.add(attr.getValueBytes());
+                                    break;
                                 case DOUBLE:
                                     vals.add(attr.getValueDouble());
+                                    break;
                                 case INTEGER:
                                     vals.add(attr.getValueInt());
+                                    break;
                                 case LONG:
                                     vals.add(attr.getValueLong());
+                                    break;
                                 case STRING:
                                     vals.add(attr.getValueString());
+                                    break;
                             }
                         }
                     }

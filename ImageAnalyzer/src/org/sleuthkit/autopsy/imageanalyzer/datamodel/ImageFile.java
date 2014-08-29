@@ -27,13 +27,11 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.imageio.ImageIO;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.IconCache;
 import org.sleuthkit.autopsy.imageanalyzer.gui.Fitable;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * ImageAnalyzer data model object that represents an image file. It is a
@@ -42,17 +40,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  *
  */
-public class ImageFile extends DrawableFile {
+public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
     private SoftReference<Image> imageRef;
 
-    ImageFile(AbstractFile f, Boolean analyzed) {
+    ImageFile(T f, Boolean analyzed) {
         super(f, analyzed);
 
-    }
-
-    ImageFile(Long id, Boolean analyzed) throws TskCoreException {
-        super(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
     @Override

@@ -43,8 +43,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName;
 import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.PATH;
@@ -209,7 +209,7 @@ public class NavPanel extends TabPane {
 
         if (treeItemForGroup != null) {
             Platform.runLater(() -> {
-                TreeItem ti = treeItemForGroup;
+                TreeItem<TreeNode> ti = treeItemForGroup;
                 while (ti != null) {
                     ti.setExpanded(true);
                     ti = ti.getParent();
@@ -323,11 +323,11 @@ public class NavPanel extends TabPane {
         List<String> hashSetNames = controller.getGroupManager().findValuesForAttribute(DrawableAttribute.HASHSET, GroupSortBy.NONE);
         for (String name : hashSetNames) {
             try {
-                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey(DrawableAttribute.HASHSET, name));
+                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey<>(DrawableAttribute.HASHSET, name));
 
                 for (Long fileId : fileIDsInGroup) {
 
-                    DrawableFile file = controller.getFileFromId(fileId);
+                    DrawableFile<?> file = controller.getFileFromId(fileId);
                     Collection<GroupKey<?>> groupKeysForFile;
                     if (controller.getGroupManager().getGroupBy() == DrawableAttribute.TAGS) {
                         Collection<TagName> tagNames = (Collection<TagName>) file.getValueOfAttribute(DrawableAttribute.TAGS);
@@ -339,7 +339,7 @@ public class NavPanel extends TabPane {
                         groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
                     }
 
-                    for (GroupKey k : groupKeysForFile) {
+                    for (GroupKey<?> k : groupKeysForFile) {
                         final Grouping groupForKey = controller.getGroupManager().getGroupForKey(k);
                         if (groupForKey != null) {
                             insertIntoHashTree(groupForKey);

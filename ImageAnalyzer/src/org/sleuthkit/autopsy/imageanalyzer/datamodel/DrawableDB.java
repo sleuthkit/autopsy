@@ -41,9 +41,9 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.CATEGORY;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
@@ -111,7 +111,7 @@ public class DrawableDB {
 
     /** map from {@link DrawableAttribute} to the {@link PreparedStatement} thet
      * is used to select groups for that attribute */
-    private final Map<DrawableAttribute, PreparedStatement> groupStatementMap = new HashMap<>();
+    private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
 
     /** list of observers to be notified if the database changes */
     private final HashSet<FileUpdateListener> updateListeners = new HashSet<>();
@@ -476,7 +476,7 @@ public class DrawableDB {
         return names;
     }
 
-    public boolean isGroupSeen(GroupKey groupKey) {
+    public boolean isGroupSeen(GroupKey<?> groupKey) {
         dbReadLock();
         try {
             groupSeenQueryStmt.clearParameters();
@@ -495,7 +495,7 @@ public class DrawableDB {
         return false;
     }
 
-    public void markGroupSeen(GroupKey gk) {
+    public void markGroupSeen(GroupKey<?> gk) {
         dbWriteLock();
         try {
             //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = 1 where value = ? and attribute = ?");
@@ -517,7 +517,7 @@ public class DrawableDB {
         return removeFile;
     }
 
-    public void updateFile(DrawableFile f) {
+    public void updateFile(DrawableFile<?> f) {
         DrawableTransaction trans = beginTransaction();
         updatefile(f, trans);
         commitTransaction(trans, true);
@@ -532,7 +532,7 @@ public class DrawableDB {
      *
      *
      */
-    public void updatefile(DrawableFile f, DrawableTransaction tr) {
+    public void updatefile(DrawableFile<?> f, DrawableTransaction tr) {
 
         //TODO:      implement batch version -jm
         if (tr.isClosed()) {
@@ -631,7 +631,7 @@ public class DrawableDB {
         }
     }
 
-    public Boolean isFileAnalyzed(DrawableFile f) {
+    public Boolean isFileAnalyzed(DrawableFile<?> f) {
         return isFileAnalyzed(f.getId());
     }
 
@@ -669,7 +669,7 @@ public class DrawableDB {
         return false;
     }
 
-    public Boolean isGroupAnalyzed(GroupKey gk) {
+    public Boolean isGroupAnalyzed(GroupKey<?> gk) {
         dbReadLock();
         try {
             List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
@@ -810,7 +810,7 @@ public class DrawableDB {
         return vals;
     }
 
-    public void insertGroup(final String value, DrawableAttribute groupBy) {
+    public void insertGroup(final String value, DrawableAttribute<?> groupBy) {
         dbWriteLock();
 
         try {
@@ -835,7 +835,7 @@ public class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException {
+    private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
             return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id), analyzed);
         } catch (IllegalStateException ex) {
@@ -852,7 +852,7 @@ public class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    public DrawableFile getFileFromID(Long id) throws TskCoreException {
+    public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
             return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id),
                                        areFilesAnalyzed(Collections.singleton(id)));
@@ -862,7 +862,7 @@ public class DrawableDB {
         }
     }
 
-    public List<Long> getFileIDsInGroup(GroupKey groupKey) throws TskCoreException {
+    public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
 
         if (groupKey.getAttribute().isDBColumn) {
             switch (groupKey.getAttribute().attrName) {
@@ -892,8 +892,8 @@ public class DrawableDB {
         return files;
     }
 
-    public List<DrawableFile> getFilesInGroup(GroupKey key) throws TskCoreException {
-        List<DrawableFile> files = new ArrayList<>();
+    public List<DrawableFile<?>> getFilesInGroup(GroupKey<?> key) throws TskCoreException {
+        List<DrawableFile<?>> files = new ArrayList<>();
         dbReadLock();
         try {
             PreparedStatement statement = null;
@@ -941,9 +941,9 @@ public class DrawableDB {
         }
     }
 
-    public List<DrawableFile> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
+    public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
         try {
-            List<DrawableFile> files = new ArrayList<>();
+            List<DrawableFile<?>> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile) {
@@ -957,7 +957,7 @@ public class DrawableDB {
         }
     }
 
-    private PreparedStatement getGroupStatment(DrawableAttribute groupBy) {
+    private PreparedStatement getGroupStatment(DrawableAttribute<?> groupBy) {
         return groupStatementMap.get(groupBy);
 
     }

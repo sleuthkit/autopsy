@@ -9,8 +9,8 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 
@@ -43,7 +43,7 @@ public interface DrawableView extends Category.CategoryListener, TagUtils.TagLis
 
     Region getBorderable();
 
-    DrawableFile getFile();
+    DrawableFile<?> getFile();
 
     void setFile(final Long fileID);
 

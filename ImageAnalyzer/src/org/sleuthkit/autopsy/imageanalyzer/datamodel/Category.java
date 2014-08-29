@@ -52,7 +52,7 @@ public enum Category implements Comparable<Category> {
     FOUR(Color.BISQUE, 4, "CAT-4,  Exemplar/Comparison (Internal Use Only)"),
     FIVE(Color.GREEN, 5, "CAT-5, Non-pertinent");
 
-    final static private Map<String, Category> nameMap = new HashMap();
+    final static private Map<String, Category> nameMap = new HashMap<>();
 
     private static List<Category> valuesList = Arrays.asList(values());
 

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -43,6 +42,7 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -73,7 +73,7 @@ public class IconCache {
         return instance;
     }
 
-    public Image get(DrawableFile file) {
+    public Image get(DrawableFile<?> file) {
         try {
             return cache.get(file.getId(), () -> load(file)).orElse(null);
         } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
@@ -91,7 +91,7 @@ public class IconCache {
         }
     }
 
-    public Optional<Image> load(DrawableFile file) throws IIOException {
+    public Optional<Image> load(DrawableFile<?> file) throws IIOException {
 
         Image icon = null;
         File cacheFile;
@@ -124,7 +124,7 @@ public class IconCache {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
     }
 
-    private Image generateAndSaveIcon(final DrawableFile file) {
+    private Image generateAndSaveIcon(final DrawableFile<?> file) {
         Image img;
         //TODO: should we wrap this in a BufferedInputStream? -jm
         try (ReadContentInputStream inputStream = new ReadContentInputStream(file.getAbstractFile())) {
@@ -146,7 +146,7 @@ public class IconCache {
     }
     /* Generate a scaled image */
 
-    private Image fallbackToSwingImage(final DrawableFile file) {
+    private Image fallbackToSwingImage(final DrawableFile<?> file) {
         final BufferedImage generateSwingIcon = generateSwingIcon(file);
         if (generateSwingIcon != null) {
             WritableImage toFXImage = SwingFXUtils.toFXImage(generateSwingIcon, null);
@@ -162,7 +162,7 @@ public class IconCache {
         }
     }
 
-    private BufferedImage generateSwingIcon(DrawableFile file) {
+    private BufferedImage generateSwingIcon(DrawableFile<?> file) {
         try (ReadContentInputStream inputStream = new ReadContentInputStream(file.getAbstractFile())) {
             BufferedImage bi = ImageIO.read(inputStream);
             if (bi == null) {
@@ -187,7 +187,7 @@ public class IconCache {
         }
     }
 
-    private void saveIcon(final DrawableFile file, final Image bi) {
+    private void saveIcon(final DrawableFile<?> file, final Image bi) {
         try {
             /* save the icon in a background thread. profiling
              * showed that it can take as much time as making

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.datamodel;
 
-import org.sleuthkit.autopsy.imageanalyzer.gui.MediaControl;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -33,13 +32,14 @@ import javafx.scene.text.Text;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.imageanalyzer.gui.MediaControl;
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class VideoFile extends DrawableFile {
+public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imageanalyzer/images/Clapperboard.png");
 
-    VideoFile(AbstractFile file, Boolean analyzed) {
+    VideoFile(T file, Boolean analyzed) {
         super(file, analyzed);
     }
 

@@ -18,18 +18,14 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui.navpanel;
 
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.event.EventType;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 
 /** A node in the nav/hash tree. Manages inserts and removals. Has parents
  * and children. Does not have graphical properties these are configured in
@@ -225,12 +221,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         if (parent != null) {
             parent.childMap.remove(getValue().getPath());
 
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (parent.getChildren()) {
-                        parent.getChildren().removeAll(GroupTreeItem.this);
-                    }
+            Platform.runLater(() -> {
+                synchronized (parent.getChildren()) {
+                    parent.getChildren().removeAll(GroupTreeItem.this);
                 }
             });
 

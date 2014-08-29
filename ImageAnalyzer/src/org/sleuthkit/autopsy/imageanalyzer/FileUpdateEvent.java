@@ -18,18 +18,18 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 
 @Immutable
 public class FileUpdateEvent {
 
     private final Set<Long> updatedFiles;
 
-    private final DrawableAttribute changedAttribute;
+    private final DrawableAttribute<?> changedAttribute;
 
     private final UpdateType updateType;
 
@@ -41,17 +41,17 @@ public class FileUpdateEvent {
         return updatedFiles;
     }
 
-    public DrawableAttribute getChangedAttribute() {
+    public DrawableAttribute<?> getChangedAttribute() {
         return changedAttribute;
     }
 
-    public FileUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute changedAttribute, UpdateType updateType) {
+    public FileUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute<?> changedAttribute, UpdateType updateType) {
         this.updatedFiles = new HashSet<>(updatedFiles);
         this.changedAttribute = changedAttribute;
         this.updateType = updateType;
     }
 
-    public FileUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute changedAttribute) {
+    public FileUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute<?> changedAttribute) {
         this.updatedFiles = new HashSet<>(updatedFiles);
         this.changedAttribute = changedAttribute;
         this.updateType = UpdateType.FILE_UPDATED;

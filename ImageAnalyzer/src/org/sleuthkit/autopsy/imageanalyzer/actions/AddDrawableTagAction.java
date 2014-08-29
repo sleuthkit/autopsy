@@ -18,11 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -34,6 +29,11 @@ import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -82,7 +82,7 @@ public class AddDrawableTagAction extends AddTagAction {
             protected Void doInBackground() throws Exception {
                 for (Long fileID : selectedFiles) {
                     try {
-                        DrawableFile file = ImageAnalyzerController.getDefault().getFileFromId(fileID);
+                        DrawableFile<?> file = ImageAnalyzerController.getDefault().getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment});
                         Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
                     } catch (IllegalStateException ex) {

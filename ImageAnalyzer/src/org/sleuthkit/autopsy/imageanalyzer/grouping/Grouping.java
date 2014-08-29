@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.grouping;
 
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -26,6 +25,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -51,9 +51,9 @@ public class Grouping {
         return fileIDs;
     }
 
-    final public GroupKey groupKey;
+    final public GroupKey<?> groupKey;
 
-    public Grouping(GroupKey groupKey, List<Long> filesInGroup) {
+    public Grouping(GroupKey<?> groupKey, List<Long> filesInGroup) {
         this.groupKey = groupKey;
         fileIDs.setAll(filesInGroup);
     }
@@ -105,11 +105,8 @@ public class Grouping {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Grouping other = (Grouping) obj;
-        if (!Objects.equals(this.groupKey, other.groupKey)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.groupKey,
+                ((Grouping) obj).groupKey);
     }
 
     synchronized public void addFile(Long f) {

@@ -86,7 +86,6 @@ public class GroupKey<T> implements Comparable<GroupKey<Comparable<T>>> {
         if (attr == DrawableAttribute.TAGS) {
             return ((TagName) getValue()).getDisplayName();
         } else {
-
             return getValue().toString();
         }
     }
