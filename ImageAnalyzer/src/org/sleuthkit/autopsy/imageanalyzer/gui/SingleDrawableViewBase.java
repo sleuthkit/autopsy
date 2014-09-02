@@ -299,7 +299,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
     protected boolean hasFollowUp() throws TskCoreException {
         String followUpTagName = TagUtils.getFollowUpTagName().getDisplayName();
-        Collection<TagName> tagNames = (Collection<TagName>) getFile().getValueOfAttribute(DrawableAttribute.TAGS);
+        Collection<TagName> tagNames = DrawableAttribute.TAGS.getValue(getFile());
         return tagNames.stream().anyMatch((tn) -> tn.getDisplayName().equals(followUpTagName));
     }
 

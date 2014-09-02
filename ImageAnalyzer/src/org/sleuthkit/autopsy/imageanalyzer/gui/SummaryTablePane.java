@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
@@ -78,7 +79,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Integer>, Integer> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
         countColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
-        tableView.getColumns().setAll(catColumn, countColumn);
+        tableView.getColumns().setAll(Arrays.asList(catColumn, countColumn));
 
 //        //register for category events
         Category.registerListener(this);

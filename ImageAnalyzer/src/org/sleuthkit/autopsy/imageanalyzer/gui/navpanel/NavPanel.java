@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imageanalyzer.gui.navpanel;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -57,9 +56,10 @@ import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Display two trees. one shows all folders (groups) and calls out folders
- * with images. the user can select folders with images to see them in the
- * main GroupPane The other shows folders with hash set hits.
+/**
+ * Display two trees. one shows all folders (groups) and calls out folders with
+ * images. the user can select folders with images to see them in the main
+ * GroupPane The other shows folders with hash set hits.
  */
 public class NavPanel extends TabPane {
 
@@ -69,14 +69,18 @@ public class NavPanel extends TabPane {
     @FXML
     private URL location;
 
-    /** TreeView for folders with hash hits */
+    /**
+     * TreeView for folders with hash hits
+     */
     @FXML
     private TreeView<TreeNode> hashTree;
 
     @FXML
     private TabPane navTabPane;
 
-    /** TreeView for all folders */
+    /**
+     * TreeView for all folders
+     */
     @FXML
     private TreeView<TreeNode> navTree;
 
@@ -89,7 +93,9 @@ public class NavPanel extends TabPane {
     @FXML
     private ComboBox<TreeNodeComparators> sortByBox;
 
-    /** contains the 'active tree' */
+    /**
+     * contains the 'active tree'
+     */
     private final SimpleObjectProperty<TreeView<TreeNode>> activeTreeProperty = new SimpleObjectProperty<>();
 
     private GroupTreeItem navTreeRoot;
@@ -198,9 +204,11 @@ public class NavPanel extends TabPane {
         hashTreeRoot.insert(g.groupKey.getValueDisplayName(), g, false);
     }
 
-    /** Set the tree to the passed in group
+    /**
+     * Set the tree to the passed in group
      *
-     * @param grouping */
+     * @param grouping
+     */
     public void setFocusedGroup(Grouping grouping) {
 
         List<String> path = groupingToPath(grouping);
@@ -222,7 +230,7 @@ public class NavPanel extends TabPane {
             });
         }
     }
-
+    @SuppressWarnings("fallthrough")
     private static List<String> groupingToPath(Grouping g) {
 
         AttributeName attrName = g.groupKey.getAttribute().attrName;
@@ -233,6 +241,7 @@ public class NavPanel extends TabPane {
                 break;
             case TAGS:
                 path = ((TagName) g.groupKey.getValue()).getDisplayName();
+            //fallthrough
             default:
                 if (path == null) {
                     path = g.groupKey.getValue().toString();
@@ -323,21 +332,12 @@ public class NavPanel extends TabPane {
         List<String> hashSetNames = controller.getGroupManager().findValuesForAttribute(DrawableAttribute.HASHSET, GroupSortBy.NONE);
         for (String name : hashSetNames) {
             try {
-                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey<>(DrawableAttribute.HASHSET, name));
+                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey<String>(DrawableAttribute.HASHSET, name));
 
                 for (Long fileId : fileIDsInGroup) {
 
                     DrawableFile<?> file = controller.getFileFromId(fileId);
-                    Collection<GroupKey<?>> groupKeysForFile;
-                    if (controller.getGroupManager().getGroupBy() == DrawableAttribute.TAGS) {
-                        Collection<TagName> tagNames = (Collection<TagName>) file.getValueOfAttribute(DrawableAttribute.TAGS);
-                        groupKeysForFile = new ArrayList<>();
-                        for (TagName tn : tagNames) {
-                            groupKeysForFile.add(new GroupKey(DrawableAttribute.TAGS, tn));
-                        }
-                    } else {
-                        groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
-                    }
+                    Collection<GroupKey<?>> groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
 
                     for (GroupKey<?> k : groupKeysForFile) {
                         final Grouping groupForKey = controller.getGroupManager().getGroupForKey(k);

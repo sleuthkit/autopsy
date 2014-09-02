@@ -56,12 +56,14 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sqlite.SQLiteJDBCLoader;
 
-/** This class is the public interface to the Image / Video Analyzer SQLite
+/**
+ * This class is the public interface to the Image / Video Analyzer SQLite
  * database. This class borrows a lot of ideas and techniques (for good or ill)
  * from {@link  SleuthkitCase}.
  *
- * TODO: Creating an abstract base class for sqlite databases* may make sense
- * in the future. see also {@link EventsDB} */
+ * TODO: Creating an abstract base class for sqlite databases* may make sense in
+ * the future. see also {@link EventsDB}
+ */
 public class DrawableDB {
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(DrawableDB.class.getName());
@@ -109,11 +111,15 @@ public class DrawableDB {
 
     private final PreparedStatement hashSetGroupStmt;
 
-    /** map from {@link DrawableAttribute} to the {@link PreparedStatement} thet
-     * is used to select groups for that attribute */
+    /**
+     * map from {@link DrawableAttribute} to the {@link PreparedStatement} thet
+     * is used to select groups for that attribute
+     */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
 
-    /** list of observers to be notified if the database changes */
+    /**
+     * list of observers to be notified if the database changes
+     */
     private final HashSet<FileUpdateListener> updateListeners = new HashSet<>();
 
     private GroupManager manager;
@@ -160,11 +166,10 @@ public class DrawableDB {
     }
 
     /**
-     * Lock to protect against read while it is in a write transaction
-     * state.
-     * Supports multiple concurrent readers if there is no writer. MUST
-     * always call dbReadUnLock() as early as possible, in the same thread
-     * where dbReadLock() was called.
+     * Lock to protect against read while it is in a write transaction state.
+     * Supports multiple concurrent readers if there is no writer. MUST always
+     * call dbReadUnLock() as early as possible, in the same thread where
+     * dbReadLock() was called.
      */
     void dbReadLock() {
         DBLock.lock();
@@ -179,9 +184,11 @@ public class DrawableDB {
         DBLock.unlock();
     }
 
-    /** @param dbPath the path to the db file
+    /**
+     * @param dbPath the path to the db file
      *
-     * @throws SQLException if there is problem creating or configuring the db */
+     * @throws SQLException if there is problem creating or configuring the db
+     */
     private DrawableDB(String dbPath) throws SQLException, ExceptionInInitializerError {
         this.dbPath = dbPath;
 
@@ -216,7 +223,8 @@ public class DrawableDB {
         }
     }
 
-    /** create PreparedStatement with the supplied string, and add the new
+    /**
+     * create PreparedStatement with the supplied string, and add the new
      * statement to the list of PreparedStatements used in {@link DrawableDB#closeStatements()
      *
      * @param stmtString the string representation of the sqlite statement to
@@ -224,24 +232,27 @@ public class DrawableDB {
      *
      * @return the prepared statement
      *
-     * @throws SQLException if unable to prepare the statement */
+     * @throws SQLException if unable to prepare the statement
+     */
     private PreparedStatement prepareStatement(String stmtString) throws SQLException {
         PreparedStatement prepareStatement = con.prepareStatement(stmtString);
         preparedStatements.add(prepareStatement);
         return prepareStatement;
     }
 
-    /** calls {@link DrawableDB#prepareStatement(java.lang.String) ,
+    /**
+     * calls {@link DrawableDB#prepareStatement(java.lang.String) ,
      *  and then add the statement to the groupStatmentMap used to lookup
      * statements by the attribute/column they group on
      *
      * @param stmtString the string representation of the sqlite statement to
      *                   prepare
-     * @param attr       the {@link DrawableAttribute} this query groups by
+     * @param attr the {@link DrawableAttribute} this query groups by
      *
      * @return the prepared statement
      *
-     * @throws SQLExceptionif unable to prepare the statement */
+     * @throws SQLExceptionif unable to prepare the statement
+     */
     private PreparedStatement prepareStatement(String stmtString, DrawableAttribute<?> attr) throws SQLException {
         PreparedStatement prepareStatement = prepareStatement(stmtString);
         if (attr != null) {
@@ -251,8 +262,9 @@ public class DrawableDB {
         return prepareStatement;
     }
 
-    /** public factory method. Creates and opens a connection to a new
-     * database * at the given path.
+    /**
+     * public factory method. Creates and opens a connection to a new database *
+     * at the given path.
      *
      * @param dbPath
      *
@@ -301,18 +313,20 @@ public class DrawableDB {
 
         try {
             LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode",
-                                                 SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                                                                                ? "native" : "pure-java"));
+                    SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
+                    ? "native" : "pure-java"));
         } catch (Exception exception) {
             LOGGER.log(Level.WARNING, "exception while checking sqlite-jdbc version and mode", exception);
         }
 
     }
 
-    /** create the table and indices if they don't already exist
+    /**
+     * create the table and indices if they don't already exist
      *
      * @return the number of rows in the table , count > 0 indicating an
-     *         existing table */
+     * existing table
+     */
     private boolean initializeDB() {
         try {
             if (isClosed()) {
@@ -457,9 +471,11 @@ public class DrawableDB {
         return con.isClosed();
     }
 
-    /** get all the hash set names used in the db
+    /**
+     * get all the hash set names used in the db
      *
-     * @return a set of the names of all the hash sets that have hash set hits */
+     * @return a set of the names of all the hash sets that have hash set hits
+     */
     public Set<String> getHashSetNames() {
         Set<String> names = new HashSet<>();
         // "SELECT DISTINCT hash_set_name FROM hash_sets"
@@ -552,7 +568,7 @@ public class DrawableDB {
             insertFileStmt.setInt(8, f.isAnalyzed() ? 1 : 0);
             insertFileStmt.executeUpdate();
 
-            final List<String> hashSetNames = (List<String>) f.getValueOfAttribute(DrawableAttribute.HASHSET);
+            final Collection<String> hashSetNames = DrawableAttribute.HASHSET.getValue(f);
 
             if (hashSetNames.isEmpty() == false) {
                 for (String name : hashSetNames) {
@@ -578,14 +594,8 @@ public class DrawableDB {
             }
 
             //and update all groups this file is in
-            for (DrawableAttribute attr : DrawableAttribute.getGroupableAttrs()) {
-                Object valueOfAttribute = f.getValueOfAttribute(attr);
-                Collection vals;
-                if (valueOfAttribute instanceof Collection) {
-                    vals = (Collection) valueOfAttribute;
-                } else {
-                    vals = Collections.singleton(valueOfAttribute);
-                }
+            for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
+                Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Object val : vals) {
                     insertGroup(val.toString(), attr);
                 }
@@ -638,7 +648,7 @@ public class DrawableDB {
     public Boolean isFileAnalyzed(long fileId) {
         dbReadLock();
         try (Statement stmt = con.createStatement();
-             ResultSet analyzedQuery = stmt.executeQuery("select analyzed from drawable_files where obj_id = " + fileId)) {
+                ResultSet analyzedQuery = stmt.executeQuery("select analyzed from drawable_files where obj_id = " + fileId)) {
             while (analyzedQuery.next()) {
                 return analyzedQuery.getBoolean(ANALYZED);
             }
@@ -655,8 +665,8 @@ public class DrawableDB {
 
         dbReadLock();
         try (Statement stmt = con.createStatement();
-             //Can't make this a preprared statement because of the IN ( ... )
-             ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIds, ", ") + ")")) {
+                //Can't make this a preprared statement because of the IN ( ... )
+                ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIds, ", ") + ")")) {
             while (analyzedQuery.next()) {
                 return analyzedQuery.getInt(ANALYZED) == fileIds.size();
             }
@@ -675,8 +685,8 @@ public class DrawableDB {
             List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
 
             try (Statement stmt = con.createStatement();
-                 //Can't make this a preprared statement because of the IN ( ... )
-                 ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
+                    //Can't make this a preprared statement because of the IN ( ... )
+                    ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
                 while (analyzedQuery.next()) {
                     return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
                 }
@@ -693,11 +703,11 @@ public class DrawableDB {
     }
 
     /**
-     * Find and return list of all ids of files matching the specific
-     * Where clause
+     * Find and return list of all ids of files matching the specific Where
+     * clause
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     *                       files (do not begin the WHERE clause with the word WHERE!)
+     * files (do not begin the WHERE clause with the word WHERE!)
      *
      * @return a list of file ids each of which satisfy the given WHERE clause
      *
@@ -746,7 +756,7 @@ public class DrawableDB {
      *
      * @return
      */
-    public <A> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
 
         List<A> vals = new ArrayList<>();
 
@@ -794,11 +804,9 @@ public class DrawableDB {
                 }
 
                 try (Statement stmt = con.createStatement();
-                     ResultSet valsResults = stmt.executeQuery(query.toString())) {
-
+                        ResultSet valsResults = stmt.executeQuery(query.toString())) {
                     while (valsResults.next()) {
-                        final Object object = valsResults.getObject(groupBy.attrName.name());
-                        vals.add((A) object);
+                        vals.add((A) valsResults.getObject(groupBy.attrName.name()));
                     }
                 } catch (SQLException ex) {
                     LOGGER.log(Level.WARNING, "Unable to get values for attribute", ex);
@@ -827,13 +835,13 @@ public class DrawableDB {
     }
 
     /**
-     * @param id       the obj_id of the file to return
+     * @param id the obj_id of the file to return
      * @param analyzed the analyzed state of the file
      *
      * @return a DrawableFile for the given obj_id and analyzed state
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     *                          {@link SleuthkitCase}
+     * {@link SleuthkitCase}
      */
     private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
@@ -850,12 +858,12 @@ public class DrawableDB {
      * @return a DrawableFile for the given obj_id
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     *                          {@link SleuthkitCase}
+     * {@link SleuthkitCase}
      */
     public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
             return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id),
-                                       areFilesAnalyzed(Collections.singleton(id)));
+                    areFilesAnalyzed(Collections.singleton(id)));
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id, ex);
             return null;
@@ -1011,10 +1019,9 @@ public class DrawableDB {
     /**
      * Mark all un analyzed files as analyzed.
      *
-     * TODO: This is a hack we only do because their is
-     * a bug that even after ingest is done, their are sometimes still files
-     * that are not marked as analyzed. Ultimately we should track down the
-     * underlying bug. -jm
+     * TODO: This is a hack we only do because their is a bug that even after
+     * ingest is done, their are sometimes still files that are not marked as
+     * analyzed. Ultimately we should track down the underlying bug. -jm
      *
      * @return the ids of files that we marked as analyzed
      */
@@ -1023,7 +1030,7 @@ public class DrawableDB {
         ArrayList<Long> ids = new ArrayList<>();
         dbWriteLock();
         try (Statement statement = con.createStatement();
-             ResultSet executeQuery = statement.executeQuery("select obj_id from drawable_files where analyzed = 0")) {
+                ResultSet executeQuery = statement.executeQuery("select obj_id from drawable_files where analyzed = 0")) {
 
             while (executeQuery.next()) {
                 ids.add(executeQuery.getLong("obj_id"));

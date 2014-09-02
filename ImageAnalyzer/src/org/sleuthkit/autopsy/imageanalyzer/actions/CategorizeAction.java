@@ -86,7 +86,7 @@ public class CategorizeAction extends AddTagAction {
 
                         Category oldCat = file.getCategory();
                         // remove file from old category group
-                        controller.getGroupManager().removeFromGroup(new GroupKey<>(DrawableAttribute.CATEGORY, oldCat), fileID);
+                        controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);
 
                         //remove old category tag if necessary
                         List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
