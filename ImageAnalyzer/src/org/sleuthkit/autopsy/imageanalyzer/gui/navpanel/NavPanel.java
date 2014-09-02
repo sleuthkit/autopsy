@@ -45,15 +45,11 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName;
-import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.PATH;
-import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.TAGS;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -230,23 +226,11 @@ public class NavPanel extends TabPane {
             });
         }
     }
+
     @SuppressWarnings("fallthrough")
     private static List<String> groupingToPath(Grouping g) {
 
-        AttributeName attrName = g.groupKey.getAttribute().attrName;
-        String path = null;
-        switch (attrName) {
-            case PATH:
-                path = ((String) g.groupKey.getValue());
-                break;
-            case TAGS:
-                path = ((TagName) g.groupKey.getValue()).getDisplayName();
-            //fallthrough
-            default:
-                if (path == null) {
-                    path = g.groupKey.getValue().toString();
-                }
-        }
+        String path = g.groupKey.getValueDisplayName();
 
         String cleanPath = StringUtils.stripStart(path, "/");
         String[] tokens = cleanPath.split("/");
@@ -258,15 +242,7 @@ public class NavPanel extends TabPane {
         initNavTree();
         List<String> path = groupingToPath(g);
 
-        AttributeName attrName = g.groupKey.getAttribute().attrName;
-        switch (attrName) {
-            case PATH:
-                navTreeRoot.insert(path, g, true);
-                break;
-            default:
-                navTreeRoot.insert(path, g, false);
-                break;
-        }
+        navTreeRoot.insert(path, g, true);
     }
 
     private void removeFromNavTree(Grouping g) {

@@ -309,7 +309,7 @@ public class GroupManager {
                 return null;
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.name() + " = " + groupKey.getValue(), ex);
+            LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
             return null;
         }
     }
@@ -568,7 +568,7 @@ public class GroupManager {
         private final SortOrder sortOrder;
 
         public ReGroupTask(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
-            super("regrouping files by " + groupBy.attrName.name() + " sorted by " + sortBy.name() + " in " + sortOrder.name() + " order", true);
+            super("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", true);
 
             this.groupBy = groupBy;
             this.sortBy = sortBy;
@@ -587,7 +587,7 @@ public class GroupManager {
                 return null;
             }
 
-            groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.name() + " sorted by " + sortBy.name() + " in " + sortOrder.name() + " order", this);
+            groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
@@ -606,9 +606,9 @@ public class GroupManager {
                     return null;//abort
                 }
                 p++;
-                updateMessage("regrouping files by " + groupBy.attrName.name() + " : " + val);
+                updateMessage("regrouping files by " + groupBy.attrName.toString() + " : " + val);
                 updateProgress(p, vals.size());
-                groupProgress.progress("regrouping files by " + groupBy.attrName.name() + " : " + val, p);
+                groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
                 //check if this group is analyzed
                 final GroupKey<A> groupKey = new GroupKey<>(groupBy, val);
 

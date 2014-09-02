@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import static org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute.AttributeName.CATEGORY;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
@@ -770,12 +769,12 @@ public class DrawableDB {
             default:
                 dbReadLock();
                 //TODO: convert this to prepared statement 
-                StringBuilder query = new StringBuilder("select " + groupBy.attrName.name() + ", count(*) from drawable_files group by " + groupBy.attrName.name());
+                StringBuilder query = new StringBuilder("select " + groupBy.attrName.toString() + ", count(*) from drawable_files group by " + groupBy.attrName.toString());
 
                 String orderByClause = "";
                 switch (sortBy) {
                     case GROUP_BY_VALUE:
-                        orderByClause = " order by " + groupBy.attrName.name();
+                        orderByClause = " order by " + groupBy.attrName.toString();
                         break;
                     case FILE_COUNT:
                         orderByClause = " order by count(*)";
@@ -806,7 +805,7 @@ public class DrawableDB {
                 try (Statement stmt = con.createStatement();
                         ResultSet valsResults = stmt.executeQuery(query.toString())) {
                     while (valsResults.next()) {
-                        vals.add((A) valsResults.getObject(groupBy.attrName.name()));
+                        vals.add((A) valsResults.getObject(groupBy.attrName.toString()));
                     }
                 } catch (SQLException ex) {
                     LOGGER.log(Level.WARNING, "Unable to get values for attribute", ex);
@@ -825,7 +824,7 @@ public class DrawableDB {
             //PreparedStatement insertGroup = con.prepareStatement("insert or ignore into groups (value, attribute, seen) values (?,?,0)");
             insertGroupStmt.clearParameters();
             insertGroupStmt.setString(1, value);
-            insertGroupStmt.setString(2, groupBy.attrName.name());
+            insertGroupStmt.setString(2, groupBy.attrName.toString());
             insertGroupStmt.execute();
         } catch (SQLException sQLException) {
             LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException);
@@ -917,18 +916,7 @@ public class DrawableDB {
             }
 
             statement.setObject(1, key.getValue());
-            //I hate this! not flexible/generic/maintainable -jm
-            //even special enums like for blackboard artifacts seems clunky
-//            switch (key.getAttribute().getValueType()) {
-//                case STRING:
-//                    statement.setString(1, (String) key.getValue());
-//                    break;
-//                case LONG:
-//                    statement.setLong(1, ((Integer) key.getValue()).longValue());
-//                    break;
-//                case BOOLEAN:
-//                    statement.setInt(1, (int) key.getValue());
-//            }
+   
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
                     files.add(getFileFromID(valsResults.getLong(OBJ_ID), valsResults.getBoolean(ANALYZED)));
