@@ -26,7 +26,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.HorizontalDirection;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
@@ -47,14 +46,16 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.ImageFile;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.VideoFile;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -270,17 +271,19 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        Node newCenterNode = file.getFullsizeDisplayNode();
-        if (newCenterNode instanceof Fitable) {
-            Fitable fitable = (Fitable) newCenterNode;
-            fitable.setPreserveRatio(true);
-            //JMTODO: this math is hack! fix it -jm
-            fitable.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
-            fitable.fitHeightProperty().bind(this.heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
+        if (file.isVideo()) {
+            return () -> {
+                imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
+            };
+        } else {
+            ImageView imageView = new ImageView(((ImageFile<?>) file).getFullSizeImage());
+            imageView.setPreserveRatio(true);
+            imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
+            imageView.fitHeightProperty().bind(this.heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
+            return () -> {
+                imageBorder.setCenter(imageView);
+            };
         }
-        return () -> {
-            imageBorder.setCenter(newCenterNode);
-        };
     }
 
     @Override

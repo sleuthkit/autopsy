@@ -22,17 +22,11 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
-import java.util.logging.Level;
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.text.Text;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.imageanalyzer.gui.MediaControl;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
@@ -60,9 +54,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         }
         final File cacheFile = getCacheFile(this.getId());
         if (cacheFile.exists() == false) {
-
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile);
-
         }
         try {
             media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
@@ -73,33 +65,6 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         }
     }
 
-    @Override
-    public Node getFullsizeDisplayNode() {
-        final File cacheFile = getCacheFile(this.getId());
-
-        try {
-            if (cacheFile.exists() == false) {
-                ContentUtils.writeToFile(this.getAbstractFile(), cacheFile);
-            }
-            final Media media = getMedia();
-            final MediaPlayer mediaPlayer = new MediaPlayer(media);
-            final MediaControl mediaView = new MediaControl(mediaPlayer);
-            mediaPlayer.statusProperty().addListener((observableStatus, oldStatus, newStatus) -> {
-                Logger.getAnonymousLogger().log(Level.INFO, "media player: {0}", newStatus);
-            });
-            return mediaView;
-        } catch (IOException ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "failed to initialize MediaControl for file " + getName(), ex);
-            return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.");
-        } catch (MediaException ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, ex.getType() + " Failed to initialize MediaControl for file " + getName(), ex);
-            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "caused by " + ex.getCause().getLocalizedMessage(), ex.getCause());
-            return new Text(ex.getType() + "\nSee the logs for details.");
-        } catch (OutOfMemoryError ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "failed to initialize MediaControl for file " + getName(), ex);
-            return new Text("There was a problem playing video file.\nSee the logs for details.");
-        }
-    }
 
     private File getCacheFile(long id) {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id);

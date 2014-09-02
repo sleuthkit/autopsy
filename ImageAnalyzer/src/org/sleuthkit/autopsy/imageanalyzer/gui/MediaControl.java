@@ -18,32 +18,41 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.VideoFile;
 
-public class MediaControl extends BorderPane implements Fitable {
+public class MediaControl extends BorderPane {
+
+    private static final Image PLAY = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/media_controls_play_small.png", true);
+    private static final Image PAUSE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/media_controls_pause_small.png", true);
 
     private final MediaPlayer mp;
-
-    private MediaView mediaView;
 
     private final boolean repeat = false;
 
@@ -52,7 +61,8 @@ public class MediaControl extends BorderPane implements Fitable {
     private boolean atEndOfMedia = false;
 
     private Duration duration;
-
+    @FXML
+    private MediaView mediaView;
     @FXML
     private ResourceBundle resources;
 
@@ -63,54 +73,80 @@ public class MediaControl extends BorderPane implements Fitable {
     private Button controlButton;
 
     @FXML
-    private Label timeLabel;
-
-    @FXML
     private Slider timeSlider;
 
     @FXML
     private Slider volumeSlider;
+    @FXML
+    private Label timeLabel;
+    @FXML
+    private ImageView controlImageView;
+    @FXML
+    private HBox playControlBar;
+    InvalidationListener seekListener;
+    private final VideoFile<?> file;
+
+    public static Node create(VideoFile<?> file) {
+        try {
+            return new MediaControl(new MediaPlayer(file.getMedia()), file);
+        } catch (IOException ex) {
+            Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
+            return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.");
+        } catch (MediaException ex) {
+            Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
+            return new Text(ex.getType() + "\nSee the logs for details.");
+        } catch (OutOfMemoryError ex) {
+            Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
+            return new Text("There was a problem playing video file.\nSee the logs for details.");
+        }
+    }
 
     @FXML
     void initialize() {
         assert controlButton != null : "fx:id=\"controlButton\" was not injected: check your FXML file 'MediaControl.fxml'.";
-        assert timeLabel != null : "fx:id=\"timeLabel\" was not injected: check your FXML file 'MediaControl.fxml'.";
         assert timeSlider != null : "fx:id=\"timeSlider\" was not injected: check your FXML file 'MediaControl.fxml'.";
         assert volumeSlider != null : "fx:id=\"volumeSlider\" was not injected: check your FXML file 'MediaControl.fxml'.";
-
-        mediaView = new MediaView(mp);
-        mediaView.setPreserveRatio(true);
-        mediaView.fitHeightProperty().bind(this.heightProperty().subtract(50));
+        mp.errorProperty().addListener((Observable observable) -> {
+            final MediaException ex = mp.getError();
+            if (ex != null) {
+                Platform.runLater(() -> {
+                    Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
+                    setCenter(new Text(ex.getType() + "\nSee the logs for details."));
+                    setBottom(null);
+                });
+            }
+        });
+        mp.statusProperty().addListener((observableStatus, oldStatus, newStatus) -> {
+            Logger.getAnonymousLogger().log(Level.INFO, "media player: {0}", newStatus);
+        });
+        mediaView.setMediaPlayer(mp);
+        mediaView.fitHeightProperty().bind(this.heightProperty().subtract(playControlBar.heightProperty()));
         mediaView.fitWidthProperty().bind(this.widthProperty());
-        setCenter(mediaView);
 
         controlButton.setOnAction((ActionEvent e) -> {
-            try {
-                Status status = mp.getStatus();
-
-                if (status == Status.UNKNOWN || status == Status.HALTED) {
+            Status status = mp.getStatus();
+            switch (status) {
+                case UNKNOWN:
+                case HALTED:
                     // don't do anything in these states
                     return;
-                }
-
-                if (status == Status.PAUSED
-                        || status == Status.READY
-                        || status == Status.STOPPED) {
+                case PAUSED:
+                case READY:
+                case STOPPED:
                     // rewind the movie if we're sitting at the end
                     if (atEndOfMedia) {
                         mp.seek(mp.getStartTime());
                         atEndOfMedia = false;
                     }
                     mp.play();
-                } else {
+                    break;
+                default:
                     mp.pause();
-                }
-            } catch (Exception ex) {
-                Logger.getAnonymousLogger().log(Level.SEVERE, "message", ex);
             }
         });
+
         mp.currentTimeProperty().addListener((Observable ov) -> {
-            updateValues();
+            updateTime();
         });
 
         mp.setOnPlaying(() -> {
@@ -118,36 +154,46 @@ public class MediaControl extends BorderPane implements Fitable {
                 mp.pause();
                 stopRequested = false;
             } else {
-                controlButton.setText("||");
+                controlImageView.setImage(PAUSE);
             }
         });
 
         mp.setOnPaused(() -> {
-            System.out.println("onPaused");
-            controlButton.setText(">");
+            controlImageView.setImage(PLAY);
         });
 
         mp.setOnReady(() -> {
             duration = mp.getMedia().getDuration();
-            updateValues();
+            timeSlider.setMax(duration.toMillis());
+            timeSlider.setMajorTickUnit(duration.toMillis());
+            updateTime();
+            updateVolume();
         });
 
         mp.setCycleCount(repeat ? MediaPlayer.INDEFINITE : 1);
         mp.setOnEndOfMedia(() -> {
             if (!repeat) {
-                controlButton.setText(">");
+                controlImageView.setImage(PLAY);
                 stopRequested = true;
                 atEndOfMedia = true;
             }
         });
+        seekListener = (Observable ov) -> {
+//            if (timeSlider.isValueChanging()) {
+            mp.seek(Duration.millis(timeSlider.getValue()));
+//            }
+        };
 
         // Add time slider
-        timeSlider.setMinWidth(50);
-        timeSlider.setMaxWidth(Double.MAX_VALUE);
-        timeSlider.valueProperty().addListener((Observable ov) -> {
-            if (timeSlider.isValueChanging()) {
-                // multiply duration by percentage calculated by slider position
-                mp.seek(duration.multiply(timeSlider.getValue() / 100.0));
+        timeSlider.setLabelFormatter(new StringConverter<Double>() {
+            @Override
+            public String toString(Double object) {
+                return formatTime(Duration.millis(object));
+            }
+
+            @Override
+            public Double fromString(String string) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         });
 
@@ -160,120 +206,57 @@ public class MediaControl extends BorderPane implements Fitable {
                 mp.setVolume(volumeSlider.getValue() / 100.0);
             }
         });
-
     }
 
-    public MediaControl(final MediaPlayer mp) {
+    private MediaControl(MediaPlayer mp, VideoFile<?> file) {
+        this.file = file;
         this.mp = mp;
-
         FXMLConstructor.construct(this, "MediaControl.fxml");
     }
 
-    protected void updateValues() {
-        if (timeLabel != null && timeSlider != null && volumeSlider != null) {
-            Platform.runLater(() -> {
-                Duration currentTime = mp.getCurrentTime();
-                timeLabel.setText(formatTime(currentTime, duration));
-                timeSlider.setDisable(duration.isUnknown());
-                if (!timeSlider.isDisabled()
-                        && duration.greaterThan(Duration.ZERO)
-                        && !timeSlider.isValueChanging()) {
-                    timeSlider.setValue(currentTime.divide(duration.toMillis()).toMillis()
-                            * 100.0);
-                }
-                if (!volumeSlider.isValueChanging()) {
-                    volumeSlider.setValue((int) Math.round(mp.getVolume()
-                            * 100));
-                }
-            });
-        }
+    protected void updateTime() {
+        Platform.runLater(() -> {
+            Duration currentTime = mp.getCurrentTime();
+            timeSlider.setDisable(duration.isUnknown());
+            timeLabel.setText(formatTime(currentTime));
+            if (!timeSlider.isDisabled()
+                    && duration.greaterThan(Duration.ZERO)
+                    && !timeSlider.isValueChanging()) {
+                timeSlider.valueProperty().removeListener(seekListener);
+                timeSlider.setValue(currentTime.toMillis());
+                timeSlider.valueProperty().addListener(seekListener);
+            }
+
+        });
     }
 
-    private static String formatTime(Duration elapsed, Duration duration) {
-        int intElapsed = (int) Math.floor(elapsed.toSeconds());
-        int elapsedHours = intElapsed / (60 * 60);
+    private void updateVolume() {
+        Platform.runLater(() -> {
+            if (!volumeSlider.isValueChanging()) {
+                volumeSlider.setValue((int) Math.round(mp.getVolume()
+                        * 100));
+            }
+        });
+    }
+
+    private static String formatTime(Duration elapsed) {
+        int totalSeconds = (int) Math.floor(elapsed.toSeconds());
+        int elapsedHours = totalSeconds / (60 * 60);
+        totalSeconds -= elapsedHours * 60 * 60;
+        int elapsedMinutes = totalSeconds / 60;
+        int elapsedSeconds = totalSeconds - elapsedMinutes * 60;
+
         if (elapsedHours > 0) {
-            intElapsed -= elapsedHours * 60 * 60;
-        }
-        int elapsedMinutes = intElapsed / 60;
-        int elapsedSeconds = intElapsed - elapsedHours * 60 * 60
-                - elapsedMinutes * 60;
-
-        if (duration.greaterThan(Duration.ZERO)) {
-            int intDuration = (int) Math.floor(duration.toSeconds());
-            int durationHours = intDuration / (60 * 60);
-            if (durationHours > 0) {
-                intDuration -= durationHours * 60 * 60;
-            }
-            int durationMinutes = intDuration / 60;
-            int durationSeconds = intDuration - durationHours * 60 * 60
-                    - durationMinutes * 60;
-            if (durationHours > 0) {
-                return String.format("%d:%02d:%02d/%d:%02d:%02d",
-                                     elapsedHours, elapsedMinutes, elapsedSeconds,
-                                     durationHours, durationMinutes, durationSeconds);
-            } else {
-                return String.format("%02d:%02d/%02d:%02d",
-                                     elapsedMinutes, elapsedSeconds, durationMinutes,
-                                     durationSeconds);
-            }
+            return String.format("%d:%02d:%02d", elapsedHours,
+                    elapsedMinutes, elapsedSeconds);
         } else {
-            if (elapsedHours > 0) {
-                return String.format("%d:%02d:%02d", elapsedHours,
-                                     elapsedMinutes, elapsedSeconds);
-            } else {
-                return String.format("%02d:%02d", elapsedMinutes,
-                                     elapsedSeconds);
-            }
+            return String.format("%02d:%02d", elapsedMinutes,
+                    elapsedSeconds);
         }
-    }
-
-    @Override
-    public final void setFitWidth(double d) {
-        mediaView.setFitWidth(d);
-    }
-
-    @Override
-    public final double getFitWidth() {
-        return mediaView.getFitWidth();
-    }
-
-    @Override
-    public final DoubleProperty fitWidthProperty() {
-        return mediaView.fitWidthProperty();
-    }
-
-    @Override
-    public final void setFitHeight(double d) {
-        mediaView.setFitHeight(d);
-    }
-
-    @Override
-    public final double getFitHeight() {
-        return mediaView.getFitHeight();
-    }
-
-    @Override
-    public final DoubleProperty fitHeightProperty() {
-        return mediaView.fitHeightProperty();
     }
 
     public void stopVideo() {
         mp.stop();
     }
 
-    @Override
-    public boolean isPreserveRatio() {
-        return mediaView.isPreserveRatio();
-    }
-
-    @Override
-    public void setPreserveRatio(boolean b) {
-        mediaView.setPreserveRatio(b);
-    }
-
-    @Override
-    public BooleanProperty preserveRatioProperty() {
-        return mediaView.preserveRatioProperty();
-    }
 }

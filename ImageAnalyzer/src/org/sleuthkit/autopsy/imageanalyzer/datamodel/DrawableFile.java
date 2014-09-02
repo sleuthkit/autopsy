@@ -29,7 +29,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
@@ -286,7 +285,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public abstract Node getFullsizeDisplayNode();
+  
 
     public abstract Image getIcon();
 

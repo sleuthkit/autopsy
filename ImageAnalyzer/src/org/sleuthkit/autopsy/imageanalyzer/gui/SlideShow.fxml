@@ -80,7 +80,7 @@
                                     <bottom>
                                         <BorderPane fx:id="footer" maxHeight="-Infinity" maxWidth="-1.0" minHeight="-Infinity" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
                                             <center>
-                                                <Label id="pathLabel" fx:id="nameLabel" alignment="CENTER" contentDisplay="TEXT_ONLY" maxHeight="16.0" minHeight="16.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" text="file name" textAlignment="CENTER" wrapText="true">
+                                                <Label id="pathLabel" fx:id="nameLabel" alignment="CENTER" contentDisplay="TEXT_ONLY" maxHeight="16.0" minHeight="16.0" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" text="file name">
                                                     <labelFor>
                                                         <ImageView fitHeight="200.0" fitWidth="200.0" opacity="1.0" pickOnBounds="true" preserveRatio="true" style="-fx-border-radius : 5;&#10;-fx-border-width : 5;&#10;-fx-border-color : blue;" BorderPane.alignment="CENTER" />
                                                     </labelFor>

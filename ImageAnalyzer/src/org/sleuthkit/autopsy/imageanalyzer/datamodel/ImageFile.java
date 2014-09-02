@@ -23,13 +23,10 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.Node;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.IconCache;
-import org.sleuthkit.autopsy.imageanalyzer.gui.Fitable;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -54,10 +51,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return IconCache.getDefault().get(this);
     }
 
-    @Override
-    public Node getFullsizeDisplayNode() {
-        return new FitableImageView(getFullSizeImage());
-    }
+   
 
     public Image getFullSizeImage() {
         Image image = null;
@@ -101,12 +95,4 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     public boolean isVideo() {
         return false;
     }
-
-    private class FitableImageView extends ImageView implements Fitable {
-
-        public FitableImageView(Image image) {
-            super(image);
-        }
-
-    }
-}
+ }

@@ -79,10 +79,12 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** An abstract base class for {@link DrawableTile} and {@link SlideShowView},
+/**
+ * An abstract base class for {@link DrawableTile} and {@link SlideShowView},
  * since they share a similar node tree and many behaviors, other implementers
  * of {@link  DrawableView}s should implement the interface directly
- * */
+ *
+ */
 public abstract class SingleDrawableViewBase extends AnchorPane implements DrawableView {
 
     private static final Logger LOGGER = Logger.getLogger(SingleDrawableViewBase.class.getName());
@@ -138,7 +140,9 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
     protected Long fileID;
 
-    /** the groupPane this {@link SingleDrawableViewBase} is embedded in */
+    /**
+     * the groupPane this {@link SingleDrawableViewBase} is embedded in
+     */
     protected GroupPane groupPane;
 
     protected SingleDrawableViewBase() {
@@ -318,6 +322,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
         nameLabel.setText(text);
         nameLabel.setTooltip(new Tooltip(text));
+
     }
 
     @Override
@@ -372,7 +377,6 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                 Platform.runLater(() -> {
                     updateUI(isVideo, hasHashSetHits, text);
                 });
-
                 Platform.runLater(getContentUpdateRunnable());
             }
         }
