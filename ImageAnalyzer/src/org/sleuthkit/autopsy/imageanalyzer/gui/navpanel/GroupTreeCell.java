@@ -12,13 +12,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 
-/** A {@link Node} in the tree that listens to its associated group. Manages
+/**
+ * A {@link Node} in the tree that listens to its associated group. Manages
  * visual representation of TreeNode in Tree. Listens to properties of group
- * that don't impact hierarchy and updates ui to reflect them */
+ * that don't impact hierarchy and updates ui to reflect them
+ */
 class GroupTreeCell extends TreeCell<TreeNode> {
 
-    /** icon to use if this cell's TreeNode doesn't represent a group but just a
-     * folder(with no DrawableFiles) in the hierarchy. */
+    /**
+     * icon to use if this cell's TreeNode doesn't represent a group but just a
+     * folder(with no DrawableFiles) in the hierarchy.
+     */
     private static final Image EMPTY_FOLDER_ICON = new Image("org/sleuthkit/autopsy/imageanalyzer/images/folder.png");
 
     public GroupTreeCell() {
@@ -61,22 +65,21 @@ class GroupTreeCell extends TreeCell<TreeNode> {
         }
     }
 
-    /** @return the Numerator of the count to append to the group name = number
-     *          of hashset hits + "/" */
+    /**
+     * @return the Numerator of the count to append to the group name = number
+     * of hashset hits + "/"
+     */
     synchronized private String getNumerator() {
-        try {
-            final String numerator = (getItem().getGroup().groupKey.getAttribute() != DrawableAttribute.HASHSET)
-                                     ? getItem().getGroup().getFilesWithHashSetHitsCount() + "/"
-                                     : "";
-            return numerator;
-        } catch (NullPointerException ex) {
-            return "";
-        }
-
+        final String numerator = (getItem().getGroup().groupKey.getAttribute() != DrawableAttribute.HASHSET)
+                ? getItem().getGroup().getFilesWithHashSetHitsCount() + "/"
+                : "";
+        return numerator;
     }
 
-    /** @return the Denominator of the count to append to the group name =
-     *          number of files in group */
+    /**
+     * @return the Denominator of the count to append to the group name = number
+     * of files in group
+     */
     synchronized private Integer getDenominator() {
         try {
             return getItem().getGroup().getSize();

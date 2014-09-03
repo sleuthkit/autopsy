@@ -230,12 +230,16 @@ public class NavPanel extends TabPane {
     @SuppressWarnings("fallthrough")
     private static List<String> groupingToPath(Grouping g) {
 
-        String path = g.groupKey.getValueDisplayName();
+        if (g.groupKey.getAttribute() == DrawableAttribute.PATH) {
+            String path = g.groupKey.getValueDisplayName();
 
-        String cleanPath = StringUtils.stripStart(path, "/");
-        String[] tokens = cleanPath.split("/");
+            String cleanPath = StringUtils.stripStart(path, "/");
+            String[] tokens = cleanPath.split("/");
 
-        return Arrays.asList(tokens);
+            return Arrays.asList(tokens);
+        } else {
+            return Arrays.asList(g.groupKey.getValueDisplayName());
+        }
     }
 
     private void insertIntoNavTree(Grouping g) {
