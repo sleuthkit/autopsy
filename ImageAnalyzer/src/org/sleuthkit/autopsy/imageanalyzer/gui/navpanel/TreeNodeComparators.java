@@ -49,8 +49,8 @@ enum TreeNodeComparators implements Comparator<TreeItem<TreeNode>>, NonNullCompa
         @Override
         public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
 
-            return -Double.compare(o1.getValue().getGroup().getFilesWithHashSetHitsCount() / o1.getValue().getGroup().getSize().doubleValue(),
-                                   o2.getValue().getGroup().getFilesWithHashSetHitsCount() / o2.getValue().getGroup().getSize().doubleValue());
+            return -Double.compare(o1.getValue().getGroup().getFilesWithHashSetHitsCount() / (double) o1.getValue().getGroup().getSize(),
+                    o2.getValue().getGroup().getFilesWithHashSetHitsCount() / (double) o2.getValue().getGroup().getSize());
         }
     };
 

@@ -258,5 +258,4 @@ public class MediaControl extends BorderPane {
     public void stopVideo() {
         mp.stop();
     }
-
 }

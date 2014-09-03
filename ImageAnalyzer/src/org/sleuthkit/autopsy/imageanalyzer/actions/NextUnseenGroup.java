@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.actions;
 
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.AbstractAction;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 
 /**
  *

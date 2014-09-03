@@ -250,7 +250,6 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     protected abstract void clearContent();
 
     protected abstract void disposeContent();
-
     protected abstract Runnable getContentUpdateRunnable();
 
     protected abstract String getLabelText();

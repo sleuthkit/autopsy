@@ -96,7 +96,7 @@ public enum GroupSortBy implements ComparatorProvider {
     PRIORITY("Priority", false, "hashset_hits.png") {
                 @Override
                 public Comparator<Grouping> getGrpComparator(SortOrder sortOrder) {
-                    return Comparator.nullsLast(Comparator.comparingDouble(Grouping::getHashHitDensity).thenComparing(Grouping::getSize).reversed());
+                    return Comparator.nullsLast(Comparator.comparingDouble(Grouping::getHashHitDensity).thenComparingInt(Grouping::getSize).reversed());
                 }
 
                 @Override

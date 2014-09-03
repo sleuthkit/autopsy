@@ -58,15 +58,15 @@ public class Grouping {
         fileIDs.setAll(filesInGroup);
     }
 
-    synchronized public Integer getSize() {
+    synchronized public int getSize() {
         return fileIDs.size();
     }
 
     public double getHashHitDensity() {
-        return getFilesWithHashSetHitsCount() / getSize().doubleValue();
+        return getFilesWithHashSetHitsCount() / (double) getSize();
     }
 
-    synchronized public Integer getFilesWithHashSetHitsCount() {
+    synchronized public int getFilesWithHashSetHitsCount() {
 
         if (filesWithHashSetHitsCount < 0) {
             filesWithHashSetHitsCount = 0;
