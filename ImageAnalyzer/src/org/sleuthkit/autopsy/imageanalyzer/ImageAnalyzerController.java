@@ -450,11 +450,11 @@ public final class ImageAnalyzerController implements FileUpdateListener {
                     for (GroupKey<?> gk : groupsForFile) {
                         Grouping g = groupManager.getGroupForKey(gk);
 
-                        //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
                         if (g != null) {
+                            //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
                             g.addFile(fileId);
-                        } ////if there wasn't already a group check if there should be one now
-                        else {
+                        } else {
+                            //if there wasn't already a group check if there should be one now
                             //TODO: use method in groupmanager ?
                             List<Long> checkAnalyzed = groupManager.checkAnalyzed(gk);
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui

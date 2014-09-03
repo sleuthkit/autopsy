@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
@@ -189,7 +190,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
     }
 
     static GroupTreeItem getTreeItemForGroup(GroupTreeItem root, Grouping grouping) {
-        if (root.getValue().getGroup() == grouping) {
+        if (Objects.equals(root.getValue().getGroup(), grouping)) {
             return root;
         } else {
             synchronized (root.getChildren()) {

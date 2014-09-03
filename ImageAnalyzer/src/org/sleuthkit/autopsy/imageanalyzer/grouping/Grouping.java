@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imageanalyzer.grouping;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -42,7 +41,7 @@ public class Grouping {
 
     public static final String UNKNOWN = "unknown";
 
-    final private ObservableList<Long> fileIDs = FXCollections.observableArrayList();
+    private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
 
     //cache the number of files in this groups with hashset hits
     private int filesWithHashSetHitsCount = -1;
@@ -110,17 +109,13 @@ public class Grouping {
     }
 
     synchronized public void addFile(Long f) {
-        Platform.runLater(() -> {
-            if (fileIDs.contains(f) == false) {
-                fileIDs.add(f);
-            }
-        });
+        if (fileIDs.contains(f) == false) {
+            fileIDs.add(f);
+        }
 
     }
 
     synchronized public void removeFile(Long f) {
-        Platform.runLater(() -> {
-            fileIDs.removeAll(f);
-        });
+        fileIDs.removeAll(f);
     }
 }

@@ -75,6 +75,7 @@ import org.sleuthkit.autopsy.imageanalyzer.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -250,6 +251,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     protected abstract void clearContent();
 
     protected abstract void disposeContent();
+
     protected abstract Runnable getContentUpdateRunnable();
 
     protected abstract String getLabelText();
@@ -264,18 +266,21 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                     Exceptions.printStackTrace(ex);
                 }
             } else {
-
                 //TODO: convert this to an action!
-                List<ContentTag> contentTagsByContent;
+                final ImageAnalyzerController controller = ImageAnalyzerController.getDefault();
                 try {
-                    contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(getFile());
+                    // remove file from old category group
+                    controller.getGroupManager().removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, TagUtils.getFollowUpTagName()), fileID);
+                
+                    List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(getFile());
                     for (ContentTag ct : contentTagsByContent) {
                         if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
                             Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
                             SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
                         }
                     }
-                    ImageAnalyzerController.getDefault().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+
+                    controller.handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }

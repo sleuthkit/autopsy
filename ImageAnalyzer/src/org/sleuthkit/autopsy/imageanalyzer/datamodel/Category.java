@@ -54,7 +54,7 @@ public enum Category implements Comparable<Category> {
 
     final static private Map<String, Category> nameMap = new HashMap<>();
 
-    private static List<Category> valuesList = Arrays.asList(values());
+    private static final List<Category> valuesList = Arrays.asList(values());
 
     static {
         for (Category cat : values()) {

@@ -92,7 +92,7 @@ public class CategorizeAction extends AddTagAction {
                         List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
 
                         for (ContentTag ct : allContentTags) {
-                            //this is bad: treating tags as categories as long as thier names start with prefix
+                            //this is bad: treating tags as categories as long as their names start with prefix
                             //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
                             if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
                                 LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
@@ -104,8 +104,7 @@ public class CategorizeAction extends AddTagAction {
                             Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
                         }
                         //make sure rest of ui  hears category change.
-                        controller.handleFileUpdate(
-                                new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
+                        controller.handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
 
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Error categorizing result", ex);

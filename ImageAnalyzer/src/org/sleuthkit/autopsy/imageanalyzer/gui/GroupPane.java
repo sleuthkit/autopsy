@@ -34,6 +34,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -354,10 +355,13 @@ public class GroupPane extends BorderPane implements GroupView {
             resetHeaderString();
             //and assign fileIDs to gridView
             if (grouping.get() == null) {
-                gridView.getItems().clear();
+                Platform.runLater(gridView.getItems()::clear);
+                
             } else {
-                gridView.setItems(grouping.get().fileIds());
-                grouping.get().fileIds().addListener((Observable p) -> {
+                Platform.runLater(() -> {
+                    gridView.setItems(grouping.get().fileIds());
+                });
+                                grouping.get().fileIds().addListener((Observable p) -> {
                     resetHeaderString();
                 });
             }

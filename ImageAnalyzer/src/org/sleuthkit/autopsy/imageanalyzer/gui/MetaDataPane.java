@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -52,6 +53,7 @@ import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -121,9 +123,15 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
         });
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
-
+        
         valueColumn.setCellValueFactory((p) -> {
-            return new SimpleStringProperty(StringUtils.join((Collection<?>) p.getValue().getValue(), ";"));
+            if (p.getValue().getKey() == DrawableAttribute.TAGS) {
+                return new SimpleStringProperty(((Collection<TagName>) p.getValue().getValue()).stream()
+                        .map(TagName::getDisplayName)
+                        .collect(Collectors.joining(" ; ", "", "")));
+            } else {
+                return new SimpleStringProperty(StringUtils.join((Collection<?>) p.getValue().getValue(), " ; "));
+            }
         });
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
         valueColumn.setCellFactory((p) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, String>() {

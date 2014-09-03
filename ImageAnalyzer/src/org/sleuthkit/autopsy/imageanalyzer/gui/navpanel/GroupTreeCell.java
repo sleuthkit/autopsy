@@ -37,17 +37,26 @@ class GroupTreeCell extends TreeCell<TreeNode> {
         super.updateItem(tNode, empty);
         prefWidthProperty().bind(getTreeView().widthProperty().subtract(15));
 
-        if (tNode != null) {
+        if (tNode == null || empty) {
+            Platform.runLater(() -> {
+                setTooltip(null);
+                setText(null);
+                setGraphic(null);
+            });
+        } else {
             final String name = StringUtils.defaultIfBlank(tNode.getPath(), Grouping.UNKNOWN);
-            setTooltip(new Tooltip(name));
+            Platform.runLater(() -> {
+                setTooltip(new Tooltip(name));
+            });
+            
 
             if (tNode.getGroup() == null) {
-                setText(name);
-                setGraphic(new ImageView(EMPTY_FOLDER_ICON));
-            } else {
-                //this TreeNode has a group so append counts to name ...
-                setText(name + " (" + getNumerator() + getDenominator() + ")");
+                Platform.runLater(() -> {
+                    setText(name);
+                    setGraphic(new ImageView(EMPTY_FOLDER_ICON));
+                });
 
+            } else {
                 //if number of files in this group changes (eg file is recategorized), update counts
                 tNode.getGroup().fileIds().addListener((Observable o) -> {
                     Platform.runLater(() -> {
@@ -55,13 +64,14 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                     });
                 });
 
-                //... and use icon corresponding to group type
-                setGraphic(new ImageView(tNode.getGroup().groupKey.getAttribute().getIcon()));
+                Platform.runLater(() -> {
+                    //this TreeNode has a group so append counts to name ...
+                    setText(name + " (" + getNumerator() + getDenominator() + ")");
+                    //... and use icon corresponding to group type
+                    setGraphic(new ImageView(tNode.getGroup().groupKey.getAttribute().getIcon()));
+                });
+                
             }
-        } else {
-            setTooltip(null);
-            setText(null);
-            setGraphic(null);
         }
     }
 
@@ -70,10 +80,15 @@ class GroupTreeCell extends TreeCell<TreeNode> {
      * of hashset hits + "/"
      */
     synchronized private String getNumerator() {
-        final String numerator = (getItem().getGroup().groupKey.getAttribute() != DrawableAttribute.HASHSET)
-                ? getItem().getGroup().getFilesWithHashSetHitsCount() + "/"
-                : "";
-        return numerator;
+        try {
+            final String numerator = (getItem().getGroup().groupKey.getAttribute() != DrawableAttribute.HASHSET)
+                    ? getItem().getGroup().getFilesWithHashSetHitsCount() + "/"
+                    : "";
+            return numerator;
+        } catch (NullPointerException e) {
+            //instead of this try catch block, remove the listener when assigned a null treeitem / group
+            return "";
+        }
     }
 
     /**

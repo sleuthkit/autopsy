@@ -63,13 +63,11 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
             return false;
         }
         final GroupKey<?> other = (GroupKey<?>) obj;
-        if (!Objects.equals(this.val, other.val)) {
-            return false;
-        }
         if (this.attr != other.attr) {
             return false;
         }
-        return true;
+
+        return Objects.equals(this.val, other.val);
     }
 
     @Override

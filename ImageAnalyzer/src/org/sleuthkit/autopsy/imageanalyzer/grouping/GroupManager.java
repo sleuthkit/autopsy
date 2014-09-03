@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -90,7 +91,7 @@ public class GroupManager {
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> unSeenGroups = FXCollections.observableArrayList();
 
-    private final SortedList<Grouping> sortedUnSeenGroups = unSeenGroups.sorted();
+    private final SortedList<Grouping> sortedUnSeenGroups = new SortedList<>(unSeenGroups);
 
     private final ObservableList<Grouping> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(sortedUnSeenGroups);
 
@@ -137,10 +138,16 @@ public class GroupManager {
      * file is a part of
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile<?> file) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile<?> file) {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : groupBy.getValue(file)) {
-            resultSet.add(new GroupKey(groupBy, val));
+            if (groupBy == DrawableAttribute.TAGS) {
+                if (((TagName) val).getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false) {
+                    resultSet.add(new GroupKey(groupBy, val));
+                }
+            } else {
+                resultSet.add(new GroupKey(groupBy, val));
+            }
         }
         return resultSet;
     }
@@ -154,7 +161,7 @@ public class GroupManager {
      * @return a a set of {@link GroupKey}s representing the group(s) the given
      * file is a part of
      */
-    public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
             DrawableFile<?> file = db.getFileFromID(fileID);
             return getGroupKeysForFile(file);
@@ -185,7 +192,9 @@ public class GroupManager {
         groupBy = DrawableAttribute.PATH;
         sortOrder = SortOrder.ASCENDING;
         Platform.runLater(() -> {
-            unSeenGroups.clear();
+            synchronized (unSeenGroups) {
+                unSeenGroups.clear();
+            }
             analyzedGroups.clear();
         });
         synchronized (groupMap) {
@@ -236,7 +245,9 @@ public class GroupManager {
     }
 
     public void markGroupSeen(Grouping group) {
-        unSeenGroups.remove(group);
+        synchronized (unSeenGroups) {
+            unSeenGroups.remove(group);
+        }
         db.markGroupSeen(group.groupKey);
     }
 
@@ -255,13 +266,16 @@ public class GroupManager {
             group.removeFile(fileID);
             if (group.fileIds().isEmpty()) {
                 synchronized (groupMap) {
-                    groupMap.remove(group.groupKey);
+                    groupMap.remove(groupKey, group);
                 }
                 Platform.runLater(() -> {
                     analyzedGroups.remove(group);
-                    unSeenGroups.remove(group);
+                    synchronized (unSeenGroups) {
+                        unSeenGroups.remove(group);
+                    }
                 });
             }
+
         }
     }
 
@@ -292,9 +306,10 @@ public class GroupManager {
                 if (analyzedGroups.contains(g) == false) {
                     analyzedGroups.add(g);
                 }
-
-                if (groupSeen == false && unSeenGroups.contains(g) == false) {
-                    unSeenGroups.add(g);
+                synchronized (unSeenGroups) {
+                    if (groupSeen == false && unSeenGroups.contains(g) == false) {
+                        unSeenGroups.add(g);
+                    }
                 }
             });
         }
@@ -399,7 +414,9 @@ public class GroupManager {
                     values = (List<A>) Category.valuesList();
                     break;
                 case TAGS:
-                    values = (List<A>) Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse();
+                    values = (List<A>) Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse().stream()
+                            .filter(t -> t.getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false)
+                            .collect(Collectors.toList());
                     break;
                 case ANALYZED:
                     values = (List<A>) Arrays.asList(false, true);
@@ -412,7 +429,6 @@ public class GroupManager {
                     //otherwise do straight db query 
                     return db.findValuesForAttribute(groupBy, sortBy, sortOrder);
             }
-
             //sort in memory
             Collections.sort(values, sortBy.getValueComparator(groupBy, sortOrder));
 
@@ -600,7 +616,9 @@ public class GroupManager {
             groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
-                unSeenGroups.clear();
+                synchronized (unSeenGroups) {
+                    unSeenGroups.clear();
+                }
             });
             synchronized (groupMap) {
                 groupMap.clear();
