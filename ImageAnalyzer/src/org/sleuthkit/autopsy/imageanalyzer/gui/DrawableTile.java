@@ -118,5 +118,4 @@ public class DrawableTile extends SingleDrawableViewBase implements Category.Cat
     protected String getLabelText() {
         return file.getName();
     }
-
 }

@@ -234,6 +234,7 @@ public class GroupPane extends BorderPane implements GroupView {
         }
 
         slideShowPane.setFile(slideShowFileId);
+        slideShowPane.requestFocus();
         setCenter(slideShowPane);
     }
 

@@ -321,7 +321,6 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
         nameLabel.setText(text);
         nameLabel.setTooltip(new Tooltip(text));
-
     }
 
     @Override
