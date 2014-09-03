@@ -84,7 +84,7 @@ public class ImageAnalyzerModule {
     public static boolean isCaseStale(Case c) {
         if (c != null) {
             String stale = new PerCaseProperties(c).getConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.STALE);
-            return StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : false;
+            return StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : true;
         } else {
             return false;
         }

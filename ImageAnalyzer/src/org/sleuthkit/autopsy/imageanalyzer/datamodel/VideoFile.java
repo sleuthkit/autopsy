@@ -39,7 +39,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     @Override
     public Image getIcon() {
-        //TODO: implement video thumbnailing here
+        //TODO: implement video thumbnailing here?
         return VIDEO_ICON;
     }
     SoftReference<Media> mediaRef;
@@ -75,7 +75,6 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         try {
             return (double) getMedia().getWidth();
         } catch (IOException | MediaException ex) {
-//            Exceptions.printStackTrace(ex);
             return -1.0;
         }
     }
@@ -90,7 +89,6 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         try {
             return (double) getMedia().getHeight();
         } catch (IOException | MediaException ex) {
-//            Exceptions.printStackTrace(ex);
             return -1.0;
         }
     }

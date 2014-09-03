@@ -83,17 +83,16 @@ public class GroupManager {
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> analyzedGroups = FXCollections.observableArrayList();
 
+    private final ObservableList<Grouping> publicAnalyzedGroupsWrapper = FXCollections.unmodifiableObservableList(analyzedGroups);
     /**
      * list of unseen groups
      */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> unSeenGroups = FXCollections.observableArrayList();
 
-    /**
-     * sorted list of unseen groups
-     */
-    @ThreadConfined(type = ThreadType.JFX)
     private final SortedList<Grouping> sortedUnSeenGroups = unSeenGroups.sorted();
+
+    private final ObservableList<Grouping> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(sortedUnSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
@@ -110,12 +109,12 @@ public class GroupManager {
     }
 
     public ObservableList<Grouping> getAnalyzedGroups() {
-        return analyzedGroups;
+        return publicAnalyzedGroupsWrapper;
     }
 
     @ThreadConfined(type = ThreadType.JFX)
-    public SortedList<Grouping> getUnSeenGroups() {
-        return sortedUnSeenGroups;
+    public ObservableList<Grouping> getUnSeenGroups() {
+        return publicSortedUnseenGroupsWrapper;
     }
 
     /**
@@ -254,6 +253,15 @@ public class GroupManager {
         final Grouping group = getGroupForKey(groupKey);
         if (group != null) {
             group.removeFile(fileID);
+            if (group.fileIds().isEmpty()) {
+                synchronized (groupMap) {
+                    groupMap.remove(group.groupKey);
+                }
+                Platform.runLater(() -> {
+                    analyzedGroups.remove(group);
+                    unSeenGroups.remove(group);
+                });
+            }
         }
     }
 
@@ -281,9 +289,11 @@ public class GroupManager {
 
             final boolean groupSeen = db.isGroupSeen(groupKey);
             Platform.runLater(() -> {
-                analyzedGroups.add(g);
+                if (analyzedGroups.contains(g) == false) {
+                    analyzedGroups.add(g);
+                }
 
-                if (groupSeen == false) {
+                if (groupSeen == false && unSeenGroups.contains(g) == false) {
                     unSeenGroups.add(g);
                 }
             });
@@ -592,7 +602,9 @@ public class GroupManager {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
             });
-            groupMap.clear();
+            synchronized (groupMap) {
+                groupMap.clear();
+            }
 
             //get a list of group key vals
             final List<A> vals = findValuesForAttribute(groupBy, sortBy, sortOrder);

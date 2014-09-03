@@ -821,7 +821,7 @@ public class DrawableDB {
         dbWriteLock();
 
         try {
-            //PreparedStatement insertGroup = con.prepareStatement("insert or ignore into groups (value, attribute, seen) values (?,?,0)");
+            //PreparedStatement insertGroup = con.prepareStatement("insert or replace into groups (value, attribute, seen) values (?,?,0)");
             insertGroupStmt.clearParameters();
             insertGroupStmt.setString(1, value);
             insertGroupStmt.setString(2, groupBy.attrName.toString());

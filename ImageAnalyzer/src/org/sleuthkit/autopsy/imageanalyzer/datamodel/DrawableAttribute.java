@@ -59,7 +59,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
             = new DrawableAttribute<>( AttributeName.TAGS, "Tags", false, "tag_red.png", DrawableFile::getTagNames);
 
     public final static DrawableAttribute<String> PATH
-            = new DrawableAttribute<>( AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getParentPath()));
+            = new DrawableAttribute<>(AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getDrawablePath()));
 
     public final static DrawableAttribute<Long> CREATED_TIME
             = new DrawableAttribute<>( AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(f.getCrtime()));
