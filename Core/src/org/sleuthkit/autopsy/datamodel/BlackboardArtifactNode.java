@@ -44,17 +44,24 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
-    private BlackboardArtifact artifact;
-    private Content associated;
+    private final BlackboardArtifact artifact;
+    private final Content associated;
     private List<NodeProperty<? extends Object>> customProperties;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
-    /**
-     * Artifact types which should have the associated content's full unique path
-     * as a property.
+    /*
+     * Artifact types which should have the full unique path of the associated 
+     * content as a property.
      */
     private static final Integer[] SHOW_UNIQUE_PATH = new Integer[] { 
         BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+    };
+
+    // TODO (RC): This is an unattractive alternative to subclassing BlackboardArtifactNode,
+    // cut from the same cloth as the equally unattractive SHOW_UNIQUE_PATH array
+    // above. It should be removed when and if the subclassing is implemented.
+    private static final Integer[] SHOW_FILE_METADATA = new Integer[] { 
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
     };
 
@@ -179,6 +186,30 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         NO_DESCR,
                         sourcePath));
             }
+            
+            if (Arrays.asList(SHOW_FILE_METADATA).contains(artifactTypeId)) {
+                AbstractFile file = associated instanceof AbstractFile ? (AbstractFile)associated : null;        
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.name"),
+                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.displayName"),
+                        "",
+                        file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.name"),
+                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.displayName"),
+                        "",
+                        file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.name"),
+                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.displayName"),
+                        "",
+                        file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.name"),
+                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.displayName"),
+                        "",
+                        file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
+                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
+                        "",
+                        associated.getSize()));             
+            }            
         } else {
             String dataSourceStr = "";
             try {
@@ -225,7 +256,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * @param np NodeProperty to add
      */
     public <T> void addNodeProperty(NodeProperty<T> np) {
-        if (customProperties == null) {
+        if (null == customProperties) {
             //lazy create the list
             customProperties = new ArrayList<>();
         }
@@ -240,6 +271,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * put
      * @param artifact to extract properties from
      */
+    @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
@@ -247,8 +279,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 //skip some internal attributes that user shouldn't see
                 if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                    continue;
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                 } else {
                     switch (attribute.getValueType()) {
                         case STRING:
@@ -337,7 +369,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             List<BlackboardAttribute> attributes = artifact.getAttributes();
             String keyword = null;
             String regexp = null;
-            String origQuery = null;
             for (BlackboardAttribute att : attributes) {
                 final int attributeTypeID = att.getAttributeTypeID();
                 if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
@@ -348,6 +379,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
             if (keyword != null) {
                 boolean isRegexp = (regexp != null && !regexp.equals(""));
+                String origQuery;
                 if (isRegexp) {
                     origQuery = regexp;
                 } else {
@@ -410,9 +442,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return "encrypted-file.png"; //NON-NLS
             case TSK_EXT_MISMATCH_DETECTED:
                 return "mismatch-16.png"; //NON-NLS
-                
+            default:
+                return "artifact-icon.png"; //NON-NLS                
         }
-        return "artifact-icon.png"; //NON-NLS
     }
 
     @Override

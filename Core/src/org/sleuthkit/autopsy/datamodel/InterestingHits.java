@@ -108,7 +108,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                     String value = rs.getString("value_text"); //NON-NLS
                     long artifactId = rs.getLong("artifact_id"); //NON-NLS
                     if (!interestingItemsMap.containsKey(value)) {
-                        interestingItemsMap.put(value, new HashSet<Long>());
+                        interestingItemsMap.put(value, new HashSet<>());
                     }
                     interestingItemsMap.get(value).add(artifactId);
                 }
@@ -238,7 +238,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     }
      
     public class SetNameNode extends DisplayableItemNode implements Observer {
-        private String setName;
+        private final String setName;
         public SetNameNode(String setName) {//, Set<Long> children) {
             super(Children.create(new HitFactory(setName), true), Lookups.singleton(setName));
             this.setName = setName;
@@ -286,7 +286,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     }
      
     private class HitFactory extends ChildFactory<Long> implements Observer {
-        private String setName;
+        private final String setName;
 
         private HitFactory(String setName) {
             super();

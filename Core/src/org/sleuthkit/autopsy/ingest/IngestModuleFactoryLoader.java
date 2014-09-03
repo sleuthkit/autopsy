@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
+import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
@@ -58,6 +59,7 @@ final class IngestModuleFactoryLoader {
             add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
             add(E01VerifierModuleFactory.class.getCanonicalName());
             add(AndroidModuleFactory.class.getCanonicalName());
+            add(InterestingItemsIngestModuleFactory.class.getCanonicalName());
         }
     };
 
