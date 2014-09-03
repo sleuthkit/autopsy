@@ -266,6 +266,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
     @Override
     @ThreadConfined(type = ThreadType.UI)
     protected void clearContent() {
+        stopVideo();
         imageBorder.setCenter(null);
     }
 

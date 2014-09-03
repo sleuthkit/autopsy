@@ -93,14 +93,14 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
-import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
-import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
-import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
+import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
+import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.imageanalyzer.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imageanalyzer.actions.Back;
 import org.sleuthkit.autopsy.imageanalyzer.actions.CategorizeAction;
@@ -238,9 +238,13 @@ public class GroupPane extends BorderPane implements GroupView {
     }
 
     public void activateTileViewer() {
+
         groupViewMode.set(GroupViewMode.TILE);
         gridView.addEventHandler(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
         setCenter(gridView);
+        if (slideShowPane != null) {
+            slideShowPane.disposeContent();
+        }
         this.scrollToFileID(globalSelectionModel.lastSelectedProperty().get());
     }
 
