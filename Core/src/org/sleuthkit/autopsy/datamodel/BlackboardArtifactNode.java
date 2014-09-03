@@ -48,9 +48,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private final Content associated;
     private List<NodeProperty<? extends Object>> customProperties;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
-    /**
-     * Artifact types which should have the associated content's full unique path
-     * as a property.
+    /*
+     * Artifact types which should have the full unique path of the associated 
+     * content as a property.
      */
     private static final Integer[] SHOW_UNIQUE_PATH = new Integer[] { 
         BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
@@ -58,7 +58,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
     };
 
-    // TODO: This is an unattractive alternative to subclassing BlackboardArtifactNode,
+    // TODO (RC): This is an unattractive alternative to subclassing BlackboardArtifactNode,
     // cut from the same cloth as the equally unattractive SHOW_UNIQUE_PATH array
     // above. It should be removed when and if the subclassing is implemented.
     private static final Integer[] SHOW_FILE_METADATA = new Integer[] { 
@@ -271,7 +271,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * put
      * @param artifact to extract properties from
      */
-    @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows aer removed in a database upgrade.
+    @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
