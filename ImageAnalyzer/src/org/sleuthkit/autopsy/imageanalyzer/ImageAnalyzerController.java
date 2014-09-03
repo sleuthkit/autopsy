@@ -77,9 +77,9 @@ import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
-import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
+import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -92,9 +92,10 @@ import org.sleuthkit.datamodel.TskData;
  * Acts as the controller in GroupManager - GroupListPane -
  * ImageAnalyzerController MVC Trio
  *
- * Connects different parts of ImageAnalyzer together and is hub for flow of control.
+ * Connects different parts of ImageAnalyzer together and is hub for flow of
+ * control.
  */
-public class ImageAnalyzerController implements FileUpdateListener {
+public final class ImageAnalyzerController implements FileUpdateListener {
 
     private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerController.class.getName());
 
@@ -229,6 +230,11 @@ public class ImageAnalyzerController implements FileUpdateListener {
                 advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)));
             }
         });
+
+        viewState().addListener((Observable observable) -> {
+            selectionModel.clearSelection();
+        });
+
         regroupDisabled.addListener((Observable observable) -> {
             checkForGroups();
         });
