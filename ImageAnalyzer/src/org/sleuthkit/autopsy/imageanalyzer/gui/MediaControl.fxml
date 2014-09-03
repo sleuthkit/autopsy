@@ -38,18 +38,22 @@
                   <Label fx:id="timeLabel" alignment="BOTTOM_CENTER" text="Label" StackPane.alignment="BOTTOM_CENTER" />
                </children>
             </StackPane>
-            <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@../images/speaker-volume.png" />
-               </image>
-               <HBox.margin>
-                  <Insets bottom="5.0" left="10.0" top="5.0" />
-               </HBox.margin>
+            <Button fx:id="volumeButton" mnemonicParsing="false" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fx:id="volumeImageView" fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/speaker-volume.png" />
+                     </image>
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
+                  </ImageView>
+               </graphic>
                <cursor>
                   <Cursor fx:constant="HAND" />
                </cursor>
-            </ImageView>
-        <Slider fx:id="volumeSlider" blockIncrement="0.1" majorTickUnit="0.25" max="1.0" minorTickCount="1" prefWidth="100.0" showTickLabels="true" showTickMarks="true" HBox.hgrow="NEVER">
+            </Button>
+        <Slider fx:id="volumeSlider" blockIncrement="0.1" majorTickUnit="0.25" max="1.0" minorTickCount="1" prefWidth="70.0" showTickLabels="true" showTickMarks="true" HBox.hgrow="NEVER">
                <HBox.margin>
                   <Insets right="5.0" />
                </HBox.margin>

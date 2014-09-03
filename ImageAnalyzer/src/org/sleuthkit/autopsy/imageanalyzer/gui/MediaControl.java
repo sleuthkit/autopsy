@@ -35,7 +35,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
@@ -49,6 +48,11 @@ import org.sleuthkit.autopsy.imageanalyzer.datamodel.VideoFile;
 
 public class MediaControl extends BorderPane {
 
+    private static final Image VOLUME_HIGH = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/speaker-volume.png");
+    private static final Image VOLUME_LOW = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/speaker-volume-low.png");
+    private static final Image VOLUME_ZERO = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/speaker-volume-none.png");
+    private static final Image VOLUME_MUTE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/speaker-volume-control-mute.png");
+
     private static final Image PLAY = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/media_controls_play_small.png", true);
     private static final Image PAUSE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/media_controls_pause_small.png", true);
 
@@ -61,8 +65,10 @@ public class MediaControl extends BorderPane {
     private boolean atEndOfMedia = false;
 
     private Duration duration;
+
     @FXML
     private MediaView mediaView;
+
     @FXML
     private ResourceBundle resources;
 
@@ -77,13 +83,28 @@ public class MediaControl extends BorderPane {
 
     @FXML
     private Slider volumeSlider;
+
     @FXML
     private Label timeLabel;
+
     @FXML
     private ImageView controlImageView;
+
+    @FXML
+    private ImageView volumeImageView;
+
     @FXML
     private HBox playControlBar;
-    InvalidationListener seekListener;
+
+    @FXML
+    private Button volumeButton;
+
+    InvalidationListener seekListener = new InvalidationListener() {
+        @Override
+        public void invalidated(Observable ov) {
+            mp.seek(Duration.millis(timeSlider.getValue()));
+        }
+    };
     private final VideoFile<?> file;
 
     public static Node create(VideoFile<?> file) {
@@ -178,11 +199,20 @@ public class MediaControl extends BorderPane {
                 atEndOfMedia = true;
             }
         });
-        seekListener = (Observable ov) -> {
-//            if (timeSlider.isValueChanging()) {
-            mp.seek(Duration.millis(timeSlider.getValue()));
-//            }
-        };
+
+        mp.volumeProperty().addListener((observable, oldVolume, newVolume) -> {
+            setVolumeIcon(newVolume);
+        });
+
+        mp.muteProperty().addListener((observable, oldMute, newMute) -> {
+            if (newMute) {
+                volumeImageView.setImage(VOLUME_MUTE);
+            } else {
+                setVolumeIcon(mp.getVolume());
+            }
+        });
+
+        timeSlider.valueProperty().addListener(seekListener);
 
         // Add time slider
         timeSlider.setLabelFormatter(new StringConverter<Double>() {
@@ -198,14 +228,26 @@ public class MediaControl extends BorderPane {
         });
 
         // Add Volume slider
-        volumeSlider.setPrefWidth(70);
-        volumeSlider.setMaxWidth(Region.USE_PREF_SIZE);
-        volumeSlider.setMinWidth(30);
         volumeSlider.valueProperty().addListener((Observable ov) -> {
             if (volumeSlider.isValueChanging()) {
-                mp.setVolume(volumeSlider.getValue() / 100.0);
+                mp.setVolume(volumeSlider.getValue());
+                mp.setMute(false);
             }
         });
+
+        volumeButton.setOnAction(event -> {
+            mp.setMute(!mp.isMute());
+        });
+    }
+
+    private void setVolumeIcon(Number newVolume) {
+        if (newVolume.doubleValue() < .1) {
+            volumeImageView.setImage(VOLUME_ZERO);
+        } else if (newVolume.doubleValue() <= .6) {
+            volumeImageView.setImage(VOLUME_LOW);
+        } else {
+            volumeImageView.setImage(VOLUME_HIGH);
+        }
     }
 
     private MediaControl(MediaPlayer mp, VideoFile<?> file) {
@@ -232,9 +274,14 @@ public class MediaControl extends BorderPane {
 
     private void updateVolume() {
         Platform.runLater(() -> {
-            if (!volumeSlider.isValueChanging()) {
-                volumeSlider.setValue((int) Math.round(mp.getVolume()
-                        * 100));
+            final double volume = mp.getVolume();
+
+            volumeSlider.setValue(volume);
+
+            if (mp.isMute()) {
+                volumeImageView.setImage(VOLUME_MUTE);
+            } else {
+                setVolumeIcon(volume);
             }
         });
     }
