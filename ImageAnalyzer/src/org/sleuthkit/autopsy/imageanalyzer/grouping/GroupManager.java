@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
@@ -91,9 +90,9 @@ public class GroupManager {
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<Grouping> unSeenGroups = FXCollections.observableArrayList();
 
-    private final SortedList<Grouping> sortedUnSeenGroups = new SortedList<>(unSeenGroups);
+//    private final SortedList<Grouping> sortedUnSeenGroups = new SortedList<>(unSeenGroups);
 
-    private final ObservableList<Grouping> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(sortedUnSeenGroups);
+    private final ObservableList<Grouping> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
@@ -309,6 +308,7 @@ public class GroupManager {
                 synchronized (unSeenGroups) {
                     if (groupSeen == false && unSeenGroups.contains(g) == false) {
                         unSeenGroups.add(g);
+                        FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
                     }
                 }
             });
@@ -459,8 +459,8 @@ public class GroupManager {
                 return getFileIDsWithCategory((Category) groupKey.getValue());
             case TAGS:
                 return getFileIDsWithTag((TagName) groupKey.getValue());
-            case HASHSET: //comment out this case to use db functionality for hashsets
-                return getFileIDsWithHashSetName((String) groupKey.getValue());
+//            case HASHSET: //comment out this case to use db functionality for hashsets
+//                return getFileIDsWithHashSetName((String) groupKey.getValue());
             default:
                 //straight db query
                 return db.getFileIDsInGroup(groupKey);
@@ -563,7 +563,7 @@ public class GroupManager {
                 groupByTask.cancel(true);
             }
             Platform.runLater(() -> {
-                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
+                FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
             });
 
             groupByTask = new ReGroupTask<A>(groupBy, sortBy, sortOrder);
@@ -573,7 +573,7 @@ public class GroupManager {
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                sortedUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
+                FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
             });
         }
     }
