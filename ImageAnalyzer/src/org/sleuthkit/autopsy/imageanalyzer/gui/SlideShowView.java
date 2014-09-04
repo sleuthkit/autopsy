@@ -215,14 +215,12 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
         syncButtonVisibility();
 
-        groupPane.grouping()
-                .addListener((Observable observable) -> {
-                    syncButtonVisibility();
-                    groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
-                        syncButtonVisibility();
-                    });
-                }
-                );
+        groupPane.grouping().addListener((Observable observable) -> {
+            syncButtonVisibility();
+            groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
+                syncButtonVisibility();
+            });
+        });
     }
 
     @ThreadConfined(type = ThreadType.ANY)
@@ -293,7 +291,6 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
     }
 
     private void cycleSlideShowImage(HorizontalDirection d) {
-
         stopVideo();
         if (fileID != null) {
             int index = groupPane.getGrouping().fileIds().indexOf(fileID);
@@ -307,7 +304,6 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
         } else {
             setFile(groupPane.getGrouping().fileIds().get(0));
         }
-
     }
 
     /**
@@ -365,7 +361,6 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
         @Override
         public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
-
             if (t1) {
                 FileIDSelectionModel.getInstance().clearAndSelect(fileID);
                 new CategorizeAction().addTag(cat.getTagName(), "");

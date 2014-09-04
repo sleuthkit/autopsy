@@ -238,8 +238,8 @@ public class GroupPane extends BorderPane implements GroupView {
         }
 
         slideShowPane.setFile(slideShowFileId);
-        slideShowPane.requestFocus();
         setCenter(slideShowPane);
+        slideShowPane.requestFocus();
     }
 
     public void activateTileViewer() {
@@ -737,32 +737,33 @@ public class GroupPane extends BorderPane implements GroupView {
                             break;
                     }
                 } else {
-
-                    switch (t.getCode()) {
-                        case NUMPAD0:
-                        case DIGIT0:
-                            new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
-                            break;
-                        case NUMPAD1:
-                        case DIGIT1:
-                            new CategorizeAction().addTag(Category.ONE.getTagName(), "");
-                            break;
-                        case NUMPAD2:
-                        case DIGIT2:
-                            new CategorizeAction().addTag(Category.TWO.getTagName(), "");
-                            break;
-                        case NUMPAD3:
-                        case DIGIT3:
-                            new CategorizeAction().addTag(Category.THREE.getTagName(), "");
-                            break;
-                        case NUMPAD4:
-                        case DIGIT4:
-                            new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
-                            break;
-                        case NUMPAD5:
-                        case DIGIT5:
-                            new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
-                            break;
+                    if (globalSelectionModel.getSelected().isEmpty() == false) {
+                        switch (t.getCode()) {
+                            case NUMPAD0:
+                            case DIGIT0:
+                                new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
+                                break;
+                            case NUMPAD1:
+                            case DIGIT1:
+                                new CategorizeAction().addTag(Category.ONE.getTagName(), "");
+                                break;
+                            case NUMPAD2:
+                            case DIGIT2:
+                                new CategorizeAction().addTag(Category.TWO.getTagName(), "");
+                                break;
+                            case NUMPAD3:
+                            case DIGIT3:
+                                new CategorizeAction().addTag(Category.THREE.getTagName(), "");
+                                break;
+                            case NUMPAD4:
+                            case DIGIT4:
+                                new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
+                                break;
+                            case NUMPAD5:
+                            case DIGIT5:
+                                new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
+                                break;
+                        }
                     }
                 }
             }
