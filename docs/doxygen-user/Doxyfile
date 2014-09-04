@@ -664,7 +664,8 @@ WARN_LOGFILE           =
 INPUT                  = main.dox \
                          installation.dox \
                          quick_start.dox \
-                         image_viewer.dox
+                         image_viewer.dox \
+                         timeline.dox
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
