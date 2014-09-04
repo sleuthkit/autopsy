@@ -91,7 +91,6 @@ public class TagUtils {
         }
     }
 
-   
     public static void fireChange(Collection<Long> ids) {
         synchronized (listeners) {
             for (TagListener list : listeners) {
@@ -113,9 +112,7 @@ public class TagUtils {
     }
 
     /**
-     *
-     * @param tn            the value of tn
-     
+     * @param tn the value of tn
      */
     static public MenuItem createSelTagMenuItem(final TagName tn, final SplitMenuButton tagSelectedMenuButton) {
         final MenuItem menuItem = new MenuItem(tn.getDisplayName(), new ImageView(DrawableAttribute.TAGS.getIcon()));
@@ -131,7 +128,6 @@ public class TagUtils {
     }
 
     public static interface TagListener {
-
         public void handleTagsChanged(Collection<Long> ids);
     }
 }

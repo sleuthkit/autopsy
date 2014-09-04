@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imageanalyzer;
 
 import java.util.Collection;
+import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
@@ -66,5 +67,13 @@ public class FileUpdateEvent {
     static public enum UpdateType {
 
         FILE_UPDATED, FILE_REMOVED;
+    }
+
+    /**
+     * Interface for listening to FileUpdateEvents
+     */
+    public static interface FileUpdateListener extends EventListener {
+
+        public void handleFileUpdate(FileUpdateEvent evt);
     }
 }

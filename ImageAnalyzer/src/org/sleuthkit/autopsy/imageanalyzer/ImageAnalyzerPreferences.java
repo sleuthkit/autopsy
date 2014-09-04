@@ -25,7 +25,7 @@ import org.openide.util.NbPreferences;
 /**
  *
  */
-public class ImageAnalyzerPreferences {
+ class ImageAnalyzerPreferences {
 
     private static final Preferences preferences = NbPreferences.forModule(ImageAnalyzerPreferences.class);
 

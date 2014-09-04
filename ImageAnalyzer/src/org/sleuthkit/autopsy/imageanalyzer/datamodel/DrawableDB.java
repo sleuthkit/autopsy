@@ -42,7 +42,6 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.FileUpdateEvent;
-import org.sleuthkit.autopsy.imageanalyzer.FileUpdateListener;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
@@ -119,7 +118,7 @@ public class DrawableDB {
     /**
      * list of observers to be notified if the database changes
      */
-    private final HashSet<FileUpdateListener> updateListeners = new HashSet<>();
+    private final HashSet<FileUpdateEvent.FileUpdateListener> updateListeners = new HashSet<>();
 
     private GroupManager manager;
 
@@ -620,7 +619,7 @@ public class DrawableDB {
         tr.commit(notify);
     }
 
-    public void addUpdatedFileListener(FileUpdateListener l) {
+    public void addUpdatedFileListener(FileUpdateEvent.FileUpdateListener l) {
         updateListeners.add(l);
     }
 
@@ -629,13 +628,13 @@ public class DrawableDB {
      * @param f the value of f
      */
     private void fireUpdatedFiles(Collection<Long> f) {
-        for (FileUpdateListener listener : updateListeners) {
+        for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
             listener.handleFileUpdate(new FileUpdateEvent(f, null, FileUpdateEvent.UpdateType.FILE_UPDATED));
         }
     }
 
     private void fireRemovedFiles(Collection<Long> f) {
-        for (FileUpdateListener listener : updateListeners) {
+        for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
             listener.handleFileUpdate(new FileUpdateEvent(f, null, FileUpdateEvent.UpdateType.FILE_REMOVED));
         }
     }

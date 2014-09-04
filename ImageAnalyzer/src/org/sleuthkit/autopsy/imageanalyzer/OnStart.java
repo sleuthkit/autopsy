@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  *
  * The {@link OnStart} annotation tells NetBeans to invoke this class's
- * {@link ImageAnalyzerModule#run()} method
+ * {@link OnStart#run()} method
  */
 @org.openide.modules.OnStart
 public class OnStart implements Runnable {
@@ -34,8 +34,8 @@ public class OnStart implements Runnable {
     static private final Logger LOGGER = Logger.getLogger(OnStart.class.getName());
 
     /**
-     * make sure that the ImageAnalyzer listeners get setup as early as possible, and
-     * do other setup stuff.
+     * make sure that the ImageAnalyzer listeners get setup as early as
+     * possible, and do other setup stuff.
      *
      * This method is invoked by virtue of the {@link OnStart} annotation on the
      * {@link ImageAnalyzerModule} class
@@ -51,5 +51,4 @@ public class OnStart implements Runnable {
 
         Case.addPropertyChangeListener(AutopsyListener.getDefault().getCaseListener());
     }
-
 }

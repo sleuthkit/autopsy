@@ -89,13 +89,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Acts as the controller in GroupManager - GroupListPane -
- * ImageAnalyzerController MVC Trio
- *
  * Connects different parts of ImageAnalyzer together and is hub for flow of
  * control.
  */
-public final class ImageAnalyzerController implements FileUpdateListener {
+public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdateListener {
 
     private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerController.class.getName());
 
@@ -314,7 +311,6 @@ public final class ImageAnalyzerController implements FileUpdateListener {
      */
     public final void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
-//            advance(GroupViewState.tile(null));
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (listeningEnabled.get() == false) {
                     replaceNotification(fullUIStackPane,
@@ -340,13 +336,6 @@ public final class ImageAnalyzerController implements FileUpdateListener {
                                 + "  the current Group By setting resulted in no groups, "
                                 + "or no groups are fully analyzed but ingest is not running."));
             }
-//            else {
-//                replaceNotification(fullUIStackPane,
-//                                    new NoGroupsDialog("Please wait while the images/videos are re grouped.",
-//                                            new ProgressIndicator()));
-//
-//            }
-            // }
 
         } else {
             clearNotification();
@@ -737,7 +726,7 @@ public final class ImageAnalyzerController implements FileUpdateListener {
          */
         @Override
         public void run() {
-            boolean removeFile = db.removeFile(getFile().getId());
+            db.removeFile(getFile().getId());
         }
     }
 
@@ -846,10 +835,9 @@ public final class ImageAnalyzerController implements FileUpdateListener {
     class PrePopulateDataSourceFiles extends TaskWithID {
 
         /**
-         * @TODO: for initial grab is there any better way than by extension?
-         *
-         * in file_done listener we look at file type id attributes and fall
-         * back on jpeg signatures and extensions to check for supported images
+         * here we grab by extension but in file_done listener we look at file
+         * type id attributes but fall back on jpeg signatures and extensions to
+         * check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageAnalyzerModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
@@ -870,7 +858,7 @@ public final class ImageAnalyzerController implements FileUpdateListener {
 
             /* Get all "drawable" files, based on extension. After ingest we use
              * file type id module and if necessary jpeg signature matching to
-             * add remove files */
+             * add/remove files */
             final List<AbstractFile> files;
             try {
                 files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + "and fs_obj_id = " + this.obj_id);

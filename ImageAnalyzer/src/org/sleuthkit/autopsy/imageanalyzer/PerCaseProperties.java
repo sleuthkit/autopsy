@@ -32,9 +32,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- *
+ * Provides access to per case module properties
  */
-public class PerCaseProperties {
+class PerCaseProperties {
 
     public static final String ENABLED = "enabled";
 
@@ -42,7 +42,9 @@ public class PerCaseProperties {
 
     private final Case c;
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     PerCaseProperties(Case c) {
         this.c = c;
     }
@@ -54,7 +56,7 @@ public class PerCaseProperties {
      * @param moduleName - The name of the config file to make
      *
      * @return True if successfully created, false if already exists or an error
-     *         is thrown.
+     * is thrown.
      */
     public synchronized boolean makeConfigFile(String moduleName) {
         if (!configExists(moduleName)) {
@@ -109,7 +111,7 @@ public class PerCaseProperties {
      * @param moduleName - The name of the config file to evaluate
      *
      * @return The path of the given config file. Returns null if the config
-     *         file doesn't exist.
+     * file doesn't exist.
      */
     private synchronized String getPropertyPath(String moduleName) {
         return c.getCaseDirectory() + File.separator + moduleName + ".properties"; //NON-NLS
@@ -118,7 +120,7 @@ public class PerCaseProperties {
     /**
      * Returns the given properties file's setting as specific by settingName.
      *
-     * @param moduleName  - The name of the config file to read from.
+     * @param moduleName - The name of the config file to read from.
      * @param settingName - The setting name to retrieve.
      *
      * @return - the value associated with the setting.
@@ -148,7 +150,7 @@ public class PerCaseProperties {
      * @param moduleName - the name of the config file to read from.
      *
      * @return - the map of all key:value pairs representing the settings of the
-     *         config.
+     * config.
      *
      * @throws IOException
      */
@@ -179,8 +181,8 @@ public class PerCaseProperties {
      * Sets the given properties file to the given setting map.
      *
      * @param moduleName - The name of the module to be written to.
-     * @param settings   - The mapping of all key:value pairs of settings to add
-     *                   to the config.
+     * @param settings - The mapping of all key:value pairs of settings to add
+     * to the config.
      */
     public synchronized void setConfigSettings(String moduleName, Map<String, String> settings) {
         if (!configExists(moduleName)) {
@@ -206,9 +208,9 @@ public class PerCaseProperties {
     /**
      * Sets the given properties file to the given settings.
      *
-     * @param moduleName  - The name of the module to be written to.
+     * @param moduleName - The name of the module to be written to.
      * @param settingName - The name of the setting to be modified.
-     * @param settingVal  - the value to set the setting to.
+     * @param settingVal - the value to set the setting to.
      */
     public synchronized void setConfigSetting(String moduleName, String settingName, String settingVal) {
         if (!configExists(moduleName)) {
@@ -234,7 +236,7 @@ public class PerCaseProperties {
      * Removes the given key from the given properties file.
      *
      * @param moduleName - The name of the properties file to be modified.
-     * @param key        - the name of the key to remove.
+     * @param key - the name of the key to remove.
      */
     public synchronized void removeProperty(String moduleName, String key) {
         if (!configExists(moduleName)) {
@@ -278,20 +280,4 @@ public class PerCaseProperties {
         }
         return props;
     }
-
-//    /**
-//     * Gets the property file as specified.
-//     *
-//     * @param moduleName
-//     *
-//     * @return A new file handle, returns null if the file does not exist.
-//     */
-//    public File getPropertyFile(String moduleName) {
-//        String path = getPropertyPath(moduleName);
-//        if (path == null) {
-//            return null;
-//        } else {
-//            return new File(getPropertyPath(moduleName));
-//        }
-//    }
 }
