@@ -25,7 +25,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.HorizontalDirection;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
@@ -165,51 +164,30 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
         });
 
         leftButton.setOnAction((ActionEvent t) -> {
-            cycleSlideShowImage(HorizontalDirection.LEFT);
+            cycleSlideShowImage(-1);
         });
         rightButton.setOnAction((ActionEvent t) -> {
-            cycleSlideShowImage(HorizontalDirection.RIGHT);
+            cycleSlideShowImage(1);
         });
 
         //set up key listener equivalents of buttons
         addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent t) -> {
 
             if (t.getEventType() == KeyEvent.KEY_PRESSED) {
+
                 switch (t.getCode()) {
                     case LEFT:
-                        cycleSlideShowImage(HorizontalDirection.LEFT);
+                        cycleSlideShowImage(-1);
+                        t.consume();
                         break;
                     case RIGHT:
-                        cycleSlideShowImage(HorizontalDirection.RIGHT);
+                        cycleSlideShowImage(1);
+                        t.consume();
                         break;
 
-                    //TODO: find a way to share these with grouppane/tileview... (ActionMap?)
-                    case NUMPAD0:
-                    case DIGIT0:
-                        new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
-                        break;
-                    case NUMPAD1:
-                    case DIGIT1:
-                        new CategorizeAction().addTag(Category.ONE.getTagName(), "");
-                        break;
-                    case NUMPAD2:
-                    case DIGIT2:
-                        new CategorizeAction().addTag(Category.TWO.getTagName(), "");
-                        break;
-                    case NUMPAD3:
-                    case DIGIT3:
-                        new CategorizeAction().addTag(Category.THREE.getTagName(), "");
-                        break;
-                    case NUMPAD4:
-                    case DIGIT4:
-                        new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
-                        break;
-                    case NUMPAD5:
-                    case DIGIT5:
-                        new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
-                        break;
+//                
                 }
-                t.consume();
+
             }
         });
 
@@ -290,14 +268,16 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
         return file.getName() + " " + getSupplementalText();
     }
 
-    private void cycleSlideShowImage(HorizontalDirection d) {
+    private void cycleSlideShowImage(int d) {
         stopVideo();
         if (fileID != null) {
             int index = groupPane.getGrouping().fileIds().indexOf(fileID);
             final int size = groupPane.getGrouping().fileIds().size();
-            index = (index + ((d == HorizontalDirection.LEFT) ? -1 : 1)) % size;
+            index += d;
             if (index < 0) {
-                index += size;
+                index = size - 1;
+            } else if (index > size) {
+                index = 0;
             }
             setFile(groupPane.getGrouping().fileIds().get(index));
 

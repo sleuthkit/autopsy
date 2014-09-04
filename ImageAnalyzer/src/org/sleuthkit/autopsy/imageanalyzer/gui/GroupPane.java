@@ -226,7 +226,7 @@ public class GroupPane extends BorderPane implements GroupView {
 
     public void activateSlideShowViewer(Long slideShowFileId) {
         groupViewMode.set(GroupViewMode.SLIDE_SHOW);
-        gridView.removeEventHandler(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
+
         //make a new slideShowPane if necessary
         if (slideShowPane == null) {
             slideShowPane = new SlideShowView(this);
@@ -245,8 +245,8 @@ public class GroupPane extends BorderPane implements GroupView {
     public void activateTileViewer() {
 
         groupViewMode.set(GroupViewMode.TILE);
-        gridView.addEventHandler(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
         setCenter(gridView);
+        gridView.requestFocus();
         if (slideShowPane != null) {
             slideShowPane.disposeContent();
         }
@@ -459,7 +459,7 @@ public class GroupPane extends BorderPane implements GroupView {
             setViewState(newValue);
         });
 
-        gridView.addEventHandler(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
+        addEventFilter(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
         gridView.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
             private ContextMenu buildContextMenu() {
@@ -670,6 +670,9 @@ public class GroupPane extends BorderPane implements GroupView {
         }
     }
 
+    private static final List<KeyCode> categoryKeyCodes = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
+            KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
+
     /**
      * implements the key handler for tile navigation ( up, down , left, right
      * arrows)
@@ -680,99 +683,74 @@ public class GroupPane extends BorderPane implements GroupView {
         public void handle(KeyEvent t) {
 
             if (t.getEventType() == KeyEvent.KEY_PRESSED) {
-                if (t.getCode() == KeyCode.SHIFT) {
-                    if (selectionAnchorIndex == null) {
-                        selectionAnchorIndex = grouping.get().fileIds().indexOf(globalSelectionModel.lastSelectedProperty().get());
-                    }
-                }
-                if (Arrays.asList(KeyCode.UP, KeyCode.DOWN, KeyCode.LEFT, KeyCode.RIGHT).contains(t.getCode())) {
-                    handleArrows(t);
-                }
-                if (t.getCode() == KeyCode.PAGE_DOWN) {
-                    getScrollBar().ifPresent((scrollBar) -> {
-                        scrollBar.adjustValue(1);
-                    });
+                switch (t.getCode()) {
+                    case SHIFT:
+                        if (selectionAnchorIndex == null) {
+                            selectionAnchorIndex = grouping.get().fileIds().indexOf(globalSelectionModel.lastSelectedProperty().get());
+                        }
+                        break;
+                    case UP:
+                    case DOWN:
+                    case LEFT:
+                    case RIGHT:
+                        handleArrows(t);
+                        break;
+                    case PAGE_DOWN:
+                        getScrollBar().ifPresent((scrollBar) -> {
+                            scrollBar.adjustValue(1);
+                        });
+                        break;
+                    case PAGE_UP:
+                        getScrollBar().ifPresent((scrollBar) -> {
+                            scrollBar.adjustValue(0);
+                        });
+                        break;
+                    case ENTER:
+                        nextGroupAction.handle(null);
+                        break;
+                    case SPACE:
+                        if (groupViewMode.get() == GroupViewMode.TILE) {
+                            activateSlideShowViewer(globalSelectionModel.lastSelectedProperty().get());
+                        } else {
+                            activateTileViewer();
+                        }
+                        break;
                 }
 
-                if (t.getCode() == KeyCode.PAGE_UP) {
-                    getScrollBar().ifPresent((scrollBar) -> {
-                        scrollBar.adjustValue(0);
-                    });
+                if (groupViewMode.get() == GroupViewMode.TILE && categoryKeyCodes.contains(t.getCode()) && t.isAltDown()) {
+                    selectAllFiles();
                 }
-                if (t.getCode() == KeyCode.ENTER) {
-                    nextGroupAction.handle(null);
-                }
-
-                if (t.isAltDown()) {
+                if (globalSelectionModel.getSelected().isEmpty() == false) {
                     switch (t.getCode()) {
                         case NUMPAD0:
                         case DIGIT0:
-                            selectAllFiles();
-                            new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
+                            new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
                             break;
                         case NUMPAD1:
                         case DIGIT1:
-                            selectAllFiles();
                             new CategorizeAction().addTag(Category.ONE.getTagName(), "");
                             break;
                         case NUMPAD2:
                         case DIGIT2:
-                            selectAllFiles();
                             new CategorizeAction().addTag(Category.TWO.getTagName(), "");
                             break;
                         case NUMPAD3:
                         case DIGIT3:
-                            selectAllFiles();
                             new CategorizeAction().addTag(Category.THREE.getTagName(), "");
                             break;
                         case NUMPAD4:
                         case DIGIT4:
-                            selectAllFiles();
                             new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
                             break;
                         case NUMPAD5:
                         case DIGIT5:
-                            selectAllFiles();
-                            new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
+                            new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
                             break;
-                    }
-                } else {
-                    if (globalSelectionModel.getSelected().isEmpty() == false) {
-                        switch (t.getCode()) {
-                            case NUMPAD0:
-                            case DIGIT0:
-                                new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
-                                break;
-                            case NUMPAD1:
-                            case DIGIT1:
-                                new CategorizeAction().addTag(Category.ONE.getTagName(), "");
-                                break;
-                            case NUMPAD2:
-                            case DIGIT2:
-                                new CategorizeAction().addTag(Category.TWO.getTagName(), "");
-                                break;
-                            case NUMPAD3:
-                            case DIGIT3:
-                                new CategorizeAction().addTag(Category.THREE.getTagName(), "");
-                                break;
-                            case NUMPAD4:
-                            case DIGIT4:
-                                new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
-                                break;
-                            case NUMPAD5:
-                            case DIGIT5:
-                                new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
-                                break;
-                        }
                     }
                 }
             }
 
             t.consume();
-        }
-
-        private Integer getPrefColumns() {
-            return Math.max((int) Math.floor((gridView.getWidth() - 18) / (gridView.getCellWidth() + gridView.getHorizontalCellSpacing() * 2)), 1);
         }
 
         private void handleArrows(KeyEvent t) {
@@ -782,7 +760,7 @@ public class GroupPane extends BorderPane implements GroupView {
                     ? grouping.get().fileIds().indexOf(lastSelectFileId)
                     : Optional.ofNullable(selectionAnchorIndex).orElse(0);
 
-            final Integer columns = getPrefColumns();
+            final int columns = Math.max((int) Math.floor((gridView.getWidth() - 18) / (gridView.getCellWidth() + gridView.getHorizontalCellSpacing() * 2)), 1);
 
             final Map<KeyCode, Integer> tileIndexMap = ImmutableMap.of(UP, -columns, DOWN, columns, LEFT, -1, RIGHT, 1);
 
