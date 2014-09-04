@@ -204,7 +204,7 @@ public class DrawableDB {
             makeGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  make  = ? ", DrawableAttribute.MAKE);
             modelGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  model  = ? ", DrawableAttribute.MODEL);
             analyzedGroupStmt = prepareStatement("Select obj_id , analyzed from drawable_files where analyzed = ?", DrawableAttribute.ANALYZED);
-            hashSetGroupStmt = prepareStatement("select drawable_files.obj_id as obj_id, analyzed from drawable_files natural join hash_sets natural join hash_set_hits  where hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
+            hashSetGroupStmt = prepareStatement("select drawable_files.obj_id as obj_id, analyzed from drawable_files ,  hash_sets , hash_set_hits  where drawable_files.obj_id = hash_set_hits.obj_id and hash_sets.hash_set_id = hash_set_hits.hash_set_id and hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
 
             updateGroupStmt = prepareStatement("update groups set seen = 1 where value = ? and attribute = ?");
             insertGroupStmt = prepareStatement("insert or replace into groups (value, attribute) values (?,?)");
