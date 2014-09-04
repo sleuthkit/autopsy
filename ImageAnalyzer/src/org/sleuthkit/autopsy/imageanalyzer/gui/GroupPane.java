@@ -114,12 +114,12 @@ import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.DrawableGroup;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A GroupPane displays the contents of a {@link Grouping}. It support both a
+ * A GroupPane displays the contents of a {@link DrawableGroup}. It support both a
  * {@link  TilePane} based view and a {@link  SlideShowView} view by swapping out
  * its internal components.
  *
@@ -204,7 +204,7 @@ public class GroupPane extends BorderPane implements GroupView {
     /**
      * the grouping this pane is currently the view for
      */
-    private final ReadOnlyObjectWrapper<Grouping> grouping = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<DrawableGroup> grouping = new ReadOnlyObjectWrapper<>();
 
     /**
      * map from fileIDs to their assigned cells in the tile view. This is used
@@ -252,7 +252,7 @@ public class GroupPane extends BorderPane implements GroupView {
         this.scrollToFileID(globalSelectionModel.lastSelectedProperty().get());
     }
 
-    public Grouping getGrouping() {
+    public DrawableGroup getGrouping() {
         return grouping.get();
     }
 
@@ -268,7 +268,7 @@ public class GroupPane extends BorderPane implements GroupView {
         } else {
             groupName = grouping.get().groupKey.getValue().toString();
         }
-        return StringUtils.defaultIfBlank(groupName, Grouping.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
+        return StringUtils.defaultIfBlank(groupName, DrawableGroup.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
     }
 
     private MenuItem createGrpCatMenuItem(final Category cat) {
@@ -322,7 +322,7 @@ public class GroupPane extends BorderPane implements GroupView {
             } else {
                 groupName = grouping.get().groupKey.getValue().toString();
             }
-            final String headerString = StringUtils.defaultIfBlank(groupName, Grouping.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
+            final String headerString = StringUtils.defaultIfBlank(groupName, DrawableGroup.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
             Platform.runLater(() -> {
                 groupLabel.setText(headerString);
             });
@@ -333,7 +333,7 @@ public class GroupPane extends BorderPane implements GroupView {
         return contextMenu;
     }
 
-    ReadOnlyObjectProperty<Grouping> grouping() {
+    ReadOnlyObjectProperty<DrawableGroup> grouping() {
         return grouping.getReadOnlyProperty();
     }
 

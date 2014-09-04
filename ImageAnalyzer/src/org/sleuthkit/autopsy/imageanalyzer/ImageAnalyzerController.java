@@ -76,7 +76,7 @@ import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
@@ -437,7 +437,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
                     Set<GroupKey<?>> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
 
                     for (GroupKey<?> gk : groupsForFile) {
-                        Grouping g = groupManager.getGroupForKey(gk);
+                        DrawableGroup g = groupManager.getGroupForKey(gk);
 
                         if (g != null) {
                             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.

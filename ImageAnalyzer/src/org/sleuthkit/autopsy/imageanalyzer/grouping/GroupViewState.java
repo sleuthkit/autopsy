@@ -26,13 +26,13 @@ import java.util.Optional;
  */
 public class GroupViewState {
 
-    private final Grouping group;
+    private final DrawableGroup group;
 
     private final GroupViewMode mode;
 
     private final Optional<Long> slideShowfileID;
 
-    public Grouping getGroup() {
+    public DrawableGroup getGroup() {
         return group;
     }
 
@@ -44,17 +44,17 @@ public class GroupViewState {
         return slideShowfileID;
     }
 
-    private GroupViewState(Grouping g, GroupViewMode mode, Long slideShowfileID) {
+    private GroupViewState(DrawableGroup g, GroupViewMode mode, Long slideShowfileID) {
         this.group = g;
         this.mode = mode;
         this.slideShowfileID = Optional.ofNullable(slideShowfileID);
     }
 
-    public static GroupViewState tile(Grouping g) {
+    public static GroupViewState tile(DrawableGroup g) {
         return new GroupViewState(g, GroupViewMode.TILE, null);
     }
 
-    public static GroupViewState slideShow(Grouping g, Long fileID) {
+    public static GroupViewState slideShow(DrawableGroup g, Long fileID) {
         return new GroupViewState(g, GroupViewMode.SLIDE_SHOW, fileID);
     }
 

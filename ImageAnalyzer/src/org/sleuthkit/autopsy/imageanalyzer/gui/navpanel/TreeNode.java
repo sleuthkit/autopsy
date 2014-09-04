@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer.gui.navpanel;
 
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.DrawableGroup;
 
 /**
  *
@@ -26,22 +26,22 @@ import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
  class TreeNode {
 
    private  String path;
-   private Grouping group;
+   private DrawableGroup group;
 
     public String getPath() {
         return path;
     }
 
-    public Grouping getGroup() {
+    public DrawableGroup getGroup() {
         return group;
     }
 
-    public TreeNode(String path, Grouping group) {
+    public TreeNode(String path, DrawableGroup group) {
         this.path = path;
         this.group = group;
     }
 
-    void setGroup(Grouping g) {
+    void setGroup(DrawableGroup g) {
     group = g;
     }
 }

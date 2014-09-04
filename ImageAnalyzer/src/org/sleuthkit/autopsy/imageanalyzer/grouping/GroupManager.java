@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-4 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Provides an abstraction layer on top of {@link  DrawableDB} ( and to some
  * extent {@link SleuthkitCase} ) to facilitate creation, retrieval, updating,
- * and sorting of {@link Grouping}s.
+ * and sorting of {@link DrawableGroup}s.
  */
 public class GroupManager {
 
@@ -72,27 +72,26 @@ public class GroupManager {
     private final ImageAnalyzerController controller;
 
     /**
-     * map from {@link GroupKey}s to {@link  Grouping}s. All groups (even not
+     * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even not
      * fully analyzed or not visible groups could be in this map
      */
-    private final Map<GroupKey<?>, Grouping> groupMap = new HashMap<>();
+    private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
     /**
      * list of all analyzed groups
      */
     @ThreadConfined(type = ThreadType.JFX)
-    private final ObservableList<Grouping> analyzedGroups = FXCollections.observableArrayList();
+    private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
 
-    private final ObservableList<Grouping> publicAnalyzedGroupsWrapper = FXCollections.unmodifiableObservableList(analyzedGroups);
+    private final ObservableList<DrawableGroup> publicAnalyzedGroupsWrapper = FXCollections.unmodifiableObservableList(analyzedGroups);
     /**
      * list of unseen groups
      */
     @ThreadConfined(type = ThreadType.JFX)
-    private final ObservableList<Grouping> unSeenGroups = FXCollections.observableArrayList();
+    private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
 
 //    private final SortedList<Grouping> sortedUnSeenGroups = new SortedList<>(unSeenGroups);
-
-    private final ObservableList<Grouping> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(unSeenGroups);
+    private final ObservableList<DrawableGroup> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
@@ -108,12 +107,12 @@ public class GroupManager {
         regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
     }
 
-    public ObservableList<Grouping> getAnalyzedGroups() {
+    public ObservableList<DrawableGroup> getAnalyzedGroups() {
         return publicAnalyzedGroupsWrapper;
     }
 
     @ThreadConfined(type = ThreadType.JFX)
-    public ObservableList<Grouping> getUnSeenGroups() {
+    public ObservableList<DrawableGroup> getUnSeenGroups() {
         return publicSortedUnseenGroupsWrapper;
     }
 
@@ -173,10 +172,10 @@ public class GroupManager {
     /**
      * @param groupKey
      *
-     * @return return the Grouping (if it exists) for the given GroupKey, or
-     * null if no group exists for that key.
+     * @return return the DrawableGroup (if it exists) for the given GroupKey, or
+ null if no group exists for that key.
      */
-    public Grouping getGroupForKey(GroupKey<?> groupKey) {
+    public DrawableGroup getGroupForKey(GroupKey<?> groupKey) {
         synchronized (groupMap) {
             return groupMap.get(groupKey);
         }
@@ -222,28 +221,34 @@ public class GroupManager {
     }
 
     /**
-     * make and return a group with the given key and files. If a group already
-     * existed for that key, it will be replaced.
+     * make and return a new group with the given key and files. If a group
+     * already existed for that key, it will be replaced.
      *
-     * @param groupKey
-     * @param files
+     * NOTE: this is the only API for making a new group.
      *
-     * @return
+     * @param groupKey the groupKey that uniquely identifies this group
+     * @param files a list of fileids that are members of this group
      *
-     * TODO: check if a group already exists for that key and ... (do what?add
-     * files to it?) -jm
+     * @return the new DrawableGroup for the given key
      */
-    public Grouping makeGroup(GroupKey<?> groupKey, List<Long> files) {
+    public DrawableGroup makeGroup(GroupKey<?> groupKey, List<Long> files) {
         List<Long> newFiles = files == null ? new ArrayList<>() : files;
 
-        Grouping g = new Grouping(groupKey, newFiles);
+        DrawableGroup g = new DrawableGroup(groupKey, newFiles);
         synchronized (groupMap) {
             groupMap.put(groupKey, g);
         }
         return g;
     }
 
-    public void markGroupSeen(Grouping group) {
+    /**
+     * 'mark' the given group as seen. This removes it from the queue of groups
+     * to review, and is persisted in the drawable db.
+     *
+     *
+     * @param group the {@link  DrawableGroup} to mark as seen
+     */
+    public void markGroupSeen(DrawableGroup group) {
         synchronized (unSeenGroups) {
             unSeenGroups.remove(group);
         }
@@ -260,7 +265,7 @@ public class GroupManager {
      */
     public synchronized void removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
-        final Grouping group = getGroupForKey(groupKey);
+        final DrawableGroup group = getGroupForKey(groupKey);
         if (group != null) {
             group.removeFile(fileID);
             if (group.fileIds().isEmpty()) {
@@ -298,7 +303,7 @@ public class GroupManager {
          * user picked a different group by attribute, while the current task
          * was still running) */
         if (task == null || (task.isCancelled() == false)) {
-            Grouping g = makeGroup(groupKey, filesInGroup);
+            DrawableGroup g = makeGroup(groupKey, filesInGroup);
 
             final boolean groupSeen = db.isGroupSeen(groupKey);
             Platform.runLater(() -> {
