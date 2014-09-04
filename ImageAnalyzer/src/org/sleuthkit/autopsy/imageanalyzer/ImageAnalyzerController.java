@@ -677,28 +677,14 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
 
     }
 
-    /**
-     * Task to mark all unanalyzed files in the DB as analyzed. Just to make
-     * sure that all are displayed. Added because there were rare cases where
-     * something failed and a file was never marked as analyzed and therefore
-     * never displayed. This task should go into the queue at the end after all
-     * of the update tasks.
-     */
-    class MarkAllFilesAsAnalyzed extends InnerTask {
-
-        @Override
-        public void run() {
-            db.markAllFilesAnalyzed();
-//            checkForGroups();
-        }
-    }
+   
 
     /**
      * task that updates one file in database with results from ingest
      */
-    class UpdateFile extends TaskWithFile {
+    class UpdateFileTask extends TaskWithFile {
 
-        public UpdateFile(AbstractFile f) {
+        public UpdateFileTask(AbstractFile f) {
             super(f);
         }
 
@@ -749,7 +735,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
             updateMessage("populating analyzed image/video database");
 
             try {
-                //grap all files with supported mime types
+                //grab all files with supported extension or mime types
                 final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " or tsk_files.obj_id in (select tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
                         + " where  blackboard_artifacts.obj_id = tsk_files.obj_id"
                         + " and blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
@@ -777,15 +763,15 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
                     } else {
                         if (hasMimeType == null) {
                             if (ImageAnalyzerModule.isSupported(f)) {
-                                //no mime type but supported => not add as not analyzed
-                                db.updatefile(DrawableFile.create(f, false), tr);
+                                //no mime type but supported =>  add as not analyzed
+                                db.insertFile(DrawableFile.create(f, false), tr);
                             } else {
-                                //no mime type, not supported  => remove ( how dd we get here)
+                                //no mime type, not supported  => remove ( should never get here)
                                 db.removeFile(f.getId(), tr);
                             }
                         } else {
                             if (hasMimeType) {  // supported mimetype => analyzed
-                                db.updatefile(DrawableFile.create(f, true), tr);
+                                db.updateFile(DrawableFile.create(f, true), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 db.removeFile(f.getId(), tr);
                             }
@@ -873,7 +859,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
                         progressHandle.finish();
                         break;
                     }
-                    db.updatefile(DrawableFile.create(f, false), tr);
+                    db.insertFile(DrawableFile.create(f, false), tr);
                     units++;
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);

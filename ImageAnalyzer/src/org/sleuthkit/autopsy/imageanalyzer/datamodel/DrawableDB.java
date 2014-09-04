@@ -91,7 +91,8 @@ public class DrawableDB {
 
     private final PreparedStatement insertHashHitStmt;
 
-    private final PreparedStatement insertFileStmt;
+    private final PreparedStatement updateFileStmt;
+    private PreparedStatement insertFileStmt;
 
     private final PreparedStatement pathGroupStmt;
 
@@ -191,9 +192,13 @@ public class DrawableDB {
         this.dbPath = dbPath;
 
         if (initializeDB()) {
-            insertFileStmt = prepareStatement(
+            updateFileStmt = prepareStatement(
                     "INSERT OR REPLACE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) "
                     + "VALUES (?,?,?,?,?,?,?,?)");
+            insertFileStmt = prepareStatement(
+                    "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) "
+                    + "VALUES (?,?,?,?,?,?,?,?)");
+
             removeFileStmt = prepareStatement("delete from drawable_files where obj_id = ?");
 
             pathGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  path  = ? ", DrawableAttribute.PATH);
@@ -533,20 +538,25 @@ public class DrawableDB {
 
     public void updateFile(DrawableFile<?> f) {
         DrawableTransaction trans = beginTransaction();
-        updatefile(f, trans);
+        updateFile(f, trans);
         commitTransaction(trans, true);
     }
 
-    /**
-     * use transactions to update files
-     *
-     * @param f
-     * @param tr
-     *
-     *
-     *
-     */
-    public void updatefile(DrawableFile<?> f, DrawableTransaction tr) {
+    public void insertFile(DrawableFile<?> f) {
+        DrawableTransaction trans = beginTransaction();
+        insertFile(f, trans);
+        commitTransaction(trans, true);
+    }
+
+    public void insertFile(DrawableFile<?> f, DrawableTransaction tr) {
+        insertOrUpdateFile(f, tr, insertFileStmt);
+    }
+
+    public void updateFile(DrawableFile<?> f, DrawableTransaction tr) {
+        insertOrUpdateFile(f, tr, updateFileStmt);
+    }
+
+    private void insertOrUpdateFile(DrawableFile<?> f, DrawableTransaction tr, PreparedStatement stmt) {
 
         //TODO:      implement batch version -jm
         if (tr.isClosed()) {
@@ -555,16 +565,16 @@ public class DrawableDB {
         dbWriteLock();
         try {
 
-            // "INSERT OR REPLACE INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
-            insertFileStmt.setLong(1, f.getId());
-            insertFileStmt.setString(2, f.getDrawablePath());
-            insertFileStmt.setString(3, f.getName());
-            insertFileStmt.setLong(4, f.getCrtime());
-            insertFileStmt.setLong(5, f.getMtime());
-            insertFileStmt.setString(6, f.getMake());
-            insertFileStmt.setString(7, f.getModel());
-            insertFileStmt.setInt(8, f.isAnalyzed() ? 1 : 0);
-            insertFileStmt.executeUpdate();
+            // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
+            stmt.setLong(1, f.getId());
+            stmt.setString(2, f.getDrawablePath());
+            stmt.setString(3, f.getName());
+            stmt.setLong(4, f.getCrtime());
+            stmt.setLong(5, f.getMtime());
+            stmt.setString(6, f.getMake());
+            stmt.setString(7, f.getModel());
+            stmt.setBoolean(8, f.isAnalyzed());
+            stmt.executeUpdate();
 
             final Collection<String> hashSetNames = DrawableAttribute.HASHSET.getValue(f);
 
@@ -602,7 +612,7 @@ public class DrawableDB {
             tr.addUpdatedFile(f.getId());
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to update file" + f.getName(), ex);
+            LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
         } finally {
             dbWriteUnlock();
         }
@@ -915,7 +925,7 @@ public class DrawableDB {
             }
 
             statement.setObject(1, key.getValue());
-   
+
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
                     files.add(getFileFromID(valsResults.getLong(OBJ_ID), valsResults.getBoolean(ANALYZED)));
@@ -1003,41 +1013,7 @@ public class DrawableDB {
         return valsResults == 1;
     }
 
-    /**
-     * Mark all un analyzed files as analyzed.
-     *
-     * TODO: This is a hack we only do because their is a bug that even after
-     * ingest is done, their are sometimes still files that are not marked as
-     * analyzed. Ultimately we should track down the underlying bug. -jm
-     *
-     * @return the ids of files that we marked as analyzed
-     */
-    public ArrayList<Long> markAllFilesAnalyzed() {
-        DrawableTransaction trans = beginTransaction();
-        ArrayList<Long> ids = new ArrayList<>();
-        dbWriteLock();
-        try (Statement statement = con.createStatement();
-                ResultSet executeQuery = statement.executeQuery("select obj_id from drawable_files where analyzed = 0")) {
-
-            while (executeQuery.next()) {
-                ids.add(executeQuery.getLong("obj_id"));
-            }
-
-            if (ids.isEmpty() == false) {
-                Logger.getAnonymousLogger().log(Level.INFO, "marking as analyzed " + ids);
-                statement.executeUpdate("update drawable_files set analyzed = 1 where obj_id in (" + StringUtils.join(ids, ",") + ")");
-                trans.updatedFiles.addAll(ids);
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "failed to mark files as analyzed", ex);
-        } finally {
-            dbWriteUnlock();
-        }
-
-        trans.commit(Boolean.TRUE);
-
-        return ids;
-    }
+   
 
     public class MultipleTransactionException extends IllegalStateException {
 

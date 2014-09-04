@@ -90,7 +90,6 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.ActionUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
@@ -406,8 +405,7 @@ public class GroupPane extends BorderPane implements GroupView {
             grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
             grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException.getLocalizedMessage());
-            Exceptions.printStackTrace(tskCoreException);
+            LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
         grpTagSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
         grpTagSplitMenu.getItems().setAll(grpTagMenues);
@@ -629,8 +627,11 @@ public class GroupPane extends BorderPane implements GroupView {
      */
     void setViewState(GroupViewState viewState) {
         if (viewState == null) {
-            setCenter(null);
-            groupLabel.setText(null);
+            Platform.runLater(() -> {
+                setCenter(null);
+                groupLabel.setText(null);
+            });
+            
         } else {
             if (this.grouping.get() != viewState.getGroup()) {
                 this.grouping.set(viewState.getGroup());
