@@ -120,7 +120,7 @@ public class AutopsyListener {
                         }
                     } else {
                         controller.setStale(true);
-                        //TODO: keep track of waht we missed for later
+                        //TODO: keep track of what we missed for later
                     }
                     break;
             }

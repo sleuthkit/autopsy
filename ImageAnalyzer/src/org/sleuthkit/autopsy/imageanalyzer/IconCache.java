@@ -22,8 +22,10 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -39,6 +41,7 @@ import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.Exceptions;
+import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,8 +49,10 @@ import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Manages creation and access of icons. Keeps a cache in memory of most
- * recently used icons, and a disk cache of all icons. */
+/**
+ * Singleton to manage creation and access of icons. Keeps a cache in memory of
+ * most * recently used icons, and a disk cache of all icons.
+ */
 public class IconCache {
 
     static private IconCache instance;
@@ -63,7 +68,6 @@ public class IconCache {
     private final Executor imageSaver = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("icon saver-%d").build());
 
     private IconCache() {
-
     }
 
     synchronized static public IconCache getDefault() {
@@ -106,14 +110,13 @@ public class IconCache {
         if (cacheFile.exists()) {
             try {
                 int dim = iconSize.get();
-                icon = new Image(cacheFile.toURI().toURL().toString(), dim, dim, true, false, true);
+                icon = new Image(Utilities.toURI(cacheFile).toURL().toString(), dim, dim, true, false, true);
             } catch (MalformedURLException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }
 
         if (icon == null) {
-            //  Logger.getAnonymousLogger().warning("wrong size cache found for image " + getName());
             icon = generateAndSaveIcon(file);
         }
         return Optional.ofNullable(icon);
@@ -126,11 +129,10 @@ public class IconCache {
 
     private Image generateAndSaveIcon(final DrawableFile<?> file) {
         Image img;
-        //TODO: should we wrap this in a BufferedInputStream? -jm
-        try (ReadContentInputStream inputStream = new ReadContentInputStream(file.getAbstractFile())) {
+        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile()))) {
             img = new Image(inputStream, MAX_ICON_SIZE, MAX_ICON_SIZE, true, true);
             if (img.isError()) {
-                LOGGER.log(Level.WARNING, "problem loading image: {0}. {1}", new Object[]{file.getName(), img.getException().getLocalizedMessage()});
+                LOGGER.log(Level.WARNING, "problem loading image: " + file.getName() + " .", img.getException());
                 return fallbackToSwingImage(file);
             } else {
                 imageSaver.execute(() -> {
@@ -189,15 +191,6 @@ public class IconCache {
 
     private void saveIcon(final DrawableFile<?> file, final Image bi) {
         try {
-            /* save the icon in a background thread. profiling
-             * showed that it can take as much time as making
-             * the icon? -bc
-             *
-             * We don't do this now as it doesn't fit the
-             * current model of ui-related backgroiund tasks,
-             * and there might be complications to not just
-             * blocking (eg having more than one task to
-             * create the same icon -jm */
             File f = getCacheFile(file.getId());
             ImageIO.write(SwingFXUtils.fromFXImage(bi, null), "png", f);
         } catch (IOException ex) {
