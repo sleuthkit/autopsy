@@ -75,15 +75,7 @@ public class AutopsyListener {
         @Override
         synchronized public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
-                case COMPLETED:
-                    if (controller.isListeningEnabled()) {
-                        if (IngestManager.getInstance().isIngestRunning() == false) {
-                            // @@@ Add some logic to not do this if we've done it in the past second
-//                            controller.queueTask(controller.new MarkAllFilesAsAnalyzed());
-                        }
-                    } else {
-                        //TODO can we do anything usefull here?
-                    }
+                //TODO can we do anything usefull here?
             }
         }
     }

@@ -1013,41 +1013,7 @@ public class DrawableDB {
         return valsResults == 1;
     }
 
-    /**
-     * Mark all un analyzed files as analyzed.
-     *
-     * TODO: This is a hack we only do because their is a bug that even after
-     * ingest is done, their are sometimes still files that are not marked as
-     * analyzed. Ultimately we should track down the underlying bug. -jm
-     *
-     * @return the ids of files that we marked as analyzed
-     */
-    public ArrayList<Long> markAllFilesAnalyzed() {
-        DrawableTransaction trans = beginTransaction();
-        ArrayList<Long> ids = new ArrayList<>();
-        dbWriteLock();
-        try (Statement statement = con.createStatement();
-                ResultSet executeQuery = statement.executeQuery("select obj_id from drawable_files where analyzed = 0")) {
-
-            while (executeQuery.next()) {
-                ids.add(executeQuery.getLong("obj_id"));
-            }
-
-            if (ids.isEmpty() == false) {
-                Logger.getAnonymousLogger().log(Level.INFO, "marking as analyzed " + ids);
-                statement.executeUpdate("update drawable_files set analyzed = 1 where obj_id in (" + StringUtils.join(ids, ",") + ")");
-                trans.updatedFiles.addAll(ids);
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "failed to mark files as analyzed", ex);
-        } finally {
-            dbWriteUnlock();
-        }
-
-        trans.commit(Boolean.TRUE);
-
-        return ids;
-    }
+   
 
     public class MultipleTransactionException extends IllegalStateException {
 

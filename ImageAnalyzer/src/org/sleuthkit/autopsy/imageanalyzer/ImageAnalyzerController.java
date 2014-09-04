@@ -677,21 +677,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
 
     }
 
-    /**
-     * Task to mark all unanalyzed files in the DB as analyzed. Just to make
-     * sure that all are displayed. Added because there were rare cases where
-     * something failed and a file was never marked as analyzed and therefore
-     * never displayed. This task should go into the queue at the end after all
-     * of the update tasks.
-     */
-    class MarkAllFilesAsAnalyzed extends InnerTask {
-
-        @Override
-        public void run() {
-            db.markAllFilesAnalyzed();
-//            checkForGroups();
-        }
-    }
+   
 
     /**
      * task that updates one file in database with results from ingest
