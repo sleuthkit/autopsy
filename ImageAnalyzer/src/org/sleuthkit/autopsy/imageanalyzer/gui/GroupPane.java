@@ -547,7 +547,7 @@ public class GroupPane extends BorderPane implements GroupView {
         });
 
         //listen to tile selection and make sure it is visible in scroll area
-        //TODO: make sure we are testing complete visability not just bounsd intersection
+        //TODO: make sure we are testing complete visability not just bounds intersection
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldFileID, newFileId) -> {
             if (groupViewMode.get() == GroupViewMode.SLIDE_SHOW) {
                 slideShowPane.setFile(newFileId);
@@ -688,25 +688,32 @@ public class GroupPane extends BorderPane implements GroupView {
                         if (selectionAnchorIndex == null) {
                             selectionAnchorIndex = grouping.get().fileIds().indexOf(globalSelectionModel.lastSelectedProperty().get());
                         }
+                        t.consume();
                         break;
                     case UP:
                     case DOWN:
                     case LEFT:
                     case RIGHT:
-                        handleArrows(t);
+                        if (groupViewMode.get() == GroupViewMode.TILE) {
+                            handleArrows(t);
+                            t.consume();
+                        }
                         break;
                     case PAGE_DOWN:
                         getScrollBar().ifPresent((scrollBar) -> {
                             scrollBar.adjustValue(1);
                         });
+                        t.consume();
                         break;
                     case PAGE_UP:
                         getScrollBar().ifPresent((scrollBar) -> {
                             scrollBar.adjustValue(0);
                         });
+                        t.consume();
                         break;
                     case ENTER:
                         nextGroupAction.handle(null);
+                        t.consume();
                         break;
                     case SPACE:
                         if (groupViewMode.get() == GroupViewMode.TILE) {
@@ -714,11 +721,13 @@ public class GroupPane extends BorderPane implements GroupView {
                         } else {
                             activateTileViewer();
                         }
+                        t.consume();
                         break;
                 }
 
                 if (groupViewMode.get() == GroupViewMode.TILE && categoryKeyCodes.contains(t.getCode()) && t.isAltDown()) {
                     selectAllFiles();
+                    t.consume();
                 }
                 if (globalSelectionModel.getSelected().isEmpty() == false) {
                     switch (t.getCode()) {
@@ -750,7 +759,6 @@ public class GroupPane extends BorderPane implements GroupView {
                 }
             }
 
-            t.consume();
         }
 
         private void handleArrows(KeyEvent t) {

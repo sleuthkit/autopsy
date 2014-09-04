@@ -184,10 +184,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
                         cycleSlideShowImage(1);
                         t.consume();
                         break;
-
-//                
                 }
-
             }
         });
 
@@ -275,9 +272,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
             final int size = groupPane.getGrouping().fileIds().size();
             index += d;
             if (index < 0) {
-                index = size - 1;
-            } else if (index > size) {
-                index = 0;
+                index += size;
             }
             setFile(groupPane.getGrouping().fileIds().get(index));
 
