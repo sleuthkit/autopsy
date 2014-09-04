@@ -60,21 +60,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
-    public static DrawableFile<?> create(AbstractFile abstractFileById, boolean b) {
+    public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
         if (ImageAnalyzerModule.isVideoFile(abstractFileById)) {
-            return new VideoFile<>(abstractFileById, b);
+            return new VideoFile<>(abstractFileById, analyzed);
         } else {
-            return new ImageFile<>(abstractFileById, b);
+            return new ImageFile<>(abstractFileById, analyzed);
         }
     }
 
-    public static DrawableFile<?> create(Long id, boolean b) throws TskCoreException, IllegalStateException {
+    public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
 
         AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
         if (ImageAnalyzerModule.isVideoFile(abstractFileById)) {
-            return new VideoFile<>(abstractFileById, b);
+            return new VideoFile<>(abstractFileById, analyzed);
         } else {
-            return new ImageFile<>(abstractFileById, b);
+            return new ImageFile<>(abstractFileById, analyzed);
         }
     }
 
@@ -284,8 +284,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
         }
     }
-
-  
 
     public abstract Image getIcon();
 

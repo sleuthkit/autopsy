@@ -27,8 +27,10 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
-/** Singleton aggregator for listeners that hook into case and ingest modules.
- * This class depends on clients to hook up listeners to Autopsy. */
+/**
+ * Singleton aggregator for listeners that hook into case and ingest modules.
+ * This class depends on clients to hook up listeners to Autopsy.
+ */
 public class AutopsyListener {
 
     private static final Logger LOGGER = Logger.getLogger(AutopsyListener.class.getName());
@@ -65,7 +67,9 @@ public class AutopsyListener {
         return instance;
     }
 
-    /** listener for ingest events */
+    /**
+     * listener for ingest events
+     */
     private class IngestJobEventListener implements PropertyChangeListener {
 
         @Override
@@ -75,7 +79,7 @@ public class AutopsyListener {
                     if (controller.isListeningEnabled()) {
                         if (IngestManager.getInstance().isIngestRunning() == false) {
                             // @@@ Add some logic to not do this if we've done it in the past second
-                            controller.queueTask(controller.new MarkAllFilesAsAnalyzed());
+//                            controller.queueTask(controller.new MarkAllFilesAsAnalyzed());
                         }
                     } else {
                         //TODO can we do anything usefull here?
@@ -84,7 +88,9 @@ public class AutopsyListener {
         }
     }
 
-    /** listener for ingest events */
+    /**
+     * listener for ingest events
+     */
     private class IngestModuleEventListener implements PropertyChangeListener {
 
         @Override
@@ -104,15 +110,17 @@ public class AutopsyListener {
                      * by file done event, anyways -jm */
                     break;
                 case FILE_DONE:
-                    /** getOldValue has fileID, getNewValue has {@link Abstractfile}
+                    /**
+                     * getOldValue has fileID, getNewValue has {@link Abstractfile}
                      *
-                     * {@link IngestManager#fireModuleDataEvent(org.sleuthkit.autopsy.ingest.ModuleDataEvent) fireModuleDataEvent} */
+                     * {@link IngestManager#fireModuleDataEvent(org.sleuthkit.autopsy.ingest.ModuleDataEvent) fireModuleDataEvent}
+                     */
                     AbstractFile file = (AbstractFile) evt.getNewValue();
                     if (controller.isListeningEnabled()) {
 
                         if (ImageAnalyzerModule.isSupportedAndNotKnown(file)) {
                             //this file should be included and we don't already know about it from hash sets (NSRL)
-                            controller.queueTask(controller.new UpdateFile(file));
+                            controller.queueTask(controller.new UpdateFileTask(file));
                         } else if (ImageAnalyzerModule.getAllSupportedExtensions().contains(file.getNameExtension())) {
                             //doing this check results in fewer tasks queued up, and faster completion of db update
                             //this file would have gotten scooped up in initial grab, but actually we don't need it
@@ -127,7 +135,9 @@ public class AutopsyListener {
         }
     }
 
-    /** listener for case events */
+    /**
+     * listener for case events
+     */
     private class CaseListener implements PropertyChangeListener {
 
         @Override
@@ -161,5 +171,4 @@ public class AutopsyListener {
         }
     }
 
- 
 }
