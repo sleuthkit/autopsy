@@ -123,11 +123,12 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
         });
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
-        
+
         valueColumn.setCellValueFactory((p) -> {
             if (p.getValue().getKey() == DrawableAttribute.TAGS) {
                 return new SimpleStringProperty(((Collection<TagName>) p.getValue().getValue()).stream()
                         .map(TagName::getDisplayName)
+                        .filter((String t) -> t.startsWith(Category.CATEGORY_PREFIX) == false)
                         .collect(Collectors.joining(" ; ", "", "")));
             } else {
                 return new SimpleStringProperty(StringUtils.join((Collection<?>) p.getValue().getValue(), " ; "));
