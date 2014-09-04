@@ -308,7 +308,9 @@ public class GroupPane extends BorderPane implements GroupView {
      */
     protected void resetHeaderString() {
         if (grouping.get() == null) {
-            groupLabel.setText("");
+            Platform.runLater(() -> {
+                groupLabel.setText("");
+            });
         } else {
             int size = grouping.get().getSize();
             int hashHitCount = grouping.get().getFilesWithHashSetHitsCount();
@@ -318,7 +320,10 @@ public class GroupPane extends BorderPane implements GroupView {
             } else {
                 groupName = grouping.get().groupKey.getValue().toString();
             }
-            groupLabel.setText(StringUtils.defaultIfBlank(groupName, Grouping.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files");
+            final String headerString = StringUtils.defaultIfBlank(groupName, Grouping.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
+            Platform.runLater(() -> {
+                groupLabel.setText(headerString);
+            });
         }
     }
 
@@ -356,12 +361,12 @@ public class GroupPane extends BorderPane implements GroupView {
             //and assign fileIDs to gridView
             if (grouping.get() == null) {
                 Platform.runLater(gridView.getItems()::clear);
-                
+
             } else {
                 Platform.runLater(() -> {
                     gridView.setItems(grouping.get().fileIds());
                 });
-                                grouping.get().fileIds().addListener((Observable p) -> {
+                grouping.get().fileIds().addListener((Observable p) -> {
                     resetHeaderString();
                 });
             }
