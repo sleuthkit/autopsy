@@ -112,7 +112,6 @@ public class Grouping {
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
         }
-
     }
 
     synchronized public void removeFile(Long f) {

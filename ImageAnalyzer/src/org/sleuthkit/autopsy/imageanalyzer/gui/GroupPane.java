@@ -35,11 +35,14 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -350,25 +353,34 @@ public class GroupPane extends BorderPane implements GroupView {
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
 
-        grouping.addListener((o) -> {
-            //when the assigned group changes, reset the scroll at to the top
-            getScrollBar().ifPresent((scrollBar) -> {
-                scrollBar.setValue(0);
-            });
-
-            //set the embeded header
-            resetHeaderString();
-            //and assign fileIDs to gridView
-            if (grouping.get() == null) {
-                Platform.runLater(gridView.getItems()::clear);
-
-            } else {
+        grouping.addListener(new InvalidationListener() {
+            private void updateFiles() {
+                final ObservableList<Long> fileIds = grouping.get().fileIds();
                 Platform.runLater(() -> {
-                    gridView.setItems(grouping.get().fileIds());
+                    gridView.setItems(FXCollections.observableArrayList(fileIds));
                 });
-                grouping.get().fileIds().addListener((Observable p) -> {
-                    resetHeaderString();
+                resetHeaderString();
+            }
+
+            @Override
+            public void invalidated(Observable o) {
+                getScrollBar().ifPresent((scrollBar) -> {
+                    scrollBar.setValue(0);
                 });
+
+                //set the embeded header
+                resetHeaderString();
+                //and assign fileIDs to gridView
+                if (grouping.get() == null) {
+                    Platform.runLater(gridView.getItems()::clear);
+
+                } else {
+                    grouping.get().fileIds().addListener((Observable observable) -> {
+                        updateFiles();
+                    });
+
+                    updateFiles();
+                }
             }
         });
 
