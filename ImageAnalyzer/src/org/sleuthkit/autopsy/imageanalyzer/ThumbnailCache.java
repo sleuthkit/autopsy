@@ -160,7 +160,7 @@ public enum ThumbnailCache {
     private Image generateAndSaveThumbnail(final DrawableFile<?> file) {
         //create a buffered input stream for the underlying Abstractfile
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile()))) {
-            Image thumbnail = new Image(inputStream, MAX_ICON_SIZE, MAX_ICON_SIZE, true, true);
+            final Image thumbnail = new Image(inputStream, MAX_ICON_SIZE, MAX_ICON_SIZE, true, true);
             if (thumbnail.isError()) {  //if there was an error loading the image via JFX, fall back on Swing
                 LOGGER.log(Level.WARNING, "problem loading image: " + file.getName() + " .", thumbnail.getException());
                 return fallbackToSwingImage(file);
@@ -189,7 +189,7 @@ public enum ThumbnailCache {
         if (generateSwingIcon == null) {    //if swing failed,
             return null;                    //propagate failure up cal stack.
         } else {//Swing load succeeded, convert to JFX Image
-            WritableImage toFXImage = SwingFXUtils.toFXImage(generateSwingIcon, null);
+            final WritableImage toFXImage = SwingFXUtils.toFXImage(generateSwingIcon, null);
             if (toFXImage != null) { //if conversion succeeded save to disk cache
                 imageSaver.execute(() -> {
                     saveIcon(file, toFXImage);

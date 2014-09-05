@@ -15,13 +15,22 @@
             <StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="NEVER">
               <children>
                 <ProgressBar id="progBar" fx:id="fileTaskProgresBar" focusTraversable="false" maxHeight="-1.0" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-1.0" prefHeight="24.0" prefWidth="-1.0" progress="0.0" visible="true" />
-                <Label id="fileUpdateLabel" fx:id="fileUpdateTaskLabel" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="0.0" labelFor="$fileTaskProgresBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="-1.0" text="0 File Update Tasks" StackPane.alignment="CENTER" />
+                <Label id="fileUpdateLabel" fx:id="fileUpdateTaskLabel" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="0.0" labelFor="$fileTaskProgresBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="-1.0" text="0 File Update Tasks" StackPane.alignment="CENTER">
+                           <StackPane.margin>
+                              <Insets left="3.0" right="3.0" />
+                           </StackPane.margin></Label>
               </children>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
             </StackPane>
             <StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="NEVER">
               <children>
                 <ProgressBar fx:id="bgTaskProgressBar" maxHeight="-1.0" maxWidth="-1.0" minHeight="-Infinity" minWidth="-1.0" prefHeight="24.0" prefWidth="-1.0" progress="0.0" StackPane.alignment="CENTER" />
-                <Label fx:id="bgTaskLabel" alignment="CENTER" cache="false" contentDisplay="CENTER" disable="false" focusTraversable="false" labelFor="$uiTaskProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" text="0 BG Tasks" StackPane.alignment="CENTER" />
+                <Label fx:id="bgTaskLabel" alignment="CENTER" cache="false" contentDisplay="CENTER" disable="false" focusTraversable="false" labelFor="$uiTaskProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" text="0 RegroupTasks" StackPane.alignment="CENTER">
+                           <StackPane.margin>
+                              <Insets left="3.0" right="3.0" />
+                           </StackPane.margin></Label>
               </children>
 <HBox.margin>
 <Insets right="5.0" />
