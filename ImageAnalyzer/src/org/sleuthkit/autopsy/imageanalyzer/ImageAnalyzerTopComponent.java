@@ -44,13 +44,18 @@ import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 
 /**
  * Top component which displays ImageAnalyzer interface.
+ *
+ * Although ImageAnalyzer doesn't currently use the explorer manager, this
+ * Topcomponenet provides one through the getExplorerManager method. However,
+ * this does not seem to function correctly unless a Netbeans provided explorer
+ * view is present in the TopComponenet, even if it is invisible/ zero sized
  */
 @ConvertAsProperties(
         dtd = "-//org.sleuthkit.autopsy.imageanalyzer//ImageAnalyzer//EN",
         autostore = false)
 @TopComponent.Description(
         preferredID = "ImageAnalyzerTopComponent",
-        //iconBase = "org/sleuthkit/autopsy/imageanalyzer/images/lightbulb.png",
+        //iconBase = "org/sleuthkit/autopsy/imageanalyzer/images/lightbulb.png" use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
 @Messages({
@@ -84,7 +89,6 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
         }
     }
 
-    //TODO: this doesn ot really belong here, move it to ImageAnalyzerController? Module?
     public static void closeTopComponent() {
         final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
         if (etc != null) {
@@ -98,7 +102,7 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
 
     private final ExplorerManager em = new ExplorerManager();
 
-    private final Lookup lookup;
+    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
 
     private final ImageAnalyzerController controller = ImageAnalyzerController.getDefault();
 
@@ -125,15 +129,14 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
         setName(Bundle.CTL_ImageAnalyzerTopComponent());
         setToolTipText(Bundle.HINT_ImageAnalyzerTopComponent());
 
-        // ...and initialization of lookup variable
-        lookup = (ExplorerUtils.createLookup(em, getActionMap()));
         initComponents();
-        Platform.runLater(() -> {
-            fullUIStack = new StackPane();
+
+        Platform.runLater(() -> {//initialize jfx ui
+            fullUIStack = new StackPane(); //this is passed into controller
             myScene = new Scene(fullUIStack);
             jfxPanel.setScene(myScene);
             groupPane = new GroupPane(controller);
-            centralStack = new StackPane(groupPane);
+            centralStack = new StackPane(groupPane);  //this is passed into controller
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);
