@@ -19,38 +19,25 @@
 package org.sleuthkit.autopsy.imageanalyzer;
 
 import java.beans.PropertyChangeEvent;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
-import static javafx.concurrent.Worker.State.CANCELLED;
-import static javafx.concurrent.Worker.State.FAILED;
-import static javafx.concurrent.Worker.State.READY;
-import static javafx.concurrent.Worker.State.RUNNING;
-import static javafx.concurrent.Worker.State.SCHEDULED;
-import static javafx.concurrent.Worker.State.SUCCEEDED;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
@@ -61,22 +48,18 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javax.annotation.concurrent.GuardedBy;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imageanalyzer.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.Toolbar;
@@ -84,6 +67,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -92,7 +76,7 @@ import org.sleuthkit.datamodel.TskData;
  * Connects different parts of ImageAnalyzer together and is hub for flow of
  * control.
  */
-public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdateListener {
+public final class ImageAnalyzerController {
 
     private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerController.class.getName());
 
@@ -159,18 +143,6 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
         return historyManager.currentState();
     }
 
-    /**
-     * the list of tasks queued to run in the uiBGTaskExecutor. By keeping this
-     * list we can cancel them more gracefully than by {@link ExecutorService#shutdownNow()
-     */
-    @GuardedBy("bgTasks")
-    private final SimpleListProperty<Future<?>> bgTasks = new SimpleListProperty<>(FXCollections.observableArrayList());
-
-    /**
-     * an executor to submit async ui related background tasks to.
-     */
-    final ExecutorService bgTaskExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build());
-
     public synchronized FileIDSelectionModel getSelectionModel() {
 
         return selectionModel;
@@ -213,7 +185,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
 
         listeningEnabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue && !oldValue && Case.existsCurrentCase() && ImageAnalyzerModule.isCaseStale(Case.getCurrentCase())) {
-                queueTask(new CopyAnalyzedFiles());
+                queueDBWorkerTask(new CopyAnalyzedFiles());
             }
         });
 
@@ -243,41 +215,6 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
             Platform.runLater(this::updateRegroupDisabled);
         });
 //        metaDataCollapsed.bind(Toolbar.getDefault().showMetaDataProperty());
-    }
-
-    /**
-     * submit a background {@link Task} to be queued for execution by the thread
-     * pool.
-     *
-     * @param task
-     */
-    @SuppressWarnings("fallthrough")
-    public void submitBGTask(final Task<?> task) {
-        //listen to task state and remove task from list of tasks once it is 'done'
-        task.stateProperty().addListener((ObservableValue<? extends Worker.State> observableState, Worker.State oldState, Worker.State newState) -> {
-            switch (newState) {
-                case READY:
-                case SCHEDULED:
-                case RUNNING:
-                    break;
-                case FAILED:
-                    LOGGER.log(Level.WARNING, "task :" + task.getTitle() + " failed", task.getException());
-                case CANCELLED:
-                case SUCCEEDED:
-                    Platform.runLater(() -> {
-                        synchronized (bgTasks) {
-                            bgTasks.remove(task);
-                        }
-                    });
-                    break;
-            }
-        });
-
-        synchronized (bgTasks) {
-            bgTasks.add(task);
-        }
-
-        bgTaskExecutor.execute(task);
     }
 
     synchronized public ReadOnlyBooleanProperty getCanAdvance() {
@@ -378,14 +315,14 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
     }
 
     /**
-     * initialize the controller for a specific case.
+     * onStart the controller for a specific case.
      *
      * @param c
      */
     public synchronized void setCase(Case c) {
 
         this.db = DrawableDB.getDrawableDB(c.getCaseDirectory(), this);
-        db.addUpdatedFileListener(this);
+
         setListeningEnabled(ImageAnalyzerModule.isEnabledforCase(c));
         setStale(ImageAnalyzerModule.isCaseStale(c));
 
@@ -395,70 +332,6 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
         historyManager.clear();
         groupManager.setDB(db);
         SummaryTablePane.getDefault().handleCategoryChanged(Collections.emptyList());
-    }
-
-    /**
-     * handle {@link FileUpdateEvent} sent from Db when files are
-     * inserted/updated
-     *
-     * @param evt
-     */
-    @Override
-    synchronized public void handleFileUpdate(FileUpdateEvent evt) {
-        final Collection<Long> fileIDs = evt.getUpdatedFiles();
-        switch (evt.getUpdateType()) {
-            case FILE_REMOVED:
-                for (final long fileId : fileIDs) {
-                    //get grouping(s) this file would be in
-                    Set<GroupKey<?>> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
-
-                    for (GroupKey<?> gk : groupsForFile) {
-                        groupManager.removeFromGroup(gk, fileId);
-                    }
-                }
-
-                break;
-            case FILE_UPDATED:
-
-                /**
-                 * TODO: is there a way to optimize this to avoid quering to db
-                 * so much. the problem is that as a new files are analyzed they
-                 * might be in new groups( if we are grouping by say make or
-                 * model)
-                 *
-                 * TODO: Should this be a InnerTask so it can be done by the
-                 * WorkerThread? Is it already done by worker thread because
-                 * handlefileUpdate is invoked through call on db in UpdateTask
-                 * innertask? -jm
-                 */
-                for (final long fileId : fileIDs) {
-
-                    //get grouping(s) this file would be in
-                    Set<GroupKey<?>> groupsForFile = groupManager.getGroupKeysForFileID(fileId);
-
-                    for (GroupKey<?> gk : groupsForFile) {
-                        Grouping g = groupManager.getGroupForKey(gk);
-
-                        if (g != null) {
-                            //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-                            g.addFile(fileId);
-                        } else {
-                            //if there wasn't already a group check if there should be one now
-                            //TODO: use method in groupmanager ?
-                            List<Long> checkAnalyzed = groupManager.checkAnalyzed(gk);
-                            if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
-                                groupManager.populateAnalyzedGroup(gk, checkAnalyzed);
-                            }
-                        }
-                    }
-                }
-
-                Category.fireChange(fileIDs);
-                if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
-                    TagUtils.fireChange(fileIDs);
-                }
-                break;
-        }
     }
 
     /**
@@ -484,7 +357,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
      *
      * @param innerTask
      */
-    final void queueTask(InnerTask innerTask) {
+    final void queueDBWorkerTask(InnerTask innerTask) {
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
             restartWorker();
@@ -506,14 +379,147 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
         return queueSizeProperty.getReadOnlyProperty();
     }
 
-    public ReadOnlyIntegerProperty bgTaskQueueSizeProperty() {
-        return bgTasks.sizeProperty();
+    public ReadOnlyDoubleProperty regroupProgress() {
+        return groupManager.regroupProgress();
+    }
+
+    /** invoked by {@link OnStart} to make sure that the ImageAnalyzer listeners
+     * get setup as early as possible, and do other setup stuff. */
+    void onStart() {
+        Platform.setImplicitExit(false);
+        LOGGER.info("setting up ImageAnalyzer listeners");
+        //TODO can we do anything usefull in an InjestJobEventListener?
+        //IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {});
+        IngestManager.getInstance().addIngestModuleEventListener((PropertyChangeEvent evt) -> {
+            switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
+                case CONTENT_CHANGED:
+                //TODO: do we need to do anything here?  -jm
+                case DATA_ADDED:
+                    /* we could listen to DATA events and progressivly
+                     * update files, and get data from DataSource ingest
+                     * modules, but given that most modules don't post new
+                     * artifacts in the events and we would have to query for
+                     * them, without knowing which are the new ones, we just
+                     * ignore these events for now. The relevant data should all
+                     * be captured by file done event, anyways -jm */
+                    break;
+                case FILE_DONE:
+                    /** getOldValue has fileID
+                     * getNewValue has {@link Abstractfile} */
+                    AbstractFile file = (AbstractFile) evt.getNewValue();
+                    if (isListeningEnabled()) {
+                        if (ImageAnalyzerModule.isSupportedAndNotKnown(file)) {
+                            //this file should be included and we don't already know about it from hash sets (NSRL)
+                            queueDBWorkerTask(new UpdateFileTask(file));
+                        } else if (ImageAnalyzerModule.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                            //doing this check results in fewer tasks queued up, and faster completion of db update
+                            //this file would have gotten scooped up in initial grab, but actually we don't need it
+                            queueDBWorkerTask(new RemoveFileTask(file));
+                        }
+                    } else {   //TODO: keep track of what we missed for later
+                        setStale(true);
+                    }
+                    break;
+            }
+        });
+        Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE:
+                    Case newCase = (Case) evt.getNewValue();
+                    if (newCase != null) { // case has been opened
+                        setCase(newCase);    //connect db, groupmanager, start worker thread
+                    } else { // case is closing
+                        //close window, reset everything
+                        SwingUtilities.invokeLater(ImageAnalyzerModule::closeTopComponent);
+                        reset();
+                    }
+                    break;
+                case DATA_SOURCE_ADDED:
+                    //copy all file data to drawable databse
+                    Content newDataSource = (Content) evt.getNewValue();
+                    if (isListeningEnabled()) {
+                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource.getId()));
+                    } else {//TODO: keep track of what we missed for later
+                        setStale(true);
+                    }
+                    break;
+            }
+        });
+    }
+
+    // @@@ REVIEW IF THIS SHOLD BE STATIC...
+    //TODO: concept seems like  the controller deal with how much work to do at a given time
+    // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)
+    private class DBWorkerThread implements Runnable {
+
+        // true if the process was requested to stop.  Currently no way to reset it
+        private volatile boolean cancelled = false;
+
+        // list of tasks to run
+        private final BlockingQueue<InnerTask> workQueue = new LinkedBlockingQueue<>();
+
+        /**
+         * Cancel all of the queued up tasks and the currently scheduled task.
+         * Note that after you cancel, you cannot submit new jobs to this
+         * thread.
+         */
+        public void cancelAllTasks() {
+            cancelled = true;
+            for (InnerTask it : workQueue) {
+                it.cancel();
+            }
+            workQueue.clear();
+            queueSizeProperty.set(workQueue.size());
+        }
+
+        /**
+         * Add a task for the worker thread to perform
+         *
+         * @param it
+         */
+        public void addTask(InnerTask it) {
+            workQueue.add(it);
+            Platform.runLater(() -> {
+                queueSizeProperty.set(workQueue.size());
+            });
+        }
+
+        @Override
+        public void run() {
+            // nearly infinite loop waiting for tasks
+            while (true) {
+                if (cancelled) {
+                    return;
+                }
+                try {
+                    // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
+                    InnerTask it = workQueue.take();
+                    if (it.cancelled == false) {
+                        it.run();
+                    }
+                    Platform.runLater(() -> {
+                        queueSizeProperty.set(workQueue.size());
+                    });
+
+                } catch (InterruptedException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
+    }
+
+    public SleuthkitCase getSleuthKitCase() throws IllegalStateException {
+        if (Case.isCaseOpen()) {
+            return Case.getCurrentCase().getSleuthkitCase();
+        } else {
+            throw new IllegalStateException("No Case is open!");
+        }
     }
 
     /**
-     *
+     * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    public static abstract class ProgressBase {
+    static private abstract class InnerTask implements Runnable {
 
         public double getProgress() {
             return progress.get();
@@ -554,82 +560,8 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
             return new ReadOnlyObjectWrapper<>(state.get());
         }
 
-        public ProgressBase() {
-            super();
+        protected InnerTask() {
         }
-    }
-
-    // @@@ REVIEW IF THIS SHOLD BE STATIC...
-    //TODO: concept seems like  the controller deal with how much work to do at a given time
-    // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)
-    private class DBWorkerThread implements Runnable {
-
-        // true if the process was requested to stop.  Currently no way to reset it
-        private volatile boolean cancelled = false;
-
-        // list of tasks to run
-        private final BlockingQueue<InnerTask> workQueue = new LinkedBlockingQueue<>();
-
-        /**
-         * Cancel all of the queued up tasks and the currently scheduled task.
-         * Note that after you cancel, you cannot submit new jobs to this
-         * thread.
-         */
-        public void cancelAllTasks() {
-            cancelled = true;
-            for (InnerTask it : workQueue) {
-                it.cancel();
-            }
-            workQueue.clear();
-            queueSizeProperty.set(workQueue.size());
-        }
-
-        /**
-         * Add a task for the worker thread to perform
-         *
-         * @param it
-         */
-        public void addTask(InnerTask it) {
-            workQueue.add(it);
-            queueSizeProperty.set(workQueue.size());
-        }
-
-        @Override
-        public void run() {
-            // nearly infinite loop waiting for tasks
-            while (true) {
-                if (cancelled) {
-                    return;
-                }
-                try {
-                    // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
-                    InnerTask it = workQueue.take();
-                    if (it.cancelled == false) {
-                        it.run();
-                    }
-
-                    queueSizeProperty.set(workQueue.size());
-
-                } catch (InterruptedException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-
-            }
-        }
-    }
-
-    public SleuthkitCase getSleuthKitCase() throws IllegalStateException {
-        if (Case.isCaseOpen()) {
-            return Case.getCurrentCase().getSleuthkitCase();
-        } else {
-            throw new IllegalStateException("No Case is open!");
-        }
-    }
-
-    /**
-     * Abstract base class for task to be done on {@link DBWorkerThread}
-     */
-    static public abstract class InnerTask extends ProgressBase implements Runnable {
 
         protected volatile boolean cancelled = false;
 
@@ -643,26 +575,9 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
     }
 
     /**
-     * Abstract base class for tasks associated with an obj id in the database
-     */
-    static private abstract class TaskWithID extends InnerTask {
-
-        protected Long obj_id;    // id of image or file
-
-        public TaskWithID(Long id) {
-            super();
-            this.obj_id = id;
-        }
-
-        public Long getId() {
-            return obj_id;
-        }
-    }
-
-    /**
      * Abstract base class for tasks associated with a file in the database
      */
-    static private abstract class TaskWithFile extends InnerTask {
+    static private abstract class FileTask extends InnerTask {
 
         private final AbstractFile file;
 
@@ -670,19 +585,17 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
             return file;
         }
 
-        public TaskWithFile(AbstractFile f) {
+        public FileTask(AbstractFile f) {
             super();
             this.file = f;
         }
 
     }
 
-   
-
     /**
      * task that updates one file in database with results from ingest
      */
-    class UpdateFileTask extends TaskWithFile {
+    private class UpdateFileTask extends FileTask {
 
         public UpdateFileTask(AbstractFile f) {
             super(f);
@@ -701,9 +614,9 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
     /**
      * task that updates one file in database with results from ingest
      */
-    class RemoveFile extends TaskWithFile {
+    private class RemoveFileTask extends FileTask {
 
-        public RemoveFile(AbstractFile f) {
+        public RemoveFileTask(AbstractFile f) {
             super(f);
         }
 
@@ -818,20 +731,23 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageAnalyzer progress/status
      */
-    class PrePopulateDataSourceFiles extends TaskWithID {
+    class PrePopulateDataSourceFiles extends InnerTask {
 
+        private final Long id;    // id of image or file
         /**
          * here we grab by extension but in file_done listener we look at file
          * type id attributes but fall back on jpeg signatures and extensions to
          * check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
-        final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageAnalyzerModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
+        private final String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageAnalyzerModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
         public PrePopulateDataSourceFiles(Long id) {
-            super(id);
+            super();
+            this.id = id;
+
         }
 
         /**
@@ -847,7 +763,7 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
              * add/remove files */
             final List<AbstractFile> files;
             try {
-                files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + "and fs_obj_id = " + this.obj_id);
+                files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + "and fs_obj_id = " + this.id);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction
@@ -880,4 +796,5 @@ public final class ImageAnalyzerController implements FileUpdateEvent.FileUpdate
             progressHandle.finish();
         }
     }
+
 }

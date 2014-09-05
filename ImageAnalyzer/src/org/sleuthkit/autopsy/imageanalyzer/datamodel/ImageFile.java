@@ -26,7 +26,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imageanalyzer.IconCache;
+import org.sleuthkit.autopsy.imageanalyzer.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -47,8 +47,8 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    public Image getIcon() {
-        return IconCache.getDefault().get(this);
+    public Image getThumbnail() {
+        return ThumbnailCache.getDefault().get(this);
     }
 
    

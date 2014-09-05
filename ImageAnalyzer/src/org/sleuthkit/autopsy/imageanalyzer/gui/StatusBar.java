@@ -69,19 +69,16 @@ public class StatusBar extends AnchorPane {
         assert bgTaskLabel != null : "fx:id=\"uiTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskProgressBar != null : "fx:id=\"uiTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
 
-        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
-            Platform.runLater(() -> {
-                fileUpdateTaskLabel.setText(newSize.toString() + " File Update Tasks");
-                fileTaskProgresBar.setProgress((double) (newSize.intValue() > 0 ? -1 : 0));
-            });
-        });
+        fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(" File Update Tasks"));//;setText(newSize.toString() + " File Update Tasks");
+        fileTaskProgresBar.progressProperty().bind(controller.getFileUpdateQueueSizeProperty().negate());
+//        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
+//            Platform.runLater(() -> {
+//
+//
+//            });
+//        });
 
-        controller.bgTaskQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
-            Platform.runLater(() -> {
-                bgTaskLabel.setText(newSize.toString() + " BG Tasks");
-                bgTaskProgressBar.setProgress((double) (newSize.intValue() > 0 ? -1 : 0));
-            });
-        });
+        bgTaskProgressBar.progressProperty().bind(controller.regroupProgress());
 
         Platform.runLater(() -> {
             staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable listening to ingest in Tools | Options | Image /Video Analyzer , after ingest is complete to update."));

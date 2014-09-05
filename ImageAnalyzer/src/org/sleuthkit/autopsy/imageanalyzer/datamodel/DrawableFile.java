@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * @TODO: There is something I don't understand or have done wrong about
  * implementing this class,as it is unreadable by
- * {@link ReadContentInputStream}. As a work around I kept a reference to the
+ * {@link ReadContentInputStream}. As a work around we keep a reference to the
  * original {@link AbstractFile} to use when reading the image. -jm
  */
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
@@ -80,8 +80,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     private String drawablePath;
 
-    abstract public boolean isVideo();
-
     protected T file;
 
     private final SimpleBooleanProperty analyzed;
@@ -90,11 +88,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     private Collection<String> hashHitSetNames;
 
-    public Collection<String> getHashHitSetNames() {
-        updateHashSets();
-        return hashHitSetNames;
-    }
-
     private String make;
 
     private String model;
@@ -102,12 +95,19 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     protected DrawableFile(T file, Boolean analyzed) {
         /* @TODO: the two 'new Integer(0).shortValue()' values and null are
          * placeholders because the super constructor expects values i can't get
-         * easily at the moment */
+         * easily at the moment.  I assume this is related to why ReadContentInputStream can't read from DrawableFiles.*/
 
         super(file.getSleuthkitCase(), file.getId(), file.getAttrType(), file.getAttrId(), file.getName(), file.getType(), file.getMetaAddr(), (int) file.getMetaSeq(), file.getDirType(), file.getMetaType(), null, new Integer(0).shortValue(), file.getSize(), file.getCtime(), file.getCrtime(), file.getAtime(), file.getMtime(), new Integer(0).shortValue(), file.getUid(), file.getGid(), file.getMd5Hash(), file.getKnown(), file.getParentPath());
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
 
+    }
+
+    public abstract boolean isVideo();
+
+    public Collection<String> getHashHitSetNames() {
+        updateHashSets();
+        return hashHitSetNames;
     }
 
     @SuppressWarnings("unchecked")
@@ -178,7 +178,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     }
 
     @Deprecated
-    final protected List<? extends Object> getValuesOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
+    protected final List<? extends Object> getValuesOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
         ArrayList<Object> vals = new ArrayList<>();
         try {
             //why doesn't file.getArtifacts() work?
@@ -285,7 +285,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public abstract Image getIcon();
+    public abstract Image getThumbnail();
 
     public void setAnalyzed(Boolean analyzed) {
         this.analyzed.set(analyzed);
@@ -309,25 +309,11 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         } else {
             try {
                 drawablePath = StringUtils.removeEnd(getUniquePath(), getName());
-//                drawablePath = StringUtils.replaceEachRepeatedly(drawablePath, DOUBLE_SLASH, SLASH);
                 return drawablePath;
             } catch (TskCoreException ex) {
                 Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "failed to get drawablePath from {0}", getName());
                 return "";
             }
         }
-    }
-
-    private long getRootID() throws TskCoreException {
-
-        Content myParent = getParent();
-        long id = -1;
-
-        while (myParent != null) {
-            id = myParent.getId();
-            myParent = myParent.getParent();
-        }
-
-        return id;
     }
 }

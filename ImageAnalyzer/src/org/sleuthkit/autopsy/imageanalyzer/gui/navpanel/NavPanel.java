@@ -46,10 +46,10 @@ import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupKey;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -155,22 +155,22 @@ public class NavPanel extends TabPane {
         initHashTree();
         initNavTree();
 
-        controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends Grouping> change) -> {
+        controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             while (change.next()) {
-                for (Grouping g : change.getAddedSubList()) {
+                for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
                     if (g.getFilesWithHashSetHitsCount() > 0) {
                         insertIntoHashTree(g);
                     }
                 }
-                for (Grouping g : change.getRemoved()) {
+                for (DrawableGroup g : change.getRemoved()) {
                     removeFromNavTree(g);
                     removeFromHashTree(g);
                 }
             }
         });
 
-        for (Grouping g : controller.getGroupManager().getAnalyzedGroups()) {
+        for (DrawableGroup g : controller.getGroupManager().getAnalyzedGroups()) {
             insertIntoNavTree(g);
             if (g.getFilesWithHashSetHitsCount() > 0) {
                 insertIntoHashTree(g);
@@ -195,7 +195,7 @@ public class NavPanel extends TabPane {
         hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
     }
 
-    private void insertIntoHashTree(Grouping g) {
+    private void insertIntoHashTree(DrawableGroup g) {
         initHashTree();
         hashTreeRoot.insert(g.groupKey.getValueDisplayName(), g, false);
     }
@@ -205,7 +205,7 @@ public class NavPanel extends TabPane {
      *
      * @param grouping
      */
-    public void setFocusedGroup(Grouping grouping) {
+    public void setFocusedGroup(DrawableGroup grouping) {
 
         List<String> path = groupingToPath(grouping);
 
@@ -228,7 +228,7 @@ public class NavPanel extends TabPane {
     }
 
     @SuppressWarnings("fallthrough")
-    private static List<String> groupingToPath(Grouping g) {
+    private static List<String> groupingToPath(DrawableGroup g) {
 
         if (g.groupKey.getAttribute() == DrawableAttribute.PATH) {
             String path = g.groupKey.getValueDisplayName();
@@ -242,14 +242,14 @@ public class NavPanel extends TabPane {
         }
     }
 
-    private void insertIntoNavTree(Grouping g) {
+    private void insertIntoNavTree(DrawableGroup g) {
         initNavTree();
         List<String> path = groupingToPath(g);
 
         navTreeRoot.insert(path, g, true);
     }
 
-    private void removeFromNavTree(Grouping g) {
+    private void removeFromNavTree(DrawableGroup g) {
         initNavTree();
         final GroupTreeItem treeItemForGroup = GroupTreeItem.getTreeItemForGroup(navTreeRoot, g);
         if (treeItemForGroup != null) {
@@ -257,7 +257,7 @@ public class NavPanel extends TabPane {
         }
     }
 
-    private void removeFromHashTree(Grouping g) {
+    private void removeFromHashTree(DrawableGroup g) {
         initHashTree();
         final GroupTreeItem treeItemForGroup = GroupTreeItem.getTreeItemForGroup(hashTreeRoot, g);
         if (treeItemForGroup != null) {
@@ -293,9 +293,9 @@ public class NavPanel extends TabPane {
     private void rebuildNavTree() {
         navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
 
-        ObservableList<Grouping> groups = controller.getGroupManager().getAnalyzedGroups();
+        ObservableList<DrawableGroup> groups = controller.getGroupManager().getAnalyzedGroups();
 
-        for (Grouping g : groups) {
+        for (DrawableGroup g : groups) {
             insertIntoNavTree(g);
         }
 
@@ -320,7 +320,7 @@ public class NavPanel extends TabPane {
                     Collection<GroupKey<?>> groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
 
                     for (GroupKey<?> k : groupKeysForFile) {
-                        final Grouping groupForKey = controller.getGroupManager().getGroupForKey(k);
+                        final DrawableGroup groupForKey = controller.getGroupManager().getGroupForKey(k);
                         if (groupForKey != null) {
                             insertIntoHashTree(groupForKey);
                         }

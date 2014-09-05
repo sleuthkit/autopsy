@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
-import javafx.application.Platform;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
@@ -34,21 +31,13 @@ public class OnStart implements Runnable {
     static private final Logger LOGGER = Logger.getLogger(OnStart.class.getName());
 
     /**
-     * make sure that the ImageAnalyzer listeners get setup as early as
-     * possible, and do other setup stuff.
+
      *
      * This method is invoked by virtue of the {@link OnStart} annotation on the
      * {@link ImageAnalyzerModule} class
      */
     @Override
     public void run() {
-        Platform.setImplicitExit(false);
-
-        LOGGER.info("setting up ImageAnalyzer listeners");
-
-        IngestManager.getInstance().addIngestJobEventListener(AutopsyListener.getDefault().getIngestJobEventListener());
-        IngestManager.getInstance().addIngestModuleEventListener(AutopsyListener.getDefault().getIngestModuleEventListener());
-
-        Case.addPropertyChangeListener(AutopsyListener.getDefault().getCaseListener());
+        ImageAnalyzerController.getDefault().onStart();
     }
 }
