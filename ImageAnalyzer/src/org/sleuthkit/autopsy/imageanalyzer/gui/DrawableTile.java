@@ -106,7 +106,7 @@ public class DrawableTile extends SingleDrawableViewBase implements Category.Cat
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        Image image = file.getIcon();
+        Image image = file.getThumbnail();
 
         return () -> {
             imageView.setImage(image);

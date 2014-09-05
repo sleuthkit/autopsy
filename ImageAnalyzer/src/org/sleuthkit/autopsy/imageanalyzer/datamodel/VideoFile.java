@@ -38,7 +38,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getThumbnail() {
         //TODO: implement video thumbnailing here?
         return VIDEO_ICON;
     }
