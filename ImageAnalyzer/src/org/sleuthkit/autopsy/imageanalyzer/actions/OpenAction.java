@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerModule;
+import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerTopComponent;
 
 @ActionID(category = "Tools",
           id = "org.sleuthkit.autopsy.imageanalyzer.OpenAction")
@@ -93,14 +94,14 @@ public final class OpenAction extends CallableSystemAction {
                     ImageAnalyzerController.getDefault().setListeningEnabled(true);
                 //fall through
                 case JOptionPane.NO_OPTION:
-                    ImageAnalyzerModule.openTopComponent();
+                    ImageAnalyzerTopComponent.openTopComponent();
                     break;
                 case JOptionPane.CANCEL_OPTION:
                     break; //do nothing
             }
         } else {
             //case is not stale, just open it
-            ImageAnalyzerModule.openTopComponent();
+            ImageAnalyzerTopComponent.openTopComponent();
         }
     }
 

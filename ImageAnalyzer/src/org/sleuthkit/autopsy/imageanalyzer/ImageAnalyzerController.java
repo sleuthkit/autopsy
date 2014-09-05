@@ -430,7 +430,7 @@ public final class ImageAnalyzerController {
                         setCase(newCase);    //connect db, groupmanager, start worker thread
                     } else { // case is closing
                         //close window, reset everything
-                        SwingUtilities.invokeLater(ImageAnalyzerModule::closeTopComponent);
+                        SwingUtilities.invokeLater(ImageAnalyzerTopComponent::closeTopComponent);
                         reset();
                     }
                     break;

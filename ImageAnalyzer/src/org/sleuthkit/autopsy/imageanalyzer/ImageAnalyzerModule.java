@@ -28,50 +28,52 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.windows.Mode;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-/** static definitions and utilities for the ImageAnalyzer module
- *
- */
+/** static definitions and utilities for the ImageAnalyzer module */
 public class ImageAnalyzerModule {
 
-    static private final Logger LOGGER = Logger.getLogger(ImageAnalyzerModule.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerModule.class.getName());
 
     static final String MODULE_NAME = ImageAnalyzerModule.class.getSimpleName();
 
-    static private final Set<String> videoExtensions
+    private static final Set<String> videoExtensions
             = Sets.newHashSet("aaf", "3gp", "asf", "avi", "m1v", "m2v", "m4v", "mp4",
-                              "mov", "mpeg", "mpg", "mpe", "mp4", "rm", "wmv", "mpv",
-                              "flv", "swf");
+                    "mov", "mpeg", "mpg", "mpe", "mp4", "rm", "wmv", "mpv",
+                    "flv", "swf");
 
-    static private final Set<String> imageExtensions = Sets.newHashSet(ImageIO.getReaderFileSuffixes());
+    private static final Set<String> imageExtensions = Sets.newHashSet(ImageIO.getReaderFileSuffixes());
 
-    static private final Set<String> supportedExtensions = Sets.union(imageExtensions, videoExtensions);
+    private static final Set<String> supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
-    static private final Set<String> imageMimes = Sets.newHashSet("image/jpeg", "image/bmp", "image/gif", "image/png");
-
-    static private final Set<String> videoMimes = Sets.newHashSet("video/mp4", "video/x-flv", "video/x-javafx");
-
-    static private final Set<String> supportedMimes = Sets.union(imageMimes, videoMimes);
+    /** mime types of images we can display */
+    private static final Set<String> imageMimes = Sets.newHashSet("image/jpeg", "image/bmp", "image/gif", "image/png");
+    /** mime types of videos we can display */
+    private static final Set<String> videoMimes = Sets.newHashSet("video/mp4", "video/x-flv", "video/x-javafx");
+    /** mime types of files we can display */
+    private static final Set<String> supportedMimes = Sets.union(imageMimes, videoMimes);
 
     public static Set<String> getSupportedMimes() {
         return Collections.unmodifiableSet(supportedMimes);
     }
 
+    /** provides static utilities, can not be instantiated */
     private ImageAnalyzerModule() {
     }
 
+    /** is listening enabled for the given case
+     *
+     * @param c
+     *
+     * @return true if listening is enabled for the given case, false otherwise
+     */
     static boolean isEnabledforCase(Case c) {
         if (c != null) {
             String enabledforCaseProp = new PerCaseProperties(c).getConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.ENABLED);
@@ -81,6 +83,13 @@ public class ImageAnalyzerModule {
         }
     }
 
+    /** is the drawable db out of date for the given case
+     *
+     * @param c
+     *
+     * @return true if the drawable db is out of date for the given case, false
+     *         otherwise
+     */
     public static boolean isCaseStale(Case c) {
         if (c != null) {
             String stale = new PerCaseProperties(c).getConfigSetting(ImageAnalyzerModule.MODULE_NAME, PerCaseProperties.STALE);
@@ -94,10 +103,20 @@ public class ImageAnalyzerModule {
         return supportedExtensions;
     }
 
+    /** is the given file suported by image analyzer: ie, does it have a
+     * supported mime type. if no mime type is found, does it have a supported
+     * extension or a jpeg header.
+     *
+     * @param file
+     *
+     * @return true if this file is supported or false if not
+     */
     public static Boolean isSupported(AbstractFile file) {
         //if there were no file type attributes, or we failed to read it, fall back on extension and jpeg header
-        return Optional.ofNullable(hasSupportedMimeType(file)).orElseGet(
-                () -> supportedExtensions.contains(getFileExtension(file)) || ImageUtils.isJpegFileHeader(file));
+        return Optional.ofNullable(hasSupportedMimeType(file)).orElseGet(() -> {
+            return supportedExtensions.contains(getFileExtension(file))
+                    || ImageUtils.isJpegFileHeader(file);
+        });
     }
 
     /**
@@ -122,7 +141,8 @@ public class ImageAnalyzerModule {
 
     /** @param file
      *
-     * @return
+     * @return true if the given file has a supported video mime type or
+     *         extension, else false
      */
     public static boolean isVideoFile(AbstractFile file) {
         try {
@@ -152,41 +172,5 @@ public class ImageAnalyzerModule {
      */
     static public boolean isSupportedAndNotKnown(AbstractFile abstractFile) {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && ImageAnalyzerModule.isSupported(abstractFile);
-    }
-
-    //TODO: this doesn ot really belong here, move it to ImageAnalyzerController? Module?
-    @ThreadConfined(type = ThreadConfined.ThreadType.UI)
-    public static void closeTopComponent() {
-        final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
-        if (etc != null) {
-            try {
-                etc.close();
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "failed to close ImageAnalyzerTopComponent", e);
-            }
-        }
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.UI)
-    public static void openTopComponent() {
-        //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
-//        synchronized (OpenTimelineAction.class) {
-//            if (timeLineController == null) {
-//                timeLineController = new TimeLineController();
-//                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");
-//            }
-//        }
-//        timeLineController.openTimeLine();
-        final ImageAnalyzerTopComponent tc=  (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
-        if (tc != null) {
-            WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline");
-            if (mode != null) {
-                mode.dockInto(tc);
-
-            }
-            tc.open();
-            tc.requestActive();
-        }
     }
 }

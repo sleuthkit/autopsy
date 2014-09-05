@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -30,7 +31,10 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.gui.GroupPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.MetaDataPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.StatusBar;
@@ -57,6 +61,40 @@ import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 public final class ImageAnalyzerTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "ImageAnalyzerTopComponent";
+    private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerTopComponent.class.getName());
+
+    public static void openTopComponent() {
+        //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
+        //        synchronized (OpenTimelineAction.class) {
+        //            if (timeLineController == null) {
+        //                timeLineController = new TimeLineController();
+        //                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");
+        //            }
+        //        }
+        //        timeLineController.openTimeLine();
+        final ImageAnalyzerTopComponent tc = (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
+        if (tc != null) {
+            WindowManager.getDefault().isTopComponentFloating(tc);
+            Mode mode = WindowManager.getDefault().findMode("timeline");
+            if (mode != null) {
+                mode.dockInto(tc);
+            }
+            tc.open();
+            tc.requestActive();
+        }
+    }
+
+    //TODO: this doesn ot really belong here, move it to ImageAnalyzerController? Module?
+    public static void closeTopComponent() {
+        final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
+        if (etc != null) {
+            try {
+                etc.close();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "failed to close ImageAnalyzerTopComponent", e);
+            }
+        }
+    }
 
     private final ExplorerManager em = new ExplorerManager();
 
