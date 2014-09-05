@@ -26,10 +26,13 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-/** Singleton that manages set of fileIds, as well as
- * last selected fileID.
+/** Singleton that manages set of fileIds, as well as last selected fileID.
+ *
  * NOTE: When we had synchronization on selected and lastSelectedProp we got
  * deadlocks with the tiles during selection
+ *
+ * TODO: should this be singleton? selections are only within a single group
+ * now... -jm
  */
 public class FileIDSelectionModel {
 

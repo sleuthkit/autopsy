@@ -10,7 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.DrawableGroup;
 
 /**
  * A {@link Node} in the tree that listens to its associated group. Manages
@@ -44,7 +44,7 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 setGraphic(null);
             });
         } else {
-            final String name = StringUtils.defaultIfBlank(tNode.getPath(), Grouping.UNKNOWN);
+            final String name = StringUtils.defaultIfBlank(tNode.getPath(), DrawableGroup.UNKNOWN);
             Platform.runLater(() -> {
                 setTooltip(new Tooltip(name));
             });

@@ -250,7 +250,7 @@ public class DrawableDB {
      *
      * @param stmtString the string representation of the sqlite statement to
      *                   prepare
-     * @param attr the {@link DrawableAttribute} this query groups by
+     * @param attr       the {@link DrawableAttribute} this query groups by
      *
      * @return the prepared statement
      *
@@ -328,7 +328,7 @@ public class DrawableDB {
      * create the table and indices if they don't already exist
      *
      * @return the number of rows in the table , count > 0 indicating an
-     * existing table
+     *         existing table
      */
     private boolean initializeDB() {
         try {
@@ -633,19 +633,15 @@ public class DrawableDB {
         updateListeners.add(l);
     }
 
-    /**
-     *
-     * @param f the value of f
-     */
-    private void fireUpdatedFiles(Collection<Long> f) {
+    private void fireUpdatedFiles(Collection<Long> fileIDs) {
         for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileUpdate(new FileUpdateEvent(f, null, FileUpdateEvent.UpdateType.FILE_UPDATED));
+            listener.handleFileUpdate(FileUpdateEvent.newUpdateEvent(fileIDs, null));
         }
     }
 
-    private void fireRemovedFiles(Collection<Long> f) {
+    private void fireRemovedFiles(Collection<Long> fileIDs) {
         for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileUpdate(new FileUpdateEvent(f, null, FileUpdateEvent.UpdateType.FILE_REMOVED));
+            listener.handleFileUpdate(FileUpdateEvent.newRemovedEvent(fileIDs));
         }
     }
 
@@ -715,7 +711,7 @@ public class DrawableDB {
      * clause
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     * files (do not begin the WHERE clause with the word WHERE!)
+     *                       files (do not begin the WHERE clause with the word WHERE!)
      *
      * @return a list of file ids each of which satisfy the given WHERE clause
      *
@@ -843,13 +839,13 @@ public class DrawableDB {
     }
 
     /**
-     * @param id the obj_id of the file to return
+     * @param id       the obj_id of the file to return
      * @param analyzed the analyzed state of the file
      *
      * @return a DrawableFile for the given obj_id and analyzed state
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     * {@link SleuthkitCase}
+     *                          {@link SleuthkitCase}
      */
     private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
@@ -866,7 +862,7 @@ public class DrawableDB {
      * @return a DrawableFile for the given obj_id
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     * {@link SleuthkitCase}
+     *                          {@link SleuthkitCase}
      */
     public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
@@ -1012,8 +1008,6 @@ public class DrawableDB {
         //indicates succesfull removal of 1 file
         return valsResults == 1;
     }
-
-   
 
     public class MultipleTransactionException extends IllegalStateException {
 

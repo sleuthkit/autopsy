@@ -29,16 +29,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents a set of files in a group. The UI listens to changes to the group
- * and updates itself accordingly.
- *
- * This class is named Grouping and not Group to avoid confusion with
- * {@link javafx.scene.Group} and others.
+ * Represents a set of image/video files in a group. The UI listens to changes
+ * to the group membership and updates itself accordingly.
  */
-public class Grouping {
+public class DrawableGroup {
 
-    private static final Logger LOGGER = Logger.getLogger(Grouping.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DrawableGroup.class.getName());
 
+    /**
+     * the string to use when the groupkey is 'empty'
+     */
     public static final String UNKNOWN = "unknown";
 
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
@@ -52,7 +52,7 @@ public class Grouping {
 
     final public GroupKey<?> groupKey;
 
-    public Grouping(GroupKey<?> groupKey, List<Long> filesInGroup) {
+    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup) {
         this.groupKey = groupKey;
         fileIDs.setAll(filesInGroup);
     }
@@ -66,7 +66,7 @@ public class Grouping {
     }
 
     synchronized public int getFilesWithHashSetHitsCount() {
-
+        //TODO: use the drawable db for this ? -jm
         if (filesWithHashSetHitsCount < 0) {
             filesWithHashSetHitsCount = 0;
             for (Long fileID : fileIds()) {
@@ -105,7 +105,7 @@ public class Grouping {
             return false;
         }
         return Objects.equals(this.groupKey,
-                ((Grouping) obj).groupKey);
+                ((DrawableGroup) obj).groupKey);
     }
 
     synchronized public void addFile(Long f) {

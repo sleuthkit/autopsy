@@ -104,7 +104,7 @@ public class CategorizeAction extends AddTagAction {
                             Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
                         }
                         //make sure rest of ui  hears category change.
-                        controller.handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
+                        controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
 
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Error categorizing result", ex);

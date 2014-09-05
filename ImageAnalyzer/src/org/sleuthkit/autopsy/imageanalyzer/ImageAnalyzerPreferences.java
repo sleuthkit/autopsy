@@ -22,14 +22,14 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 
-/**
- *
- */
- class ImageAnalyzerPreferences {
+/** Persists Image Analyzer preference to a per user .properties file */
+class ImageAnalyzerPreferences {
 
+    /** NBPreferences object used to persist settings */
     private static final Preferences preferences = NbPreferences.forModule(ImageAnalyzerPreferences.class);
 
-    static final String ENABLED_BY_DEFAULT = "enabled_by_default";
+    /** key for the listening enabled for new cases setting */
+    private static final String ENABLED_BY_DEFAULT = "enabled_by_default";
 
     static boolean isEnabledByDefault() {
         final boolean aBoolean = preferences.getBoolean(ENABLED_BY_DEFAULT, true);

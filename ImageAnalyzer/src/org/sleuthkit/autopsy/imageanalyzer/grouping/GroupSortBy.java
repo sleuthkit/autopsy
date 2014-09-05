@@ -43,15 +43,15 @@ public enum GroupSortBy implements ComparatorProvider {
      */
     FILE_COUNT("Group Size", true, "folder-open-image.png") {
                 @Override
-                public Comparator<Grouping> getGrpComparator(final SortOrder sortOrder) {
-                    return applySortOrder(sortOrder, Comparator.comparingInt(Grouping::getSize));
+                public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
+                    return applySortOrder(sortOrder, Comparator.comparingInt(DrawableGroup::getSize));
                 }
 
                 @Override
                 public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
                     return (A v1, A v2) -> {
-                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v1));
-                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v2));
+                        DrawableGroup g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v1));
+                        DrawableGroup g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v2));
                         return getGrpComparator(sortOrder).compare(g1, g2);
                     };
                 }
@@ -62,7 +62,7 @@ public enum GroupSortBy implements ComparatorProvider {
      */
     GROUP_BY_VALUE("Group Name", true, "folder-rename.png") {
                 @Override
-                public Comparator<Grouping> getGrpComparator(final SortOrder sortOrder) {
+                public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
                     return applySortOrder(sortOrder, Comparator.comparing(t -> t.groupKey.getValueDisplayName()));
                 }
 
@@ -81,7 +81,7 @@ public enum GroupSortBy implements ComparatorProvider {
      */
     NONE("None", false, "prohibition.png") {
                 @Override
-                public Comparator<Grouping> getGrpComparator(SortOrder sortOrder) {
+                public Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder) {
                     return new NoOpComparator<>();
                 }
 
@@ -95,15 +95,15 @@ public enum GroupSortBy implements ComparatorProvider {
      */
     PRIORITY("Priority", false, "hashset_hits.png") {
                 @Override
-                public Comparator<Grouping> getGrpComparator(SortOrder sortOrder) {
-                    return Comparator.nullsLast(Comparator.comparingDouble(Grouping::getHashHitDensity).thenComparingInt(Grouping::getSize).reversed());
+                public Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder) {
+                    return Comparator.nullsLast(Comparator.comparingDouble(DrawableGroup::getHashHitDensity).thenComparingInt(DrawableGroup::getSize).reversed());
                 }
 
                 @Override
                 public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
                     return (A v1, A v2) -> {
-                        Grouping g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v1));
-                        Grouping g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v2));
+                        DrawableGroup g1 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v1));
+                        DrawableGroup g2 = ImageAnalyzerController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v2));
 
                         return getGrpComparator(sortOrder).compare(g1, g2);
                     };
@@ -181,5 +181,5 @@ interface ComparatorProvider {
 
     <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder);
 
-    Comparator<Grouping> getGrpComparator(SortOrder sortOrder);
+    Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder);
 }

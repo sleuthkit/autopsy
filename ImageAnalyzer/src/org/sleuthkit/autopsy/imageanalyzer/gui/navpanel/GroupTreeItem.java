@@ -27,7 +27,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.imageanalyzer.grouping.Grouping;
+import org.sleuthkit.autopsy.imageanalyzer.grouping.DrawableGroup;
 
 /**
  * A node in the nav/hash tree. Manages inserts and removals. Has parents and
@@ -46,7 +46,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      */
     private TreeNodeComparators comp;
 
-    public GroupTreeItem(String t, Grouping g, TreeNodeComparators comp) {
+    public GroupTreeItem(String t, DrawableGroup g, TreeNodeComparators comp) {
         super(new TreeNode(t, g));
         this.comp = comp;
     }
@@ -71,7 +71,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param g Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
-    void insert(String path, Grouping g, Boolean tree) {
+    void insert(String path, DrawableGroup g, Boolean tree) {
         if (tree) {
             String cleanPath = StringUtils.stripStart(path, "/");
 
@@ -132,7 +132,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param g Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
-    void insert(List<String> path, Grouping g, Boolean tree) {
+    void insert(List<String> path, DrawableGroup g, Boolean tree) {
         if (tree) {
             // Are we at the end of the recursion?
             if (path.isEmpty()) {
@@ -189,7 +189,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         return comp.compare(this, o);
     }
 
-    static GroupTreeItem getTreeItemForGroup(GroupTreeItem root, Grouping grouping) {
+    static GroupTreeItem getTreeItemForGroup(GroupTreeItem root, DrawableGroup grouping) {
         if (Objects.equals(root.getValue().getGroup(), grouping)) {
             return root;
         } else {

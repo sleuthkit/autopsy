@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imageanalyzer;
 
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -30,7 +31,10 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.gui.GroupPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.MetaDataPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.StatusBar;
@@ -40,13 +44,18 @@ import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 
 /**
  * Top component which displays ImageAnalyzer interface.
+ *
+ * Although ImageAnalyzer doesn't currently use the explorer manager, this
+ * Topcomponenet provides one through the getExplorerManager method. However,
+ * this does not seem to function correctly unless a Netbeans provided explorer
+ * view is present in the TopComponenet, even if it is invisible/ zero sized
  */
 @ConvertAsProperties(
         dtd = "-//org.sleuthkit.autopsy.imageanalyzer//ImageAnalyzer//EN",
         autostore = false)
 @TopComponent.Description(
         preferredID = "ImageAnalyzerTopComponent",
-        //iconBase = "org/sleuthkit/autopsy/imageanalyzer/images/lightbulb.png",
+        //iconBase = "org/sleuthkit/autopsy/imageanalyzer/images/lightbulb.png" use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
 @Messages({
@@ -57,10 +66,43 @@ import org.sleuthkit.autopsy.imageanalyzer.gui.navpanel.NavPanel;
 public final class ImageAnalyzerTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "ImageAnalyzerTopComponent";
+    private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerTopComponent.class.getName());
+
+    public static void openTopComponent() {
+        //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
+        //        synchronized (OpenTimelineAction.class) {
+        //            if (timeLineController == null) {
+        //                timeLineController = new TimeLineController();
+        //                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");
+        //            }
+        //        }
+        //        timeLineController.openTimeLine();
+        final ImageAnalyzerTopComponent tc = (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
+        if (tc != null) {
+            WindowManager.getDefault().isTopComponentFloating(tc);
+            Mode mode = WindowManager.getDefault().findMode("timeline");
+            if (mode != null) {
+                mode.dockInto(tc);
+            }
+            tc.open();
+            tc.requestActive();
+        }
+    }
+
+    public static void closeTopComponent() {
+        final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
+        if (etc != null) {
+            try {
+                etc.close();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "failed to close ImageAnalyzerTopComponent", e);
+            }
+        }
+    }
 
     private final ExplorerManager em = new ExplorerManager();
 
-    private final Lookup lookup;
+    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
 
     private final ImageAnalyzerController controller = ImageAnalyzerController.getDefault();
 
@@ -87,15 +129,14 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
         setName(Bundle.CTL_ImageAnalyzerTopComponent());
         setToolTipText(Bundle.HINT_ImageAnalyzerTopComponent());
 
-        // ...and initialization of lookup variable
-        lookup = (ExplorerUtils.createLookup(em, getActionMap()));
         initComponents();
-        Platform.runLater(() -> {
-            fullUIStack = new StackPane();
+
+        Platform.runLater(() -> {//initialize jfx ui
+            fullUIStack = new StackPane(); //this is passed into controller
             myScene = new Scene(fullUIStack);
             jfxPanel.setScene(myScene);
             groupPane = new GroupPane(controller);
-            centralStack = new StackPane(groupPane);
+            centralStack = new StackPane(groupPane);  //this is passed into controller
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);

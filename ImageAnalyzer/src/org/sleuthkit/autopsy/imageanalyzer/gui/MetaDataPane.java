@@ -220,7 +220,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
     }
 
     public void updateUI() {
-        final Image icon = getFile().getIcon();
+        final Image icon = getFile().getThumbnail();
         final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributesList = getFile().getAttributesList();
 
         Platform.runLater(() -> {

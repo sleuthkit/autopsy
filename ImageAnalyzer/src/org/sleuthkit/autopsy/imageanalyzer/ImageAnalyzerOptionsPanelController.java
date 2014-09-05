@@ -26,6 +26,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
+/** OptionsPanelController for the ImageAnalyzerOptionPanel */
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_Options",
         iconBase = "org/sleuthkit/autopsy/imageanalyzer/images/polaroid_48_silhouette.png",

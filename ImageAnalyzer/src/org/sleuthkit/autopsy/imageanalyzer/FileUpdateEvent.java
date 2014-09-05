@@ -25,53 +25,64 @@ import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableAttribute;
 
+/** represents a change in the database for one or more files. */
 @Immutable
 public class FileUpdateEvent {
 
-    private final Set<Long> updatedFiles;
+    /** the obj_ids of affected files */
+    private final Set<Long> fileIDs;
 
+    /** the attribute that was modified */
     private final DrawableAttribute<?> changedAttribute;
 
+    /** the type of update ( updated/removed) */
     private final UpdateType updateType;
 
     public UpdateType getUpdateType() {
         return updateType;
     }
 
-    public Collection<Long> getUpdatedFiles() {
-        return updatedFiles;
+    public Collection<Long> getFileIDs() {
+        return fileIDs;
     }
 
     public DrawableAttribute<?> getChangedAttribute() {
         return changedAttribute;
     }
 
-    public FileUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute<?> changedAttribute, UpdateType updateType) {
-        this.updatedFiles = new HashSet<>(updatedFiles);
-        this.changedAttribute = changedAttribute;
+    public static FileUpdateEvent newRemovedEvent(Collection<? extends Long> updatedFiles) {
+        return new FileUpdateEvent(updatedFiles, UpdateType.REMOVE, null);
+    }
+
+    /**
+     *
+     * @param updatedFiles     the files that have been added or changed in the
+     *                         database
+     * @param changedAttribute the attribute that was changed for the files, or
+     *                         null if this represents new files
+     *
+     * @return a new FileUpdateEvent
+     */
+    public static FileUpdateEvent newUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute<?> changedAttribute) {
+        return new FileUpdateEvent(updatedFiles, UpdateType.UPDATE, changedAttribute);
+    }
+
+    private FileUpdateEvent(Collection<? extends Long> updatedFiles, UpdateType updateType, DrawableAttribute<?> changedAttribute) {
+        this.fileIDs = new HashSet<>(updatedFiles);
         this.updateType = updateType;
-    }
-
-    public FileUpdateEvent(Collection<? extends Long> updatedFiles, DrawableAttribute<?> changedAttribute) {
-        this.updatedFiles = new HashSet<>(updatedFiles);
         this.changedAttribute = changedAttribute;
-        this.updateType = UpdateType.FILE_UPDATED;
-    }
-
-    public FileUpdateEvent(Collection<? extends Long> updatedFiles) {
-        this.updatedFiles = new HashSet<>(updatedFiles);
-        changedAttribute = null;
-        this.updateType = UpdateType.FILE_UPDATED;
     }
 
     static public enum UpdateType {
 
-        FILE_UPDATED, FILE_REMOVED;
+        /** files have been added or updated in the db */
+        UPDATE,
+        /** files have been removed
+         * from the db */
+        REMOVE;
     }
 
-    /**
-     * Interface for listening to FileUpdateEvents
-     */
+    /** Interface for listening to FileUpdateEvents */
     public static interface FileUpdateListener extends EventListener {
 
         public void handleFileUpdate(FileUpdateEvent evt);

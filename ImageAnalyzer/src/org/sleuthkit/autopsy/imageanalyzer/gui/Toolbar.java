@@ -44,7 +44,7 @@ import javax.swing.SortOrder;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.imageanalyzer.FXMLConstructor;
 import org.sleuthkit.autopsy.imageanalyzer.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imageanalyzer.IconCache;
+import org.sleuthkit.autopsy.imageanalyzer.ThumbnailCache;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.TagUtils;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
@@ -214,7 +214,7 @@ public class Toolbar extends ToolBar {
 
         orderGroup.selectedToggleProperty().addListener(queryInvalidationListener);
 
-        IconCache.getDefault().iconSize.bind(sizeSlider.valueProperty());
+        ThumbnailCache.getDefault().iconSize.bind(sizeSlider.valueProperty());
 
     }
 
