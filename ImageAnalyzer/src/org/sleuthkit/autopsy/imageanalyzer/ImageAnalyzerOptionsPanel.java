@@ -23,13 +23,19 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /** The Image/Video Analyzer panel in the NetBeans provided Options Dialogs
- * accessed via Tool -> Options */
+ * accessed via Tool -> Options
+ *
+ * Uses {@link ImageAnalyzerPreferences} and {@link PerCaseProperties} to
+ * persist settings
+ */
 final class ImageAnalyzerOptionsPanel extends javax.swing.JPanel {
 
     ImageAnalyzerOptionsPanel(ImageAnalyzerOptionsPanelController controller) {
         initComponents();
 
+        //listen for interactions
         IngestManager.getInstance().addIngestJobEventListener(evt -> {
+            //disable during ingest
             enabledForCaseBox.setEnabled(Case.isCaseOpen() && IngestManager.getInstance().isIngestRunning() == false);
         });
 
