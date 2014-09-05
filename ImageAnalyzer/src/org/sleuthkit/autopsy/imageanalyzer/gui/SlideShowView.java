@@ -270,7 +270,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
         if (fileID != null) {
             int index = groupPane.getGrouping().fileIds().indexOf(fileID);
             final int size = groupPane.getGrouping().fileIds().size();
-            index += d;
+            index = (index + d) % size;
             if (index < 0) {
                 index += size;
             }
@@ -283,7 +283,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
     /**
      * @return supplemental text to include in the label, specifically: "image x
-     * of y"
+     *         of y"
      */
     private String getSupplementalText() {
         return " ( " + (groupPane.getGrouping().fileIds().indexOf(fileID) + 1) + " of " + groupPane.getGrouping().fileIds().size() + " in group )";
