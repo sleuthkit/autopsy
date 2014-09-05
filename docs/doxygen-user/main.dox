@@ -1,0 +1,24 @@
+/*! \mainpage Autopsy User's Guide 
+
+
+Overview
+-----
+
+This is the User's Guide for the open source Autopsy platform (http://www.sleuthkit.org/autopsy/). 
+It is a work in progress. We are moving documentation from the JavaHelp system to this document. 
+
+Note that Autopsy 3 is a complete rewrite from Autopsy 2 and none of this document is relevant to Autopsy 2.
+
+Help Topics
+-------
+The following topics are available here:
+
+- \subpage installation_page
+- \subpage quick_start_page
+- \subpage image_viewer_page
+
+If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
+
+*/
+
+
