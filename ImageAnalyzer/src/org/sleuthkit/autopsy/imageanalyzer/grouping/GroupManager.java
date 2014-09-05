@@ -620,9 +620,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      */
     @Override
     synchronized public void handleFileUpdate(FileUpdateEvent evt) {
-        final Collection<Long> fileIDs = evt.getUpdatedFiles();
+        final Collection<Long> fileIDs = evt.getFileIDs();
         switch (evt.getUpdateType()) {
-            case FILE_REMOVED:
+            case REMOVE:
                 for (final long fileId : fileIDs) {
                     //get grouping(s) this file would be in
                     Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
@@ -633,7 +633,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 }
 
                 break;
-            case FILE_UPDATED:
+            case UPDATE:
 
                 /**
                  * TODO: is there a way to optimize this to avoid quering to db

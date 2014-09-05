@@ -280,7 +280,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                         }
                     }
 
-                    controller.getGroupManager().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }

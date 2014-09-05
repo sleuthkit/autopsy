@@ -93,7 +93,7 @@ public class AddDrawableTagAction extends AddTagAction {
                     }
 
                     //make sure rest of ui  hears category change.
-                    ImageAnalyzerController.getDefault().getGroupManager().handleFileUpdate(new FileUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+                    ImageAnalyzerController.getDefault().getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                   
                 }
                 
