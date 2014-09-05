@@ -479,7 +479,9 @@ public final class ImageAnalyzerController {
          */
         public void addTask(InnerTask it) {
             workQueue.add(it);
-            queueSizeProperty.set(workQueue.size());
+            Platform.runLater(() -> {
+                queueSizeProperty.set(workQueue.size());
+            });
         }
 
         @Override
@@ -495,13 +497,13 @@ public final class ImageAnalyzerController {
                     if (it.cancelled == false) {
                         it.run();
                     }
-
-                    queueSizeProperty.set(workQueue.size());
+                    Platform.runLater(() -> {
+                        queueSizeProperty.set(workQueue.size());
+                    });
 
                 } catch (InterruptedException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-
             }
         }
     }

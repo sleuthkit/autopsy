@@ -27,7 +27,7 @@
             <StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="NEVER">
               <children>
                 <ProgressBar fx:id="bgTaskProgressBar" maxHeight="-1.0" maxWidth="-1.0" minHeight="-Infinity" minWidth="-1.0" prefHeight="24.0" prefWidth="-1.0" progress="0.0" StackPane.alignment="CENTER" />
-                <Label fx:id="bgTaskLabel" alignment="CENTER" cache="false" contentDisplay="CENTER" disable="false" focusTraversable="false" labelFor="$uiTaskProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" text="0 RegroupTasks" StackPane.alignment="CENTER">
+                <Label fx:id="bgTaskLabel" alignment="CENTER" cache="false" contentDisplay="CENTER" disable="false" focusTraversable="false" labelFor="$uiTaskProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" text="Regrouping" StackPane.alignment="CENTER">
                            <StackPane.margin>
                               <Insets left="3.0" right="3.0" />
                            </StackPane.margin></Label>

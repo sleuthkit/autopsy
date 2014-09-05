@@ -585,7 +585,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             });
 
             groupByTask = new ReGroupTask<A>(groupBy, sortBy, sortOrder);
-            regroupProgress.bind(groupByTask.progressProperty());
+            Platform.runLater(() -> {
+                regroupProgress.bind(groupByTask.progressProperty());
+            });
             regroupExecutor.submit(groupByTask);
         } else {
             // just resort the list of groups

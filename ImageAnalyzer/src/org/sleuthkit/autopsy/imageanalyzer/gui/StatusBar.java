@@ -34,33 +34,33 @@ import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
  *
  */
 public class StatusBar extends AnchorPane {
-    
+
     private final ImageAnalyzerController controller;
-    
+
     @FXML
     private ResourceBundle resources;
-    
+
     @FXML
     private URL location;
-    
+
     @FXML
     private ProgressBar fileTaskProgresBar;
-    
+
     @FXML
     private Label fileUpdateTaskLabel;
-    
+
     @FXML
     private Label statusLabel;
-    
+
     @FXML
     private Label bgTaskLabel;
-    
+
     @FXML
     private Label staleLabel;
-    
+
     @FXML
     private ProgressBar bgTaskProgressBar;
-    
+
     @FXML
     void initialize() {
         assert fileTaskProgresBar != null : "fx:id=\"fileTaskProgresBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
@@ -68,48 +68,44 @@ public class StatusBar extends AnchorPane {
         assert statusLabel != null : "fx:id=\"statusLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskLabel != null : "fx:id=\"uiTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskProgressBar != null : "fx:id=\"uiTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        
-        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
-            Platform.runLater(() -> {
-                fileUpdateTaskLabel.setText(newSize.toString() + " File Update Tasks");
-                fileTaskProgresBar.setProgress((double) (newSize.intValue() > 0 ? -1 : 0));
-            });
-        });
 
-//        controller.regroupProgress().addListener((ov, oldSize, newSize) -> {
+        fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(" File Update Tasks"));//;setText(newSize.toString() + " File Update Tasks");
+        fileTaskProgresBar.progressProperty().bind(controller.getFileUpdateQueueSizeProperty().negate());
+//        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
 //            Platform.runLater(() -> {
-        bgTaskLabel.visibleProperty().bind(controller.regroupProgress().lessThan(0));
-        bgTaskProgressBar.progressProperty().bind(controller.regroupProgress());
-//                setProgress((double) (newSize.intValue() > 0 ? -1 : 0));
+//
+//
 //            });
 //        });
+
+        bgTaskProgressBar.progressProperty().bind(controller.regroupProgress());
 
         Platform.runLater(() -> {
             staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable listening to ingest in Tools | Options | Image /Video Analyzer , after ingest is complete to update."));
         });
         staleLabel.visibleProperty().bind(controller.stale());
     }
-    
+
     public StatusBar(ImageAnalyzerController controller) {
         this.controller = controller;
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
-        
+
         try {
             fxmlLoader.load();
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
-        
+
     }
-    
+
     public void setLabelText(final String newText) {
         Platform.runLater(() -> {
             statusLabel.setText(newText);
         });
     }
-    
+
     public String getLabeltext() {
         return statusLabel.getText();
     }
