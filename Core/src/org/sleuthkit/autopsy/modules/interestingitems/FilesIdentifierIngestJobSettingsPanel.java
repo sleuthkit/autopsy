@@ -264,6 +264,8 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         filesSetScrollPane = new javax.swing.JScrollPane();
         filesSetTable = new javax.swing.JTable();
 
+        setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FilesIdentifierIngestJobSettingsPanel.class, "FilesIdentifierIngestJobSettingsPanel.border.title"))); // NOI18N
+
         filesSetTable.setBackground(new java.awt.Color(240, 240, 240));
         filesSetTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -283,14 +285,14 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(filesSetScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
+                .addComponent(filesSetScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(filesSetScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
+                .addComponent(filesSetScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
