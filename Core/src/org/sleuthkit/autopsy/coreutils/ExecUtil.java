@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ import java.util.logging.Level;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
+        logger.log(Level.INFO, "Executing {0}", arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
@@ -80,7 +80,7 @@ import java.util.logging.Level;
         logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
 
         // wait for output redirectors to finish writing / reading
-        outputWriterRedirect.join();
+        outputStringRedirect.join();
         errorStringRedirect.join();
         
         return outputStringRedirect.getOutput();
@@ -110,7 +110,7 @@ import java.util.logging.Level;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
+        logger.log(Level.INFO, "Executing {0}", arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
@@ -124,7 +124,7 @@ import java.util.logging.Level;
 
         //wait for process to complete and capture error core
         final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
+        logger.log(Level.INFO, "{0} exit value: {1}", new Object[]{aCommand, exitVal}); //NON-NLS
 
         // wait for them to finish writing / reading
         outputWriterRedirect.join();
@@ -133,15 +133,12 @@ import java.util.logging.Level;
         //gc process with its streams
         //proc = null;
     }
-    
-    
-    
 
     /**
      * Interrupt the running process and stop its stream redirect threads
      */
     public synchronized void stop() {
-        logger.log(Level.INFO, "Stopping Execution of: " + command); //NON-NLS
+        logger.log(Level.INFO, "Stopping Execution of: {0}", command); //NON-NLS
 
         if (errorStringRedirect != null) {
             errorStringRedirect.stopRun();
@@ -173,8 +170,8 @@ import java.util.logging.Level;
     private static class StreamToStringRedirect extends Thread {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
-        private InputStream is;
-        private StringBuffer output = new StringBuffer();
+        private final InputStream is;
+        private final StringBuffer output = new StringBuffer();
         private volatile boolean doRun = false;
 
         StreamToStringRedirect(final InputStream anIs, final String aType) {
@@ -191,7 +188,7 @@ import java.util.logging.Level;
         @Override
         public final void run() {
             final String SEP = System.getProperty("line.separator");
-            InputStreamReader isr = null;
+            InputStreamReader isr;
             BufferedReader br = null;
             try {
                 isr = new InputStreamReader(this.is);
@@ -243,7 +240,7 @@ import java.util.logging.Level;
     private static class StreamToWriterRedirect extends Thread {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
-        private InputStream is;
+        private final InputStream is;
         private volatile boolean doRun = false;
         private Writer writer = null;
 
@@ -262,7 +259,7 @@ import java.util.logging.Level;
         @Override
         public final void run() {
             final String SEP = System.getProperty("line.separator");
-            InputStreamReader isr = null;
+            InputStreamReader isr;
             BufferedReader br = null;
             try {
                 isr = new InputStreamReader(this.is);
