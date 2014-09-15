@@ -9,10 +9,9 @@ If these pages don't answer your question, then send the question to The Sleuth 
 
 If you want to write modules, then these pages are for you:
 - \subpage platform_page
-- \subpage services_page
 - Setup
--- \subpage mod_dev_page
--- \subpage mod_dev_python_page
+ - \subpage mod_dev_page
+ - \subpage mod_dev_python_page
 - The following are based on specific types of modules:
  - \subpage mod_ingest_page
  - \subpage mod_report_page
