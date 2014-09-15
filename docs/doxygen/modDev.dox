@@ -1,10 +1,10 @@
-/*! \page mod_dev_page Development Setup
+/*! \page mod_dev_page Java Development Setup
 
 <!-- NOTE: This doc contains the concepts that apply when developing
 any type of module. Information about specific types of modules should
 go into the page for that module type. -->
 
-This page describes the basic concepts and setup that are needed regardless of the module type that you are building. 
+This page describes the basic concepts and setup that are needed for all types of Java modules. It is not needed for Python module development. 
 
 \section mod_dev_setup Basic Setup
 

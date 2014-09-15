@@ -4,18 +4,8 @@
 \section ingest_modules_getting_started Getting Started
 
 This page describes how to develop ingest modules using either Java or Python (Jython).  It assumes you have 
-already set up your Java development environment as described in \ref mod_dev_page.  Note that the Jython JAR file
-has been added to the Autopsy-Core NetBeans project as a wrapped JAR.
+already set up your development environment as described in \ref mod_dev_page or \ref mod_dev_python_page.
 
-Ingest modules developed using Java can be added directly to your private copy of the source code, but if you
-want to share your module with others, it should be developed as a NetBeans module. You can then distribute the module
-and users can install it in Autopsy using the NetBeans Plugin Manager accessed through Autopsy's Tools -> Plugins menu item.  
-The user will go to the Downloaded tab, push the Add Plugins... button to navigate to and select your NetBeans Module file,
-and then push the Install button to complete the installation.
- 
-Ingest modules developed using Jython are installed in Autopsy by placing them in their own subdirectory of the python_modules
-directory. A window into the python_modules directory can be opened through the Autopsy's Tools -> Python Plugins menu item. 
-Create a folder in this directory and create or place your Python scripts in this folder.  
 
 \section ingest_module_types Ingest Module Types
   

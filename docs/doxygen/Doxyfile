@@ -666,6 +666,7 @@ INPUT                  = main.dox \
 			 services.dox \
                          modContent.dox \
                          modDev.dox \
+                         modDevPython.dox \
                          modIngest.dox \
                          modReport.dox \
                          modResult.dox \
