@@ -26,19 +26,20 @@ import java.io.Writer;
 import java.util.logging.Level;
 
 /**
- * Takes care of forking a process and reading output / error streams to either a
- * string buffer or directly to a file writer
- * BC: @@@ This code scares me in a multi-threaded env. I think the arguments should be passed into the constructor
- * and different run methods that either return the string or use the redirected writer. 
+ * Takes care of forking a process and reading output / error streams to either
+ * a string buffer or directly to a file writer BC: @@@ This code scares me in a
+ * multi-threaded env. I think the arguments should be passed into the
+ * constructor and different run methods that either return the string or use
+ * the redirected writer.
  */
- public final class ExecUtil {
+public final class ExecUtil {
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
-    private final String command = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
     private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
+    private int exitValue = -100;
 
     /**
      * Execute a process. Redirect asynchronously stdout to a string and stderr
@@ -69,20 +70,19 @@ import java.util.logging.Level;
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
-        errorStringRedirect.start();        
+        errorStringRedirect.start();
 
         //stdout redirect
         outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT"); //NON-NLS
         outputStringRedirect.start();
 
         //wait for process to complete and capture error core
-        final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
+        this.exitValue = proc.waitFor();
 
         // wait for output redirectors to finish writing / reading
         outputStringRedirect.join();
         errorStringRedirect.join();
-        
+
         return outputStringRedirect.getOutput();
     }
 
@@ -116,20 +116,20 @@ import java.util.logging.Level;
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
-        errorStringRedirect.start();        
+        errorStringRedirect.start();
 
         //stdout redirect
         outputWriterRedirect = new ExecUtil.StreamToWriterRedirect(proc.getInputStream(), stdoutWriter);
         outputWriterRedirect.start();
 
         //wait for process to complete and capture error core
-        final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, "{0} exit value: {1}", new Object[]{aCommand, exitVal}); //NON-NLS
+        this.exitValue = proc.waitFor();
+        logger.log(Level.INFO, "{0} exit value: {1}", new Object[]{aCommand, exitValue}); //NON-NLS
 
         // wait for them to finish writing / reading
         outputWriterRedirect.join();
         errorStringRedirect.join();
-        
+
         //gc process with its streams
         //proc = null;
     }
@@ -138,7 +138,6 @@ import java.util.logging.Level;
      * Interrupt the running process and stop its stream redirect threads
      */
     public synchronized void stop() {
-        logger.log(Level.INFO, "Stopping Execution of: {0}", command); //NON-NLS
 
         if (errorStringRedirect != null) {
             errorStringRedirect.stopRun();
@@ -159,6 +158,16 @@ import java.util.logging.Level;
             proc.destroy();
             proc = null;
         }
+    }
+
+    /**
+     * Gets the exit value returned by the subprocess used to execute a command.
+     *
+     * @return The exit value or the distinguished value -100 if this method is 
+     * called before the exit value is set.
+     */
+    synchronized public int getExitValue() {
+        return this.exitValue;
     }
 
     /**
