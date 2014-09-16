@@ -121,6 +121,7 @@ def main():
         elif SYS is OS.WIN:
             theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
+
     # Otherwise test away!
     TestRunner.run_tests(test_config)
 
@@ -134,10 +135,13 @@ class TestRunner(object):
         Executes the AutopsyIngest for each image and dispatches the results based on
         the mode (rebuild or testing)
         """
+
+        #  get list of test images to process
         test_data_list = [ TestData(image, test_config) for image in test_config.images ]
 
         Reports.html_add_images(test_config.html_log, test_config.images)
 
+        # Test each image
         logres =[]
         for test_data in test_data_list:
             Errors.clear_print_logs()
@@ -146,12 +150,16 @@ class TestRunner(object):
                 Errors.print_error(msg)
                 Errors.print_error(test_data.gold_archive)
                 continue
+
+            # Analyze the given image
             TestRunner._run_autopsy_ingest(test_data)
 
+            # Either copy the data or compare the data
             if test_config.args.rebuild:
                 TestRunner.rebuild(test_data)
             else:
-                logres.append(TestRunner._run_test(test_data))
+                logres.append(TestRunner._compare_results(test_data))
+
             test_data.printout = Errors.printout
             test_data.printerror = Errors.printerror
             # give solr process time to die.
@@ -206,8 +214,8 @@ class TestRunner(object):
         TestRunner._handle_solr(test_data)
         TestRunner._handle_exception(test_data)
 
-    #TODO: figure out return type of _run_test (logres)
-    def _run_test(test_data):
+    #TODO: figure out return type of _compare_results(logres)
+    def _compare_results(test_data):
         """Compare the results of the output to the gold standard.
 
         Args:
@@ -216,12 +224,15 @@ class TestRunner(object):
         Returns:
             logres?
         """
+
+        # Unzip the gold file
         TestRunner._extract_gold(test_data)
 
         # Look for core exceptions
         # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
         logres = Logs.search_common_log("TskCoreException", test_data)
 
+        # Compare output with gold and display results
         TestResultsDiffer.run_diff(test_data)
         print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
@@ -250,6 +261,7 @@ class TestRunner(object):
                   Errors.add_errors_out(os.path.join(test_data.output_path, f))
             Errors.add_errors_out(test_data.common_log_path)
         return logres
+
 
     def _extract_gold(test_data):
         """Extract gold archive file to output/gold/tmp/
