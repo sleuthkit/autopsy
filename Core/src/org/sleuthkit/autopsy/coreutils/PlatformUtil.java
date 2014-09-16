@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.filechooser.FileSystemView;
 import org.hyperic.sigar.Sigar;
@@ -47,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class PlatformUtil {
 
-    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules";    
+    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules";
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -126,12 +127,11 @@ public class PlatformUtil {
         }
 
         File jrePath = new File(getInstallPath() + File.separator + "jre");
-
-        if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
+        if (jrePath.exists() && jrePath.isDirectory()) {
             System.out.println(
                     NbBundle.getMessage(PlatformUtil.class,
-                                        "PlatformUtil.jrePath.jreDir.msg",
-                                        jrePath.getAbsolutePath()));
+                            "PlatformUtil.jrePath.jreDir.msg",
+                            jrePath.getAbsolutePath()));
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java"; //NON-NLS
         } else {
             //else use system installed java in PATH env variable
@@ -140,7 +140,6 @@ public class PlatformUtil {
         }
 
         System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.usingJavaPath.msg", javaPath));
-
 
         return javaPath;
     }
@@ -154,26 +153,25 @@ public class PlatformUtil {
     public static File getUserDirectory() {
         return Places.getUserDirectory();
     }
-    
+
     /**
-     * Get RCP project dirs 
-     * @return 
+     * Get RCP project dirs
+     *
+     * @return
      */
     public static List<String> getProjectsDirs() {
-        List<String> ret = new ArrayList<String>();
+        List<String> ret = new ArrayList<>();
         String projectDir = System.getProperty("netbeans.dirs");
         if (projectDir == null) {
             return ret;
         }
-        String [] split = projectDir.split(";");
+        String[] split = projectDir.split(";");
         if (split == null || split.length == 0) {
             return ret;
         }
-        for (String path : split) {
-            ret.add(path);
-        }
-         
-         return ret;
+        ret.addAll(Arrays.asList(split));
+
+        return ret;
     }
 
     /**
@@ -229,20 +227,15 @@ public class PlatformUtil {
         InputStream inputStream = resourceClass.getResourceAsStream(resourceFile);
 
         OutputStream out = null;
-        InputStream in = null;
-        try {
+        try (InputStream in = new BufferedInputStream(inputStream)) {
 
-            in = new BufferedInputStream(inputStream);
             OutputStream outFile = new FileOutputStream(resourceFileF);
             out = new BufferedOutputStream(outFile);
-            int readBytes = 0;
+            int readBytes;
             while ((readBytes = in.read()) != -1) {
                 out.write(readBytes);
             }
         } finally {
-            if (in != null) {
-                in.close();
-            }
             if (out != null) {
                 out.flush();
                 out.close();
@@ -302,13 +295,28 @@ public class PlatformUtil {
     }
 
     /**
+     * Attempts to determine whether the operating system is a 64-bit operating
+     * system. May not be completely reliable for non-Windows operating systems.
+     *
+     * @return True if the operating system is definitely a 64-bit operating
+     * system, false otherwise.
+     */
+    public static boolean is64BitOS() {
+        if (System.getProperty("os.name").contains("Windows")) {
+            return (System.getenv("ProgramFiles(x86)") != null);
+        } else {
+            return (System.getProperty("os.arch").contains("64"));
+        }
+    }
+
+    /**
      * Get a list of all physical drives attached to the client's machine. Error
      * threshold of 4 non-existent physical drives before giving up.
      *
      * @return list of physical drives
      */
     public static List<LocalDisk> getPhysicalDrives() {
-        List<LocalDisk> drives = new ArrayList<LocalDisk>();
+        List<LocalDisk> drives = new ArrayList<>();
         // Windows drives
         if (PlatformUtil.isWindowsOS()) {
             int n = 0;
@@ -359,18 +367,18 @@ public class PlatformUtil {
      * @return list of local drives and partitions
      */
     public static List<LocalDisk> getPartitions() {
-        List<LocalDisk> drives = new ArrayList<LocalDisk>();
+        List<LocalDisk> drives = new ArrayList<>();
         FileSystemView fsv = FileSystemView.getFileSystemView();
         if (PlatformUtil.isWindowsOS()) {
             File[] f = File.listRoots();
-            for (int i = 0; i < f.length; i++) {
-                String name = fsv.getSystemDisplayName(f[i]);
+            for (File f1 : f) {
+                String name = fsv.getSystemDisplayName(f1);
                 // Check if it is a drive, readable, and not mapped to the network
-                if (f[i].canRead() && !name.contains("\\\\") && (fsv.isDrive(f[i]) || fsv.isFloppyDrive(f[i]))) {
-                    String path = f[i].getPath();
+                if (f1.canRead() && !name.contains("\\\\") && (fsv.isDrive(f1) || fsv.isFloppyDrive(f1))) {
+                    String path = f1.getPath();
                     String diskPath = "\\\\.\\" + path.substring(0, path.length() - 1);
                     if (canReadDrive(diskPath)) {
-                        drives.add(new LocalDisk(fsv.getSystemDisplayName(f[i]), diskPath, f[i].getTotalSpace()));
+                        drives.add(new LocalDisk(fsv.getSystemDisplayName(f1), diskPath, f1.getTotalSpace()));
                     }
                 }
             }
@@ -452,8 +460,8 @@ public class PlatformUtil {
     /**
      * Query and get PID of another java process
      *
-     * @param sigarSubQuery a sigar subquery to identify a unique java process among
-     * other java processes, for example, by class name, use:
+     * @param sigarSubQuery a sigar subquery to identify a unique java process
+     * among other java processes, for example, by class name, use:
      * Args.*.eq=org.jboss.Main more examples here:
      * http://support.hyperic.com/display/SIGAR/PTQL
      *
@@ -483,9 +491,10 @@ public class PlatformUtil {
     /**
      * Query and get PIDs of another java processes matching a query
      *
-     * @param sigarSubQuery a sigar subquery to identify a java processes among other
-     * java processes, for example, by class name, use: Args.*.eq=org.jboss.Main
-     * more examples here: http://support.hyperic.com/display/SIGAR/PTQL
+     * @param sigarSubQuery a sigar subquery to identify a java processes among
+     * other java processes, for example, by class name, use:
+     * Args.*.eq=org.jboss.Main more examples here:
+     * http://support.hyperic.com/display/SIGAR/PTQL
      *
      * @return array of PIDs of a java processes matching the query or null if
      * it couldn't be determined
@@ -539,7 +548,6 @@ public class PlatformUtil {
      * @return virt memory used in bytes or -1 if couldn't be queried
      */
     public static synchronized long getProcessVirtualMemoryUsed() {
-        long pid = getPID();
         long virtMem = -1;
 
         try {
@@ -547,11 +555,11 @@ public class PlatformUtil {
                 sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
             }
 
-            if (sigar == null || pid == -1) {
+            if (sigar == null || getPID() == -1) {
                 System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.sigarNotInit.msg"));
                 return -1;
             }
-            virtMem = sigar.getProcMem(pid).getSize();
+            virtMem = sigar.getProcMem(getPID()).getSize();
         } catch (Exception e) {
             System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.gen.msg", e.toString()));
         }
@@ -574,8 +582,8 @@ public class PlatformUtil {
         final MemoryUsage nonHeap = memoryManager.getNonHeapMemoryUsage();
 
         return NbBundle.getMessage(PlatformUtil.class,
-                                   "PlatformUtil.getJvmMemInfo.usageText",
-                                   heap.toString(), nonHeap.toString());
+                "PlatformUtil.getJvmMemInfo.usageText",
+                heap.toString(), nonHeap.toString());
     }
 
     /**
@@ -589,8 +597,8 @@ public class PlatformUtil {
         final long totalMemory = runTime.totalMemory();
         final long freeMemory = runTime.freeMemory();
         return NbBundle.getMessage(PlatformUtil.class,
-                                   "PlatformUtil.getPhysicalMemInfo.usageText",
-                                   Long.toString(maxMemory), Long.toString(totalMemory), Long.toString(freeMemory));
+                "PlatformUtil.getPhysicalMemInfo.usageText",
+                Long.toString(maxMemory), Long.toString(totalMemory), Long.toString(freeMemory));
     }
 
     /**
@@ -599,14 +607,9 @@ public class PlatformUtil {
      * @return formatted string with all memory usage info
      */
     public static String getAllMemUsageInfo() {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(PlatformUtil.getPhysicalMemInfo()).append("\n");
-//        sb.append(PlatformUtil.getJvmMemInfo()).append("\n");
-//        sb.append("Process Virtual Memory: ").append(PlatformUtil.getProcessVirtualMemoryUsed());
-//        return sb.toString();
         return NbBundle.getMessage(PlatformUtil.class,
-                                   "PlatformUtil.getAllMemUsageInfo.usageText",
-                                   PlatformUtil.getPhysicalMemInfo(), PlatformUtil.getJvmMemInfo(),
-                                   PlatformUtil.getProcessVirtualMemoryUsed());
+                "PlatformUtil.getAllMemUsageInfo.usageText",
+                PlatformUtil.getPhysicalMemInfo(), PlatformUtil.getJvmMemInfo(),
+                PlatformUtil.getProcessVirtualMemoryUsed());
     }
 }
