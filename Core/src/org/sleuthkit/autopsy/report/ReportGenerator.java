@@ -564,7 +564,16 @@ import org.sleuthkit.datamodel.TskData;
                 tableProgress.get(module).updateStatusLabel(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
                                             ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
-                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList("File", "Tag", "Comment")); //NON-NLS
+                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName())));
+                
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
                     comment.append(
