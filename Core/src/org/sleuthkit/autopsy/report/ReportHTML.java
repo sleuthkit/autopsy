@@ -535,7 +535,14 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             row.add("");
             return;
         }
-
+        
+        // Add metadata about the file to HTML output
+        row.add(Long.toString(file.getSize()));
+        row.add(file.getCtimeAsDate());
+        row.add(file.getAtimeAsDate());
+        row.add(file.getMtimeAsDate());
+        row.add(file.getMd5Hash());
+        
         // save it in a folder based on the tag name
         String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
         
