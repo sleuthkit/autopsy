@@ -565,14 +565,14 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
                                             ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
                 ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash", ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName())));
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash")));
                 
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
