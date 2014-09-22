@@ -289,11 +289,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         alwaysCalcHashesCheckbox.setPreferredSize(new java.awt.Dimension(271, 35));
         alwaysCalcHashesCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         alwaysCalcHashesCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-        alwaysCalcHashesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                alwaysCalcHashesCheckboxActionPerformed(evt);
-            }
-        });
 
         jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -345,10 +340,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void alwaysCalcHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCalcHashesCheckboxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_alwaysCalcHashesCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
