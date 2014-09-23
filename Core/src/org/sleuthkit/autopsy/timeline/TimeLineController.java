@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -64,6 +63,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -457,7 +457,7 @@ public class TimeLineController  {
     }
 
     synchronized public void pushTimeRange(Interval timeRange) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
@@ -476,7 +476,7 @@ public class TimeLineController  {
     }
 
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
