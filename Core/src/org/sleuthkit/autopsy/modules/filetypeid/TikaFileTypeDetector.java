@@ -24,20 +24,41 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 
-class TikaFileTypeDetector {
+public class TikaFileTypeDetector {
 
     private static final Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
     private final int BUFFER_SIZE = 64 * 1024; //how many bytes to pass in
     private final byte buffer[] = new byte[BUFFER_SIZE];
-            
+           
     /**
-     * 
+     * Detect the mime type of the passed in file and save it to the blackboard
+     * @param abstractFile
+     * @return mime type or null
+     * @throws TskCoreException 
+     */
+    public synchronized String detectAndSave(AbstractFile abstractFile) throws TskCoreException {
+        String mimeType = detect(abstractFile);
+        if (mimeType != null) {
+            // add artifact
+            BlackboardArtifact getInfoArt = abstractFile.getGenInfoArtifact();
+            BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), mimeType);
+            getInfoArt.addAttribute(batt);
+
+            // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
+        }
+        return mimeType;
+    }
+    /**
+     * Detect the mime type of the passed in file
      * @param abstractFile
      * @return mime type of detected format or null
      */
-    public synchronized String attemptMatch(AbstractFile abstractFile) {
+    public synchronized String detect(AbstractFile abstractFile) {
         try {
             byte buf[];
             int len = abstractFile.read(buffer, 0, BUFFER_SIZE);

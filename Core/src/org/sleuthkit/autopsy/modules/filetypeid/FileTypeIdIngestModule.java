@@ -102,17 +102,8 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
         try {
             long startTime = System.currentTimeMillis();
-            String mimeType = tikaDetector.attemptMatch(abstractFile);
+            tikaDetector.detectAndSave(abstractFile);
             addToTotals(jobId, (System.currentTimeMillis() - startTime)); //add match time
-
-            if (mimeType != null) {
-                // add artifact
-                BlackboardArtifact getInfoArt = abstractFile.getGenInfoArtifact();
-                BlackboardAttribute batt = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), mimeType);
-                getInfoArt.addAttribute(batt);
-
-                // we don't fire the event because we just updated TSK_GEN_INFO, which isn't displayed in the tree and is vague.
-            }
             return ProcessResult.OK;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS

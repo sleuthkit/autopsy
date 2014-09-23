@@ -880,11 +880,18 @@ class TestResultsDiffer(object):
         goldHtml = goldHtml[goldHtml.find("<ul>"):]
         outputHtml = outputHtml[outputHtml.find("<ul>"):]
 
-        gold_list = TestResultsDiffer._split(goldHtml, 50)
-        output_list = TestResultsDiffer._split(outputHtml, 50)
+        # Determine how many 50-byte sequences there are
+        # @@@ I really don't understand this test...
+        #    BC: My guess is that it is this vague to deal with time
+        #    stamps about when the report was generated, but this 
+        #    should really be doing an exact match and ignoring that
+        #    type of error (or stripping the date out of the report 
+        #    before diff).  Showing the user a diff would be useful.
+        gold_list = TestResultsDiffer._splitByLen(goldHtml, 50)
+        output_list = TestResultsDiffer._splitByLen(outputHtml, 50)
         if not len(gold_list) == len(output_list):
             ex = (len(gold_list), len(output_list))
-            print("846 ex is " + str(ex))
+            print(output_path + " is different size " + str(ex))
             return ex
         else:
             return (0, 0)
@@ -917,7 +924,7 @@ class TestResultsDiffer(object):
             return False
 
     # Split a string into an array of string of the given size
-    def _split(input, size):
+    def _splitByLen(input, size):
         return [input[start:start+size] for start in range(0, len(input), size)]
 
 
