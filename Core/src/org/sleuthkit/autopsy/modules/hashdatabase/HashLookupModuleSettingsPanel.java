@@ -101,19 +101,25 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
+        List<String> enabledKnownHashSetNames = new ArrayList<>();
+        List<String> disabledKnownHashSetNames = new ArrayList<>();
+        List<String> enabledKnownBadHashSetNames = new ArrayList<>();
+        List<String> disabledKnownBadHashSetNames = new ArrayList<>();
+        getHashSetNames(knownHashSetModels, enabledKnownHashSetNames, disabledKnownHashSetNames);
+        getHashSetNames(knownBadHashSetModels, enabledKnownBadHashSetNames, disabledKnownBadHashSetNames);
         return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(),
-                getNamesOfEnabledHashSets(knownHashSetModels),
-                getNamesOfEnabledHashSets(knownBadHashSetModels));
+                enabledKnownHashSetNames, enabledKnownBadHashSetNames,
+                disabledKnownHashSetNames, disabledKnownBadHashSetNames);
     }
 
-    private List<String> getNamesOfEnabledHashSets(List<HashSetModel> hashSetModels) {
-        List<String> namesOfEnabledHashSets = new ArrayList<>();
+    private void getHashSetNames(List<HashSetModel> hashSetModels, List<String> enabledHashSetNames, List<String> disabledHashSetNames) {
         for (HashSetModel model : hashSetModels) {
             if (model.isEnabled() && model.isIndexed()) {
-                namesOfEnabledHashSets.add(model.getName());
+                enabledHashSetNames.add(model.getName());
+            } else {
+                disabledHashSetNames.add(model.getName());                
             }
         }
-        return namesOfEnabledHashSets;
     }
 
     void update() {

@@ -24,39 +24,117 @@ import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Settings for a hash lookup file ingest module instance.
+ * Ingest job settings for the hash lookup module.
  */
 final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
     private final HashSet<String> namesOfEnabledKnownHashSets = new HashSet<>();
     private final HashSet<String> namesOfEnabledKnownBadHashSets = new HashSet<>();
+    private final HashSet<String> namesOfDisabledKnownHashSets = new HashSet<>();
+    private final HashSet<String> namesOfDisabledKnownBadHashSets = new HashSet<>();
     private boolean shouldCalculateHashes = true;
 
-    HashLookupModuleSettings(boolean shouldCalculateHashes, List<String> namesOfEnabledKnownHashSets, List<String> namesOfEnabledKnownBadHashSets) {
+    /**
+     * Constructs ingest job settings for the hash lookup module.
+     *
+     * @param shouldCalculateHashes Whether or not hashes should be calculated.
+     * @param namesOfEnabledKnownHashSets A list of enabled known hash sets.
+     * @param namesOfEnabledKnownBadHashSets A list of enabled known bad hash
+     * sets.
+     */
+    HashLookupModuleSettings(boolean shouldCalculateHashes,
+            List<String> namesOfEnabledKnownHashSets,
+            List<String> namesOfEnabledKnownBadHashSets) {
+        this(shouldCalculateHashes, namesOfEnabledKnownHashSets, namesOfEnabledKnownBadHashSets, new ArrayList<>(), new ArrayList<>());
+    }
+
+    /**
+     * Constructs ingest job settings for the hash lookup module.
+     *
+     * @param shouldCalculateHashes Whether or not hashes should be calculated.
+     * @param namesOfEnabledKnownHashSets A list of enabled known hash sets.
+     * @param namesOfEnabledKnownBadHashSets A list of enabled known bad hash
+     * sets.
+     * @param namesOfDisabledKnownHashSets A list of disabled known hash sets.
+     * @param namesOfDisabledKnownBadHashSets A list of disabled known bad hash
+     * sets.
+     */
+    HashLookupModuleSettings(boolean shouldCalculateHashes,
+            List<String> namesOfEnabledKnownHashSets,
+            List<String> namesOfEnabledKnownBadHashSets,
+            List<String> namesOfDisabledKnownHashSets,
+            List<String> namesOfDisabledKnownBadHashSets) {
         this.shouldCalculateHashes = shouldCalculateHashes;
         this.namesOfEnabledKnownHashSets.addAll(namesOfEnabledKnownHashSets);
         this.namesOfEnabledKnownBadHashSets.addAll(namesOfEnabledKnownBadHashSets);
+        this.namesOfDisabledKnownHashSets.addAll(namesOfDisabledKnownHashSets);
+        this.namesOfDisabledKnownBadHashSets.addAll(namesOfDisabledKnownBadHashSets);
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public long getVersionNumber() {
-        return serialVersionUID;
-    }    
-        
+        return HashLookupModuleSettings.serialVersionUID;
+    }
+
+    /**
+     * Checks the setting that specifies whether or not hashes are to be
+     * calculated.
+     *
+     * @return True if hashes are to be calculated, false otherwise.
+     */
     boolean shouldCalculateHashes() {
-        return shouldCalculateHashes;
+        return this.shouldCalculateHashes;
     }
 
+    /**
+     * Checks whether or not a hash set is enabled. If there is no setting for
+     * the requested hash set, it is deemed to be enabled.
+     *
+     * @param hashSetName The name of the hash set to check.
+     * @return True if the hash set is enabled, false otherwise.
+     */
     boolean isHashSetEnabled(String hashSetName) {
-        return (namesOfEnabledKnownHashSets.contains(hashSetName) || namesOfEnabledKnownBadHashSets.contains(hashSetName));
+        return !(this.namesOfDisabledKnownHashSets.contains(hashSetName) || this.namesOfDisabledKnownBadHashSets.contains(hashSetName));
     }
 
+    /**
+     * Get the names of all explicitly enabled known files hash sets.
+     *
+     * @return The list of names.
+     */
     List<String> getNamesOfEnabledKnownHashSets() {
-        return new ArrayList<>(namesOfEnabledKnownHashSets);
+        return new ArrayList<>(this.namesOfEnabledKnownHashSets);
     }
 
-    List<String> getNamesOfEnabledKnownBadHashSets() {
-        return new ArrayList<>(namesOfEnabledKnownBadHashSets);
+    /**
+     * Get the names of all explicitly disabled known files hash sets.
+     *
+     * @return The list of names.
+     */
+    List<String> getNamesOfDisabledKnownHashSets() {
+        return new ArrayList<>(namesOfDisabledKnownHashSets);
     }
+
+    /**
+     * Get the names of all explicitly enabled known bad files hash sets.
+     *
+     * @return The list of names.
+     */
+    List<String> getNamesOfEnabledKnownBadHashSets() {
+        return new ArrayList<>(this.namesOfEnabledKnownBadHashSets);
+    }
+
+    /**
+     * Get the names of all explicitly disabled known bad files hash sets.
+     *
+     * @return The list of names.
+     */
+    List<String> getNamesOfDisabledKnownBadHashSets() {
+        return new ArrayList<>(this.namesOfDisabledKnownBadHashSets);
+    }
+
 }
