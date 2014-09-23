@@ -663,9 +663,9 @@ WARN_LOGFILE           =
 
 INPUT                  = main.dox \
                          workflow.dox \
-			 services.dox \
                          modContent.dox \
                          modDev.dox \
+                         modDevPython.dox \
                          modIngest.dox \
                          modReport.dox \
                          modResult.dox \
@@ -673,6 +673,8 @@ INPUT                  = main.dox \
                          platformConcepts.dox \
                          regressionTesting.dox \
                          native_libs.dox \
+                         modDevPython.dox \
+                         debugTsk.dox \
                          ../../Core/src \
                          ../../CoreLibs/src \
                          ../../KeywordSearch/src \

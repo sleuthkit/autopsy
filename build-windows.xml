@@ -32,6 +32,9 @@
         <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
     </target>
 
+    <!-- The following copy the libtsk_jni dependencies to the Autopsy
+         folder structure.  libtsk_jni is inside of the JAR file and contains
+         libtsk and the JNI code. -->
     <!-- copy 64-bit dlls into the installer folder -->
     <target name="copyWinTskLibs64ToBaseDir" if="win64.TskLib.exists">
         <fileset dir="${win64.TskLib.path}" id="win64dlls">

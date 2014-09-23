@@ -4,7 +4,10 @@
         <available file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" property="tsk_dylib.present"/>
         <available file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.so" property="tsk_so.present"/>
     </target>
-    
+   
+    <!-- BC: NOTE I'm not sure this copying is required anymore because the
+      TSK Data model JAR file should have the libraries inside of it.  We've 
+      made that change w/out really maintaining the non-Windows platforms. -->
     <!-- OS X -->
     <target name="copyTskLibs_dylib" depends="testTSKLibs" if="tsk_dylib.present">
         <property environment="env"/>
