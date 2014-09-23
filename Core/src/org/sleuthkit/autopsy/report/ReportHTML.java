@@ -526,7 +526,6 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             addRow(row);
             return;
         }
-        
         AbstractFile file = (AbstractFile) content;
         // Don't make a local copy of the file if it is a directory or unallocated space.
         if (file.isDir() ||
@@ -537,10 +536,11 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         }
         
         // Add metadata about the file to HTML output
-        row.add(Long.toString(file.getSize()));
+        row.add(file.getMtimeAsDate());
         row.add(file.getCtimeAsDate());
         row.add(file.getAtimeAsDate());
-        row.add(file.getMtimeAsDate());
+        row.add(file.getCrtimeAsDate());
+        row.add(Long.toString(file.getSize()));
         row.add(file.getMd5Hash());
         
         // save it in a folder based on the tag name
@@ -550,13 +550,23 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         StringBuilder localFileLink = new StringBuilder();
         localFileLink.append("<a href=\""); //NON-NLS
         localFileLink.append(localFilePath);
-        localFileLink.append("\">").append(NbBundle.getMessage(this.getClass(), "ReportHTML.link.viewFile")).append("</a>"); //NON-NLS
-        row.add(localFileLink.toString());              
+        localFileLink.append("\">");
         
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n"); //NON-NLS
+        int positionCounter=0;
         for (String cell : row) {
-            builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
+            // position-dependent code used to format this report. Not great, but understandable for formatting.
+            if(positionCounter==1) { // Convert the file name to a hyperlink and left-align it
+                builder.append("\t\t<td class=\"left_align_cell\">").append(localFileLink.toString()).append(cell).append("</a></td>\n"); //NON-NLS
+            }
+            else if (positionCounter==7) { // Right-align the bytes column.
+                builder.append("\t\t<td class=\"right_align_cell\">").append(cell).append("</td>\n"); //NON-NLS
+            }
+            else { // Regular case, not a file name nor a byte count
+                builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
+            }
+            ++positionCounter;
         }
         builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
@@ -566,7 +576,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         } 
         catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write row to out.", ex); //NON-NLS
-        } 
+        }
         catch (NullPointerException ex) {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
@@ -774,10 +784,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                          "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" + //NON-NLS
                          "ul li a:hover {text-decoration: underline;}\n" + //NON-NLS
                          "p {margin: 0 0 20px 0;}\n" + //NON-NLS
-                         "table {max-width: 100%; min-width: 700px; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
-                         ".keyword_list table {width: 100%; margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" + //NON-NLS
-                         "table th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
-                         "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif; max-width: 500px; min-width: 125px; word-break: break-all; overflow: auto;}\n" + //NON-NLS
+                         "table {white-space:nowrap; min-width: 700px; padding: 2; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
+                         ".keyword_list table {margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" + //NON-NLS
+                         "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
+                         "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n" + //NON-NLS
+                         "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n" + //NON-NLS
+                         "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:center; }\n" + //NON-NLS
                          "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
