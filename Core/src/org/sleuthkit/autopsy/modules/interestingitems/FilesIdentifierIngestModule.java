@@ -70,7 +70,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                 // to disable the interesting files set definition UI during ingest.
                 List<FilesSet> filesSets = new ArrayList<>();
                 for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
-                    if (settings.isInterestingFilesSetEnabled(set.getName())) {
+                    if (settings.interestingFilesSetIsEnabled(set.getName())) {
                         filesSets.add(set);
                     }
                 }

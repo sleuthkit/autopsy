@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,17 +30,32 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 final class FilesIdentifierIngestJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-    private final Set<String> enabledFilesSetNames = new HashSet<>();
+    private Set<String> enabledFilesSetNames = new HashSet<>();
+    private Set<String> disabledFilesSetNames = new HashSet<>();
 
     /**
      * Construct the ingest job settings for an interesting files identifier
      * ingest module.
      *
-     * @param enabledFilesSetNames The names of the interesting files sets
-     * that are enabled for the ingest job.
+     * @param enabledFilesSetNames The names of the interesting files sets that
+     * are enabled for the ingest job.
      */
     FilesIdentifierIngestJobSettings(List<String> enabledFilesSetNames) {
-        this.enabledFilesSetNames.addAll(enabledFilesSetNames);
+        this(enabledFilesSetNames, new ArrayList<>());
+    }
+
+    /**
+     * Construct the ingest job settings for an interesting files identifier
+     * ingest module.
+     *
+     * @param enabledFilesSetNames The names of the interesting files sets that
+     * are enabled for the ingest job.
+     * @param disabledFilesSetNames The names of the interesting files sets that
+     * are disabled for the ingest job.
+     */
+    FilesIdentifierIngestJobSettings(List<String> enabledFilesSetNames, List<String> disabledFilesSetNames) {
+        this.enabledFilesSetNames = new HashSet<>(enabledFilesSetNames);
+        this.disabledFilesSetNames = new HashSet<>(disabledFilesSetNames);
     }
 
     /**
@@ -52,12 +68,32 @@ final class FilesIdentifierIngestJobSettings implements IngestModuleIngestJobSet
 
     /**
      * Determines whether or not an interesting files set definition is enabled
-     * for an ingest job.
+     * for an ingest job. If there is no setting for the requested files set, it
+     * is deemed to be enabled.
      *
      * @param filesSetName The name of the files set definition to check.
      * @return True if the file set is enabled, false otherwise.
      */
-    boolean isInterestingFilesSetEnabled(String filesSetName) {
-        return (this.enabledFilesSetNames.contains(filesSetName));
+    boolean interestingFilesSetIsEnabled(String filesSetName) {
+        return !(this.disabledFilesSetNames.contains(filesSetName));
     }
+
+    /**
+     * Get the names of all explicitly enabled interesting files set definitions.
+     *
+     * @return The list of names.
+     */
+    List<String> getNamesOfEnabledInterestingFilesSets() {
+        return new ArrayList<>(this.enabledFilesSetNames);
+    }
+    
+    /**
+     * Get the names of all explicitly disabled interesting files set definitions.
+     *
+     * @return The list of names.
+     */
+    List<String> getNamesOfDisabledInterestingFilesSets() {
+        return new ArrayList<>(disabledFilesSetNames);
+    }
+    
 }
