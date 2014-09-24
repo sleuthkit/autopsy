@@ -31,17 +31,17 @@ import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
-/** * Node for {@link TimeLineEvent}s. */
+/** * Explorer Node for {@link TimeLineEvent}s. */
 class EventNode extends DisplayableItemNode {
 
     private final TimeLineEvent e;
@@ -77,17 +77,13 @@ class EventNode extends DisplayableItemNode {
             }
         });
 
-        //  String name, String displayName, String desc, T value
         properties.put(new NodeProperty<>("icon", "Icon", "icon", true)); //gets overriden with icon
-
         properties.put(timePropery);
-        properties.put(new NodeProperty<>("eventID", "Event ID", "event id", e.getEventID()));
-        properties.put(new NodeProperty<>("fileID", "File ID", "File id", e.getFileID()));
-        properties.put(new NodeProperty<>("artifactID", "Result ID", "result id", e.getArtifactID() == 0 ? "" : e.getArtifactID()));
+        properties.put(new NodeProperty<>("description", "Description", "description", e.getFullDescription()));
         properties.put(new NodeProperty<>("eventBaseType", "Base Type", "base type", e.getType().getSuperType().getDisplayName()));
         properties.put(new NodeProperty<>("eventSubType", "Sub Type", "sub type", e.getType().getDisplayName()));
         properties.put(new NodeProperty<>("Known", "Known", "known", e.getKnown().toString()));
-        properties.put(new NodeProperty<>("description", "Description", "description", e.getFullDescription()));
+
         return s;
     }
 
@@ -147,5 +143,4 @@ class EventNode extends DisplayableItemNode {
             firePropertyChange("time", oldValue, t);
         }
     }
-
 }
