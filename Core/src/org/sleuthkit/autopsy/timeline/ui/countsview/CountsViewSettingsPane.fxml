@@ -11,10 +11,10 @@
 <HBox.margin>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 </HBox.margin></Label><FlowPane alignment="CENTER_LEFT" hgap="5.0" prefWrapLength="250.0" vgap="5.0">
-<children><RadioButton fx:id="linearRadio" mnemonicParsing="false" selected="true" text="Linear">
+<children><RadioButton fx:id="logRadio" mnemonicParsing="false" selected="true" text="Logarithmic">
 <toggleGroup>
 <ToggleGroup fx:id="scaleGroup" />
-</toggleGroup></RadioButton><RadioButton fx:id="sqrtRadio" mnemonicParsing="false" text="Square Root" toggleGroup="$scaleGroup" /><RadioButton fx:id="logRadio" mnemonicParsing="false" text="Logarithmic" toggleGroup="$scaleGroup" />
+</toggleGroup></RadioButton><RadioButton fx:id="linearRadio" mnemonicParsing="false" text="Linear" toggleGroup="$scaleGroup" /><RadioButton fx:id="sqrtRadio" mnemonicParsing="false" text="Square Root" toggleGroup="$scaleGroup" />
 </children>
 <HBox.margin>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
