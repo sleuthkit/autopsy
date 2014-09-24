@@ -24,7 +24,7 @@ import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Settings for a keyword search file ingest module instance.
+ * Ingest job settings for the keywords search module.
  */
 final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
 
@@ -32,30 +32,61 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     private HashSet<String> namesOfEnabledKeywordLists;
     private HashSet<String> namesOfDisabledKeywordLists; // Added in version 1.1
 
+    /**
+     * Constructs ingest job settings for the keywords search module.
+     *
+     * @param namesOfEnabledKeywordLists A list of enabled keywords lists.
+     */
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists) {
         this(namesOfEnabledKeywordLists, new ArrayList<String>());
     }
 
+    /**
+     * Constructs ingest job settings for the keywords search module.
+     *
+     * @param namesOfEnabledKeywordLists A list of enabled keywords lists.
+     * @param namesOfDisabledKeywordLists A list of disabled keywords lists.
+     */
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists) {
         this.namesOfEnabledKeywordLists = new HashSet<>(namesOfEnabledKeywordLists);
         this.namesOfDisabledKeywordLists = new HashSet<>(namesOfDisabledKeywordLists);
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
     }
 
+    /**
+     * Checks whether or not a keywords list is enabled. If there is no setting
+     * for the requested list, it is deemed to be enabled.
+     *
+     * @param hashSetName The name of the keywords list to check.
+     * @return True if the keywords list is enabled, false otherwise.
+     */
     boolean keywordListIsEnabled(String keywordListName) {
         this.upgradeFromOlderVersions();
         return namesOfEnabledKeywordLists.contains(keywordListName);
     }
 
+    /**
+     * Get the names of all explicitly enabled keywords lists.
+     *
+     * @return The list of names.
+     */
     List<String> getNamesOfEnabledKeyWordLists() {
         this.upgradeFromOlderVersions();
         return new ArrayList<>(namesOfEnabledKeywordLists);
     }
 
+    /**
+     * Get the names of all explicitly disabled keywords lists.
+     *
+     * @return The list of names.
+     */
     List<String> getNamesOfDisabledKeyWordLists() {
         this.upgradeFromOlderVersions();
         return new ArrayList<>(namesOfDisabledKeywordLists);
