@@ -77,6 +77,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      */
     @Override
     public long getVersionNumber() {
+        this.upgradeFromOlderVersions();
         return HashLookupModuleSettings.serialVersionUID;
     }
 
@@ -87,6 +88,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @return True if hashes are to be calculated, false otherwise.
      */
     boolean shouldCalculateHashes() {
+        this.upgradeFromOlderVersions();
         return this.shouldCalculateHashes;
     }
 

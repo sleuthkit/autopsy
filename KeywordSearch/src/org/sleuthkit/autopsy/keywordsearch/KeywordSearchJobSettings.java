@@ -57,6 +57,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      */
     @Override
     public long getVersionNumber() {
+        this.upgradeFromOlderVersions();
         return serialVersionUID;
     }
 
@@ -64,7 +65,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      * Checks whether or not a keywords list is enabled. If there is no setting
      * for the requested list, it is deemed to be enabled.
      *
-     * @param hashSetName The name of the keywords list to check.
+     * @param keywordListName The name of the keywords list to check.
      * @return True if the keywords list is enabled, false otherwise.
      */
     boolean keywordListIsEnabled(String keywordListName) {
