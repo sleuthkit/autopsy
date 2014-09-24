@@ -55,7 +55,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         for (KeywordList list : keywordLists) {
             String listName = list.getName();
             keywordListNames.add(listName);
-            keywordListStates.put(listName, settings.isKeywordListEnabled(listName));
+            keywordListStates.put(listName, settings.keywordListIsEnabled(listName));
         }
     }
 
@@ -160,12 +160,15 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     @Override
     public IngestModuleIngestJobSettings getSettings() {
         List<String> enabledListNames = new ArrayList<>();
+        List<String> disabledListNames = new ArrayList<>();
         for (String listName : keywordListNames) {
             if (keywordListStates.get(listName)) {
                 enabledListNames.add(listName);
+            } else {
+                disabledListNames.add(listName);                
             }
         }
-        return new KeywordSearchJobSettings(enabledListNames);
+        return new KeywordSearchJobSettings(enabledListNames, disabledListNames);
     }
 
     void reset(KeywordSearchJobSettings newSettings) {
