@@ -66,9 +66,6 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      * compatible, version of this class is de-serialized.
      */
     private void upgradeFromOlderVersions() {
-        if (null == this.namesOfEnabledKeywordLists) {
-            this.namesOfEnabledKeywordLists = new HashSet<>();
-        }
         if (null == this.namesOfDisabledKeywordLists) {
             this.namesOfDisabledKeywordLists = new HashSet<>();
         }
