@@ -27,26 +27,51 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * Settings for a keyword search file ingest module instance.
  */
 final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
-    
+
     private static final long serialVersionUID = 1L;
-    private final HashSet<String> namesOfEnabledKeywordLists = new HashSet<>();
+    private HashSet<String> namesOfEnabledKeywordLists;
+    private HashSet<String> namesOfDisabledKeywordLists; // Added in version 1.1
 
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists) {
-        this.namesOfEnabledKeywordLists.addAll(namesOfEnabledKeywordLists);
+        this(namesOfEnabledKeywordLists, new ArrayList<String>());
+    }
+
+    KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists) {
+        this.namesOfEnabledKeywordLists = new HashSet<>(namesOfEnabledKeywordLists);
+        this.namesOfDisabledKeywordLists = new HashSet<>(namesOfDisabledKeywordLists);
     }
 
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
-    }    
-        
-    boolean isKeywordListEnabled(String keywordListName) {
+    }
+
+    boolean keywordListIsEnabled(String keywordListName) {
+        this.upgradeFromOlderVersions();
         return namesOfEnabledKeywordLists.contains(keywordListName);
     }
-    
-    List<String> getNamesOfEnabledKeyWordLists() {
-        return new ArrayList<>(namesOfEnabledKeywordLists);
-    }    
-}
-    
 
+    List<String> getNamesOfEnabledKeyWordLists() {
+        this.upgradeFromOlderVersions();
+        return new ArrayList<>(namesOfEnabledKeywordLists);
+    }
+
+    List<String> getNamesOfDisabledKeyWordLists() {
+        this.upgradeFromOlderVersions();
+        return new ArrayList<>(namesOfDisabledKeywordLists);
+    }
+
+    /**
+     * Initialize fields set to null when an instance of a previous, but still
+     * compatible, version of this class is de-serialized.
+     */
+    private void upgradeFromOlderVersions() {
+        if (null == this.namesOfEnabledKeywordLists) {
+            this.namesOfEnabledKeywordLists = new HashSet<>();
+        }
+        if (null == this.namesOfDisabledKeywordLists) {
+            this.namesOfDisabledKeywordLists = new HashSet<>();
+        }
+    }
+
+}

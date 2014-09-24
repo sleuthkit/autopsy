@@ -170,7 +170,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
             boolean hasKeywordsForSearch = false;
             for (KeywordList keywordList : keywordLists) {
-                if (settings.isKeywordListEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
+                if (settings.keywordListIsEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
                     hasKeywordsForSearch = true;
                     break;
                 }
