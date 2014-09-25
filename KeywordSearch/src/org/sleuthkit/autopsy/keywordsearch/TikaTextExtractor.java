@@ -160,11 +160,16 @@ class TikaTextExtractor implements TextExtractor {
             long totalRead = 0;
             boolean eof = false;
             //we read max 1024 chars at time, this seems to max what this Reader would return
-            while (!eof && (readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) != -1) {
-                totalRead += readSize;
-
+            while (!eof) {
+                readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS);
+                if (readSize == -1) {
+                    eof = true;
+                }
+                else {
+                    totalRead += readSize;
+                }
                 //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
-                while ((totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
+                while (!eof && (totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
                         && (readSize = reader.read(textChunkBuf, (int) totalRead, SINGLE_READ_CHARS)) != -1) {
                     totalRead += readSize;
                 }
