@@ -41,7 +41,7 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
  * or to any file provided in constructor
  */
-final class XmlKeywordSearchList extends KeywordSearchList {
+public final class XmlKeywordSearchList extends KeywordSearchList {
 
     private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
