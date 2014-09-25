@@ -35,9 +35,9 @@ public final class IngestJobContext {
     IngestJobContext(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
     }
-    
+
     /**
-     * 
+     *
      * @return The data source that this ingest job is associated with.
      */
     public Content getDataSource() {
@@ -61,6 +61,16 @@ public final class IngestJobContext {
      */
     public boolean isJobCancelled() {
         return this.ingestJob.isCancelled();
+    }
+
+    /**
+     * Checks whether or not the ingest job includes processing of unallocated
+     * space.
+     *
+     * @return True if unallocated space will be processed, false otherwise.
+     */
+    public boolean processingUnallocatedSpace() {
+        return this.ingestJob.shouldProcessUnallocatedSpace();
     }
 
     /**
