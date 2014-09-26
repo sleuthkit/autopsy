@@ -61,12 +61,16 @@ public class KeywordListsManager extends Observable {
     }
 
     /**
-     * Gets the configured keyword lists.
+     * Gets the names of the configured keyword lists.
      *
-     * @return A collection of keyword list objects.
+     * @return The name strings.
      */
-    public List<KeywordList> getKeywordLists() {
-        return new ArrayList<>(XmlKeywordSearchList.getCurrent().getListsL());
+    public List<String> getKeywordLists() {
+        List<String> names = new ArrayList<>();
+        for (KeywordList list : XmlKeywordSearchList.getCurrent().getListsL()) {
+            names.add(list.getName());
+        }
+        return names;
     }
     
 }
