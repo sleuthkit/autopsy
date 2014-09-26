@@ -46,7 +46,6 @@ final class XmlKeywordSearchList extends KeywordSearchList {
     private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
     private static final String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
-//    private static final String XSDFILE = "KeywordsSchema.xsd"; //NON-NLS
     private static final String ROOT_EL = "keyword_lists"; //NON-NLS
     private static final String LIST_EL = "keyword_list"; //NON-NLS
     private static final String LIST_NAME_ATTR = "name"; //NON-NLS
