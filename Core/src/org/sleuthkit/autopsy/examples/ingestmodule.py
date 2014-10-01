@@ -1,3 +1,33 @@
+# Sample module in the public domain. Feel free to use this as a template
+# for your modules (and you can remove this header and take complete credit
+# and liability)
+#
+# Contact: Brian Carrier [carrier <at> sleuthkit [dot] org]
+#
+# This is free and unencumbered software released into the public domain.
+#
+# Anyone is free to copy, modify, publish, use, compile, sell, or
+# distribute this software, either in source code form or as a compiled
+# binary, for any purpose, commercial or non-commercial, and by any
+# means.
+#
+# In jurisdictions that recognize copyright laws, the author or authors
+# of this software dedicate any and all copyright interest in the
+# software to the public domain. We make this dedication for the benefit
+# of the public at large and to the detriment of our heirs and
+# successors. We intend this dedication to be an overt act of
+# relinquishment in perpetuity of all present and future rights to this
+# software under copyright law.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+
 import jarray
 from java.lang import System
 from org.sleuthkit.datamodel import SleuthkitCase
@@ -15,6 +45,38 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 
+# Sample factory that defines basic functionality and features of the module
+class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
+    
+    def getModuleDisplayName(self):
+        return "Sample Jython Ingest Module"
+    
+    def getModuleDescription(self):
+        return "A sample Jython ingest module"
+    
+    def getModuleVersionNumber(self):
+        return "1.0"
+    
+    # Return true if module wants to get passed in a data source
+    def isDataSourceIngestModuleFactory(self):
+        return True
+    
+    # can return null if isDataSourceIngestModuleFactory returns false
+    def createDataSourceIngestModule(self, ingestOptions):
+        return SampleJythonDataSourceIngestModule()
+
+    # Return true if module wants to get called for each file
+    def isFileIngestModuleFactory(self):
+        return True
+    
+    # can return null if isFileIngestModuleFactory returns false
+    def createFileIngestModule(self, ingestOptions):
+        return SampleJythonFileIngestModule()
+
+
+# Data Source-level ingest module.  One gets created per data source.
+# Queries for various files.
+# If you don't need a data source-level module, delete this class.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
     def __init__(self):
@@ -27,7 +89,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 		if self.context.isJobCancelled():
 			return IngestModule.ProcessResult.OK
 
-		# There are two tasks to do.
+		# Configure progress bar for 2 tasks
 		progressBar.switchToDeterminate(2)
 
 		autopsyCase = Case.getCurrentCase()
@@ -35,7 +97,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 		services = Services(sleuthkitCase)
 		fileManager = services.getFileManager()
 
-		#Get count of files with .doc extension.
+		# Get count of files with .doc extension.
 		fileCount = 0;
 		docFiles = fileManager.findFiles(dataSource, "%.doc")
 		for docFile in docFiles:
@@ -62,7 +124,10 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
 		return IngestModule.ProcessResult.OK;
 
-        
+
+# File-level ingest module.  One gets created per thread.
+# Looks at the attributes of the passed in file.
+# if you don't need a file-level module, delete this class.
 class SampleJythonFileIngestModule(FileIngestModule):
 
     def startUp(self, context):
@@ -94,25 +159,4 @@ class SampleJythonFileIngestModule(FileIngestModule):
     def shutDown(self):
         pass
 
-class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
 
-    def getModuleDisplayName(self):
-        return "Sample Jython Ingest Module"
-
-    def getModuleDescription(self):
-        return "A sample Jython ingest module"
-
-    def getModuleVersionNumber(self):
-        return "1.0"
-
-    def isDataSourceIngestModuleFactory(self):
-        return True
-
-    def createDataSourceIngestModule(self, ingestOptions):
-        return SampleJythonDataSourceIngestModule()
-
-    def isFileIngestModuleFactory(self):
-        return True
-
-    def createFileIngestModule(self, ingestOptions):
-        return SampleJythonFileIngestModule()
