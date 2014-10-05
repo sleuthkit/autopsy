@@ -670,6 +670,7 @@ INPUT                  = main.dox \
                          modReport.dox \
                          modResult.dox \
                          modAdvanced.dox \
+                         modMobile.dox \
                          platformConcepts.dox \
                          regressionTesting.dox \
                          native_libs.dox \

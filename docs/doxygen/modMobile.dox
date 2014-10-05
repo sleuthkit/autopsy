@@ -1,0 +1,22 @@
+/*! \page mod_mobile_page Mobile Forensics
+
+\section mod_mobile_overview Overview
+
+Smart phones are basically small computers and Autopsy can parse and analyze the contents of Android and iOS devices.  This includes both the official databases and third-party app databaes.  This page provides some basic pointers for doing so.  It assumes that you have already read \ref mod_ingest_page and know the basics of writing ingest modules.
+
+The basic idea is that you need an ingest module.  We've typically written mobile forensics modules as data source-level ingest modules, which means they are passed in a reference to the entire data source and not passed in individual files. We do this because we typically know the path where we expect to find the files and databases of interest. 
+
+The ingest module has a basic flow of
+- Query for files using the org.sleuthkit.autopsy.casemodule.services.FileManager service
+- Parse them or open them with SQLite (you'll need to bring along a SQLite JAR file)
+- Create Blackboard Artifacts (see \ref platform_blackboard)
+
+The BlackBoard has standard artifacts for the standard cell phone forensics data types, such as BlackboardArtifact.TSK_CALLLOG. 
+
+\section mod_mobile_std Android Module
+
+Autopsy comes with an Android module, as defined in various classes in the org.sleuthkit.autopsy.modules.android package.  You can use those classes as a reference example. 
+
+Submit pull requests with any additions that you have to these modules. 
+
+*/
