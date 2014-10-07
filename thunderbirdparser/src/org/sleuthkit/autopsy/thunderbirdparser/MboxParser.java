@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.james.mime4j.dom.BinaryBody;
@@ -249,6 +250,25 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
     private void handleAttachment(EmailMessage email, Entity e) {
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         String filename = e.getFilename();
+        
+        // sanitize name.  Had an attachment with a Japanese encoded path that 
+        // invalid characters and attachment could not be saved.
+        filename = filename.replaceAll("\\?", "_");
+        filename = filename.replaceAll("<", "_");
+        filename = filename.replaceAll(">", "_");
+        filename = filename.replaceAll(":", "_");
+        filename = filename.replaceAll("\"", "_");
+        filename = filename.replaceAll("/", "_");
+        filename = filename.replaceAll("\\\\", "_");
+        filename = filename.replaceAll("|", "_");
+        filename = filename.replaceAll("\\*", "_");
+        
+        // also had some crazy long names, so make random one if we get those.
+        // also from Japanese image that had encoded name
+        if (filename.length() > 64) {
+            filename = UUID.randomUUID().toString();
+        }
+        
         String uniqueFilename = filename + "-" + email.getSentDate();
         String outPath = outputDirPath + uniqueFilename;
         FileOutputStream fos;
@@ -258,7 +278,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         } catch (FileNotFoundException ex) {
             addErrorMessage(
                     NbBundle.getMessage(this.getClass(),
-                                        "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", filename));
+                                        "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", outPath));
             logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
             return;
         }
