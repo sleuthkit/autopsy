@@ -307,13 +307,13 @@ final class LocalDiskPanel extends JPanel {
 
         private volatile boolean loadingDisks = false;
 
-        List<LocalDisk> physical = new ArrayList<>();
-
+        List<LocalDisk> physicalDrives = new ArrayList<>();
         List<LocalDisk> partitions = new ArrayList<>();
 
         //private String SELECT = "Select a local disk:";
         private String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
-
+        private String NO_DRIVES = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.nodrives.msg");
+        
         LocalDiskThread worker = null;
 
         private void loadDisks() {
@@ -326,7 +326,7 @@ final class LocalDiskPanel extends JPanel {
             // Clear the lists
             errorLabel.setText("");
             disks = new ArrayList<>();
-            physical = new ArrayList<>();
+            physicalDrives = new ArrayList<>();
             partitions = new ArrayList<>();
             diskComboBox.setEnabled(false);
             ready = false;
@@ -357,17 +357,41 @@ final class LocalDiskPanel extends JPanel {
 
         @Override
         public Object getSelectedItem() {
-            return ready ? selected : LOADING;
+            if (ready) {
+                if (disks.isEmpty()) {
+                    return NO_DRIVES;
+                }
+                return selected;
+            }
+            else {
+                return LOADING;
+            }
         }
 
         @Override
         public int getSize() {
-            return ready ? disks.size() : 1;
+            if (ready) {
+                if (disks.isEmpty()) {
+                    return 1;
+                }
+                return disks.size();
+            }
+            else {
+                return 1;
+            }
         }
 
         @Override
         public Object getElementAt(int index) {
-            return ready ? disks.get(index) : LOADING;
+            if (ready) {
+                if (disks.isEmpty()) {
+                    return NO_DRIVES;
+                }
+                return disks.get(index);
+            }
+            else {
+                return LOADING;
+            }
         }
 
         @Override
@@ -383,7 +407,7 @@ final class LocalDiskPanel extends JPanel {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel panel = new JPanel(new BorderLayout());
             JLabel label = new JLabel();
-            if (index == physical.size() - 1) {
+            if ((index == physicalDrives.size() - 1) && (physicalDrives.size() > 0)) {
                 panel.add(new JSeparator(JSeparator.HORIZONTAL), BorderLayout.SOUTH);
             }
 
@@ -396,13 +420,11 @@ final class LocalDiskPanel extends JPanel {
             }
 
             String localDiskString = value.toString();
-            if (localDiskString.equals(LOADING)) {
-                label.setText(LOADING);
+            label.setText(value.toString());
+            if ((localDiskString.equals(LOADING)) || (localDiskString.equals(NO_DRIVES))) {
                 label.setFont(label.getFont().deriveFont(Font.ITALIC));
                 label.setBackground(Color.GRAY);
-            } else {
-                label.setText(value.toString());
-            }
+            } 
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));
 
@@ -417,14 +439,14 @@ final class LocalDiskPanel extends JPanel {
             @Override
             protected Object doInBackground() throws Exception {
                 // Populate the lists
-                physical = PlatformUtil.getPhysicalDrives();
+                physicalDrives = PlatformUtil.getPhysicalDrives();
                 partitions = PlatformUtil.getPartitions();
 
                 return null;
             }
 
             private void displayErrors() {
-                if (physical.isEmpty() && partitions.isEmpty()) {
+                if (physicalDrives.isEmpty() && partitions.isEmpty()) {
                     if (PlatformUtil.isWindowsOS()) {
                         errorLabel.setText(
                                 NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.disksNotDetected.text"));
@@ -437,7 +459,7 @@ final class LocalDiskPanel extends JPanel {
                                                                       "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText"));
                     }
                     diskComboBox.setEnabled(false);
-                } else if (physical.isEmpty()) {
+                } else if (physicalDrives.isEmpty()) {
                     errorLabel.setText(
                             NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.someDisksNotDetected.text"));
                     errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
@@ -459,17 +481,18 @@ final class LocalDiskPanel extends JPanel {
                     if (!this.isCancelled()) {
                         enableNext = false;
                         displayErrors();
-                        ready = true;
+                        
                         worker = null;
                         loadingDisks = false;
 
-                        disks.addAll(physical);
+                        disks.addAll(physicalDrives);
                         disks.addAll(partitions);
 
                         if (disks.size() > 0) {
                             diskComboBox.setEnabled(true);
                             diskComboBox.setSelectedIndex(0);
                         }
+                        ready = true;
                     } else {
                         logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
                     }
