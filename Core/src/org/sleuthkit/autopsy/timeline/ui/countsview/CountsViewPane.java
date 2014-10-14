@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import javafx.application.Platform;
@@ -61,9 +59,9 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.actions.Back;
@@ -105,7 +103,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
 
     private final CategoryAxis dateAxis = new CategoryAxis(FXCollections.<String>observableArrayList());
 
-    private final SimpleObjectProperty<ScaleType> scale = new SimpleObjectProperty<>(ScaleType.LINEAR);
+    private final SimpleObjectProperty<ScaleType> scale = new SimpleObjectProperty<>(ScaleType.LOGARITHMIC);
 
     //private access to barchart data
     private final Map<EventType, XYChart.Series<String, Number>> eventTypeMap = new ConcurrentHashMap<>();
@@ -462,12 +460,6 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
     class CountsViewSettingsPane extends HBox {
 
         @FXML
-        private ResourceBundle resources;
-
-        @FXML
-        private URL location;
-
-        @FXML
         private RadioButton logRadio;
 
         @FXML
@@ -484,7 +476,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
             assert sqrtRadio != null : "fx:id=\"sqrtRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
-            linearRadio.setSelected(true);
+            logRadio.setSelected(true);
             scaleGroup.selectedToggleProperty().addListener(observable -> {
                 if (scaleGroup.getSelectedToggle() == linearRadio) {
                     scale.set(ScaleType.LINEAR);
