@@ -431,6 +431,7 @@ class ExtractRegistry extends Extract {
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
                 String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+                String winver = "";
                 
                 for (int j = 0; j < myartlist.getLength(); j++) {
                     Node artchild = myartlist.item(j);
@@ -497,7 +498,6 @@ class ExtractRegistry extends Extract {
                                 }
                                 break;
                             case "WinVersion": //NON-NLS
-                                String winver = "";
                                 String name = artnode.getAttribute("name"); //NON-NLS
 
                                 if (name.contains("ProductName")) { //NON-NLS
@@ -519,7 +519,7 @@ class ExtractRegistry extends Extract {
                                     try {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, winver));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, installtime));
-                                        BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                        BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                         bbart.addAttributes(bbattributes);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
