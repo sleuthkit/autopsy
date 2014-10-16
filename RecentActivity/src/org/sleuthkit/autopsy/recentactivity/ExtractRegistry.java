@@ -67,6 +67,8 @@ class ExtractRegistry extends Extract {
     private Content dataSource;
     private IngestJobContext context;
 
+    final private static UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
+    
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
@@ -151,8 +153,6 @@ class ExtractRegistry extends Extract {
             logger.log(Level.SEVERE, null, ex);
         }
         
-        UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
-        
         int j = 0;
         for (AbstractFile regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
@@ -191,7 +191,7 @@ class ExtractRegistry extends Extract {
             
             // parse the autopsy-specific output
             if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
-                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile, usbMapper) == false) {
+                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                                 this.getName(), regFileName));
@@ -373,18 +373,17 @@ class ExtractRegistry extends Extract {
     // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
     /**
      * 
-     * @param regRecord
+     * @param regFilePath Path to the output file produced by RegRipper.
      * @param regFile File object for registry that we are parsing (to make blackboard artifacts with)
-     * @param extrctr
      * @return 
      */
-    private boolean parseAutopsyPluginOutput(String regRecord, AbstractFile regFile, UsbDeviceIdMapper extrctr) {
+    private boolean parseAutopsyPluginOutput(String regFilePath, AbstractFile regFile) {
         FileInputStream fstream = null;
         try {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
      
             // Read the file in and create a Document and elements
-            File regfile = new File(regRecord);
+            File regfile = new File(regFilePath);
             fstream = new FileInputStream(regfile);
             
             String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next(); //NON-NLS
@@ -415,7 +414,7 @@ class ExtractRegistry extends Extract {
                     String etime = timenode.getTextContent();
                     try {
                         Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
-                        mtime = epochtime.longValue();
+                        mtime = epochtime;
                         String Tempdate = mtime.toString();
                         mtime = Long.valueOf(Tempdate) / 1000;
                     } catch (ParseException ex) {
@@ -431,7 +430,9 @@ class ExtractRegistry extends Extract {
                 
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
+                String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
                 String winver = "";
+                
                 for (int j = 0; j < myartlist.getLength(); j++) {
                     Node artchild = myartlist.item(j);
                     // If it has attributes, then it is an Element (based off API)
@@ -439,131 +440,125 @@ class ExtractRegistry extends Extract {
                         Element artnode = (Element) artchild;
                         
                         String value = artnode.getTextContent().trim();
-                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
-                        if ("recentdocs".equals(dataType)) { //NON-NLS
-                            //               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
-                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
-                            //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", dataType, value));
-                            //               bbart.addAttributes(bbattributes);
-                            // @@@ BC: Why are we ignoring this...
-                        } 
-                        else if ("usb".equals(dataType)) { //NON-NLS
-                            try {      
-                                Long usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
-                                usbMtime = Long.valueOf(usbMtime.toString());
+                        switch (dataType) {
+                            case "recentdocs": //NON-NLS                                
+                                // BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                                // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
+                                // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
+                                // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", dataType, value));
+                                // bbart.addAttributes(bbattributes);
+                                // @@@ BC: Why are we ignoring this...
+                                break;
+                            case "usb": //NON-NLS
+                                try {      
+                                    Long usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
+                                    usbMtime = Long.valueOf(usbMtime.toString());
 
-                                BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), usbMtime));
-                                String dev = artnode.getAttribute("dev"); //NON-NLS
-                                String make = "";
-                                String model = dev; 
-                                if (dev.toLowerCase().contains("vid")) { //NON-NLS
-                                    USBInfo info = extrctr.parseAndLookup(dev);
-                                    if (info.getVendor() != null) {
-                                        make = info.getVendor();
+                                    BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, usbMtime));
+                                    String dev = artnode.getAttribute("dev"); //NON-NLS
+                                    String make = "";
+                                    String model = dev; 
+                                    if (dev.toLowerCase().contains("vid")) { //NON-NLS
+                                        USBInfo info = usbMapper.parseAndLookup(dev);
+                                        if (info.getVendor() != null) {
+                                            make = info.getVendor();
+                                        }
+                                        if (info.getProduct() != null) {
+                                            model = info.getProduct();
+                                        }
                                     }
-                                    if (info.getProduct() != null) {
-                                        model = info.getProduct();
-                                    }
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), parentModuleName, make));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), parentModuleName, model));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), parentModuleName, value));
+                                    bbart.addAttributes(bbattributes);
+                                } catch (TskCoreException ex) {
+                                    logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS
                                 }
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
-                                        NbBundle.getMessage(this.getClass(),
-                                                "ExtractRegistry.parentModuleName.noSpace"), make));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(),
-                                        NbBundle.getMessage(this.getClass(),
-                                                "ExtractRegistry.parentModuleName.noSpace"), model));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(),
-                                        NbBundle.getMessage(this.getClass(),
-                                                "ExtractRegistry.parentModuleName.noSpace"), value));
-                                bbart.addAttributes(bbattributes);
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS
-                            }
-                        } 
-                        else if ("uninstall".equals(dataType)) { //NON-NLS
-                            Long itemMtime = null;
-                            try {
-                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
-                                itemMtime = epochtime.longValue();
-                                itemMtime = itemMtime / 1000;
-                            } catch (ParseException e) {
-                                logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
-                            }
-
-                            try {
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), value));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), itemMtime));
-                                BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
-                                bbart.addAttributes(bbattributes);
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
-                            }
-                        } 
-                        else if ("WinVersion".equals(dataType)) { //NON-NLS
-                            String name = artnode.getAttribute("name"); //NON-NLS
-
-                            if (name.contains("ProductName")) { //NON-NLS
-                                winver = value;
-                            }
-                            if (name.contains("CSDVersion")) { //NON-NLS
-                                winver = winver + " " + value;
-                            }
-                            if (name.contains("InstallDate")) { //NON-NLS
-                                Long installtime = null;
+                                break;
+                            case "uninstall": //NON-NLS
+                                Long itemMtime = null;
                                 try {
-                                    Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
-                                    installtime = epochtime.longValue();
-                                    String Tempdate = installtime.toString();
-                                    installtime = Long.valueOf(Tempdate) / 1000;
+                                    Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
+                                    itemMtime = epochtime;
+                                    itemMtime = itemMtime / 1000;
                                 } catch (ParseException e) {
-                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                    logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
                                 }
+
                                 try {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                                             NbBundle.getMessage(this.getClass(),
-                                                                                                 "ExtractRegistry.parentModuleName.noSpace"), winver));
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                                                                             NbBundle.getMessage(this.getClass(),
-                                                                                                 "ExtractRegistry.parentModuleName.noSpace"), installtime));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, value));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),parentModuleName, itemMtime));
                                     BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                     bbart.addAttributes(bbattributes);
                                 } catch (TskCoreException ex) {
                                     logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
                                 }
-                            }
-                        } 
-                        else if ("office".equals(dataType)) { //NON-NLS
-                            String name = artnode.getAttribute("name"); //NON-NLS
-                            
-                            try {
-                                BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                                // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
-                                if (mtime != null) {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
-                                                                             NbBundle.getMessage(this.getClass(),
-                                                                                                 "ExtractRegistry.parentModuleName.noSpace"), mtime));
+                                break;
+                            case "WinVersion": //NON-NLS
+                                String name = artnode.getAttribute("name"); //NON-NLS
+
+                                if (name.contains("ProductName")) { //NON-NLS
+                                    winver = value;
                                 }
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), name));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), value));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                                         NbBundle.getMessage(this.getClass(),
-                                                                                             "ExtractRegistry.parentModuleName.noSpace"), artnode.getNodeName()));
-                                bbart.addAttributes(bbattributes);
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
-                            }
+                                if (name.contains("CSDVersion")) { //NON-NLS
+                                    winver = winver + " " + value;
+                                }
+                                if (name.contains("InstallDate")) { //NON-NLS
+                                    Long installtime = null;
+                                    try {
+                                        Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                        installtime = epochtime;
+                                        String Tempdate = installtime.toString();
+                                        installtime = Long.valueOf(Tempdate) / 1000;
+                                    } catch (ParseException e) {
+                                        logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                    }
+                                    try {
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, winver));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, installtime));
+                                        BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
+                                        bbart.addAttributes(bbattributes);
+                                    } catch (TskCoreException ex) {
+                                        logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
+                                    }
+                                }
+                                break;
+                            case "office": //NON-NLS
+                                String officeName = artnode.getAttribute("name"); //NON-NLS
+
+                                try {
+                                    BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                                    // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
+                                    if (mtime != null) {
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), parentModuleName, mtime));
+                                    }
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), parentModuleName, officeName));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), parentModuleName, value));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, artnode.getNodeName()));
+                                    bbart.addAttributes(bbattributes);
+                                } catch (TskCoreException ex) {
+                                    logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
+                                }
+                                break;
+                            case "ProcessorArchitecture": //NON-NLS
+                                try {
+                                    String processorArchitecture = value;
+                                    if (processorArchitecture.equals("AMD64"))
+                                        processorArchitecture = "x86-64";
+                                    
+                                    BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID(), parentModuleName, processorArchitecture));
+                                    bbart.addAttributes(bbattributes);
+                                } catch (TskCoreException ex) {
+                                    logger.log(Level.SEVERE, "Error adding os info artifact to blackboard."); //NON-NLS
+                                }
+                                break;
+                            default:
+                                logger.log(Level.WARNING, "Unercognized node name: " + dataType);
+                                break;
                         }
                     }
                 }
