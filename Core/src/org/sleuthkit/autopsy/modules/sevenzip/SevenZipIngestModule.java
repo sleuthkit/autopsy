@@ -284,12 +284,23 @@ public final class SevenZipIngestModule implements FileIngestModule {
         
         if (detectedFormat == null) {
             logger.log(Level.WARNING, "Could not detect format for file: " + archiveFile); //NON-NLS
+            
+            // if we don't have attribute info then use file extension
+            String extension = archiveFile.getNameExtension();
+            if ("rar".equals(extension))
+            {
+                // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
+                // it will be opened incorrectly when using 7zip's built-in auto-detect functionality
+                return RAR;            
+            }
+            
+            // Otherwise open the archive using 7zip's built-in auto-detect functionality
             return null;
         }
         else if (detectedFormat.contains("application/x-rar-compressed"))
         {
-            // EL: for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
-            // it will be opened incorrectly when using 7zip's built-in auto-detect functionality (see VIK-619). 
+            // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
+            // it will be opened incorrectly when using 7zip's built-in auto-detect functionality
             return RAR;            
         }
 
@@ -339,8 +350,9 @@ public final class SevenZipIngestModule implements FileIngestModule {
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
 
-            // EL: for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
-            // it will be opened incorrectly when using 7zip's built-in auto-detect functionality (see VIK-619).
+            // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
+            // it will be opened incorrectly when using 7zip's built-in auto-detect functionality.
+            // All other archive formats are still opened using 7zip built-in auto-detect functionality.
             ArchiveFormat options = get7ZipOptions(archiveFile);            
             inArchive = SevenZip.openInArchive(options, stream);
 
