@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  * Creates ingest jobs and their constituent ingest tasks, enabled the tasks for
- * execution by the ingest manager's ingest threads.
+ * execution by the ingest manager's ingest threads. // RJCTODO: Fix this
  */
 final class IngestScheduler {
 
@@ -135,7 +135,7 @@ final class IngestScheduler {
         return errors;
     }
 
-    synchronized private void scheduleIngestTasks(IngestJob job) throws InterruptedException {
+    synchronized void scheduleIngestTasks(IngestJob job) throws InterruptedException {
         // This is synchronized to guard the task queues and make enabled for 
         // a job an an atomic operation. Otherwise, the data source task might 
         // be completed before the file tasks were scheduled, resulting in a 
@@ -375,24 +375,37 @@ final class IngestScheduler {
         }
     }
 
+    /**
+     * Queries whether or not ingest jobs are running.
+     * 
+     * @return True or false.
+     */
     boolean ingestJobsAreRunning() {
         return !ingestJobsById.isEmpty();
     }
-
-    /**
-     * Clears the queues for the job. If job is complete, finish it up.
-     * Otherwise,
-     * this will exit and the last worker thread will finish / clean up.
-     *
-     * @param job
+        
+    /** 
+     * Discards all pending tasks of the specified type(s) for an ingest job. 
+     * 
+     * @param job The job for which the pending tasks are to be discarded.
      */
-    synchronized void cancelIngestJob(IngestJob job) {
+    enum TaskType { DATA_SOURCE_INGEST, FILE_INGEST, ALL };
+    synchronized void discardPendingTasksForJob(IngestJob job, TaskType tasksToDiscard) {
         long jobId = job.getId();
-        removeAllPendingTasksForJob(pendingRootDirectoryTasks, jobId);
-        removeAllPendingTasksForJob(pendingDirectoryTasks, jobId);
-        removeAllPendingTasksForJob(pendingFileTasks, jobId);
-        removeAllPendingTasksForJob(pendingDataSourceTasks, jobId);
-        job.cancel();
+        
+        if (TaskType.FILE_INGEST == tasksToDiscard || TaskType.ALL == tasksToDiscard) {
+            removeAllPendingTasksForJob(pendingRootDirectoryTasks, jobId);
+            removeAllPendingTasksForJob(pendingDirectoryTasks, jobId);
+            removeAllPendingTasksForJob(pendingFileTasks, jobId);
+        }
+        
+        if (TaskType.FILE_INGEST == tasksToDiscard || TaskType.ALL == tasksToDiscard) {        
+            removeAllPendingTasksForJob(pendingDataSourceTasks, jobId);
+        }
+        
+        // If the job has no other pending tasks or tasks in progreass, wrap it 
+        // up. Otherwise, the job will be finished when the last task in 
+        // progress is completed.                
         if (ingestJobIsComplete(job)) {
             finishIngestJob(job);
         }
@@ -485,7 +498,7 @@ final class IngestScheduler {
         job.finish();
         long jobId = job.getId();
         ingestJobsById.remove(jobId);
-        if (!job.isCancelled()) {
+        if (!job.jobIsCancelled()) {
             logger.log(Level.INFO, "Ingest job {0} completed", jobId);
             IngestManager.getInstance().fireIngestJobCompleted(job.getId());
         } else {

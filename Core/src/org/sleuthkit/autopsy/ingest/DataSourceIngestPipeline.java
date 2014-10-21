@@ -27,17 +27,17 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * This class manages a sequence of data source ingest modules. It starts them, 
- * shuts them down, and runs them in sequential order. 
+ * This class manages a sequence of data source ingest modules. It starts them,
+ * shuts them down, and runs them in sequential order.
  */
 final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobContext context;
+    private final IngestJob job;
     private final List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
-    DataSourceIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
-        this.context = context;
+    DataSourceIngestPipeline(IngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+        this.job = job;
 
         // Create an ingest module instance from each data source ingest module 
         // template. Put the modules in a map of module class names to module 
@@ -75,7 +75,7 @@ final class DataSourceIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModuleDecorator module : modules) {
             try {
-                module.startUp(context);
+                module.startUp(new IngestJobContext(this.job));
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -96,7 +96,9 @@ final class DataSourceIngestPipeline {
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (context.isJobCancelled()) {
+            if (this.job.dataSourceIngestPipelineIsInterrupted()) {
+                this.job.resumeDataSourceIngestPipeline();
+            } else if (this.job.dataSourceIngestIsCancelled()) {
                 break;
             }
         }
