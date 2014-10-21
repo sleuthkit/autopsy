@@ -227,6 +227,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 case TSK_GPS_SEARCH:
                      in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png"); //NON-NLS
                      break;
+                case TSK_OS_INFO:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/computer.png"); //NON-NLS
+                     break;
 
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
