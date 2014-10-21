@@ -78,13 +78,14 @@ class TextMessageAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "Select address,date,type,subject,body FROM sms;");
+                    "Select address,date,read,type,subject,body FROM sms;");
 
             String address; // may be phone number, or other addresses
-
             String direction; // message received in inbox = 1, message sent = 2
-            String subject;//message subject
+            String read; // may be unread = 0, read = 1
+            String subject; //message subject
             String body; //message body
+
             while (resultSet.next()) {
                 address = resultSet.getString("address");
                 Long date = Long.valueOf(resultSet.getString("date")) / 1000;
@@ -93,6 +94,11 @@ class TextMessageAnalyzer {
                 } else {
                     direction = "Outgoing";
                 }
+                if (resultSet.getString("read").equals("0")) {
+                    read = "Unread";
+                } else {
+                    read = "Read";
+                }
                 subject = resultSet.getString("subject");
                 body = resultSet.getString("body");
 
@@ -100,6 +106,7 @@ class TextMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, address));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID(), moduleName, read));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "SMS Message"));
