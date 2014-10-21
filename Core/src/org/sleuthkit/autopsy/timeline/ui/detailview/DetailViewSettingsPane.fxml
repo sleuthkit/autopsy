@@ -7,48 +7,73 @@
 
 <fx:root alignment="CENTER_LEFT" spacing="5.0" type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
   <children>
-    <FlowPane alignment="CENTER_LEFT" hgap="5.0" prefHeight="-1.0" prefWidth="-1.0" prefWrapLength="220.0" vgap="5.0" HBox.hgrow="ALWAYS">
-      <children><Label text="Layout Options:" />
-<HBox spacing="5.0">
-<children>
-        <CheckBox fx:id="bandByTypeBox" mnemonicParsing="false" text="Band by Type" />
-        <CheckBox fx:id="oneEventPerRowBox" mnemonicParsing="false" text="One Event Per Row" />
-</children>
-<FlowPane.margin>
-<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-</FlowPane.margin>
-</HBox>
-      </children>
-<HBox.margin>
-<Insets bottom="5.0" left="5.0" right="5.0" />
-</HBox.margin>
-    </FlowPane>
-    <Separator orientation="VERTICAL" prefHeight="-1.0" />
-    <FlowPane columnHalignment="CENTER" hgap="5.0" prefHeight="-1.0" prefWidth="-1.0" prefWrapLength="350.0" vgap="5.0" HBox.hgrow="ALWAYS">
-      <children>
-        <CheckBox fx:id="truncateAllBox" mnemonicParsing="false" text="Truncate Descriptions to (px):" />
-            <Slider id="truncateAllSlider" fx:id="truncateWidthSlider" blockIncrement="50.0" disable="false" majorTickUnit="150.0" max="500.0" min="50.0" minorTickCount="0" prefHeight="33.0" prefWidth="146.0" showTickLabels="true" showTickMarks="false" value="200.0">
-<FlowPane.margin>
-<Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-</FlowPane.margin></Slider>
-      </children>
-    </FlowPane>
-    <Separator orientation="VERTICAL" prefHeight="-1.0" /><FlowPane alignment="CENTER_LEFT" hgap="5.0" minHeight="-Infinity" minWidth="-Infinity" prefWrapLength="200.0" vgap="5.0" HBox.hgrow="ALWAYS">
-<children><Label text="Description Visbility:" />
-<HBox spacing="5.0">
-<children><RadioButton fx:id="showRadio" mnemonicParsing="false" selected="true" text="Show">
+      <MenuButton mnemonicParsing="false" text="Advanced Layout Options">
+        <items>
+            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Band by Type">
+               <content>
+        <CheckBox fx:id="bandByTypeBox" mnemonicParsing="false" text="Band by Type">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding></CheckBox>
+               </content>
+            </CustomMenuItem>
+            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="One Event Per Row">
+               <content>
+        <CheckBox fx:id="oneEventPerRowBox" mnemonicParsing="false" text="One Event Per Row">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding></CheckBox>
+               </content>
+            </CustomMenuItem>
+            <SeparatorMenuItem mnemonicParsing="false" />
+            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Truncate Descriptions ">
+               <content>
+              <CheckBox fx:id="truncateAllBox" mnemonicParsing="false" text="Truncate Descriptions ">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding></CheckBox>
+               </content>
+            </CustomMenuItem>
+            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="max description width (px)">
+               <content>
+                  <Label fx:id="truncateSliderLabel" contentDisplay="BOTTOM" text="max description width (px):">
+                     <graphic>
+                        <Slider id="truncateAllSlider" fx:id="truncateWidthSlider" blockIncrement="50.0" disable="false" majorTickUnit="150.0" max="500.0" min="50.0" minorTickCount="0" prefHeight="33.0" prefWidth="150.0" showTickLabels="true" showTickMarks="false" value="200.0" />
+                     </graphic>
+                  </Label>
+               </content>
+            </CustomMenuItem>
+            <SeparatorMenuItem mnemonicParsing="false" text="Description Visibility" />
+          <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Show Full Description">
+               <content>
+                  <RadioButton fx:id="showRadio" mnemonicParsing="false" selected="true" text="Show Full Description">
 <toggleGroup>
 <ToggleGroup fx:id="descrVisibility" />
-</toggleGroup></RadioButton><RadioButton fx:id="countsRadio" mnemonicParsing="false" text="Counts Only" toggleGroup="$descrVisibility" /><RadioButton fx:id="hiddenRadio" mnemonicParsing="false" text="Hide" toggleGroup="$descrVisibility" />
-</children>
-<FlowPane.margin>
-<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-</FlowPane.margin>
-</HBox>
-</children>
-<HBox.margin>
-<Insets />
-</HBox.margin></FlowPane>
+</toggleGroup>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </RadioButton>
+               </content>
+            </CustomMenuItem>
+            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Show Counts Only">
+               <content>
+                  <RadioButton fx:id="countsRadio" mnemonicParsing="false" text="Show Counts Only" toggleGroup="$descrVisibility">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding></RadioButton>
+               </content>
+            </CustomMenuItem>
+            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Hide Description">
+               <content>
+                  <RadioButton fx:id="hiddenRadio" mnemonicParsing="false" text="Hide Description" toggleGroup="$descrVisibility">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding></RadioButton>
+               </content>
+            </CustomMenuItem>
+        </items>
+      </MenuButton>
   </children>
   <padding>
     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

@@ -463,9 +463,6 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         private RadioButton logRadio;
 
         @FXML
-        private RadioButton sqrtRadio;
-
-        @FXML
         private RadioButton linearRadio;
 
         @FXML
@@ -474,15 +471,13 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         @FXML
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
-            assert sqrtRadio != null : "fx:id=\"sqrtRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
             logRadio.setSelected(true);
             scaleGroup.selectedToggleProperty().addListener(observable -> {
                 if (scaleGroup.getSelectedToggle() == linearRadio) {
                     scale.set(ScaleType.LINEAR);
-                } else if (scaleGroup.getSelectedToggle() == sqrtRadio) {
-                    scale.set(ScaleType.SQUARE_ROOT);
-                } else if (scaleGroup.getSelectedToggle() == logRadio) {
+                }
+                if (scaleGroup.getSelectedToggle() == logRadio) {
                     scale.set(ScaleType.LOGARITHMIC);
                 }
             });
@@ -496,7 +491,6 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
     private static enum ScaleType {
 
         LINEAR(t -> t.doubleValue()),
-        SQUARE_ROOT(t -> Math.sqrt(t)),
         LOGARITHMIC(t -> Math.log10(t) + 1);
 
         private final Function<Long, Double> func;
