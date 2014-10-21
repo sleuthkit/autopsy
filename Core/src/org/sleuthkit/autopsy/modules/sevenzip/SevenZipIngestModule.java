@@ -279,7 +279,8 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 detectedFormat = attribute.getValueString();
                 break;
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {            
+            logger.log(Level.WARNING, "Couldn't obtain file attributes for file: " + archiveFile.toString(), ex);       
         }     
         
         if (detectedFormat == null) {
