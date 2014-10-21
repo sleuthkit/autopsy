@@ -96,10 +96,10 @@ final class DataSourceIngestPipeline {
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (this.job.dataSourceIngestPipelineIsInterrupted()) {
-                this.job.resumeDataSourceIngestPipeline();
-            } else if (this.job.dataSourceIngestIsCancelled()) {
+            if (this.job.dataSourceIngestIsCancelled()) {
                 break;
+            } else if (this.job.dataSourceIngestPipelineIsInterrupted())  {
+                progress = this.job.resumeDataSourceIngestPipeline();
             }
         }
         ingestManager.setIngestTaskProgressCompleted(task);

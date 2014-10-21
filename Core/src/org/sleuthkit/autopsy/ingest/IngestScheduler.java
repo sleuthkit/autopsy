@@ -60,7 +60,6 @@ final class IngestScheduler {
 
     private volatile boolean enabled = false;
 
-    //    private volatile boolean cancellingAllTasks = false; TODO: Uncomment this with related code, if desired
     private final DataSourceIngestTaskQueue dataSourceTaskDispenser = new DataSourceIngestTaskQueue();
 
     private final FileIngestTaskQueue fileTaskDispenser = new FileIngestTaskQueue();
@@ -135,11 +134,11 @@ final class IngestScheduler {
         return errors;
     }
 
-    synchronized void scheduleIngestTasks(IngestJob job) throws InterruptedException {
-        // This is synchronized to guard the task queues and make enabled for 
-        // a job an an atomic operation. Otherwise, the data source task might 
-        // be completed before the file tasks were scheduled, resulting in a 
-        // false positive for a job completion check.
+    synchronized private void scheduleIngestTasks(IngestJob job) throws InterruptedException {
+        // This is synchronized to guard the task queues and make ingest 
+        // scheduling for a job an an atomic operation. Otherwise, the data 
+        // source task might be completed before the file tasks were scheduled, 
+        // resulting in a false positive for a job completion check.
         if (job.hasDataSourceIngestPipeline()) {
             scheduleDataSourceIngestTask(job);
         }
@@ -364,14 +363,6 @@ final class IngestScheduler {
         if (jobIsCompleted) {
             // The lock does not need to be held for the job shut down.
             finishIngestJob(job);
-            // TODO: Uncomment this code to make sure that there is no more work
-            // being done by the ingest threads. The wait() call is in 
-            // cancelAllTasks(). 
-//            if (cancellingAllTasks) {
-//                synchronized (ingestJobsById) {
-//                    ingestJobsById.notify();
-//                }
-//            }
         }
     }
 
@@ -399,13 +390,13 @@ final class IngestScheduler {
             removeAllPendingTasksForJob(pendingFileTasks, jobId);
         }
         
-        if (TaskType.FILE_INGEST == tasksToDiscard || TaskType.ALL == tasksToDiscard) {        
+        if (TaskType.DATA_SOURCE_INGEST == tasksToDiscard || TaskType.ALL == tasksToDiscard) {        
             removeAllPendingTasksForJob(pendingDataSourceTasks, jobId);
         }
         
         // If the job has no other pending tasks or tasks in progreass, wrap it 
         // up. Otherwise, the job will be finished when the last task in 
-        // progress is completed.                
+        // progress is completed - see notifyTaskCompleted().               
         if (ingestJobIsComplete(job)) {
             finishIngestJob(job);
         }
@@ -456,20 +447,6 @@ final class IngestScheduler {
                 }
             }
         }
-        // TODO: Uncomment this code to make sure that there is no more work
-        // being done by the ingest threads. The notify() call is in 
-        // notifyTaskCompleted()
-//        cancellingAllTasks = true;
-//        synchronized (ingestJobsById) {
-//            while (ingestJobsById.isEmpty() == false) {
-//                try {
-//                    ingestJobsById.wait();
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(IngestScheduler.class.getName()).log(Level.FINE, "Unexpected interruption of wait on ingest jobs collection", ex); //NON-NLS
-//                }
-//            }
-//        }
-//        cancellingAllTasks = false;
     }
 
     synchronized private <T> void removeAllPendingTasks(Collection<T> taskQueue) {

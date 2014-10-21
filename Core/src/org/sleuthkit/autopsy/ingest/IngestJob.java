@@ -23,8 +23,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -43,7 +45,6 @@ final class IngestJob {
     private final long id;
     private final Content dataSource;
     private final boolean processUnallocatedSpace;
-    private final Object lock; // RJCTODO: Don't need this...
     private DataSourceIngestPipeline dataSourceIngestPipeline;
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
 
@@ -57,10 +58,13 @@ final class IngestJob {
     private long processedFiles;
     private ProgressHandle fileIngestProgress;
 
-    // These fields support cancellation of all or part of the ingest job
-    private boolean dataSourceIngestPipelineInterrupted = false;
-    private boolean dataSourceIngestCancelled = false;
-    private boolean fileIngestCancelled = false;
+    // These fields support cancellation of all or part of the ingest job. The
+    // lock object is used to enable the three flags to be treated as one state
+    // variable subject and to support atomic cancellation operations.
+    private boolean dataSourceIngestPipelineInterrupted;
+    private boolean dataSourceIngestCancelled;
+    private boolean fileIngestCancelled;
+    private final Object cancellationLock;
 
     // This field is used for generating ingest job diagnostic data.
     private final long startTime;
@@ -77,7 +81,7 @@ final class IngestJob {
         this.id = id;
         this.dataSource = dataSource;
         this.processUnallocatedSpace = processUnallocatedSpace;
-        this.lock = new Object();
+        this.cancellationLock = new Object();
         this.fileIngestPipelines = new LinkedBlockingQueue<>();
 
         this.filesInProgress = new ArrayList<>();
@@ -189,13 +193,27 @@ final class IngestJob {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.dataSourceIngest.initialDisplayName",
                 dataSource.getName());
-        dataSourceIngestProgress = ProgressHandleFactory.createHandle(displayName, () -> {
-            // RJCTODO: Do a dialog box here to do one of the following:
-            // a. Interrupt the data source pipeline (cancel the current data source ingest module).
-            // b. Cancel data source ingest.
-            // c. Cancel data source ingest and file ingest.            
-            this.cancelDataSourceIngest();
-            return true;
+        dataSourceIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+            @Override
+            public boolean cancel() {
+                DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
+                // RJCTODO: Need bundle for dialog title
+                // RJCTODO: Consider text changes per story in JIRA
+                // RJCTODO: Consider current module issues
+                JOptionPane.showConfirmDialog(null, panel, "Cancel Ingest", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
+                switch (panel.getCancelRequest()) {
+                    case CURRENT_DATA_SOURCE_MODULE:
+                        IngestJob.this.interruptDataSourceIngestPipeline();
+                        break;
+                    case DATA_SOURCE_INGEST:
+                        IngestJob.this.cancelDataSourceIngest();
+                        break;
+                    case JOB:
+                        IngestJob.this.cancel();
+                        break;
+                }
+                return true;
+            }
         });
         dataSourceIngestProgress.start();
         dataSourceIngestProgress.switchToIndeterminate();
@@ -208,12 +226,24 @@ final class IngestJob {
         final String displayName = NbBundle.getMessage(this.getClass(),
                 "IngestJob.progress.fileIngest.displayName",
                 dataSource.getName());
-        fileIngestProgress = ProgressHandleFactory.createHandle(displayName, () -> {
-            // RJCTODO: Do a dialog box here to do one of the following:
-            // a. Cancel file ingest.
-            // b. Cancel data source ingest and file ingest.            
-            this.cancelFileIngest();
-            return true;
+        fileIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+
+            @Override
+            public boolean cancel() {
+                FileIngestCancellationPanel panel = new FileIngestCancellationPanel();
+                // RJCTODO: Need bundle for dialog title
+                // RJCTODO: Consider text changes per story in JIRA
+                JOptionPane.showConfirmDialog(null, panel, "Cancel Ingest", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
+                switch (panel.getCancelRequest()) {
+                    case FILE_INGEST:
+                        IngestJob.this.cancelFileIngest();
+                        break;
+                    case JOB:
+                        IngestJob.this.cancel();
+                        break;
+                }
+                return true;
+            }
         });
         estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
         fileIngestProgress.start();
@@ -256,11 +286,13 @@ final class IngestJob {
                 }
             }
 
-            // all data source ingest jobs are done for this task, so shut down progress bar
+            // All data source ingest jobs are done for this task, so shut down 
+            // the progress bar
             if (null != dataSourceIngestProgress) {
                 dataSourceIngestProgress.finish();
-                // This is safe because this method will be called at most once per
-                // ingest job and finish() will not be called while that single 
+                // RJCTODO: What about this comment?
+                // This is safe because this method will be called at most once 
+                // per ingest job and finish() will not be called while that single 
                 // data source ingest task has not been reported complete by this
                 // code to the ingest scheduler.
                 dataSourceIngestProgress = null;
@@ -281,7 +313,8 @@ final class IngestJob {
     void process(FileIngestTask task) throws InterruptedException {
         try {
             if (!this.jobIsCancelled() && !this.fileIngestIsCancelled()) {
-                // Get the next available file ingest pipeline.
+                // Get a file ingest pipeline not currently in use by another
+                // file ingest thread.
                 FileIngestPipeline pipeline = this.fileIngestPipelines.take();
                 if (!pipeline.isEmpty()) {
                     // Get the file to process.
@@ -317,7 +350,8 @@ final class IngestJob {
                     }
                 }
 
-                // Relinquish the pipeline.
+                // Relinquish the pipeline so it can be reused by another file 
+                // ingest thread.
                 fileIngestPipelines.put(pipeline);
             }
         } finally {
@@ -370,7 +404,7 @@ final class IngestJob {
      * the currently executing data source ingest module.
      */
     void interruptDataSourceIngestPipeline() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             this.dataSourceIngestPipelineInterrupted = true;
         }
     }
@@ -382,7 +416,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean dataSourceIngestPipelineIsInterrupted() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             return this.dataSourceIngestPipelineInterrupted;
         }
     }
@@ -390,9 +424,12 @@ final class IngestJob {
     /**
      * Requests an resume of the data source ingest pipeline.
      */
-    void resumeDataSourceIngestPipeline() {
-        synchronized (this.lock) {
+    ProgressHandle resumeDataSourceIngestPipeline() {
+        synchronized (this.cancellationLock) {
             this.dataSourceIngestPipelineInterrupted = false;
+            this.dataSourceIngestProgress.finish();
+            this.startDataSourceIngestProgressBar();
+            return this.dataSourceIngestProgress;
         }
     }
 
@@ -401,7 +438,7 @@ final class IngestJob {
      * source ingest pipeline.
      */
     void cancelDataSourceIngest() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             if (dataSourceIngestProgress != null) {
                 final String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
@@ -423,7 +460,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean dataSourceIngestIsCancelled() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             return this.dataSourceIngestCancelled;
         }
     }
@@ -433,7 +470,7 @@ final class IngestJob {
      * pipeline.
      */
     void cancelFileIngest() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             if (this.fileIngestProgress != null) {
                 final String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.fileIngest.displayName",
@@ -454,7 +491,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean fileIngestIsCancelled() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             return this.fileIngestCancelled;
         }
     }
@@ -464,7 +501,7 @@ final class IngestJob {
      * file ingest pipelines.
      */
     void cancel() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             this.cancelDataSourceIngest();
             this.cancelFileIngest();
         }
@@ -477,7 +514,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean jobIsCancelled() {
-        synchronized (this.lock) {
+        synchronized (this.cancellationLock) {
             return this.dataSourceIngestCancelled && this.fileIngestCancelled;
         }
     }
@@ -502,16 +539,16 @@ final class IngestJob {
         private final long snapShotTime;
 
         IngestJobStats() {
-            synchronized (IngestJob.this.lock) {
+            synchronized (IngestJob.this) {
                 this.startTime = IngestJob.this.startTime;
                 this.processedFiles = IngestJob.this.processedFiles;
                 this.estimatedFilesToProcess = IngestJob.this.estimatedFilesToProcess;
-                snapShotTime = new Date().getTime();
+                this.snapShotTime = new Date().getTime();
             }
         }
 
         /**
-         * Get files per second throughput since job started
+         * Get files per second throughput since job started.
          *
          * @return
          */
