@@ -56,7 +56,7 @@ public class TextFilter extends AbstractFilter {
     synchronized public TextFilter copyOf() {
         TextFilter textFilter = new TextFilter(getText());
         textFilter.setActive(isActive());
-        textFilter.setDisabled(isdisabled());
+        textFilter.setDisabled(isDisabled());
         return textFilter;
     }
     

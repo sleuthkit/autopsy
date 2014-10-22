@@ -76,6 +76,5 @@ public interface Filter {
 
     SimpleBooleanProperty getDisabledProperty();
 
-    boolean isdisabled();
-
+    boolean isDisabled();
 }

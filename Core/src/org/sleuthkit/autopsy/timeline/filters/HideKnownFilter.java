@@ -37,7 +37,7 @@ public class HideKnownFilter extends AbstractFilter {
     public HideKnownFilter copyOf() {
         HideKnownFilter hideKnownFilter = new HideKnownFilter();
         hideKnownFilter.setActive(isActive());
-        hideKnownFilter.setDisabled(isdisabled());
+        hideKnownFilter.setDisabled(isDisabled());
         return hideKnownFilter;
     }
 
