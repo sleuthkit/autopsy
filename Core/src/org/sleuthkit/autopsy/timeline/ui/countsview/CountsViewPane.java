@@ -53,17 +53,20 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javax.swing.JOptionPane;
 import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
+import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -451,13 +454,41 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
             } else if (e.getClickCount() >= 2) {  //double-click => zoom in time
                 if (interval.toDuration().isLongerThan(Seconds.ONE.toStandardDuration())) {
                     controller.pushTimeRange(interval);
+                } else {
+
+                    int showConfirmDialog = JOptionPane.showConfirmDialog(null,
+                            NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.detailSwitchMessage"),
+                            NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.detailSwitchTitle"), JOptionPane.YES_NO_OPTION);
+                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
+                        controller.setViewMode(VisualizationMode.DETAIL);
+                    }
+
+                    /* //I would like to use the JAvafx dialog, but it doesn't
+                     * block the ui (because it is embeded in a TopComponent)
+                     * -jm
+                     *
+                     * final Dialogs.CommandLink yes = new
+                     * Dialogs.CommandLink("Yes", "switch to Details view");
+                     * final Dialogs.CommandLink no = new
+                     * Dialogs.CommandLink("No", "return to Counts view with a
+                     * resolution of Seconds");
+                     * Action choice = Dialogs.create()
+                     * .title("Switch to Details View?")
+                     * .masthead("There is no temporal resolution smaller than
+                     * Seconds.")
+                     * .message("Would you like to switch to the Details view
+                     * instead?")
+                     * .showCommandLinks(Arrays.asList(yes, no));
+                     *
+                     * if (choice == yes) {
+                     * controller.setViewMode(VisualizationMode.DETAIL);
+                     * } */
                 }
             }
         }
-
     }
 
-    class CountsViewSettingsPane extends HBox {
+    private class CountsViewSettingsPane extends HBox {
 
         @FXML
         private RadioButton logRadio;
