@@ -670,7 +670,7 @@ public class TimeLineController  {
     }
 
     @Immutable
-    class AutopsyCaseListener implements PropertyChangeListener {
+    private class AutopsyCaseListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {

@@ -38,6 +38,7 @@ import javafx.scene.chart.Axis;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollBar;
@@ -60,9 +61,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.joda.time.DateTime;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -391,6 +392,9 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         @FXML
         private Slider truncateWidthSlider;
 
+        @FXML
+        private Label truncateSliderLabel;
+
         public DetailViewSettingsPane() {
             FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml");
         }
@@ -404,7 +408,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
             bandByTypeBox.selectedProperty().bindBidirectional(chart.getBandByType());
             truncateAllBox.selectedProperty().bindBidirectional(chart.getTruncateAll());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.getOneEventPerRow());
-            truncateWidthSlider.disableProperty().bind(truncateAllBox.selectedProperty().not());
+            truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
                     chart.getTruncateWidth().set(truncateWidthSlider.getValue());
