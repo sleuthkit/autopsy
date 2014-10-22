@@ -42,7 +42,7 @@ public class TypeFilter extends UnionFilter {
     private TypeFilter(EventType et, boolean recursive) {
         super(FXCollections.observableArrayList());
         this.eventType = et;
-        
+
         if (recursive) { // add subfilters for each subtype
             for (EventType subType : et.getSubTypes()) {
                 this.getSubFilters().add(new TypeFilter(subType));
@@ -57,11 +57,11 @@ public class TypeFilter extends UnionFilter {
     public TypeFilter(EventType et) {
         this(et, true);
     }
-    
+
     public EventType getEventType() {
         return eventType;
     }
-    
+
     @Override
     public String getDisplayName() {
         return eventType == RootEventType.getInstance() ? "Event Type Filter" : eventType.getDisplayName();
@@ -76,21 +76,21 @@ public class TypeFilter extends UnionFilter {
     public Image getFXImage() {
         return eventType.getFXImage();
     }
-    
+
     @Override
     public TypeFilter copyOf() {
         //make a nonrecursive copy of this filter
         final TypeFilter typeFilter = new TypeFilter(eventType, false);
         typeFilter.setActive(isActive());
-        typeFilter.setDisabled(isdisabled());
+        typeFilter.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach((Filter t) -> {
             typeFilter.getSubFilters().add(t.copyOf());
         });
-        
+
         return typeFilter;
     }
-    
+
     @Override
     public String getHTMLReportString() {
         String string = getEventType().getDisplayName() + getStringCheckBox();
@@ -99,7 +99,7 @@ public class TypeFilter extends UnionFilter {
         }
         return string;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -109,15 +109,15 @@ public class TypeFilter extends UnionFilter {
             return false;
         }
         final TypeFilter other = (TypeFilter) obj;
-        
+
         if (isActive() != other.isActive()) {
             return false;
         }
-        
+
         if (this.eventType != other.eventType) {
             return false;
         }
-        
+
         for (int i = 0; i < getSubFilters().size(); i++) {
             if (getSubFilters().get(i).equals(other.getSubFilters().get(i)) == false) {
                 return false;
@@ -125,12 +125,12 @@ public class TypeFilter extends UnionFilter {
         }
         return true;
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.eventType);
         return hash;
     }
-    
+
 }
