@@ -130,7 +130,9 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         initializeSlider(descrLODSlider,
                 () -> {
                     DescriptionLOD newLOD = DescriptionLOD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
-                    controller.pushDescrLOD(newLOD);
+                    if (controller.pushDescrLOD(newLOD) == false) {
+                        descrLODSlider.setValue(new DescrLODConverter().fromString(filteredEvents.getDescriptionLOD().toString()));
+                    }
                 }, this.filteredEvents.descriptionLOD(),
                 () -> {
                     descrLODSlider.setValue(this.filteredEvents.descriptionLOD().get().ordinal());

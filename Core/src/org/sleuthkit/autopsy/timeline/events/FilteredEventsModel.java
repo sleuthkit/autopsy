@@ -259,4 +259,7 @@ public class FilteredEventsModel {
 //            requestedLOD.set(zCrumb.getDescrLOD());
 //        }
 //    }
+    public DescriptionLOD getDescriptionLOD() {
+        return requestedLOD.get();
+    }
 }
