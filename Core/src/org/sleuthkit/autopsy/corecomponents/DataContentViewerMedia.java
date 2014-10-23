@@ -51,8 +51,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final MediaViewVideoPanel videoPanel;
     private final Set<String> videoExtensions; // get them from the panel
     private final Set<String> imageExtensions; 
-    private final TreeSet<String> videoMimes;
-    private final TreeSet<String> imageMimes;
+    private final Set<String> videoMimes;
+    private final Set<String> imageMimes;
     private final MediaViewImagePanel imagePanel;
     private boolean videoPanelInited;
     private boolean imagePanelInited;
