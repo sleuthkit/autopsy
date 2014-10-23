@@ -59,6 +59,9 @@ public class RootEventType implements EventType {
     private static class RootEventTypeHolder {
 
         private static final RootEventType INSTANCE = new RootEventType();
+
+        private RootEventTypeHolder() {
+        }
     }
 
     @Override
@@ -75,8 +78,6 @@ public class RootEventType implements EventType {
     public List<BaseTypes> getSubTypes() {
         return Arrays.asList(BaseTypes.values());
     }
-
-   
 
     @Override
     public String getIconBase() {
