@@ -24,12 +24,7 @@ package org.sleuthkit.autopsy.ingest;
  */
 final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
 
-    enum CancelRequestType {
-
-        CURRENT_DATA_SOURCE_MODULE, DATA_SOURCE_INGEST, JOB
-    }
-
-    private CancelRequestType requestType;
+    private boolean cancelAllIngestModules;
 
     /**
      * Constructs an instance of the panel.
@@ -37,16 +32,17 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
     DataSourceIngestCancellationPanel() {
         initComponents();
         this.cancelCurrentModuleRadioButton.setSelected(true);
-        this.requestType = DataSourceIngestCancellationPanel.CancelRequestType.CURRENT_DATA_SOURCE_MODULE;
     }
 
     /**
-     * Gets the cancellation request type.
+     * Queries whether the user wants to cancel the ingest job or just the
+     * currently executing data source ingest module.
      *
-     * @return An enumeration member indicating the request type.
+     * @return True if the ingest job is to be canceled, false if only the
+     * current module is to be canceled.
      */
-    DataSourceIngestCancellationPanel.CancelRequestType getCancelRequest() {
-        return this.requestType;
+    boolean cancelAllDataSourceIngestModules() {
+        return this.cancelAllIngestModules;
     }
 
     /**
@@ -60,8 +56,7 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
 
         cancelRadioButtonsGroup = new javax.swing.ButtonGroup();
         cancelCurrentModuleRadioButton = new javax.swing.JRadioButton();
-        cancelDataSourceIngestRadioButton = new javax.swing.JRadioButton();
-        cancelIngestJobRadioButton = new javax.swing.JRadioButton();
+        cancelAllModulesRadioButton = new javax.swing.JRadioButton();
 
         cancelRadioButtonsGroup.add(cancelCurrentModuleRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(cancelCurrentModuleRadioButton, org.openide.util.NbBundle.getMessage(DataSourceIngestCancellationPanel.class, "DataSourceIngestCancellationPanel.cancelCurrentModuleRadioButton.text")); // NOI18N
@@ -71,19 +66,11 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
             }
         });
 
-        cancelRadioButtonsGroup.add(cancelDataSourceIngestRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(cancelDataSourceIngestRadioButton, org.openide.util.NbBundle.getMessage(DataSourceIngestCancellationPanel.class, "DataSourceIngestCancellationPanel.cancelDataSourceIngestRadioButton.text")); // NOI18N
-        cancelDataSourceIngestRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        cancelRadioButtonsGroup.add(cancelAllModulesRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(cancelAllModulesRadioButton, org.openide.util.NbBundle.getMessage(DataSourceIngestCancellationPanel.class, "DataSourceIngestCancellationPanel.cancelAllModulesRadioButton.text")); // NOI18N
+        cancelAllModulesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelDataSourceIngestRadioButtonActionPerformed(evt);
-            }
-        });
-
-        cancelRadioButtonsGroup.add(cancelIngestJobRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(cancelIngestJobRadioButton, org.openide.util.NbBundle.getMessage(DataSourceIngestCancellationPanel.class, "DataSourceIngestCancellationPanel.cancelIngestJobRadioButton.text")); // NOI18N
-        cancelIngestJobRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelIngestJobRadioButtonActionPerformed(evt);
+                cancelAllModulesRadioButtonActionPerformed(evt);
             }
         });
 
@@ -94,8 +81,7 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cancelIngestJobRadioButton)
-                    .addComponent(cancelDataSourceIngestRadioButton)
+                    .addComponent(cancelAllModulesRadioButton)
                     .addComponent(cancelCurrentModuleRadioButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -105,30 +91,23 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(cancelCurrentModuleRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cancelDataSourceIngestRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cancelIngestJobRadioButton)
+                .addComponent(cancelAllModulesRadioButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cancelCurrentModuleRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelCurrentModuleRadioButtonActionPerformed
-        this.requestType = DataSourceIngestCancellationPanel.CancelRequestType.CURRENT_DATA_SOURCE_MODULE;
+        this.cancelAllIngestModules = this.cancelAllModulesRadioButton.isEnabled();
     }//GEN-LAST:event_cancelCurrentModuleRadioButtonActionPerformed
 
-    private void cancelDataSourceIngestRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelDataSourceIngestRadioButtonActionPerformed
-        this.requestType = DataSourceIngestCancellationPanel.CancelRequestType.DATA_SOURCE_INGEST;
-    }//GEN-LAST:event_cancelDataSourceIngestRadioButtonActionPerformed
-
-    private void cancelIngestJobRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelIngestJobRadioButtonActionPerformed
-        this.requestType = DataSourceIngestCancellationPanel.CancelRequestType.JOB;
-    }//GEN-LAST:event_cancelIngestJobRadioButtonActionPerformed
+    private void cancelAllModulesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelAllModulesRadioButtonActionPerformed
+        this.cancelAllIngestModules = this.cancelAllModulesRadioButton.isEnabled();
+    }//GEN-LAST:event_cancelAllModulesRadioButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JRadioButton cancelAllModulesRadioButton;
     private javax.swing.JRadioButton cancelCurrentModuleRadioButton;
-    private javax.swing.JRadioButton cancelDataSourceIngestRadioButton;
-    private javax.swing.JRadioButton cancelIngestJobRadioButton;
     private javax.swing.ButtonGroup cancelRadioButtonsGroup;
     // End of variables declaration//GEN-END:variables
 }

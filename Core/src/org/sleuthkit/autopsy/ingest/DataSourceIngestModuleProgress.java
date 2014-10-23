@@ -25,10 +25,10 @@ import org.netbeans.api.progress.ProgressHandle;
  */
 public class DataSourceIngestModuleProgress {
 
-    private final ProgressHandle progress;
+    private final IngestJob job;
 
-    DataSourceIngestModuleProgress(ProgressHandle progress) {
-        this.progress = progress;
+    DataSourceIngestModuleProgress(IngestJob job) {
+        this.job = job;
     }
 
     /**
@@ -40,7 +40,7 @@ public class DataSourceIngestModuleProgress {
      * data source.
      */
     public void switchToDeterminate(int workUnits) {
-        progress.switchToDeterminate(workUnits);
+        this.job.switchDataSourceIngestProgressBarToDeterminate(workUnits);
     }
 
     /**
@@ -48,7 +48,7 @@ public class DataSourceIngestModuleProgress {
      * the total work units to process the data source is unknown.
      */
     public void switchToIndeterminate() {
-        progress.switchToIndeterminate();
+        this.job.switchDataSourceIngestProgressBarToIndeterminate();
     }
 
     /**
@@ -58,17 +58,18 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        progress.progress("", workUnits);
+        this.job.advanceDataSourceIngestProgressBar("", workUnits);
     }
-    
+
     /**
      * Updates the sub-title on the progress bar
+     *
      * @param message Message to display
      */
     public void progress(String message) {
-        progress.progress(message);
+        this.job.advanceDataSourceIngestProgressBar(message);
     }
-    
+
     /**
      * Updates the progress bar with the number of work units performed, if in
      * the determinate mode.
@@ -77,6 +78,7 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(String message, int workUnits) {
-        progress.progress(message, workUnits);
+        this.job.advanceDataSourceIngestProgressBar(message, workUnits);
     }
+
 }

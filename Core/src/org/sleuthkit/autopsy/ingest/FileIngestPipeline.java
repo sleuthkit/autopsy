@@ -68,7 +68,7 @@ final class FileIngestPipeline {
     }
 
     boolean isEmpty() {
-        return modules.isEmpty();
+        return this.modules.isEmpty();
     }
 
     /**
@@ -77,7 +77,7 @@ final class FileIngestPipeline {
      */
     List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : modules) {
+        for (FileIngestModuleDecorator module : this.modules) {
             try {
                 module.startUp(new IngestJobContext(this.job));
             } catch (Exception ex) { // Catch-all exception firewall
@@ -97,28 +97,28 @@ final class FileIngestPipeline {
     List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
         AbstractFile file = task.getFile();
-        for (FileIngestModuleDecorator module : modules) {
+        for (FileIngestModuleDecorator module : this.modules) {
             try {
-                ingestManager.setIngestTaskProgress(task, module.getDisplayName());
+                FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(file);
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (this.job.fileIngestIsCancelled()) {
+            if (this.job.isCancelled()) {
                 break;
             }
         }
         file.close();
-        if (!this.job.fileIngestIsCancelled()) {
+        if (!this.job.isCancelled()) {
             IngestManager.getInstance().fireFileIngestDone(file);
         }
-        ingestManager.setIngestTaskProgressCompleted(task);
+        FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
         return errors;
     }
 
     List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : modules) {
+        for (FileIngestModuleDecorator module : this.modules) {
             try {
                 module.shutDown();
             } catch (Exception ex) {

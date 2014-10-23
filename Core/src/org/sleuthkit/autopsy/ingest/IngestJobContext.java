@@ -25,8 +25,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Provides an instance of an ingest module with services specific to the ingest
- * job of which the module is a part.
+ * Provides an ingest module with services specific to the ingest job of which
+ * the module is a part.
  */
 public final class IngestJobContext {
 
@@ -44,7 +44,7 @@ public final class IngestJobContext {
      * @return The data source.
      */
     public Content getDataSource() {
-        return ingestJob.getDataSource();
+        return this.ingestJob.getDataSource();
     }
 
     /**
@@ -61,8 +61,9 @@ public final class IngestJobContext {
      * ingest job associated with this context has been requested.
      *
      * @return True or false.
+     *
      * @deprecated Use dataSourceIngestIsCancelled() or fileIngestIsCancelled()
-     * or jobIsCancelled()
+     * instead.
      */
     @Deprecated
     public boolean isJobCancelled() {
@@ -70,36 +71,25 @@ public final class IngestJobContext {
     }
 
     /**
-     * Queries whether or not cancellation of the data source ingest part of the
-     * ingest job associated with this context has been requested.
+     * Allows a data source ingest module to determine whether or not
+     * cancellation of the data source ingest part of the ingest job associated
+     * with this context has been requested.
      *
      * @return True or false.
      */
     public boolean dataSourceIngestIsCancelled() {
-        // For a data source ingest module, both a pipeline interrupt and data 
-        // source ingest cancellation require the same response - the module
-        // should exit from its process() method as soon as possible.
-        return this.ingestJob.dataSourceIngestPipelineIsInterrupted() || this.ingestJob.dataSourceIngestIsCancelled();
+        return this.ingestJob.currentDataSourceIngestModuleIsCancelled() || this.ingestJob.isCancelled();
     }
 
     /**
-     * Queries whether or not cancellation of the file ingest part of the ingest
-     * job associated with this context has been requested.
+     * Allows a file ingest module to determine whether or not cancellation of
+     * the file ingest part of the ingest job associated with this context has
+     * been requested.
      *
      * @return True or false.
      */
     public boolean fileIngestIsCancelled() {
-        return this.ingestJob.fileIngestIsCancelled();
-    }
-
-    /**
-     * Queries whether or not cancellation of the ingest job associated with
-     * this context has been requested.
-     *
-     * @return True or false.
-     */
-    public boolean jobIsCancelled() {
-        return this.ingestJob.jobIsCancelled();
+        return this.ingestJob.isCancelled();
     }
 
     /**
@@ -121,15 +111,16 @@ public final class IngestJobContext {
     public void scheduleFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
             try {
-                IngestJobContext.scheduler.scheduleAdditionalFileIngestTask(ingestJob, file);
+                IngestJobContext.scheduler.scheduleAdditionalFileIngestTask(this.ingestJob, file);
             } catch (InterruptedException ex) {
-                // Ultimately, this method is called by ingest task execution
-                // threads running ingest module code. Handle the unexpected
-                // interrupt here rather
+                // Handle the unexpected interrupt here rather than make ingest 
+                // module writers responsible for writing this exception handler. 
+                // The interrupt flag of the thread is reset for detection by 
+                // the thread task code.  
                 Thread.currentThread().interrupt();
                 IngestJobContext.logger.log(Level.SEVERE, "File task scheduling unexpectedly interrupted", ex); //NON-NLS
             }
         }
     }
-
+    
 }
