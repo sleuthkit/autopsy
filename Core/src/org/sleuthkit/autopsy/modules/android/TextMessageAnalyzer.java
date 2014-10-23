@@ -82,7 +82,7 @@ class TextMessageAnalyzer {
 
             String address; // may be phone number, or other addresses
             String direction; // message received in inbox = 1, message sent = 2
-            String read; // may be unread = 0, read = 1
+            Integer read; // may be unread = 0, read = 1
             String subject; //message subject
             String body; //message body
 
@@ -94,11 +94,7 @@ class TextMessageAnalyzer {
                 } else {
                     direction = "Outgoing";
                 }
-                if (resultSet.getString("read").equals("0")) {
-                    read = "Unread";
-                } else {
-                    read = "Read";
-                }
+		read = resultSet.getInt("read");
                 subject = resultSet.getString("subject");
                 body = resultSet.getString("body");
 
