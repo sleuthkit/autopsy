@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -53,16 +52,12 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
-import org.controlsfx.control.action.ActionGroup;
-import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
@@ -91,6 +86,7 @@ public class AggregateEventNode extends StackPane {
 
     /** The label used to display this node's event's description */
     private final Label descrLabel = new Label();
+
     /** The label used to display this node's event count */
     private final Label countLabel = new Label();
 
@@ -117,7 +113,6 @@ public class AggregateEventNode extends StackPane {
 
     private final Button plusButton = new Button(null, new ImageView(PLUS)) {
         {
-//            setBackground(null);
             setMinSize(16, 16);
             setMaxSize(16, 16);
             setPrefSize(16, 16);
@@ -125,7 +120,6 @@ public class AggregateEventNode extends StackPane {
     };
     private final Button minusButton = new Button(null, new ImageView(MINUS)) {
         {
-//            setBackground(null);
             setMinSize(16, 16);
             setMaxSize(16, 16);
             setPrefSize(16, 16);
@@ -144,17 +138,19 @@ public class AggregateEventNode extends StackPane {
         final Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
         final HBox hBox = new HBox(descrLabel, countLabel, region, minusButton, plusButton);
-//        hBox.setPrefWidth(USE_COMPUTED_SIZE);
-//        hBox.setMinWidth(USE_PREF_SIZE);
+        hBox.setPrefWidth(USE_COMPUTED_SIZE);
+        hBox.setMinWidth(USE_PREF_SIZE);
         hBox.setPadding(new Insets(2, 5, 2, 5));
         hBox.setAlignment(Pos.CENTER_LEFT);
 
         minusButton.setVisible(false);
         plusButton.setVisible(false);
+        minusButton.setManaged(false);
+        plusButton.setManaged(false);
         final BorderPane borderPane = new BorderPane(subNodePane, hBox, null, null, null);
         BorderPane.setAlignment(subNodePane, Pos.TOP_LEFT);
-//        new BorderPane(subNodePane, descrLabel, null, null, null);
-        //set initial properties
+        borderPane.setPrefWidth(USE_COMPUTED_SIZE);
+
         getChildren().addAll(spanRegion, borderPane);
 
         setAlignment(Pos.TOP_LEFT);
@@ -162,7 +158,6 @@ public class AggregateEventNode extends StackPane {
         minWidthProperty().bind(spanRegion.widthProperty());
         setPrefHeight(USE_COMPUTED_SIZE);
         setMaxHeight(USE_PREF_SIZE);
-//        setMargin(hBox, new Insets(2, 5, 2, 5));
 
         //set up subnode pane sizing contraints
         subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
@@ -196,12 +191,19 @@ public class AggregateEventNode extends StackPane {
             spanRegion.setEffect(new DropShadow(10, evtColor));
             minusButton.setVisible(true);
             plusButton.setVisible(true);
+            minusButton.setManaged(true);
+            plusButton.setManaged(true);
+            toFront();
+
         });
 
         setOnMouseExited((MouseEvent e) -> {
             spanRegion.setEffect(null);
             minusButton.setVisible(false);
             plusButton.setVisible(false);
+            minusButton.setManaged(false);
+            plusButton.setManaged(false);
+
         });
 
         setOnMouseClicked(new EventMouseHandler());
@@ -229,8 +231,7 @@ public class AggregateEventNode extends StackPane {
         Tooltip.install(AggregateEventNode.this, new Tooltip(getEvent().getEventIDs().size() + " " + getEvent().getType() + " events\n"
                 + getEvent().getDescription()
                 + "\nbetween " + getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter())
-                + "\nand      " + getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter())
-                + "\nright-click to adjust local description zoom."));
+                + "\nand      " + getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter())));
     }
 
     public Pane getSubNodePane() {
@@ -257,7 +258,7 @@ public class AggregateEventNode extends StackPane {
      *
      * @param w the maximum width the description label should have
      */
-    public void setDescriptionLabelMaxWidth(double w) {
+    public void setDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
 
@@ -279,10 +280,8 @@ public class AggregateEventNode extends StackPane {
             default:
             case SHOWN:
                 String description = event.getDescription();
-//                parentEventNode.getEvent().getDescription()
-//                StringUtils.substringAfter(event.getDescription(), parentEventNode.getEvent().getDescription());
                 description = parentEventNode != null
-                        ? "..." + StringUtils.substringAfter(description, parentEventNode.getEvent().getDescription())
+                        ? "    ..." + StringUtils.substringAfter(description, parentEventNode.getEvent().getDescription())
                         : description;
                 descrLabel.setText(description);
                 countLabel.setText(((size == 1) ? "" : " (" + size + ")"));
@@ -387,34 +386,13 @@ public class AggregateEventNode extends StackPane {
                 @Override
                 protected void succeeded() {
                     try {
-                        if (get().size() > 1) {
-                            chart.setCursor(Cursor.WAIT);
-                            //assign subNodes and erquest chart layout
-                            getSubNodePane().getChildren().setAll(get());
-                            setDescriptionVisibility(descrVis);
-                            chart.setRequiresLayout(true);
-                            chart.requestChartLayout();
-                            chart.setCursor(null);
-                        } else if (get().size() == 1) {
-                            chart.setCursor(Cursor.WAIT);
-                            switch (descrVis) {
-                                case COUNT_ONLY:
-                                    descrLabel.setText("");
-                                    break;
-                                case HIDDEN:
-                                    descrLabel.setText("");
-                                    break;
-                                default:
-                                case SHOWN:
-                                    descrLabel.setText(get().get(0).getEvent().getDescription());
-                                    break;
-                            }
-                            chart.setRequiresLayout(true);
-                            chart.requestChartLayout();
-                            chart.setCursor(null);
-                        } else {
-                            get();
-                        }
+                        chart.setCursor(Cursor.WAIT);
+                        //assign subNodes and request chart layout
+                        getSubNodePane().getChildren().setAll(get());
+                        setDescriptionVisibility(descrVis);
+                        chart.setRequiresLayout(true);
+                        chart.requestChartLayout();
+                        chart.setCursor(null);
                     } catch (InterruptedException | ExecutionException ex) {
                         Exceptions.printStackTrace(ex);
                     }
@@ -431,8 +409,8 @@ public class AggregateEventNode extends StackPane {
 
         @Override
         public void handle(MouseEvent t) {
-            t.consume();
             if (t.getButton() == MouseButton.PRIMARY) {
+                t.consume();
                 if (t.isShiftDown()) {
                     if (chart.selectedNodes.contains(AggregateEventNode.this) == false) {
                         chart.selectedNodes.add(AggregateEventNode.this);
@@ -448,31 +426,7 @@ public class AggregateEventNode extends StackPane {
                 } else {
                     chart.selectedNodes.setAll(AggregateEventNode.this);
                 }
-            } else if (t.getButton() == MouseButton.SECONDARY) {
-                if (chart.getChartContextMenu() != null) {
-                    chart.getChartContextMenu().hide();
-                }
-                //we use a per node menu to remember the slider position
-                ContextMenu nodeContextMenu = getContextMenu();
-                if (nodeContextMenu == null) {
-                    nodeContextMenu = builContextMenu();
-                    setContextMenu(nodeContextMenu);
-                }
-                nodeContextMenu.show(AggregateEventNode.this, t.getScreenX(), t.getScreenY());
             }
         }
-
-        private ContextMenu builContextMenu() {
-            //we don't reuse item from chartContextMenu because 'place marker' is location specific.
-            //TODO: refactor this so we can reuse chartContextMenu items
-            ContextMenu contextMenu = new ContextMenu();
-            contextMenu.getItems().addAll(ActionUtils.createContextMenu(
-                    Arrays.asList(new ActionGroup("Zoom History", new Back(chart.getController()),
-                                    new Forward(chart.getController())))).getItems());
-            //TODO: add tagging actions here
-            contextMenu.setAutoHide(true);
-            return contextMenu;
-        }
     }
-
 }

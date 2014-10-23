@@ -60,7 +60,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javax.annotation.concurrent.GuardedBy;
 import org.controlsfx.control.action.AbstractAction;
@@ -349,7 +348,7 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
      * @return the DateTime along the x-axis corresponding to the given x value
      *         (in the space of this {@link EventDetailChart}
      */
-    public final DateTime getDateTimeForPosition(double x) {
+    public DateTime getDateTimeForPosition(double x) {
         return getXAxis().getValueForDisplay(getXAxis().parentToLocal(x, 0).getX());
     }
 
@@ -553,10 +552,9 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
             //size timespan border
             tlNode.setSpanWidth(span);
             if (truncateAll.get()) { //if truncate option is selected limit width of description label
-                tlNode.setDescriptionLabelMaxWidth(Math.max(span, truncateWidth.get()));
+                tlNode.setDescriptionWidth(Math.max(span, truncateWidth.get()));
             } else { //else set it unbounded
-
-                tlNode.setDescriptionLabelMaxWidth(20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());
+                tlNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());
             }
             tlNode.autosize(); //compute size of tlNode based on constraints and event data
 
