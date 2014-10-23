@@ -108,7 +108,7 @@ public class AggregateEvent {
         return new AggregateEvent(IntervalUtils.span(ag1.span, ag2.span), ag1.getType(), ids, ag1.getDescription(), ag1.lod);
     }
 
-    DescriptionLOD getLOD() {
+    public DescriptionLOD getLOD() {
         return lod;
     }
 }

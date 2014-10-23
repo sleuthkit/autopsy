@@ -360,7 +360,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         c1.applySelectionEffect(applied);
     }
 
-    class DetailViewSettingsPane extends HBox {
+    private class DetailViewSettingsPane extends HBox {
 
         @FXML
         private RadioButton hiddenRadio;

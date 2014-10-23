@@ -196,6 +196,32 @@ public class ImageUtils {
         return (((fileHeaderBuffer[0] & 0xff) == 0xff) && ((fileHeaderBuffer[1] & 0xff) == 0xd8));
     }
     
+    public static boolean isPngFileHeader(AbstractFile file) {
+        if (file.getSize() < 10) {
+            return false;
+        }
+
+        byte[] fileHeaderBuffer = new byte[8];
+        int bytesRead;
+        try {
+            bytesRead = file.read(fileHeaderBuffer, 0, 8);
+        } catch (TskCoreException ex) {
+            //ignore if can't read the first few bytes, not an image
+            return false;
+        }
+        if (bytesRead != 8) {
+            return false;
+        }
+        /*
+         * Check for the header. Since Java bytes are signed, we cast them
+         * to an int first.
+         */
+        return (((fileHeaderBuffer[1] & 0xff) == 0x50) && ((fileHeaderBuffer[2] & 0xff) == 0x4E) &&
+                ((fileHeaderBuffer[3] & 0xff) == 0x47) && ((fileHeaderBuffer[4] & 0xff) == 0x0D) &&
+                ((fileHeaderBuffer[5] & 0xff) == 0x0A) && ((fileHeaderBuffer[6] & 0xff) == 0x1A) &&
+                ((fileHeaderBuffer[7] & 0xff) == 0x0A));
+    }
+    
     
     private static Image generateAndSaveIcon(Content content, int iconSize) { 
         Image icon = null;

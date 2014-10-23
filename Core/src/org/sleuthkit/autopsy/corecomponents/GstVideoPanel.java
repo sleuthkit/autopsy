@@ -52,8 +52,6 @@ import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -71,8 +69,8 @@ import org.sleuthkit.datamodel.TskData;
     @ServiceProvider(service = FrameCapture.class)
 })
 public class GstVideoPanel extends MediaViewVideoPanel {
-
-    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"}; //NON-NLS
+    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"}; //NON-NLS 
+    private static final List<String> MIMETYPES = Arrays.asList("video/quicktime", "audio/mpeg", "audio/x-mpeg", "video/mpeg", "video/x-mpeg", "audio/mpeg3", "audio/x-mpeg-3", "video/x-flv", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
     
     private static final Logger logger = Logger.getLogger(GstVideoPanel.class.getName());
     private boolean gstInited;
@@ -88,8 +86,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
-    private Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
-    static private final List<String> supportedMimes = Arrays.asList();
+    private final Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
+    
     /**
      * Creates new form MediaViewVideoPanel
      */
@@ -806,6 +804,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
     @Override
     public List<String> getMimeTypes() {
-        return supportedMimes;
+        return MIMETYPES;
     }
 }

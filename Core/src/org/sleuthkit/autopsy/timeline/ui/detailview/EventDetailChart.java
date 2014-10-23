@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
@@ -54,41 +53,27 @@ import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.CustomMenuItem;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
-import javafx.util.StringConverter;
 import javax.annotation.concurrent.GuardedBy;
 import org.controlsfx.control.action.AbstractAction;
 import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.TextFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 
 /**
  * Custom implementation of {@link XYChart} to graph events on a horizontal
@@ -103,7 +88,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * node to contain each band if we need a place for per band controls.
  *
  * //TODO: refactor the projected lines to a separate class. -jm */
-public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implements TimeLineChart<DateTime> {
+public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> implements TimeLineChart<DateTime> {
 
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
 
@@ -113,14 +98,16 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
      * events together during layout */
     private final SimpleBooleanProperty bandByType = new SimpleBooleanProperty(false);
 
+    // I don't like having these package visible, but it was the easiest way to
     private ContextMenu chartContextMenu;
 
     private TimeLineController controller;
 
+    private FilteredEventsModel filteredEvents;
+
     /** how much detail of the description to show in the ui */
     private final SimpleObjectProperty<DescriptionVisibility> descrVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
 
-    private FilteredEventsModel filteredEvents;
 
     /** a user position-able vertical line to help the compare events */
     private Line guideLine;
@@ -171,7 +158,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
     @GuardedBy(value = "this")
     private boolean requiresLayout = true;
 
-    private final ObservableList<AggregateEventNode> selectedNodes;
+    final ObservableList<AggregateEventNode> selectedNodes;
 
     /**
      * list of series of data added to this chart TODO: replace this with a map
@@ -262,7 +249,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
                         }
                     }
                 }, new ActionGroup("Zoom History", new Back(controller),
-                                   new Forward(controller))));
+                        new Forward(controller))));
                 chartContextMenu.setAutoHide(true);
                 chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
                 clickEvent.consume();
@@ -297,7 +284,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
                         });
                         c.getAddedSubList().forEach((AggregateEventNode t) -> {
                             Line line = new Line(dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(t.getEvent().getSpan().getStartMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET,
-                                                 dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(t.getEvent().getSpan().getEndMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
+                                    dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(t.getEvent().getSpan().getEndMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
                             );
                             line.setStroke(t.getEvent().getType().getColor().deriveColor(0, 1, 1, .5));
                             line.setStrokeWidth(PROJECTED_LINE_STROKE_WIDTH);
@@ -326,7 +313,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
     }
 
     @Override
-    public final synchronized void setController(TimeLineController controller) {
+    public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(this.controller.getEventsModel());
     }
@@ -361,7 +348,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
      * @return the DateTime along the x-axis corresponding to the given x value
      *         (in the space of this {@link EventDetailChart}
      */
-    public final DateTime getDateTimeForPosition(double x) {
+    public DateTime getDateTimeForPosition(double x) {
         return getXAxis().getValueForDisplay(getXAxis().parentToLocal(x, 0).getX());
     }
 
@@ -398,8 +385,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
         final AggregateEvent aggEvent = data.getYValue();
         AggregateEventNode eventNode = nodeMap.get(aggEvent);
         if (eventNode == null) {
-            eventNode = new AggregateEventNode(aggEvent, null);
-            eventNode.setOnMouseClicked(new EventMouseHandler(eventNode));
+            eventNode = new AggregateEventNode(aggEvent, null, this);
 
             eventNode.setLayoutX(getXAxis().getDisplayPosition(new DateTime(aggEvent.getSpan().getStartMillis())));
             data.setNode(eventNode);
@@ -566,10 +552,9 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
             //size timespan border
             tlNode.setSpanWidth(span);
             if (truncateAll.get()) { //if truncate option is selected limit width of description label
-                tlNode.setDescriptionLabelMaxWidth(Math.max(span, truncateWidth.get()));
+                tlNode.setDescriptionWidth(Math.max(span, truncateWidth.get()));
             } else { //else set it unbounded
-
-                tlNode.setDescriptionLabelMaxWidth(20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());
+                tlNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());
             }
             tlNode.autosize(); //compute size of tlNode based on constraints and event data
 
@@ -577,7 +562,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
             double xRight = xPos + tlNode.getWidth();
 
             //get the height of the node
-            final double h = layoutNodesResultHeight == 0 ? tlNode.getHeight() : layoutNodesResultHeight;
+            final double h = layoutNodesResultHeight == 0 ? tlNode.getHeight() : layoutNodesResultHeight + DEFAULT_ROW_HEIGHT;
             //initial test position
             double yPos = minY;
 
@@ -616,8 +601,8 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
             localMax = Math.max(yPos2, localMax);
 
             Timeline tm = new Timeline(new KeyFrame(Duration.seconds(1.0),
-                                                    new KeyValue(tlNode.layoutXProperty(), xPos),
-                                                    new KeyValue(tlNode.layoutYProperty(), yPos)));
+                    new KeyValue(tlNode.layoutXProperty(), xPos),
+                    new KeyValue(tlNode.layoutYProperty(), yPos)));
 
             tm.play();
 //            tlNode.relocate(xPos, yPos);
@@ -625,6 +610,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
         maxY.set(Math.max(maxY.get(), localMax));
         return localMax - minY;
     }
+    private static final int DEFAULT_ROW_HEIGHT = 24;
 
     private void layoutProjectionMap() {
         for (final Map.Entry<AggregateEventNode, Line> entry : projectionMap.entrySet()) {
@@ -642,20 +628,28 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
         return getXAxis().localToParent(getXAxis().getDisplayPosition(dt), 0).getX();
     }
 
-    private static final class DescriptionLODConverter extends StringConverter<Double> {
-
-        @Override
-        public String toString(Double value) {
-            return value == -1 ? "None"
-                   : DescriptionLOD.values()[value.intValue()].getDisplayName();
-        }
-
-        @Override
-        public Double fromString(String string) {
-            //we never convert from string to double (slider position)
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
+    /**
+     * @return the controller
+     */
+    public TimeLineController getController() {
+        return controller;
     }
+
+    /**
+     * @return the filteredEvents
+     */
+    public FilteredEventsModel getFilteredEvents() {
+        return filteredEvents;
+    }
+
+    /**
+     * @return the chartContextMenu
+     */
+    public ContextMenu getChartContextMenu() {
+        return chartContextMenu;
+    }
+
+ 
 
     private static class StartTimeComparator implements Comparator<Node> {
 
@@ -669,7 +663,7 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
             } else {
 
                 return Long.compare(((AggregateEventNode) n1).getEvent().getSpan().getStartMillis(),
-                                    (((AggregateEventNode) n2).getEvent().getSpan().getStartMillis()));
+                        (((AggregateEventNode) n2).getEvent().getSpan().getStartMillis()));
             }
         }
 
@@ -698,144 +692,13 @@ public class EventDetailChart extends XYChart<DateTime, AggregateEvent> implemen
 
     }
 
-    /** event handler used for mouse events on {@link AggregateEventNode}s
-     * //TODO: refactor this to put more of the state(slider)in the node */
-    private class EventMouseHandler implements EventHandler<MouseEvent> {
 
-        private final AggregateEventNode aggNode;
+     synchronized void setRequiresLayout(boolean b) {
+        requiresLayout = true;
+    }
 
-        private final AggregateEvent aggEvent;
-
-        private final Slider slider;
-
-        public EventMouseHandler(AggregateEventNode aggNode) {
-            this.aggNode = aggNode;
-            this.aggEvent = aggNode.getEvent();
-
-            //configure slider
-            this.slider = new Slider(-1, 2, -1);
-            slider.setShowTickMarks(true);
-            slider.setShowTickLabels(true);
-            slider.setSnapToTicks(true);
-            slider.setMajorTickUnit(1);
-            slider.setMinorTickCount(0);
-            slider.setBlockIncrement(1);
-            slider.setLabelFormatter(new DescriptionLODConverter());
-
-            //on slider change, reload subnodes
-            InvalidationListener invalidationListener = o -> {
-                if (slider.isValueChanging() == false) {
-                    reloadSubNodes();
-                }
-            };
-            slider.valueProperty().addListener(invalidationListener);
-            slider.valueChangingProperty().addListener(invalidationListener);
-        }
-
-        private void reloadSubNodes() {
-            final int value = Math.round(slider.valueProperty().floatValue());
-            aggNode.getSubNodePane().getChildren().clear();
-            aggNode.setEventDetailsVisible(true);
-            if (value == -1) {
-                aggNode.getSubNodePane().getChildren().clear();
-                aggNode.setEventDetailsVisible(true);
-                synchronized (EventDetailChart.this) {
-                    requiresLayout = true;
-                }
-                requestChartLayout();
-            } else {
-                final DescriptionLOD newLOD = DescriptionLOD.values()[value];
-
-                final Filter combinedFilter = Filter.intersect(new Filter[]{new TextFilter(aggEvent.getDescription()),
-                                                                            new TypeFilter(aggEvent.getType()),
-                                                                            filteredEvents.filter().get()});
-                final Interval span = aggEvent.getSpan().withEndMillis(aggEvent.getSpan().getEndMillis() + 1000);
-                LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>("Load sub events", true) {
-
-                    @Override
-                    protected List<AggregateEventNode> call() throws Exception {
-
-                        List<AggregateEvent> aggregatedEvents = filteredEvents.getAggregatedEvents(new ZoomParams(span,
-                                                                                                                  filteredEvents.eventTypeZoom().get(),
-                                                                                                                  combinedFilter,
-                                                                                                                  newLOD));
-                        return aggregatedEvents.stream().map((AggregateEvent t) -> {
-                            AggregateEventNode subNode = new AggregateEventNode(t, aggNode);
-                            subNode.setOnMouseClicked(new EventMouseHandler(subNode));
-                            subNode.setLayoutX(getXAxis().getDisplayPosition(new DateTime(t.getSpan().getStartMillis())) - aggNode.getLayoutXCompensation());
-                            return subNode;
-                        }).collect(Collectors.toList());
-                    }
-
-                    @Override
-                    protected void succeeded() {
-                        try {
-                            if (get().size() > 1) {
-                                setCursor(Cursor.WAIT);
-                                aggNode.setEventDetailsVisible(false);
-                                aggNode.getSubNodePane().getChildren().setAll(get());
-                                synchronized (EventDetailChart.this) {
-                                    requiresLayout = true;
-                                }
-                                requestChartLayout();
-                                setCursor(null);
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            Exceptions.printStackTrace(ex);
-                        }
-                    }
-                };
-                controller.monitorTask(loggedTask);
-            }
-        }
-
-        @Override
-        public void handle(MouseEvent t) {
-            t.consume();
-            if (t.getButton() == MouseButton.PRIMARY) {
-                if (t.isShiftDown()) {
-                    if (selectedNodes.contains(aggNode) == false) {
-                        selectedNodes.add(aggNode);
-                    }
-                } else if (t.isShortcutDown()) {
-                    selectedNodes.removeAll(aggNode);
-                } else if (t.getClickCount() > 1) {
-                    slider.increment();
-                } else {
-                    selectedNodes.setAll(aggNode);
-                }
-            } else if (t.getButton() == MouseButton.SECONDARY) {
-
-                if (chartContextMenu != null) {
-                    chartContextMenu.hide();
-                }
-                //we use a per node menu to remember the slider position
-                ContextMenu nodeContextMenu = aggNode.getContextMenu();
-                if (nodeContextMenu == null) {
-                    nodeContextMenu = builContextMenu();
-                    aggNode.setContextMenu(nodeContextMenu);
-                }
-                nodeContextMenu.show(aggNode, t.getScreenX(), t.getScreenY());
-            }
-        }
-
-        private ContextMenu builContextMenu() {
-            //should we include a label to remind uer of what group this is for
-            //final MenuItem headingItem = new CustomMenuItem(new Label(aggEvent.getDescription()), false);
-            //headingItem.getStyleClass().remove("menu-item");
-            final Label sliderLabel = new Label("Nested Detail:", slider);
-            sliderLabel.setContentDisplay(ContentDisplay.RIGHT);
-            final MenuItem detailSliderItem = new CustomMenuItem(sliderLabel, false);
-            detailSliderItem.getStyleClass().remove("menu-item");
-            ContextMenu contextMenu = new ContextMenu(detailSliderItem);
-            //we don't reuse item from chartContextMenu because 'place marker' is location specific.
-            //TODO: refactor this so we can reuse chartContextMenu items
-            contextMenu.getItems().addAll(ActionUtils.createContextMenu(
-                    Arrays.asList(new ActionGroup("Zoom History", new Back(controller),
-                                                  new Forward(controller)))).getItems());
-            //TODO: add tagging actions here
-            contextMenu.setAutoHide(true);
-            return contextMenu;
-        }
+    @Override
+    protected void requestChartLayout() {
+        super.requestChartLayout(); //To change body of generated methods, choose Tools | Templates.
     }
 }
