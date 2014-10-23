@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
@@ -49,10 +50,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private AbstractFile lastFile;
     //UI
     private final MediaViewVideoPanel videoPanel;
-    private final Set<String> videoExtensions; // get them from the panel
-    private final Set<String> imageExtensions; 
-    private final Set<String> videoMimes;
-    private final Set<String> imageMimes;
+    private final SortedSet<String> videoExtensions; // get them from the panel
+    private final SortedSet<String> imageExtensions; 
+    private final SortedSet<String> videoMimes;
+    private final SortedSet<String> imageMimes;
     private final MediaViewImagePanel imagePanel;
     private boolean videoPanelInited;
     private boolean imagePanelInited;
