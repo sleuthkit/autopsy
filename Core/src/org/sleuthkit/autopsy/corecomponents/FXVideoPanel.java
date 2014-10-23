@@ -80,9 +80,7 @@ import org.sleuthkit.datamodel.TskData;
 public class FXVideoPanel extends MediaViewVideoPanel {
 
     private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"}; //NON-NLS
-
-    static private final List<String> supportedMimes = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
-
+    private static final List<String> MIMETYPES = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
 
     private boolean fxInited = false;
@@ -825,6 +823,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
     @Override
     public List<String> getMimeTypes() {
-        return supportedMimes;
+        return MIMETYPES;
     }
 }
