@@ -382,7 +382,7 @@ final class IngestScheduler {
      *
      * @param job The job to cancel.
      */
-    synchronized void cancelIngestJob(IngestJob job) {
+    synchronized void cancelPendingTasksForIngestJob(IngestJob job) {
         long jobId = job.getId();
         removeAllPendingTasksForJob(pendingRootDirectoryTasks, jobId);
         removeAllPendingTasksForJob(pendingDirectoryTasks, jobId);

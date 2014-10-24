@@ -556,8 +556,10 @@ final class IngestJob {
             }
         }
 
+        this.cancelled = true;
+        
         // Tell the ingest scheduler to cancel all pending tasks.
-        IngestJob.ingestScheduler.cancelIngestJob(this);
+        IngestJob.ingestScheduler.cancelPendingTasksForIngestJob(this);
     }
 
     /**
