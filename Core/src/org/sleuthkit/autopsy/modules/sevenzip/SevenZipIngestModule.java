@@ -60,6 +60,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import net.sf.sevenzipjbinding.ArchiveFormat;
+import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
 
 /**
  * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
@@ -260,6 +262,53 @@ public final class SevenZipIngestModule implements FileIngestModule {
             return false;
         }
     }
+    
+    /**
+     * Check file extension and return appropriate input options for SevenZip.openInArchive()
+     *
+     * @param archiveFile file to check file extension
+     * @return input parameter for SevenZip.openInArchive()
+     */
+    private ArchiveFormat get7ZipOptions(AbstractFile archiveFile)
+    {
+        // try to get the file type from the BB
+        String detectedFormat = null;        
+        try {
+            ArrayList<BlackboardAttribute> attributes = archiveFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                detectedFormat = attribute.getValueString();
+                break;
+            }
+        } catch (TskCoreException ex) {            
+            logger.log(Level.WARNING, "Couldn't obtain file attributes for file: " + archiveFile.toString(), ex);       
+        }     
+        
+        if (detectedFormat == null) {
+            logger.log(Level.WARNING, "Could not detect format for file: " + archiveFile); //NON-NLS
+            
+            // if we don't have attribute info then use file extension
+            String extension = archiveFile.getNameExtension();
+            if ("rar".equals(extension))
+            {
+                // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
+                // it will be opened incorrectly when using 7zip's built-in auto-detect functionality
+                return RAR;            
+            }
+            
+            // Otherwise open the archive using 7zip's built-in auto-detect functionality
+            return null;
+        }
+        else if (detectedFormat.contains("application/x-rar-compressed"))
+        {
+            // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
+            // it will be opened incorrectly when using 7zip's built-in auto-detect functionality
+            return RAR;            
+        }
+
+        // Otherwise open the archive using 7zip's built-in auto-detect functionality
+        return null;
+    }
+        
 
     /**
      * Unpack the file to local folder and return a list of derived files
@@ -301,8 +350,12 @@ public final class SevenZipIngestModule implements FileIngestModule {
         boolean progressStarted = false;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
-            inArchive = SevenZip.openInArchive(null, // autodetect archive type
-                    stream);
+
+            // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
+            // it will be opened incorrectly when using 7zip's built-in auto-detect functionality.
+            // All other archive formats are still opened using 7zip built-in auto-detect functionality.
+            ArchiveFormat options = get7ZipOptions(archiveFile);            
+            inArchive = SevenZip.openInArchive(options, stream);
 
             int numItems = inArchive.getNumberOfItems();
             logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFile.getName(), numItems}); //NON-NLS

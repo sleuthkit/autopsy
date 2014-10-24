@@ -1337,6 +1337,13 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")}));
                 break;    
+            case TSK_OS_INFO:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.processorArchitecture.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osName.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osInstallDate.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
+                break;    
             default:
                 return null;
         }
@@ -1676,6 +1683,12 @@ import org.sleuthkit.datamodel.TskData;
                         orderedRowData.add("");
                     }                   
                     orderedRowData.add(file.getUniquePath());
+                    break;
+                 case TSK_OS_INFO: 
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
