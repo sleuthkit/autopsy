@@ -23,16 +23,93 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 /**
- * Takes care of forking a process and reading output / error streams to either
- * a string buffer or directly to a file writer BC: @@@ This code scares me in a
- * multi-threaded env. I think the arguments should be passed into the
- * constructor and different run methods that either return the string or use
- * the redirected writer.
+ * Executes a command line using an operating system process with a configurable
+ * timeout and pluggable logic to kill or continue the process on timeout.
  */
 public final class ExecUtil {
+
+    /**
+     * The execute() methods do a wait with a timeout on the executing process and
+     * query the terminator each time the timeout expires to determine whether
+     * or not to kill the process or allow it to continue.
+     */
+    public interface ProcessTerminator {
+
+        /**
+         * An implementation of this interface is called by the run() methods at
+         * every timeout to determine whether or not to kill the running
+         * process.
+         *
+         * @return True or false.
+         */
+        boolean shouldTerminateProcess();
+    }
+
+    /**
+     * The default, do-nothing process terminator.
+     */
+    private static class NullProcessTerminator implements ProcessTerminator {
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public boolean shouldTerminateProcess() {
+            return false;
+        }
+    }    
+        
+    /**
+     * Runs a process using a default do-nothing terminator.
+     *
+     * @param processBuilder A process builder used to configure and construct
+     * the process to be run.
+     * @param timeOut The duration of the timeout.
+     * @param units The units for the timeout.
+     * @return the exit value of the process
+     * @throws SecurityException if a security manager exists and vetoes any
+     * aspect of running the process.
+     * @throws IOException if an I/o error occurs.
+     */
+    public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units) throws SecurityException, IOException {
+        return ExecUtil.execute(processBuilder, timeOut, units, new ExecUtil.NullProcessTerminator());
+    }
+
+    /**
+     * Runs a process using a custom terminator.
+     *
+     * @param processBuilder A process builder used to configure and construct
+     * the process to be run.
+     * @param timeOut The duration of the timeout.
+     * @param units The units for the timeout.
+     * @param terminator The terminator.
+     * @return the exit value of the process
+     * @throws SecurityException if a security manager exists and vetoes any
+     * aspect of running the process.
+     * @throws IOException if an I/o error occurs.
+     */
+    public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+        Process process = processBuilder.start();
+        try {
+            do {
+                process.waitFor(timeOut, units);
+                if (process.isAlive() && terminator.shouldTerminateProcess()) {
+                    process.destroyForcibly();
+                }
+            } while (process.isAlive());
+        } catch (InterruptedException ex) {
+            if (process.isAlive()) {
+                process.destroyForcibly();
+            }
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0));
+            Thread.currentThread().interrupt();
+        }
+        return process.exitValue();
+    }
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
@@ -50,6 +127,7 @@ public final class ExecUtil {
      * @param params parameters of the command
      * @return string buffer with captured stdout
      */
+    @Deprecated
     public synchronized String execute(final String aCommand, final String... params) throws IOException, InterruptedException {
         // build command array
         String[] arrayCommand = new String[params.length + 1];
@@ -95,6 +173,7 @@ public final class ExecUtil {
      * @param params parameters of the command
      * @return string buffer with captured stdout
      */
+    @Deprecated
     public synchronized void execute(final Writer stdoutWriter, final String aCommand, final String... params) throws IOException, InterruptedException {
 
         // build command array
@@ -137,6 +216,7 @@ public final class ExecUtil {
     /**
      * Interrupt the running process and stop its stream redirect threads
      */
+    @Deprecated
     public synchronized void stop() {
 
         if (errorStringRedirect != null) {
@@ -166,6 +246,7 @@ public final class ExecUtil {
      * @return The exit value or the distinguished value -100 if this method is 
      * called before the exit value is set.
      */
+    @Deprecated
     synchronized public int getExitValue() {
         return this.exitValue;
     }

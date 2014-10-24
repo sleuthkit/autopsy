@@ -156,11 +156,9 @@ class SampleFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        if (!context.isJobCancelled()) {
-            // This method is thread-safe with per ingest job reference counted
-            // management of shared data.
-            reportBlackboardPostCount(context.getJobId());
-        }
+        // This method is thread-safe with per ingest job reference counted
+        // management of shared data.
+        reportBlackboardPostCount(context.getJobId());
     }
 
     synchronized static void addToBlackboardPostCount(long ingestJobId, long countToAdd) {

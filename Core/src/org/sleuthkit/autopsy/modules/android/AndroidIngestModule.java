@@ -53,7 +53,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             ContactAnalyzer.findContacts();
             progressBar.progress(1);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
@@ -63,7 +63,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             CallLogAnalyzer.findCallLogs();
             progressBar.progress(2);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
@@ -73,7 +73,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             TextMessageAnalyzer.findTexts();
             progressBar.progress(3);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
@@ -83,7 +83,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             TangoMessageAnalyzer.findTangoMessages();
             progressBar.progress(4);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
@@ -93,7 +93,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             WWFMessageAnalyzer.findWWFMessages();
             progressBar.progress(5);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
@@ -103,7 +103,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             GoogleMapLocationAnalyzer.findGeoLocations();
             progressBar.progress(6);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
@@ -113,7 +113,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         try {
             BrowserLocationAnalyzer.findGeoLocations();
             progressBar.progress(7);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {

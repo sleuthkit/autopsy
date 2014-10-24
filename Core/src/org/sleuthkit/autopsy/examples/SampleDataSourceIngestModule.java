@@ -70,7 +70,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        if (context.isJobCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return IngestModule.ProcessResult.OK;
         }
 
@@ -92,7 +92,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             }
             progressBar.progress(1);
 
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
 
@@ -107,7 +107,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             }
             progressBar.progress(1);
 
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
 

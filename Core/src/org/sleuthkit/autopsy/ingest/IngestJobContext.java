@@ -25,11 +25,13 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Provides an instance of an ingest module with services specific to the ingest
- * job and the ingest pipeline of which the module is a part.
+ * Provides an ingest module with services specific to the ingest job of which
+ * the module is a part.
  */
 public final class IngestJobContext {
 
+    private static final Logger logger = Logger.getLogger(IngestJobContext.class.getName());
+    private static final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestJob ingestJob;
 
     IngestJobContext(IngestJob ingestJob) {
@@ -37,11 +39,12 @@ public final class IngestJobContext {
     }
 
     /**
+     * Gets the data source associated with this context.
      *
-     * @return The data source that this ingest job is associated with.
+     * @return The data source.
      */
     public Content getDataSource() {
-        return ingestJob.getDataSource();
+        return this.ingestJob.getDataSource();
     }
 
     /**
@@ -54,20 +57,46 @@ public final class IngestJobContext {
     }
 
     /**
-     * Determines whether the ingest job associated with the current context has
-     * been canceled.
+     * Queries whether or not cancellation of the data source ingest part of the
+     * ingest job associated with this context has been requested.
      *
-     * @return True if the job has been canceled, false otherwise.
+     * @return True or false.
+     *
+     * @deprecated Use dataSourceIngestIsCancelled() or fileIngestIsCancelled()
+     * instead.
      */
+    @Deprecated
     public boolean isJobCancelled() {
+        return this.dataSourceIngestIsCancelled();
+    }
+
+    /**
+     * Allows a data source ingest module to determine whether or not
+     * cancellation of the data source ingest part of the ingest job associated
+     * with this context has been requested.
+     *
+     * @return True or false.
+     */
+    public boolean dataSourceIngestIsCancelled() {
+        return this.ingestJob.currentDataSourceIngestModuleIsCancelled() || this.ingestJob.isCancelled();
+    }
+
+    /**
+     * Allows a file ingest module to determine whether or not cancellation of
+     * the file ingest part of the ingest job associated with this context has
+     * been requested.
+     *
+     * @return True or false.
+     */
+    public boolean fileIngestIsCancelled() {
         return this.ingestJob.isCancelled();
     }
 
     /**
-     * Checks whether or not the ingest job includes processing of unallocated
-     * space.
+     * Queries whether or not unallocated space should be processed for the
+     * ingest job associated with this context.
      *
-     * @return True if unallocated space will be processed, false otherwise.
+     * @return True or false.
      */
     public boolean processingUnallocatedSpace() {
         return this.ingestJob.shouldProcessUnallocatedSpace();
@@ -75,21 +104,23 @@ public final class IngestJobContext {
 
     /**
      * Adds one or more files to the files to be passed through the file ingest
-     * pipeline of the ingest job associated with the current context.
+     * pipeline of the ingest job associated with this context.
      *
      * @param files The files to be processed by the file ingest pipeline.
      */
     public void scheduleFiles(List<AbstractFile> files) {
         for (AbstractFile file : files) {
             try {
-                IngestScheduler.getInstance().scheduleAdditionalFileIngestTask(ingestJob, file);
+                IngestJobContext.scheduler.scheduleAdditionalFileIngestTask(this.ingestJob, file);
             } catch (InterruptedException ex) {
-                // Ultimately, this method is called by ingest task execution
-                // threads running ingest module code. Handle the unexpected
-                // interrupt here rather
+                // Handle the unexpected interrupt here rather than make ingest 
+                // module writers responsible for writing this exception handler. 
+                // The interrupt flag of the thread is reset for detection by 
+                // the thread task code.  
                 Thread.currentThread().interrupt();
-                Logger.getLogger(IngestJobContext.class.getName()).log(Level.SEVERE, "File task scheduling unexpectedly interrupted", ex); //NON-NLS
+                IngestJobContext.logger.log(Level.SEVERE, "File task scheduling unexpectedly interrupted", ex); //NON-NLS
             }
         }
     }
+    
 }
