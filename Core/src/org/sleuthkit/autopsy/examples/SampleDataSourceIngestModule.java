@@ -99,8 +99,8 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             // Get files by creation time.
             long currentTime = System.currentTimeMillis() / 1000;
             long minTime = currentTime - (14 * 24 * 60 * 60); // Go back two weeks.
-            List<FsContent> otherFiles = sleuthkitCase.findFilesWhere("crtime > " + minTime);
-            for (FsContent otherFile : otherFiles) {
+            List<AbstractFile> otherFiles = fileManager.findFiles(dataSource, "crtime > " + minTime);
+            for (AbstractFile otherFile : otherFiles) {
                 if (!skipKnownFiles || otherFile.getKnown() != TskData.FileKnown.KNOWN) {
                     ++fileCount;
                 }

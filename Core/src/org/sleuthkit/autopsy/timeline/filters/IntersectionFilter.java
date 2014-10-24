@@ -10,15 +10,15 @@ import javafx.collections.ObservableList;
 
 /** Intersection(And) filter */
 public class IntersectionFilter extends CompoundFilter {
-    
+
     public IntersectionFilter(ObservableList<Filter> subFilters) {
         super(subFilters);
     }
-    
+
     public IntersectionFilter() {
         super(FXCollections.<Filter>observableArrayList());
     }
-    
+
     @Override
     public IntersectionFilter copyOf() {
         IntersectionFilter filter = new IntersectionFilter(FXCollections.observableArrayList(
@@ -26,20 +26,22 @@ public class IntersectionFilter extends CompoundFilter {
                 .map(Filter::copyOf)
                 .collect(Collectors.toList())));
         filter.setActive(isActive());
-        filter.setDisabled(isdisabled());
+        filter.setDisabled(isDisabled());
         return filter;
     }
-    
+
     @Override
     public String getDisplayName() {
-        return "Intersection";
+        return "Intersection" + getSubFilters().stream()
+                .map(Filter::getDisplayName)
+                .collect(Collectors.joining(",", "[", "]"));
     }
-    
+
     @Override
     public String getHTMLReportString() {
         return getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>"));
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -49,11 +51,11 @@ public class IntersectionFilter extends CompoundFilter {
             return false;
         }
         final IntersectionFilter other = (IntersectionFilter) obj;
-        
+
         if (isActive() != other.isActive()) {
             return false;
         }
-        
+
         for (int i = 0; i < getSubFilters().size(); i++) {
             if (getSubFilters().get(i).equals(other.getSubFilters().get(i)) == false) {
                 return false;
@@ -61,7 +63,7 @@ public class IntersectionFilter extends CompoundFilter {
         }
         return true;
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 7;

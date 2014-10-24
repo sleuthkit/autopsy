@@ -12,6 +12,7 @@
     <property name="netbeans-plat-version" value="7.3" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
 
+    <!-- Determine platform and include specific file -->
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
     </condition>  
@@ -19,10 +20,10 @@
         <os family="windows"/>  
     </condition>  
     <import file="build-${os.family}.xml"/> 
-    <property name="test-input" location="Test/input"/>
-    <property name="thirdparty.dir" value="${basedir}/thirdparty" />
-
+    
+    <!-- Third party tools dependencies -->
     <!-- import ant-contrib tools -->
+    <property name="thirdparty.dir" value="${basedir}/thirdparty" />
     <property name="ant-contrib.dir" value="${thirdparty.dir}/ant-contrib/1.0b3" />
     <property name="ant.contrib.jar" value="${ant-contrib.dir}/ant-contrib.jar" />
     <taskdef resource="net/sf/antcontrib/antlib.xml">
@@ -31,12 +32,11 @@
         </classpath>
     </taskdef>
     
+    <target name="getJunit">
+        <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
+        <unzip src="${junit.dir}/junit.zip" dest="${nbplatform.active.dir}"/>
+    </target>
 
-    <!-- This seems really bad to be hard coded, but I couldn't find a better solution -->
-    <path id="jni-path">
-        <pathelement location="${basedir}/build/cluster/modules/org-sleuthkit-datamodel.jar"/>
-        <path refid="cluster.path.id" />
-    </path>
 
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
@@ -48,10 +48,8 @@
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>
     
-     <target name="getJunit">
-        <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
-        <unzip src="${junit.dir}/junit.zip" dest="${nbplatform.active.dir}"/>
-    </target>
+    
+    
     
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
@@ -185,6 +183,11 @@
         
     </target>
     
+    <!-- This seems really bad to be hard coded, but I couldn't find a better solution -->
+    <path id="jni-path">
+        <pathelement location="${basedir}/build/cluster/modules/org-sleuthkit-datamodel.jar"/>
+        <path refid="cluster.path.id" />
+    </path>
     <target name="jni" depends="build,findTSK">
         <javah verbose="yes" outputFile="${env.TSK_HOME}/bindings/java/tsk_jni/tsk_jni/dataModel_SleuthkitJNI.h">
             <class name="org.sleuthkit.datamodel.SleuthkitJNI" />
@@ -229,6 +232,7 @@
         <antcall target="build-installer-${os.family}" />
     </target>
     
+    <property name="test-input" location="Test/input"/>
     <target name="test-download-imgs" description="Get test images and store them in the path represented by the test-input variable.">
          <available file="${test-input}/nps-2008-jean.E01" property="img-present-1"/>
          <available file="${test-input}/nps-2008-jean.E02" property="img-present-2"/>
