@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javafx.beans.InvalidationListener;
@@ -102,7 +103,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
     /** @return the list of nodes containing settings widgets to insert into
      *          this visualization's header */
     protected List<Node> getSettingsNodes() {
-        return settingsNodes;
+        return Collections.unmodifiableList(settingsNodes);
     }
 
     /** @param value a value along this visualization's x axis

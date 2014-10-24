@@ -23,6 +23,9 @@ import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -33,7 +36,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -47,25 +49,29 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * used with JavaFx image viewer only.
  */
  public class MediaViewImagePanel extends javax.swing.JPanel {
-
     private JFXPanel fxPanel;
     private ImageView fxImageView;
     private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
     private boolean fxInited = false;
+    
+    private final List<String> supportedExtensions;
+    static private final List<String> supportedMimes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp"); 
 
     /**
      * Creates new form MediaViewImagePanel
      */
     public MediaViewImagePanel() {
         initComponents();
-
-
-
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
-
-
         if (fxInited) {
             setupFx();
+        }
+        
+        supportedExtensions = new ArrayList<>();
+        //logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
+        for (String suffix : ImageIO.getReaderFileSuffixes()) {
+            //logger.log(Level.INFO, "suffix: " + suffix);
+            supportedExtensions.add("." + suffix);
         }
     }
     
@@ -99,13 +105,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                         // setVisible(true);
                     }
                 });
-
-
-
             }
         });
-
-
     }
 
     public void reset() {
@@ -206,6 +207,22 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             }
         });
 
+    }
+    
+    /**
+     * returns supported mime types
+     * @return 
+     */
+    public List<String> getMimeTypes() {
+        return supportedMimes;
+    }
+    
+    /**
+     * returns supported extensions (each starting with .)
+     * @return 
+     */
+    public List<String> getExtensions() {
+        return supportedExtensions;
     }
 
     /**

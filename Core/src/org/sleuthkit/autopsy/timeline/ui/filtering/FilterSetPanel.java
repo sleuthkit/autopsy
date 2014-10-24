@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -66,6 +69,8 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     private FilteredEventsModel filteredEvents;
 
     private TimeLineController controller;
+
+    private final ObservableMap<String, Boolean> expansionMap = FXCollections.observableHashMap();
 
     @FXML
     void initialize() {
@@ -138,6 +143,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     public FilterSetPanel() {
         FXMLConstructor.construct(this, "FilterSetPanel.fxml");
+        expansionMap.put("Event Type Filter", Boolean.TRUE);
     }
 
     @Override
@@ -152,16 +158,14 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
-
         refresh();
-
         this.filteredEvents.filter().addListener((Observable o) -> {
             refresh();
         });
     }
 
     private void refresh() {
-        filterTreeTable.setRoot(new FilterTreeItem(this.filteredEvents.filter().get().copyOf()));
+        filterTreeTable.setRoot(new FilterTreeItem(this.filteredEvents.filter().get().copyOf(), expansionMap));
     }
 
     /**
@@ -171,23 +175,29 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     private static class FilterCheckBoxCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
 
         private final CheckBox checkBox = new CheckBox();
+        private SimpleBooleanProperty activeProperty;
 
         @Override
         protected void updateItem(AbstractFilter item, boolean empty) {
             super.updateItem(item, empty);
             Platform.runLater(() -> {
+                if (activeProperty != null) {
+                    checkBox.selectedProperty().unbindBidirectional(activeProperty);
+                }
+                checkBox.disableProperty().unbind();
                 if (item == null) {
                     setText(null);
                     setGraphic(null);
-                    checkBox.selectedProperty().unbind();
-                    checkBox.disableProperty().unbind();
+
                 } else {
                     setText(item.getDisplayName());
-                    checkBox.selectedProperty().bindBidirectional(item.getActiveProperty());
+                    activeProperty = item.getActiveProperty();
+                    checkBox.selectedProperty().bindBidirectional(activeProperty);
                     checkBox.disableProperty().bind(item.getDisabledProperty());
                     setGraphic(checkBox);
                 }
             });
         }
+
     }
 }

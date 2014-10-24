@@ -13,7 +13,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 public abstract class AbstractFilter implements Filter {
 
     private final SimpleBooleanProperty active = new SimpleBooleanProperty(true);
-
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
 
     @Override
@@ -42,7 +41,7 @@ public abstract class AbstractFilter implements Filter {
     }
 
     @Override
-    public boolean isdisabled() {
+    public boolean isDisabled() {
         return disabled.get();
     }
 
@@ -50,4 +49,7 @@ public abstract class AbstractFilter implements Filter {
     public String getStringCheckBox() {
         return "[" + (isActive() ? "x" : " ") + "]";
     }
+
+  
+
 }

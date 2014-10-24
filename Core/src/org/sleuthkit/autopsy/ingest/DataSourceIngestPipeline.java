@@ -39,30 +39,12 @@ final class DataSourceIngestPipeline {
         this.job = job;
 
         // Create an ingest module instance from each data source ingest module 
-        // template. Put the modules in a map of module class names to module 
-        // instances to facilitate loading the modules into the pipeline in the 
-        // sequence indicated by the ordered list of module class names that 
-        // will be obtained from the data source ingest pipeline configuration.
-        Map<String, DataSourceIngestModuleDecorator> modulesByClass = new HashMap<>();
+        // template. 
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
                 DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
-                modulesByClass.put(module.getClassName(), module);
+                modules.add(module);
             }
-        }
-
-        // Add the ingest modules to the pipeline in the order indicated by the 
-        // data source ingest pipeline configuration, adding any additional 
-        // modules found in the global lookup, but not mentioned in the 
-        // configuration, to the end of the pipeline in arbitrary order.
-        List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getDataSourceIngestPipelineConfig();
-        for (String moduleClassName : pipelineConfig) {
-            if (modulesByClass.containsKey(moduleClassName)) {
-                modules.add(modulesByClass.remove(moduleClassName));
-            }
-        }
-        for (DataSourceIngestModuleDecorator module : modulesByClass.values()) {
-            modules.add(module);
         }
     }
 
