@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -41,7 +42,7 @@ import org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
- * Discovers ingest module factories implemented in Java or Jython.
+ * Discovers and instantiates ingest module factories.
  */
 final class IngestModuleFactoryLoader {
 
@@ -111,9 +112,13 @@ final class IngestModuleFactoryLoader {
             }
         }
 
-        // Add any remaining non-core factories discovered. Order is not 
-        // guaranteed!
-        factories.addAll(javaFactoriesByClass.values());
+        // Add any remaining non-core factories discovered. Order with an 
+        // alphabetical sort by module display name.
+        TreeMap<String, IngestModuleFactory> javaFactoriesSortedByName = new TreeMap<>(); 
+        for (IngestModuleFactory factory : javaFactoriesByClass.values()) {
+            javaFactoriesSortedByName.put(factory.getModuleDisplayName(), factory);
+        }                
+        factories.addAll(javaFactoriesSortedByName.values());
 
         // Add any ingest module factories implemented using Jython. Order is 
         // not guaranteed! 
