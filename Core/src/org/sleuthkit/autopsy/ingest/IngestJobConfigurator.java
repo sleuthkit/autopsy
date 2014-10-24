@@ -125,9 +125,9 @@ public final class IngestJobConfigurator {
         ModuleSettings.setConfigSetting(launcherContext, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
 
         // Get the process unallocated space flag setting. If the setting does
-        // not exist yet, default it to false.
+        // not exist yet, default it to true.
         if (ModuleSettings.settingExists(launcherContext, PARSE_UNALLOC_SPACE_KEY) == false) {
-            ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, "false"); //NON-NLS
+            ModuleSettings.setConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY, "true"); //NON-NLS
         }
         boolean processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(launcherContext, PARSE_UNALLOC_SPACE_KEY));
 

@@ -34,4 +34,20 @@ public enum DescriptionLOD {
     private DescriptionLOD(String displayName) {
         this.displayName = displayName;
     }
+
+    public DescriptionLOD next() {
+        try {
+            return values()[ordinal() + 1];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return null;
+        }
+    }
+
+    public DescriptionLOD previous() {
+        try {
+            return values()[ordinal() - 1];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return null;
+        }
+    }
 }
