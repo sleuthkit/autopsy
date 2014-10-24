@@ -40,6 +40,7 @@ public final class ExecUtil {
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
     private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
     private int exitValue = -100;
+    private String[] extraEnvironmentVariables;
 
     /**
      * Execute a process. Redirect asynchronously stdout to a string and stderr
@@ -65,8 +66,16 @@ public final class ExecUtil {
 
         final Runtime rt = Runtime.getRuntime();
         logger.log(Level.INFO, "Executing {0}", arrayCommandToLog.toString()); //NON-NLS
+        if(extraEnvironmentVariables!=null)
+        {
+            logger.log(Level.INFO, "Using {0} extra environment variables:", extraEnvironmentVariables.length);//NON-NLS
+            for (String s : extraEnvironmentVariables)
+            {
+                logger.log(Level.INFO, "    {0}", s);//NON-NLS
+            }
+        }
 
-        proc = rt.exec(arrayCommand);
+        proc = rt.exec(arrayCommand, extraEnvironmentVariables);
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
@@ -111,8 +120,15 @@ public final class ExecUtil {
 
         final Runtime rt = Runtime.getRuntime();
         logger.log(Level.INFO, "Executing {0}", arrayCommandToLog.toString()); //NON-NLS
-
-        proc = rt.exec(arrayCommand);
+        if(extraEnvironmentVariables!=null)
+        {
+            logger.log(Level.INFO, "Using {0} extra environment variables:", extraEnvironmentVariables.length);//NON-NLS
+            for (String s : extraEnvironmentVariables)
+            {
+                logger.log(Level.INFO, "    {0}", s);//NON-NLS
+            }
+        }        
+        proc = rt.exec(arrayCommand, extraEnvironmentVariables);
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
@@ -160,6 +176,39 @@ public final class ExecUtil {
         }
     }
 
+    /**
+     * Gets the current settings for extraEnvironmentVariables. These settings will be 
+     * applied when the execute() method is called, and will function as if that 
+     * environment variable were set in the parent prior to the call.
+     *
+     * @return Gets the current settings for extraEnvironmentVariables
+     */
+    public String[] getExtraEnvironmentVariables() {
+        return extraEnvironmentVariables;
+    }
+    
+    /**
+     * Sets the current settings for extraEnvironmentVariables. These settings will be 
+     * applied when the execute() method is called, and will function as if that 
+     * environment variable were set in the parent prior to the call.
+     *
+     * @return void
+     */
+    public void setExtraEnvironmentVariables(String[] newEnvironmentVariables) {
+        extraEnvironmentVariables=newEnvironmentVariables;
+    }    
+    
+    /**
+     * Clears extraEnvironmentVariables. These settings are applied when the 
+     * execute() method is called, and will function as if that environment 
+     * variable were set in the parent prior to the call.
+     *
+     * @return void
+     */
+    public void clearExtraEnvironmentVariables() {
+        extraEnvironmentVariables=null;
+    }    
+    
     /**
      * Gets the exit value returned by the subprocess used to execute a command.
      *

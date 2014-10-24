@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
@@ -14,10 +15,13 @@
             <items>
                 <HBox alignment="CENTER" BorderPane.alignment="CENTER">
                     <children>
-                        <Label text="Mode:">
+                        <Label text="Visualization Mode:">
                             <HBox.margin>
                                 <Insets right="5.0" />
                             </HBox.margin>
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
                         </Label>
                              
                         <org.controlsfx.control.SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
@@ -30,6 +34,9 @@
                                             </image>
                                         </ImageView>
                                     </graphic>
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
                                 </ToggleButton>
                                 <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false" text="Details">
                                     <graphic>
@@ -39,6 +46,9 @@
                                             </image>
                                         </ImageView>
                                     </graphic>
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
                                 </ToggleButton>
                             </buttons>
                                     
@@ -52,7 +62,7 @@
                     </BorderPane.margin>
                 </HBox>
                 <Separator orientation="VERTICAL" />
-                <Button fx:id="snapShotButton" mnemonicParsing="false" text="snapshot">
+                <Button fx:id="snapShotButton" mnemonicParsing="false" text="Screenshot">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>

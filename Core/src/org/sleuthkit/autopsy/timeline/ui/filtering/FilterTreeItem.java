@@ -1,5 +1,8 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
+import javafx.beans.Observable;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.filters.CompoundFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -16,15 +19,28 @@ public class FilterTreeItem extends TreeItem<Filter> {
      *          be made for them added added to the children of this
      *          FilterTreeItem
      */
-    public FilterTreeItem(Filter f) {
+    public FilterTreeItem(Filter f, ObservableMap<String, Boolean> expansionMap) {
         super(f);
-        setExpanded(true);
+
+        expansionMap.addListener((MapChangeListener.Change<? extends String, ? extends Boolean> change) -> {
+            if (change.getKey() == f.getDisplayName()) {
+                setExpanded(expansionMap.get(change.getKey()));
+            }
+        });
+
+        if (expansionMap.get(f.getDisplayName()) != null) {
+            setExpanded(expansionMap.get(f.getDisplayName()));
+        }
+
+        expandedProperty().addListener((Observable observable) -> {
+            expansionMap.put(f.getDisplayName(), isExpanded());
+        });
 
         if (f instanceof CompoundFilter) {
             CompoundFilter cf = (CompoundFilter) f;
 
             for (Filter af : cf.getSubFilters()) {
-                getChildren().add(new FilterTreeItem(af));
+                getChildren().add(new FilterTreeItem(af, expansionMap));
             }
         }
     }

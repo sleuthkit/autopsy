@@ -115,3 +115,22 @@ ImgScalr 4.2 for image resizing in image viewers
 - Web page: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/
 - License: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/#license
 
+
+EMBEDED RESOURCES
+
+This section lists other resources, such as icons, that are used by Autopsy.   
+
+FAMFAMFAM Silk Icons v1.3
+- Web page: http://www.famfamfam.com/lab/icons/silk/
+- License: http://creativecommons.org/licenses/by/3.0/
+
+Fugue Icons v3.5.6
+- Web page: http://p.yusukekamiyamane.com/
+- License: http://creativecommons.org/licenses/by/3.0/
+
+WebHostingHub Glyphs
+- Web page: http://www.webhostinghub.com/glyphs/
+- License: http://creativecommons.org/licenses/by/3.0/
+
+Splashy Icons (free as in free) 
+- Web page: http://splashyfish.com/icons/
