@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.CarvedFileContainer;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -197,8 +198,7 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume
-     * or file system given by systemId.
+     * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume or image given by systemId.
      *
      * @param carvedFileName the name of the carved file (containing appropriate
      *                       extension)
@@ -220,6 +220,23 @@ public class FileManager implements Closeable {
         return tskCase.addCarvedFile(carvedFileName, carvedFileSize, systemId, sectors);
     }
 
+    /**
+     * Adds a collection of carved files to the VirtualDirectory '$CarvedFiles' in the volume or image given by
+     * systemId. Creates $CarvedFiles if it does not exist already.
+     *
+     * @param filesToAdd a list of CarvedFileContainer files to add as carved files
+     * @return List<LayoutFile> This is a list of the files added to the database
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public List<LayoutFile> addCarvedFiles(List<CarvedFileContainer> filesToAdd) throws TskCoreException {
+        if (tskCase == null) {
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.addCarvedFile.exception.msg"));
+        }
+        else {
+            return tskCase.addCarvedFiles(filesToAdd);
+        }
+    }
+    
     /**
      * Interface for receiving notifications on folders being added via a
      * callback

@@ -1,0 +1,6 @@
+TestDisk & PhotoRec are mainly written by Christophe GRENIER.
+Many people further contributed to TestDisk, directly or indirectly, by
+reporting problems, helping with the documentation, suggesting various
+improvements, sending me gifts using my Amazon whish-list...
+
+Thanks to the thousands of people who have provided support for the project!
