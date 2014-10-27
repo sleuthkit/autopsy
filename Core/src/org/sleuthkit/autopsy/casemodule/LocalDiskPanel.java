@@ -419,12 +419,14 @@ final class LocalDiskPanel extends JPanel {
                 label.setForeground(list.getForeground());
             }
 
-            String localDiskString = value.toString();
-            label.setText(value.toString());
-            if ((localDiskString.equals(LOADING)) || (localDiskString.equals(NO_DRIVES))) {
-                label.setFont(label.getFont().deriveFont(Font.ITALIC));
-                label.setBackground(Color.GRAY);
-            } 
+            if (value != null) {
+                String localDiskString = value.toString();
+                label.setText(value.toString());
+                if ((localDiskString.equals(LOADING)) || (localDiskString.equals(NO_DRIVES))) {
+                    label.setFont(label.getFont().deriveFont(Font.ITALIC));
+                    label.setBackground(Color.GRAY);
+                }
+            }
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));
 
