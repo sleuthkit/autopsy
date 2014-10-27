@@ -32,8 +32,8 @@ import java.util.logging.Level;
  */
 public final class ExecUtil {
 
-    private static final long DEFAULT_TIMEOUT = 1000;
-    private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.MILLISECONDS;
+    private static final long DEFAULT_TIMEOUT = 5;
+    private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
         
     /**
      * The execute() methods do a wait with a timeout on the executing process
