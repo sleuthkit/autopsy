@@ -32,10 +32,13 @@ import java.util.logging.Level;
  */
 public final class ExecUtil {
 
+    private static final long DEFAULT_TIMEOUT = 1000;
+    private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.MILLISECONDS;
+        
     /**
-     * The execute() methods do a wait with a timeout on the executing process and
-     * query the terminator each time the timeout expires to determine whether
-     * or not to kill the process or allow it to continue.
+     * The execute() methods do a wait with a timeout on the executing process
+     * and query the terminator each time the timeout expires to determine
+     * whether or not to kill the process or allow it to continue.
      */
     public interface ProcessTerminator {
 
@@ -50,33 +53,40 @@ public final class ExecUtil {
     }
 
     /**
-     * The default, do-nothing process terminator.
-     */
-    private static class NullProcessTerminator implements ProcessTerminator {
-
-        /**
-         * @inheritDoc
-         */
-        @Override
-        public boolean shouldTerminateProcess() {
-            return false;
-        }
-    }    
-        
-    /**
-     * Runs a process using a default do-nothing terminator.
+     * Runs a process without a timeout and terminator.
      *
      * @param processBuilder A process builder used to configure and construct
      * the process to be run.
-     * @param timeOut The duration of the timeout.
-     * @param units The units for the timeout.
      * @return the exit value of the process
      * @throws SecurityException if a security manager exists and vetoes any
      * aspect of running the process.
-     * @throws IOException if an I/o error occurs.
+     * @throws IOException if an I/O error occurs.
      */
-    public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units) throws SecurityException, IOException {
-        return ExecUtil.execute(processBuilder, timeOut, units, new ExecUtil.NullProcessTerminator());
+    public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
+        return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean shouldTerminateProcess() {
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Runs a process using the default timeout and a custom terminator.
+     *
+     * @param processBuilder A process builder used to configure and construct
+     * the process to be run.
+     * @param terminator The terminator.
+     * @return the exit value of the process
+     * @throws SecurityException if a security manager exists and vetoes any
+     * aspect of running the process.
+     * @throws IOException if an I/O error occurs.
+     */
+    public static int execute(ProcessBuilder processBuilder, ProcessTerminator terminator) throws SecurityException, IOException {
+        return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
     }
 
     /**
@@ -243,7 +253,7 @@ public final class ExecUtil {
     /**
      * Gets the exit value returned by the subprocess used to execute a command.
      *
-     * @return The exit value or the distinguished value -100 if this method is 
+     * @return The exit value or the distinguished value -100 if this method is
      * called before the exit value is set.
      */
     @Deprecated
