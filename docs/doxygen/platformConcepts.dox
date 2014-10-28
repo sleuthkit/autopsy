@@ -46,21 +46,16 @@ The blackboard is not unique to Autopsy.  It is part of The Sleuth Kit datamodel
 - Details of the Java classes can be found in \ref jni_blackboard section of the The Sleuth Kit JNI documents (http://sleuthkit.org/sleuthkit/docs/jni-docs/). 
 
 
-\subsection mod_dev_other_services Framework Services
+\subsection mod_dev_other_services Framework Services and Utilities
 
-The followig are basic services that are available. 
+The followig are basic services that are available to any module:
 
 - FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API to access any file in the case. You can access FileManager by calling org.sleuthkit.autopsy.casemodule.services.Services.getFileManager().  Data Source-level Ingest modules and Report modules typically use this service because the other modules are passed in a reference to a specific file to do something with. 
-- org.sleuthkit.autopsy.coreutils.Logger - Use this class to log error and informational messages to the central Autopsy log file.
-- If you have a background task that needs the provide the user with feedback, you can use the org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show() method to make a message in the lower right hand area.
+- Logging: the org.sleuthkit.autopsy.coreutils.Logger class can be used to log error and informational messages to the central Autopsy log file.
+- Pop-up Windows: 
+If you have a background task that needs the provide the user with feedback, you can use the org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show() method to make a message in the lower right hand area.
+- Module Settings: If you want to persist settings between invocations of Autopsy, you can use org.sleuthkit.autopsy.coreutils.ModuleSettings.
+- Platform Utilities: The org.sleuthkit.autopsy.coreutils.PlatformUtil class allows you to save resources into the user folder and determine paths for the case and user folders.
+- File Utilities: The org.sleuthkit.autopsy.coreutils.FileUtil class assists with creating and deleting folders, etc.
 - IngestModules also have a class that provides additional services.  See \ref ingest_modules_services_ingest. 
-
-
-\subsection mod_dev_other_utilities Framework Utilities
-
-In addition to the services previously listed, there are some general utilities that could be useful to modules.  These include: 
-- org.sleuthkit.autopsy.coreutils.PlatformUtil - platform-specific methods to determine available disk space, memory, etc.
-- org.sleuthkit.autopsy.coreutils.ModuleSettings - to persist module configuration and settings
-- org.sleuthkit.autopsy.coreutils.FileUtil - to delete and add folders, etc.
-
 */
