@@ -792,7 +792,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                          "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
                          "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n" + //NON-NLS
                          "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n" + //NON-NLS
-                         "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:center; }\n" + //NON-NLS
+                         "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n" + //NON-NLS
                          "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
