@@ -55,7 +55,9 @@ The followig are basic services that are available to any module:
 - Pop-up Windows: 
 If you have a background task that needs the provide the user with feedback, you can use the org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show() method to make a message in the lower right hand area.
 - Module Settings: If you want to persist settings between invocations of Autopsy, you can use org.sleuthkit.autopsy.coreutils.ModuleSettings.
-- Platform Utilities: The org.sleuthkit.autopsy.coreutils.PlatformUtil class allows you to save resources into the user folder and determine paths for the case and user folders.
+- Platform Utilities: The org.sleuthkit.autopsy.coreutils.PlatformUtil class allows you to save resources into the user folder and determine paths for the user folders.  Specifically:
+ - PlatformUtil.extractResourceToUserConfigDir()
+ - PlatformUtil.isWindowsOS()
 - File Utilities: The org.sleuthkit.autopsy.coreutils.FileUtil class assists with creating and deleting folders, etc.
 - IngestModules also have a class that provides additional services.  See \ref ingest_modules_services_ingest. 
 */
