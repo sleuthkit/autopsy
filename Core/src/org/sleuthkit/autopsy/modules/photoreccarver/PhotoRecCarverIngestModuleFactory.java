@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.photoreccarver;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -32,8 +33,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter
 {
-
-    private static final String VERSION_NUMBER = "1.0";
 
     /**
      * Gets the ingest module name for use within this package.
@@ -69,7 +68,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
     @Override
     public String getModuleVersionNumber()
     {
-        return PhotoRecCarverIngestModuleFactory.VERSION_NUMBER;
+        return Version.getVersion();
     }
 
     /**
