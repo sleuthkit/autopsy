@@ -167,7 +167,7 @@ final class LocalDiskPanel extends JPanel {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -419,12 +419,14 @@ final class LocalDiskPanel extends JPanel {
                 label.setForeground(list.getForeground());
             }
 
-            String localDiskString = value.toString();
-            label.setText(value.toString());
-            if ((localDiskString.equals(LOADING)) || (localDiskString.equals(NO_DRIVES))) {
-                label.setFont(label.getFont().deriveFont(Font.ITALIC));
-                label.setBackground(Color.GRAY);
-            } 
+            if (value != null) {
+                String localDiskString = value.toString();
+                label.setText(value.toString());
+                if ((localDiskString.equals(LOADING)) || (localDiskString.equals(NO_DRIVES))) {
+                    label.setFont(label.getFont().deriveFont(Font.ITALIC));
+                    label.setBackground(Color.GRAY);
+                }
+            }
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));
 

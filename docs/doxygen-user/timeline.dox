@@ -32,7 +32,7 @@ This section covers some basic concepts of the interface.
 
 Events
 ------
-The timeline tool is organized around events. An Event has a timestamp, a type, and a description.  Note: all Events are discreet, but might be grouped together to form clusters with a duration in the Details View depending on the level of Description that is enabled in the UI.
+The timeline tool is organized around events. An Event has a timestamp, a type, and a description.  Note: all Events are discrete, but might be grouped together to form clusters with a duration in the Details View depending on the level of Description that is enabled in the UI.
 
 The timeline collects data from multiple sources and organizes the events into the following taxonomy:
 
@@ -157,7 +157,7 @@ __Truncate Descriptions__:  The user can select ‘truncate descriptions’ and 
 
 __Description Visibility__:  The user may choose a description visibility level of ‘show’, ‘counts only’, or ‘hide’.  Show is the default.  If Counts only is selected, only the count in parenthesis is shown, if hide is selected the entire text label is hidden.  Counts only and hide are useful if the user wants to get a less cluttered view, focussed more on when event clusters occurred and their type, and is not interested in the descriptions.
 
-Right-clicking a cluster will show a slider to locally adjust the description detail for the cluster.  By increasing the detail level for the slider, the events in the cluster will be displayed clustered at a time scale appropriate for their extent and the detail level chosen.  This can be repeated for the subclusters, to create a nested hierarchy of clusters. As with the global description level, care should be used when selecting ‘full’, as this may cause an enormous amount of detail to be shown, slowing the tool down.
+Clicking the small green [+] button in a cluster will expand it with the next level of detail. The events in the cluster will be displayed clustered at a time scale appropriate for their extent and the detail level chosen.  This can be repeated for the subclusters, to create a nested hierarchy of clusters. Clicking the red [-] button collapses a cluster to a lower level of detail.  As with the global description level, care should be used when fully expanding large clusters, as this may cause an enormous amount of detail to be shown, slowing the tool down.
 
 
 

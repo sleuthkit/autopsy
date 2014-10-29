@@ -19,15 +19,10 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -41,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public final class ReportBranding implements ReportBrandingProviderI {
 
     //property names
-    private static final String GENERATOR_LOGO_PATH_PROP = "GeneratorLogoPath"; //NON-NLS
     private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
     private static final String REPORT_TITLE_PROP = "ReportTitle"; //NON-NLS
     private static final String REPORT_FOOTER_PROP = "ReportFooter"; //NON-NLS
@@ -54,6 +48,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
+    private static String generatorLogoPath;
 
     public ReportBranding() {
 
@@ -69,7 +64,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
                     //TODO use defaults
                 }
             }
-            getGeneratorLogoPath();
+            extractGeneratorLogo();
             getAgencyLogoPath();
             getReportTitle();
         }
@@ -78,31 +73,24 @@ public final class ReportBranding implements ReportBrandingProviderI {
     public String getReportsBrandingDir() {
         return reportsBrandingDir;
     }
+    
+    private void extractGeneratorLogo() {
+        try {
+            PlatformUtil.extractResourceToUserConfigDir(getClass(), DEFAULT_GENERATOR_LOGO, true);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error extracting report branding resource for generator logo ", ex); //NON-NLS
+        }
+        generatorLogoPath = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_GENERATOR_LOGO;
+    }
 
     @Override
     public String getGeneratorLogoPath() {
-        String curPath = null;
-        try {
-            curPath = ModuleSettings.getConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP);
-            if (curPath == null || (!curPath.isEmpty() && !new File(curPath).canRead() ) ) {
-                //use default
-                logger.log(Level.INFO, "Using default report branding for generator logo"); //NON-NLS
-                curPath = reportsBrandingDir + File.separator + "logo.png"; //NON-NLS
-                InputStream in = getClass().getResourceAsStream(DEFAULT_GENERATOR_LOGO);
-                OutputStream output = new FileOutputStream(new File(curPath));
-                FileUtil.copy(in, output);
-                ModuleSettings.setConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP, curPath);
-            }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error extracting report branding resources for generator logo", e); //NON-NLS
-        }
-
-        return curPath;
+        return generatorLogoPath;
     }
 
     @Override
     public void setGeneratorLogoPath(String path) {
-        ModuleSettings.setConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP, path);
+        
     }
 
     @Override

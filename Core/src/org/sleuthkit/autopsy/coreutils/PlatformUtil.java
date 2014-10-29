@@ -212,6 +212,7 @@ public class PlatformUtil {
      * @param resourceClass class in the same package as the resourceFile to
      * extract
      * @param resourceFile resource file name to extract
+     * @param overWrite true to overwrite an existing resource
      * @return true if extracted, false otherwise (if file already exists)
      * @throws IOException exception thrown if extract the file failed for IO
      * reasons
@@ -223,6 +224,8 @@ public class PlatformUtil {
         if (resourceFileF.exists() && !overWrite) {
             return false;
         }
+        
+        resourceFileF.getParentFile().mkdirs();
 
         InputStream inputStream = resourceClass.getResourceAsStream(resourceFile);
 
