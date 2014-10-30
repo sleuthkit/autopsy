@@ -75,37 +75,6 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      * @inheritDoc
      */
     @Override
-    public IngestModuleIngestJobSettings getDefaultIngestJobSettings()
-    {
-        return new PhotoRecCarverIngestJobSettings();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public boolean hasIngestJobSettingsPanel()
-    {
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings)
-    {
-        if (!(settings instanceof PhotoRecCarverIngestJobSettings))
-        {
-            throw new IllegalArgumentException(NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "unrecognizedSettings.message"));
-        }
-        return new PhotoRecCarverIngestJobSettingsPanel((PhotoRecCarverIngestJobSettings) settings);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
     public boolean isFileIngestModuleFactory()
     {
         return true;
@@ -117,11 +86,11 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings)
     {
-        if (!(settings instanceof PhotoRecCarverIngestJobSettings))
+        if (!(settings instanceof IngestModuleIngestJobSettings))
         {
             throw new IllegalArgumentException(NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "unrecognizedSettings.message"));
         }
-        return new PhotoRecCarverFileIngestModule((PhotoRecCarverIngestJobSettings) settings);
+        return new PhotoRecCarverFileIngestModule();
     }
 
 }

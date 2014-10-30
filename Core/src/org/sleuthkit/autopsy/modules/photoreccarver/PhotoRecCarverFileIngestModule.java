@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -50,20 +51,26 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
-import java.util.concurrent.TimeUnit;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with unallocated space files as input.
  */
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
+    private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
+    private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
+    private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
+    private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
+    private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
+    private static final String LOG_FILE = "run_log.txt"; //NON-NLS
     private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final Map<Long, WorkingPaths> pathsByJob = new ConcurrentHashMap<>();
-    private final PhotoRecCarverIngestJobSettings settings;
     private IngestJobContext context;
     private Path rootOutputDirPath;
     private File executableFile;
@@ -72,10 +79,10 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * Constructs a file ingest module that runs the Unallocated Carver executable with unallocated space files as
      * input.
      *
-     * @param settings The settings for the ingest module.
+     * @param None
      */
-    PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
-        this.settings = settings;
+    PhotoRecCarverFileIngestModule() {
+
     }
 
     /**
@@ -96,8 +103,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         this.context = context;
         this.rootOutputDirPath = PhotoRecCarverFileIngestModule.createModuleOutputDirectoryForCase();
 
-        String execName = PhotoRecCarverIngestJobSettings.PHOTOREC_DIRECTORY + PhotoRecCarverIngestJobSettings.PHOTOREC_EXECUTABLE;
-        executableFile = settings.locateExecutable(execName);
+        Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
+        executableFile = locateExecutable(execName.toString());
+
         if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.context.getJobId()) == 1) {
             try {
                 // The first instance of the module for an ingest job creates 
@@ -146,26 +154,34 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // Verify initialization succeeded.
             if (null == this.executableFile) {
-                PhotoRecCarverFileIngestModule.logger.log(Level.SEVERE, "Unallocated Carver unallocated space ingest module called after failed start up");  // NON-NLS
+                logger.log(Level.SEVERE, "Unallocated Carver unallocated space ingest module called after failed start up");  // NON-NLS
+                return IngestModule.ProcessResult.ERROR;
+            }
+
+            // Check that we have roughly enough disk space left to complete the operation
+            long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
+            if ((file.getSize() * 2) > freeDiskSpace) {
+                logger.log(Level.SEVERE, "Error processing " + file.getName() + " with "
+                        + PhotoRecCarverIngestModuleFactory.getModuleName()
+                        + " Not enough space on primary disk to carve unallocated space."); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
 
             // Write the file to disk.
             WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.context.getJobId());
-            Path tempDirPath = paths.getTempDirPath();
-            tempFilePath = Paths.get(tempDirPath.toString(), file.getName());
+            tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
             ContentUtils.writeToFile(file, tempFilePath.toFile());
 
             // Create a subdirectory for this file.
             Path outputDirPath = Paths.get(paths.getOutputDirPath().toString(), file.getName());
             Files.createDirectory(outputDirPath);
-            File log = new File(outputDirPath + "\\" + PhotoRecCarverIngestJobSettings.LOG_FILE); //NON-NLS
+            File log = new File(Paths.get(outputDirPath.toString(), LOG_FILE).toString()); //NON-NLS
 
             // Scan the file with Unallocated Carver.
             ProcessBuilder processAndSettings = new ProcessBuilder(
-                    "\"" + settings.executableFile().toString() + "\"",
+                    "\"" + executableFile + "\"",
                     "/d",
-                    "\"" + outputDirPath.toAbsolutePath() + "\\results\"",
+                    "\"" + outputDirPath.toAbsolutePath() + File.separator + PHOTOREC_RESULTS_BASE + "\"",
                     "/cmd",
                     "\"" + tempFilePath.toFile() + "\"",
                     "search");  // NON_NLS
@@ -184,7 +200,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (null != tempFilePath && Files.exists(tempFilePath)) {
                     tempFilePath.toFile().delete();
                 }
-                PhotoRecCarverFileIngestModule.logger.log(Level.INFO, "Cancelled by user"); // NON-NLS
+                logger.log(Level.INFO, "Cancelled by user"); // NON-NLS
                 return IngestModule.ProcessResult.OK;
             }
 
@@ -195,21 +211,26 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (null != tempFilePath && Files.exists(tempFilePath)) {
                     tempFilePath.toFile().delete();
                 }
-                PhotoRecCarverFileIngestModule.logger.log(Level.SEVERE,
-                        "Unallocated Carver returned error exit value = {0} when scanning {1}",
+                logger.log(Level.SEVERE, "Unallocated Carver returned error exit value = {0} when scanning {1}",
                         new Object[]{exitValue, file.getName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
 
             // Move carver log file to avoid placement into Autopsy results. PhotoRec appends ".1" to the folder name.
-            java.io.File oldAuditFile = new java.io.File(outputDirPath.toAbsolutePath() + "\\results.1\\report.xml"); //NON-NLS
-            java.io.File newAuditFile = new java.io.File(outputDirPath.toAbsolutePath() + "\\report.xml"); //NON-NLS
+            java.io.File oldAuditFile = new java.io.File(Paths.get(outputDirPath.toString(), PHOTOREC_RESULTS_EXTENDED, PHOTOREC_REPORT).toString()); //NON-NLS
+            java.io.File newAuditFile = new java.io.File(Paths.get(outputDirPath.toString(), PHOTOREC_REPORT).toString()); //NON-NLS
             oldAuditFile.renameTo(newAuditFile);
 
-            Path pathToRemove = Paths.get(outputDirPath.toAbsolutePath() + "\\results.1"); //NON-NLS
-            FileUtil.deleteDir(new File(pathToRemove.toString()));
+            Path pathToRemove = Paths.get(outputDirPath.toAbsolutePath().toString());
+            DirectoryStream<Path> stream = Files.newDirectoryStream(pathToRemove);
+            for (Path entry : stream) {
+                if (Files.isDirectory(entry)) {
+                    FileUtil.deleteDir(new File(entry.toString()));
+                }
+            }
 
-            PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser();
+            // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
+            PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
             List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
             if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 context.scheduleFiles(new ArrayList<AbstractFile>(theList));
@@ -223,7 +244,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
         }
         catch (IOException | TskCoreException ex) {
-            PhotoRecCarverFileIngestModule.logger.log(Level.SEVERE, "Error processing " + file.getName() + " with Unallocated Carver", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with Unallocated Carver", ex); // NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
 
@@ -237,6 +258,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public void shutDown() {
         if (refCounter.decrementAndGet(this.context.getJobId()) == 0) {
@@ -247,8 +271,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
             }
             catch (SecurityException ex) {
-                PhotoRecCarverFileIngestModule.logger.log(Level.SEVERE, "Error shutting down Unallocated Carver unallocated space module", ex); // NON-NLS
-
+                logger.log(Level.SEVERE, "Error shutting down Unallocated Carver unallocated space module", ex); // NON-NLS
             }
         }
     }
@@ -282,7 +305,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         Path path = Paths.get(Case.getCurrentCase().getModulesOutputDirAbsPath(), PhotoRecCarverIngestModuleFactory.getModuleName());
         try {
             Files.createDirectory(path);
-
         }
         catch (FileAlreadyExistsException ex) {
             // No worries.
@@ -293,7 +315,13 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         return path;
     }
 
-    private long getRootId(AbstractFile file) {
+    /**
+     * Finds the root Volume or Image of the AbstractFile passed in.
+     *
+     * @param file The file we want to find the root parent for
+     * @return The ID of the root parent Volume or Image
+     */
+    private static long getRootId(AbstractFile file) {
         long id = -1;
         Content parent = null;
         try {
@@ -320,7 +348,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws IllegalArgumentException
      * @throws IOException
      */
-    static boolean isDirectoryEmpty(final Path directoryPath) throws IllegalArgumentException, IOException {
+    private static boolean isDirectoryEmpty(final Path directoryPath) throws IllegalArgumentException, IOException {
         if (!Files.isDirectory(directoryPath)) {
             throw new IllegalArgumentException("The directoryPath argument must be a directory path"); // NON-NLS
         }
@@ -328,4 +356,30 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             return !dirStream.iterator().hasNext();
         }
     }
+
+    /**
+     * Determines whether or not a directory is empty.
+     *
+     * @param executableToFindName The name of the executable to find
+     * @return A File reference or throws an exception
+     * @throws IngestModuleException
+     */
+    public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException {
+        // Must be running under a Windows operating system.
+        if (!PlatformUtil.isWindowsOS()) {
+            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "unsupportedOS.message"));
+        }
+
+        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
+        if (null == exeFile) {
+            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "missingExecutable.message"));
+        }
+
+        if (!exeFile.canExecute()) {
+            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotRunExecutable.message"));
+        }
+
+        return exeFile;
+    }
+
 }
