@@ -235,15 +235,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 context.scheduleFiles(new ArrayList<AbstractFile>(theList));
             }
-
-            if (!isDirectoryEmpty(outputDirPath)) {
-                // Add the output directory to the case as an Autopsy report.
-                Case.getCurrentCase().addReport(outputDirPath.toAbsolutePath().toString(),
-                        NbBundle.getMessage(this.getClass(), "moduleDisplayName.text"), file.getName()
-                        + " " + NbBundle.getMessage(this.getClass(), "moduleDisplayName.text") + " Scan"); // NON-NLS
-            }
         }
-        catch (IOException | TskCoreException ex) {
+        catch (IOException ex) {
             logger.log(Level.SEVERE, "Error processing " + file.getName() + " with Unallocated Carver", ex); // NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
@@ -358,7 +351,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Determines whether or not a directory is empty.
+     * Finds and returns the path to the executable, if able.
      *
      * @param executableToFindName The name of the executable to find
      * @return A File reference or throws an exception
