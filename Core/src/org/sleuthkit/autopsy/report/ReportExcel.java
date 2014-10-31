@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -42,7 +41,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     private CellStyle elementStyle;
     private int rowIndex = 0;
     private int sheetColCount = 0;
-    private int artifactsCount = 0;
     private String reportPath;
     
     // Get the default instance of this report
@@ -142,31 +140,6 @@ import org.sleuthkit.datamodel.TskCoreException;
         sheet = wb.createSheet(name);
         sheet.setAutobreaks(true);
         rowIndex = 0;
-        artifactsCount = 0;
-        
-        // Add a title row to the worksheet.
-        Row row = sheet.createRow(rowIndex);
-        row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue(name);
-        ++rowIndex;
-        
-        // Add an artifacts count row. The actual count will be filled in later.
-        row = sheet.createRow(rowIndex);
-        row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.numAartifacts.text"));
-        ++rowIndex;
-
-        // Add a comment row, if a comment was supplied.
-        if (!description.isEmpty()) {
-            row = sheet.createRow(rowIndex);
-            row.setRowStyle(setStyle);
-            row.createCell(0).setCellValue(description);
-            ++rowIndex;
-        }
-        
-        // Add an empty row as a separator.
-        sheet.createRow(rowIndex);
-        ++rowIndex;
                 
         // There will be at least two columns, one each for the artifacts count and its label.
         sheetColCount = 2;
@@ -176,12 +149,7 @@ import org.sleuthkit.datamodel.TskCoreException;
      * End the current data type and sheet.
      */
     @Override
-    public void endDataType() {
-        // Fill in the artifact count cell in row 0.
-        Row row = sheet.getRow(1);
-        row.setRowStyle(setStyle);
-        row.createCell(1).setCellValue(artifactsCount);
-    
+    public void endDataType() {  
         // Now that the sheet is complete, size the columns to the content.
         for (int i = 0; i < sheetColCount; ++i) {
             sheet.autoSizeColumn(i);
@@ -268,7 +236,6 @@ import org.sleuthkit.datamodel.TskCoreException;
             row.createCell(i).setCellValue(rowData.get(i));
         }
         ++rowIndex;
-        ++artifactsCount;
     }
 
     /**

@@ -282,13 +282,22 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                 } else {
+                    // BC: This should all be moved to the Attribute class...
                     switch (attribute.getValueType()) {
                         case STRING:
                             String valString = attribute.getValueString();
                             map.put(attribute.getAttributeTypeDisplayName(),  valString == null ? "":valString);
                             break;
                         case INTEGER:
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
+                            if (attributeTypeID == ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID()) {
+                                if (attribute.getValueInt() == 0) {
+                                    map.put(attribute.getAttributeTypeDisplayName(), "Unread");
+                                } else {
+                                    map.put(attribute.getAttributeTypeDisplayName(), "Read");
+                                }
+                            } else {
+                                map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
+                            }
                             break;
                         case LONG:
                             if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
