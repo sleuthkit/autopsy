@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -40,21 +42,41 @@ import org.sleuthkit.datamodel.TskFileRange;
  */
 public class PhotoRecCarverOutputParser {
 
+    Path basePath;
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
 
-    public PhotoRecCarverOutputParser() {
+    public PhotoRecCarverOutputParser(Path base) {
+        basePath = base;
     }
 
+    /**
+     * Gets the value inside the XML element and returns it. Ignores leading whitespace.
+     *
+     * @param name The XML element we are looking for.
+     * @param line The line in which we are looking for the element.
+     * @return The String value found
+     */
     public String getValue(String name, String line) {
         return line.replaceAll("[\t ]*</?" + name + ">", ""); //NON-NLS
     }
 
+    /**
+     * Gets the value inside the XML element and returns it. Ignores leading whitespace.
+     *
+     * @param xmlInputFile The XML file we are trying to read and parse
+     * @param id The parent id of the unallocated space we are parsing.
+     * @param af The AbstractFile representing the unallocated space we are parsing.
+     * @return A List<LayoutFile> containing all the files added into the database
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     public List<LayoutFile> parse(File xmlInputFile, long id, AbstractFile af) throws FileNotFoundException, IOException {
         try {
             String fileName;
             long fileSize;
             String result;
             String[] fields;
+
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
             // create and initialize the list to put into the database
@@ -83,6 +105,10 @@ public class PhotoRecCarverOutputParser {
                 // read filename line
                 line = in.readLine();
                 fileName = getValue("filename", line); //NON-NLS
+                Path p = Paths.get(fileName);
+                if (p.startsWith(basePath)) {
+                    fileName = p.getFileName().toString();
+                }
 
                 line = in.readLine(); /// read filesize line
                 fileSize = Long.parseLong(getValue("filesize", line)); //NON-NLS
