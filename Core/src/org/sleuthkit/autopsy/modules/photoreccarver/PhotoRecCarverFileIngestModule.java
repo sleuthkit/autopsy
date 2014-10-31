@@ -117,11 +117,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // the module output directory for the current case.
                 DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss-SSSS");  // NON-NLS
                 Date date = new Date();
-                Path outputDirPath = Paths.get(this.rootOutputDirPath.toAbsolutePath().toString(), dateFormat.format(date));
+                String folder = this.context.getDataSource().getId() + "_" + dateFormat.format(date);
+                Path outputDirPath = Paths.get(this.rootOutputDirPath.toAbsolutePath().toString(), folder);
                 Files.createDirectories(outputDirPath);
 
-                // A temp subdirectory is also created as a location for writing 
-                // unallocated space files to disk.
+                // A temp subdirectory is also created as a location for writing unallocated space files to disk.
                 Path tempDirPath = Paths.get(outputDirPath.toString(), PhotoRecCarverFileIngestModule.TEMP_DIR_NAME);
                 Files.createDirectory(tempDirPath);
 
