@@ -142,14 +142,14 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                      new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID));
 
     static public String stringValueOf(BlackboardAttribute attr) {
-        return attr != null ? attr.getValueString() : "";
+        return attr != null ? attr.getDisplayString() : "";
     }
 
     public static String toFrom(BlackboardAttribute dir) {
         if (dir == null) {
             return "";
         } else {
-            switch (dir.getValueString()) {
+            switch (dir.getDisplayString()) {
                 case "Incoming":
                     return "from";
                 case "Outgoing":

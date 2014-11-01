@@ -169,7 +169,7 @@ public interface ArtifactEventType extends EventType {
         @Override
         public String apply(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) {
             final BlackboardAttribute attr = attrMap.get(attribute);
-            return (attr != null) ? StringUtils.defaultString(attr.getValueString()) : " ";
+            return (attr != null) ? StringUtils.defaultString(attr.getDisplayString()) : " ";
         }
 
         private final BlackboardAttribute.ATTRIBUTE_TYPE attribute;
