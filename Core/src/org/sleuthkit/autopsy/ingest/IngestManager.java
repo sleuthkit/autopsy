@@ -134,7 +134,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestTask() {
         long threadId = nextThreadId.incrementAndGet();
-        dataSourceIngestThreadPool.submit(new ExecuteIngestTasksTask(threadId, IngestScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        dataSourceIngestThreadPool.submit(new ExecuteIngestTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
@@ -144,7 +144,7 @@ public class IngestManager {
      */
     private void startFileIngestTask() {
         long threadId = nextThreadId.incrementAndGet();
-        fileIngestThreadPool.submit(new ExecuteIngestTasksTask(threadId, IngestScheduler.getInstance().getFileIngestTaskQueue()));
+        fileIngestThreadPool.submit(new ExecuteIngestTasksTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
@@ -174,12 +174,12 @@ public class IngestManager {
     }
 
     void handleCaseOpened() {
-        IngestScheduler.getInstance().setEnabled(true);
+        IngestJob.jobCreationEnabled(true);
         clearIngestMessageBox();
     }
 
     void handleCaseClosed() {
-        IngestScheduler.getInstance().setEnabled(false);
+        IngestJob.jobCreationEnabled(false);
         cancelAllIngestJobs();
         clearIngestMessageBox();
     }
@@ -197,7 +197,7 @@ public class IngestManager {
      * @return True if any ingest jobs are in progress, false otherwise.
      */
     public boolean isIngestRunning() {
-        return IngestScheduler.getInstance().ingestJobsAreRunning();
+        return IngestJob.ingestJobsAreRunning();
     }
 
     
@@ -293,7 +293,7 @@ public class IngestManager {
         }
 
         // Cancel all the jobs already created.
-        IngestScheduler.getInstance().cancelAllIngestJobs();
+        IngestJob.cancelAllJobs();
     }
 
     /**
@@ -555,7 +555,7 @@ public class IngestManager {
                     }
 
                     // Start an ingest job for the data source.
-                    List<IngestModuleError> errors = IngestScheduler.getInstance().startIngestJob(dataSource, moduleTemplates, processUnallocatedSpace);
+                    List<IngestModuleError> errors = IngestJob.startJob(dataSource, moduleTemplates, processUnallocatedSpace);
                     if (!errors.isEmpty()) {
                         // Report the errors to the user. They have already been logged.
                         StringBuilder moduleStartUpErrors = new StringBuilder();

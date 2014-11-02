@@ -29,7 +29,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestScheduler.IngestJobSchedulerStats;
 
 public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
@@ -161,20 +160,20 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         private final String[] columnNames = {"Job ID", 
             "Data Source", "Start", "Num Processed", "Files/Sec", "In Progress", "Files Queued", "Dir Queued", "Root Queued", "DS Queued"};
-        private List<IngestJobSchedulerStats> schedStats;
+        private List<IngestJob.IngestJobSnapshot> jobSnapshots;
 
         private IngestJobTableModel() {
             refresh();
         }
 
         private void refresh() {
-            schedStats = IngestScheduler.getInstance().getJobStats();
+            jobSnapshots = IngestJob.getJobSnapshots();
             fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return schedStats.size();
+            return jobSnapshots.size();
         }
 
         @Override
@@ -189,39 +188,39 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestJobSchedulerStats schedStat = schedStats.get(rowIndex);
+            IngestJob.IngestJobSnapshot snapShot = jobSnapshots.get(rowIndex);
             Object cellValue;
             switch (columnIndex) {
                 case 0:
-                    cellValue = schedStat.getJobId();
+                    cellValue = snapShot.getJobId();
                     break;
                 case 1:
-                    cellValue = schedStat.getDataSource();
+                    cellValue = snapShot.getDataSource();
                     break;
                 case 2:
                     SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-                    cellValue = dateFormat.format(new Date(schedStat.getIngestJobStats().getStartTime()));
+                    cellValue = dateFormat.format(new Date(snapShot.getStartTime()));
                     break;
                 case 3:
-                    cellValue = schedStat.getIngestJobStats().getFilesProcessed();
+                    cellValue = snapShot.getFilesProcessed();
                     break;
                 case 4:
-                    cellValue = schedStat.getIngestJobStats().getSpeed();
+                    cellValue = snapShot.getSpeed();
                     break;
                 case 5:
-                    cellValue = schedStat.getRunningListSize();
+                    cellValue = snapShot.getRunningListSize();
                     break;
                 case 6:
-                    cellValue = schedStat.getFileQueueSize();
+                    cellValue = snapShot.getFileQueueSize();
                     break;
                 case 7:
-                    cellValue = schedStat.getDirQueueSize();
+                    cellValue = snapShot.getDirQueueSize();
                     break;
                 case 8:
-                    cellValue = schedStat.getRootQueueSize();
+                    cellValue = snapShot.getRootQueueSize();
                     break;
                 case 9:
-                    cellValue = schedStat.getDsQueueSize();
+                    cellValue = snapShot.getDsQueueSize();
                     break;
                 default:
                     cellValue = null;

@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -31,7 +30,6 @@ import org.sleuthkit.datamodel.Content;
 public final class IngestJobContext {
 
     private static final Logger logger = Logger.getLogger(IngestJobContext.class.getName());
-    private static final IngestScheduler scheduler = IngestScheduler.getInstance();
     private final IngestJob ingestJob;
 
     IngestJobContext(IngestJob ingestJob) {
@@ -107,20 +105,21 @@ public final class IngestJobContext {
      * pipeline of the ingest job associated with this context.
      *
      * @param files The files to be processed by the file ingest pipeline.
+     * @deprecated use addFilesToJob() instead
      */
+    @Deprecated
     public void scheduleFiles(List<AbstractFile> files) {
-        for (AbstractFile file : files) {
-            try {
-                IngestJobContext.scheduler.scheduleAdditionalFileIngestTask(this.ingestJob, file);
-            } catch (InterruptedException ex) {
-                // Handle the unexpected interrupt here rather than make ingest 
-                // module writers responsible for writing this exception handler. 
-                // The interrupt flag of the thread is reset for detection by 
-                // the thread task code.  
-                Thread.currentThread().interrupt();
-                IngestJobContext.logger.log(Level.SEVERE, "File task scheduling unexpectedly interrupted", ex); //NON-NLS
-            }
-        }
+        this.addFilesToJob(files);
+    }
+    
+    /**
+     * Adds one or more files to the files to be passed through the file ingest
+     * pipeline of the ingest job associated with this context.
+     *
+     * @param files The files to be processed by the file ingest pipeline.
+     */
+    public void addFilesToJob(List<AbstractFile> files) {
+        this.ingestJob.addFiles(files);
     }
     
 }

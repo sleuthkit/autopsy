@@ -67,7 +67,7 @@ public class DataSourceIngestModuleProgress {
      * @param message Message to display
      */
     public void progress(String message) {
-        this.job.advanceDataSourceIngestProgressBar(message);
+        this.job.advanceDataSourceIngestProgressBar(message); // RJCTODO: Is this right?
     }
 
     /**
