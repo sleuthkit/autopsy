@@ -35,7 +35,7 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.BorderPane;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -149,7 +149,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setController(TimeLineController timeLineController) {
         this.controller = timeLineController;
-        AbstractAction defaultFiltersAction = new DefaultFilters(controller);
+        Action defaultFiltersAction = new DefaultFilters(controller);
         defaultButton.setOnAction(defaultFiltersAction);
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         this.setModel(timeLineController.getEventsModel());
