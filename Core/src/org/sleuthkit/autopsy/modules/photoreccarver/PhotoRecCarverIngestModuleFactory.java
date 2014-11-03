@@ -25,22 +25,19 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * A factory for creating instances of file ingest modules that carve unallocated space
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter
-{
+public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     /**
      * Gets the ingest module name for use within this package.
      *
      * @return A name string.
      */
-    static String getModuleName()
-    {
+    static String getModuleName() {
         return NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "moduleDisplayName.text");
     }
 
@@ -48,8 +45,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      * @inheritDoc
      */
     @Override
-    public String getModuleDisplayName()
-    {
+    public String getModuleDisplayName() {
         return PhotoRecCarverIngestModuleFactory.getModuleName();
     }
 
@@ -57,8 +53,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      * @inheritDoc
      */
     @Override
-    public String getModuleDescription()
-    {
+    public String getModuleDescription() {
         return NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "moduleDescription.text");
     }
 
@@ -66,8 +61,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      * @inheritDoc
      */
     @Override
-    public String getModuleVersionNumber()
-    {
+    public String getModuleVersionNumber() {
         return Version.getVersion();
     }
 
@@ -75,8 +69,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      * @inheritDoc
      */
     @Override
-    public boolean isFileIngestModuleFactory()
-    {
+    public boolean isFileIngestModuleFactory() {
         return true;
     }
 
@@ -84,13 +77,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      * @inheritDoc
      */
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings)
-    {
-        if (!(settings instanceof IngestModuleIngestJobSettings))
-        {
-            throw new IllegalArgumentException(NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "unrecognizedSettings.message"));
-        }
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         return new PhotoRecCarverFileIngestModule();
     }
-
 }
