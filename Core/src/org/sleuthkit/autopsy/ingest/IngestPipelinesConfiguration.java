@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
@@ -33,32 +33,36 @@ import org.w3c.dom.NodeList;
 
 /**
  * Provides data source and file ingest pipeline configurations as ordered lists
- * of ingest module class names. The order of the module class names indicates
- * the desired sequence of ingest module instances in an ingest modules
- * pipeline.
+ * of ingest module factory class names.
  */
 final class IngestPipelinesConfiguration {
 
     private static final Logger logger = Logger.getLogger(IngestPipelinesConfiguration.class.getName());
-    private static final String PIPELINE_CONFIG_FILE_VERSION_KEY = "PipelineConfigFileVersion"; //NON-NLS
-    private static final String PIPELINE_CONFIG_FILE_VERSION_NO_STRING = "1";
-    private static final int PIPELINE_CONFIG_FILE_VERSION_NO = 1;
-    private static final String PIPELINES_CONFIG_FILE = "pipeline_config.xml"; //NON-NLS
-    private static final String PIPELINES_CONFIG_FILE_XSD = "PipelineConfigSchema.xsd"; //NON-NLS
-    private static final String XML_PIPELINE_ELEM = "PIPELINE"; //NON-NLS
-    private static final String XML_PIPELINE_TYPE_ATTR = "type"; //NON-NLS
-    private static final String DATA_SOURCE_INGEST_PIPELINE_TYPE = "ImageAnalysis"; //NON-NLS
+    private static final String PIPELINES_CONFIG_FILE = "PipelineConfig.xml"; //NON-NLS
+    private static final String PIPELINE_ELEM = "PIPELINE"; //NON-NLS
+    private static final int NUMBER_OF_PIPELINE_DEFINITIONS = 3;
+    private static final String PIPELINE_TYPE_ATTR = "type"; //NON-NLS
+    private static final String STAGE_ONE_DATA_SOURCE_INGEST_PIPELINE_ELEM = "ImageAnalysisStageOne"; //NON-NLS
+    private static final String STAGE_TWO_DATA_SOURCE_INGEST_PIPELINE_ELEM = "ImageAnalysisStageTwo"; //NON-NLS
     private static final String FILE_INGEST_PIPELINE_TYPE = "FileAnalysis"; //NON-NLS
-    private static final String XML_MODULE_ELEM = "MODULE"; //NON-NLS
+    private static final String INGEST_MODULE_ELEM = "MODULE"; //NON-NLS
     private static final String XML_MODULE_CLASS_NAME_ATTR = "location"; //NON-NLS
+
     private static IngestPipelinesConfiguration instance;
-    private final List<String> dataSourceIngestPipelineConfig = new ArrayList<>();
+
+    private final List<String> stageOneDataSourceIngestPipelineConfig = new ArrayList<>();
     private final List<String> fileIngestPipelineConfig = new ArrayList<>();
+    private final List<String> stageTwoDataSourceIngestPipelineConfig = new ArrayList<>();
 
-    private IngestPipelinesConfiguration() {
-        readPipelinesConfigurationFile();
-    }
-
+    // RJCTODO: Bring this code back into use, use it in IngestJob to sort things
+    // into the now three pipelines. Other NBMs built on top of Autopsy that 
+    // have custom pipeline config files can do a PlatformUtil.extractResourceToUserConfigDir()
+    // before this is called.
+    /**
+     * Gets the ingest pipelines configuration singleton.
+     *
+     * @return The singleton.
+     */
     synchronized static IngestPipelinesConfiguration getInstance() {
         if (instance == null) {
             Logger.getLogger(IngestPipelinesConfiguration.class.getName()).log(Level.INFO, "Creating ingest module loader instance"); //NON-NLS
@@ -67,57 +71,90 @@ final class IngestPipelinesConfiguration {
         return instance;
     }
 
-    List<String> getDataSourceIngestPipelineConfig() {
-        return new ArrayList<>(dataSourceIngestPipelineConfig);
+    /**
+     * Constructs an object that provides data source and file ingest pipeline
+     * configurations as ordered lists of ingest module factory class names.
+     */
+    private IngestPipelinesConfiguration() {
+        this.readPipelinesConfigurationFile();
     }
 
+    /**
+     * Gets the ordered list of ingest module factory class names for the
+     * file ingest pipeline.
+     *
+     * @return An ordered list of ingest module factory class names.
+     */
+    List<String> getStageOneDataSourceIngestPipelineConfig() {
+        return new ArrayList<>(stageOneDataSourceIngestPipelineConfig);
+    }
+
+    /**
+     * Gets the ordered list of ingest module factory class names for the
+     * first stage data source ingest pipeline.
+     *
+     * @return An ordered list of ingest module factory class names.
+     */
     List<String> getFileIngestPipelineConfig() {
         return new ArrayList<>(fileIngestPipelineConfig);
     }
 
+    /**
+     * Gets the ordered list of ingest module factory class names for the
+     * second stage data source ingest pipeline.
+     *
+     * @return An ordered list of ingest module factory class names.
+     */
+    List<String> getStageTwoDataSourceIngestPipelineConfig() {
+        return new ArrayList<>(stageTwoDataSourceIngestPipelineConfig);
+    }
+
+    /**
+     * Attempts to read the ingest pipeline configuration data from an XML file.
+     */
     private void readPipelinesConfigurationFile() {
         try {
-            boolean overWrite;
-            if (!ModuleSettings.settingExists(this.getClass().getSimpleName(), PIPELINE_CONFIG_FILE_VERSION_KEY)) {
-                ModuleSettings.setConfigSetting(this.getClass().getSimpleName(), PIPELINE_CONFIG_FILE_VERSION_KEY, PIPELINE_CONFIG_FILE_VERSION_NO_STRING);
-                overWrite = true;
-            } else {
-                int versionNumber = Integer.parseInt(ModuleSettings.getConfigSetting(this.getClass().getSimpleName(), PIPELINE_CONFIG_FILE_VERSION_KEY));
-                overWrite = versionNumber < PIPELINE_CONFIG_FILE_VERSION_NO;
-                // TODO: Migrate user edits
-            }
-            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, overWrite);
+            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, false);
 
-            String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINES_CONFIG_FILE;
-            Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath);
+            Path configFilePath = Paths.get(PlatformUtil.getUserConfigDirectory(), PIPELINES_CONFIG_FILE);
+            Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath.toAbsolutePath().toString());
             if (doc == null) {
                 return;
             }
 
+            // Get the document root element.
             Element rootElement = doc.getDocumentElement();
-            if (rootElement == null) {
+            if (null == rootElement) {
                 logger.log(Level.SEVERE, "Invalid pipelines config file"); //NON-NLS
                 return;
             }
 
-            NodeList pipelineElements = rootElement.getElementsByTagName(XML_PIPELINE_ELEM);
+            // Get the pipeline elements and confirm that the correct number is
+            // present.
+            NodeList pipelineElements = rootElement.getElementsByTagName(IngestPipelinesConfiguration.PIPELINE_ELEM);
             int numPipelines = pipelineElements.getLength();
-            if (numPipelines < 1 || numPipelines > 2) {
+            if (numPipelines != IngestPipelinesConfiguration.NUMBER_OF_PIPELINE_DEFINITIONS) {
                 logger.log(Level.SEVERE, "Invalid pipelines config file"); //NON-NLS
                 return;
             }
 
+            // Parse the pipeline elements to populate the pipeline 
+            // configuration lists.
+            // RJCTODO: SHould check that each element is unique. Or could try the XSD bit.
             List<String> pipelineConfig = null;
             for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
                 Element pipelineElement = (Element) pipelineElements.item(pipelineNum);
-                String pipelineTypeAttr = pipelineElement.getAttribute(XML_PIPELINE_TYPE_ATTR);
-                if (pipelineTypeAttr != null) {
+                String pipelineTypeAttr = pipelineElement.getAttribute(PIPELINE_TYPE_ATTR);
+                if (null != pipelineTypeAttr) {
                     switch (pipelineTypeAttr) {
-                        case DATA_SOURCE_INGEST_PIPELINE_TYPE:
-                            pipelineConfig = dataSourceIngestPipelineConfig;
+                        case STAGE_ONE_DATA_SOURCE_INGEST_PIPELINE_ELEM:
+                            pipelineConfig = this.stageOneDataSourceIngestPipelineConfig;
                             break;
                         case FILE_INGEST_PIPELINE_TYPE:
-                            pipelineConfig = fileIngestPipelineConfig;
+                            pipelineConfig = this.fileIngestPipelineConfig;
+                            break;
+                        case STAGE_TWO_DATA_SOURCE_INGEST_PIPELINE_ELEM:
+                            pipelineConfig = this.stageTwoDataSourceIngestPipelineConfig;
                             break;
                         default:
                             logger.log(Level.SEVERE, "Invalid pipelines config file"); //NON-NLS
@@ -128,16 +165,13 @@ final class IngestPipelinesConfiguration {
                 // Create an ordered list of class names. The sequence of class 
                 // names defines the sequence of modules in the pipeline.
                 if (pipelineConfig != null) {
-                    NodeList modulesElems = pipelineElement.getElementsByTagName(XML_MODULE_ELEM);
+                    NodeList modulesElems = pipelineElement.getElementsByTagName(INGEST_MODULE_ELEM);
                     int numModules = modulesElems.getLength();
-                    if (numModules == 0) {
-                        break;
-                    }
                     for (int moduleNum = 0; moduleNum < numModules; ++moduleNum) {
                         Element moduleElement = (Element) modulesElems.item(moduleNum);
-                        final String moduleClassName = moduleElement.getAttribute(XML_MODULE_CLASS_NAME_ATTR);
-                        if (moduleClassName != null) {
-                            pipelineConfig.add(moduleClassName);
+                        String className = moduleElement.getTextContent();
+                        if (null != className && !className.isEmpty()) {
+                            pipelineConfig.add(className);
                         }
                     }
                 }

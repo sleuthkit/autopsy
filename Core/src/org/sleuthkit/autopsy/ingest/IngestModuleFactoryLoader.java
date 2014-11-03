@@ -51,6 +51,8 @@ final class IngestModuleFactoryLoader {
     private static final String SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME = SampleExecutableIngestModuleFactory.class.getCanonicalName();
     private static final ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
         {
+            // RJCTODO: Find out wherer ot put the photorec carver
+            
             // The ordering of the core ingest module factories implemented
             // using Java is hard-coded. 
             add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS

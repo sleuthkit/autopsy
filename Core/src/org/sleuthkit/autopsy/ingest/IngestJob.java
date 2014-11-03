@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -114,7 +116,7 @@ final class IngestJob {
             long jobId = nextIngestJobId.incrementAndGet();
             IngestJob job = new IngestJob(jobId, dataSource, processUnallocatedSpace);
             errors = job.start(ingestModuleTemplates);
-            if (errors.isEmpty() && (job.hasDataSourceIngestPipeline() || job.hasFileIngestPipeline())) {
+            if (errors.isEmpty() && (job.hasDataSourceIngestPipeline() || job.hasFileIngestPipeline())) { // RJCTODO: What about 2nd stage only?
                 ingestJobsById.put(jobId, job);
                 IngestManager.getInstance().fireIngestJobStarted(jobId);
                 IngestJob.ingestScheduler.scheduleIngestTasks(job);
@@ -135,7 +137,8 @@ final class IngestJob {
 
     /**
      * RJCTODO
-     * @return 
+     *
+     * @return
      */
     static List<IngestJobSnapshot> getJobSnapshots() {
         List<IngestJobSnapshot> snapShots = new ArrayList<>();
@@ -144,7 +147,7 @@ final class IngestJob {
         }
         return snapShots;
     }
-    
+
     /**
      * RJCTODO
      */
@@ -555,20 +558,38 @@ final class IngestJob {
      * @throws InterruptedException
      */
     private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
-        // RJCTODO: Use config file
-        // Sort the ingest module templates as required for the pipelines.
-        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = new ArrayList<>();
-        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = new ArrayList<>();
-        List<IngestModuleTemplate> fileIngestModuleTemplates = new ArrayList<>();
+        // RJCTODO: Improve variable names!
+
+        // Make mappings of ingest module factory class names to templates.
+        Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new HashMap<>();
+        Map<String, IngestModuleTemplate> fileModuleTemplates = new HashMap<>();
         for (IngestModuleTemplate template : ingestModuleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
-                firstStageDataSourceModuleTemplates.add(template);
-            } else {
-                firstStageDataSourceModuleTemplates.add(template);
+                dataSourceModuleTemplates.put(template.getModuleFactory().getClass().getCanonicalName(), template);
+            }
+            if (template.isFileIngestModuleTemplate()) {
+                fileModuleTemplates.put(template.getModuleFactory().getClass().getCanonicalName(), template);
             }
         }
 
-        // Contruct the pipelines.
+        // Use the mappings and the ingest pipelines configuration to create
+        // ordered lists of ingest module templates for each ingest pipeline.
+        IngestPipelinesConfiguration pipelineConfigs = IngestPipelinesConfiguration.getInstance();
+        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = this.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
+        List<IngestModuleTemplate> fileIngestModuleTemplates = this.getConfiguredIngestModuleTemplates(fileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
+        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = this.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
+
+        // Add any module templates that were not specified in the pipeline
+        // configurations to an appropriate pipeline - either the first stage
+        // data source ingest pipeline or the file ingest pipeline.
+        for (IngestModuleTemplate template : dataSourceModuleTemplates.values()) {
+            firstStageDataSourceModuleTemplates.add(template);
+        }
+        for (IngestModuleTemplate template : fileModuleTemplates.values()) {
+            fileIngestModuleTemplates.add(template);
+        }
+
+        // Contruct the data source ingest pipelines.
         this.firstStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, firstStageDataSourceModuleTemplates);
         this.secondStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, secondStageDataSourceModuleTemplates);
         this.dataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
@@ -578,6 +599,28 @@ final class IngestJob {
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             this.fileIngestPipelines.put(new FileIngestPipeline(this, fileIngestModuleTemplates));
         }
+    }
+
+    /**
+     * Use an ordered list of ingest module factory class names to create an
+     * ordered subset of a collection ingest module templates. The ingest module
+     * templates are removed from the input collection as they are added to the
+     * output collection.
+     *
+     * @param ingestModuleTemplates A mapping of ingest module factory class
+     * names to ingest module templates.
+     * @param pipelineConfig An ordered list of ingest module factory class
+     * names representing an ingest pipeline.
+     * @return
+     */
+    List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(Map<String, IngestModuleTemplate> ingestModuleTemplates, List<String> pipelineConfig) {
+        List<IngestModuleTemplate> templates = new ArrayList<>();
+        for (String moduleClassName : pipelineConfig) {
+            if (ingestModuleTemplates.containsKey(moduleClassName)) {
+                templates.add(ingestModuleTemplates.remove(moduleClassName));
+            }
+        }
+        return templates;
     }
 
     /**
@@ -748,7 +791,7 @@ final class IngestJob {
                 this.dataSourceIngestProgress = null;
             }
         }
-        
+
         IngestJob.ingestJobsById.remove(this.id);
         if (!this.isCancelled()) {
             logger.log(Level.INFO, "Ingest job {0} completed", this.id);
@@ -784,7 +827,7 @@ final class IngestJob {
     class IngestJobSnapshot {
 
         private final long jobId;
-        private final String dataSource; 
+        private final String dataSource;
         private final long startTime;
         private final long processedFiles;
         private final long estimatedFilesToProcess;
@@ -809,7 +852,8 @@ final class IngestJob {
 
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         long getJobId() {
             return this.jobId;
@@ -817,12 +861,13 @@ final class IngestJob {
 
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         String getDataSource() {
             return dataSource;
-        }        
-        
+        }
+
         /**
          * Gets files per second throughput since job started.
          *
@@ -870,10 +915,11 @@ final class IngestJob {
         long getFilesEstimated() {
             return estimatedFilesToProcess;
         }
-        
+
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         long getRootQueueSize() {
             return this.tasksSnapshot.getRootQueueSize();
@@ -881,7 +927,8 @@ final class IngestJob {
 
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         long getDirQueueSize() {
             return this.tasksSnapshot.getDirQueueSize();
@@ -889,7 +936,8 @@ final class IngestJob {
 
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         long getFileQueueSize() {
             return this.tasksSnapshot.getFileQueueSize();
@@ -897,7 +945,8 @@ final class IngestJob {
 
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         long getDsQueueSize() {
             return this.tasksSnapshot.getDsQueueSize();
@@ -905,12 +954,13 @@ final class IngestJob {
 
         /**
          * RJCTODO
-         * @return 
+         *
+         * @return
          */
         long getRunningListSize() {
             return this.tasksSnapshot.getRunningListSize();
-        }                
-        
+        }
+
     }
 
 }
