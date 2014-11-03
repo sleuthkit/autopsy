@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import impl.org.controlsfx.skin.RangeSliderSkin;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,13 +33,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
-import javafx.scene.control.Skin;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
@@ -63,13 +60,13 @@ import javafx.scene.paint.Color;
 import javax.annotation.concurrent.GuardedBy;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import org.controlsfx.control.RangeSlider;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
@@ -235,19 +232,19 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         rangeSlider.setOpacity(.7);
         rangeSlider.setMin(0);
 
-        /** this is still needed to not get swamped by low/high value changes.
-         * https://bitbucket.org/controlsfx/controlsfx/issue/241/rangeslider-high-low-properties
-         * TODO: committ an appropriate version of this fix to the ControlsFX
-         * repo on bitbucket, remove this after next release -jm */
-        Skin<?> skin = rangeSlider.getSkin();
-        if (skin != null) {
-            attachDragListener((RangeSliderSkin) skin);
-        } else {
-            rangeSlider.skinProperty().addListener((Observable observable) -> {
-                RangeSliderSkin skin1 = (RangeSliderSkin) rangeSlider.getSkin();
-                attachDragListener(skin1);
-            });
-        }
+//        /** this is still needed to not get swamped by low/high value changes.
+//         * https://bitbucket.org/controlsfx/controlsfx/issue/241/rangeslider-high-low-properties
+//         * TODO: committ an appropriate version of this fix to the ControlsFX
+//         * repo on bitbucket, remove this after next release -jm */
+//        Skin<?> skin = rangeSlider.getSkin();
+//        if (skin != null) {
+//            attachDragListener((RangeSliderSkin) skin);
+//        } else {
+//            rangeSlider.skinProperty().addListener((Observable observable) -> {
+//                RangeSliderSkin skin1 = (RangeSliderSkin) rangeSlider.getSkin();
+//                attachDragListener(skin1);
+//            });
+//        }
 
         rangeSlider.setBlockIncrement(1);
 
@@ -292,59 +289,59 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         });
     }
 
-    /**
-     * TODO: committed an appropriate version of this fix to the ControlsFX repo
-     * on bitbucket, remove this after next release -jm
-     *
-     * @param skin
-     */
-    private void attachDragListener(RangeSliderSkin skin) {
-        if (skin != null) {
-            for (Node n : skin.getChildren()) {
-                if (n.getStyleClass().contains("track")) {
-                    n.setOpacity(.3);
-                }
-                if (n.getStyleClass().contains("range-bar")) {
-                    StackPane rangeBar = (StackPane) n;
-                    rangeBar.setOnMousePressed((MouseEvent e) -> {
-                        rangeBar.requestFocus();
-                        preDragPos = e.getX();
-                    });
-
-                    //don't mark as not changing until mouse is released
-                    rangeBar.setOnMouseReleased((MouseEvent event) -> {
-                        rangeSlider.setLowValueChanging(false);
-                        rangeSlider.setHighValueChanging(false);
-                    });
-                    rangeBar.setOnMouseDragged((MouseEvent event) -> {
-                        final double min = rangeSlider.getMin();
-                        final double max = rangeSlider.getMax();
-
-                        ///!!!  compensate for range and width so that rangebar actualy stays with the slider
-                        double delta = (event.getX() - preDragPos) * (max - min) / rangeSlider.
-                                getWidth();
-                        ////////////////////////////////////////////////////
-
-                        final double lowValue = rangeSlider.getLowValue();
-                        final double newLowValue = Math.min(Math.max(min, lowValue + delta),
-                                                            max);
-                        final double highValue = rangeSlider.getHighValue();
-                        final double newHighValue = Math.min(Math.max(min, highValue + delta),
-                                                             max);
-
-                        if (newLowValue <= min || newHighValue >= max) {
-                            return;
-                        }
-
-                        rangeSlider.setLowValueChanging(true);
-                        rangeSlider.setHighValueChanging(true);
-                        rangeSlider.setLowValue(newLowValue);
-                        rangeSlider.setHighValue(newHighValue);
-                    });
-                }
-            }
-        }
-    }
+//    /**
+//     * TODO: committed an appropriate version of this fix to the ControlsFX repo
+//     * on bitbucket, remove this after next release -jm
+//     *
+//     * @param skin
+//     */
+//    private void attachDragListener(RangeSliderSkin skin) {
+//        if (skin != null) {
+//            for (Node n : skin.getChildren()) {
+//                if (n.getStyleClass().contains("track")) {
+//                    n.setOpacity(.3);
+//                }
+//                if (n.getStyleClass().contains("range-bar")) {
+//                    StackPane rangeBar = (StackPane) n;
+//                    rangeBar.setOnMousePressed((MouseEvent e) -> {
+//                        rangeBar.requestFocus();
+//                        preDragPos = e.getX();
+//                    });
+//
+//                    //don't mark as not changing until mouse is released
+//                    rangeBar.setOnMouseReleased((MouseEvent event) -> {
+//                        rangeSlider.setLowValueChanging(false);
+//                        rangeSlider.setHighValueChanging(false);
+//                    });
+//                    rangeBar.setOnMouseDragged((MouseEvent event) -> {
+//                        final double min = rangeSlider.getMin();
+//                        final double max = rangeSlider.getMax();
+//
+//                        ///!!!  compensate for range and width so that rangebar actualy stays with the slider
+//                        double delta = (event.getX() - preDragPos) * (max - min) / rangeSlider.
+//                                getWidth();
+//                        ////////////////////////////////////////////////////
+//
+//                        final double lowValue = rangeSlider.getLowValue();
+//                        final double newLowValue = Math.min(Math.max(min, lowValue + delta),
+//                                                            max);
+//                        final double highValue = rangeSlider.getHighValue();
+//                        final double newHighValue = Math.min(Math.max(min, highValue + delta),
+//                                                             max);
+//
+//                        if (newLowValue <= min || newHighValue >= max) {
+//                            return;
+//                        }
+//
+//                        rangeSlider.setLowValueChanging(true);
+//                        rangeSlider.setHighValueChanging(true);
+//                        rangeSlider.setLowValue(newLowValue);
+//                        rangeSlider.setHighValue(newHighValue);
+//                    });
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public synchronized void setController(TimeLineController controller) {
@@ -568,14 +565,14 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'.";
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'.";
 
-            AbstractAction zoomOutAction = new ZoomOut(controller);
+            Action zoomOutAction = new ZoomOut(controller);
             zoomButton.setOnAction(zoomOutAction);
             zoomButton.disableProperty().bind(zoomOutAction.disabledProperty());
 
             dismissButton.setOnAction(e -> {
                 closeCallback.run();
             });
-            AbstractAction defaultFiltersAction = new DefaultFilters(controller);
+            Action defaultFiltersAction = new DefaultFilters(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         }

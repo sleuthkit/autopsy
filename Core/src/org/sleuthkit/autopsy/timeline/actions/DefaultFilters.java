@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.actions;
 
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.timeline.filters.Filter;
 /**
  *
  */
-public class DefaultFilters extends AbstractAction {
+public class DefaultFilters extends Action {
 
     private final TimeLineController controller;
 
@@ -48,10 +48,8 @@ public class DefaultFilters extends AbstractAction {
                 return eventsModel.getRequestedZoomParamters().getValue().getFilter().equals(Filter.getDefaultFilter());
             }
         });
-    }
-
-    @Override
-    public void handle(ActionEvent event) {
-        controller.applyDefaultFilters();
+        setEventHandler((ActionEvent t) -> {
+            controller.applyDefaultFilters();
+        });
     }
 }

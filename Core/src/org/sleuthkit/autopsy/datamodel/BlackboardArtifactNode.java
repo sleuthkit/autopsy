@@ -281,36 +281,17 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
+                    map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else {
-                    switch (attribute.getValueType()) {
-                        case STRING:
-                            String valString = attribute.getValueString();
-                            map.put(attribute.getAttributeTypeDisplayName(),  valString == null ? "":valString);
-                            break;
-                        case INTEGER:
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
-                            break;
-                        case LONG:
-                            if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID() 
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID() 
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID() ) {
-                                map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
-                            } else {
-                                map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
-                            }
-                            break;
-                        case DOUBLE:
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueDouble());
-                            break;
-                        case BYTE:
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueBytes());
-                            break;
-                    }
+                    map.put(attribute.getAttributeTypeDisplayName(), attribute.getDisplayString());
                 }
             }
         } catch (TskException ex) {
