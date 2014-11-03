@@ -46,7 +46,7 @@ class PhotoRecCarverOutputParser {
     private final Path basePath;
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
     private static final List<LayoutFile> EMPTY_LIST = Collections.unmodifiableList(new ArrayList<LayoutFile>());
-    
+
     PhotoRecCarverOutputParser(Path base) {
         basePath = base;
     }
@@ -63,8 +63,8 @@ class PhotoRecCarverOutputParser {
     }
 
     /**
-     * Parses the given report.xml file, creating a List<LayoutFile> to return. Uses FileManager to add
-     * all carved files that it finds to the TSK database as $CarvedFiles under the passed-in parent id.
+     * Parses the given report.xml file, creating a List<LayoutFile> to return. Uses FileManager to add all carved files
+     * that it finds to the TSK database as $CarvedFiles under the passed-in parent id.
      *
      * @param xmlInputFile The XML file we are trying to read and parse
      * @param id The parent id of the unallocated space we are parsing.
@@ -83,14 +83,14 @@ class PhotoRecCarverOutputParser {
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
             // create and initialize the list to put into the database
-            List<CarvedFileContainer> carvedFileContainer = new ArrayList<CarvedFileContainer>();
+            List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
 
             // create and initialize a line
             try ( // create a BufferedReader
                     BufferedReader in = new BufferedReader(new FileReader(xmlInputFile))) {
                 // create and initialize a line
                 String line = in.readLine();
-                
+
                 // loop until an empty line is read
                 reachedEndOfFile:
                 while (!line.isEmpty()) {
@@ -98,14 +98,14 @@ class PhotoRecCarverOutputParser {
                     {
                         if (line.equals("</dfxml>")) //NON-NLS
                         { // We have found the end. Break out of both loops and move on to processing.
-                            line=""; /// KDM does this break right?
+                            line = "";
                             break reachedEndOfFile;
                         }
                         line = in.readLine();
                     }
-                    
-                    List<TskFileRange> ranges = new ArrayList<TskFileRange>();
-                    
+
+                    List<TskFileRange> ranges = new ArrayList<>();
+
                     // read filename line
                     line = in.readLine();
                     fileName = getValue("filename", line); //NON-NLS
@@ -113,12 +113,12 @@ class PhotoRecCarverOutputParser {
                     if (p.startsWith(basePath)) {
                         fileName = p.getFileName().toString();
                     }
-                    
+
                     line = in.readLine(); /// read filesize line
                     fileSize = Long.parseLong(getValue("filesize", line)); //NON-NLS
-                    
+
                     in.readLine(); /// eat a line and move on to the next
-                    
+
                     line = in.readLine(); /// now get next valid line
                     while (line.contains("<byte_run")) //NON-NLS
                     {
@@ -128,7 +128,7 @@ class PhotoRecCarverOutputParser {
                         result = result.replaceAll("'/>[\t ]*", ""); //NON-NLS
                         fields = result.split(" ");  /// offset, image offset, length //NON-NLS
                         ranges.add((new TskFileRange(af.convertToImgOffset(Long.parseLong(fields[1])), Long.parseLong(fields[2]), ranges.size())));
-                        
+
                         // read the next line
                         line = in.readLine();
                     }
@@ -138,7 +138,7 @@ class PhotoRecCarverOutputParser {
             return fileManager.addCarvedFiles(carvedFileContainer);
         }
         catch (IOException | NumberFormatException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database{0}", ex); //NON_NLS
+            logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: {0}", ex); //NON_NLS
         }
         return EMPTY_LIST;
     }
