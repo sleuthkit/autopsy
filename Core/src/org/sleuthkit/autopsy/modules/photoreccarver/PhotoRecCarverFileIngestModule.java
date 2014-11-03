@@ -76,16 +76,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private File executableFile;
 
     /**
-     * Constructs a file ingest module that runs the Unallocated Carver executable with unallocated space files as
-     * input.
-     *
-     * @param None
-     */
-    PhotoRecCarverFileIngestModule() {
-
-    }
-
-    /**
      * @inheritDoc
      */
     @Override
@@ -108,13 +98,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
         if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.context.getJobId()) == 1) {
             try {
-                // The first instance of the module for an ingest job creates 
-                // a time-stamped output subdirectory of the unallocated space
-                // scans subdirectory of the Unallocated Carver module output  
-                // directory for the current case. 
-
-                // Make output subdirectories for the current time and image within
-                // the module output directory for the current case.
+                // The first instance creates an output subdirectory with a date and time stamp
                 DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss-SSSS");  // NON-NLS
                 Date date = new Date();
                 String folder = this.context.getDataSource().getId() + "_" + dateFormat.format(date);
@@ -154,16 +138,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // Verify initialization succeeded.
             if (null == this.executableFile) {
-                logger.log(Level.SEVERE, "Unallocated Carver unallocated space ingest module called after failed start up");  // NON-NLS
+                logger.log(Level.SEVERE, "PhotoRec carver called after failed start up");  // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
 
             // Check that we have roughly enough disk space left to complete the operation
             long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
             if ((file.getSize() * 2) > freeDiskSpace) {
-                logger.log(Level.SEVERE, "Error processing " + file.getName() + " with "
-                        + PhotoRecCarverIngestModuleFactory.getModuleName()
-                        + " Not enough space on primary disk to carve unallocated space."); // NON-NLS
+                logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to carve unallocated space.",
+                        new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
 
@@ -200,7 +183,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (null != tempFilePath && Files.exists(tempFilePath)) {
                     tempFilePath.toFile().delete();
                 }
-                logger.log(Level.INFO, "Cancelled by user"); // NON-NLS
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
                 return IngestModule.ProcessResult.OK;
             }
 
@@ -211,7 +194,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (null != tempFilePath && Files.exists(tempFilePath)) {
                     tempFilePath.toFile().delete();
                 }
-                logger.log(Level.SEVERE, "Unallocated Carver returned error exit value = {0} when scanning {1}",
+                logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}",
                         new Object[]{exitValue, file.getName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
@@ -233,11 +216,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
             List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
             if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
-                context.scheduleFiles(new ArrayList<AbstractFile>(theList));
+                context.scheduleFiles(new ArrayList<>(theList));
             }
         }
         catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with Unallocated Carver", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
 
@@ -264,7 +247,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
             }
             catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Error shutting down Unallocated Carver unallocated space module", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS
             }
         }
     }
@@ -328,26 +311,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
         }
         catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Exception while trying to get parent of AbstractFile.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
         }
         return id;
-    }
-
-    /**
-     * Determines whether or not a directory is empty.
-     *
-     * @param directoryPath The path to the directory to inspect.
-     * @return True if the directory is empty, false otherwise.
-     * @throws IllegalArgumentException
-     * @throws IOException
-     */
-    private static boolean isDirectoryEmpty(final Path directoryPath) throws IllegalArgumentException, IOException {
-        if (!Files.isDirectory(directoryPath)) {
-            throw new IllegalArgumentException("The directoryPath argument must be a directory path"); // NON-NLS
-        }
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directoryPath)) {
-            return !dirStream.iterator().hasNext();
-        }
     }
 
     /**
