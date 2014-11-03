@@ -20,14 +20,14 @@ package org.sleuthkit.autopsy.timeline.actions;
 
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 
 /**
  *
  */
-public class ZoomOut extends AbstractAction {
+public class ZoomOut extends Action {
 
     private final TimeLineController controller;
 
@@ -47,10 +47,8 @@ public class ZoomOut extends AbstractAction {
                 return eventsModel.getRequestedZoomParamters().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
             }
         });
-    }
-
-    @Override
-    public void handle(ActionEvent event) {
-        controller.zoomOutToActivity();
+        setEventHandler((ActionEvent t) -> {
+            controller.zoomOutToActivity();
+        });
     }
 }

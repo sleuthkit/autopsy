@@ -418,17 +418,16 @@ import org.sleuthkit.datamodel.TskData;
                 }
             }
                       
-            
             // report on the blackboard results
             makeBlackboardArtifactTables();
-            
+
             // report on the tagged files and artifacts
             makeContentTagsTables();
             makeBlackboardArtifactTagsTables();
-            
+
             // report on the tagged images
             makeThumbnailTable();
-            
+
             // finish progress, wrap up
             for (TableReportModule module : tableModules) {
                 tableProgress.get(module).complete();
@@ -1225,6 +1224,7 @@ import org.sleuthkit.datamodel.TskData;
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.msgType"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.readStatus"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromEmail"),
@@ -1384,13 +1384,11 @@ import org.sleuthkit.datamodel.TskData;
                     SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
                 }
-            } else if(type.equals(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) ||
-                    type.equals(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) ||
-                    type.equals(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())) {
-                value = Double.toString(tempatt.getValueDouble());
-            } else {
-                value = tempatt.getValueString();
+            } 
+            else {
+                value = tempatt.getDisplayString();
             }
+            
             if (value == null) {
                 value = "";
             }
@@ -1485,6 +1483,11 @@ import org.sleuthkit.datamodel.TskData;
             if (rowData == null) {
                 try {
                     rowData = getOrderedRowDataAsStrings();
+                    // replace null values if attribute was not defined
+                    for (int i = 0; i < rowData.size(); i++) {
+                        if (rowData.get(i) == null) 
+                            rowData.set(i, "");
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Core exception while generating row data for artifact report.", ex); //NON-NLS
                     rowData = Collections.<String>emptyList();
@@ -1495,9 +1498,9 @@ import org.sleuthkit.datamodel.TskData;
         
        /**
         * Get a list of Strings with all the row values for the Artifact in the
-        * correct order to be written to the report.
+        * correct order to be written to the report.  
         * 
-        * @return List<String> row values
+        * @return List<String> row values.  Values could be null if attribute is not defined in artifact
         * @throws TskCoreException 
         */
        private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
@@ -1567,7 +1570,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                  case TSK_CONTACT:
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
@@ -1578,6 +1581,7 @@ import org.sleuthkit.datamodel.TskData;
                  case TSK_MESSAGE:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
@@ -1588,9 +1592,9 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                   case TSK_CALLLOG:
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1604,7 +1608,7 @@ import org.sleuthkit.datamodel.TskData;
                     break;
                   case TSK_SPEED_DIAL_ENTRY:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;

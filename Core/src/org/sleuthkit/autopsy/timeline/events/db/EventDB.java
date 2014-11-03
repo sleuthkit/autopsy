@@ -186,7 +186,7 @@ public class EventDB {
             return "1";
         }
         result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result;
-        System.out.println(result);
+        //System.out.println(result);
         return result;
     }
 
@@ -402,7 +402,7 @@ public class EventDB {
                 if (end2 == 0) {
                     end2 = getMaxTime();
                 }
-                System.out.println(start2 + " " + start + " " + end + " " + end2);
+                //System.out.println(start2 + " " + start + " " + end + " " + end2);
                 return new Interval(start2 * 1000, (end2 + 1) * 1000, TimeLineController.getJodaTimeZone());
             }
         } catch (SQLException ex) {
@@ -445,7 +445,7 @@ public class EventDB {
 
         dbReadLock();
         final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + getSQLWhere(filter);
-        System.out.println(query);
+        //System.out.println(query);
         try (Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
@@ -801,13 +801,13 @@ public class EventDB {
 
         ResultSet rs = null;
         dbReadLock();
-        System.out.println(queryString);
+        //System.out.println(queryString);
         try (Statement stmt = con.createStatement();) {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.start();
             rs = stmt.executeQuery(queryString);
             stopwatch.stop();
-            System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
+            // System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
             while (rs.next()) {
 
                 EventType type = useSubTypes
@@ -880,7 +880,7 @@ public class EventDB {
                 + " from events where time >= " + start + " and time < " + end + " and " + getSQLWhere(filter)
                 + " group by interval, " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) + " , " + descriptionColumn
                 + " order by Min(time)";
-        System.out.println(query);
+        //System.out.println(query);
         ResultSet rs = null;
         try (Statement stmt = con.createStatement(); // scoop up requested events in groups organized by interval, type, and desription
                 ) {
@@ -890,7 +890,7 @@ public class EventDB {
 
             rs = stmt.executeQuery(query);
             stopwatch.stop();
-            System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
+            //System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
             while (rs.next()) {
                 EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN)) : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
 

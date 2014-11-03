@@ -1,3 +1,17 @@
+---------------- VERSION 3.1.1  --------------
+Improvements:
+- New time line feature
+- New Interesting Files module
+- Added support for Python modules
+- Updated HTML report
+- Media Content viewer uses blackboard artifacts and detects PNG by sig.
+- New logo
+
+Bug Fixes:
+- Adding local disk errors
+- ZIP files inside of RAR files are properly extracted
+ 
+
 ---------------- VERSION 3.1.0  --------------
 Numerous changes have gone into this long-awaited major release.
 
