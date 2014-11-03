@@ -41,7 +41,7 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
     protected void cancelled() {
         super.cancelled();
         if (logStateChanges) {
-            LOGGER.log(Level.WARNING, "{0} cancelled!", getTitle());
+            // LOGGER.log(Level.WARNING, "{0} cancelled!", getTitle());
         }
     }
 
@@ -56,7 +56,7 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
     protected void scheduled() {
         super.scheduled();
         if (logStateChanges) {
-            LOGGER.log(Level.INFO, "{0} scheduled", getTitle());
+            // LOGGER.log(Level.INFO, "{0} scheduled", getTitle());
         }
     }
 
@@ -69,7 +69,7 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
             LOGGER.log(Level.SEVERE, getTitle() + " threw unexpected exception: ", ex);
         }
         if (logStateChanges) {
-            LOGGER.log(Level.INFO, "{0} succeeded", getTitle());
+            // LOGGER.log(Level.INFO, "{0} succeeded", getTitle());
         }
     }
 }

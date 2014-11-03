@@ -64,16 +64,6 @@
                 <package>com.sun.mail.smtp</package>
                 <package>com.sun.mail.util</package>
                 <package>com.sun.mail.util.logging</package>
-                <package>impl.org.controlsfx</package>
-                <package>impl.org.controlsfx.autocompletion</package>
-                <package>impl.org.controlsfx.behavior</package>
-                <package>impl.org.controlsfx.i18n</package>
-                <package>impl.org.controlsfx.skin</package>
-                <package>impl.org.controlsfx.spreadsheet</package>
-                <package>impl.org.controlsfx.tools</package>
-                <package>impl.org.controlsfx.tools.rectangle</package>
-                <package>impl.org.controlsfx.tools.rectangle.change</package>
-                <package>impl.org.controlsfx.version</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
@@ -485,11 +475,14 @@
                 <package>org.apache.xmlbeans.xml.stream.events</package>
                 <package>org.apache.xmlbeans.xml.stream.utils</package>
                 <package>org.apache.xmlcommons</package>
+                <package>org.controlsfx</package>
                 <package>org.controlsfx.control</package>
                 <package>org.controlsfx.control.action</package>
                 <package>org.controlsfx.control.cell</package>
                 <package>org.controlsfx.control.decoration</package>
                 <package>org.controlsfx.control.spreadsheet</package>
+                <package>org.controlsfx.control.table</package>
+                <package>org.controlsfx.control.table.model</package>
                 <package>org.controlsfx.control.textfield</package>
                 <package>org.controlsfx.dialog</package>
                 <package>org.controlsfx.glyphfont</package>
@@ -623,6 +616,10 @@
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/openjfx-dialogs-1.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
             </class-path-extension>
@@ -681,10 +678,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.0.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.0.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
@@ -753,6 +746,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-fxml-8.0-r1-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r1-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-8.20.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.20.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-fxml-8.0-r1.jar</runtime-relative-path>
