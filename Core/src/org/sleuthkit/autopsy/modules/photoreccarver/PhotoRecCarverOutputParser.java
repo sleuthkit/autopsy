@@ -45,7 +45,6 @@ class PhotoRecCarverOutputParser {
 
     private final Path basePath;
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
-    private static final List<LayoutFile> EMPTY_LIST = Collections.unmodifiableList(new ArrayList<LayoutFile>());
 
     PhotoRecCarverOutputParser(Path base) {
         basePath = base;
@@ -74,7 +73,7 @@ class PhotoRecCarverOutputParser {
      * @throws IOException
      */
     List<LayoutFile> parse(File xmlInputFile, long id, AbstractFile af) throws FileNotFoundException, IOException {
-        try {
+        try (BufferedReader in = new BufferedReader(new FileReader(xmlInputFile))) {
             String fileName;
             long fileSize;
             String result;
@@ -86,60 +85,58 @@ class PhotoRecCarverOutputParser {
             List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
 
             // create and initialize a line
-            try ( // create a BufferedReader
-                    BufferedReader in = new BufferedReader(new FileReader(xmlInputFile))) {
-                // create and initialize a line
-                String line = in.readLine();
+            String line = in.readLine();
 
-                // loop until an empty line is read
-                reachedEndOfFile:
-                while (!line.isEmpty()) {
-                    while (!line.contains("<fileobject>")) //NON-NLS
-                    {
-                        if (line.equals("</dfxml>")) //NON-NLS
-                        { // We have found the end. Break out of both loops and move on to processing.
-                            line = "";
-                            break reachedEndOfFile;
-                        }
-                        line = in.readLine();
+            // loop until an empty line is read
+            reachedEndOfFile:
+            while (!line.isEmpty()) {
+                while (!line.contains("<fileobject>")) //NON-NLS
+                {
+                    if (line.equals("</dfxml>")) //NON-NLS
+                    { // We have found the end. Break out of both loops and move on to processing.
+                        line = "";
+                        break reachedEndOfFile;
                     }
-
-                    List<TskFileRange> ranges = new ArrayList<>();
-
-                    // read filename line
                     line = in.readLine();
-                    fileName = getValue("filename", line); //NON-NLS
-                    Path p = Paths.get(fileName);
-                    if (p.startsWith(basePath)) {
-                        fileName = p.getFileName().toString();
-                    }
-
-                    line = in.readLine(); /// read filesize line
-                    fileSize = Long.parseLong(getValue("filesize", line)); //NON-NLS
-
-                    in.readLine(); /// eat a line and move on to the next
-
-                    line = in.readLine(); /// now get next valid line
-                    while (line.contains("<byte_run")) //NON-NLS
-                    {
-                        result = line.replaceAll("[\t ]*<byte_run offset='", ""); //NON-NLS
-                        result = result.replaceAll("'[\t ]*img_offset='", " "); //NON-NLS
-                        result = result.replaceAll("'[\t ]*len='", " "); //NON-NLS
-                        result = result.replaceAll("'/>[\t ]*", ""); //NON-NLS
-                        fields = result.split(" ");  /// offset, image offset, length //NON-NLS
-                        ranges.add((new TskFileRange(af.convertToImgOffset(Long.parseLong(fields[1])), Long.parseLong(fields[2]), ranges.size())));
-
-                        // read the next line
-                        line = in.readLine();
-                    }
-                    carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, ranges));
                 }
+
+                List<TskFileRange> ranges = new ArrayList<>();
+
+                // read filename line
+                line = in.readLine();
+                fileName = getValue("filename", line); //NON-NLS
+                Path p = Paths.get(fileName);
+                if (p.startsWith(basePath)) {
+                    fileName = p.getFileName().toString();
+                }
+
+                line = in.readLine(); /// read filesize line
+                fileSize = Long.parseLong(getValue("filesize", line)); //NON-NLS
+
+                in.readLine(); /// eat a line and move on to the next
+
+                line = in.readLine(); /// now get next valid line
+                while (line.contains("<byte_run")) //NON-NLS
+                {
+                    result = line.replaceAll("[\t ]*<byte_run offset='", ""); //NON-NLS
+                    result = result.replaceAll("'[\t ]*img_offset='", " "); //NON-NLS
+                    result = result.replaceAll("'[\t ]*len='", " "); //NON-NLS
+                    result = result.replaceAll("'/>[\t ]*", ""); //NON-NLS
+                    fields = result.split(" ");  /// offset, image offset, length //NON-NLS
+                    ranges.add((new TskFileRange(af.convertToImgOffset(Long.parseLong(fields[1])), Long.parseLong(fields[2]), ranges.size())));
+
+                    // read the next line
+                    line = in.readLine();
+                }
+                carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, ranges));
             }
             return fileManager.addCarvedFiles(carvedFileContainer);
         }
         catch (IOException | NumberFormatException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: {0}", ex); //NON_NLS
         }
-        return EMPTY_LIST;
+
+        List<LayoutFile> empty = Collections.emptyList();
+        return empty;
     }
 }
