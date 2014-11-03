@@ -670,9 +670,12 @@ INPUT                  = main.dox \
                          modReport.dox \
                          modResult.dox \
                          modAdvanced.dox \
+                         modMobile.dox \
                          platformConcepts.dox \
                          regressionTesting.dox \
                          native_libs.dox \
+                         modDevPython.dox \
+                         debugTsk.dox \
                          ../../Core/src \
                          ../../CoreLibs/src \
                          ../../KeywordSearch/src \

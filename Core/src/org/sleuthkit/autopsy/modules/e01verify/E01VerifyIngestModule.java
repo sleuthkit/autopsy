@@ -135,7 +135,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
 
         // Read in byte size chunks and update the hash value with the data.
         for (int i = 0; i < totalChunks; i++) {
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return ProcessResult.OK;
             }
             data = new byte[(int) chunkSize];

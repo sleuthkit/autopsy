@@ -166,11 +166,15 @@ public final class Reports implements AutopsyVisitableItem {
             propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.name"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.desc"),
-                    dateFormatter.format(new java.util.Date(this.report.getCreatedTime() * 1000)).toString()));
+                    dateFormatter.format(new java.util.Date(this.report.getCreatedTime() * 1000))));
             propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.name"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.desc"),
                     this.report.getPath()));
+            propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.name"),
+                    NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.displayName"),
+                    NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.desc"),
+                    this.report.getReportName()));
             return sheet;
         }
 

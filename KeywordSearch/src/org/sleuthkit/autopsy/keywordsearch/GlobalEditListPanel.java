@@ -93,7 +93,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         lsm.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if (lsm.isSelectionEmpty() || currentKeywordList.isLocked()) {
+                if (lsm.isSelectionEmpty() || currentKeywordList.isLocked() || IngestManager.getInstance().isIngestRunning() ) {
                     deleteWordButton.setEnabled(false);
                 } else {
                     deleteWordButton.setEnabled(true);
@@ -145,30 +145,36 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }
 
     void setButtonStates() {
-        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
-        boolean listSet = currentKeywordList != null;
-        boolean isLocked = !listSet ? true : currentKeywordList.isLocked();
-        boolean noKeywords = !listSet ? true : currentKeywordList.getKeywords().isEmpty();
-        addWordButton.setEnabled(listSet && !ingestRunning && !isLocked);
-        addWordField.setEnabled(listSet && !ingestRunning && !isLocked);
-        chRegex.setEnabled(listSet && ingestRunning && !isLocked);
-        keywordOptionsLabel.setEnabled(addWordButton.isEnabled() || chRegex.isEnabled());
-        keywordOptionsSeparator.setEnabled(addWordButton.isEnabled() || chRegex.isEnabled());
-        ingestMessagesCheckbox.setEnabled(listSet && !ingestRunning);
-        ingestMessagesCheckbox.setSelected(!listSet ? false : currentKeywordList.getIngestMessages());
-        listOptionsLabel.setEnabled(ingestMessagesCheckbox.isEnabled());
-        listOptionsSeparator.setEnabled(ingestMessagesCheckbox.isEnabled());
-        saveListButton.setEnabled(listSet);
-        exportButton.setEnabled(listSet);
-        deleteListButton.setEnabled(listSet && !ingestRunning && !isLocked);
-        deleteWordButton.setEnabled(listSet && !ingestRunning && !isLocked);
-        if (noKeywords) {
+        boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
+        boolean isListSelected = currentKeywordList != null;
+        
+        // items that only need a selected list
+        boolean canEditList = ((isListSelected == true) && (isIngestRunning == false));
+        ingestMessagesCheckbox.setEnabled(canEditList);
+        ingestMessagesCheckbox.setSelected(currentKeywordList != null && currentKeywordList.getIngestMessages());
+        listOptionsLabel.setEnabled(canEditList);
+        listOptionsSeparator.setEnabled(canEditList);
+        
+        // items that need an unlocked list w/out ingest running
+        boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isLocked()));
+        boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
+        addWordButton.setEnabled(canAddWord);
+        addWordField.setEnabled(canAddWord);
+        chRegex.setEnabled(canAddWord);
+        keywordOptionsLabel.setEnabled(canAddWord);
+        keywordOptionsSeparator.setEnabled(canAddWord);
+        deleteListButton.setEnabled(canAddWord);
+        
+        
+        // items that need a non-empty list
+        if ((currentKeywordList == null) || (currentKeywordList.getKeywords().isEmpty())) {
             saveListButton.setEnabled(false);
             exportButton.setEnabled(false);
             deleteWordButton.setEnabled(false);
         } else {
             saveListButton.setEnabled(true);
             exportButton.setEnabled(true);
+            // We do not set deleteWordButton because it will be set by the list select model code when a word is selected.
         }
     }
 

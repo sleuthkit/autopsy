@@ -18,29 +18,29 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.tika.Tika;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.autopsy.modules.filetypeid.TikaFileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -74,19 +74,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
     };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private Indexer indexer;
     //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private SleuthkitCase caseHandle = null;
     private List<TextExtractor> textExtractors;
     private StringsTextExtractor stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
-    private Tika tikaFormatDetector;
     private long jobId;
     private long dataSourceId;   
     private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
@@ -134,8 +132,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         initialized = false;       
         jobId = context.getJobId();  
         dataSourceId = context.getDataSource().getId();
-        caseHandle = Case.getCurrentCase().getSleuthkitCase();
-        tikaFormatDetector = new Tika();
+        
         ingester = Server.getIngester();
         this.context = context;
 
@@ -173,7 +170,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
             boolean hasKeywordsForSearch = false;
             for (KeywordList keywordList : keywordLists) {
-                if (settings.isKeywordListEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
+                if (settings.keywordListIsEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
                     hasKeywordsForSearch = true;
                     break;
                 }
@@ -299,8 +296,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors.clear();
         textExtractors = null;
         stringExtractor = null;
-
-        tikaFormatDetector = null;
 
         initialized = false;
     }
@@ -478,24 +473,31 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            // @@@ Could use Blackboard instead of doing this again
-            //use Tika to detect the format
+            
+            
+            // try to get the file type from the BB
             String detectedFormat = null;
-            InputStream is = null;
             try {
-                is = new ReadContentInputStream(aFile);
-                detectedFormat = tikaFormatDetector.detect(is, aFile.getName());
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile, e); //NON-NLS
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not close stream after detecting format using tika for file: " //NON-NLS
-                                + aFile, ex);
-                    }
+                ArrayList<BlackboardAttribute> attributes = aFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+                for (BlackboardAttribute attribute : attributes) {
+                    detectedFormat = attribute.getValueString();
+                    break;
                 }
+            } catch (TskCoreException ex) {
+            }
+            // else, use FileType module to detect the format
+            if (detectedFormat == null) {
+                TikaFileTypeDetector tikaFileTypeDetector = new TikaFileTypeDetector();
+                try {
+                    detectedFormat = tikaFileTypeDetector.detectAndSave(aFile);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile); //NON-NLS
+                    return;
+                }
+                if (detectedFormat == null) {
+                    logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile); //NON-NLS
+                    return;
+                } 
             }
 
             // we skip archive formats that are opened by the archive module. 

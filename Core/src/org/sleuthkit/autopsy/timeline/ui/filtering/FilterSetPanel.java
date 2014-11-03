@@ -18,15 +18,19 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
-import java.net.URL;
-import java.util.ResourceBundle;
+import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
@@ -48,12 +52,6 @@ import org.sleuthkit.autopsy.timeline.filters.Filter;
 public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
-
-    @FXML
     private Button applyButton;
 
     @FXML
@@ -71,6 +69,8 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     private FilteredEventsModel filteredEvents;
 
     private TimeLineController controller;
+
+    private final ObservableMap<String, Boolean> expansionMap = FXCollections.observableHashMap();
 
     @FXML
     void initialize() {
@@ -143,6 +143,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     public FilterSetPanel() {
         FXMLConstructor.construct(this, "FilterSetPanel.fxml");
+        expansionMap.put("Event Type Filter", Boolean.TRUE);
     }
 
     @Override
@@ -157,16 +158,46 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
-
         refresh();
-
         this.filteredEvents.filter().addListener((Observable o) -> {
             refresh();
         });
-
     }
 
-    public void refresh() {
-        filterTreeTable.setRoot(new FilterTreeItem(this.filteredEvents.filter().get().copyOf()));
+    private void refresh() {
+        filterTreeTable.setRoot(new FilterTreeItem(this.filteredEvents.filter().get().copyOf(), expansionMap));
+    }
+
+    /**
+     * A {@link TreeTableCell} that represents the active state of a
+     * {@link AbstractFilter} as a checkbox
+     */
+    private static class FilterCheckBoxCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
+
+        private final CheckBox checkBox = new CheckBox();
+        private SimpleBooleanProperty activeProperty;
+
+        @Override
+        protected void updateItem(AbstractFilter item, boolean empty) {
+            super.updateItem(item, empty);
+            Platform.runLater(() -> {
+                if (activeProperty != null) {
+                    checkBox.selectedProperty().unbindBidirectional(activeProperty);
+                }
+                checkBox.disableProperty().unbind();
+                if (item == null) {
+                    setText(null);
+                    setGraphic(null);
+
+                } else {
+                    setText(item.getDisplayName());
+                    activeProperty = item.getActiveProperty();
+                    checkBox.selectedProperty().bindBidirectional(activeProperty);
+                    checkBox.disableProperty().bind(item.getDisabledProperty());
+                    setGraphic(checkBox);
+                }
+            });
+        }
+
     }
 }

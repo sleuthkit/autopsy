@@ -29,46 +29,24 @@ import org.sleuthkit.datamodel.AbstractFile;
 final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobContext context;
+    private final IngestJob job;
     private final List<FileIngestModuleDecorator> modules = new ArrayList<>();
 
-    FileIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
-        this.context = context;
+    FileIngestPipeline(IngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+        this.job = job;
 
         // Create an ingest module instance from each file ingest module 
         // template. 
-        // current code uses the order pased in.
-        // Commented out code relied on the XML configuration file for ordering.
-        //Map<String, FileIngestModuleDecorator> modulesByClass = new HashMap<>();
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
                 FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
                 modules.add(module);
-                //modulesByClass.put(module.getClassName(), module);
             }
         }
-
-        // Add the ingest modules to the pipeline in the order indicated by the 
-        // data source ingest pipeline configuration, adding any additional 
-        // modules found in the global lookup, but not mentioned in the 
-        // configuration, to the end of the pipeline in arbitrary order.
-        /*List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getFileIngestPipelineConfig();
-        for (String moduleClassName : pipelineConfig) {
-            if (modulesByClass.containsKey(moduleClassName)) {
-                modules.add(modulesByClass.remove(moduleClassName));
-            }
-            else {
-                // @@@ add error message to flag renamed / removed modules
-            }
-        }
-        for (FileIngestModuleDecorator module : modulesByClass.values()) {
-            modules.add(module);
-        }
-        */
     }
 
     boolean isEmpty() {
-        return modules.isEmpty();
+        return this.modules.isEmpty();
     }
 
     /**
@@ -77,9 +55,9 @@ final class FileIngestPipeline {
      */
     List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : modules) {
+        for (FileIngestModuleDecorator module : this.modules) {
             try {
-                module.startUp(context);
+                module.startUp(new IngestJobContext(this.job));
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -97,28 +75,28 @@ final class FileIngestPipeline {
     List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
         AbstractFile file = task.getFile();
-        for (FileIngestModuleDecorator module : modules) {
+        for (FileIngestModuleDecorator module : this.modules) {
             try {
-                ingestManager.setIngestTaskProgress(task, module.getDisplayName());
+                FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(file);
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (context.isJobCancelled()) {
+            if (this.job.isCancelled()) {
                 break;
             }
         }
         file.close();
-        if (!context.isJobCancelled()) {
+        if (!this.job.isCancelled()) {
             IngestManager.getInstance().fireFileIngestDone(file);
         }
-        ingestManager.setIngestTaskProgressCompleted(task);
+        FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
         return errors;
     }
 
     List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : modules) {
+        for (FileIngestModuleDecorator module : this.modules) {
             try {
                 module.shutDown();
             } catch (Exception ex) {

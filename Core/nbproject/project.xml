@@ -196,6 +196,7 @@
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
+                <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.datamodel</package>

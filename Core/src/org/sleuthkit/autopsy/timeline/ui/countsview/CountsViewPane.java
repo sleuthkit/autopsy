@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import javafx.application.Platform;
@@ -55,17 +53,20 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javax.swing.JOptionPane;
 import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
-import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
+import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -105,7 +106,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
 
     private final CategoryAxis dateAxis = new CategoryAxis(FXCollections.<String>observableArrayList());
 
-    private final SimpleObjectProperty<ScaleType> scale = new SimpleObjectProperty<>(ScaleType.LINEAR);
+    private final SimpleObjectProperty<ScaleType> scale = new SimpleObjectProperty<>(ScaleType.LOGARITHMIC);
 
     //private access to barchart data
     private final Map<EventType, XYChart.Series<String, Number>> eventTypeMap = new ConcurrentHashMap<>();
@@ -453,25 +454,44 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
             } else if (e.getClickCount() >= 2) {  //double-click => zoom in time
                 if (interval.toDuration().isLongerThan(Seconds.ONE.toStandardDuration())) {
                     controller.pushTimeRange(interval);
+                } else {
+
+                    int showConfirmDialog = JOptionPane.showConfirmDialog(null,
+                            NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.detailSwitchMessage"),
+                            NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.detailSwitchTitle"), JOptionPane.YES_NO_OPTION);
+                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
+                        controller.setViewMode(VisualizationMode.DETAIL);
+                    }
+
+                    /* //I would like to use the JAvafx dialog, but it doesn't
+                     * block the ui (because it is embeded in a TopComponent)
+                     * -jm
+                     *
+                     * final Dialogs.CommandLink yes = new
+                     * Dialogs.CommandLink("Yes", "switch to Details view");
+                     * final Dialogs.CommandLink no = new
+                     * Dialogs.CommandLink("No", "return to Counts view with a
+                     * resolution of Seconds");
+                     * Action choice = Dialogs.create()
+                     * .title("Switch to Details View?")
+                     * .masthead("There is no temporal resolution smaller than
+                     * Seconds.")
+                     * .message("Would you like to switch to the Details view
+                     * instead?")
+                     * .showCommandLinks(Arrays.asList(yes, no));
+                     *
+                     * if (choice == yes) {
+                     * controller.setViewMode(VisualizationMode.DETAIL);
+                     * } */
                 }
             }
         }
-
     }
 
-    class CountsViewSettingsPane extends HBox {
-
-        @FXML
-        private ResourceBundle resources;
-
-        @FXML
-        private URL location;
+    private class CountsViewSettingsPane extends HBox {
 
         @FXML
         private RadioButton logRadio;
-
-        @FXML
-        private RadioButton sqrtRadio;
 
         @FXML
         private RadioButton linearRadio;
@@ -482,15 +502,13 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         @FXML
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
-            assert sqrtRadio != null : "fx:id=\"sqrtRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
-            linearRadio.setSelected(true);
+            logRadio.setSelected(true);
             scaleGroup.selectedToggleProperty().addListener(observable -> {
                 if (scaleGroup.getSelectedToggle() == linearRadio) {
                     scale.set(ScaleType.LINEAR);
-                } else if (scaleGroup.getSelectedToggle() == sqrtRadio) {
-                    scale.set(ScaleType.SQUARE_ROOT);
-                } else if (scaleGroup.getSelectedToggle() == logRadio) {
+                }
+                if (scaleGroup.getSelectedToggle() == logRadio) {
                     scale.set(ScaleType.LOGARITHMIC);
                 }
             });
@@ -504,7 +522,6 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
     private static enum ScaleType {
 
         LINEAR(t -> t.doubleValue()),
-        SQUARE_ROOT(t -> Math.sqrt(t)),
         LOGARITHMIC(t -> Math.log10(t) + 1);
 
         private final Function<Long, Double> func;

@@ -25,6 +25,7 @@ import org.openide.explorer.view.BeanTreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
+
 /**
  *
  * @author jantonius

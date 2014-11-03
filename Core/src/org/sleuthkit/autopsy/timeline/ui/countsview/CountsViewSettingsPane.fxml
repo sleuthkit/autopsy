@@ -5,25 +5,24 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<fx:root alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-<children><FlowPane alignment="CENTER_LEFT" hgap="5.0" prefWrapLength="250.0" vgap="5.0" HBox.hgrow="ALWAYS">
-<children><Label minHeight="-Infinity" minWidth="-Infinity" text="Scale: ">
-<HBox.margin>
-<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-</HBox.margin></Label><FlowPane alignment="CENTER_LEFT" hgap="5.0" prefWrapLength="250.0" vgap="5.0">
-<children><RadioButton fx:id="linearRadio" mnemonicParsing="false" selected="true" text="Linear">
-<toggleGroup>
-<ToggleGroup fx:id="scaleGroup" />
-</toggleGroup></RadioButton><RadioButton fx:id="sqrtRadio" mnemonicParsing="false" text="Square Root" toggleGroup="$scaleGroup" /><RadioButton fx:id="logRadio" mnemonicParsing="false" text="Logarithmic" toggleGroup="$scaleGroup" />
-</children>
+<fx:root alignment="CENTER_LEFT" type="HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<children>
+      <HBox alignment="CENTER_LEFT" spacing="5.0">
+         <children>
+            <Label minHeight="-Infinity" minWidth="-Infinity" text="Scale: ">
 <HBox.margin>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 </HBox.margin>
-<FlowPane.margin>
-<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-</FlowPane.margin></FlowPane>
-</children>
-<HBox.margin>
-<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-</HBox.margin></FlowPane>
+            </Label>
+            <RadioButton fx:id="logRadio" mnemonicParsing="false" selected="true" text="Logarithmic">
+<toggleGroup>
+<ToggleGroup fx:id="scaleGroup" />
+</toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="linearRadio" mnemonicParsing="false" text="Linear" toggleGroup="$scaleGroup" />
+         </children>
+         <HBox.margin>
+            <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+         </HBox.margin>
+      </HBox>
 </children></fx:root>

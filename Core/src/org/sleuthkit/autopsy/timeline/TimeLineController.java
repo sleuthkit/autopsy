@@ -18,14 +18,15 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
@@ -64,6 +65,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -92,7 +94,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * </li>
  * <ul>
  */
-public class TimeLineController  {
+public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
@@ -221,9 +223,9 @@ public class TimeLineController  {
 
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
-                                          EventTypeZoomLevel.BASE_TYPE,
-                                          Filter.getDefaultFilter(),
-                                          DescriptionLOD.SHORT);
+                EventTypeZoomLevel.BASE_TYPE,
+                Filter.getDefaultFilter(),
+                DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
         //persistent listener instances
@@ -457,7 +459,7 @@ public class TimeLineController  {
     }
 
     synchronized public void pushTimeRange(Interval timeRange) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
@@ -466,17 +468,34 @@ public class TimeLineController  {
         }
     }
 
-    synchronized public void pushDescrLOD(DescriptionLOD newLOD) {
-        ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
-        if (currentZoom == null) {
-            advance(InitialZoomState.withDescrLOD(newLOD));
-        } else if (currentZoom.hasDescrLOD(newLOD) == false) {
-            advance(currentZoom.withDescrLOD(newLOD));
+    synchronized public boolean pushDescrLOD(DescriptionLOD newLOD) {
+        Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.getRequestedZoomParamters().get().getTimeRange());
+        final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
+
+        boolean shouldContinue = true;
+        if (newLOD == DescriptionLOD.FULL && count > 10_000) {
+
+            int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
+                    "You are about to show details for " + NumberFormat.getInstance().format(count) + " events. This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
+                    "",
+                    JOptionPane.YES_NO_OPTION);
+
+            shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
         }
+
+        if (shouldContinue) {
+            ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
+            if (currentZoom == null) {
+                advance(InitialZoomState.withDescrLOD(newLOD));
+            } else if (currentZoom.hasDescrLOD(newLOD) == false) {
+                advance(currentZoom.withDescrLOD(newLOD));
+            }
+        }
+        return shouldContinue;
     }
 
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
@@ -599,35 +618,35 @@ public class TimeLineController  {
      */
     synchronized public boolean outOfDatePromptAndRebuild() {
         return showOutOfDateConfirmation() == JOptionPane.YES_OPTION
-               ? rebuildRepo()
-               : false;
+                ? rebuildRepo()
+                : false;
     }
 
     synchronized int showLastPopulatedWhileIngestingConfirmation() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                                             DO_REPOPULATE_MESSAGE,
-                                             "re populate events?",
-                                             JOptionPane.YES_NO_OPTION,
-                                             JOptionPane.QUESTION_MESSAGE);
+                DO_REPOPULATE_MESSAGE,
+                "re populate events?",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
     }
 
     synchronized int showOutOfDateConfirmation() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
-                                             NbBundle.getMessage(TimeLineController.class,
-                                                                 "Timeline.propChg.confDlg.timelineOOD.msg"),
-                                             NbBundle.getMessage(TimeLineController.class,
-                                                                 "Timeline.propChg.confDlg.timelineOOD.details"),
-                                             JOptionPane.YES_NO_OPTION);
+                NbBundle.getMessage(TimeLineController.class,
+                        "Timeline.propChg.confDlg.timelineOOD.msg"),
+                NbBundle.getMessage(TimeLineController.class,
+                        "Timeline.propChg.confDlg.timelineOOD.details"),
+                JOptionPane.YES_NO_OPTION);
     }
 
     synchronized int showIngestConfirmation() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
-                                             NbBundle.getMessage(TimeLineController.class,
-                                                                 "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
-                                             NbBundle.getMessage(TimeLineController.class,
-                                                                 "Timeline.initTimeline.confDlg.genBeforeIngest.details"),
-                                             JOptionPane.YES_NO_OPTION);
+                NbBundle.getMessage(TimeLineController.class,
+                        "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
+                NbBundle.getMessage(TimeLineController.class,
+                        "Timeline.initTimeline.confDlg.genBeforeIngest.details"),
+                JOptionPane.YES_NO_OPTION);
     }
 
     private class AutopsyIngestModuleListener implements PropertyChangeListener {
@@ -670,7 +689,7 @@ public class TimeLineController  {
     }
 
     @Immutable
-    class AutopsyCaseListener implements PropertyChangeListener {
+    private class AutopsyCaseListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {

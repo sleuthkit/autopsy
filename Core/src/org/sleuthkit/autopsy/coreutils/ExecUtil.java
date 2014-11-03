@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,22 +23,110 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 /**
- * Takes care of forking a process and reading output / error streams to either a
- * string buffer or directly to a file writer
- * BC: @@@ This code scares me in a multi-threaded env. I think the arguments should be passed into the constructor
- * and different run methods that either return the string or use the redirected writer. 
+ * Executes a command line using an operating system process with a configurable
+ * timeout and pluggable logic to kill or continue the process on timeout.
  */
- public final class ExecUtil {
+public final class ExecUtil {
+
+    private static final long DEFAULT_TIMEOUT = 5;
+    private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
+        
+    /**
+     * The execute() methods do a wait with a timeout on the executing process
+     * and query the terminator each time the timeout expires to determine
+     * whether or not to kill the process or allow it to continue.
+     */
+    public interface ProcessTerminator {
+
+        /**
+         * An implementation of this interface is called by the run() methods at
+         * every timeout to determine whether or not to kill the running
+         * process.
+         *
+         * @return True or false.
+         */
+        boolean shouldTerminateProcess();
+    }
+
+    /**
+     * Runs a process without a timeout and terminator.
+     *
+     * @param processBuilder A process builder used to configure and construct
+     * the process to be run.
+     * @return the exit value of the process
+     * @throws SecurityException if a security manager exists and vetoes any
+     * aspect of running the process.
+     * @throws IOException if an I/O error occurs.
+     */
+    public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
+        return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean shouldTerminateProcess() {
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Runs a process using the default timeout and a custom terminator.
+     *
+     * @param processBuilder A process builder used to configure and construct
+     * the process to be run.
+     * @param terminator The terminator.
+     * @return the exit value of the process
+     * @throws SecurityException if a security manager exists and vetoes any
+     * aspect of running the process.
+     * @throws IOException if an I/O error occurs.
+     */
+    public static int execute(ProcessBuilder processBuilder, ProcessTerminator terminator) throws SecurityException, IOException {
+        return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+    }
+
+    /**
+     * Runs a process using a custom terminator.
+     *
+     * @param processBuilder A process builder used to configure and construct
+     * the process to be run.
+     * @param timeOut The duration of the timeout.
+     * @param units The units for the timeout.
+     * @param terminator The terminator.
+     * @return the exit value of the process
+     * @throws SecurityException if a security manager exists and vetoes any
+     * aspect of running the process.
+     * @throws IOException if an I/o error occurs.
+     */
+    public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+        Process process = processBuilder.start();
+        try {
+            do {
+                process.waitFor(timeOut, units);
+                if (process.isAlive() && terminator.shouldTerminateProcess()) {
+                    process.destroyForcibly();
+                }
+            } while (process.isAlive());
+        } catch (InterruptedException ex) {
+            if (process.isAlive()) {
+                process.destroyForcibly();
+            }
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0));
+            Thread.currentThread().interrupt();
+        }
+        return process.exitValue();
+    }
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
-    private final String command = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
     private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
+    private int exitValue = -100;
 
     /**
      * Execute a process. Redirect asynchronously stdout to a string and stderr
@@ -49,6 +137,7 @@ import java.util.logging.Level;
      * @param params parameters of the command
      * @return string buffer with captured stdout
      */
+    @Deprecated
     public synchronized String execute(final String aCommand, final String... params) throws IOException, InterruptedException {
         // build command array
         String[] arrayCommand = new String[params.length + 1];
@@ -63,26 +152,25 @@ import java.util.logging.Level;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
+        logger.log(Level.INFO, "Executing {0}", arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
-        errorStringRedirect.start();        
+        errorStringRedirect.start();
 
         //stdout redirect
         outputStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getInputStream(), "OUTPUT"); //NON-NLS
         outputStringRedirect.start();
 
         //wait for process to complete and capture error core
-        final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
+        this.exitValue = proc.waitFor();
 
         // wait for output redirectors to finish writing / reading
-        outputWriterRedirect.join();
+        outputStringRedirect.join();
         errorStringRedirect.join();
-        
+
         return outputStringRedirect.getOutput();
     }
 
@@ -95,6 +183,7 @@ import java.util.logging.Level;
      * @param params parameters of the command
      * @return string buffer with captured stdout
      */
+    @Deprecated
     public synchronized void execute(final Writer stdoutWriter, final String aCommand, final String... params) throws IOException, InterruptedException {
 
         // build command array
@@ -110,38 +199,35 @@ import java.util.logging.Level;
         }
 
         final Runtime rt = Runtime.getRuntime();
-        logger.log(Level.INFO, "Executing " + arrayCommandToLog.toString()); //NON-NLS
+        logger.log(Level.INFO, "Executing {0}", arrayCommandToLog.toString()); //NON-NLS
 
         proc = rt.exec(arrayCommand);
 
         //stderr redirect
         errorStringRedirect = new ExecUtil.StreamToStringRedirect(proc.getErrorStream(), "ERROR"); //NON-NLS
-        errorStringRedirect.start();        
+        errorStringRedirect.start();
 
         //stdout redirect
         outputWriterRedirect = new ExecUtil.StreamToWriterRedirect(proc.getInputStream(), stdoutWriter);
         outputWriterRedirect.start();
 
         //wait for process to complete and capture error core
-        final int exitVal = proc.waitFor();
-        logger.log(Level.INFO, aCommand + " exit value: " + exitVal); //NON-NLS
+        this.exitValue = proc.waitFor();
+        logger.log(Level.INFO, "{0} exit value: {1}", new Object[]{aCommand, exitValue}); //NON-NLS
 
         // wait for them to finish writing / reading
         outputWriterRedirect.join();
         errorStringRedirect.join();
-        
+
         //gc process with its streams
         //proc = null;
     }
-    
-    
-    
 
     /**
      * Interrupt the running process and stop its stream redirect threads
      */
+    @Deprecated
     public synchronized void stop() {
-        logger.log(Level.INFO, "Stopping Execution of: " + command); //NON-NLS
 
         if (errorStringRedirect != null) {
             errorStringRedirect.stopRun();
@@ -165,6 +251,17 @@ import java.util.logging.Level;
     }
 
     /**
+     * Gets the exit value returned by the subprocess used to execute a command.
+     *
+     * @return The exit value or the distinguished value -100 if this method is
+     * called before the exit value is set.
+     */
+    @Deprecated
+    synchronized public int getExitValue() {
+        return this.exitValue;
+    }
+
+    /**
      * Asynchronously read the output of a given input stream and write to a
      * string to be returned. Any exception during execution of the command is
      * managed in this thread.
@@ -173,8 +270,8 @@ import java.util.logging.Level;
     private static class StreamToStringRedirect extends Thread {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
-        private InputStream is;
-        private StringBuffer output = new StringBuffer();
+        private final InputStream is;
+        private final StringBuffer output = new StringBuffer();
         private volatile boolean doRun = false;
 
         StreamToStringRedirect(final InputStream anIs, final String aType) {
@@ -191,7 +288,7 @@ import java.util.logging.Level;
         @Override
         public final void run() {
             final String SEP = System.getProperty("line.separator");
-            InputStreamReader isr = null;
+            InputStreamReader isr;
             BufferedReader br = null;
             try {
                 isr = new InputStreamReader(this.is);
@@ -243,7 +340,7 @@ import java.util.logging.Level;
     private static class StreamToWriterRedirect extends Thread {
 
         private static final Logger logger = Logger.getLogger(StreamToStringRedirect.class.getName());
-        private InputStream is;
+        private final InputStream is;
         private volatile boolean doRun = false;
         private Writer writer = null;
 
@@ -262,7 +359,7 @@ import java.util.logging.Level;
         @Override
         public final void run() {
             final String SEP = System.getProperty("line.separator");
-            InputStreamReader isr = null;
+            InputStreamReader isr;
             BufferedReader br = null;
             try {
                 isr = new InputStreamReader(this.is);

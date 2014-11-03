@@ -19,51 +19,30 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * This class manages a sequence of data source ingest modules. It starts them, 
- * shuts them down, and runs them in sequential order. 
+ * This class manages a sequence of data source ingest modules. It starts them,
+ * shuts them down, and runs them in sequential order.
  */
 final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobContext context;
+    private final IngestJob job;
     private final List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
 
-    DataSourceIngestPipeline(IngestJobContext context, List<IngestModuleTemplate> moduleTemplates) {
-        this.context = context;
+    DataSourceIngestPipeline(IngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+        this.job = job;
 
         // Create an ingest module instance from each data source ingest module 
-        // template. Put the modules in a map of module class names to module 
-        // instances to facilitate loading the modules into the pipeline in the 
-        // sequence indicated by the ordered list of module class names that 
-        // will be obtained from the data source ingest pipeline configuration.
-        Map<String, DataSourceIngestModuleDecorator> modulesByClass = new HashMap<>();
+        // template. 
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
                 DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
-                modulesByClass.put(module.getClassName(), module);
+                modules.add(module);
             }
-        }
-
-        // Add the ingest modules to the pipeline in the order indicated by the 
-        // data source ingest pipeline configuration, adding any additional 
-        // modules found in the global lookup, but not mentioned in the 
-        // configuration, to the end of the pipeline in arbitrary order.
-        List<String> pipelineConfig = IngestPipelinesConfiguration.getInstance().getDataSourceIngestPipelineConfig();
-        for (String moduleClassName : pipelineConfig) {
-            if (modulesByClass.containsKey(moduleClassName)) {
-                modules.add(modulesByClass.remove(moduleClassName));
-            }
-        }
-        for (DataSourceIngestModuleDecorator module : modulesByClass.values()) {
-            modules.add(module);
         }
     }
 
@@ -75,7 +54,7 @@ final class DataSourceIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestModuleDecorator module : modules) {
             try {
-                module.startUp(context);
+                module.startUp(new IngestJobContext(this.job));
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -83,21 +62,24 @@ final class DataSourceIngestPipeline {
         return errors;
     }
 
-    List<IngestModuleError> process(DataSourceIngestTask task, ProgressHandle progress) {
+    List<IngestModuleError> process(DataSourceIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = task.getDataSource();
         for (DataSourceIngestModuleDecorator module : modules) {
             try {
-                progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.displayName",
-                        module.getDisplayName(), dataSource.getName()));
+                        module.getDisplayName(), dataSource.getName());
+                this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
                 ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                module.process(dataSource, new DataSourceIngestModuleProgress(progress));
+                module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
             } catch (Exception ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
-            if (context.isJobCancelled()) {
+            if (this.job.isCancelled()) {
                 break;
+            } else if (this.job.currentDataSourceIngestModuleIsCancelled())  {
+                this.job.currentDataSourceIngestModuleCancellationCompleted();
             }
         }
         ingestManager.setIngestTaskProgressCompleted(task);

@@ -38,15 +38,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Manages reading and writing of keyword lists to user settings XML file keywords.xml
- * or to any file provided in constructor
+ * Manages reading and writing of keyword lists to user settings XML file
+ * keywords.xml or to any file provided in constructor
  */
 final class XmlKeywordSearchList extends KeywordSearchList {
 
     private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
-    private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;   
-    private static final String XSDFILE = "KeywordsSchema.xsd"; //NON-NLS
+    private static final String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     private static final String ROOT_EL = "keyword_lists"; //NON-NLS
     private static final String LIST_EL = "keyword_list"; //NON-NLS
     private static final String LIST_NAME_ATTR = "name"; //NON-NLS
@@ -59,8 +58,8 @@ final class XmlKeywordSearchList extends KeywordSearchList {
     private static final String KEYWORD_SELECTOR_ATTR = "selector"; //NON-NLS
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
-    private static XmlKeywordSearchList currentInstance = null; 
-    private DateFormat dateFormatter;
+    private static XmlKeywordSearchList currentInstance = null;
+    private final DateFormat dateFormatter;
 
     static synchronized XmlKeywordSearchList getCurrent() {
         if (currentInstance == null) {
@@ -71,20 +70,21 @@ final class XmlKeywordSearchList extends KeywordSearchList {
     }
 
     /**
-     * Constructor to obtain handle on other that the current keyword list
-     * (such as for import or export)
+     * Constructor to obtain handle on other that the current keyword list (such
+     * as for import or export)
+     *
      * @param xmlFile xmlFile to obtain XmlKeywordSearchList handle on
      */
     XmlKeywordSearchList(String xmlFile) {
         super(xmlFile);
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
-    
+
     @Override
     public boolean save() {
         return save(false);
     }
-    
+
     @Override
     public boolean save(boolean isExport) {
         boolean success = false;
@@ -113,7 +113,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                 listEl.setAttribute(LIST_NAME_ATTR, listName);
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
-                
+
                 // only write the 'useForIngest' and 'ingestMessages' attributes
                 // if we're not exporting the list.
                 if (!isExport) {
@@ -123,7 +123,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String literal = keyword.isLiteral()?"true":"false"; //NON-NLS
+                    String literal = keyword.isLiteral() ? "true" : "false"; //NON-NLS
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
                     BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
                     if (selectorType != null) {
@@ -165,25 +165,23 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
                 final String created = listEl.getAttribute(LIST_CREATE_ATTR);
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
-                
+
                 //set these bools to true by default, if they don't exist in XML
                 Boolean useForIngestBool;
-                Boolean ingestMessagesBool; 
-                
-                if (listEl.hasAttribute(LIST_USE_FOR_INGEST) ) {
+                Boolean ingestMessagesBool;
+
+                if (listEl.hasAttribute(LIST_USE_FOR_INGEST)) {
                     useForIngestBool = Boolean.parseBoolean(listEl.getAttribute(LIST_USE_FOR_INGEST));
-                }
-                else {
+                } else {
                     useForIngestBool = true;
                 }
 
                 if (listEl.hasAttribute(LIST_INGEST_MSGS)) {
                     ingestMessagesBool = Boolean.parseBoolean(listEl.getAttribute(LIST_INGEST_MSGS));
-                }
-                else {
+                } else {
                     ingestMessagesBool = true;
                 }
-                
+
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
 
@@ -199,12 +197,12 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                     boolean isLiteral = literal.equals("true"); //NON-NLS
                     Keyword keyword = new Keyword(wordEl.getTextContent(), isLiteral);
                     String selector = wordEl.getAttribute(KEYWORD_SELECTOR_ATTR);
-                    if (! selector.equals("")) {
+                    if (!selector.equals("")) {
                         BlackboardAttribute.ATTRIBUTE_TYPE selectorType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(selector);
                         keyword.setType(selectorType);
                     }
                     words.add(keyword);
-                    
+
                 }
                 theLists.put(name, list);
             }

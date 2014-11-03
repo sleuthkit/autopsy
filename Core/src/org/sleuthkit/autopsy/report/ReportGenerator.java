@@ -564,7 +564,17 @@ import org.sleuthkit.datamodel.TskData;
                 tableProgress.get(module).updateStatusLabel(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
                                             ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
-                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList("File", "Tag", "Comment")); //NON-NLS
+                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeChanged"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash")));
+                
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
                     comment.append(
@@ -596,7 +606,7 @@ import org.sleuthkit.datamodel.TskData;
                     fileName = tag.getContent().getName();
                 }
                 
-                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(fileName, tag.getName().getDisplayName(), tag.getComment()));
+                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName(), fileName, tag.getComment()));
                 for (TableReportModule module : tableModules) {                                                                                       
                     // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                     if (module instanceof ReportHTML) {
@@ -1327,6 +1337,13 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")}));
                 break;    
+            case TSK_OS_INFO:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.processorArchitecture.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osName.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osInstallDate.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
+                break;    
             default:
                 return null;
         }
@@ -1666,6 +1683,12 @@ import org.sleuthkit.datamodel.TskData;
                         orderedRowData.add("");
                     }                   
                     orderedRowData.add(file.getUniquePath());
+                    break;
+                 case TSK_OS_INFO: 
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));

@@ -27,13 +27,6 @@ If one wishes to make any additional panels within the original options panel, o
 Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. The next section, \ref mod_dev_adv_properties, has more details on doing this.
 
 
-\subsection mod_dev_adv_properties Saving Settings and Properties
-
-It is recommended to have the module settings persistent, so that when a change is made and Autopsy is re-opened 
-the user made changes remain effective and not reset back to defaults.
-Use org.sleuthkit.autopsy.coreutils.ModuleSettings class for saving and reading back settings for your module.
-
-
 \subsection mod_dev_adv_events Registering for Events
 
 Autopsy will generate events as the application runs and modules may want to listen for those events so that they can change their state.  There is not an exhaustive list of events, but here are some common ones to listen for:

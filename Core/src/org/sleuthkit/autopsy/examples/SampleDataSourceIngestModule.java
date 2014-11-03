@@ -70,7 +70,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        if (context.isJobCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return IngestModule.ProcessResult.OK;
         }
 
@@ -92,22 +92,22 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             }
             progressBar.progress(1);
 
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
 
             // Get files by creation time.
             long currentTime = System.currentTimeMillis() / 1000;
             long minTime = currentTime - (14 * 24 * 60 * 60); // Go back two weeks.
-            List<FsContent> otherFiles = sleuthkitCase.findFilesWhere("crtime > " + minTime);
-            for (FsContent otherFile : otherFiles) {
+            List<AbstractFile> otherFiles = fileManager.findFiles(dataSource, "crtime > " + minTime);
+            for (AbstractFile otherFile : otherFiles) {
                 if (!skipKnownFiles || otherFile.getKnown() != TskData.FileKnown.KNOWN) {
                     ++fileCount;
                 }
             }
             progressBar.progress(1);
 
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
 

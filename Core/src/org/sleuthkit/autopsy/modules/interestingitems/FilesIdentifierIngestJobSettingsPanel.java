@@ -76,7 +76,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         List<FilesSetRow> filesSetRows = new ArrayList<>();
         this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
         for (FilesSet set : this.filesSetSnapshot.values()) {
-            filesSetRows.add(new FilesSetRow(set, settings.isInterestingFilesSetEnabled(set.getName())));
+            filesSetRows.add(new FilesSetRow(set, settings.interestingFilesSetIsEnabled(set.getName())));
         }
 
         // Make a table model to manage the row objects.
@@ -107,10 +107,15 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
     @Override
     public IngestModuleIngestJobSettings getSettings() {
         List<String> enabledInterestingFilesSets = new ArrayList<>();
-        this.tableModel.filesSetRows.stream().filter((rowModel) -> (rowModel.isEnabled())).forEach((rowModel) -> {
-            enabledInterestingFilesSets.add(rowModel.getFilesSet().getName());
-        });
-        return new FilesIdentifierIngestJobSettings(enabledInterestingFilesSets);
+        List<String> disabledInterestingFilesSets = new ArrayList<>();
+        for (FilesSetRow rowModel : this.tableModel.filesSetRows) {
+            if (rowModel.isEnabled()) {
+                enabledInterestingFilesSets.add(rowModel.getFilesSet().getName());
+            } else {
+                disabledInterestingFilesSets.add(rowModel.getFilesSet().getName());
+            }
+        }
+        return new FilesIdentifierIngestJobSettings(enabledInterestingFilesSets, disabledInterestingFilesSets);
     }
 
     /**
@@ -128,7 +133,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         for (FilesSet set : newFilesSetSnapshot.values()) {
             if (this.filesSetSnapshot.keySet().contains(set.getName())) {
                 // Preserve the current enabled/diabled state of the set.
-                rowModels.add(new FilesSetRow(set, settings.isInterestingFilesSetEnabled(set.getName())));
+                rowModels.add(new FilesSetRow(set, settings.interestingFilesSetIsEnabled(set.getName())));
             } else {
                 // New sets are enabled by default.
                 rowModels.add(new FilesSetRow(set, true));
