@@ -452,6 +452,8 @@ final class IngestTasksScheduler {
         return true;
     }
 
+    // RJCTODO: Is this still necessary? There is code elsewhere to remove and
+    // re-add the task to the tasks in progress list.
     /**
      * A helper method to safely add a file ingest task to the blocking pending
      * tasks queue.
