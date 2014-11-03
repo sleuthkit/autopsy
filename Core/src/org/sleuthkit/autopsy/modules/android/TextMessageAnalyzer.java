@@ -78,28 +78,33 @@ class TextMessageAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "Select address,date,type,subject,body FROM sms;");
+                    "Select address,date,read,type,subject,body FROM sms;");
 
             String address; // may be phone number, or other addresses
 
             String direction; // message received in inbox = 1, message sent = 2
             String subject;//message subject
+            Integer read; // may be unread = 0, read = 1
             String body; //message body
             while (resultSet.next()) {
                 address = resultSet.getString("address");
                 Long date = Long.valueOf(resultSet.getString("date")) / 1000;
-                if (resultSet.getString("type").equals("1")) {
-                    direction = "Incoming";
-                } else {
-                    direction = "Outgoing";
-                }
+                
+                read = resultSet.getInt("read");
                 subject = resultSet.getString("subject");
                 body = resultSet.getString("body");
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, address));
+                if (resultSet.getString("type").equals("1")) {
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, "Incoming"));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, address));
+                } else {
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, "Outgoing"));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, address));
+                }
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
+                
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID(), moduleName, read));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "SMS Message"));

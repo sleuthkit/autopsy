@@ -109,13 +109,13 @@ public class EventsRepository {
         this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
 
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
-            LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
+            //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getEventById));
         eventCountsCache = CacheBuilder.newBuilder().maximumSize(1000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<ZoomParams, Map<EventType, Long>> rn) -> {
-            LOGGER.log(Level.INFO, "evicting counts: {0}", rn.toString());
+            //LOGGER.log(Level.INFO, "evicting counts: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::countEvents));
         aggregateEventsCache = CacheBuilder.newBuilder().maximumSize(1000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<ZoomParams, List<AggregateEvent>> rn) -> {
-            LOGGER.log(Level.INFO, "evicting aggregated events: {0}", rn.toString());
+            //LOGGER.log(Level.INFO, "evicting aggregated events: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getAggregatedEvents));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
