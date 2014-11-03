@@ -42,10 +42,11 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE),
             (artf, attrMap) -> {
                 final BlackboardAttribute dir = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION);
+                final BlackboardAttribute readStatus = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS);
                 final BlackboardAttribute name = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
                 final BlackboardAttribute phoneNumber = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER);
                 final BlackboardAttribute subject = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT);
-                List<String> asList = Arrays.asList(stringValueOf(dir), name != null || phoneNumber != null ? toFrom(dir) : "", stringValueOf(name != null ? name : phoneNumber), (subject == null ? "" : stringValueOf(subject)));
+                List<String> asList = Arrays.asList(stringValueOf(dir), stringValueOf(readStatus), name != null || phoneNumber != null ? toFrom(dir) : "", stringValueOf(name != null ? name : phoneNumber), (subject == null ? "" : stringValueOf(subject)));
                 return StringUtils.join(asList, " ");
             },
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT)),
@@ -141,14 +142,14 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                      new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID));
 
     static public String stringValueOf(BlackboardAttribute attr) {
-        return attr != null ? attr.getValueString() : "";
+        return attr != null ? attr.getDisplayString() : "";
     }
 
     public static String toFrom(BlackboardAttribute dir) {
         if (dir == null) {
             return "";
         } else {
-            switch (dir.getValueString()) {
+            switch (dir.getDisplayString()) {
                 case "Incoming":
                     return "from";
                 case "Outgoing":

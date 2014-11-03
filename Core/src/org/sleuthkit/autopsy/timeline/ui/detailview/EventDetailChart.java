@@ -62,7 +62,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
 import javax.annotation.concurrent.GuardedBy;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -108,13 +108,12 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
     /** how much detail of the description to show in the ui */
     private final SimpleObjectProperty<DescriptionVisibility> descrVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
 
-
     /** a user position-able vertical line to help the compare events */
     private Line guideLine;
 
     /** * the user can drag out a time range to zoom into and this
-     * {@link IntervalSelector} is the visual representation of it while
-     * the user is dragging */
+     * {@link IntervalSelector} is the visual representation of it while the
+     * user is dragging */
     private IntervalSelector<? extends DateTime> intervalSelector;
 
     /** listener that triggers layout pass */
@@ -220,34 +219,29 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
             }
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
 
-                chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new AbstractAction("Place Marker") {
+                chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action("Place Marker") {
                     {
                         setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true)));
+                        setEventHandler((ActionEvent t) -> {
+                            if (guideLine == null) {
+                                guideLine = new GuideLine(0, 0, 0, getHeight(), dateAxis);
+                                guideLine.relocate(clickEvent.getX(), 0);
+                                guideLine.endYProperty().bind(heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
+
+                                getChartChildren().add(guideLine);
+
+                                guideLine.setOnMouseClicked((MouseEvent event) -> {
+                                    if (event.getButton() == MouseButton.SECONDARY) {
+                                        clearGuideLine();
+                                        event.consume();
+                                    }
+                                });
+                            } else {
+                                guideLine.relocate(clickEvent.getX(), 0);
+                            }
+                        });
                     }
 
-                    @Override
-                    public void handle(ActionEvent ae) {
-//                    
-                        if (guideLine == null) {
-                            guideLine = new GuideLine(0, 0, 0, getHeight(), dateAxis);
-                            guideLine.relocate(clickEvent.getX(), 0);
-                            guideLine.endYProperty().bind(heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
-
-                            getChartChildren().add(guideLine);
-
-                            guideLine.setOnMouseClicked((MouseEvent event) -> {
-                                if (event.getButton() == MouseButton.SECONDARY) {
-                                    clearGuideLine();
-                                    event.consume();
-                                }
-                            });
-
-//                           
-                        } else {
-
-                            guideLine.relocate(clickEvent.getX(), 0);
-                        }
-                    }
                 }, new ActionGroup("Zoom History", new Back(controller),
                         new Forward(controller))));
                 chartContextMenu.setAutoHide(true);
@@ -419,15 +413,15 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
      *
      * we start with a list of nodes (each representing an event) - sort the
      * list of nodes by span start time of the underlying event - initialize
-     * empty map (maxXatY) from y-position to max used x-value - for each
-     * node: -- autosize the node (based on text label) -- get the event's start
-     * and end positions from the dateaxis -- size the capsule representing
-     * event duration -- starting from the top of the chart: --- (1)check if
-     * maxXatY is to the left of the start position: -------if maxXatY less than
-     * start position , good, put the current node here, mark end
-     * position as maxXatY, go to next node -------if maxXatY greater than start
-     * position, increment y position, do -------------check(1) again until
-     * maxXatY less than start position
+     * empty map (maxXatY) from y-position to max used x-value - for each node:
+     * -- autosize the node (based on text label) -- get the event's start and
+     * end positions from the dateaxis -- size the capsule representing event
+     * duration -- starting from the top of the chart: --- (1)check if maxXatY
+     * is to the left of the start position: -------if maxXatY less than start
+     * position , good, put the current node here, mark end position as maxXatY,
+     * go to next node -------if maxXatY greater than start position, increment
+     * y position, do -------------check(1) again until maxXatY less than start
+     * position
      */
     @Override
     protected synchronized void layoutPlotChildren() {
@@ -649,8 +643,6 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         return chartContextMenu;
     }
 
- 
-
     private static class StartTimeComparator implements Comparator<Node> {
 
         @Override
@@ -692,8 +684,7 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
     }
 
-
-     synchronized void setRequiresLayout(boolean b) {
+    synchronized void setRequiresLayout(boolean b) {
         requiresLayout = true;
     }
 
