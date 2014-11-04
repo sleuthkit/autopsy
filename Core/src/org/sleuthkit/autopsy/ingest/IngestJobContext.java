@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -29,7 +28,6 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJobContext {
 
-    private static final Logger logger = Logger.getLogger(IngestJobContext.class.getName());
     private final IngestJob ingestJob;
 
     IngestJobContext(IngestJob ingestJob) {
@@ -101,25 +99,25 @@ public final class IngestJobContext {
     }
 
     /**
-     * Adds one or more files to the files to be passed through the file ingest
-     * pipeline of the ingest job associated with this context.
+     * Adds one or more files, i.e., extracted or carved files, to the ingest
+     * job associated with this context.
      *
-     * @param files The files to be processed by the file ingest pipeline.
+     * @param files The files to be added.
      * @deprecated use addFilesToJob() instead
      */
     @Deprecated
     public void scheduleFiles(List<AbstractFile> files) {
         this.addFilesToJob(files);
     }
-    
+
     /**
-     * Adds one or more files to the files to be passed through the file ingest
-     * pipeline of the ingest job associated with this context.
+     * Adds one or more files, i.e., extracted or carved files, to the ingest
+     * job associated with this context.
      *
-     * @param files The files to be processed by the file ingest pipeline.
+     * @param files The files to be added.
      */
     public void addFilesToJob(List<AbstractFile> files) {
         this.ingestJob.addFiles(files);
     }
-    
+
 }

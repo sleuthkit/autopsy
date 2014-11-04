@@ -44,9 +44,8 @@ final class IngestPipelinesConfiguration {
     private static final String PIPELINE_TYPE_ATTR = "type"; //NON-NLS
     private static final String STAGE_ONE_DATA_SOURCE_INGEST_PIPELINE_ELEM = "ImageAnalysisStageOne"; //NON-NLS
     private static final String STAGE_TWO_DATA_SOURCE_INGEST_PIPELINE_ELEM = "ImageAnalysisStageTwo"; //NON-NLS
-    private static final String FILE_INGEST_PIPELINE_TYPE = "FileAnalysis"; //NON-NLS
+    private static final String FILE_INGEST_PIPELINE_ELEM = "FileAnalysis"; //NON-NLS
     private static final String INGEST_MODULE_ELEM = "MODULE"; //NON-NLS
-    private static final String XML_MODULE_CLASS_NAME_ATTR = "location"; //NON-NLS
 
     private static IngestPipelinesConfiguration instance;
 
@@ -54,10 +53,6 @@ final class IngestPipelinesConfiguration {
     private final List<String> fileIngestPipelineConfig = new ArrayList<>();
     private final List<String> stageTwoDataSourceIngestPipelineConfig = new ArrayList<>();
 
-    // RJCTODO: Bring this code back into use, use it in IngestJob to sort things
-    // into the now three pipelines. Other NBMs built on top of Autopsy that 
-    // have custom pipeline config files can do a PlatformUtil.extractResourceToUserConfigDir()
-    // before this is called.
     /**
      * Gets the ingest pipelines configuration singleton.
      *
@@ -140,7 +135,6 @@ final class IngestPipelinesConfiguration {
 
             // Parse the pipeline elements to populate the pipeline 
             // configuration lists.
-            // RJCTODO: SHould check that each element is unique. Or could try the XSD bit.
             List<String> pipelineConfig = null;
             for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
                 Element pipelineElement = (Element) pipelineElements.item(pipelineNum);
@@ -150,7 +144,7 @@ final class IngestPipelinesConfiguration {
                         case STAGE_ONE_DATA_SOURCE_INGEST_PIPELINE_ELEM:
                             pipelineConfig = this.stageOneDataSourceIngestPipelineConfig;
                             break;
-                        case FILE_INGEST_PIPELINE_TYPE:
+                        case FILE_INGEST_PIPELINE_ELEM:
                             pipelineConfig = this.fileIngestPipelineConfig;
                             break;
                         case STAGE_TWO_DATA_SOURCE_INGEST_PIPELINE_ELEM:

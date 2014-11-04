@@ -42,23 +42,35 @@ import org.sleuthkit.datamodel.Content;
  */
 final class IngestJob {
 
-    private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
-    private static final IngestTasksScheduler ingestScheduler = IngestTasksScheduler.getInstance();
-
-    // These static fields are used for the creation and management of ingest 
-    // jobs in progress.
-    private static volatile boolean jobCreationIsEnabled;
-    private static final AtomicLong nextIngestJobId = new AtomicLong(0L);
-    private static final ConcurrentHashMap<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
-
-    // An ingest job may have multiple stages.
+    /**
+     * An ingest job may have multiple stages.
+     */
     private enum Stages {
 
-        FIRST, // High priority data source ingest modules plus file ingest modules
-        SECOND // Low priority data source ingest modules
+        /**
+         * High priority data source ingest modules and file ingest modules.
+         */
+        FIRST,
+        /**
+         * Lower priority, usually long-running, data source ingest modules.
+         */
+        SECOND
     };
 
-    // These fields define the ingest job and the work it entails.
+    private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
+    private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
+
+    /**
+     * These static fields are used for the creation and management of ingest
+     * jobs in progress.
+     */
+    private static volatile boolean jobCreationIsEnabled;
+    private static final AtomicLong nextJobId = new AtomicLong(0L);
+    private static final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
+
+    /**
+     * These fields define the ingest job and the work it entails.
+     */
     private final long id;
     private final Content dataSource;
     private final boolean processUnallocatedSpace;
@@ -68,10 +80,12 @@ final class IngestJob {
     private DataSourceIngestPipeline secondStageDataSourceIngestPipeline;
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
 
-    // These fields are used to update the ingest progress UI components. The
-    // filesInProgress collection contains the names of the files that are in
-    // the file ingest pipelines and the two file counter fields are used to
-    // update the file ingest progress bar.
+    /**
+     * These fields are used to update ingest progress UI components for the
+     * job. The filesInProgress collection contains the names of the files that
+     * are in the file ingest pipelines and the two file counter fields are used
+     * to update the file ingest progress bar.
+     */
     private ProgressHandle dataSourceIngestProgress;
     private final Object dataSourceIngestProgressLock;
     private final List<String> filesInProgress;
@@ -80,12 +94,16 @@ final class IngestJob {
     private ProgressHandle fileIngestProgress;
     private final Object fileIngestProgressLock;
 
-    // These fields support cancellation of either the currently running data
-    // source ingest module or the entire ingest job. 
+    /**
+     * These fields support cancellation of either the currently running data
+     * source ingest module or the entire ingest job.
+     */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private volatile boolean cancelled;
 
-    // This field is used for generating ingest job diagnostic data.
+    /**
+     * This field is used for generating ingest job diagnostic data.
+     */
     private final long startTime;
 
     /**
@@ -98,29 +116,27 @@ final class IngestJob {
     }
 
     /**
-     * Creates an ingest job for a data source.
+     * Starts an ingest job for a data source.
      *
      * @param dataSource The data source to ingest.
      * @param ingestModuleTemplates The ingest module templates to use to create
      * the ingest pipelines for the job.
      * @param processUnallocatedSpace Whether or not the job should include
      * processing of unallocated space.
-     *
      * @return A collection of ingest module start up errors, empty on success.
-     *
-     * @throws InterruptedException
      */
-    static List<IngestModuleError> startJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) throws InterruptedException {
+    static List<IngestModuleError> startJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (IngestJob.jobCreationIsEnabled) {
-            long jobId = nextIngestJobId.incrementAndGet();
+            long jobId = nextJobId.incrementAndGet();
             IngestJob job = new IngestJob(jobId, dataSource, processUnallocatedSpace);
+            IngestJob.jobsById.put(jobId, job);
             errors = job.start(ingestModuleTemplates);
-            if (errors.isEmpty() && (job.hasDataSourceIngestPipeline() || job.hasFileIngestPipeline())) { // RJCTODO: What about 2nd stage only?
-                ingestJobsById.put(jobId, job);
+            if (errors.isEmpty() && job.hasIngestPipeline()) {
                 IngestManager.getInstance().fireIngestJobStarted(jobId);
-                IngestJob.ingestScheduler.scheduleIngestTasks(job);
-                logger.log(Level.INFO, "Ingest job {0} started", jobId);
+                IngestJob.logger.log(Level.INFO, "Ingest job {0} started", jobId);
+            } else {
+                IngestJob.jobsById.remove(jobId);
             }
         }
         return errors;
@@ -132,27 +148,27 @@ final class IngestJob {
      * @return True or false.
      */
     static boolean ingestJobsAreRunning() {
-        return !ingestJobsById.isEmpty();
+        return !jobsById.isEmpty();
     }
 
     /**
-     * RJCTODO
+     * Gets snapshots of the state of all running ingest jobs.
      *
-     * @return
+     * @return A list of ingest job state snapshots.
      */
     static List<IngestJobSnapshot> getJobSnapshots() {
         List<IngestJobSnapshot> snapShots = new ArrayList<>();
-        for (IngestJob job : IngestJob.ingestJobsById.values()) {
+        for (IngestJob job : IngestJob.jobsById.values()) {
             snapShots.add(job.getIngestJobSnapshot());
         }
         return snapShots;
     }
 
     /**
-     * RJCTODO
+     * Cancels all running ingest jobs.
      */
     static void cancelAllJobs() {
-        for (IngestJob job : ingestJobsById.values()) {
+        for (IngestJob job : jobsById.values()) {
             job.cancel();
         }
     }
@@ -165,7 +181,7 @@ final class IngestJob {
      * @param processUnallocatedSpace Whether or not unallocated space should be
      * processed during the ingest job.
      */
-    IngestJob(long id, Content dataSource, boolean processUnallocatedSpace) {
+    private IngestJob(long id, Content dataSource, boolean processUnallocatedSpace) {
         this.id = id;
         this.dataSource = dataSource;
         this.processUnallocatedSpace = processUnallocatedSpace;
@@ -178,9 +194,9 @@ final class IngestJob {
     }
 
     /**
-     * Gets the identifier assigned to the ingest job.
+     * Gets the identifier assigned to this job.
      *
-     * @return The ingest job identifier.
+     * @return The job identifier.
      */
     long getId() {
         return this.id;
@@ -206,51 +222,12 @@ final class IngestJob {
     }
 
     /**
-     * Starts up the ingest pipelines and ingest progress bars.
-     *
-     * @return A collection of ingest module startup errors, empty on success.
-     * @throws InterruptedException
-     */
-    List<IngestModuleError> start(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
-        this.createIngestPipelines(ingestModuleTemplates);
-        List<IngestModuleError> errors = startUpIngestPipelines();
-        if (errors.isEmpty()) {
-            if (!this.dataSourceIngestPipeline.isEmpty()) {
-                this.startDataSourceIngestProgressBar();
-            }
-            if (!this.fileIngestPipelines.peek().isEmpty()) {
-                this.startFileIngestProgressBar();
-            }
-        }
-        return errors;
-    }
-
-    /**
-     * Checks to see if this job has a data source ingest pipeline.
-     *
-     * @return True or false.
-     */
-    boolean hasDataSourceIngestPipeline() {
-        return (this.dataSourceIngestPipeline.isEmpty() == false);
-    }
-
-    /**
-     * Checks to see if the job has a file ingest pipeline.
-     *
-     * @return True or false.
-     */
-    boolean hasFileIngestPipeline() {
-        return (this.fileIngestPipelines.peek().isEmpty() == false);
-    }
-
-    /**
-     * Passes the data source for this job through the data source ingest
+     * Passes the data source for this job through a data source ingest
      * pipeline.
      *
      * @param task A data source ingest task wrapping the data source.
-     * @throws InterruptedException
      */
-    void process(DataSourceIngestTask task) throws InterruptedException {
+    void process(DataSourceIngestTask task) {
         try {
             if (!this.isCancelled() && !this.dataSourceIngestPipeline.isEmpty()) {
                 List<IngestModuleError> errors = new ArrayList<>();
@@ -268,9 +245,12 @@ final class IngestJob {
                 }
             }
         } finally {
-            // No matter what happens, let the ingest scheduler know that this
-            // task is completed.
-            IngestJob.ingestScheduler.notifyTaskCompleted(task);
+            // No matter what happens, let the task scheduler know that this
+            // task is completed and check for job completion.
+            IngestJob.taskScheduler.notifyTaskCompleted(task);
+            if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
+                this.handleTasksCompleted();
+            }
         }
     }
 
@@ -284,11 +264,15 @@ final class IngestJob {
     void process(FileIngestTask task) throws InterruptedException {
         try {
             if (!this.isCancelled()) {
-                // Get a file ingest pipeline not currently in use by another
-                // file ingest thread.
+                /**
+                 * Get a file ingest pipeline not currently in use by another
+                 * file ingest thread.
+                 */
                 FileIngestPipeline pipeline = this.fileIngestPipelines.take();
                 if (!pipeline.isEmpty()) {
-                    // Get the file to process.
+                    /**
+                     * Get the file to process.
+                     */
                     AbstractFile file = task.getFile();
 
                     // Update the file ingest progress bar.
@@ -328,46 +312,28 @@ final class IngestJob {
                 this.fileIngestPipelines.put(pipeline);
             }
         } finally {
-            // No matter what happens, let the ingest scheduler know that this
-            // task is completed.
-            IngestJob.ingestScheduler.notifyTaskCompleted(task);
-        }
-    }
-
-    /**
-     *
-     * @param file
-     */
-    void addFiles(List<AbstractFile> files) {
-        // RJCTODO: Add handling of lack of support for file ingest in second stage
-        for (AbstractFile file : files) {
-            try {
-                // RJCTODO: Deal with possible IllegalStateException; maybe don't need logging here
-                IngestJob.ingestScheduler.scheduleFileIngestTask(this, file);
-            } catch (InterruptedException ex) {
-                // Handle the unexpected interrupt here rather than make ingest 
-                // module writers responsible for writing this exception handler. 
-                // The interrupt flag of the thread is reset for detection by 
-                // the thread task code.  
-                Thread.currentThread().interrupt();
-                IngestJob.logger.log(Level.SEVERE, "File task scheduling unexpectedly interrupted", ex); //NON-NLS
+            // No matter what happens, let the task scheduler know that this
+            // task is completed and check for job completion.
+            IngestJob.taskScheduler.notifyTaskCompleted(task);
+            if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
+                this.handleTasksCompleted();
             }
         }
     }
 
     /**
-     * Allows the ingest tasks scheduler to notify this ingest job whenever all
-     * the scheduled tasks for this ingest job have been completed.
+     * Adds more files to an ingest job, i.e., derived or carved files. Not
+     * currently supported for the second stage of the job.
+     *
+     * @param files A list of files to add.
      */
-    void notifyTasksCompleted() {
-        switch (this.stage) {
-            case FIRST:
-                this.finishFirstStage();
-                this.startSecondStage();
-                break;
-            case SECOND:
-                this.finish();
-                break;
+    void addFiles(List<AbstractFile> files) {
+        if (IngestJob.Stages.FIRST == this.stage) {
+            for (AbstractFile file : files) {
+                IngestJob.taskScheduler.scheduleFileIngestTask(this, file);
+            }
+        } else {
+            IngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }
     }
 
@@ -432,7 +398,6 @@ final class IngestJob {
         }
     }
 
-    // RJCTODO: Is this right?
     /**
      * Updates the data source ingest progress bar display name.
      *
@@ -527,8 +492,10 @@ final class IngestJob {
 
         this.cancelled = true;
 
-        // Tell the ingest scheduler to cancel all pending tasks.
-        IngestJob.ingestScheduler.cancelPendingTasksForIngestJob(this);
+        /**
+         * Tell the task scheduler to cancel all pending tasks.
+         */
+        IngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
     }
 
     /**
@@ -542,24 +509,12 @@ final class IngestJob {
     }
 
     /**
-     * Get some basic performance statistics on this job.
-     *
-     * @return An ingest job statistics object.
-     */
-    IngestJobSnapshot getIngestJobSnapshot() {
-        return new IngestJobSnapshot();
-    }
-
-    /**
      * Creates the file and data source ingest pipelines.
      *
      * @param ingestModuleTemplates Ingest module templates to use to populate
      * the pipelines.
-     * @throws InterruptedException
      */
-    private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) throws InterruptedException {
-        // RJCTODO: Improve variable names!
-
+    private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) {
         // Make mappings of ingest module factory class names to templates.
         Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new HashMap<>();
         Map<String, IngestModuleTemplate> fileModuleTemplates = new HashMap<>();
@@ -595,9 +550,18 @@ final class IngestJob {
         this.dataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
 
         // Construct the file ingest pipelines.
-        int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
-        for (int i = 0; i < numberOfFileIngestThreads; ++i) {
-            this.fileIngestPipelines.put(new FileIngestPipeline(this, fileIngestModuleTemplates));
+        try {
+            int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
+            for (int i = 0; i < numberOfFileIngestThreads; ++i) {
+                this.fileIngestPipelines.put(new FileIngestPipeline(this, fileIngestModuleTemplates));
+            }
+        } catch (InterruptedException ex) {
+            /**
+             * The current thread was interrupted while blocked on a full queue.
+             * Blocking should never happen here, but reset the interrupted flag
+             * rather than just swallowing the exception.
+             */
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -624,13 +588,120 @@ final class IngestJob {
     }
 
     /**
+     * Starts up the ingest pipelines and ingest progress bars.
+     *
+     * @return A collection of ingest module startup errors, empty on success.
+     */
+    private List<IngestModuleError> start(List<IngestModuleTemplate> ingestModuleTemplates) {
+        this.createIngestPipelines(ingestModuleTemplates);
+        List<IngestModuleError> errors = startUpIngestPipelines();
+        if (errors.isEmpty()) {
+            if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+                // There is at least one first stage pipeline.
+                this.startFirstStage();
+            } else if (this.hasSecondStageDataSourceIngestPipeline()) {
+                // There is no first stage pipeline, but there is a second stage
+                // ingest pipeline.
+                this.startSecondStage();
+            }
+        }
+        return errors;
+    }
+
+    /**
+     * Starts the first stage of the job.
+     */
+    private void startFirstStage() {
+        this.stage = IngestJob.Stages.FIRST;
+
+        /**
+         * Start one or both of the first stage progress bars.
+         */
+        if (this.hasFirstStageDataSourceIngestPipeline()) {
+            this.startDataSourceIngestProgressBar();
+        }
+        if (this.hasFileIngestPipeline()) {
+            this.startFileIngestProgressBar();
+        }
+
+        /**
+         * Schedule the first stage tasks.
+         */
+        if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
+            IngestJob.taskScheduler.scheduleIngestTasks(this);
+        } else if (this.hasFirstStageDataSourceIngestPipeline()) {
+            IngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
+        } else {
+            IngestJob.taskScheduler.scheduleFileIngestTasks(this);
+
+            /**
+             * No data source ingest task has been scheduled for this stage, and
+             * it is possible, if unlikely, that no file ingest tasks were
+             * actually scheduled since there are files that get filtered out by
+             * the tasks scheduler. In this special case, an ingest thread will
+             * never get to make the following check for this stage of the job.
+             */
+            if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
+                this.handleTasksCompleted();
+            }
+        }
+    }
+
+    /**
+     * Starts the second stage of the ingest job.
+     */
+    private void startSecondStage() {
+        this.stage = IngestJob.Stages.SECOND;
+        this.startDataSourceIngestProgressBar();
+        this.dataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
+        IngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
+    }
+
+    /**
+     * Checks to see if this job has at least one ingest pipeline.
+     *
+     * @return True or false.
+     */
+    private boolean hasIngestPipeline() {
+        return this.hasFirstStageDataSourceIngestPipeline()
+                || this.hasFileIngestPipeline()
+                || this.hasSecondStageDataSourceIngestPipeline();
+    }
+
+    /**
+     * Checks to see if this job has a first stage data source ingest pipeline.
+     *
+     * @return True or false.
+     */
+    private boolean hasFirstStageDataSourceIngestPipeline() {
+        return (this.firstStageDataSourceIngestPipeline.isEmpty() == false);
+    }
+
+    /**
+     * Checks to see if this job has a second stage data source ingest pipeline.
+     *
+     * @return True or false.
+     */
+    private boolean hasSecondStageDataSourceIngestPipeline() {
+        return (this.secondStageDataSourceIngestPipeline.isEmpty() == false);
+    }
+
+    /**
+     * Checks to see if the job has a file ingest pipeline.
+     *
+     * @return True or false.
+     */
+    private boolean hasFileIngestPipeline() {
+        return (this.fileIngestPipelines.peek().isEmpty() == false);
+    }
+
+    /**
      * Starts up each of the file and data source ingest modules to collect
      * possible errors.
      *
      * @return A collection of ingest module startup errors, empty on success.
-     * @throws InterruptedException
      */
-    private List<IngestModuleError> startUpIngestPipelines() throws InterruptedException {
+    private List<IngestModuleError> startUpIngestPipelines() {
         List<IngestModuleError> errors = new ArrayList<>();
 
         // Start up the first stage data source ingest pipeline.
@@ -725,8 +796,23 @@ final class IngestJob {
     }
 
     /**
-     * Shuts down the file ingest pipelines and current progress bars, if any,
-     * for this job.
+     * Handles when all ingest tasks for this job are completed by finishing the
+     * current stage and possibly starting the next stage.
+     */
+    private void handleTasksCompleted() {
+        switch (this.stage) {
+            case FIRST:
+                this.finishFirstStage();
+                break;
+            case SECOND:
+                this.finish();
+                break;
+        }
+    }
+
+    /**
+     * Shuts down the first stage ingest pipelines and progress bars and starts
+     * the second stage, if appropriate.
      */
     private void finishFirstStage() {
         // Shut down the file ingest pipelines. Note that no shut down is
@@ -758,22 +844,12 @@ final class IngestJob {
                 this.fileIngestProgress = null;
             }
         }
-    }
 
-    /**
-     * RJCTODO
-     */
-    private void startSecondStage() {
-        this.stage = IngestJob.Stages.SECOND;
-        if (!this.cancelled && !this.secondStageDataSourceIngestPipeline.isEmpty()) {
-            this.dataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
-            this.startDataSourceIngestProgressBar();
-            try {
-                IngestJob.ingestScheduler.scheduleDataSourceIngestTask(this);
-            } catch (InterruptedException ex) {
-                // RJCTODO:
-                this.finish();
-            }
+        /**
+         * Start the second stage, if appropriate.
+         */
+        if (!this.cancelled && this.hasSecondStageDataSourceIngestPipeline()) {
+            this.startSecondStage();
         } else {
             this.finish();
         }
@@ -792,7 +868,7 @@ final class IngestJob {
             }
         }
 
-        IngestJob.ingestJobsById.remove(this.id);
+        IngestJob.jobsById.remove(this.id);
         if (!this.isCancelled()) {
             logger.log(Level.INFO, "Ingest job {0} completed", this.id);
             IngestManager.getInstance().fireIngestJobCompleted(this.id);
@@ -822,6 +898,15 @@ final class IngestJob {
     }
 
     /**
+     * Gets a snapshot of this jobs state and performance.
+     *
+     * @return An ingest job statistics object.
+     */
+    private IngestJobSnapshot getIngestJobSnapshot() {
+        return new IngestJobSnapshot();
+    }
+
+    /**
      * Stores basic diagnostic statistics for an ingest job.
      */
     class IngestJobSnapshot {
@@ -847,23 +932,13 @@ final class IngestJob {
                 this.estimatedFilesToProcess = IngestJob.this.estimatedFilesToProcess;
                 this.snapShotTime = new Date().getTime();
             }
-            this.tasksSnapshot = IngestJob.ingestScheduler.getTasksSnapshotForJob(this.jobId);
+            this.tasksSnapshot = IngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         long getJobId() {
             return this.jobId;
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         String getDataSource() {
             return dataSource;
         }
@@ -916,47 +991,22 @@ final class IngestJob {
             return estimatedFilesToProcess;
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         long getRootQueueSize() {
             return this.tasksSnapshot.getRootQueueSize();
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         long getDirQueueSize() {
-            return this.tasksSnapshot.getDirQueueSize();
+            return this.tasksSnapshot.getDirectoryTasksQueueSize();
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         long getFileQueueSize() {
             return this.tasksSnapshot.getFileQueueSize();
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         long getDsQueueSize() {
             return this.tasksSnapshot.getDsQueueSize();
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         long getRunningListSize() {
             return this.tasksSnapshot.getRunningListSize();
         }

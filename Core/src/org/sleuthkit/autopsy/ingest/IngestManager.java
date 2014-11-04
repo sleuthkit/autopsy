@@ -134,7 +134,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestTask() {
         long threadId = nextThreadId.incrementAndGet();
-        dataSourceIngestThreadPool.submit(new ExecuteIngestTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        dataSourceIngestThreadPool.submit(new ExecuteIngestTasksRunnable(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
@@ -144,7 +144,7 @@ public class IngestManager {
      */
     private void startFileIngestTask() {
         long threadId = nextThreadId.incrementAndGet();
-        fileIngestThreadPool.submit(new ExecuteIngestTasksTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
+        fileIngestThreadPool.submit(new ExecuteIngestTasksRunnable(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
@@ -154,7 +154,7 @@ public class IngestManager {
         }
 
         long taskId = nextThreadId.incrementAndGet();
-        Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobsTask(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
+        Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobsCallable(taskId, dataSources, moduleTemplates, processUnallocatedSpace));
         startIngestJobsTasks.put(taskId, task);
     }
 
@@ -200,11 +200,11 @@ public class IngestManager {
         return IngestJob.ingestJobsAreRunning();
     }
 
-    
     /**
      * Called each time a module in a data source pipeline starts
+     *
      * @param task
-     * @param ingestModuleDisplayName 
+     * @param ingestModuleDisplayName
      */
     void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
@@ -212,20 +212,22 @@ public class IngestManager {
 
     /**
      * Called each time a module in a file ingest pipeline starts
+     *
      * @param task
-     * @param ingestModuleDisplayName 
+     * @param ingestModuleDisplayName
      */
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-        
+
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
      * Called each time a data source ingest task completes
-     * @param task 
+     *
+     * @param task
      */
     void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
@@ -233,7 +235,8 @@ public class IngestManager {
 
     /**
      * Called when a file ingest pipeline is complete for a given file
-     * @param task 
+     *
+     * @param task
      */
     void setIngestTaskProgressCompleted(FileIngestTask task) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
@@ -242,19 +245,21 @@ public class IngestManager {
         synchronized (processedFilesSnapshotLock) {
             processedFilesSnapshot.incrementProcessedFilesCount();
         }
-        
+
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
-    
+
     /**
-     * Internal method to update the times associated with each module. 
+     * Internal method to update the times associated with each module.
+     *
      * @param moduleName
-     * @param duration 
+     * @param duration
      */
     private void incrementModuleRunTime(String moduleName, Long duration) {
-        if (moduleName.equals("IDLE"))
+        if (moduleName.equals("IDLE")) {
             return;
-        
+        }
+
         synchronized (ingestModuleRunTimes) {
             Long prevTimeL = ingestModuleRunTimes.get(moduleName);
             long prevTime = 0;
@@ -262,12 +267,13 @@ public class IngestManager {
                 prevTime = prevTimeL;
             }
             prevTime += duration;
-            ingestModuleRunTimes.put(moduleName, prevTime);    
+            ingestModuleRunTimes.put(moduleName, prevTime);
         }
     }
-    
+
     /**
      * Return the list of run times for each module
+     *
      * @return Map of module name to run time (in milliseconds)
      */
     Map<String, Long> getModuleRunTimes() {
@@ -279,12 +285,12 @@ public class IngestManager {
 
     /**
      * Get the stats on current state of each thread
-     * @return 
+     *
+     * @return
      */
     List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
         return new ArrayList<>(ingestThreadActivitySnapshots.values());
     }
-
 
     public void cancelAllIngestJobs() {
         // Stop creating new ingest jobs.
@@ -418,7 +424,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestJobEventPublisher, IngestJobEvent.STARTED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventRunnable(ingestJobEventPublisher, IngestJobEvent.STARTED, ingestJobId, null));
     }
 
     /**
@@ -427,7 +433,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestJobEventPublisher, IngestJobEvent.COMPLETED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventRunnable(ingestJobEventPublisher, IngestJobEvent.COMPLETED, ingestJobId, null));
     }
 
     /**
@@ -436,7 +442,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestJobEventPublisher, IngestJobEvent.CANCELLED, ingestJobId, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventRunnable(ingestJobEventPublisher, IngestJobEvent.CANCELLED, ingestJobId, null));
     }
 
     /**
@@ -445,7 +451,7 @@ public class IngestManager {
      * @param file The file that is completed.
      */
     void fireFileIngestDone(AbstractFile file) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, file.getId(), file));
+        fireIngestEventsThreadPool.submit(new FireIngestEventRunnable(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, file.getId(), file));
     }
 
     /**
@@ -454,7 +460,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestModuleEventPublisher, IngestModuleEvent.DATA_ADDED, moduleDataEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventRunnable(ingestModuleEventPublisher, IngestModuleEvent.DATA_ADDED, moduleDataEvent, null));
     }
 
     /**
@@ -465,7 +471,7 @@ public class IngestManager {
      * content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        fireIngestEventsThreadPool.submit(new FireIngestEventTask(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
+        fireIngestEventsThreadPool.submit(new FireIngestEventRunnable(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
     }
 
     /**
@@ -509,7 +515,7 @@ public class IngestManager {
     /**
      * Creates ingest jobs.
      */
-    private class StartIngestJobsTask implements Callable<Void> {
+    private final class StartIngestJobsCallable implements Callable<Void> {
 
         private final long threadId;
         private final List<Content> dataSources;
@@ -517,7 +523,7 @@ public class IngestManager {
         private final boolean processUnallocatedSpace;
         private ProgressHandle progress;
 
-        StartIngestJobsTask(long threadId, List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
+        StartIngestJobsCallable(long threadId, List<Content> dataSources, List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
             this.threadId = threadId;
             this.dataSources = dataSources;
             this.moduleTemplates = moduleTemplates;
@@ -587,9 +593,6 @@ public class IngestManager {
                         break;
                     }
                 }
-            } catch (InterruptedException ex) {
-                // Reset interrupted status.
-                Thread.currentThread().interrupt();
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Failed to create ingest job", ex); //NON-NLS
             } finally {
@@ -603,12 +606,12 @@ public class IngestManager {
     /**
      * A consumer for an ingest task queue.
      */
-    private class ExecuteIngestTasksTask implements Runnable {
+    private final class ExecuteIngestTasksRunnable implements Runnable {
 
         private final long threadId;
         private final IngestTaskQueue tasks;
 
-        ExecuteIngestTasksTask(long threadId, IngestTaskQueue tasks) {
+        ExecuteIngestTasksRunnable(long threadId, IngestTaskQueue tasks) {
             this.threadId = threadId;
             this.tasks = tasks;
         }
@@ -632,7 +635,7 @@ public class IngestManager {
     /**
      * Fires ingest events to ingest manager property change listeners.
      */
-    private static class FireIngestEventTask implements Runnable {
+    private static final class FireIngestEventRunnable implements Runnable {
 
         private final PropertyChangeSupport publisher;
         private final IngestJobEvent jobEvent;
@@ -640,7 +643,7 @@ public class IngestManager {
         private final Object oldValue;
         private final Object newValue;
 
-        FireIngestEventTask(PropertyChangeSupport publisher, IngestJobEvent event, Object oldValue, Object newValue) {
+        FireIngestEventRunnable(PropertyChangeSupport publisher, IngestJobEvent event, Object oldValue, Object newValue) {
             this.publisher = publisher;
             this.jobEvent = event;
             this.moduleEvent = null;
@@ -648,7 +651,7 @@ public class IngestManager {
             this.newValue = newValue;
         }
 
-        FireIngestEventTask(PropertyChangeSupport publisher, IngestModuleEvent event, Object oldValue, Object newValue) {
+        FireIngestEventRunnable(PropertyChangeSupport publisher, IngestModuleEvent event, Object oldValue, Object newValue) {
             this.publisher = publisher;
             this.jobEvent = null;
             this.moduleEvent = event;
@@ -695,9 +698,9 @@ public class IngestManager {
             startTime = new Date();
             this.activity = activity;
             this.dataSourceName = dataSource.getName();
-            this.fileName = "";    
+            this.fileName = "";
         }
-        
+
         // file ingest thread
         IngestThreadActivitySnapshot(long threadId, long jobId, String activity, Content dataSource, AbstractFile file) {
             this.threadId = threadId;
@@ -711,7 +714,7 @@ public class IngestManager {
         long getJobId() {
             return jobId;
         }
-        
+
         long getThreadId() {
             return threadId;
         }

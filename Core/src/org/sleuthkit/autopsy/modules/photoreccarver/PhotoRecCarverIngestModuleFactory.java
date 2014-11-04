@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * A factory for creating instances of file ingest modules that carve unallocated space

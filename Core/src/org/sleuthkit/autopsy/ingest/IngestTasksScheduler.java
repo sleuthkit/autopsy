@@ -47,39 +47,55 @@ final class IngestTasksScheduler {
     private static final int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
     private static IngestTasksScheduler instance;
 
-    // Scheduling of data source ingest tasks is accomplished by putting them
-    // in a FIFO queue to be consumed by the ingest threads. The pending data 
-    // tasks queue is therefore wrapped in a "dispenser" that implements the 
-    // IngestTaskQueue interface and is exposed via a getter method.
+    /**
+     * Scheduling of data source ingest tasks is accomplished by putting them in
+     * a FIFO queue to be consumed by the ingest threads, so the queue is
+     * wrapped in a "dispenser" that implements the IngestTaskQueue interface
+     * and is exposed via a getter method.
+     */
     private final LinkedBlockingQueue<DataSourceIngestTask> pendingDataSourceTasks;
     private final DataSourceIngestTaskQueue dataSourceTasksDispenser;
 
-    // Scheduling of file ingest tasks is accomplished by "shuffling" them 
-    // through a sequence of internal queues that allows for the interleaving of 
-    // tasks from different ingest jobs based on priority. These scheduling
-    // queues are: 
-    //    1. root directory tasks (priority queue)
-    //    2. directory tasks (FIFO queue)
-    //    3. pending file tasks (LIFO queue)
-    // Tasks in the pending file tasks queue are ready to be consumed by the 
-    // ingest threads. The pending file tasks queue is therefore wrapped in a 
-    // "dispenser" that implements the IngestTaskQueue interface and is exposed 
-    // via a getter method.
+    /**
+     * Scheduling of file ingest tasks is accomplished by "shuffling" them
+     * through a sequence of internal queues that allows for the interleaving of
+     * tasks from different ingest jobs based on priority. These scheduling
+     * queues are:
+     *
+     * 1. Root directory tasks (priority queue)
+     *
+     * 2. Directory tasks (FIFO queue)
+     *
+     * 3. Pending file tasks (LIFO queue).
+     *
+     * The pending file tasks queue is LIFO to handle large numbers of files
+     * extracted from archive files. At least one image has been processed that
+     * had a folder full of archive files. The queue grew to have thousands of
+     * entries, as each successive archive file was expanded, so now extracted
+     * files get added to the front of the queue so that in such a scenario they
+     * would be processed before the expansion of the next archive file.
+     *
+     * Tasks in the pending file tasks queue are ready to be consumed by the
+     * ingest threads, so the queue is wrapped in a "dispenser" that implements
+     * the IngestTaskQueue interface and is exposed via a getter method.
+     */
     private final TreeSet<FileIngestTask> rootDirectoryTasks;
     private final List<FileIngestTask> directoryTasks;
     private final BlockingDeque<FileIngestTask> pendingFileTasks;
     private final FileIngestTaskQueue fileTasksDispenser;
 
-    // The ingest scheduler is responsible for notifying an ingest jobs whenever
-    // all of the ingest tasks currently associated with the job are complete. 
-    // To make this possible, the ingest tasks scheduler needs to keep track not 
-    // only of the tasks in its queues, but also of the tasks that have been 
-    // handed out for processing by code running on the ingest manager's ingest 
-    // threads. Therefore all ingest tasks are added to this list and are not 
-    // removed when an ingest thread takes an ingest task. Instead, the ingest 
-    // thread calls back into the scheduler when the task is completed, at 
-    // which time the task will be removed from this list.
-    private final List<IngestTask> tasksInProgressAndPending;
+    /**
+     * The ingest tasks scheduler allows ingest jobs to query it to see if there
+     * are any tasks in progress for the job. To make this possible, the ingest
+     * tasks scheduler needs to keep track not only of the tasks in its queues,
+     * but also of the tasks that have been handed out for processing by the
+     * ingest threads. Therefore all ingest tasks are added to this list when
+     * they are created and are not removed when an ingest thread takes an
+     * ingest task. Instead, the ingest thread calls back into the scheduler
+     * when the task is completed, at which time the task will be removed from
+     * this list.
+     */
+    private final List<IngestTask> tasksInProgress;
 
     /**
      * Gets the ingest tasks scheduler singleton.
@@ -101,7 +117,7 @@ final class IngestTasksScheduler {
         this.directoryTasks = new ArrayList<>();
         this.pendingFileTasks = new LinkedBlockingDeque<>();
         this.fileTasksDispenser = new FileIngestTaskQueue();
-        this.tasksInProgressAndPending = new ArrayList<>();
+        this.tasksInProgress = new ArrayList<>();
     }
 
     /**
@@ -132,42 +148,33 @@ final class IngestTasksScheduler {
      * @throws InterruptedException if the calling thread is blocked due to a
      * full tasks queue and is interrupted.
      */
-    synchronized void scheduleIngestTasks(IngestJob job) throws InterruptedException {
-        // The initial ingest scheduling for a job an an atomic operation. 
-        // Otherwise, the data source task might be completed before the file 
-        // tasks are created, resulting in a potential false positive when this
-        // task scheduler checks whether or not all the tasks for the job are
-        // completed.
-        if (job.hasDataSourceIngestPipeline()) {
-            scheduleDataSourceIngestTask(job);
-        }
-        if (job.hasFileIngestPipeline()) {
-            scheduleFileIngestTasks(job);
-        }
+    synchronized void scheduleIngestTasks(IngestJob job) {
+        // Scheduling of both a data source ingest task and file ingest tasks 
+        // for a job must be an atomic operation. Otherwise, the data source 
+        // task might be completed before the file tasks are scheduled, 
+        // resulting in a potential false positive when another thread checks 
+        // whether or not all the tasks for the job are completed.
+        this.scheduleDataSourceIngestTask(job);
+        this.scheduleFileIngestTasks(job);
     }
 
     /**
      * Schedules a data source ingest task for an ingest job.
      *
      * @param job The job for which the tasks are to be scheduled.
-     * @throws InterruptedException if the calling thread is blocked due to a
-     * full tasks queue and is interrupted.
      */
-    synchronized void scheduleDataSourceIngestTask(IngestJob job) throws InterruptedException {
-        // Create a data source ingest task for the data source associated with
-        // the ingest job and add the task to the pending data source tasks
-        // queue. Data source tasks are scheduled on a first come, first served
-        // basis.
+    synchronized void scheduleDataSourceIngestTask(IngestJob job) {
         DataSourceIngestTask task = new DataSourceIngestTask(job);
-        this.tasksInProgressAndPending.add(task);
+        this.tasksInProgress.add(task);
         try {
-            // This call should not block because the queue is (theoretically) 
-            // unbounded.
             this.pendingDataSourceTasks.put(task);
         } catch (InterruptedException ex) {
-            this.tasksInProgressAndPending.remove(task);
-            IngestTasksScheduler.logger.log(Level.SEVERE, "Interruption of unexpected block on pending data source tasks queue", ex); //NON-NLS
-            throw ex;
+            /**
+             * The current thread was interrupted while blocked on a full queue.
+             * Discard the task and reset the interrupted flag.
+             */
+            this.tasksInProgress.remove(task);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -175,18 +182,15 @@ final class IngestTasksScheduler {
      * Schedules file ingest tasks for an ingest job.
      *
      * @param job The job for which the tasks are to be scheduled.
-     * @throws InterruptedException if the calling thread is blocked due to a
-     * full tasks queue and is interrupted.
      */
-    synchronized void scheduleFileIngestTasks(IngestJob job) throws InterruptedException {
+    synchronized void scheduleFileIngestTasks(IngestJob job) {
         // Get the top level files for the data source associated with this job
-        // and add them to the root directories priority queue. The file tasks
-        // may be interleaved with file tasks from other jobs, based on priority. 
+        // and add them to the root directories priority queue.  
         List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
         for (AbstractFile firstLevelFile : topLevelFiles) {
             FileIngestTask task = new FileIngestTask(job, firstLevelFile);
             if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
-                this.tasksInProgressAndPending.add(task);
+                this.tasksInProgress.add(task);
                 this.rootDirectoryTasks.add(task);
             }
         }
@@ -197,16 +201,12 @@ final class IngestTasksScheduler {
      * Schedules a file ingest task for an ingest job.
      *
      * @param job The job for which the tasks are to be scheduled.
-     * @param file The file associated with the task.
-     * @throws InterruptedException if the calling thread is blocked due to a
-     * full tasks queue and is interrupted.
+     * @param file The file to be associated with the task.
      */
-    void scheduleFileIngestTask(IngestJob job, AbstractFile file) throws InterruptedException, IllegalStateException {
+    synchronized void scheduleFileIngestTask(IngestJob job, AbstractFile file) {
         FileIngestTask task = new FileIngestTask(job, file);
         if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
-            // This synchronized method sends the file task directly to the 
-            // pending file tasks queue. This is done to prioritize derived 
-            // and carved files generated by a file ingest task in progress.                 
+            this.tasksInProgress.add(task);
             addToPendingFileTasksQueue(task);
         }
     }
@@ -217,12 +217,24 @@ final class IngestTasksScheduler {
      *
      * @param task The completed task.
      */
-    synchronized void notifyTaskCompleted(IngestTask task) throws InterruptedException {
-        tasksInProgressAndPending.remove(task);
-        IngestJob job = task.getIngestJob();
-        if (this.tasksForJobAreCompleted(job)) {
-            job.notifyTasksCompleted();
+    synchronized void notifyTaskCompleted(IngestTask task) {
+        tasksInProgress.remove(task);
+    }
+
+    /**
+     * Queries the task scheduler to determine whether or not all current ingest
+     * tasks for an ingest job are completed.
+     *
+     * @param job The job for which the query is to be performed.
+     * @return True or false.
+     */
+    synchronized boolean tasksForJobAreCompleted(IngestJob job) {
+        for (IngestTask task : tasksInProgress) {
+            if (task.getIngestJob().getId() == job.getId()) {
+                return false;
+            }
         }
+        return true;
     }
 
     /**
@@ -234,25 +246,17 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to to canceled.
      */
     synchronized void cancelPendingTasksForIngestJob(IngestJob job) {
-        // The scheduling queues are cleared of tasks for the job, and the tasks
-        // that are removed from the scheduling queues are also removed from the
-        // tasks in progress list. However, a tasks in progress check for the 
-        // job may still return true since the tasks that have been taken by the 
-        // ingest threads are still in the tasks in progress list.
         long jobId = job.getId();
         this.removeTasksForJob(this.rootDirectoryTasks, jobId);
         this.removeTasksForJob(this.directoryTasks, jobId);
         this.removeTasksForJob(this.pendingFileTasks, jobId);
         this.removeTasksForJob(this.pendingDataSourceTasks, jobId);
-        if (this.tasksForJobAreCompleted(job)) {
-            job.notifyTasksCompleted();
-        }
     }
 
     /**
-     * A helper that gets the top level files such as file system root
-     * directories, layout files and virtual directories for a data source. Used
-     * to create file tasks to put into the root directories queue.
+     * Gets the top level files such as file system root directories, layout
+     * files and virtual directories for a data source. Used to create file
+     * tasks to put into the root directories queue.
      *
      * @param dataSource The data source.
      * @return A list of top level files.
@@ -290,14 +294,11 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * A helper that "shuffles" the file task queues to ensure that there is at
-     * least one task in the pending file ingest tasks queue, as long as there
-     * are still file ingest tasks to be performed.
-     *
-     * @throws InterruptedException if the calling thread is blocked due to a
-     * full tasks queue and is interrupted.
+     * "Shuffles" the file task queues to ensure that there is at least one task
+     * in the pending file ingest tasks queue, as long as there are still file
+     * ingest tasks to be performed.
      */
-    synchronized private void shuffleFileTaskQueues() throws InterruptedException, IllegalStateException {
+    synchronized private void shuffleFileTaskQueues() {
         // This is synchronized because it is called both by synchronized 
         // methods of this ingest scheduler and an unsynchronized method of its
         // file tasks "dispenser".
@@ -323,16 +324,13 @@ final class IngestTasksScheduler {
             }
 
             // Try to add the most recently added directory from the 
-            // directory tasks queue to the pending file tasks queue. Note
-            // the removal of the task from the tasks in progress list. If
-            // the task is enqueued, it will be put back in the list by
-            // the addToPendingFileTasksQueue() helper.
-            boolean tasksEnqueuedForDirectory = false;
+            // directory tasks queue to the pending file tasks queue. 
             FileIngestTask directoryTask = this.directoryTasks.remove(this.directoryTasks.size() - 1);
-            this.tasksInProgressAndPending.remove(directoryTask);
+            this.tasksInProgress.remove(directoryTask);
             if (shouldEnqueueFileTask(directoryTask)) {
                 addToPendingFileTasksQueue(directoryTask);
-                tasksEnqueuedForDirectory = true;
+            } else {
+                this.tasksInProgress.remove(directoryTask);
             }
 
             // If the directory contains subdirectories or files, try to 
@@ -349,16 +347,15 @@ final class IngestTasksScheduler {
                             // addition of the task to the tasks in progress
                             // list. This is necessary because this is the
                             // first appearance of this task in the queues.
-                            this.tasksInProgressAndPending.add(childTask);
+                            this.tasksInProgress.add(childTask);
                             this.directoryTasks.add(childTask);
-                            tasksEnqueuedForDirectory = true;
                         } else if (shouldEnqueueFileTask(childTask)) {
                             // Found a file, put the task directly into the
                             // pending file tasks queue. The new task will 
                             // be put into the tasks in progress list by the
                             // addToPendingFileTasksQueue() helper.
+                            this.tasksInProgress.add(childTask);
                             addToPendingFileTasksQueue(childTask);
-                            tasksEnqueuedForDirectory = true;
                         }
                     }
                 }
@@ -366,24 +363,13 @@ final class IngestTasksScheduler {
                 String errorMessage = String.format("An error occurred getting the children of %s", directory.getName()); //NON-NLS
                 logger.log(Level.SEVERE, errorMessage, ex);
             }
-
-            // In the case where the directory task is not pushed into the
-            // the pending file tasks queue and has no children, check to 
-            // see if the job is completed - the directory task might have 
-            // been the last task for the job.                
-            if (!tasksEnqueuedForDirectory) {
-                IngestJob job = directoryTask.getIngestJob();
-                if (this.tasksForJobAreCompleted(job)) {
-                    job.notifyTasksCompleted();
-                }
-            }
         }
     }
 
     /**
-     * A helper method that examines the file associated with a file ingest task
-     * to determine whether or not the file should be processed and therefore
-     * the task should be enqueued.
+     * Examines the file associated with a file ingest task to determine whether
+     * or not the file should be processed and therefore whether or not the task
+     * should be enqueued.
      *
      * @param task The task to be scrutinized.
      * @return True or false.
@@ -407,9 +393,6 @@ final class IngestTasksScheduler {
 
         // Skip the task if the file is one of a select group of special, large
         // NTFS or FAT file system files.
-        // the file is in the root directory, has a file name
-        // starting with $, containing : (not default attributes)
-        //with meta address < 32, i.e. some special large NTFS and FAT files
         if (file instanceof org.sleuthkit.datamodel.File) {
             final org.sleuthkit.datamodel.File f = (org.sleuthkit.datamodel.File) file;
 
@@ -452,50 +435,28 @@ final class IngestTasksScheduler {
         return true;
     }
 
-    // RJCTODO: Is this still necessary? There is code elsewhere to remove and
-    // re-add the task to the tasks in progress list.
     /**
-     * A helper method to safely add a file ingest task to the blocking pending
-     * tasks queue.
+     * Adds a file ingest task to the blocking pending tasks queue.
      *
-     * @param task
-     * @throws IllegalStateException
+     * @param task The task to add.
      */
-    synchronized private void addToPendingFileTasksQueue(FileIngestTask task) throws IllegalStateException {
-        tasksInProgressAndPending.add(task);
+    synchronized private void addToPendingFileTasksQueue(FileIngestTask task) {
         try {
-            // The file is added to the front of the pending files queue because 
-            // at least one image has been processed that had a folder full of 
-            // archive files. The queue grew to have thousands of entries, so 
-            // this (might) help with pushing those files through ingest. 
-            this.pendingFileTasks.addFirst(task);
-        } catch (IllegalStateException ex) {
-            tasksInProgressAndPending.remove(task);
-            Logger.getLogger(IngestTasksScheduler.class.getName()).log(Level.SEVERE, "Pending file tasks queue is full", ex); //NON-NLS
-            throw ex;
+            this.pendingFileTasks.putFirst(task);
+        } catch (InterruptedException ex) {
+            /**
+             * The current thread was interrupted while blocked on a full queue.
+             * Discard the task and reset the interrupted flag.
+             */
+            this.tasksInProgress.remove(task);
+            Thread.currentThread().interrupt();
         }
     }
 
     /**
-     * Determines whether or not all current ingest tasks for an ingest job are 
-     * completed.
-     *
-     * @param job The job for which the query is to be performed.
-     * @return True or false.
-     */
-    private boolean tasksForJobAreCompleted(IngestJob job) {
-        for (IngestTask task : tasksInProgressAndPending) {
-            if (task.getIngestJob().getId() == job.getId()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * A helper that removes all of the ingest tasks associated with an ingest
-     * job from a tasks queue. The task is removed from the the tasks in
-     * progress list as well.
+     * Removes all of the ingest tasks associated with an ingest job from a
+     * tasks queue. The task is removed from the the tasks in progress list as
+     * well.
      *
      * @param taskQueue The queue from which to remove the tasks.
      * @param jobId The id of the job for which the tasks are to be removed.
@@ -505,15 +466,14 @@ final class IngestTasksScheduler {
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
             if (task.getIngestJob().getId() == jobId) {
-                this.tasksInProgressAndPending.remove(task);
+                this.tasksInProgress.remove(task);
                 iterator.remove();
             }
         }
     }
 
     /**
-     * A helper that counts the number of ingest tasks in a task queue for a
-     * given job.
+     * Counts the number of ingest tasks in a task queue for a given job.
      *
      * @param queue The queue for which to count tasks.
      * @param jobId The id of the job for which the tasks are to be counted.
@@ -532,10 +492,11 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * RJCTODO
-     * 
-     * @param jobId
-     * @return 
+     * Returns a snapshot of the states of the tasks in progress for an ingest
+     * job.
+     *
+     * @param jobId The identifier assigned to the job.
+     * @return
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
         return new IngestJobTasksSnapshot(jobId);
@@ -684,9 +645,10 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * A snapshot of ingest tasks data for an ingest job.  
+     * A snapshot of ingest tasks data for an ingest job.
      */
     class IngestJobTasksSnapshot {
+
         private final long jobId;
         private final long rootQueueSize;
         private final long dirQueueSize;
@@ -695,8 +657,9 @@ final class IngestTasksScheduler {
         private final long runningListSize;
 
         /**
-         * RJCTODO
-         * @param jobId 
+         * Constructs a snapshot of ingest tasks data for an ingest job.
+         *
+         * @param jobId The identifier associated with the job.
          */
         IngestJobTasksSnapshot(long jobId) {
             this.jobId = jobId;
@@ -704,56 +667,51 @@ final class IngestTasksScheduler {
             this.dirQueueSize = countTasksForJob(IngestTasksScheduler.this.directoryTasks, jobId);
             this.fileQueueSize = countTasksForJob(IngestTasksScheduler.this.pendingFileTasks, jobId);
             this.dsQueueSize = countTasksForJob(IngestTasksScheduler.this.pendingDataSourceTasks, jobId);
-            this.runningListSize = countTasksForJob(IngestTasksScheduler.this.tasksInProgressAndPending, jobId) - fileQueueSize - dsQueueSize;            
+            this.runningListSize = countTasksForJob(IngestTasksScheduler.this.tasksInProgress, jobId) - fileQueueSize - dsQueueSize;
         }
-        
+
         /**
-         * RJCTODO
-         * @return 
+         * Gets the identifier associated with the ingest job for which this
+         * snapshot was created.
+         *
+         * @return The ingest job identifier.
          */
         long getJobId() {
             return jobId;
         }
 
         /**
-         * RJCTODO
-         * @return 
+         * Gets the number of file ingest tasks associated with the job that are
+         * in the root directories queue.
+         *
+         * @return The tasks count.
          */
         long getRootQueueSize() {
             return rootQueueSize;
         }
 
         /**
-         * RJCTODO
-         * @return 
+         * Gets the number of file ingest tasks associated with the job that are
+         * in the root directories queue.
+         *
+         * @return The tasks count.
          */
-        long getDirQueueSize() {
+        long getDirectoryTasksQueueSize() {
             return dirQueueSize;
         }
 
-        /**
-         * RJCTODO
-         * @return 
-         */
         long getFileQueueSize() {
             return fileQueueSize;
         }
 
-        /**
-         * RJCTODO
-         * @return 
-         */
         long getDsQueueSize() {
             return dsQueueSize;
         }
 
-        /**
-         * RJCTODO
-         * @return 
-         */
         long getRunningListSize() {
             return runningListSize;
-        }        
+        }
+
     }
-    
+
 }
