@@ -43,7 +43,7 @@ final class DataSourceIngestPipeline {
                 DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
                 modules.add(module);
             }
-        }
+        }        
     }
 
     boolean isEmpty() {
