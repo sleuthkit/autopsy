@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.sun.javafx.PlatformUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -108,12 +110,12 @@ public final class ExecUtil {
             do {
                 process.waitFor(timeOut, units);
                 if (process.isAlive() && terminator.shouldTerminateProcess()) {
-                    process.destroyForcibly();
+                    killProcess(process);
                 }
             } while (process.isAlive());
         } catch (InterruptedException ex) {
             if (process.isAlive()) {
-                process.destroyForcibly();
+                killProcess(process);
             }
             Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0));
             Thread.currentThread().interrupt();
@@ -121,6 +123,33 @@ public final class ExecUtil {
         return process.exitValue();
     }
 
+    /**
+     * Kill a process and its children
+     * @param process The parent process to kill
+     */
+    public static void killProcess(Process process) {
+        if (process == null)
+            return;
+        
+        try {
+            if (PlatformUtil.isWindows()) {
+                Win32Process parentProcess = new Win32Process(process);
+                List<Win32Process> children = parentProcess.getChildren();
+
+                children.stream().forEach((child) -> {
+                    child.terminate();
+                });
+                parentProcess.terminate();
+            }
+            else {
+                process.destroyForcibly();
+            }
+        }
+        catch (Exception ex) {
+            logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
+        }
+    }
+            
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
