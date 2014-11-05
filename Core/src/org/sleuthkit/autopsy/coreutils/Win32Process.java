@@ -42,7 +42,7 @@ public class Win32Process {
      * Create a Win32Process object for the given Process object.
      * Reflection is used to construct a Windows process handle.
      * @param process A Java Process object
-     * @throws IOException 
+     * @throws Exception 
      */
     Win32Process (Process process) throws Exception
     {
@@ -64,7 +64,7 @@ public class Win32Process {
     /**
      * Create a Win32Process object for the given process id.
      * @param pid Process Id
-     * @throws IOException 
+     * @throws Exception 
      */
     Win32Process (int pid) throws Exception
     {
