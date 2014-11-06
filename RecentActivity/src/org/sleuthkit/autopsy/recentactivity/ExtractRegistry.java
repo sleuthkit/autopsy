@@ -393,6 +393,7 @@ class ExtractRegistry extends Extract {
             result = result.replaceAll("\\r", ""); //NON-NLS
             result = result.replaceAll("'", "&apos;"); //NON-NLS
             result = result.replaceAll("&", "&amp;"); //NON-NLS
+            result = result.replace('\0', ' '); // NON-NLS
             String enddoc = "</document>"; //NON-NLS
             String stringdoc = startdoc + result + enddoc;
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
