@@ -71,14 +71,14 @@ public class DataSourceIngestModuleProgress {
     }
 
     /**
-     * Updates the progress bar with the number of work units performed, if in
-     * the determinate mode.
+     * Updates the progress bar with a new task name and the number of work
+     * units performed, if in the determinate mode.
      *
-     * @param message Message to display in sub-title
+     * @param currentTask The task name.
      * @param workUnits Number of work units performed so far by the module.
      */
-    public void progress(String message, int workUnits) {
-        this.job.advanceDataSourceIngestProgressBar(message, workUnits);
+    public void progress(String currentTask, int workUnits) {
+        this.job.advanceDataSourceIngestProgressBar(currentTask, workUnits);
     }
 
 }

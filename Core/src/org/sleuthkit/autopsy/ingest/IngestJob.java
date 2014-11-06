@@ -48,6 +48,10 @@ final class IngestJob {
     private enum Stages {
 
         /**
+         * Setting up for processing.
+         */
+        INITIALIZATION,
+        /**
          * High priority data source ingest modules and file ingest modules.
          */
         FIRST,
@@ -69,22 +73,21 @@ final class IngestJob {
     private static final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
 
     /**
-     * These fields define the ingest job and the work it entails.
+     * These fields define the ingest job and the work it entails. Note that
+     * there is a collection for multiple copies of the file ingest pipeline,
+     * one for each file ingest thread.
      */
     private final long id;
     private final Content dataSource;
     private final boolean processUnallocatedSpace;
     private Stages stage;
-    private DataSourceIngestPipeline dataSourceIngestPipeline;
     private DataSourceIngestPipeline firstStageDataSourceIngestPipeline;
     private DataSourceIngestPipeline secondStageDataSourceIngestPipeline;
+    private DataSourceIngestPipeline currentDataSourceIngestPipeline;
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
 
     /**
-     * These fields are used to update ingest progress UI components for the
-     * job. The filesInProgress collection contains the names of the files that
-     * are in the file ingest pipelines and the two file counter fields are used
-     * to update the file ingest progress bar.
+     * These fields are used to update ingest progress bars for the job.
      */
     private ProgressHandle dataSourceIngestProgress;
     private final Object dataSourceIngestProgressLock;
@@ -159,7 +162,7 @@ final class IngestJob {
     static List<IngestJobSnapshot> getJobSnapshots() {
         List<IngestJobSnapshot> snapShots = new ArrayList<>();
         for (IngestJob job : IngestJob.jobsById.values()) {
-            snapShots.add(job.getIngestJobSnapshot());
+            snapShots.add(job.getSnapshot());
         }
         return snapShots;
     }
@@ -185,7 +188,7 @@ final class IngestJob {
         this.id = id;
         this.dataSource = dataSource;
         this.processUnallocatedSpace = processUnallocatedSpace;
-        this.stage = IngestJob.Stages.FIRST;
+        this.stage = IngestJob.Stages.INITIALIZATION;
         this.fileIngestPipelines = new LinkedBlockingQueue<>();
         this.filesInProgress = new ArrayList<>();
         this.dataSourceIngestProgressLock = new Object();
@@ -222,22 +225,28 @@ final class IngestJob {
     }
 
     /**
-     * Passes the data source for this job through a data source ingest
-     * pipeline.
+     * Passes the data source for this job through the currently active data
+     * source ingest pipeline.
      *
      * @param task A data source ingest task wrapping the data source.
      */
     void process(DataSourceIngestTask task) {
         try {
-            if (!this.isCancelled() && !this.dataSourceIngestPipeline.isEmpty()) {
+            if (!this.isCancelled() && !this.currentDataSourceIngestPipeline.isEmpty()) {
+                /**
+                 * Run the data source through the pipeline.
+                 */
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(this.dataSourceIngestPipeline.process(task));
+                errors.addAll(this.currentDataSourceIngestPipeline.process(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }
             }
 
-            // Shut down the data source ingest progress bar right away.  
+            /**
+             * Shut down the data source ingest progress bar right away. Data
+             * source-level processing is finished for this stage.
+             */
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != this.dataSourceIngestProgress) {
                     this.dataSourceIngestProgress.finish();
@@ -245,21 +254,19 @@ final class IngestJob {
                 }
             }
         } finally {
-            // No matter what happens, let the task scheduler know that this
-            // task is completed and check for job completion.
             IngestJob.taskScheduler.notifyTaskCompleted(task);
-            if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
-                this.handleTasksCompleted();
-            }
+            this.checkForCurrentTasksCompleted();
         }
     }
 
     /**
-     * Passes the a file from the data source for this job through the file
-     * ingest pipeline.
+     * Passes a file from the data source for this job through the file ingest
+     * pipeline.
      *
      * @param task A file ingest task.
-     * @throws InterruptedException
+     * @throws InterruptedException if the thread executing this code is
+     * interrupted while blocked on taking from or putting to the file ingest
+     * pipelines collection.
      */
     void process(FileIngestTask task) throws InterruptedException {
         try {
@@ -275,7 +282,9 @@ final class IngestJob {
                      */
                     AbstractFile file = task.getFile();
 
-                    // Update the file ingest progress bar.
+                    /**
+                     * Update the file ingest progress bar.
+                     */
                     synchronized (this.fileIngestProgressLock) {
                         ++this.processedFiles;
                         if (this.processedFiles <= this.estimatedFilesToProcess) {
@@ -286,15 +295,19 @@ final class IngestJob {
                         this.filesInProgress.add(file.getName());
                     }
 
-                    // Run the file through the pipeline.
+                    /**
+                     * Run the file through the pipeline.
+                     */
                     List<IngestModuleError> errors = new ArrayList<>();
                     errors.addAll(pipeline.process(task));
                     if (!errors.isEmpty()) {
                         logIngestModuleErrors(errors);
                     }
 
-                    // Update the file ingest progress bar again in case the 
-                    // file was being displayed.
+                    /**
+                     * Update the file ingest progress bar again, in case the
+                     * file was being displayed.
+                     */
                     if (!this.cancelled) {
                         synchronized (this.fileIngestProgressLock) {
                             this.filesInProgress.remove(file.getName());
@@ -307,17 +320,15 @@ final class IngestJob {
                     }
                 }
 
-                // Relinquish the pipeline so it can be reused by another file 
-                // ingest thread.
+                /**
+                 * Relinquish the pipeline so it can be reused by another file
+                 * ingest thread.
+                 */
                 this.fileIngestPipelines.put(pipeline);
             }
         } finally {
-            // No matter what happens, let the task scheduler know that this
-            // task is completed and check for job completion.
             IngestJob.taskScheduler.notifyTaskCompleted(task);
-            if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
-                this.handleTasksCompleted();
-            }
+            this.checkForCurrentTasksCompleted();
         }
     }
 
@@ -399,31 +410,31 @@ final class IngestJob {
     }
 
     /**
-     * Updates the data source ingest progress bar display name.
+     * Updates the data source ingest progress with a new task name.
      *
-     * @param displayName The new display name.
+     * @param currentTask The task name.
      */
-    void advanceDataSourceIngestProgressBar(String displayName) {
+    void advanceDataSourceIngestProgressBar(String currentTask) {
         if (!this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != this.dataSourceIngestProgress) {
-                    this.dataSourceIngestProgress.progress(displayName);
+                    this.dataSourceIngestProgress.progress(currentTask);
                 }
             }
         }
     }
 
     /**
-     * Updates the progress bar with the number of work units performed, if in
-     * the determinate mode.
+     * Updates the progress bar with a new task name and the number of work
+     * units performed, if in the determinate mode.
      *
-     * @param message Message to display in sub-title
+     * @param currentTask The task name.
      * @param workUnits Number of work units performed.
      */
-    void advanceDataSourceIngestProgressBar(String message, int workUnits) {
+    void advanceDataSourceIngestProgressBar(String currentTask, int workUnits) {
         if (!this.cancelled) {
             synchronized (this.fileIngestProgressLock) {
-                this.dataSourceIngestProgress.progress(message, workUnits);
+                this.dataSourceIngestProgress.progress(currentTask, workUnits);
             }
         }
     }
@@ -440,17 +451,19 @@ final class IngestJob {
     }
 
     /**
-     * Rescind a temporary cancellation of data source ingest in order to stop
-     * the currently executing data source ingest module.
+     * Rescind a temporary cancellation of data source ingest used to stop the
+     * currently executing data source ingest module.
      */
     void currentDataSourceIngestModuleCancellationCompleted() {
         this.currentDataSourceIngestModuleCancelled = false;
 
-        // A new progress bar must be created because the cancel button of the 
-        // previously constructed component is disabled by NetBeans when the 
-        // user selects the "OK" button of the cancellation confirmation dialog 
-        // popped up by NetBeans when the progress bar cancel button was 
-        // pressed.
+        /**
+         * A new progress bar must be created because the cancel button of the
+         * previously constructed component is disabled by NetBeans when the
+         * user selects the "OK" button of the cancellation confirmation dialog
+         * popped up by NetBeans when the progress bar cancel button was
+         * pressed.
+         */
         synchronized (this.dataSourceIngestProgressLock) {
             this.dataSourceIngestProgress.finish();
             this.dataSourceIngestProgress = null;
@@ -463,8 +476,10 @@ final class IngestJob {
      * file ingest pipelines.
      */
     void cancel() {
-        // Put a cancellation message on data source ingest progress bar, 
-        // if it is still running.
+        /**
+         * Put a cancellation message on data source ingest progress bar, if it
+         * is still running.
+         */
         synchronized (this.dataSourceIngestProgressLock) {
             if (dataSourceIngestProgress != null) {
                 final String displayName = NbBundle.getMessage(this.getClass(),
@@ -477,8 +492,10 @@ final class IngestJob {
             }
         }
 
-        // Put a cancellation message on the file ingest progress bar, 
-        // if it is still running.
+        /**
+         * Put a cancellation message on the file ingest progress bar, if it is
+         * still running.
+         */
         synchronized (this.fileIngestProgressLock) {
             if (this.fileIngestProgress != null) {
                 final String displayName = NbBundle.getMessage(this.getClass(),
@@ -493,9 +510,11 @@ final class IngestJob {
         this.cancelled = true;
 
         /**
-         * Tell the task scheduler to cancel all pending tasks.
+         * Tell the task scheduler to cancel all pending tasks, i.e., tasks not
+         * not being performed by an ingest thread.
          */
         IngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
+        this.checkForCurrentTasksCompleted();
     }
 
     /**
@@ -509,13 +528,33 @@ final class IngestJob {
     }
 
     /**
+     * Starts up the ingest pipelines and ingest progress bars.
+     *
+     * @return A collection of ingest module startup errors, empty on success.
+     */
+    private List<IngestModuleError> start(List<IngestModuleTemplate> ingestModuleTemplates) {
+        this.createIngestPipelines(ingestModuleTemplates);
+        List<IngestModuleError> errors = startUpIngestPipelines();
+        if (errors.isEmpty()) {
+            if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+                this.startFirstStage();
+            } else if (this.hasSecondStageDataSourceIngestPipeline()) {
+                this.startSecondStage();
+            }
+        }
+        return errors;
+    }
+
+    /**
      * Creates the file and data source ingest pipelines.
      *
      * @param ingestModuleTemplates Ingest module templates to use to populate
      * the pipelines.
      */
     private void createIngestPipelines(List<IngestModuleTemplate> ingestModuleTemplates) {
-        // Make mappings of ingest module factory class names to templates.
+        /**
+         * Make mappings of ingest module factory class names to templates.
+         */
         Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new HashMap<>();
         Map<String, IngestModuleTemplate> fileModuleTemplates = new HashMap<>();
         for (IngestModuleTemplate template : ingestModuleTemplates) {
@@ -527,16 +566,20 @@ final class IngestJob {
             }
         }
 
-        // Use the mappings and the ingest pipelines configuration to create
-        // ordered lists of ingest module templates for each ingest pipeline.
+        /**
+         * Use the mappings and the ingest pipelines configuration to create
+         * ordered lists of ingest module templates for each ingest pipeline.
+         */
         IngestPipelinesConfiguration pipelineConfigs = IngestPipelinesConfiguration.getInstance();
         List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = this.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
         List<IngestModuleTemplate> fileIngestModuleTemplates = this.getConfiguredIngestModuleTemplates(fileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
         List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = this.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
 
-        // Add any module templates that were not specified in the pipeline
-        // configurations to an appropriate pipeline - either the first stage
-        // data source ingest pipeline or the file ingest pipeline.
+        /**
+         * Add any module templates that were not specified in the pipelines
+         * configuration to an appropriate pipeline - either the first stage
+         * data source ingest pipeline or the file ingest pipeline.
+         */
         for (IngestModuleTemplate template : dataSourceModuleTemplates.values()) {
             firstStageDataSourceModuleTemplates.add(template);
         }
@@ -544,12 +587,15 @@ final class IngestJob {
             fileIngestModuleTemplates.add(template);
         }
 
-        // Contruct the data source ingest pipelines.
+        /**
+         * Construct the data source ingest pipelines.
+         */
         this.firstStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, firstStageDataSourceModuleTemplates);
         this.secondStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, secondStageDataSourceModuleTemplates);
-        this.dataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
 
-        // Construct the file ingest pipelines.
+        /**
+         * Construct the file ingest pipelines, one per file ingest thread.
+         */
         try {
             int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
             for (int i = 0; i < numberOfFileIngestThreads; ++i) {
@@ -558,8 +604,8 @@ final class IngestJob {
         } catch (InterruptedException ex) {
             /**
              * The current thread was interrupted while blocked on a full queue.
-             * Blocking should never happen here, but reset the interrupted flag
-             * rather than just swallowing the exception.
+             * Blocking should actually never happen here, but reset the
+             * interrupted flag rather than just swallowing the exception.
              */
             Thread.currentThread().interrupt();
         }
@@ -567,9 +613,9 @@ final class IngestJob {
 
     /**
      * Use an ordered list of ingest module factory class names to create an
-     * ordered subset of a collection ingest module templates. The ingest module
-     * templates are removed from the input collection as they are added to the
-     * output collection.
+     * ordered output list of ingest module templates for an ingest pipeline.
+     * The ingest module templates are removed from the input collection as they
+     * are added to the output collection.
      *
      * @param ingestModuleTemplates A mapping of ingest module factory class
      * names to ingest module templates.
@@ -585,27 +631,6 @@ final class IngestJob {
             }
         }
         return templates;
-    }
-
-    /**
-     * Starts up the ingest pipelines and ingest progress bars.
-     *
-     * @return A collection of ingest module startup errors, empty on success.
-     */
-    private List<IngestModuleError> start(List<IngestModuleTemplate> ingestModuleTemplates) {
-        this.createIngestPipelines(ingestModuleTemplates);
-        List<IngestModuleError> errors = startUpIngestPipelines();
-        if (errors.isEmpty()) {
-            if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
-                // There is at least one first stage pipeline.
-                this.startFirstStage();
-            } else if (this.hasSecondStageDataSourceIngestPipeline()) {
-                // There is no first stage pipeline, but there is a second stage
-                // ingest pipeline.
-                this.startSecondStage();
-            }
-        }
-        return errors;
     }
 
     /**
@@ -625,6 +650,12 @@ final class IngestJob {
         }
 
         /**
+         * Make the first stage data source pipeline the current data source
+         * pipeline.
+         */
+        this.currentDataSourceIngestPipeline = this.firstStageDataSourceIngestPipeline;
+
+        /**
          * Schedule the first stage tasks.
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
@@ -639,11 +670,9 @@ final class IngestJob {
              * it is possible, if unlikely, that no file ingest tasks were
              * actually scheduled since there are files that get filtered out by
              * the tasks scheduler. In this special case, an ingest thread will
-             * never get to make the following check for this stage of the job.
+             * never to check for completion of this stage of the job.
              */
-            if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
-                this.handleTasksCompleted();
-            }
+            this.checkForCurrentTasksCompleted();
         }
     }
 
@@ -653,7 +682,7 @@ final class IngestJob {
     private void startSecondStage() {
         this.stage = IngestJob.Stages.SECOND;
         this.startDataSourceIngestProgressBar();
-        this.dataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
+        this.currentDataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
         IngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
     }
 
@@ -705,7 +734,7 @@ final class IngestJob {
         List<IngestModuleError> errors = new ArrayList<>();
 
         // Start up the first stage data source ingest pipeline.
-        errors.addAll(this.dataSourceIngestPipeline.startUp());
+        errors.addAll(this.firstStageDataSourceIngestPipeline.startUp());
 
         // Start up the second stage data source ingest pipeline.
         errors.addAll(this.secondStageDataSourceIngestPipeline.startUp());
@@ -792,6 +821,16 @@ final class IngestJob {
             this.estimatedFilesToProcess = this.dataSource.accept(new GetFilesCountVisitor());
             this.fileIngestProgress.start();
             this.fileIngestProgress.switchToDeterminate((int) this.estimatedFilesToProcess);
+        }
+    }
+
+    /**
+     * Checks to see if the ingest tasks for the current stage are completed and
+     * invokes a handler if they are.
+     */
+    private void checkForCurrentTasksCompleted() {
+        if (IngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
+            this.handleTasksCompleted();
         }
     }
 
@@ -902,7 +941,7 @@ final class IngestJob {
      *
      * @return An ingest job statistics object.
      */
-    private IngestJobSnapshot getIngestJobSnapshot() {
+    private IngestJobSnapshot getSnapshot() {
         return new IngestJobSnapshot();
     }
 
@@ -932,19 +971,36 @@ final class IngestJob {
                 this.estimatedFilesToProcess = IngestJob.this.estimatedFilesToProcess;
                 this.snapShotTime = new Date().getTime();
             }
+
+            /**
+             * Get a snapshot of the tasks currently in progress for this job.
+             */
             this.tasksSnapshot = IngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
         }
 
+        /**
+         * Gets the identifier of the ingest job that is the subject of this
+         * snapshot.
+         *
+         * @return The ingest job id.
+         */
         long getJobId() {
             return this.jobId;
         }
 
+        /**
+         * Gets the name of the data source associated with the ingest job that
+         * is the subject of this snapshot.
+         *
+         * @return A data source name string.
+         */
         String getDataSource() {
             return dataSource;
         }
 
         /**
-         * Gets files per second throughput since job started.
+         * Gets files per second throughput since the ingest job that is the
+         * subject of this snapshot started.
          *
          * @return Files processed per second (approximate).
          */
@@ -953,7 +1009,7 @@ final class IngestJob {
         }
 
         /**
-         * Gets the the ingest job was started.
+         * Gets the time the ingest job was started.
          *
          * @return The start time as number of milliseconds since January 1,
          * 1970, 00:00:00 GMT.
