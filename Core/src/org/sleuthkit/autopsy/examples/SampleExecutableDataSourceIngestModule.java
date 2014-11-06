@@ -61,7 +61,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
