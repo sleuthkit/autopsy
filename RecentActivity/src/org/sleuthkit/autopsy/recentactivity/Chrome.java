@@ -128,7 +128,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -204,7 +204,7 @@ class Chrome extends Extract {
             
             logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{moduleName, temps}); //NON-NLS
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -341,7 +341,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -416,7 +416,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -504,7 +504,7 @@ class Chrome extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }

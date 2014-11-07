@@ -216,7 +216,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
             List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
             if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
-                context.scheduleFiles(new ArrayList<>(theList));
+                context.addFilesToJob(new ArrayList<>(theList));
             }
         }
         catch (IOException ex) {

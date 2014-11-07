@@ -93,7 +93,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
             }
@@ -161,7 +161,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                                                                    historyMsg.toString());
         services.postMessage(inboxMsg);
 
-        if (context.isJobCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return ProcessResult.OK;
         }
         
