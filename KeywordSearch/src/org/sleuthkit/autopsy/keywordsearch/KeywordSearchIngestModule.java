@@ -247,8 +247,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return;
         }
 
-        if (context.isJobCancelled()) {
-            logger.log(Level.INFO, "Ingest job cancelled"); //NON-NLS
+        if (context.fileIngestIsCancelled()) {
             stop();
             return;
         }
