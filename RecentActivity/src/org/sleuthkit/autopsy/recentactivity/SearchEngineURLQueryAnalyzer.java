@@ -278,7 +278,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
             
             for (BlackboardArtifact artifact : listArtifacts) {
-                if (context.isJobCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancled the process.
                 }
                 
@@ -346,7 +346,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for search engine queries", e); //NON-NLS
         } finally {
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
             IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(

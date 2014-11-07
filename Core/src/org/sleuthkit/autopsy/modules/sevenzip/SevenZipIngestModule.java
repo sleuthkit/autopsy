@@ -181,7 +181,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
             //currently sending a single event for all new files
             services.fireModuleContentEvent(new ModuleContentEvent(abstractFile));
         
-            context.scheduleFiles(unpackedFiles);
+            context.addFilesToJob(unpackedFiles);
         }
 
         return ProcessResult.OK;

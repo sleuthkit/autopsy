@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
 
@@ -111,7 +112,7 @@ class ExtractIE extends Extract {
                 continue;
             }
          
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
             
@@ -201,7 +202,7 @@ class ExtractIE extends Extract {
         
         dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
             if (cookiesFile.getSize() == 0) {
@@ -309,7 +310,7 @@ class ExtractIE extends Extract {
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
             temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
             File datFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
             try {
@@ -324,6 +325,9 @@ class ExtractIE extends Extract {
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt"; //NON-NLS
             boolean bPascProcSuccess = executePasco(temps, filename);
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
 
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
@@ -354,34 +358,26 @@ class ExtractIE extends Extract {
      */
     private boolean executePasco(String indexFilePath, String outputFileName) {
         boolean success = true;
-
-        Writer writer = null;
-        ExecUtil execPasco = new ExecUtil();
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
-            logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS
-            writer = new FileWriter(outputFileFullPath);
-            execPasco.execute(writer, JAVA_PATH, 
-                    "-cp", PASCO_LIB_PATH,  //NON-NLS
-                    "isi.pasco2.Main", "-T", "history", indexFilePath ); //NON-NLS
+            final String errFileFullPath = moduleTempResultsDir + File.separator + outputFileName + ".err";
+            logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS   
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(JAVA_PATH);
+            commandLine.add("-cp"); //NON-NLS
+            commandLine.add(PASCO_LIB_PATH);
+            commandLine.add("isi.pasco2.Main"); //NON-NLS
+            commandLine.add("-T"); //NON-NLS
+            commandLine.add("history");  //NON-NLS
+            commandLine.add(indexFilePath);
+            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+            processBuilder.redirectOutput(new File(outputFileFullPath));
+            processBuilder.redirectError(new File(errFileFullPath));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             success = false;
             logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex); //NON-NLS
-        } catch (InterruptedException ex) {
-            success = false;
-            logger.log(Level.SEVERE, "Pasco has been interrupted, failed to extract some web history from Internet Explorer.", ex); //NON-NLS
-        }
-        finally {
-            if (writer != null) {
-                try {
-                    writer.flush();
-                    writer.close();
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error closing writer stream after for Pasco result", ex); //NON-NLS
-                }
-            }
-            execPasco.stop();
         }
         return success;
     }
