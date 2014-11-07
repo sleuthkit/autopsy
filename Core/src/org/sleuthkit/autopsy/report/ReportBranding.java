@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
                     //TODO use defaults
                 }
             }
-            extractGeneratorLogo();
+            extractDefaultGeneratorLogo();
             getAgencyLogoPath();
             getReportTitle();
         }
@@ -74,7 +74,10 @@ public final class ReportBranding implements ReportBrandingProviderI {
         return reportsBrandingDir;
     }
     
-    private void extractGeneratorLogo() {
+    /**
+     * extract default logo from JAR file to local file.
+     */
+    private void extractDefaultGeneratorLogo() {
         try {
             PlatformUtil.extractResourceToUserConfigDir(getClass(), DEFAULT_GENERATOR_LOGO, true);
         } catch (IOException ex) {
@@ -90,7 +93,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
     @Override
     public void setGeneratorLogoPath(String path) {
-        
+        generatorLogoPath = path;        
     }
 
     @Override
