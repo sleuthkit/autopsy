@@ -297,7 +297,7 @@ class ExtractRegistry extends Extract {
             regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-autopsy.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
-            executeRegRipper(regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
+            executeRegRipper(RR_PATH, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
         }
         if (context.dataSourceIngestIsCancelled()) {
             return regOutputFiles;
@@ -308,16 +308,16 @@ class ExtractRegistry extends Extract {
             regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-full.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing Full RegRipper results to: {0}", regOutputFiles.fullPlugins); //NON-NLS
-            executeRegRipper(regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
+            executeRegRipper(RR_FULL_PATH, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
         }        
         return regOutputFiles;
     }
     
-    private void executeRegRipper(String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
+    private void executeRegRipper(String regRipperPath, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", outputFile); //NON-NLS
             List<String> commandLine = new ArrayList<>();
-            commandLine.add(RR_PATH);
+            commandLine.add(regRipperPath);
             commandLine.add("-r"); //NON-NLS
             commandLine.add(hiveFilePath);
             commandLine.add("-f"); //NON-NLS
