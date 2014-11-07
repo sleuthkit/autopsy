@@ -30,6 +30,9 @@ import javax.swing.table.TableColumn;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.openide.util.NbBundle;
 
+/**
+ * A panel that displays ingest task progress snapshots.
+ */
 public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private final JDialog parent;
