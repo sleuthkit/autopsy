@@ -58,7 +58,7 @@ import org.xml.sax.SAXException;
  */
 class ExtractRegistry extends Extract {
 
-    private static final Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
+    private Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
     private String RR_FULL_PATH;
     private boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper

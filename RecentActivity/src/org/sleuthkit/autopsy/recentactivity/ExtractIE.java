@@ -367,8 +367,8 @@ class ExtractIE extends Extract {
             commandLine.add("-cp"); //NON-NLS
             commandLine.add(PASCO_LIB_PATH);
             commandLine.add("isi.pasco2.Main"); //NON-NLS
-            commandLine.add("-T");
-            commandLine.add("history");
+            commandLine.add("-T"); //NON-NLS
+            commandLine.add("history");  //NON-NLS
             commandLine.add(indexFilePath);
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             processBuilder.redirectOutput(new File(outputFileFullPath));
