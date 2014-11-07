@@ -48,7 +48,14 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
-    private static String generatorLogoPath;
+    
+    // this is static so that it can be set by another object
+    // before the report is actually made.  Entire class should
+    // probably become singleton. Is set to null until setPath
+    // is called to specify something other than default.
+    private static String generatorLogoPath = null;
+    
+    private String defaultGeneratorLogoPath;
 
     public ReportBranding() {
 
@@ -83,11 +90,15 @@ public final class ReportBranding implements ReportBrandingProviderI {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error extracting report branding resource for generator logo ", ex); //NON-NLS
         }
-        generatorLogoPath = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_GENERATOR_LOGO;
+        defaultGeneratorLogoPath = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_GENERATOR_LOGO;
     }
 
     @Override
     public String getGeneratorLogoPath() {
+        // if no one called to change the path, use default
+        if (generatorLogoPath == null)
+            generatorLogoPath = defaultGeneratorLogoPath;
+        
         return generatorLogoPath;
     }
 
@@ -100,6 +111,10 @@ public final class ReportBranding implements ReportBrandingProviderI {
     public String getAgencyLogoPath() {
         String curPath = null;
 
+        /* The agency logo code uses these properties to persist changes
+         * in the logo (within the same process). 
+         * This is different from the generator logo that uses a static variable. 
+        */
         curPath = ModuleSettings.getConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP);
         //if has been set, validate it's correct, if not set, return null
         if (curPath != null && new File(curPath).canRead() == false) {
@@ -113,6 +128,8 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
     @Override
     public void setAgencyLogoPath(String path) {
+        // Use properties to persist the logo to use. 
+        // Should use static variable instead
         ModuleSettings.setConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP, path);
     }
 
