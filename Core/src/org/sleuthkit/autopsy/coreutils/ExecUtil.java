@@ -149,7 +149,10 @@ public final class ExecUtil {
             logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
         }
     }
-            
+       
+    /**
+     * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL
+     */
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;

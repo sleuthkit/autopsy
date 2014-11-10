@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
@@ -61,15 +62,11 @@ class ExtractRegistry extends Extract {
     private String RR_PATH;
     private String RR_FULL_PATH;
     private boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper
-    private boolean rrFullFound = false; // true if we found the full version of regripper
-    final private static String MODULE_VERSION = "1.0";
-    
+    private boolean rrFullFound = false; // true if we found the full version of regripper    
     private Content dataSource;
     private IngestJobContext context;
-
     final private static UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
     
-    //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
@@ -169,7 +166,7 @@ class ExtractRegistry extends Extract {
                 continue;
             }
             
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
            
@@ -182,10 +179,9 @@ class ExtractRegistry extends Extract {
                 logger.log(Level.SEVERE, null, ex);
             }
             
-            logger.log(Level.INFO, moduleName + "- Now getting registry information from " + regFileNameLocal); //NON-NLS
-            RegOutputFiles regOutputFiles = executeRegRip(regFileNameLocal, outputPathBase);
-            
-            if (context.isJobCancelled()) {
+            logger.log(Level.INFO, "{0}- Now getting registry information from {1}", new Object[]{moduleName, regFileNameLocal}); //NON-NLS
+            RegOutputFiles regOutputFiles = ripRegistryFile(regFileNameLocal, outputPathBase);
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
             
@@ -268,9 +264,9 @@ class ExtractRegistry extends Extract {
      * @param regFilePath Path to local copy of registry
      * @param outFilePathBase  Path to location to save output file to.  Base mtimeItem that will be extended on
      */
-    private RegOutputFiles executeRegRip(String regFilePath, String outFilePathBase) {
+    private RegOutputFiles ripRegistryFile(String regFilePath, String outFilePathBase) {
         String autopsyType = "";    // Type argument for rr for autopsy-specific modules
-        String fullType = "";   // Type argument for rr for full set of modules
+        String fullType;   // Type argument for rr for full set of modules
 
         RegOutputFiles regOutputFiles = new RegOutputFiles();
         
@@ -298,78 +294,44 @@ class ExtractRegistry extends Extract {
         
         // run the autopsy-specific set of modules
         if (!autopsyType.isEmpty() && rrFound) {
-            // TODO - add error messages
-            Writer writer = null;
-            ExecUtil execRR = null;
-            try {
-                regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
-                logger.log(Level.INFO, "Writing RegRipper results to: " + regOutputFiles.autopsyPlugins); //NON-NLS
-                writer = new FileWriter(regOutputFiles.autopsyPlugins);
-                execRR = new ExecUtil();
-                execRR.execute(writer, RR_PATH,
-                        "-r", regFilePath, "-f", autopsyType); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile",
-                                            this.getName()));
-            } catch (InterruptedException ex) {
-                logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile2",
-                                            this.getName()));
-            } finally {
-                if (writer != null) {
-                    try {
-                        writer.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper", ex); //NON-NLS
-                    }
-                }
-                if (execRR != null) {
-                    execRR.stop();
-                }
-            }
+            regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
+            String errFilePath = outFilePathBase + "-autopsy.err.txt"; //NON-NLS
+            logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
+            executeRegRipper(RR_PATH, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
+        }
+        if (context.dataSourceIngestIsCancelled()) {
+            return regOutputFiles;
         }
         
         // run the full set of rr modules
         if (!fullType.isEmpty() && rrFullFound) {
-            Writer writer = null;
-            ExecUtil execRR = null;
-            try {
-                regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
-                logger.log(Level.INFO, "Writing Full RegRipper results to: " + regOutputFiles.fullPlugins); //NON-NLS
-                writer = new FileWriter(regOutputFiles.fullPlugins);
-                execRR = new ExecUtil();
-                execRR.execute(writer, RR_FULL_PATH,
-                        "-r", regFilePath, "-f", fullType); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Unable to run full RegRipper and process parse some registry files.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile3",
-                                            this.getName()));
-            } catch (InterruptedException ex) {
-                logger.log(Level.SEVERE, "RegRipper full has been interrupted, failed to parse registry.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile4",
-                                            this.getName()));
-            } finally {
-                if (writer != null) {
-                    try {
-                        writer.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Error closing output writer after running RegRipper full", ex); //NON-NLS
-                    }
-                }
-                if (execRR != null) {
-                    execRR.stop();
-                }
-            }
-        }
-        
+            regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
+            String errFilePath = outFilePathBase + "-full.err.txt"; //NON-NLS
+            logger.log(Level.INFO, "Writing Full RegRipper results to: {0}", regOutputFiles.fullPlugins); //NON-NLS
+            executeRegRipper(RR_FULL_PATH, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
+        }        
         return regOutputFiles;
     }
     
+    private void executeRegRipper(String regRipperPath, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
+        try {
+            logger.log(Level.INFO, "Writing RegRipper results to: {0}", outputFile); //NON-NLS
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(regRipperPath);
+            commandLine.add("-r"); //NON-NLS
+            commandLine.add(hiveFilePath);
+            commandLine.add("-f"); //NON-NLS
+            commandLine.add(hiveFileType);
+            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+            processBuilder.redirectOutput(new File(outputFile));
+            processBuilder.redirectError(new File(errFile));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to run RegRipper", ex); //NON-NLS
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
+        }        
+    }
+        
     // @@@ VERIFY that we are doing the right thing when we parse multiple NTUSER.DAT
     /**
      * 
@@ -558,7 +520,7 @@ class ExtractRegistry extends Extract {
                                 }
                                 break;
                             default:
-                                logger.log(Level.WARNING, "Unercognized node name: " + dataType);
+                                logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType);
                                 break;
                         }
                     }

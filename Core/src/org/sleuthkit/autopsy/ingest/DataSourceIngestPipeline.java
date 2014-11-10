@@ -71,6 +71,7 @@ final class DataSourceIngestPipeline {
                         "IngestJob.progress.dataSourceIngest.displayName",
                         module.getDisplayName(), dataSource.getName());
                 this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
+                this.job.switchDataSourceIngestProgressBarToIndeterminate();
                 ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
             } catch (Exception ex) { // Catch-all exception firewall

@@ -79,7 +79,7 @@ class RecentDocumentsByLnk extends Extract  {
         
         dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
             
