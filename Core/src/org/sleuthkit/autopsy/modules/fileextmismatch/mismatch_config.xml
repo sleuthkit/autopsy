@@ -228,6 +228,7 @@
   <ext>tile</ext>
  </signature>
  <signature mimetype="image/png">
+  <ext>avatar</ext>
   <ext>gif</ext>
   <ext>jpeg</ext>
   <ext>jpg</ext>
