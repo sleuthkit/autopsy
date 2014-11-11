@@ -18,19 +18,30 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
+
 /**
  * An ExecUtil process terminator for data source ingest modules that checks for
  * ingest job cancellation.
  */
-public final class DataSourceIngestModuleProcessTerminator extends IngestModuleTimedProcessTerminator {
+public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTerminator {
 
+    public final IngestJobContext context;
+    public static long creationTime_sec;    // time when TimedProcessTerminator was constructed
+    public static final long DEFAULT_TIMEOUT = 172800;   // 48 hours
+    public static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
+    
     /**
      * Constructs a process terminator for a data source ingest module.
      *
      * @param context The ingest job context for the ingest module.
      */
-    public DataSourceIngestModuleProcessTerminator(IngestJobContext context) {
-        super(context);
+    public IngestModuleTimedProcessTerminator(IngestJobContext context) {
+        this.context = context;
+        
+        IngestModuleTimedProcessTerminator.creationTime_sec = (new Date().getTime())/1000;
     }
 
     /**
@@ -39,10 +50,23 @@ public final class DataSourceIngestModuleProcessTerminator extends IngestModuleT
     @Override
     public boolean shouldTerminateProcess() {
         
+        // check if maximum execution time elapsed    
         if (didProcessTimeOut())
             return true;
         
         return this.context.dataSourceIngestIsCancelled();
     }
 
+    /**
+     * @return true if process should be terminated, false otherwise
+     */
+    public boolean didProcessTimeOut() {
+        
+        // check if maximum execution time elapsed
+        long currentTime_sec = (new Date().getTime())/1000;        
+        if (currentTime_sec - IngestModuleTimedProcessTerminator.creationTime_sec > DEFAULT_TIMEOUT)
+            return true;
+        
+        return false;
+    }    
 }
