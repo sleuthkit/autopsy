@@ -4,7 +4,7 @@
 \section ingest_modules_getting_started Getting Started
 
 This page describes how to develop ingest modules using either Java or Python (Jython).  It assumes you have 
-already set up your development environment as described in \ref mod_dev_page or \ref mod_dev_python_page.
+already set up your development environment as described in \ref mod_dev_page or \ref mod_dev_py_page.
 
 
 \section ingest_module_types Ingest Module Types
