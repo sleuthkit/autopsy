@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * An ExecUtil process terminator for data source ingest modules that checks for
@@ -29,12 +30,14 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTerminator {
 
     public final IngestJobContext context;
-    public static long creationTime_sec;    // time when TimedProcessTerminator was constructed
-    public static final long DEFAULT_TIMEOUT = 172800;   // 48 hours
-    public static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
+    private static final Logger logger = Logger.getLogger(IngestModuleTimedProcessTerminator.class.getName());
+    private static long creationTime_sec;   // time when TimedProcessTerminator was constructed
+    private static long timeout_sec;        // time out value (seconds)
+    private static final long DEFAULT_TIMEOUT_SEC = 172800;   // 48 hours
     
     /**
-     * Constructs a process terminator for a data source ingest module.
+     * Constructs a process terminator for an ingest module. 
+     * Uses default process execution timeout value.
      *
      * @param context The ingest job context for the ingest module.
      */
@@ -42,7 +45,27 @@ public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTermi
         this.context = context;
         
         IngestModuleTimedProcessTerminator.creationTime_sec = (new Date().getTime())/1000;
+        IngestModuleTimedProcessTerminator.timeout_sec = DEFAULT_TIMEOUT_SEC;
     }
+    
+    /**
+     * Constructs a process terminator for an ingest module. 
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param timeout_sec Process execution timeout value (seconds)
+     */
+    public IngestModuleTimedProcessTerminator(IngestJobContext context, long timeout_sec) {
+        this.context = context;
+        
+        IngestModuleTimedProcessTerminator.creationTime_sec = (new Date().getTime())/1000;
+        
+        if (timeout_sec > 0)
+            IngestModuleTimedProcessTerminator.timeout_sec = timeout_sec;
+        else {
+            IngestModuleTimedProcessTerminator.logger.log(Level.WARNING, "Process time out value specified must be greater than zero"); // NON-NLS
+            IngestModuleTimedProcessTerminator.timeout_sec = DEFAULT_TIMEOUT_SEC;
+        }
+    }    
 
     /**
      * @return true if process should be terminated, false otherwise
@@ -64,7 +87,7 @@ public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTermi
         
         // check if maximum execution time elapsed
         long currentTime_sec = (new Date().getTime())/1000;        
-        if (currentTime_sec - IngestModuleTimedProcessTerminator.creationTime_sec > DEFAULT_TIMEOUT)
+        if (currentTime_sec - IngestModuleTimedProcessTerminator.creationTime_sec > IngestModuleTimedProcessTerminator.timeout_sec)
             return true;
         
         return false;

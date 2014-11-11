@@ -26,6 +26,7 @@ public final class DataSourceIngestModuleProcessTerminator extends IngestModuleT
 
     /**
      * Constructs a process terminator for a data source ingest module.
+     * Uses default process execution timeout value.
      *
      * @param context The ingest job context for the ingest module.
      */
@@ -33,6 +34,16 @@ public final class DataSourceIngestModuleProcessTerminator extends IngestModuleT
         super(context);
     }
 
+    /**
+     * Constructs a process terminator for a data source ingest module. 
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param timeout_sec Process execution timeout value (seconds)
+     */
+    public DataSourceIngestModuleProcessTerminator(IngestJobContext context, long timeout_sec) {
+        super(context, timeout_sec);
+    }    
+    
     /**
      * @return true if process should be terminated, false otherwise
      */

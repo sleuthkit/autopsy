@@ -27,12 +27,23 @@ public final class FileIngestModuleProcessTerminator extends IngestModuleTimedPr
 
     /**
      * Constructs a process terminator for a file ingest module.
+     * Uses default process execution timeout value.
      *
      * @param context The ingest job context for the ingest module.
      */
     public FileIngestModuleProcessTerminator(IngestJobContext context) {
         super(context);
     }
+    
+    /**
+     * Constructs a process terminator for a file ingest module. 
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param timeout_sec Process execution timeout value (seconds)
+     */
+    public FileIngestModuleProcessTerminator(IngestJobContext context, long timeout_sec) {
+        super(context, timeout_sec);
+    }      
 
     /**
      * @return true if process should be terminated, false otherwise
