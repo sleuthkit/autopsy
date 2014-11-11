@@ -251,6 +251,7 @@ final class IngestTasksScheduler {
         this.removeTasksForJob(this.directoryTasks, jobId);
         this.removeTasksForJob(this.pendingFileTasks, jobId);
         this.removeTasksForJob(this.pendingDataSourceTasks, jobId);
+        this.shuffleFileTaskQueues();
     }
 
     /**
