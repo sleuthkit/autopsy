@@ -1,39 +1,41 @@
-/*! \page platform_page Platform Concepts
+/*! \page platform_page Module Development Overview
+
+
+This page covers the basics of Autopsy, including the types of modules and the basic services that are provided.  Other pages will cover development environment setup and how to build specific types of modules.  This page applies to both Java and Python modules.
+
+
+\section platform_frameworks Types of Modules
+Autopsy was designed to be an extensible platform for other developers to leverage. There are several places in the platform where plug-in modules can be applied. 
+- <b>Ingest Modules:</b> These modules are run when a new data source (such as a disk image) is added to a case (and can be re-run afterwards too).  These modules come in two forms:
+ - File Ingest Modules are called for every file in the data source.  Use this type of module if you want to examine the contents of all or most of the files.  Examples include hash calculation, hash lookup, file type identification, and entropy calculation.  These modules are passed in a reference to a file to analyze. 
+ - Data Source Ingest Modules are called once for every image or set of logical files.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions.  Note that these modules will not have access to the contents of ZIP files. 
+See \ref mod_ingest_page for details on building these modules. 
+- <b>Report Modules:</b> These modules create different types of outputs that contain the analysis results. See \ref mod_report_page for details on creating these modules. 
+- <b>Content Viewers:</b> These graphical modules show information about a specific file. These are the modules in the lower right of the interface.  The platform comes with viewers to view the file in hexadecimal, extract the strings from the file, and view images and movies.  See \ref mod_content_page for details on creating these modules. 
+- <b>Result Viewers:</b> These modules show information about a set of files. These modules are in the upper right of the interface. The platform comes with viewers to view the set of files in a table and thumbnails.  See \ref mod_result_page for details on creating these modules.
+
+
+\section platform_languages Languages
+
+All modules can be written in Java.  The \ref mod_dev_page page covers setup of a Java environment.
+
+Some of the modules can be written in Python, namely ingest an report modules.  See \ref mod_dev_py_page for setup details. Python modules have access to all of the same services as Java modules do, except they cannot currently make UI elements. 
+
+
 
 \section platform_basics Basic Concepts
 
-These are the basic concepts that you should be aware of before writing a module:
+These are the basic concepts that you should be aware of before writing any type of module.  
 
-- <b>Phases:</b> The platform has been design to support different phases in the investigation process:
- - Case Creation: Use wizards to create a new case.
- - Data Source Adding: Where disk images and logical files are added to a case and file systems in disk images are analyzed to populate the database.  The end result of this phase is that the central database has a basic record of each file so that it can be analyzed.  This happens in the Add Image Wizard.
- - Ingest Module Analysis: A variety of analysis modules then run on the  files referenced in the database to perform specific tasks.
- - Browsing and searching: User manually browses and searches the data using the user interface.  They can browse through the results from the ingest modules that may still be running in the background. 
- - Report: A final report is generated at the end of the case.
-- <b>Central Database</b>: All data except for the disk image is stored in a SQLite database.  This includes information about what files exist in a disk image and the output from modules. Access to this database can be found from the org.sleuthkit.datamodel.SleuthkitCase class, but you'll probably never need to directly interact with it. The services and data model classes will interact with it. 
-- <b>Case</b>: A case class (org.sleuthkit.autopsy.casemodule.Case) is the top-level object for the data being analyzed.  From here, you can access all of the files and query it. 
-- <b>Blackboard:</b> The platform uses the blackboard to enable modules to communicate with each other and to display data in the GUI. See the \ref platform_blackboard section for more details. 
-- <b>Services</b>: There are services provided by the platform. See the \ref mod_dev_other_services section for more details.
-- <b>Utilities</b>: There are core utilities that the platform provides to modules. See the \ref mod_dev_other_utilities section for more details. 
-- <b>Single tree:</b> Results from the various modules can generally be found in a single tree. This makes it easy for users to find their results. 
-
-
-\section platform_frameworks Frameworks in the Platform
-Autopsy was designed to be an extensible platform for other developers to leverage. There are several places in the platform where plug-in modules can be applied. 
-- <b>Ingest Modules:</b> These modules are run when a new data source is added to a case (and can be re-run afterwards too).  These modules come in two forms:
- - File Ingest Modules are called for every file in the image.  Use this type of module if you want to examine the contents of all or most of the files.  Examples include hash calculation, hash lookup, file type identification, and entropy calculation. 
- - Data Source Ingest Modules are called once for every image or set of logical files.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions. 
-See \ref mod_ingest_page for details on building these modules. 
-- <b>Report Modules:</b> These modules create different types of outputs that contain the analysis results. See \ref mod_report_page for details on creating these modules. 
-- <b>Content Viewers:</b> These modules show information about a specific file. These are the modules in the lower right of the interface.  The platform comes with viewers to view the file in hexadecimal, extract the strings from the file, and view images and movies.  See \ref mod_content_page for details on creating these modules. 
-- <b>Result Viewers:</b> These modules show information about a set of files. These modules are in the upper right of the interface. The platform comes with viewers to view the set of files in a table and thumbnails.  See \ref mod_result_page for details on creating these modules. 
+- <b>Data Source</b>: Data source is the term used in Autopsy to refer to disk images and logical files that are added to a case.  Data sources are represented in Autopsy using several types of classes from the org.sleuthkit.datamodel package. 
+- <b>Case</b>: A case is a container for one or more data sources in Autopsy.  A case is represented by a  org.sleuthkit.autopsy.casemodule.Case class. Only one case can be open at a time.  You can get the current case using org.sleuthkit.autopsy.casemodule.Case.getCurrentCase().
+- <b>Central Database</b>: A central SQLite database exists and stores all file metadata and analysis results. Access to this database can be found from the org.sleuthkit.datamodel.SleuthkitCase class, but you'll probably never need to directly interact with it. All modules can query it for information, though many do not need to.  For example, file-level ingest modules will be passed in a reference to a specific file to analyze and may never need to directly go to the database for more information. 
+- <b>Blackboard:</b> The blackboard is how modules communicate back and forth.  Modules post their results to the blackboard in the form of artifacts and the UI will display them.  See the \ref platform_blackboard section for more details. 
+- <b>Services and Utilities</b>: There are a lot of convenience services and utilities that are provided to developers.  Refer to the \ref mod_dev_other_services section for more details.
 
 
 
-\section platform_services Services
-The platform provides a variety of services and utilities that you need to be familiar with.  This section outlines the basic ones and additional ones are described at the end of the document in \ref mod_dev_adv.
-
-\subsection platform_blackboard The Blackboard
+\section platform_blackboard The Blackboard
 
 The blackboard allows modules to communicate with each other and the UI. It has three main uses in Autopsy:
 - Ingest modules can communicate with each other. For example, one module can calculate a MD5 hash of a file and post it to the blackboard.  Then another module can retrieve the hash value from the blackboard and not need to calculate it again.
@@ -46,19 +48,21 @@ The blackboard is not unique to Autopsy.  It is part of The Sleuth Kit datamodel
 - Details of the Java classes can be found in \ref jni_blackboard section of the The Sleuth Kit JNI documents (http://sleuthkit.org/sleuthkit/docs/jni-docs/). 
 
 
+
 \subsection mod_dev_other_services Framework Services and Utilities
 
-The followig are basic services that are available to any module:
+The following are basic services that are available to any module.  They are provided here to be used as a reference.  When you are developing your module and feel like something should be provided by the framework, then refer to this list to find out where it could be.  If you don't find it, let us know and we'll talk about adding it for other writers to benefit. 
 
-- FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API to access any file in the case. You can access FileManager by calling org.sleuthkit.autopsy.casemodule.services.Services.getFileManager().  Data Source-level Ingest modules and Report modules typically use this service because the other modules are passed in a reference to a specific file to do something with. 
+
+- FileManager: the org.sleuthkit.autopsy.casemodule.services.FileManager service provides an API to access any file in the case. You can access FileManager by calling org.sleuthkit.autopsy.casemodule.services.Services.getFileManager().  Data Source-level Ingest modules and Report modules typically use this service. 
 - Logging: the org.sleuthkit.autopsy.coreutils.Logger class can be used to log error and informational messages to the central Autopsy log file.
-- Pop-up Windows: 
-If you have a background task that needs the provide the user with feedback, you can use the org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show() method to make a message in the lower right hand area.
+- Pop-up Windows: If you have a background task that needs the provide the user with feedback, you can use the org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify.show() method to make a message in the lower right hand area.
 - Module Settings: If you want to persist settings between invocations of Autopsy, you can use org.sleuthkit.autopsy.coreutils.ModuleSettings.
 - Content Utilities: The org.sleuthkit.autopsy.datamodel.ContentUtils class has utility methods to write files from Autopsy to local disk. Specifically the org.sleuthkit.autopsy.datamodel.ContentUtils.writeToFile() method. 
 - Platform Utilities: The org.sleuthkit.autopsy.coreutils.PlatformUtil class allows you to save resources into the user folder and determine paths for the user folders.  Specifically:
  - PlatformUtil.extractResourceToUserConfigDir()
  - PlatformUtil.isWindowsOS()
 - File Utilities: The org.sleuthkit.autopsy.coreutils.FileUtil class assists with creating and deleting folders, etc.
-- IngestModules also have a class that provides additional services.  See \ref ingest_modules_services_ingest. 
+- IngestModules also have a class that provides additional services unique to their needs.  See \ref ingest_modules_services_ingest. 
+
 */
