@@ -251,6 +251,7 @@ final class IngestTasksScheduler {
         this.removeTasksForJob(this.directoryTasks, jobId);
         this.removeTasksForJob(this.pendingFileTasks, jobId);
         this.removeTasksForJob(this.pendingDataSourceTasks, jobId);
+        this.shuffleFileTaskQueues();
     }
 
     /**
@@ -326,7 +327,6 @@ final class IngestTasksScheduler {
             // Try to add the most recently added directory from the 
             // directory tasks queue to the pending file tasks queue. 
             FileIngestTask directoryTask = this.directoryTasks.remove(this.directoryTasks.size() - 1);
-            this.tasksInProgress.remove(directoryTask);
             if (shouldEnqueueFileTask(directoryTask)) {
                 addToPendingFileTasksQueue(directoryTask);
             } else {
@@ -351,9 +351,7 @@ final class IngestTasksScheduler {
                             this.directoryTasks.add(childTask);
                         } else if (shouldEnqueueFileTask(childTask)) {
                             // Found a file, put the task directly into the
-                            // pending file tasks queue. The new task will 
-                            // be put into the tasks in progress list by the
-                            // addToPendingFileTasksQueue() helper.
+                            // pending file tasks queue. 
                             this.tasksInProgress.add(childTask);
                             addToPendingFileTasksQueue(childTask);
                         }
@@ -667,7 +665,7 @@ final class IngestTasksScheduler {
             this.dirQueueSize = countTasksForJob(IngestTasksScheduler.this.directoryTasks, jobId);
             this.fileQueueSize = countTasksForJob(IngestTasksScheduler.this.pendingFileTasks, jobId);
             this.dsQueueSize = countTasksForJob(IngestTasksScheduler.this.pendingDataSourceTasks, jobId);
-            this.runningListSize = countTasksForJob(IngestTasksScheduler.this.tasksInProgress, jobId) - fileQueueSize - dsQueueSize;
+            this.runningListSize = countTasksForJob(IngestTasksScheduler.this.tasksInProgress, jobId);
         }
 
         /**

@@ -289,7 +289,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 services.fireModuleContentEvent(new ModuleContentEvent(derived));
             }
         }
-        context.scheduleFiles(derivedFiles);
+        context.addFilesToJob(derivedFiles);
         services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
     }
 

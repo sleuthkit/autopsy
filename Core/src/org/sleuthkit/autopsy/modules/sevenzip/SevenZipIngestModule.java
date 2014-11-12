@@ -181,7 +181,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
             //currently sending a single event for all new files
             services.fireModuleContentEvent(new ModuleContentEvent(abstractFile));
         
-            context.scheduleFiles(unpackedFiles);
+            context.addFilesToJob(unpackedFiles);
         }
 
         return ProcessResult.OK;
@@ -466,7 +466,8 @@ public final class SevenZipIngestModule implements FileIngestModule {
                                 "SevenZipIngestModule.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(ArchiveFileExtractorModuleFactory.getModuleName(), msg, details));
-                        logger.log(Level.INFO, "Skipping archive item due not sufficient disk space for this item: {0}, {1}", new Object[]{archiveFile.getName(), fileName}); //NON-NLS
+                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new Object[]{archiveFile.getUniquePath(), fileName}); //NON-NLS
+                        logger.log(Level.INFO, "Available disk space: {0}", new Object[]{freeDiskSpace}); //NON-NLS
                         continue; //skip this file
                     } else {
                         //update est. disk space during this archive, so we don't need to poll for every file extracted
@@ -555,7 +556,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 //TODO decide if anything to cleanup, for now bailing
             }
 
-        } catch (SevenZipException ex) {
+        } catch (SevenZipException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
             String fullName;

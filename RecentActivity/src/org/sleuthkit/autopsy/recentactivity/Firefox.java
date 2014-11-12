@@ -116,7 +116,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -197,7 +197,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -277,7 +277,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
@@ -385,16 +385,16 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, downloadQuery);
-            logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified."); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(),
@@ -494,7 +494,7 @@ class Firefox extends Extract {
                 continue;
             }
             File dbFile = new File(temps);
-            if (context.isJobCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
