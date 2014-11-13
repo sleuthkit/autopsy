@@ -18,30 +18,41 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
-
 /**
  * An ExecUtil process terminator for data source ingest modules that checks for
  * ingest job cancellation.
  */
-public final class DataSourceIngestModuleProcessTerminator implements ExecUtil.ProcessTerminator {
-
-    private final IngestJobContext context;
+public final class DataSourceIngestModuleProcessTerminator extends IngestModuleTimedProcessTerminator {
 
     /**
      * Constructs a process terminator for a data source ingest module.
+     * Uses default process execution timeout value.
      *
      * @param context The ingest job context for the ingest module.
      */
     public DataSourceIngestModuleProcessTerminator(IngestJobContext context) {
-        this.context = context;
+        super(context);
     }
 
     /**
-     * @inheritDoc
+     * Constructs a process terminator for a data source ingest module. 
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param timeout_sec Process execution timeout value (seconds)
+     */
+    public DataSourceIngestModuleProcessTerminator(IngestJobContext context, long timeout_sec) {
+        super(context, timeout_sec);
+    }    
+    
+    /**
+     * @return true if process should be terminated, false otherwise
      */
     @Override
     public boolean shouldTerminateProcess() {
+        
+        if (didProcessTimeOut())
+            return true;
+        
         return this.context.dataSourceIngestIsCancelled();
     }
 
