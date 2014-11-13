@@ -9,6 +9,7 @@ This page describes the basic concepts and setup that are needed for all types o
 Autopsy uses Jython (http://www.jython.org) to enable Python scripting. Jython looks like Python and gets converted into Java byte code and run on the JVM.  Its biggest limitations are:
 - Limited to Python 2.5
 - Can't use Python libraries that have native code
+- You can't make any UIs.  This means that you can't make content viewer modules or have configuration settings for your ingest modules. 
 
 Using it is very easy though in Autopsy and it allows you to access all of the Java services and classes that you need. 
 

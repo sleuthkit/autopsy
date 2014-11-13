@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.imageanalyzer.actions;
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.scene.image.ImageView;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 
 /**
  *
  */
-public class NextUnseenGroup extends AbstractAction {
+public class NextUnseenGroup extends Action {
 
     private final ImageAnalyzerController controller;
 
@@ -40,15 +40,14 @@ public class NextUnseenGroup extends AbstractAction {
         controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
             disabledProperty().set(controller.getGroupManager().getUnSeenGroups().size() <= 1);
         });
-    }
 
-    @Override
-    public void handle(ActionEvent event) {
-        if (controller.viewState() != null && controller.viewState().get() != null && controller.viewState().get().getGroup() != null) {
-            controller.getGroupManager().markGroupSeen(controller.viewState().get().getGroup());
-        }
-        if (controller.getGroupManager().getUnSeenGroups().size() > 0) {
-            controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
-        }
+        setEventHandler((ActionEvent t) -> {
+            if (controller.viewState() != null && controller.viewState().get() != null && controller.viewState().get().getGroup() != null) {
+                controller.getGroupManager().markGroupSeen(controller.viewState().get().getGroup());
+            }
+            if (controller.getGroupManager().getUnSeenGroups().size() > 0) {
+                controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
+            }
+        });
     }
 }
