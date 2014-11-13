@@ -27,12 +27,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * An ExecUtil process terminator for data source ingest modules that checks for
  * ingest job cancellation.
  */
-public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTerminator {
+public class TimedProcessTerminator implements ExecUtil.ProcessTerminator {
 
     public final IngestJobContext context;
-    private static final Logger logger = Logger.getLogger(IngestModuleTimedProcessTerminator.class.getName());
-    private static long creationTime_sec;   // time when TimedProcessTerminator was constructed
-    private static long timeout_sec;        // time out value (seconds)
+    private static final Logger logger = Logger.getLogger(TimedProcessTerminator.class.getName());
+    private static long creationTimeSec;   // time when TimedProcessTerminator was constructed
+    private static long timeoutSec;        // time out value (seconds)
     private static final long DEFAULT_TIMEOUT_SEC = 172800;   // 48 hours
     
     /**
@@ -41,29 +41,29 @@ public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTermi
      *
      * @param context The ingest job context for the ingest module.
      */
-    public IngestModuleTimedProcessTerminator(IngestJobContext context) {
+    public TimedProcessTerminator(IngestJobContext context) {
         this.context = context;
         
-        IngestModuleTimedProcessTerminator.creationTime_sec = (new Date().getTime())/1000;
-        IngestModuleTimedProcessTerminator.timeout_sec = DEFAULT_TIMEOUT_SEC;
+        TimedProcessTerminator.creationTimeSec = (new Date().getTime())/1000;
+        TimedProcessTerminator.timeoutSec = DEFAULT_TIMEOUT_SEC;
     }
     
     /**
      * Constructs a process terminator for an ingest module. 
      *
      * @param context The ingest job context for the ingest module.
-     * @param timeout_sec Process execution timeout value (seconds)
+     * @param timeoutSec Process execution timeout value (seconds)
      */
-    public IngestModuleTimedProcessTerminator(IngestJobContext context, long timeout_sec) {
+    public TimedProcessTerminator(IngestJobContext context, long timeoutSec) {
         this.context = context;
         
-        IngestModuleTimedProcessTerminator.creationTime_sec = (new Date().getTime())/1000;
+        TimedProcessTerminator.creationTimeSec = (new Date().getTime())/1000;
         
-        if (timeout_sec > 0)
-            IngestModuleTimedProcessTerminator.timeout_sec = timeout_sec;
+        if (timeoutSec > 0)
+            TimedProcessTerminator.timeoutSec = timeoutSec;
         else {
-            IngestModuleTimedProcessTerminator.logger.log(Level.WARNING, "Process time out value specified must be greater than zero"); // NON-NLS
-            IngestModuleTimedProcessTerminator.timeout_sec = DEFAULT_TIMEOUT_SEC;
+            TimedProcessTerminator.logger.log(Level.WARNING, "Process time out value specified must be greater than zero"); // NON-NLS
+            TimedProcessTerminator.timeoutSec = DEFAULT_TIMEOUT_SEC;
         }
     }    
 
@@ -73,23 +73,11 @@ public class IngestModuleTimedProcessTerminator implements ExecUtil.ProcessTermi
     @Override
     public boolean shouldTerminateProcess() {
         
-        // check if maximum execution time elapsed    
-        if (didProcessTimeOut())
-            return true;
-        
-        return this.context.dataSourceIngestIsCancelled();
-    }
-
-    /**
-     * @return true if process should be terminated, false otherwise
-     */
-    public boolean didProcessTimeOut() {
-        
         // check if maximum execution time elapsed
-        long currentTime_sec = (new Date().getTime())/1000;        
-        if (currentTime_sec - IngestModuleTimedProcessTerminator.creationTime_sec > IngestModuleTimedProcessTerminator.timeout_sec)
+        long currentTimeSec = (new Date().getTime())/1000;        
+        if (currentTimeSec - TimedProcessTerminator.creationTimeSec > TimedProcessTerminator.timeoutSec)
             return true;
         
         return false;
-    }    
+    }
 }
