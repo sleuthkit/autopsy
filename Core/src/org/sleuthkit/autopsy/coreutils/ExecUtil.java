@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -149,7 +150,59 @@ public final class ExecUtil {
             logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
         }
     }
-       
+
+    /**
+     * Timed process terminator that triggers either based on default process time out value
+     * or user specified time out value.
+     */
+    public static class TimedProcessTerminator implements ProcessTerminator {
+
+        private final long creationTimeSec;   // time when TimedProcessTerminator was constructed
+        private final long timeoutSec;        // time out value (seconds)
+        private static final long DEFAULT_TIMEOUT_SEC = 172800;   // 48 hours
+
+        /**
+         * Constructs a process terminator for an ingest module. Uses default
+         * process execution timeout value.
+         */
+        public TimedProcessTerminator() {
+            creationTimeSec = (new Date().getTime()) / 1000;
+            timeoutSec = DEFAULT_TIMEOUT_SEC;
+        }
+
+        /**
+         * Constructs a process terminator for an ingest module.
+         *
+         * @param userSpecifiedTimeoutSec Process execution timeout value (seconds)
+         */
+        public TimedProcessTerminator(long userSpecifiedTimeoutSec) {
+            creationTimeSec = (new Date().getTime()) / 1000;
+
+            if (userSpecifiedTimeoutSec > 0) {
+                timeoutSec = userSpecifiedTimeoutSec;
+            } else {
+                logger.log(Level.WARNING, "Process time out value must be greater than zero. Using default time out instead."); // NON-NLS
+                timeoutSec = DEFAULT_TIMEOUT_SEC;
+            }
+        }
+
+        /**
+         * @return true if process should be terminated, false otherwise
+         */
+        @Override
+        public boolean shouldTerminateProcess() {
+
+            // check if maximum execution time elapsed
+            long currentTimeSec = (new Date().getTime()) / 1000;
+            if (currentTimeSec - creationTimeSec > timeoutSec) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+
     /**
      * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL
      */
