@@ -141,19 +141,16 @@ final class IngestJob {
      * Starts an ingest job for a data source.
      *
      * @param dataSource The data source to ingest.
-     * @param ingestModuleTemplates The ingest module templates to use to create
-     * the ingest pipelines for the job.
-     * @param processUnallocatedSpace Whether or not the job should include
-     * processing of unallocated space.
+     * @param settings The settings for the job.
      * @return A collection of ingest module start up errors, empty on success.
      */
-    static List<IngestModuleError> startJob(Content dataSource, List<IngestModuleTemplate> ingestModuleTemplates, boolean processUnallocatedSpace) {
+    static List<IngestModuleError> startJob(Content dataSource, IngestJobSettings settings) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (IngestJob.jobCreationIsEnabled) {
             long jobId = nextJobId.incrementAndGet();
-            IngestJob job = new IngestJob(jobId, dataSource, processUnallocatedSpace);
+            IngestJob job = new IngestJob(jobId, dataSource, settings.getProcessUnallocatedSpace());
             IngestJob.jobsById.put(jobId, job);
-            errors = job.start(ingestModuleTemplates);
+            errors = job.start(settings.getEnabledIngestModuleTemplates());
             if (errors.isEmpty() && job.hasIngestPipeline()) {
                 IngestManager.getInstance().fireIngestJobStarted(jobId);
                 IngestJob.logger.log(Level.INFO, "Ingest job {0} started", jobId);

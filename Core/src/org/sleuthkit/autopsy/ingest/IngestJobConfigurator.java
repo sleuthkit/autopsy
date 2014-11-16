@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
@@ -28,34 +27,33 @@ import org.sleuthkit.datamodel.Content;
  * for a particular context and for launching ingest jobs that process one or
  * more data sources using the ingest job configuration.
  *
- * @deprecated Use the IngestModuleConfiguration and IngestJobConfigurationPanel
- * and IngestManager.startIngestJob() or IngestManager.startIngestJobNoUI()
- * instead. // RJCTODO
+ * @deprecated Use the IngestModuleSettings and IngestJobConfigurationPanel
+ * classes and IngestManager.startIngestJob() instead.
  */
 @Deprecated
 public final class IngestJobConfigurator {
 
     private final IngestJobSettings settings;
-    private final IngestJobConfigurationPanel ingestConfigPanel;
+    private final IngestJobSettingsPanel settingsPanel;
 
     /**
-     * Constructs an ingest job launcher that creates and persists an ingest job
-     * configuration for a particular context and launches ingest jobs that
-     * process one or more data sources using the ingest job configuration.
+     * Constructs an ingest job launcher that creates and persists ingest job
+     * settings for a particular context and launches ingest jobs that
+     * process one or more data sources using the settings.
      *
      * @param context The context identifier.
      */
     @Deprecated
     public IngestJobConfigurator(String context) {
         this.settings = new IngestJobSettings(context);
-        this.ingestConfigPanel = new IngestJobConfigurationPanel(settings);
+        this.settingsPanel = new IngestJobSettingsPanel(settings);
     }
 
     /**
-     * Gets any warnings generated when the persisted ingest job configuration
-     * for the specified context is retrieved and loaded.
+     * Gets any warnings generated when the persisted ingest job settings
+     * for the specified context are loaded or saved.
      *
-     * @return A collection of warning messages.
+     * @return A collection of warning messages, possibly empty.
      */
     @Deprecated
     public List<String> getIngestJobConfigWarnings() {
@@ -64,18 +62,17 @@ public final class IngestJobConfigurator {
 
     /**
      * Gets the user interface panel the launcher uses to obtain the user's
-     * ingest job configuration for the specified context.
+     * ingest job settings for the specified context.
      *
-     * @return A JPanel with components that can be used to create an ingest job
-     * configuration.
+     * @return The panel.
      */
     @Deprecated
     public JPanel getIngestJobConfigPanel() {
-        return ingestConfigPanel;
+        return settingsPanel;
     }
 
     /**
-     * Persists the ingest job configuration for the specified context.
+     * Persists the ingest job settings for the specified context.
      */
     @Deprecated
     public void saveIngestJobConfig() {
@@ -84,23 +81,15 @@ public final class IngestJobConfigurator {
 
     /**
      * Launches ingest jobs for one or more data sources using the ingest job
-     * configuration for the selected context.
+     * settings for the specified context.
      *
      * @param dataSources The data sources to ingest.
      */
     @Deprecated
     public void startIngestJobs(List<Content> dataSources) {
-        // Filter out the disabled ingest module templates.
-        List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
-        List<IngestModuleTemplate> moduleTemplates = this.settings.getIngestModuleTemplates();
-        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            if (moduleTemplate.isEnabled()) {
-                enabledModuleTemplates.add(moduleTemplate);
-            }
-        }
-
-        if ((!enabledModuleTemplates.isEmpty()) && (dataSources != null) && (!dataSources.isEmpty())) {
-            IngestManager.getInstance().startIngestJobs(dataSources, enabledModuleTemplates, this.settings.getProcessUnallocatedSpace());
+        IngestManager ingestManager = IngestManager.getInstance();
+        for (Content dataSource : dataSources) {
+            ingestManager.startIngestJob(dataSource, this.settings, true);
         }
     }
 }

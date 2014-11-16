@@ -38,17 +38,18 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * The ingest job settings for a particular context.
+ * Encapsulates the ingest job settings for a particular context such as the Add
+ * Data Source wizard or the Run Ingest Modules dialog.
  */
 public class IngestJobSettings {
 
-    private static final String ENABLED_INGEST_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
-    private static final String DISABLED_INGEST_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
+    private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
+    private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS    
+    private static final String PROCESS_UNALLOC_SPACE_DEFAULT = "true"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
-    private static final String PROCESS_UNALLOC_SPACE_DEFAULT = "true";
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final String context;
     private String moduleSettingsFolderPath;
@@ -71,17 +72,17 @@ public class IngestJobSettings {
     }
 
     /**
-     * Saves the ingest job settings for this context.
+     * Saves these ingest job settings.
      */
     public void save() {
         this.store();
     }
 
     /**
-     * Gets and clears any warnings associated with the ingest job settings for
-     * this context.
+     * Gets and clears any accumulated warnings associated with these ingest job
+     * settings.
      *
-     * @return A collection of warning messages, possibly empty.
+     * @return A list of warning messages, possibly empty.
      */
     public List<String> getWarnings() {
         List<String> warningMessages = new ArrayList<>(this.warnings);
@@ -90,18 +91,34 @@ public class IngestJobSettings {
     }
 
     /**
-     * Gets the ingest module templates for this context.
+     * Gets the ingest module templates part of these ingest job settings.
      *
-     * @return A list of the ingest module templates.
+     * @return The list of ingest module templates.
      */
     List<IngestModuleTemplate> getIngestModuleTemplates() {
         return Collections.unmodifiableList(this.moduleTemplates);
     }
 
     /**
-     * Sets the ingest module templates for this context.
+     * Gets the enabled ingest module templates part of these ingest job
+     * settings.
      *
-     * @param moduleTemplates The list of ingest module templates.
+     * @return The list of enabled ingest module templates.
+     */
+    List<IngestModuleTemplate> getEnabledIngestModuleTemplates() {
+        List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
+        for (IngestModuleTemplate moduleTemplate : this.moduleTemplates) {
+            if (moduleTemplate.isEnabled()) {
+                enabledModuleTemplates.add(moduleTemplate);
+            }
+        }
+        return enabledModuleTemplates;
+    }
+
+    /**
+     * Sets the ingest module templates part of these ingest job settings.
+     *
+     * @param moduleTemplates The ingest module templates.
      */
     void setIngestModuleTemplates(List<IngestModuleTemplate> moduleTemplates) {
         this.moduleTemplates.clear();
@@ -109,7 +126,8 @@ public class IngestJobSettings {
     }
 
     /**
-     * Gets the process unallocated space flag for this context.
+     * Gets the process unallocated space flag part of these ingest job
+     * settings.
      *
      * @return True or false.
      */
@@ -118,7 +136,7 @@ public class IngestJobSettings {
     }
 
     /**
-     * Sets the process unallocated space flag for this context.
+     * Sets the process unallocated space flag for these ingest job settings.
      *
      * @param processUnallocatedSpace True or false.
      */
@@ -127,31 +145,22 @@ public class IngestJobSettings {
     }
 
     /**
-     * Creates the folder for saving individual ingest module settings for this
-     * context, if it does not already exist.
+     * Creates the folder for saving the individual ingest module settings part
+     * of these ingest job settings.
      */
     private void createSavedModuleSettingsFolder() {
         try {
             Path folder = Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, context);
             Files.createDirectories(folder);
             this.moduleSettingsFolderPath = folder.toAbsolutePath().toString();
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to create ingest module settings directory", ex); //NON-NLS
-            this.warnings.add(NbBundle.getMessage(IngestJobSettings.class, "IngestJobConfiguration.createModuleSettingsFolderForContext.exception.msg")); //NON-NLS
-
-            // RJCTODO: Add this sort of code to clients, move bundle property to clients
-//            JOptionPane.showMessageDialog(null,
-//                    NbBundle.getMessage(this.getClass(),
-//                    "IngestJobConfiguration.createModuleSettingsFolderForContext.exception.msg"),
-//                    NbBundle.getMessage(this.getClass(),
-//                    "IngestJobConfigurator.createModuleSettingsFolderForContext.exception.title"),
-//                    JOptionPane.ERROR_MESSAGE);
+        } catch (IOException | SecurityException ex) {
+            logger.log(Level.SEVERE, "Failed to create ingest module settings directory " + this.moduleSettingsFolderPath, ex); //NON-NLS
+            this.warnings.add(NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.createModuleSettingsFolder.warning")); //NON-NLS
         }
     }
 
     /**
-     * Loads the saved or default ingest job settings for this context into
-     * memory.
+     * Loads the saved or default ingest job settings context into memory.
      */
     private void load() {
         /**
@@ -168,8 +177,8 @@ public class IngestJobSettings {
          * Get the enabled/disabled ingest modules settings for this context. By
          * default, all loaded modules are enabled.
          */
-        HashSet<String> enabledModuleNames = getModulesNamesFromSetting(IngestJobSettings.ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(loadedModuleNames));
-        HashSet<String> disabledModuleNames = getModulesNamesFromSetting(IngestJobSettings.DISABLED_INGEST_MODULES_KEY, ""); //NON-NLS
+        HashSet<String> enabledModuleNames = getModulesNamesFromSetting(IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(loadedModuleNames));
+        HashSet<String> disabledModuleNames = getModulesNamesFromSetting(IngestJobSettings.DISABLED_MODULES_KEY, ""); //NON-NLS
 
         /**
          * Check for missing modules and create warnings if any are found.
@@ -188,7 +197,9 @@ public class IngestJobSettings {
         for (String moduleName : missingModuleNames) {
             enabledModuleNames.remove(moduleName);
             disabledModuleNames.remove(moduleName);
-            this.warnings.add(NbBundle.getMessage(IngestJobSettings.class, "IngestJobConfiguration.missingModule.warning", moduleName)); //NON-NLS
+            String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.missingModule.warning", moduleName); //NON-NLS
+            logger.log(Level.WARNING, warning);
+            this.warnings.add(warning);
         }
 
         /**
@@ -216,19 +227,19 @@ public class IngestJobSettings {
          * Update the enabled/disabled ingest module settings for this context
          * to reflect any missing modules or newly discovered modules.
          */
-        ModuleSettings.setConfigSetting(this.context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(this.context, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
+        ModuleSettings.setConfigSetting(this.context, IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(this.context, IngestJobSettings.DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
 
         // Get the process unallocated space flag setting. If the setting does
         // not exist yet, default it to true.
-        if (ModuleSettings.settingExists(this.context, PARSE_UNALLOC_SPACE_KEY) == false) {
-            ModuleSettings.setConfigSetting(this.context, PARSE_UNALLOC_SPACE_KEY, "true"); //NON-NLS
+        if (ModuleSettings.settingExists(this.context, IngestJobSettings.PARSE_UNALLOC_SPACE_KEY) == false) {
+            ModuleSettings.setConfigSetting(this.context, IngestJobSettings.PARSE_UNALLOC_SPACE_KEY, IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
         }
-        this.processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(this.context, PARSE_UNALLOC_SPACE_KEY));
+        this.processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(this.context, IngestJobSettings.PARSE_UNALLOC_SPACE_KEY));
     }
 
     /**
-     * Gets the module names for a given key for this context.
+     * Gets the module names for a given key within these ingest job settings.
      *
      * @param key The key string.
      * @param defaultSetting The default list of module names.
@@ -266,10 +277,10 @@ public class IngestJobSettings {
 
     /**
      * Gets the saved or default ingest job settings for a given ingest module
-     * for this context.
+     * for these ingest job settings.
      *
-     * @param factory The ingest module factory for the module.
-     * @return The ingest job settings.
+     * @param factory The ingest module factory for an ingest module.
+     * @return The ingest module settings.
      */
     private IngestModuleIngestJobSettings loadModuleSettings(IngestModuleFactory factory) {
         IngestModuleIngestJobSettings settings = null;
@@ -278,8 +289,9 @@ public class IngestJobSettings {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch (IOException | ClassNotFoundException ex) {
-                String logMessage = String.format("Error loading ingest job settings for %s module for %s context, using defaults", factory.getModuleDisplayName(), this.context); //NON-NLS
-//                logger.log(Level.WARNING, logMessage, ex); RJCTODO
+                String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
+                logger.log(Level.WARNING, warning, ex);
+                this.warnings.add(warning);
             }
         }
         if (settings == null) {
@@ -289,21 +301,20 @@ public class IngestJobSettings {
     }
 
     /**
-     * RJCTODO
+     * Returns the absolute path for the ingest job settings file for a given
+     * ingest module for these ingest job settings.
      *
-     * @param factory
-     * @return
+     * @param factory The ingest module factory for an ingest module.
+     * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
-        StringBuilder filePath = new StringBuilder(this.moduleSettingsFolderPath);
-        filePath.append(File.separator);
-        filePath.append(factory.getClass().getCanonicalName());
-        filePath.append(MODULE_SETTINGS_FILE_EXT);
-        return filePath.toString();
+        String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
+        return path.toAbsolutePath().toString();
     }
 
     /**
-     * RJCTODO
+     * Saves the ingest job settings for this context.
      */
     private void store() {
         /**
@@ -320,20 +331,21 @@ public class IngestJobSettings {
                 disabledModuleNames.add(moduleName);
             }
         }
-        ModuleSettings.setConfigSetting(this.context, ENABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(this.context, DISABLED_INGEST_MODULES_KEY, makeCommaSeparatedList(disabledModuleNames));
+        ModuleSettings.setConfigSetting(this.context, ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(this.context, DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
 
         /**
-         * Save the process unallocated space setting. 
+         * Save the process unallocated space setting.
          */
         String processUnalloc = Boolean.toString(this.processUnallocatedSpace);
         ModuleSettings.setConfigSetting(this.context, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
     }
 
     /**
-     * Serializes the ingest job settings for an ingest module for this context.
+     * Serializes the ingest job settings for this context for a given ingest
+     * module.
      *
-     * @param factory The ingest module factory for the ingest module.
+     * @param factory The ingest module factory for the module.
      * @param settings The ingest job settings for the ingest module
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
@@ -342,19 +354,20 @@ public class IngestJobSettings {
                 out.writeObject(settings);
             }
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Error saving ingest job settings for %s ingest module for %s context", factory.getModuleDisplayName(), this.context), ex); //NON-NLS
-            this.warnings.add(NbBundle.getMessage(this.getClass(), "IngestJobConfiguration.saveJobSettings.errmsg", factory.getModuleDisplayName()));
+            String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsSave.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
+            logger.log(Level.SEVERE, warning, ex);
+            this.warnings.add(warning);
         }
     }
 
     /**
-     * RJCTODO: Consider making this a generally available utility; there might
-     * be a cleaner impl in Core Java 2
+     * Makes a comma-separated values list from a hash set of strings.
      *
-     * @param input
-     * @return
+     * @param input A hash set of strings.
+     * @return The contents of the hash set as a single string of
+     * comma-separated values.
      */
-    private static String makeCommaSeparatedList(HashSet<String> input) {
+    private static String makeCommaSeparatedValuesList(HashSet<String> input) {
         if (input == null || input.isEmpty()) {
             return "";
         }

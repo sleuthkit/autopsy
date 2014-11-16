@@ -35,41 +35,47 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 
 /**
- * User interface component to allow a user to set ingest module options and
- * enable/disable the modules.
+ * User interface component to allow a user to make ingest job settings.
  */
-class IngestJobConfigurationPanel extends javax.swing.JPanel {
+public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
-    private final IngestJobSettings config;
+    private final IngestJobSettings settings;
     private final List<IngestModuleModel> modules;
     private IngestModuleModel selectedModule;
 
-    IngestJobConfigurationPanel(IngestJobSettings config) {
-        this.config = config;
+    /**
+     * Construct a user interface component to allow a user to make ingest job
+     * settings.
+     *
+     * @param settings The initial settings for the ingest job.
+     */
+    public IngestJobSettingsPanel(IngestJobSettings settings) {
+        this.settings = settings;
         this.modules = new ArrayList<>();
-        for (IngestModuleTemplate moduleTemplate : config.getIngestModuleTemplates()) {
+        for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             this.modules.add(new IngestModuleModel(moduleTemplate));
-        }        
+        }
         initComponents();
         customizeComponents();
     }
-    
+
     /**
-     * RJCTODO
-     * @return 
+     * Gets the ingest settings made using this panel. 
+     *
+     * @return The settings.
      */
-    IngestJobSettings getConfig() {
+    IngestJobSettings getSettings() {
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
             if (module.hasModuleSettingsPanel()) {
-                IngestModuleIngestJobSettings settings = module.getModuleSettingsPanel().getSettings();
-                moduleTemplate.setModuleSettings(settings);
+                IngestModuleIngestJobSettings moduleSettings = module.getModuleSettingsPanel().getSettings();
+                moduleTemplate.setModuleSettings(moduleSettings);
             }
             moduleTemplates.add(moduleTemplate);
         }
-        this.config.setIngestModuleTemplates(moduleTemplates);
-        return this.config;
+        this.settings.setIngestModuleTemplates(moduleTemplates);
+        return this.settings;
     }
 
     private void customizeComponents() {
@@ -115,7 +121,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
-        processUnallocCheckbox.setSelected(this.config.getProcessUnallocatedSpace());
+        processUnallocCheckbox.setSelected(this.settings.getProcessUnallocatedSpace());
     }
 
     /**
@@ -162,8 +168,8 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         jPanel1.setPreferredSize(new java.awt.Dimension(338, 257));
 
-        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.advancedButton.text")); // NOI18N
-        advancedButton.setActionCommand(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.advancedButton.actionCommand")); // NOI18N
+        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.advancedButton.text")); // NOI18N
+        advancedButton.setActionCommand(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.advancedButton.actionCommand")); // NOI18N
         advancedButton.setEnabled(false);
         advancedButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -171,7 +177,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
-        descriptionLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.descriptionLabel.text")); // NOI18N
+        descriptionLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.descriptionLabel.text")); // NOI18N
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(250, 180));
@@ -210,8 +216,8 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
         processUnallocPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
 
-        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestJobConfigurationPanel.class, "IngestJobConfigurationPanel.processUnallocCheckbox.toolTipText")); // NOI18N
+        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.text")); // NOI18N
+        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.toolTipText")); // NOI18N
         processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 processUnallocCheckboxActionPerformed(evt);
@@ -263,7 +269,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
-       this.config.setProcessUnallocatedSpace(processUnallocCheckbox.isSelected());
+        this.settings.setProcessUnallocatedSpace(processUnallocCheckbox.isSelected());
     }//GEN-LAST:event_processUnallocCheckboxActionPerformed
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
