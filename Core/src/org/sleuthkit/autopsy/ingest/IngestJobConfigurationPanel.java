@@ -40,20 +40,25 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
  */
 class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
-    private List<IngestModuleModel> modules = new ArrayList<>();
-    private boolean processUnallocatedSpace = false;
-    private IngestModuleModel selectedModule = null;
+    private final IngestJobConfiguration config;
+    private final List<IngestModuleModel> modules;
+    private IngestModuleModel selectedModule;
 
-    IngestJobConfigurationPanel(List<IngestModuleTemplate> moduleTemplates, boolean processUnallocatedSpace) {
-        for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
-            modules.add(new IngestModuleModel(moduleTemplate));
-        }
-        this.processUnallocatedSpace = processUnallocatedSpace;
+    IngestJobConfigurationPanel(IngestJobConfiguration config) {
+        this.config = config;
+        this.modules = new ArrayList<>();
+        for (IngestModuleTemplate moduleTemplate : config.getIngestModuleTemplates()) {
+            this.modules.add(new IngestModuleModel(moduleTemplate));
+        }        
         initComponents();
         customizeComponents();
     }
-
-    List<IngestModuleTemplate> getIngestModuleTemplates() {
+    
+    /**
+     * RJCTODO
+     * @return 
+     */
+    IngestJobConfiguration getConfig() {
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
@@ -63,11 +68,8 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
             moduleTemplates.add(moduleTemplate);
         }
-        return moduleTemplates;
-    }
-
-    boolean getProcessUnallocSpace() {
-        return processUnallocCheckbox.isSelected();
+        this.config.setIngestModuleTemplates(moduleTemplates);
+        return this.config;
     }
 
     private void customizeComponents() {
@@ -113,7 +115,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
-        processUnallocCheckbox.setSelected(processUnallocatedSpace);
+        processUnallocCheckbox.setSelected(this.config.shouldProcessUnallocatedSpace());
     }
 
     /**
@@ -261,7 +263,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
-        processUnallocatedSpace = processUnallocCheckbox.isSelected();
+       this.config.setProcessUnallocatedSpace(processUnallocCheckbox.isSelected());
     }//GEN-LAST:event_processUnallocCheckboxActionPerformed
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
