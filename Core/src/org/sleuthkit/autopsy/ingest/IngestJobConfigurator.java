@@ -29,14 +29,14 @@ import org.sleuthkit.datamodel.Content;
  * more data sources using the ingest job configuration.
  *
  * @deprecated Use the IngestModuleConfiguration and IngestJobConfigurationPanel
- * and IngestManager.startIngestJob() or IngestManager.startIngestJobNoUI() instead. // RJCTODO
+ * and IngestManager.startIngestJob() or IngestManager.startIngestJobNoUI()
+ * instead. // RJCTODO
  */
 @Deprecated
 public final class IngestJobConfigurator {
 
-    private final IngestJobConfiguration config;
+    private final IngestJobSettings settings;
     private final IngestJobConfigurationPanel ingestConfigPanel;
-    private IngestJobConfiguration.Messages messages;
 
     /**
      * Constructs an ingest job launcher that creates and persists an ingest job
@@ -47,8 +47,8 @@ public final class IngestJobConfigurator {
      */
     @Deprecated
     public IngestJobConfigurator(String context) {
-        this.config = new IngestJobConfiguration(context);
-        this.ingestConfigPanel = new IngestJobConfigurationPanel(config);
+        this.settings = new IngestJobSettings(context);
+        this.ingestConfigPanel = new IngestJobConfigurationPanel(settings);
     }
 
     /**
@@ -59,10 +59,7 @@ public final class IngestJobConfigurator {
      */
     @Deprecated
     public List<String> getIngestJobConfigWarnings() {
-        List<String> warnings = new ArrayList<>();
-        warnings.addAll(this.messages.getWarningMessages());
-        warnings.addAll(this.messages.getErrorMessages());
-        return warnings;
+        return this.settings.getWarnings();
     }
 
     /**
@@ -82,7 +79,7 @@ public final class IngestJobConfigurator {
      */
     @Deprecated
     public void saveIngestJobConfig() {
-        this.messages = this.config.save();
+        this.settings.save();
     }
 
     /**
@@ -95,7 +92,7 @@ public final class IngestJobConfigurator {
     public void startIngestJobs(List<Content> dataSources) {
         // Filter out the disabled ingest module templates.
         List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
-        List<IngestModuleTemplate> moduleTemplates = this.config.getIngestModuleTemplates();
+        List<IngestModuleTemplate> moduleTemplates = this.settings.getIngestModuleTemplates();
         for (IngestModuleTemplate moduleTemplate : moduleTemplates) {
             if (moduleTemplate.isEnabled()) {
                 enabledModuleTemplates.add(moduleTemplate);
@@ -103,7 +100,7 @@ public final class IngestJobConfigurator {
         }
 
         if ((!enabledModuleTemplates.isEmpty()) && (dataSources != null) && (!dataSources.isEmpty())) {
-            IngestManager.getInstance().startIngestJobs(dataSources, enabledModuleTemplates, this.config.shouldProcessUnallocatedSpace());
+            IngestManager.getInstance().startIngestJobs(dataSources, enabledModuleTemplates, this.settings.getProcessUnallocatedSpace());
         }
     }
 }

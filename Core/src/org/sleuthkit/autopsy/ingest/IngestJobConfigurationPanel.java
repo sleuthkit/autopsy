@@ -40,11 +40,11 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
  */
 class IngestJobConfigurationPanel extends javax.swing.JPanel {
 
-    private final IngestJobConfiguration config;
+    private final IngestJobSettings config;
     private final List<IngestModuleModel> modules;
     private IngestModuleModel selectedModule;
 
-    IngestJobConfigurationPanel(IngestJobConfiguration config) {
+    IngestJobConfigurationPanel(IngestJobSettings config) {
         this.config = config;
         this.modules = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : config.getIngestModuleTemplates()) {
@@ -58,7 +58,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
      * RJCTODO
      * @return 
      */
-    IngestJobConfiguration getConfig() {
+    IngestJobSettings getConfig() {
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
@@ -115,7 +115,7 @@ class IngestJobConfigurationPanel extends javax.swing.JPanel {
             }
         });
 
-        processUnallocCheckbox.setSelected(this.config.shouldProcessUnallocatedSpace());
+        processUnallocCheckbox.setSelected(this.config.getProcessUnallocatedSpace());
     }
 
     /**
