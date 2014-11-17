@@ -307,6 +307,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     return "searchquery.png"; //NON-NLS
                 case TSK_METADATA_EXIF:
                     return "camera-icon-16.png"; //NON-NLS
+                case TSK_EMAIL_MSG:
+                    return "mail-icon-16.png"; //NON-NLS
                 case TSK_CONTACT:
                     return "contact.png"; //NON-NLS
                 case TSK_MESSAGE:

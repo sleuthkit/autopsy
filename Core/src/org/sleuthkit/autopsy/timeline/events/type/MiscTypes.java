@@ -62,7 +62,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                   final BlackboardAttribute longEnd = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
                   return String.format("from %1$g %2$g to %3$g %4$g", latStart.getValueDouble(), longStart.getValueDouble(), latEnd.getValueDouble(), longEnd.getValueDouble());
               }),
-    GPS_TRACKPOINT("Location History", "gps-trackpoint.png",
+    GPS_TRACKPOINT("Location History", "gps_trackpoint.png",
                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
                    new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),

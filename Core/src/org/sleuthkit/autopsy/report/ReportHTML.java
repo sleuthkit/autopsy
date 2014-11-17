@@ -230,7 +230,30 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 case TSK_OS_INFO:
                      in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/computer.png"); //NON-NLS
                      break;
-
+                case TSK_GPS_TRACKPOINT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps_trackpoint.png"); //NON-NLS
+                    break;
+                case TSK_GPS_ROUTE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps_trackpoint.png"); //NON-NLS
+                    break;
+                case TSK_EMAIL_MSG:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
+                    break;
+                case TSK_ENCRYPTION_DETECTED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/encrypted-file.png"); //NON-NLS
+                    break;
+                case TSK_EXT_MISMATCH_DETECTED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mismatch-16.png"); //NON-NLS
+                    break;
+                case TSK_INTERESTING_ARTIFACT_HIT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
+                    break;
+                case TSK_INTERESTING_FILE_HIT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
+                    break;
+                case TSK_PROG_RUN:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
