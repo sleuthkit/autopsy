@@ -530,13 +530,13 @@ class Chrome extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          (Util.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), /// KDM DUPLIATE of TSK_DOMAIN!
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                                                          result.get("signon_realm").toString())); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFile, bbattributes);

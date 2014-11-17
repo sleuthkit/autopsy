@@ -1150,6 +1150,7 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.urlDomainDecoded"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_DOWNLOAD: 
@@ -1268,11 +1269,8 @@ import org.sleuthkit.datamodel.TskData;
                  columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_GPS_BOOKMARK:
                  columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
@@ -1577,6 +1575,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
