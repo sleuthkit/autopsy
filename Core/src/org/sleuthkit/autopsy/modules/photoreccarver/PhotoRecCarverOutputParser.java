@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,10 +93,13 @@ class PhotoRecCarverOutputParser {
             if (numberOfFiles == 0) {
                 return null;
             }
+            String fileName;
+            Long fileSize;
             NodeList fileNames;
             NodeList fileSizes;
             NodeList fileRanges;
             Element entry;
+            Path filePath;
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
             // create and initialize the list to put into the database
@@ -107,6 +111,13 @@ class PhotoRecCarverOutputParser {
                 fileSizes = entry.getElementsByTagName("filesize"); //NON-NLS
                 fileRanges = entry.getElementsByTagName("byte_run"); //NON-NLS
 
+                fileSize=Long.parseLong(fileSizes.item(0).getTextContent());
+                fileName=fileNames.item(0).getTextContent();
+                filePath = Paths.get(fileName);
+                if (filePath.startsWith(basePath)) {		
+                    fileName = filePath.getFileName().toString();		
+                }
+                
                 List<TskFileRange> tskRanges = new ArrayList<>();
                 for (int rangeIndex = 0; rangeIndex < fileRanges.getLength(); ++rangeIndex) {
                     Long img_offset = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("img_offset")); //NON-NLS
@@ -114,8 +125,7 @@ class PhotoRecCarverOutputParser {
                     tskRanges.add(new TskFileRange(af.convertToImgOffset(img_offset), len, rangeIndex));
                 }
                 carvedFileContainer.add(
-                        new CarvedFileContainer(fileNames.item(0).getTextContent(), Long.parseLong(fileSizes.item(0).getTextContent()),
-                                id, tskRanges));
+                        new CarvedFileContainer(fileName, fileSize, id, tskRanges));
             }
             return fileManager.addCarvedFiles(carvedFileContainer);
         }
