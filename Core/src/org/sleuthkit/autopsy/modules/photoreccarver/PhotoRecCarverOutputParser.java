@@ -53,17 +53,6 @@ class PhotoRecCarverOutputParser {
     }
 
     /**
-     * Gets the value inside the XML element and returns it. Ignores leading whitespace.
-     *
-     * @param name The XML element we are looking for.
-     * @param line The line in which we are looking for the element.
-     * @return The String value found
-     */
-    private static String getValue(String name, String line) {
-        return line.replaceAll("[\t ]*</?" + name + ">", ""); //NON-NLS
-    }
-
-    /**
      * Parses the given report.xml file, creating a List<LayoutFile> to return. Uses FileManager to add all carved files
      * that it finds to the TSK database as $CarvedFiles under the passed-in parent id.
      *
