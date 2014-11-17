@@ -43,7 +43,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
 
                 /** Override
                  * {@link ArtifactEventType#parseAttributesHelper(org.sleuthkit.datamodel.BlackboardArtifact, java.util.Map)}
-                 * with non default descritpion construction */
+                 * with non default description construction */
                 @Override
                 public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) {
                     long time = attrMap.get(getDateTimeAttrubuteType()).getValueLong();
