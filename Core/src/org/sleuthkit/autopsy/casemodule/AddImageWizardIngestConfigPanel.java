@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-
-import org.sleuthkit.autopsy.ingest.IngestJobConfigurator;
 import org.openide.util.NbBundle;
 import java.awt.Color;
 import java.awt.Component;
@@ -37,6 +35,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
  *
@@ -46,7 +47,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
-    private IngestJobConfigurator ingestConfig;
+    private IngestJobSettings ingestJobSettings;
+    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -60,10 +62,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupTask; 
    
-    private AddImageAction addImageAction;
+    private final AddImageAction addImageAction;
     
-    private AddImageWizardAddingProgressPanel progressPanel;
-    private AddImageWizardChooseDataSourcePanel dataSourcePanel;
+    private final AddImageWizardAddingProgressPanel progressPanel;
+    private final AddImageWizardChooseDataSourcePanel dataSourcePanel;
     
     private DataSourceProcessor dsProcessor;
     
@@ -73,8 +75,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
         
-        ingestConfig = new IngestJobConfigurator(AddImageWizardIngestConfigPanel.class.getCanonicalName());
-        List<String> messages = ingestConfig.getIngestJobConfigWarnings();
+        this.ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());        
+        List<String> messages = this.ingestJobSettings.getWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -95,7 +97,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     @Override
     public Component getComponent() {
         if (component == null) {
-            component = new AddImageWizardIngestConfigVisual(ingestConfig.getIngestJobConfigPanel());
+            component = new AddImageWizardIngestConfigVisual(new IngestJobSettingsPanel(this.ingestJobSettings));
         }
         return component;
     }
@@ -188,8 +190,16 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        ingestConfig.saveIngestJobConfig();
-
+        this.ingestJobSettings.save();
+        List<String> messages = this.ingestJobSettings.getWarnings();
+        if (messages.isEmpty() == false) {
+            StringBuilder warning = new StringBuilder();
+            for (String message : messages) {
+                warning.append(message).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warning.toString());
+        }
+        
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();
@@ -202,9 +212,11 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            ingestConfig.startIngestJobs(newContents);
+            IngestManager ingestManager = IngestManager.getInstance();
+            for (Content content : newContents) {
+                ingestManager.startIngestJob(content, ingestJobSettings, true);                
+            }
             progressPanel.setStateFinished();
-
         }
     }
     

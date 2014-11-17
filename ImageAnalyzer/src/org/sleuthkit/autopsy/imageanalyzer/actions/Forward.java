@@ -23,14 +23,14 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
-import org.controlsfx.control.action.AbstractAction;
+import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 
 /**
  *
  */
 //TODO: This and the corresponding timeline action are identical except for the type of the controller...  abstract something! -jm
-public class Forward extends AbstractAction {
+public class Forward extends Action {
 
     private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imageanalyzer/images/arrow.png", 16, 16, true, true, true);
 
@@ -42,10 +42,9 @@ public class Forward extends AbstractAction {
         setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;
         disabledProperty().bind(controller.getCanAdvance().not());
-    }
 
-    @Override
-    public void handle(ActionEvent ae) {
-        controller.advance();
+        setEventHandler((ActionEvent t) -> {
+            controller.advance();
+        });
     }
 }

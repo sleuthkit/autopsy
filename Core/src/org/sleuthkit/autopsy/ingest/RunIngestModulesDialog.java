@@ -44,13 +44,13 @@ public final class RunIngestModulesDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private static Dimension DIMENSIONS = new Dimension(500, 300);
-    private List<Content> dataSources = new ArrayList<>();
-    private IngestJobConfigurator ingestJobLauncher;
+    private final List<Content> dataSources = new ArrayList<>();
+        private IngestJobSettings ingestJobSettings;
 
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        ingestJobLauncher = new IngestJobConfigurator(RunIngestModulesDialog.class.getCanonicalName());
-        List<String> messages = ingestJobLauncher.getIngestJobConfigWarnings();
+        ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName());
+        List<String> messages = ingestJobSettings.getWarnings();
         if (messages.isEmpty() == false) {
             StringBuilder warning = new StringBuilder();
             for (String message : messages) {
@@ -79,28 +79,31 @@ public final class RunIngestModulesDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
-        add(ingestJobLauncher.getIngestJobConfigPanel(), BorderLayout.PAGE_START);
+        add(new IngestJobSettingsPanel(ingestJobSettings), BorderLayout.PAGE_START);
         JButton startButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.startButton.title"));
         JButton closeButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.closeButton.title"));
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestJobLauncher.saveIngestJobConfig();
-                ingestJobLauncher.startIngestJobs(dataSources);
+                ingestJobSettings.save();
+                IngestManager ingestManager = IngestManager.getInstance();
+                for (Content dataSource : dataSources) {
+                    ingestManager.startIngestJob(dataSource, ingestJobSettings, true);
+                }
                 close();
             }
         });
         closeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestJobLauncher.saveIngestJobConfig();
+                ingestJobSettings.save();
                 close();
             }
         });
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                ingestJobLauncher.saveIngestJobConfig();
+                ingestJobSettings.save();
                 close();
             }
         });
