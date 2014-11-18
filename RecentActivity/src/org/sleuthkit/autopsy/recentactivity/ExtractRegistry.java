@@ -194,50 +194,13 @@ class ExtractRegistry extends Extract {
                 }
             }
 
-            // create a RAW_TOOL artifact for the full output
+            // create a report for the full output
             if (regOutputFiles.fullPlugins.isEmpty() == false) {
                 try {
-                    BlackboardArtifact art = regFile.newArtifact(ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID());
-                    BlackboardAttribute att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                                      NbBundle.getMessage(this.getClass(),
-                                                                                          "ExtractRegistry.parentModuleName.noSpace"),
-                                                                      NbBundle.getMessage(this.getClass(),
-                                                                                          "ExtractRegistry.programName"));
-                    art.addAttribute(att);
-
-                    FileReader fread = new FileReader(regOutputFiles.fullPlugins);
-                    BufferedReader input = new BufferedReader(fread);
-
-                    StringBuilder sb = new StringBuilder();
-                    try {
-                        while (true) {
-                            String s = input.readLine();
-                            if (s == null) {
-                                break;
-                            }
-                            sb.append(s).append("\n");
-                        }
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, null, ex);
-                    } finally {
-                        try {
-                            input.close();
-                        } catch (IOException ex) {
-                            logger.log(Level.WARNING, "Failed to close reader.", ex); //NON-NLS
-                        }
-                    }
-                    att = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "ExtractRegistry.parentModuleName.noSpace"), sb.toString());
-                    art.addAttribute(att);
-                } catch (FileNotFoundException ex) {
-                    this.addErrorMessage(NbBundle.getMessage(this.getClass(),
-                                                             "ExtractRegistry.analyzeRegFiles.errMsg.errReadingRegFile",
-                                                             this.getName(), regOutputFiles.fullPlugins));
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (TskCoreException ex) {
-                    // TODO - add error message here?
-                    logger.log(Level.SEVERE, null, ex);
+                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(),"ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath() );
+                } 
+                catch (TskCoreException e) {
+                    this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage());
                 }
             }
             
