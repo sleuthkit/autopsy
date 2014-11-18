@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Executes a command line using an operating system process with a configurable
@@ -159,7 +160,7 @@ public final class ExecUtil {
 
         private final long creationTimeSec;   // time when TimedProcessTerminator was constructed
         private final long timeoutSec;        // time out value (seconds)
-        private static final long DEFAULT_TIMEOUT_SEC = 172800;   // 48 hours
+        private final boolean neverTimeOut;   // flag that is set if process should never be timed out
 
         /**
          * Constructs a process terminator for an ingest module. Uses default
@@ -167,7 +168,18 @@ public final class ExecUtil {
          */
         public TimedProcessTerminator() {
             creationTimeSec = (new Date().getTime()) / 1000;
-            timeoutSec = DEFAULT_TIMEOUT_SEC;
+            long defaultTimeoutSec = UserPreferences.getProcessTimeOutHrs() * 3600;
+            
+            // check if user ever wants process to be terminated after time out
+            if (defaultTimeoutSec > 0) {
+                neverTimeOut = false;
+                timeoutSec = defaultTimeoutSec;                
+           } else {
+                // never time out
+                logger.log(Level.INFO, "Process will never be terminated due to time out"); // NON-NLS
+                neverTimeOut = true;    
+                timeoutSec = Long.MAX_VALUE; 
+            }
         }
 
         /**
@@ -177,12 +189,16 @@ public final class ExecUtil {
          */
         public TimedProcessTerminator(long userSpecifiedTimeoutSec) {
             creationTimeSec = (new Date().getTime()) / 1000;
-
-            if (userSpecifiedTimeoutSec > 0) {
+            long defaultTimeoutSec = UserPreferences.getProcessTimeOutHrs() * 3600;   
+            
+            // check if user ever wants process to be terminated after time out
+            if (defaultTimeoutSec > 0 && userSpecifiedTimeoutSec > 0) {
                 timeoutSec = userSpecifiedTimeoutSec;
+                neverTimeOut = false;
             } else {
-                logger.log(Level.WARNING, "Process time out value must be greater than zero. Using default time out instead."); // NON-NLS
-                timeoutSec = DEFAULT_TIMEOUT_SEC;
+                neverTimeOut = true;            
+                logger.log(Level.INFO, "Process will never be terminated due to time out"); // NON-NLS
+                timeoutSec = Long.MAX_VALUE;
             }
         }
 
@@ -191,6 +207,9 @@ public final class ExecUtil {
          */
         @Override
         public boolean shouldTerminateProcess() {
+            
+            if (neverTimeOut)
+                return false;
 
             // check if maximum execution time elapsed
             long currentTimeSec = (new Date().getTime()) / 1000;

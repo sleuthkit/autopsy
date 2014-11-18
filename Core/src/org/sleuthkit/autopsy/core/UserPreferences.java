@@ -34,6 +34,15 @@ public final class UserPreferences {
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
+    public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
+    private static final String TIME_OUT_MODE = "TimeOutMode"; // NON-NLS  
+    
+    private static final int DEFAULT_PROCESS_TIMEOUT_HR = 48;   
+    public enum SelectedTimeOutMode  {
+        DEFAULT,     
+        NEVER,       
+        CUSTOM       
+    };     
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -85,5 +94,31 @@ public final class UserPreferences {
 
     public static void setNumberOfFileIngestThreads(int value) {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
-    }        
+    }      
+    
+    public static int getProcessTimeOutHrs() {
+        int timeOut = preferences.getInt(PROCESS_TIME_OUT_HOURS, DEFAULT_PROCESS_TIMEOUT_HR);
+        if (timeOut < 0)
+            timeOut = 0;
+        return timeOut;
+    }
+    
+    public static int getDefaultProcessTimeOutHrs() {
+        return DEFAULT_PROCESS_TIMEOUT_HR;
+    }    
+
+    public static void setProcessTimeOutHrs(int value) {
+        if (value < 0)
+            value = 0;            
+        preferences.putInt(PROCESS_TIME_OUT_HOURS, value);
+    }  
+    
+    public static SelectedTimeOutMode getTimeOutMode() {
+        int ordinal = preferences.getInt(TIME_OUT_MODE, SelectedTimeOutMode.NEVER.ordinal());
+        return SelectedTimeOutMode.values()[ordinal];
+    }
+
+    public static void setTimeOutMode(SelectedTimeOutMode timeOutMode) {
+        preferences.putInt(TIME_OUT_MODE, timeOutMode.ordinal());
+    }         
 }
