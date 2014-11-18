@@ -64,6 +64,7 @@
                 <package>com.sun.mail.smtp</package>
                 <package>com.sun.mail.util</package>
                 <package>com.sun.mail.util.logging</package>
+                <package>javafx.scene.control</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
