@@ -281,7 +281,7 @@ Autopsy allows you to provide a graphical panel that will be displayed when the 
 
 To provide options for each ingest job:
 - Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.hasIngestJobSettingsPanel() in your factory class to return true.
-- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options and returns a IngestModuleIngestJobSettings object based on the settings.
+- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options and returns a IngestModuleIngestJobSettings object based on the settings.  This will get passed in the last configuration setting that was used, so that you can populate the panel accordlingly and the user doesn't have to choose new settings. 
 - Create a class based on org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings to store the settings.
 
 Your panel should create the IngestModuleIngestJobSettings class to store the settings and that will be passed back into your factory with each call to createDataSourceIngestModule() or createFileIngestModule().  The factory should cast it to its internal class that implements IngestModuleIngestJobSettings and pass that object into the constructor of its ingest module so that it can use the settings when it runs. 
@@ -290,6 +290,9 @@ You can also implement the getDefaultIngestJobSettings() method to return an ins
 
 NOTE: We recommend storing simple data in the IngestModuleIngestJobSettings-based class.  In the case of our hash lookup module, we store the string names of the hash databases to do lookups in.  We then get the hash database handles in the call to startUp() using the global module settings. 
 
+NOTE: The main benefit of using the IngestModuleIngestJobSettings-based class to store settings (versus some static variables in your package) are:
+- When multiple jobs are running at the same time, each can have their own settings.
+- Autopsy persists them so that the last used settings get passed into the call to getIngestJobSettingsPanel() and you don't need to save them yoursevles to provide the user the benefit of re-using the last settings.
 
 
 \subsection ingest_modules_making_options_global Global Options
