@@ -37,76 +37,120 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Dialog box that allows ingest modules to be run on a data source that has
- * already been added to a case.
+ * Dialog box that allows a user to configure and run an ingest job on one or
+ * more data sources.
  */
 public final class RunIngestModulesDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private final List<Content> dataSources = new ArrayList<>();
-        private IngestJobSettings ingestJobSettings;
+    private IngestJobSettingsPanel ingestJobSettingsPanel;
 
-    public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
+    /**
+     * Construct a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @param frame The dialog parent window.
+     * @param title The title for the dialog.
+     * @param modal True if the dialog should be modal, false otherwise.
+     * @param dataSources The data sources to be processed.
+     */
+    public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
-        ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName());
-        List<String> messages = ingestJobSettings.getWarnings();
-        if (messages.isEmpty() == false) {
-            StringBuilder warning = new StringBuilder();
-            for (String message : messages) {
-                warning.append(message).append("\n");
-            }
-            JOptionPane.showMessageDialog(null, warning.toString());
-        }
+        this.dataSources.addAll(dataSources);
     }
 
+    /**
+     * Construct a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @param dataSources The data sources to be processed.
+     */
+    public RunIngestModulesDialog(List<Content> dataSources) {
+        this(new JFrame(TITLE), TITLE, true, dataSources);
+    }
+
+    /**
+     * Construct a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @param frame The dialog parent window.
+     * @param title The title for the dialog.
+     * @param modal True if the dialog should be modal, false otherwise.
+     * @deprecated
+     */
+    @Deprecated
+    public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
+        super(frame, title, modal);
+    }
+
+    /**
+     * Construct a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @deprecated
+     */
+    @Deprecated
     public RunIngestModulesDialog() {
         this(new JFrame(TITLE), TITLE, true);
     }
 
     /**
-     * Shows the Ingest dialog.
+     * Set the data sources to be processed.
+     *
+     * @param dataSources The data sources.
+     * @deprecated
+     */
+    @Deprecated
+    public void setDataSources(List<Content> dataSources) {
+        this.dataSources.clear();
+        this.dataSources.addAll(dataSources);
+    }
+
+    /**
+     * Displays this dialog.
      */
     public void display() {
         setLayout(new BorderLayout());
+
+        /**
+         * Center the dialog.
+         */
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-
-        // set the popUp window / JFrame
         setSize(DIMENSIONS);
-        int w = this.getSize().width;
-        int h = this.getSize().height;
+        int width = this.getSize().width;
+        int height = this.getSize().height;
+        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
 
-        // set the location of the popUp Window on the center of the screen
-        setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+        /**
+         * Get the default or saved ingest job settings for this context and use
+         * them to create and add an ingest job settings panel.
+         */
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName());
+        this.showWarnings(ingestJobSettings);
+        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        add(this.ingestJobSettingsPanel, BorderLayout.PAGE_START);
 
-        add(new IngestJobSettingsPanel(ingestJobSettings), BorderLayout.PAGE_START);
+        // Add a start ingest button.
         JButton startButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.startButton.title"));
-        JButton closeButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.closeButton.title"));
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestJobSettings.save();
-                IngestManager ingestManager = IngestManager.getInstance();
-                for (Content dataSource : dataSources) {
-                    ingestManager.startIngestJob(dataSource, ingestJobSettings, true);
-                }
-                close();
+                doButtonAction(true);
             }
         });
+
+        // Add a close button.
+        JButton closeButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.closeButton.title"));
         closeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ingestJobSettings.save();
-                close();
+                doButtonAction(false);
             }
         });
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                ingestJobSettings.save();
-                close();
-            }
-        });
+
+        // Put the buttons in their own panel, under the settings panel.
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
@@ -115,21 +159,65 @@ public final class RunIngestModulesDialog extends JDialog {
         buttonPanel.add(closeButton);
         add(buttonPanel, BorderLayout.LINE_START);
 
+        /**
+         * Add a handler for when the dialog window is closed directly,
+         * bypassing the buttons.
+         */
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                doButtonAction(false);
+            }
+        });
+
+        /**
+         * Show the dialog.
+         */
         pack();
         setResizable(false);
         setVisible(true);
     }
 
-    public void setDataSources(List<Content> inputContent) {
-        dataSources.clear();
-        dataSources.addAll(inputContent);
-    }
-
     /**
-     * Closes the Ingest dialog
+     * Closes this dialog.
      */
+    @Deprecated
     public void close() {
         setVisible(false);
         dispose();
+    }
+
+    /**
+     * Saves the ingest job settings, optionally starts an ingest job for each
+     * data source, then closes the dialog
+     *
+     * @param startIngestJob True if ingest job(s) should be started, false
+     * otherwise.
+     */
+    private void doButtonAction(boolean startIngestJob) {
+        IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        ingestJobSettings.save();
+        showWarnings(ingestJobSettings);
+
+        if (startIngestJob) {
+            IngestManager ingestManager = IngestManager.getInstance();
+            for (Content dataSource : RunIngestModulesDialog.this.dataSources) {
+                ingestManager.startIngestJob(dataSource, ingestJobSettings, true);
+            }
+        }
+
+        setVisible(false);
+        dispose();
+    }
+
+    private void showWarnings(IngestJobSettings ingestJobSettings) {
+        List<String> warnings = ingestJobSettings.getWarnings();
+        if (warnings.isEmpty() == false) {
+            StringBuilder warningMessage = new StringBuilder();
+            for (String warning : warnings) {
+                warningMessage.append(warning).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warningMessage.toString());
+        }
     }
 }

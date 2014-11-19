@@ -118,8 +118,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                     NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog();
-                            ingestDialog.setDataSources(Collections.<Content>singletonList(content));
+                            final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
                             ingestDialog.display();
                         }
                     });
