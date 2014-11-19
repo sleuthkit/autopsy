@@ -186,18 +186,14 @@ step is to then do some fancy analysis and present the results to the user.
 The first question that you must answer is what type of data do you want the user to see.  There are two options:
 
 -# Data that can be accessed from the tree on the left-hand side of the UI and can be displayed in a table.  To do this, you will make blackboard artifacts.
--# Data that is in a big text file or some other report that the user can review. There are two ways of doing this: make a report or make a TSK_TOOL_OUTPUT artifact. 
+-# Data that is in a big text file or some other report that the user can review. To do this, you will use the Case.addReport() method to make the output available in the directory tree.
 
 
 \subsection ingest_modules_making_results_bb Posting Results to the Blackboard
 The blackboard is used to store results so that they are displayed in the results tree.  
-See \ref platform_blackboard  for details on posting results to it. 
-
+See \ref platform_blackboard  for details on posting results to it.  You use the blackboard when you have specific items to show the user.  if you want to just shown them a big report from another library or tool, see \ref ingest_modules_makeing_results_report.
 The blackboard defines artifacts for specific data types (such as web bookmarks). 
-You can use one of the standard artifact types, create your own, or simply post text 
-as a org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT artifact.
-The latter is much easier (for example, you can simply copy in the output from 
-an existing tool), but it forces the user to parse the output themselves.  
+You can use one of the standard artifact types or create your own.
 
 When modules add data to the blackboard, they should notify listeners of the new 
 data by invoking the org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() method. 
@@ -211,10 +207,6 @@ only once after the bulk write, so as not to flood the system with events.
 \subsection ingest_modules_making_results_report Making a Report 
 
 If your module makes a text or HTML file (or some other report format) that has some complex structure (either because you prefer to write output that way or your module is simply a wrapper around another tool), then you can simply call the output a report and then it will be shown in the UI in the reports area.  You can do this by calling the org.sleuthkit.autopsy.casemodule.Case.addReport() method. 
-
-As mentioned above, another way of adding a report into Autopsy is using the org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT artifact.  However, this has been known to cause problems with large reports in Autopsy, so the reporting mechanism is easier for the user.
-
-
 
 
 
@@ -281,7 +273,7 @@ Autopsy allows you to provide a graphical panel that will be displayed when the 
 
 To provide options for each ingest job:
 - Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.hasIngestJobSettingsPanel() in your factory class to return true.
-- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options and returns a IngestModuleIngestJobSettings object based on the settings.
+- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options and returns a IngestModuleIngestJobSettings object based on the settings.  This will get passed in the last configuration setting that was used, so that you can populate the panel accordlingly and the user doesn't have to choose new settings. 
 - Create a class based on org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings to store the settings.
 
 Your panel should create the IngestModuleIngestJobSettings class to store the settings and that will be passed back into your factory with each call to createDataSourceIngestModule() or createFileIngestModule().  The factory should cast it to its internal class that implements IngestModuleIngestJobSettings and pass that object into the constructor of its ingest module so that it can use the settings when it runs. 
@@ -290,6 +282,9 @@ You can also implement the getDefaultIngestJobSettings() method to return an ins
 
 NOTE: We recommend storing simple data in the IngestModuleIngestJobSettings-based class.  In the case of our hash lookup module, we store the string names of the hash databases to do lookups in.  We then get the hash database handles in the call to startUp() using the global module settings. 
 
+NOTE: The main benefit of using the IngestModuleIngestJobSettings-based class to store settings (versus some static variables in your package) are:
+- When multiple jobs are running at the same time, each can have their own settings.
+- Autopsy persists them so that the last used settings get passed into the call to getIngestJobSettingsPanel() and you don't need to save them yoursevles to provide the user the benefit of re-using the last settings.
 
 
 \subsection ingest_modules_making_options_global Global Options
