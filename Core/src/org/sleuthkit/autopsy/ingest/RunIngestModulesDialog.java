@@ -210,7 +210,7 @@ public final class RunIngestModulesDialog extends JDialog {
         dispose();
     }
 
-    private void showWarnings(IngestJobSettings ingestJobSettings) {
+    private static void showWarnings(IngestJobSettings ingestJobSettings) {
         List<String> warnings = ingestJobSettings.getWarnings();
         if (warnings.isEmpty() == false) {
             StringBuilder warningMessage = new StringBuilder();
