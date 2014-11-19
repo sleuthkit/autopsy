@@ -55,7 +55,7 @@ final class DataSourceIngestPipeline {
         for (DataSourceIngestModuleDecorator module : modules) {
             try {
                 module.startUp(new IngestJobContext(this.job));
-            } catch (Exception ex) { // Catch-all exception firewall
+            } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
@@ -74,7 +74,7 @@ final class DataSourceIngestPipeline {
                 this.job.switchDataSourceIngestProgressBarToIndeterminate();
                 ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
-            } catch (Exception ex) { // Catch-all exception firewall
+            } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
             if (this.job.isCancelled()) {

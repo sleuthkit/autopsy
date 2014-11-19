@@ -58,7 +58,7 @@ final class FileIngestPipeline {
         for (FileIngestModuleDecorator module : this.modules) {
             try {
                 module.startUp(new IngestJobContext(this.job));
-            } catch (Exception ex) { // Catch-all exception firewall
+            } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
@@ -79,7 +79,7 @@ final class FileIngestPipeline {
             try {
                 FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(file);
-            } catch (Exception ex) { // Catch-all exception firewall
+            } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
             if (this.job.isCancelled()) {
@@ -99,7 +99,7 @@ final class FileIngestPipeline {
         for (FileIngestModuleDecorator module : this.modules) {
             try {
                 module.shutDown();
-            } catch (Exception ex) {
+            } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }

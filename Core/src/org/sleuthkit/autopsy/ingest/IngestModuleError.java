@@ -24,9 +24,9 @@ package org.sleuthkit.autopsy.ingest;
  */
 final class IngestModuleError {
     private final String moduleDisplayName;
-    private final Exception error;
+    private final Throwable error;
 
-    IngestModuleError(String moduleDisplayName, Exception error) {
+    IngestModuleError(String moduleDisplayName, Throwable error) {
         this.moduleDisplayName = moduleDisplayName;
         this.error = error;
     }
@@ -35,7 +35,7 @@ final class IngestModuleError {
         return this.moduleDisplayName;
     }
 
-    Exception getModuleError() {
+    Throwable getModuleError() {
         return this.error;
     }
 }
