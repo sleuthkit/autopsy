@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,23 +19,21 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
-
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 /**
- * visual component of 2nd panle in add image wizard. allows the user to
- * configure ingest modules. delegates most details to ingestPanel attribute.
- *
+ * UI panel for the ingest job configuration wizard panel of the add data source
+ * wizard.
  *
  */
- class AddImageWizardIngestConfigVisual extends javax.swing.JPanel {
+class AddImageWizardIngestConfigVisual extends JPanel {
 
-    //could this be something more specific than JPanel? - jm
-    private JPanel ingestPanel = null;
+    private final JPanel ingestPanel;
 
     /**
-     * Creates new form AddImageVisualPanel3
+     * Constructs a UI panel for the ingest job configuration wizard panel of
+     * the add data source wizard.
      */
     public AddImageWizardIngestConfigVisual(JPanel ingestPanel) {
         this.ingestPanel = ingestPanel;
@@ -50,10 +48,9 @@ import javax.swing.JPanel;
     }
 
     /**
-     * Returns the name of the this panel. This name will be shown on the left
-     * panel of the "Add Image" wizard panel.
+     * Returns the name of the this panel.
      *
-     * @return name the name of this panel
+     * @return A name string.
      */
     @Override
     public String getName() {

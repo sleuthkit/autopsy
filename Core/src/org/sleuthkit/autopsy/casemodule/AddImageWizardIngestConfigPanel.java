@@ -46,8 +46,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
-    private IngestJobSettings ingestJobSettings;
+
+    private IngestJobSettingsPanel ingestJobSettingsPanel;
     
     /**
      * The visual component that displays this panel. If you need to access the
@@ -75,15 +75,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
         
-        this.ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());        
-        List<String> messages = this.ingestJobSettings.getWarnings();
-        if (messages.isEmpty() == false) {
-            StringBuilder warning = new StringBuilder();
-            for (String message : messages) {
-                warning.append(message).append("\n");
-            }
-            JOptionPane.showMessageDialog(null, warning.toString());
-        }
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());        
+        showWarnings(ingestJobSettings);
+        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
     }
 
     /**
@@ -97,7 +91,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     @Override
     public Component getComponent() {
         if (component == null) {
-            component = new AddImageWizardIngestConfigVisual(new IngestJobSettingsPanel(this.ingestJobSettings));
+            component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
         }
         return component;
     }
@@ -190,21 +184,26 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        this.ingestJobSettings.save();
-        List<String> messages = this.ingestJobSettings.getWarnings();
-        if (messages.isEmpty() == false) {
-            StringBuilder warning = new StringBuilder();
-            for (String message : messages) {
-                warning.append(message).append("\n");
-            }
-            JOptionPane.showMessageDialog(null, warning.toString());
-        }
+        IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        ingestJobSettings.save();
+        showWarnings(ingestJobSettings);
         
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();
     }
 
+    private static void showWarnings(IngestJobSettings ingestJobSettings) {
+        List<String> warnings = ingestJobSettings.getWarnings();
+        if (warnings.isEmpty() == false) {
+            StringBuilder warningMessage = new StringBuilder();
+            for (String warning : warnings) {
+                warningMessage.append(warning).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warningMessage.toString());
+        }
+    }
+    
     /**
      * Start ingest after verifying we have a new image, we are ready to ingest,
      * and we haven't already ingested.
@@ -214,7 +213,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             ingested = true;
             IngestManager ingestManager = IngestManager.getInstance();
             for (Content content : newContents) {
-                ingestManager.startIngestJob(content, ingestJobSettings, true);                
+                ingestManager.startIngestJob(content, ingestJobSettingsPanel.getSettings(), true);                
             }
             progressPanel.setStateFinished();
         }

@@ -64,7 +64,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      *
      * @return The settings.
      */
-    IngestJobSettings getSettings() {
+    public IngestJobSettings getSettings() {
         List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
         for (IngestModuleModel module : modules) {
             IngestModuleTemplate moduleTemplate = module.getIngestModuleTemplate();
