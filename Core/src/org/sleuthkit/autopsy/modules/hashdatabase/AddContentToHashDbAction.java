@@ -27,15 +27,16 @@ import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to content to a hash database.
@@ -149,7 +150,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
                     // don't let them add the hash for an empty file to the DB
-                    if (md5Hash.toLowerCase().equals("d41d8cd98f00b204e9800998ecf8427e")) { //NON-NLS
+                    if (HashUtility.isNoDataMd5(md5Hash)) { //NON-NLS
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)"); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
