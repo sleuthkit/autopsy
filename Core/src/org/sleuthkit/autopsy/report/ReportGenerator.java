@@ -462,7 +462,7 @@ import org.sleuthkit.datamodel.TskData;
                                                 type.getDisplayName()));
                 }
                 
-                // Keyword hits and hashset hit artifacts get sepcial handling.                
+                // Keyword hits and hashset hit artifacts get special handling.
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
                     writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
@@ -491,10 +491,6 @@ import org.sleuthkit.datamodel.TskData;
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
                 if (columnHeaders == null) {
                     // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
-                    MessageNotifyUtil.Notify.show(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.msgShow.skippingArtType.title", type),
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.msgShow.skippingArtType.msg"),
-                            MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
                 
@@ -557,7 +553,7 @@ import org.sleuthkit.datamodel.TskData;
             }
                         
             // Tell the modules reporting on content tags is beginning.
-            for (TableReportModule module : tableModules) {            
+             for (TableReportModule module : tableModules) {            
                 // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                 // @@@ Alos Using the obsolete ARTIFACT_TYPE.TSK_TAG_FILE is also an expedient hack.
                 tableProgress.get(module).updateStatusLabel(
@@ -1154,6 +1150,7 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.urlDomainDecoded"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_DOWNLOAD: 
@@ -1186,9 +1183,10 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size")}));
                 break;
-            case TSK_DEVICE_ATTACHED: 
+            case TSK_DEVICE_ATTACHED:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devMake"),    
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceId"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
@@ -1208,6 +1206,7 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_CONTACT: 
@@ -1237,7 +1236,8 @@ import org.sleuthkit.datamodel.TskData;
             case TSK_CALLLOG:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
@@ -1269,11 +1269,8 @@ import org.sleuthkit.datamodel.TskData;
                  columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_GPS_BOOKMARK:
                  columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
@@ -1319,12 +1316,6 @@ import org.sleuthkit.datamodel.TskData;
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile") }));
                 break;
-            case TSK_TOOL_OUTPUT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
-                break;
             case TSK_ENCRYPTION_DETECTED:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
@@ -1344,6 +1335,55 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osInstallDate.text"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;    
+            case TSK_EMAIL_MSG:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailTo"), //TSK_EMAIL_TO
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailFrom"), //TSK_EMAIL_FROM
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSubject"), //TSK_SUBJECT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeSent"), //TSK_DATETIME_SENT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeRcvd"), //TSK_DATETIME_RCVD
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),  //TSK_PATH
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailCc"), //TSK_EMAIL_CC
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailBcc"), //TSK_EMAIL_BCC
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskMsgId")})); //TSK_MSG_ID
+                break;        
+            case TSK_INTERESTING_FILE_HIT:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"), //TSK_SET_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskInterestingFilesCategory"), //TSK_CATEGORY
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath")})); //TSK_PATH
+                break;
+            case TSK_GPS_ROUTE:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskGpsRouteCategory"), //TSK_CATEGORY
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"), //TSK_DATETIME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeEnd"), //TSK_GEO_LATITUDE_END
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeEnd"), //TSK_GEO_LONGITUDE_END
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeStart"), //TSK_GEO_LATITUDE_START
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeStart"), //TSK_GEO_LONGITUDE_START
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"), //TSK_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"), //TSK_LOCATION
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program")}));//TSK_PROG_NAME
+                break;
+            case TSK_INTERESTING_ARTIFACT_HIT:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"), //TSK_SET_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"), //TSK_ASSOCIATED_ARTIFACT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program")})); //TSK_PROG_NAME
+                break;
+            case TSK_PROG_RUN:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"), //TSK_PROG_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"), //TSK_ASSOCIATED_ARTIFACT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"), //TSK_DATETIME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.count")})); //TSK_COUNT
+                break;
+                
+            case TSK_OS_ACCOUNT:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userName"), //TSK_USER_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId")})); //TSK_USER_ID
+                break;
             default:
                 return null;
         }
@@ -1420,8 +1460,15 @@ import org.sleuthkit.datamodel.TskData;
      */
     private String getFileUniquePath(long objId) {
         try {
-            return skCase.getAbstractFileById(objId).getUniquePath();
-        } catch (TskCoreException ex) {
+            AbstractFile af = skCase.getAbstractFileById(objId);
+            if(af!=null) {
+                return af.getUniquePath();
+            }
+            else {
+                return "";
+            }
+        }
+        catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
         }
         return "";
@@ -1528,6 +1575,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1549,6 +1597,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                 case TSK_DEVICE_ATTACHED:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
@@ -1561,12 +1610,13 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
-                case TSK_METADATA_EXIF: 
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                case TSK_METADATA_EXIF:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                  case TSK_CONTACT:
@@ -1593,7 +1643,8 @@ import org.sleuthkit.datamodel.TskData;
                     break;
                   case TSK_CALLLOG:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
@@ -1608,7 +1659,7 @@ import org.sleuthkit.datamodel.TskData;
                     break;
                   case TSK_SPEED_DIAL_ENTRY:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1621,9 +1672,6 @@ import org.sleuthkit.datamodel.TskData;
                   case TSK_GPS_TRACKPOINT:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1667,7 +1715,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
-                 case TSK_TOOL_OUTPUT: 
+                 case TSK_TOOL_OUTPUT:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
@@ -1676,7 +1724,7 @@ import org.sleuthkit.datamodel.TskData;
                      orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                      orderedRowData.add(getFileUniquePath(getObjectID()));
                      break;
-                case TSK_EXT_MISMATCH_DETECTED:   
+                case TSK_EXT_MISMATCH_DETECTED:
                     AbstractFile file = skCase.getAbstractFileById(getObjectID());
                     orderedRowData.add(file.getName());
                     orderedRowData.add(file.getNameExtension());
@@ -1688,11 +1736,58 @@ import org.sleuthkit.datamodel.TskData;
                     }                   
                     orderedRowData.add(file.getUniquePath());
                     break;
-                 case TSK_OS_INFO: 
+                case TSK_OS_INFO:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_EMAIL_MSG:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID()));
+                    break; 
+                case TSK_INTERESTING_FILE_HIT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                    String pathToShow=mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID());
+                    if (pathToShow.isEmpty())
+                    {
+                        pathToShow=getFileUniquePath(getObjectID());
+                    }
+                    orderedRowData.add(pathToShow); 
+                    break; 
+                case TSK_GPS_ROUTE:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    break;
+                case TSK_INTERESTING_ARTIFACT_HIT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    break;
+                case TSK_PROG_RUN:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_COUNT.getTypeID()));
+                    break;
+                case TSK_OS_ACCOUNT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
