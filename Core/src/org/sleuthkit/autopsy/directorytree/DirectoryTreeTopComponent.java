@@ -937,7 +937,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
                 }
                 Node listNode = keywordRootChilds.findChild(listName);
+                if (listNode == null) {
+                    return;
+                }
                 Children listChildren = listNode.getChildren();
+                if (listChildren == null) {
+                    return;
+                }
                 treeNode = listChildren.findChild(keywordName);
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
@@ -962,8 +968,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else {
             Node extractedContent = resultsChilds.findChild(ExtractedContent.NAME);
             Children extractedChilds = extractedContent.getChildren();
+            if (extractedChilds == null) {
+                return;
+            }
             treeNode = extractedChilds.findChild(type.getLabel());
         }
+        
+        if (treeNode == null) {
+            return;
+        }
+        
         try {
             em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
