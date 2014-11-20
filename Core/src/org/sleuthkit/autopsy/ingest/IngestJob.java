@@ -65,7 +65,7 @@ final class IngestJob {
      */
     private final long id;
     private final Content dataSource;
-    private final boolean processUnallocatedSpace;
+    private final IngestJobSettings ingestJobSettings;
     private final Object dataSourceIngestPipelineLock;
     private DataSourceIngestPipeline firstStageDataSourceIngestPipeline;
     private DataSourceIngestPipeline secondStageDataSourceIngestPipeline;
@@ -148,7 +148,7 @@ final class IngestJob {
         List<IngestModuleError> errors = new ArrayList<>();
         if (IngestJob.jobCreationIsEnabled) {
             long jobId = nextJobId.incrementAndGet();
-            IngestJob job = new IngestJob(jobId, dataSource, settings.getProcessUnallocatedSpace());
+            IngestJob job = new IngestJob(jobId, dataSource, settings);
             IngestJob.jobsById.put(jobId, job);
             errors = job.start(settings.getEnabledIngestModuleTemplates());
             if (errors.isEmpty() && job.hasIngestPipeline()) {
@@ -200,10 +200,11 @@ final class IngestJob {
      * @param processUnallocatedSpace Whether or not unallocated space should be
      * processed during the ingest job.
      */
-    private IngestJob(long id, Content dataSource, boolean processUnallocatedSpace) {
+    private IngestJob(long id, Content dataSource, IngestJobSettings settings) {
         this.id = id;
         this.dataSource = dataSource;
-        this.processUnallocatedSpace = processUnallocatedSpace;
+        
+        this.ingestJobSettings = settings;
         this.dataSourceIngestPipelineLock = new Object();
         this.fileIngestPipelines = new LinkedBlockingQueue<>();
         this.filesInProgress = new ArrayList<>();
@@ -239,7 +240,7 @@ final class IngestJob {
      * @return True or false.
      */
     boolean shouldProcessUnallocatedSpace() {
-        return this.processUnallocatedSpace;
+        return this.ingestJobSettings.getProcessUnallocatedSpace();
     }
 
     /**
