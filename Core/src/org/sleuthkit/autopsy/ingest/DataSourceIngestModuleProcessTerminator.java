@@ -18,48 +18,50 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 
 /**
- * A timed process terminator for data source ingest modules. Checks for
- * ingest job cancellation as well.
+ * A process terminator for data source ingest modules that checks for ingest
+ * job cancellation and optionally checks for process run time in excess of a
+ * specified maximum.
  */
-public final class DataSourceIngestModuleProcessTerminator extends ExecUtil.TimedProcessTerminator {
+public final class DataSourceIngestModuleProcessTerminator implements ProcessTerminator {
 
-    public final IngestJobContext context;
-    
+    private final IngestJobContext context;
+    private TimedProcessTerminator timedTerminator;
+
     /**
      * Constructs a process terminator for a data source ingest module.
-     * Uses default process execution timeout value.
      *
      * @param context The ingest job context for the ingest module.
      */
     public DataSourceIngestModuleProcessTerminator(IngestJobContext context) {
-        super();
         this.context = context;
     }
 
     /**
-     * Constructs a process terminator for a data source ingest module. 
+     * Constructs a process terminator for a data source ingest module.
      *
      * @param context The ingest job context for the ingest module.
-     * @param timeoutSec Process execution timeout value (seconds)
+     * @param maxRunTimeInSeconds Maximum allowable run time of process.
      */
-    public DataSourceIngestModuleProcessTerminator(IngestJobContext context, long timeoutSec) {
-        super(timeoutSec);
-        this.context = context;
-    }    
-    
+    public DataSourceIngestModuleProcessTerminator(IngestJobContext context, long maxRunTimeInSeconds) {
+        this(context);
+        this.timedTerminator = new TimedProcessTerminator(maxRunTimeInSeconds);
+    }
+
     /**
-     * @return true if process should be terminated, false otherwise
+     * @inheritDoc
      */
     @Override
     public boolean shouldTerminateProcess() {
-        
-        if (this.context.dataSourceIngestIsCancelled())
+
+        if (this.context.dataSourceIngestIsCancelled()) {
             return true;
-        
-        return super.shouldTerminateProcess();
+        }
+
+        return this.timedTerminator != null ? this.timedTerminator.shouldTerminateProcess() : false;
     }
 
 }
