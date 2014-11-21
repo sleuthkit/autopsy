@@ -19,47 +19,49 @@
 package org.sleuthkit.autopsy.ingest;
 
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 
 /**
- * A timed process terminator for data source ingest modules. Checks for
- * ingest job cancellation as well.
+ * A process terminator for file ingest modules that checks for ingest job
+ * cancellation and optionally checks for process run time in excess of a
+ * specified maximum.
  */
-public final class FileIngestModuleProcessTerminator extends ExecUtil.TimedProcessTerminator {
+public final class FileIngestModuleProcessTerminator implements ProcessTerminator {
 
-    public final IngestJobContext context;
-    
+    private final IngestJobContext context;
+    private ExecUtil.TimedProcessTerminator timedTerminator;
+
     /**
      * Constructs a process terminator for a file ingest module.
-     * Uses default process execution timeout value.
      *
      * @param context The ingest job context for the ingest module.
      */
     public FileIngestModuleProcessTerminator(IngestJobContext context) {
-        super();
         this.context = context;
     }
-    
-    /**
-     * Constructs a process terminator for a file ingest module. 
-     *
-     * @param context The ingest job context for the ingest module.
-     * @param timeoutSec Process execution timeout value (seconds)
-     */
-    public FileIngestModuleProcessTerminator(IngestJobContext context, long timeoutSec) {
-        super(timeoutSec);
-        this.context = context;
-    }      
 
     /**
-     * @return true if process should be terminated, false otherwise
+     * Constructs a process terminator for a file ingest module.
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param maxRunTimeInSeconds Maximum allowable run time of process.
+     */
+    public FileIngestModuleProcessTerminator(IngestJobContext context, long maxRunTimeInSeconds) {
+        this(context);
+        this.timedTerminator = new ExecUtil.TimedProcessTerminator(maxRunTimeInSeconds);
+    }
+
+    /**
+     * @inheritDoc
      */
     @Override
     public boolean shouldTerminateProcess() {
 
-        if (this.context.fileIngestIsCancelled())
+        if (this.context.fileIngestIsCancelled()) {
             return true;
-        
-        return super.shouldTerminateProcess();
+        }
+
+        return this.timedTerminator != null ? this.timedTerminator.shouldTerminateProcess() : false;
     }
 
 }
