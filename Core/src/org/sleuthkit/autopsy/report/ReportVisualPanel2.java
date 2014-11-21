@@ -105,6 +105,7 @@ final class ReportVisualPanel2 extends JPanel {
     }
 
     // Initialize the list of Artifacts
+    @SuppressWarnings("deprecation")
     private void initArtifactTypes() {
 
         try {

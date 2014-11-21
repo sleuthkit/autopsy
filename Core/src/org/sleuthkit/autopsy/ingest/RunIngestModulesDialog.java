@@ -128,7 +128,7 @@ public final class RunIngestModulesDialog extends JDialog {
          * them to create and add an ingest job settings panel.
          */
         IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName());
-        this.showWarnings(ingestJobSettings);
+        RunIngestModulesDialog.showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
         add(this.ingestJobSettingsPanel, BorderLayout.PAGE_START);
 
