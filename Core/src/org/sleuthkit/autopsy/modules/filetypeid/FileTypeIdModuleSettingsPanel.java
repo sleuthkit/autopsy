@@ -29,19 +29,24 @@ final class FileTypeIdModuleSettingsPanel extends IngestModuleIngestJobSettingsP
 
     private final FileTypeIdModuleSettings settings;
 
-    public FileTypeIdModuleSettingsPanel(FileTypeIdModuleSettings settings) {
+    // NOTE: This was declared public, but was inaccessible because the class is 
+    // not public
+    FileTypeIdModuleSettingsPanel(FileTypeIdModuleSettings settings) {
         this.settings = settings;
         initComponents();
         customizeComponents();
     }
 
-    private void customizeComponents() {
-        skipKnownCheckBox.setSelected(settings.skipKnownFiles());
-    }
-
+    /**
+     * @inheritDoc
+     */
     @Override
     public IngestModuleIngestJobSettings getSettings() {
         return settings;
+    }
+    
+    private void customizeComponents() {
+        skipKnownCheckBox.setSelected(settings.skipKnownFiles());
     }
 
     /**

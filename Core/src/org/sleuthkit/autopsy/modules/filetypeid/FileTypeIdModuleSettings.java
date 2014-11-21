@@ -23,6 +23,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 /**
  * Ingest job options for the file type identifier ingest module instances.
  */
+// @Deprecated This class is not for public use
 public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
@@ -35,6 +36,9 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
         this.skipKnownFiles = skipKnownFiles;
     }
     
+    /**
+     * @inheritDoc
+     */
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
