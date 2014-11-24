@@ -18,39 +18,62 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.externalresults.ExternalResultsXMLParser;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import javax.xml.bind.DatatypeConverter;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 
 /**
  * RJCTODO
  */
 public class UserDefinedFileTypes {
 
+    private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; // NON-NLS
     private static final String ROOT_FILE_TYPES_ELEMENT = "fileTypes"; // NON-NLS
     private static final String FILE_TYPE_ELEMENT = "fileType"; // NON-NLS
     private static final String MIME_TYPE_ELEMENT = "mimeType"; // NON-NLS
     private static final String SIGNATURE_ELEMENT = "signature"; // NON-NLS
     private static final String OFFSET_ELEMENT = "offset";
+    private static final String ENCODING = "UTF-8"; //NON-NLS // RJCTODO: Is this right?
+
+    /**
+     * Reads the user-defined file type definitions from the user-defined file
+     * types file.
+     *
+     * @return A list of file type signature
+     */
+    synchronized static List<FileTypeSignature> getUserDefinedFileTypeSignatures() {
+        Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), UserDefinedFileTypes.USER_DEFINED_TYPE_DEFINITIONS_FILE);
+        String filePathString = filePath.toAbsolutePath().toString();
+        File file = new File(filePathString);
+        if (file.exists() && file.canRead()) {
+            return UserDefinedFileTypes.Reader.readFileTypes(filePathString);
+        }
+        return Collections.emptyList();
+    }
 
     /**
      * An association between a MIME type and a signature within a file.
      */
-    static interface FileSignature {
+    static interface FileTypeSignature {
 
         /**
          * Gets the MIME type associated with this signature.
@@ -58,6 +81,20 @@ public class UserDefinedFileTypes {
          * @return The MIME type string.
          */
         String getMimeType();
+
+        /**
+         * RJCTODO
+         *
+         * @return
+         */
+        byte[] getSignatureBytes();
+
+        /**
+         * RJCTODO
+         *
+         * @return
+         */
+        long getOffset();
 
         /**
          * Determines whether or not a file contains the signature.
@@ -73,7 +110,7 @@ public class UserDefinedFileTypes {
      * An association between a MIME type and a byte signature at a specified
      * offset within a file.
      */
-    static class ByteSignature implements FileSignature {
+    static class ByteSignature implements FileTypeSignature {
 
         private final String mimeType;
         private final byte[] signatureBytes;
@@ -107,6 +144,22 @@ public class UserDefinedFileTypes {
          * @inheritDoc
          */
         @Override
+        public byte[] getSignatureBytes() {
+            return this.signatureBytes;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public long getOffset() {
+            return this.offset;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        @Override
         public boolean containedIn(AbstractFile file) {
             try {
                 int bytesRead = file.read(this.buffer, offset, buffer.length);
@@ -117,7 +170,40 @@ public class UserDefinedFileTypes {
         }
 
     }
-        
+
+    /**
+     * RJCTODO
+     */
+    static class AsciiStringSignature implements FileTypeSignature {
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public String getMimeType() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public byte[] getSignatureBytes() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public long getOffset() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public boolean containedIn(AbstractFile file) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+    }
+
     /**
      * Provides a mechanism for persisting user-defined file types.
      */
@@ -129,10 +215,39 @@ public class UserDefinedFileTypes {
          * @param signatures A collection of file signatures.
          * @param filePath The path to the file.
          */
-        static void writeFileTypes(List<FileSignature> signatures, String filePath) {
+        static void writeFileTypes(List<FileTypeSignature> signatures, String filePath) {
+            try {
+                DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = builderFactory.newDocumentBuilder();
+                Document doc = builder.newDocument();
+                Element rootElem = doc.createElement(UserDefinedFileTypes.ROOT_FILE_TYPES_ELEMENT);
+                doc.appendChild(rootElem);
+                for (FileTypeSignature signature : signatures) {
+                    UserDefinedFileTypes.Writer.writeFileType(signature, rootElem, doc);
+                }
+                if (!XMLUtil.saveDoc(HashDbManager.class, filePath, UserDefinedFileTypes.ENCODING, doc)) {
+                    // RJCTODO
+                }
+            } catch (ParserConfigurationException ex) {
+            }
 
         }
-        
+
+        static void writeFileType(FileTypeSignature signature, Element rootElem, Document doc) {
+            Element mimeTypeElem = doc.createElement(UserDefinedFileTypes.MIME_TYPE_ELEMENT);
+            mimeTypeElem.setTextContent(signature.getMimeType());
+            Element sigElem = doc.createElement(UserDefinedFileTypes.SIGNATURE_ELEMENT);
+            sigElem.setTextContent(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
+            Element offsetElem = doc.createElement(UserDefinedFileTypes.OFFSET_ELEMENT);
+            offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
+            Element fileTypeElem = doc.createElement(UserDefinedFileTypes.FILE_TYPE_ELEMENT);
+            fileTypeElem.appendChild(mimeTypeElem);
+            fileTypeElem.appendChild(sigElem);
+            fileTypeElem.appendChild(offsetElem);
+            rootElem.appendChild(fileTypeElem);
+            // RJCTODO: Surely there are some exceptions that could be thrown here?
+        }
+
     }
 
     /**
@@ -146,26 +261,75 @@ public class UserDefinedFileTypes {
          * @param filePath The path to the file.
          * @return A collection of file signatures.
          */
-        static List<FileSignature> readFileTypes(String filePath) {
-            // RJCTODO:
-        try {
-            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            Document doc = builder.parse(new FileInputStream(filePath));
-            final Document doc = XMLUtil.loadDoc(ExternalResultsXMLParser.class, this.resultsFilePath, XSD_FILE);
-            if (doc != null) {
-                final Element rootElem = doc.getDocumentElement();
-                if (rootElem != null && rootElem.getNodeName().equals(ExternalResultsXMLParser.TagNames.ROOT_ELEM.toString())) {
-            
-        } catch (ParserConfigurationException e) {
-        } catch (SAXException e) {
-        } catch (IOException e) {
-        }
-            
-
-            
-            
+        static List<FileTypeSignature> readFileTypes(String filePath) {
+            try {
+                DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = builderFactory.newDocumentBuilder();
+                Document doc = builder.parse(new FileInputStream(filePath));
+                if (doc != null) {
+                    Element rootElem = doc.getDocumentElement();
+                    if (rootElem != null && rootElem.getNodeName().equals(UserDefinedFileTypes.ROOT_FILE_TYPES_ELEMENT)) {
+                        return UserDefinedFileTypes.Reader.parseFileTypes(rootElem);
+                    }
+                }
+            } catch (ParserConfigurationException | SAXException | IOException e) {
+                // RJCTODO:
+            }
             return Collections.emptyList();
+        }
+
+        /**
+         * RJCTODO
+         *
+         * @param rootElem
+         * @return
+         */
+        private static List<FileTypeSignature> parseFileTypes(Element rootElem) {
+            List<FileTypeSignature> signatures = new ArrayList<>();
+            NodeList fileTypeElems = rootElem.getElementsByTagName(UserDefinedFileTypes.FILE_TYPE_ELEMENT);
+            for (int i = 0; i < fileTypeElems.getLength(); ++i) {
+                Element fileTypeElem = (Element) fileTypeElems.item(i);
+                UserDefinedFileTypes.Reader.tryParseSignature(fileTypeElem, signatures);
+            }
+            return signatures;
+        }
+
+        /**
+         * RJCTODO
+         *
+         * @param fileTypeElem
+         * @param signatures
+         */
+        private static void tryParseSignature(Element fileTypeElem, List<FileTypeSignature> signatures) {
+            try {
+                String mimeType = "";
+                byte[] signature = null;
+                long offset = -1;
+                NodeList childElems = fileTypeElem.getElementsByTagName(UserDefinedFileTypes.FILE_TYPE_ELEMENT);
+                for (int i = 0; i < childElems.getLength(); ++i) {
+                    Element childElem = (Element) childElems.item(i);
+                    switch (childElem.getTagName()) {
+                        case MIME_TYPE_ELEMENT:
+                            mimeType = childElem.getTextContent();
+                            break;
+                        case SIGNATURE_ELEMENT:
+                            signature = DatatypeConverter.parseHexBinary(childElem.getTextContent());
+                            break;
+                        case OFFSET_ELEMENT:
+                            offset = DatatypeConverter.parseLong(childElem.getTextContent());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (!mimeType.isEmpty() && null != signature && signature.length > 0 && offset >= 0) {
+                    signatures.add(new ByteSignature(mimeType, signature, offset));
+                }
+            } catch (NumberFormatException ex) {
+                // RJCTODO: Log error
+            } catch (IllegalArgumentException ex) {
+                // RJCTODO: Log error                
+            }
         }
 
     }

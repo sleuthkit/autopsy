@@ -29,7 +29,7 @@ class UserDefinedFileTypeIdentifier {
 
     private static final String USER_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml";
     private static final String AUTOPSY_DEFINITIONS_FILE = "AutopsyFileTypeDefinitions.xml";    
-    private final List<UserDefinedFileTypes.FileSignature> signatures;
+    private final List<UserDefinedFileTypes.FileTypeSignature> signatures;
 
     /**
      * Creates an object that does file type identification with user-defined
@@ -69,7 +69,7 @@ class UserDefinedFileTypeIdentifier {
      */
     String identify(AbstractFile file) {
         String type = "";
-        for (UserDefinedFileTypes.FileSignature signature : this.signatures) {
+        for (UserDefinedFileTypes.FileTypeSignature signature : this.signatures) {
             if (signature.containedIn(file)) {
                 type = signature.getMimeType();
                 break;
