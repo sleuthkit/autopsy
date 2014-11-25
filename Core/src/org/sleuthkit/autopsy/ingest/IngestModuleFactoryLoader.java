@@ -110,7 +110,7 @@ final class IngestModuleFactoryLoader {
             if (coreFactory != null) {
                 factories.add(coreFactory);
             } else {
-                logger.log(Level.SEVERE, "Core factory {0} not loaded", coreFactory);
+                logger.log(Level.SEVERE, "Core factory {0} not loaded", className);
             }
         }
 

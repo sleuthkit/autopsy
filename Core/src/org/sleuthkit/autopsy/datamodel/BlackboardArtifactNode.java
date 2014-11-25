@@ -32,6 +32,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -290,7 +291,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
                     map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
-                } else {
+                } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID() && 
+                        attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
+                    /* This was added because the RegRipper output would often cause the UI to 
+                     * get a black line accross it and hang if you hovered over large output
+                     * or selected it.  This reduces the amount of data in the table.
+                     * Could consider doing this for all fields in the UI.  
+                    */
+                    String value = attribute.getDisplayString();
+                    if (value.length() > 512)
+                        value = value.substring(0, 512);
+                    map.put(attribute.getAttributeTypeDisplayName(), value);
+                } 
+                else {
                     map.put(attribute.getAttributeTypeDisplayName(), attribute.getDisplayString());
                 }
             }

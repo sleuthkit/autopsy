@@ -34,7 +34,7 @@ public final class UserPreferences {
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
-    
+        
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -85,5 +85,6 @@ public final class UserPreferences {
 
     public static void setNumberOfFileIngestThreads(int value) {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
-    }        
+    }      
+    
 }

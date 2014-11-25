@@ -37,22 +37,51 @@ public final class ExecUtil {
 
     private static final long DEFAULT_TIMEOUT = 5;
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
-        
+
     /**
-     * The execute() methods do a wait with a timeout on the executing process
-     * and query the terminator each time the timeout expires to determine
-     * whether or not to kill the process or allow it to continue.
+     * The execute() methods do a wait() with a timeout on the executing process
+     * and query a process terminator each time the timeout expires to determine
+     * whether or not to kill the process.
      */
     public interface ProcessTerminator {
 
         /**
-         * An implementation of this interface is called by the run() methods at
-         * every timeout to determine whether or not to kill the running
-         * process.
+         * Decides whether or not to terminate a process being run by a
+         * ExcUtil.execute() methods.
          *
          * @return True or false.
          */
         boolean shouldTerminateProcess();
+    }
+
+    /**
+     * Process terminator that can be used to kill a processes after it exceeds
+     * a maximum allowable run time.
+     */
+    public static class TimedProcessTerminator implements ProcessTerminator {
+
+        private final long startTimeInSeconds;
+        private final long maxRunTimeInSeconds; 
+
+        /**
+         * Creates a process terminator that can be used to kill a process after
+         * it has run for a given period of time.
+         * 
+         * @param maxRunTimeInSeconds The maximum allowable run time in seconds.
+         */
+        public TimedProcessTerminator(long maxRunTimeInSeconds) {
+            this.maxRunTimeInSeconds = maxRunTimeInSeconds;
+            this.startTimeInSeconds = (new Date().getTime()) / 1000;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public boolean shouldTerminateProcess() {
+            long currentTimeInSeconds = (new Date().getTime()) / 1000;
+            return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
+        }
     }
 
     /**
@@ -125,13 +154,15 @@ public final class ExecUtil {
     }
 
     /**
-     * Kill a process and its children
+     * Kills a process and its children
+     *
      * @param process The parent process to kill
      */
     public static void killProcess(Process process) {
-        if (process == null)
+        if (process == null) {
             return;
-        
+        }
+
         try {
             if (PlatformUtil.isWindows()) {
                 Win32Process parentProcess = new Win32Process(process);
@@ -141,67 +172,13 @@ public final class ExecUtil {
                     child.terminate();
                 });
                 parentProcess.terminate();
-            }
-            else {
+            } else {
                 process.destroyForcibly();
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
         }
     }
-
-    /**
-     * Timed process terminator that triggers either based on default process time out value
-     * or user specified time out value.
-     */
-    public static class TimedProcessTerminator implements ProcessTerminator {
-
-        private final long creationTimeSec;   // time when TimedProcessTerminator was constructed
-        private final long timeoutSec;        // time out value (seconds)
-        private static final long DEFAULT_TIMEOUT_SEC = 172800;   // 48 hours
-
-        /**
-         * Constructs a process terminator for an ingest module. Uses default
-         * process execution timeout value.
-         */
-        public TimedProcessTerminator() {
-            creationTimeSec = (new Date().getTime()) / 1000;
-            timeoutSec = DEFAULT_TIMEOUT_SEC;
-        }
-
-        /**
-         * Constructs a process terminator for an ingest module.
-         *
-         * @param userSpecifiedTimeoutSec Process execution timeout value (seconds)
-         */
-        public TimedProcessTerminator(long userSpecifiedTimeoutSec) {
-            creationTimeSec = (new Date().getTime()) / 1000;
-
-            if (userSpecifiedTimeoutSec > 0) {
-                timeoutSec = userSpecifiedTimeoutSec;
-            } else {
-                logger.log(Level.WARNING, "Process time out value must be greater than zero. Using default time out instead."); // NON-NLS
-                timeoutSec = DEFAULT_TIMEOUT_SEC;
-            }
-        }
-
-        /**
-         * @return true if process should be terminated, false otherwise
-         */
-        @Override
-        public boolean shouldTerminateProcess() {
-
-            // check if maximum execution time elapsed
-            long currentTimeSec = (new Date().getTime()) / 1000;
-            if (currentTimeSec - creationTimeSec > timeoutSec) {
-                return true;
-            }
-
-            return false;
-        }
-    }
-
 
     /**
      * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL

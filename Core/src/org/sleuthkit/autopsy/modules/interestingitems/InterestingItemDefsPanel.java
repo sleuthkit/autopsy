@@ -106,7 +106,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void resetComponents() {
         this.resetRuleComponents();
         this.setsListModel.clear();
-        this.setNameTextField.setText("");
         this.setDescriptionTextArea.setText("");
         this.ignoreKnownFilesCheckbox.setSelected(true);
         this.newSetButton.setEnabled(true);
@@ -119,7 +118,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * components.
      */
     private void resetRuleComponents() {
-        this.ruleNameTextField.setText("");
         this.fileNameTextField.setText("");
         this.fileNameRadioButton.setSelected(true);
         this.fileNameRegexCheckbox.setSelected(false);
@@ -151,7 +149,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (selectedSet != null) {
                 // Populate the components that display the properties of the 
                 // selected files set.
-                InterestingItemDefsPanel.this.setNameTextField.setText(selectedSet.getName());
                 InterestingItemDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 InterestingItemDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
 
@@ -197,7 +194,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
                 // Populate the components that display the properties of the 
                 // selected rule.
-                InterestingItemDefsPanel.this.ruleNameTextField.setText(rule.getName());
                 InterestingItemDefsPanel.this.fileNameTextField.setText(nameFilter.getTextToMatch());
                 InterestingItemDefsPanel.this.fileNameRadioButton.setSelected(nameFilter instanceof FilesSet.Rule.FullNameFilter);
                 InterestingItemDefsPanel.this.fileNameExtensionRadioButton.setSelected(nameFilter instanceof FilesSet.Rule.ExtensionFilter);
@@ -371,82 +367,43 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void initComponents() {
 
         fileNameButtonGroup = new javax.swing.ButtonGroup();
-        setsListLabel = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel6 = new javax.swing.JLabel();
+        newRuleButton = new javax.swing.JButton();
+        filesRadioButton = new javax.swing.JRadioButton();
+        editRuleButton = new javax.swing.JButton();
         rulesListLabel = new javax.swing.JLabel();
-        setsListScrollPane = new javax.swing.JScrollPane();
-        setsList = new javax.swing.JList<FilesSet>();
         rulesListScrollPane = new javax.swing.JScrollPane();
         rulesList = new javax.swing.JList<FilesSet.Rule>();
-        selectedSetLabel = new javax.swing.JLabel();
-        ignoreKnownFilesCheckbox = new javax.swing.JCheckBox();
-        selectedRuleLabel = new javax.swing.JLabel();
-        newSetButton = new javax.swing.JButton();
-        editSetButton = new javax.swing.JButton();
-        deleteSetButton = new javax.swing.JButton();
-        newRuleButton = new javax.swing.JButton();
-        editRuleButton = new javax.swing.JButton();
-        deleteRuleButton = new javax.swing.JButton();
-        separator = new javax.swing.JSeparator();
-        setNameTextField = new javax.swing.JTextField();
-        ruleNameTextField = new javax.swing.JTextField();
-        fileNamePanel = new javax.swing.JPanel();
-        fileNameRegexCheckbox = new javax.swing.JCheckBox();
-        fileNameExtensionRadioButton = new javax.swing.JRadioButton();
-        fileNameTextField = new javax.swing.JTextField();
-        fileNameRadioButton = new javax.swing.JRadioButton();
-        rulePathPanel = new javax.swing.JPanel();
-        rulePathFilterRegexCheckBox = new javax.swing.JCheckBox();
-        rulePathFilterTextField = new javax.swing.JTextField();
-        setDescPanel = new javax.swing.JPanel();
         setDescScrollPanel = new javax.swing.JScrollPane();
         setDescriptionTextArea = new javax.swing.JTextArea();
-        typePanel = new javax.swing.JPanel();
-        filesRadioButton = new javax.swing.JRadioButton();
-        dirsRadioButton = new javax.swing.JRadioButton();
+        editSetButton = new javax.swing.JButton();
+        setsListScrollPane = new javax.swing.JScrollPane();
+        setsList = new javax.swing.JList<FilesSet>();
+        fileNameExtensionRadioButton = new javax.swing.JRadioButton();
+        jLabel3 = new javax.swing.JLabel();
+        fileNameTextField = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        fileNameRadioButton = new javax.swing.JRadioButton();
+        rulePathFilterTextField = new javax.swing.JTextField();
+        ignoreKnownFilesCheckbox = new javax.swing.JCheckBox();
+        fileNameRegexCheckbox = new javax.swing.JCheckBox();
+        separator = new javax.swing.JSeparator();
+        setsListLabel = new javax.swing.JLabel();
         bothRadioButton = new javax.swing.JRadioButton();
+        deleteSetButton = new javax.swing.JButton();
+        deleteRuleButton = new javax.swing.JButton();
+        newSetButton = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        dirsRadioButton = new javax.swing.JRadioButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        rulePathFilterRegexCheckBox = new javax.swing.JCheckBox();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
 
-        org.openide.awt.Mnemonics.setLocalizedText(setsListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.setsListLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(rulesListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulesListLabel.text")); // NOI18N
-
-        setsList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        setsListScrollPane.setViewportView(setsList);
-
-        rulesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        rulesListScrollPane.setViewportView(rulesList);
-
-        org.openide.awt.Mnemonics.setLocalizedText(selectedSetLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.selectedSetLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
-        ignoreKnownFilesCheckbox.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(selectedRuleLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.selectedRuleLabel.text")); // NOI18N
-
-        newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(newSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newSetButton.text")); // NOI18N
-        newSetButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newSetButtonActionPerformed(evt);
-            }
-        });
-
-        editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(editSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editSetButton.text")); // NOI18N
-        editSetButton.setEnabled(false);
-        editSetButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                editSetButtonActionPerformed(evt);
-            }
-        });
-
-        deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(deleteSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.deleteSetButton.text")); // NOI18N
-        deleteSetButton.setEnabled(false);
-        deleteSetButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteSetButtonActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel6.text")); // NOI18N
 
         newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newRuleButton.text")); // NOI18N
@@ -457,12 +414,85 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        filesRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.filesRadioButton.text")); // NOI18N
+        filesRadioButton.setEnabled(false);
+
         editRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editRuleButton.text")); // NOI18N
         editRuleButton.setEnabled(false);
         editRuleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editRuleButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(rulesListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulesListLabel.text")); // NOI18N
+
+        rulesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        rulesListScrollPane.setViewportView(rulesList);
+
+        setDescriptionTextArea.setEditable(false);
+        setDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        setDescriptionTextArea.setColumns(20);
+        setDescriptionTextArea.setLineWrap(true);
+        setDescriptionTextArea.setRows(2);
+        setDescScrollPanel.setViewportView(setDescriptionTextArea);
+
+        editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(editSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editSetButton.text")); // NOI18N
+        editSetButton.setEnabled(false);
+        editSetButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editSetButtonActionPerformed(evt);
+            }
+        });
+
+        setsList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        setsListScrollPane.setViewportView(setsList);
+
+        fileNameButtonGroup.add(fileNameExtensionRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(fileNameExtensionRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameExtensionRadioButton.text")); // NOI18N
+        fileNameExtensionRadioButton.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel3.text")); // NOI18N
+
+        fileNameTextField.setEditable(false);
+        fileNameTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameTextField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel5.text")); // NOI18N
+
+        fileNameButtonGroup.add(fileNameRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(fileNameRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRadioButton.text")); // NOI18N
+        fileNameRadioButton.setEnabled(false);
+
+        rulePathFilterTextField.setEditable(false);
+        rulePathFilterTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterTextField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
+        ignoreKnownFilesCheckbox.setEnabled(false);
+        ignoreKnownFilesCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ignoreKnownFilesCheckboxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(fileNameRegexCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRegexCheckbox.text")); // NOI18N
+        fileNameRegexCheckbox.setEnabled(false);
+
+        separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        org.openide.awt.Mnemonics.setLocalizedText(setsListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.setsListLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(bothRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.bothRadioButton.text")); // NOI18N
+        bothRadioButton.setEnabled(false);
+
+        deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.deleteSetButton.text")); // NOI18N
+        deleteSetButton.setEnabled(false);
+        deleteSetButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSetButtonActionPerformed(evt);
             }
         });
 
@@ -475,146 +505,169 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
-        separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
+        newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newSetButton.text")); // NOI18N
+        newSetButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newSetButtonActionPerformed(evt);
+            }
+        });
 
-        setNameTextField.setEditable(false);
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel2.text")); // NOI18N
 
-        ruleNameTextField.setEditable(false);
-        ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.ruleNameTextField.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(dirsRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.dirsRadioButton.text")); // NOI18N
+        dirsRadioButton.setEnabled(false);
+        dirsRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dirsRadioButtonActionPerformed(evt);
+            }
+        });
 
-        fileNamePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNamePanel.border.title"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel1.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileNameRegexCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRegexCheckbox.text")); // NOI18N
-        fileNameRegexCheckbox.setEnabled(false);
-
-        fileNameButtonGroup.add(fileNameExtensionRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(fileNameExtensionRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameExtensionRadioButton.text")); // NOI18N
-        fileNameExtensionRadioButton.setEnabled(false);
-
-        fileNameTextField.setEditable(false);
-        fileNameTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameTextField.text")); // NOI18N
-
-        fileNameButtonGroup.add(fileNameRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(fileNameRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRadioButton.text")); // NOI18N
-        fileNameRadioButton.setEnabled(false);
-
-        javax.swing.GroupLayout fileNamePanelLayout = new javax.swing.GroupLayout(fileNamePanel);
-        fileNamePanel.setLayout(fileNamePanelLayout);
-        fileNamePanelLayout.setHorizontalGroup(
-            fileNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(fileNamePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(fileNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fileNameTextField)
-                    .addGroup(fileNamePanelLayout.createSequentialGroup()
-                        .addComponent(fileNameRadioButton)
-                        .addGap(10, 10, 10)
-                        .addComponent(fileNameExtensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(fileNameRegexCheckbox)))
-                .addContainerGap())
-        );
-        fileNamePanelLayout.setVerticalGroup(
-            fileNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(fileNamePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(fileNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(fileNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fileNameRadioButton)
-                    .addComponent(fileNameExtensionRadioButton)
-                    .addComponent(fileNameRegexCheckbox))
-                .addContainerGap())
-        );
-
-        rulePathPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathPanel.border.title"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel4.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(rulePathFilterRegexCheckBox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterRegexCheckBox.text")); // NOI18N
         rulePathFilterRegexCheckBox.setEnabled(false);
 
-        rulePathFilterTextField.setEditable(false);
-        rulePathFilterTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterTextField.text")); // NOI18N
+        jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
+        jTextArea1.setColumns(20);
+        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setRows(3);
+        jTextArea1.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jTextArea1.text")); // NOI18N
+        jTextArea1.setWrapStyleWord(true);
+        jScrollPane2.setViewportView(jTextArea1);
 
-        javax.swing.GroupLayout rulePathPanelLayout = new javax.swing.GroupLayout(rulePathPanel);
-        rulePathPanel.setLayout(rulePathPanelLayout);
-        rulePathPanelLayout.setHorizontalGroup(
-            rulePathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(rulePathPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(rulePathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(rulePathFilterRegexCheckBox)
-                    .addComponent(rulePathFilterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(setsListLabel)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(setsListScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(editSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(deleteSetButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(rulesListLabel)
+                    .addComponent(jLabel5)
+                    .addComponent(ignoreKnownFilesCheckbox)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel1))
+                        .addGap(18, 18, 18)
+                        .addComponent(filesRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(dirsRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(bothRadioButton))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(9, 9, 9)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(2, 2, 2)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(fileNameRadioButton)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(fileNameExtensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(fileNameRegexCheckbox))
+                                    .addComponent(fileNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(rulePathFilterRegexCheckBox)
+                                    .addComponent(rulePathFilterTextField)))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(newRuleButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(editRuleButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(deleteRuleButton))
+                    .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 336, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6)
+                    .addComponent(rulesListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 336, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
-        rulePathPanelLayout.setVerticalGroup(
-            rulePathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(rulePathPanelLayout.createSequentialGroup()
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(rulePathFilterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(rulePathFilterRegexCheckBox)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 444, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ignoreKnownFilesCheckbox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(rulesListLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(rulesListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(newRuleButton)
+                            .addComponent(editRuleButton)
+                            .addComponent(deleteRuleButton))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel1)
+                        .addGap(2, 2, 2)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel2)
+                            .addComponent(filesRadioButton)
+                            .addComponent(dirsRadioButton)
+                            .addComponent(bothRadioButton))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel3)
+                            .addComponent(fileNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(fileNameRadioButton)
+                            .addComponent(fileNameExtensionRadioButton)
+                            .addComponent(fileNameRegexCheckbox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(rulePathFilterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(rulePathFilterRegexCheckBox))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(setsListLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(newSetButton)
+                            .addComponent(editSetButton)
+                            .addComponent(deleteSetButton))))
                 .addContainerGap())
         );
 
-        setDescPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.setDescPanel.border.title"))); // NOI18N
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteRuleButton, deleteSetButton, editRuleButton, editSetButton, newRuleButton, newSetButton});
 
-        setDescriptionTextArea.setEditable(false);
-        setDescriptionTextArea.setColumns(20);
-        setDescriptionTextArea.setRows(5);
-        setDescScrollPanel.setViewportView(setDescriptionTextArea);
-
-        javax.swing.GroupLayout setDescPanelLayout = new javax.swing.GroupLayout(setDescPanel);
-        setDescPanel.setLayout(setDescPanelLayout);
-        setDescPanelLayout.setHorizontalGroup(
-            setDescPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(setDescPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        setDescPanelLayout.setVerticalGroup(
-            setDescPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, setDescPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        typePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.typePanel.border.title"))); // NOI18N
-
-        filesRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.filesRadioButton.text")); // NOI18N
-        filesRadioButton.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(dirsRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.dirsRadioButton.text")); // NOI18N
-        dirsRadioButton.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(bothRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.bothRadioButton.text")); // NOI18N
-        bothRadioButton.setEnabled(false);
-
-        javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
-        typePanel.setLayout(typePanelLayout);
-        typePanelLayout.setHorizontalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(typePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(filesRadioButton)
-                .addGap(18, 18, 18)
-                .addComponent(dirsRadioButton)
-                .addGap(18, 18, 18)
-                .addComponent(bothRadioButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        typePanelLayout.setVerticalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(typePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filesRadioButton)
-                    .addComponent(dirsRadioButton)
-                    .addComponent(bothRadioButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        jScrollPane1.setViewportView(jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -622,93 +675,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(newSetButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(editSetButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(deleteSetButton))
-                    .addComponent(setsListLabel)
-                    .addComponent(setsListScrollPane)
-                    .addComponent(ignoreKnownFilesCheckbox)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(selectedSetLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(setNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(setDescPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(selectedRuleLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ruleNameTextField))
-                    .addComponent(rulesListLabel)
-                    .addComponent(fileNamePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rulePathPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(newRuleButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(editRuleButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteRuleButton))
-                    .addComponent(rulesListScrollPane)
-                    .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 710, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteRuleButton, deleteSetButton, editRuleButton, editSetButton, newRuleButton, newSetButton});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(setsListLabel)
-                            .addComponent(rulesListLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(selectedSetLabel)
-                                    .addComponent(setNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(setDescPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(ignoreKnownFilesCheckbox))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(rulesListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(selectedRuleLabel)
-                                    .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(16, 16, 16)
-                                .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(fileNamePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(rulePathPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(deleteRuleButton)
-                            .addComponent(editRuleButton)
-                            .addComponent(newRuleButton)
-                            .addComponent(deleteSetButton)
-                            .addComponent(editSetButton)
-                            .addComponent(newSetButton)))
-                    .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 474, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 11, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 468, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteRuleButton, deleteSetButton, editRuleButton, editSetButton, newRuleButton, newSetButton});
-
     }// </editor-fold>//GEN-END:initComponents
 
     private void newSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSetButtonActionPerformed
@@ -753,6 +728,14 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
+    private void ignoreKnownFilesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ignoreKnownFilesCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ignoreKnownFilesCheckboxActionPerformed
+
+    private void dirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_dirsRadioButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton bothRadioButton;
     private javax.swing.JButton deleteRuleButton;
@@ -762,32 +745,34 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JButton editSetButton;
     private javax.swing.ButtonGroup fileNameButtonGroup;
     private javax.swing.JRadioButton fileNameExtensionRadioButton;
-    private javax.swing.JPanel fileNamePanel;
     private javax.swing.JRadioButton fileNameRadioButton;
     private javax.swing.JCheckBox fileNameRegexCheckbox;
     private javax.swing.JTextField fileNameTextField;
     private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JCheckBox ignoreKnownFilesCheckbox;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newSetButton;
-    private javax.swing.JTextField ruleNameTextField;
     private javax.swing.JCheckBox rulePathFilterRegexCheckBox;
     private javax.swing.JTextField rulePathFilterTextField;
-    private javax.swing.JPanel rulePathPanel;
     private javax.swing.JList<FilesSet.Rule> rulesList;
     private javax.swing.JLabel rulesListLabel;
     private javax.swing.JScrollPane rulesListScrollPane;
-    private javax.swing.JLabel selectedRuleLabel;
-    private javax.swing.JLabel selectedSetLabel;
     private javax.swing.JSeparator separator;
-    private javax.swing.JPanel setDescPanel;
     private javax.swing.JScrollPane setDescScrollPanel;
     private javax.swing.JTextArea setDescriptionTextArea;
-    private javax.swing.JTextField setNameTextField;
     private javax.swing.JList<FilesSet> setsList;
     private javax.swing.JLabel setsListLabel;
     private javax.swing.JScrollPane setsListScrollPane;
-    private javax.swing.JPanel typePanel;
     // End of variables declaration//GEN-END:variables
 
 }

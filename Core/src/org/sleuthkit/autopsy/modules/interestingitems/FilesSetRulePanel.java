@@ -344,81 +344,39 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         typeButtonGroup = new javax.swing.ButtonGroup();
         ruleNameLabel = new javax.swing.JLabel();
         ruleNameTextField = new javax.swing.JTextField();
-        namePanel = new javax.swing.JPanel();
-        nameRegexCheckbox = new javax.swing.JCheckBox();
-        extensionRadioButton = new javax.swing.JRadioButton();
+        jLabel1 = new javax.swing.JLabel();
+        dirsRadioButton = new javax.swing.JRadioButton();
+        filesRadioButton = new javax.swing.JRadioButton();
+        filesAndDirsRadioButton = new javax.swing.JRadioButton();
+        jLabel2 = new javax.swing.JLabel();
         nameTextField = new javax.swing.JTextField();
         fullNameRadioButton = new javax.swing.JRadioButton();
-        typePanel = new javax.swing.JPanel();
-        filesRadioButton = new javax.swing.JRadioButton();
-        dirsRadioButton = new javax.swing.JRadioButton();
-        filesAndDirsRadioButton = new javax.swing.JRadioButton();
-        pathPanel = new javax.swing.JPanel();
-        pathRegexCheckBox = new javax.swing.JCheckBox();
+        extensionRadioButton = new javax.swing.JRadioButton();
+        nameRegexCheckbox = new javax.swing.JCheckBox();
+        jLabel3 = new javax.swing.JLabel();
         pathTextField = new javax.swing.JTextField();
+        pathRegexCheckBox = new javax.swing.JCheckBox();
         pathSeparatorInfoLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameLabel.text")); // NOI18N
 
         ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameTextField.text")); // NOI18N
 
-        namePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.namePanel.border.title"))); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(nameRegexCheckbox, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.nameRegexCheckbox.text")); // NOI18N
-
-        nameButtonGroup.add(extensionRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(extensionRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.extensionRadioButton.text")); // NOI18N
-
-        nameTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.nameTextField.text")); // NOI18N
-
-        nameButtonGroup.add(fullNameRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(fullNameRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.fullNameRadioButton.text")); // NOI18N
-
-        javax.swing.GroupLayout namePanelLayout = new javax.swing.GroupLayout(namePanel);
-        namePanel.setLayout(namePanelLayout);
-        namePanelLayout.setHorizontalGroup(
-            namePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(namePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(namePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(namePanelLayout.createSequentialGroup()
-                        .addComponent(fullNameRadioButton)
-                        .addGap(10, 10, 10)
-                        .addComponent(extensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(nameRegexCheckbox)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(nameTextField))
-                .addContainerGap())
-        );
-        namePanelLayout.setVerticalGroup(
-            namePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(namePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(namePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fullNameRadioButton)
-                    .addComponent(extensionRadioButton)
-                    .addComponent(nameRegexCheckbox))
-                .addContainerGap())
-        );
-
-        typePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.typePanel.border.title"))); // NOI18N
-
-        typeButtonGroup.add(filesRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesRadioButton.text")); // NOI18N
-        filesRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                filesRadioButtonActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel1.text")); // NOI18N
 
         typeButtonGroup.add(dirsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(dirsRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.dirsRadioButton.text")); // NOI18N
         dirsRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 dirsRadioButtonActionPerformed(evt);
+            }
+        });
+
+        typeButtonGroup.add(filesRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesRadioButton.text")); // NOI18N
+        filesRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filesRadioButtonActionPerformed(evt);
             }
         });
 
@@ -430,80 +388,72 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         });
 
-        javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
-        typePanel.setLayout(typePanelLayout);
-        typePanelLayout.setHorizontalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(typePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(filesRadioButton)
-                .addGap(18, 18, 18)
-                .addComponent(dirsRadioButton)
-                .addGap(18, 18, 18)
-                .addComponent(filesAndDirsRadioButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        typePanelLayout.setVerticalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(typePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filesRadioButton)
-                    .addComponent(dirsRadioButton)
-                    .addComponent(filesAndDirsRadioButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel2.text")); // NOI18N
 
-        pathPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.pathPanel.border.title"))); // NOI18N
+        nameTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.nameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(pathRegexCheckBox, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.pathRegexCheckBox.text")); // NOI18N
+        nameButtonGroup.add(fullNameRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(fullNameRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.fullNameRadioButton.text")); // NOI18N
+
+        nameButtonGroup.add(extensionRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(extensionRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.extensionRadioButton.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(nameRegexCheckbox, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.nameRegexCheckbox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel3.text")); // NOI18N
 
         pathTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.pathTextField.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(pathRegexCheckBox, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.pathRegexCheckBox.text")); // NOI18N
+
         pathSeparatorInfoLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/info-icon-16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(pathSeparatorInfoLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.pathSeparatorInfoLabel.text")); // NOI18N
-
-        javax.swing.GroupLayout pathPanelLayout = new javax.swing.GroupLayout(pathPanel);
-        pathPanel.setLayout(pathPanelLayout);
-        pathPanelLayout.setHorizontalGroup(
-            pathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pathPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(pathPanelLayout.createSequentialGroup()
-                        .addComponent(pathRegexCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(pathSeparatorInfoLabel))
-                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        pathPanelLayout.setVerticalGroup(
-            pathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pathPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(pathRegexCheckBox)
-                    .addComponent(pathSeparatorInfoLabel))
-                .addContainerGap())
-        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(namePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(ruleNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(pathPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                        .addComponent(jLabel3)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(pathRegexCheckBox)
+                                .addGap(45, 45, 45)
+                                .addComponent(pathSeparatorInfoLabel))
+                            .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(ruleNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addGap(27, 27, 27)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(filesRadioButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(dirsRadioButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(filesAndDirsRadioButton))
+                            .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addComponent(jLabel2)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(nameTextField))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addGap(78, 78, 78)
+                            .addComponent(fullNameRadioButton)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(extensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(nameRegexCheckbox))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -512,16 +462,31 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(dirsRadioButton)
+                    .addComponent(filesRadioButton)
+                    .addComponent(filesAndDirsRadioButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(namePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pathPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(fullNameRadioButton)
+                    .addComponent(extensionRadioButton)
+                    .addComponent(nameRegexCheckbox))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addGap(4, 4, 4)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(pathSeparatorInfoLabel)
+                    .addComponent(pathRegexCheckBox))
                 .addContainerGap())
         );
-
-        namePanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.namePanel.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void filesAndDirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesAndDirsRadioButtonActionPerformed
@@ -542,17 +507,17 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton filesAndDirsRadioButton;
     private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JRadioButton fullNameRadioButton;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.ButtonGroup nameButtonGroup;
-    private javax.swing.JPanel namePanel;
     private javax.swing.JCheckBox nameRegexCheckbox;
     private javax.swing.JTextField nameTextField;
-    private javax.swing.JPanel pathPanel;
     private javax.swing.JCheckBox pathRegexCheckBox;
     private javax.swing.JLabel pathSeparatorInfoLabel;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JLabel ruleNameLabel;
     private javax.swing.JTextField ruleNameTextField;
     private javax.swing.ButtonGroup typeButtonGroup;
-    private javax.swing.JPanel typePanel;
     // End of variables declaration//GEN-END:variables
 }

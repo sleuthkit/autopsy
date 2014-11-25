@@ -228,7 +228,7 @@ final class FilesSet {
         public String toString() {
             // This override is designed to provide a display name for use with 
             // javax.swing.DefaultListModel<E>.
-            return this.ruleName;
+            return this.ruleName + " (" + fileNameFilter.getTextToMatch() + ")";
         }
 
         /**
