@@ -18,21 +18,28 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import javax.swing.DefaultListModel;
+import javax.swing.ListModel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypes.FileTypeSignature;
 
 /**
- * RJCTODO
+ * A panel to allow a user to make custom file type definitions.
  */
-class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
+final class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
+    
+//    private final HashMap<String, FileTypeDefinitionsManager.FileTypeDefinition> fileTypeDefs;
+//    private final ListModel<String> fileTypesListModel;
 
     /**
-     * Creates... RJCTODO
+     * Creates a panel to allow a user to make custom file type definitions.
      */
     FileTypeIdSettingsPanel() {
+        this.fileTypeDefs = new HashMap<>();
         initComponents();
-        
     }
 
     /**
@@ -40,35 +47,48 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
      */
     @Override
     public void saveSettings() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.store();
     }
-            
-    void load() {
-        List<FileTypeSignature> fileTypeSignatures;
-
-        // RJCTODO read settings and initialize GUI
-        // Example:        
-        // someCheckBox.setSelected(Preferences.userNodeForPackage(FileTypeIdPanel.class).getBoolean("someFlag", false));
-        // or for org.openide.util with API spec. version >= 7.4:
-        // someCheckBox.setSelected(NbPreferences.forModule(FileTypeIdPanel.class).getBoolean("someFlag", false));
-        // or:
-        // someTextField.setText(SomeSystemOption.getDefault().getSomeStringProperty());
-    }
-
-    void store() {
-        // RJCTODO store modified settings
-        // Example:
-        // Preferences.userNodeForPackage(FileTypeIdPanel.class).putBoolean("someFlag", someCheckBox.isSelected());
-        // or for org.openide.util with API spec. version >= 7.4:
-        // NbPreferences.forModule(FileTypeIdPanel.class).putBoolean("someFlag", someCheckBox.isSelected());
-        // or:
-        // SomeSystemOption.getDefault().setSomeStringProperty(someTextField.getText());
-    }
-
-    boolean valid() {
-        return true;
-    }    
     
+    /**
+     * RJCTODO
+     */
+    void load() {
+//        try {
+//            this.fileTypeDefs.clear();
+//            DefaultListModel<String> fileTypesListModel = new DefaultListModel<>();
+//            for (FileTypeDefinition fileTypeDef : FileTypeDefinitionsManager.getFileTypeDefinitions()) {
+//                this.fileTypeDefs.put(fileTypeDef.getTypeName(), fileTypeDef);
+//                fileTypesListModel.addElement(fileTypeDef.getTypeName());
+//            }
+//            this.typesList.setModel(fileTypesListModel);
+//        } catch (IOException ex) {
+//            // RJCTODO
+//        }
+    }
+
+    /**
+     * RJCTODO
+     */
+    void store() {
+//        try {
+//            ListModel<String> fileTypesListModel = this.typesList.getModel();
+//            List<FileTypeDefinitionsManager.FileTypeDefinition> newFileTypeDefs = new ArrayList<>();            
+//            for (int i = 0; i < fileTypesListModel.getSize(); ++i) {
+//                String typeName = fileTypesListModel.getElementAt(i);
+//                newFileTypeDefs.add(this.fileTypeDefs.get(typeName));
+//            }
+//            FileTypeDefinitionsManager.setFileTypeDefinitions(newFileTypeDefs);
+//        } catch (IOException ex) {
+//            // RJCTODO            
+//        }
+    }
+    
+    boolean valid() {
+        // RJCTODO            
+        return true;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -79,8 +99,8 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
+        typesScrollPane = new javax.swing.JScrollPane();
+        typesList = new javax.swing.JList();
         jSeparator1 = new javax.swing.JSeparator();
         mimeTypeLabel = new javax.swing.JLabel();
         mimeTypeTextField = new javax.swing.JTextField();
@@ -98,7 +118,7 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
         jTextArea1 = new javax.swing.JTextArea();
         postHitCheckBox = new javax.swing.JCheckBox();
 
-        jScrollPane1.setViewportView(jList1);
+        typesScrollPane.setViewportView(typesList);
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
@@ -149,7 +169,7 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
                         .addComponent(jButton1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton2))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(typesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(37, 37, 37)
@@ -204,7 +224,7 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 219, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(typesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 219, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
@@ -247,8 +267,6 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
-    private javax.swing.JList jList1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTextArea jTextArea1;
@@ -261,6 +279,8 @@ class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
     private javax.swing.JLabel signatureLabel;
     private javax.swing.JComboBox signatureTypeComboBox;
     private javax.swing.JLabel signatureTypeLabel;
+    private javax.swing.JList typesList;
+    private javax.swing.JScrollPane typesScrollPane;
     // End of variables declaration//GEN-END:variables
 
 }

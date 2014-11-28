@@ -23,19 +23,17 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Does file type identification with user-defined file type signatures.
+ * Does file type identification with user-defined file type fileTypeDefs.
  */
 class UserDefinedFileTypeIdentifier {
 
-    private static final String USER_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml";
-    private static final String AUTOPSY_DEFINITIONS_FILE = "AutopsyFileTypeDefinitions.xml";    
-    private final List<UserDefinedFileTypes.FileTypeSignature> signatures;
+    private final List<FileTypeDefinitionsManager.FileTypeDefinition> fileTypeDefs;
 
     /**
      * Creates an object that does file type identification with user-defined
-     * file type signatures.
+ file type fileTypeDefs.
      *
-     * @param sigFilePath A path to a signature definitions file.
+     * @param sigFilePath A path to a fileTypeDef definitions file.
      */
     static UserDefinedFileTypeIdentifier createDetector(String sigFilePath) {
         UserDefinedFileTypeIdentifier detector = new UserDefinedFileTypeIdentifier();
@@ -45,33 +43,35 @@ class UserDefinedFileTypeIdentifier {
 
     /**
      * Create an object that does file type identification with user-defined
-     * file type signatures.
+ file type fileTypeDefs.
      */
     private UserDefinedFileTypeIdentifier() {
-        this.signatures = new ArrayList<>();
+        this.fileTypeDefs = new ArrayList<>();
     }
 
     /**
-     * Loads a set of user-defined file type signatures from a file.
+     * Loads a set of user-defined file type fileTypeDefs from a file.
      *
-     * @param sigFilePath The path to the signature definitions file.
+     * @param sigFilePath The path to the fileTypeDef definitions file.
      */
     private void loadSignatures(String sigFilePath) {
-        // RJCTODO: Load signature file, creating 
+        // RJCTODO: Load fileTypeDef file, creating 
     }
 
     /**
      * Attempts to identify a file using the set of user-defined file type
-     * signatures.
+ fileTypeDefs.
      *
      * @param file The file to type.
      * @return A MIME type string or the empty string if identification fails.
      */
     String identify(AbstractFile file) {
         String type = "";
-        for (UserDefinedFileTypes.FileTypeSignature signature : this.signatures) {
-            if (signature.containedIn(file)) {
-                type = signature.getMimeType();
+        for (FileTypeDefinitionsManager.FileTypeDefinition fileTypeDef : this.fileTypeDefs) {
+            if (fileTypeDef.matches(file)) {
+                type = fileTypeDef.getTypeName();
+                // RJCTODO: Add attribute to GEN IBNFO artifact?
+                // RJCTODO: Handle alert here?
                 break;
             }
         }
