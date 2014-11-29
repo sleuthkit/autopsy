@@ -23,55 +23,40 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Does file type identification with user-defined file type fileTypeDefs.
+ * Does file type identification with user-defined file types.
  */
-class UserDefinedFileTypeIdentifier {
+final class UserDefinedFileTypeIdentifier {
 
-    private final List<FileTypeDefinitionsManager.FileTypeDefinition> fileTypeDefs;
+    private final List<FileType> fileTypes;
 
     /**
      * Creates an object that does file type identification with user-defined
- file type fileTypeDefs.
-     *
-     * @param sigFilePath A path to a fileTypeDef definitions file.
+     * file types. Does not load the file type definitions.
      */
-    static UserDefinedFileTypeIdentifier createDetector(String sigFilePath) {
-        UserDefinedFileTypeIdentifier detector = new UserDefinedFileTypeIdentifier();
-        detector.loadSignatures(sigFilePath);
-        return detector;
+    UserDefinedFileTypeIdentifier() {
+        this.fileTypes = new ArrayList<>();
     }
 
     /**
-     * Create an object that does file type identification with user-defined
- file type fileTypeDefs.
+     * Loads the set of user-defined file types.
      */
-    private UserDefinedFileTypeIdentifier() {
-        this.fileTypeDefs = new ArrayList<>();
-    }
-
-    /**
-     * Loads a set of user-defined file type fileTypeDefs from a file.
-     *
-     * @param sigFilePath The path to the fileTypeDef definitions file.
-     */
-    private void loadSignatures(String sigFilePath) {
-        // RJCTODO: Load fileTypeDef file, creating 
+    void loadFileTypes() throws UserDefinedFileTypes.UserDefinedFileTypesException {
+        this.fileTypes.clear();
+        this.fileTypes.addAll(UserDefinedFileTypes.getFileTypes());
     }
 
     /**
      * Attempts to identify a file using the set of user-defined file type
- fileTypeDefs.
+     * file types.
      *
      * @param file The file to type.
-     * @return A MIME type string or the empty string if identification fails.
+     * @return A FileType object or null if identification fails.
      */
-    String identify(AbstractFile file) {
-        String type = "";
-        for (FileTypeDefinitionsManager.FileTypeDefinition fileTypeDef : this.fileTypeDefs) {
-            if (fileTypeDef.matches(file)) {
-                type = fileTypeDef.getTypeName();
-                // RJCTODO: Add attribute to GEN IBNFO artifact?
-                // RJCTODO: Handle alert here?
+    FileType identify(AbstractFile file) {
+        FileType type = null;
+        for (FileType fileType : this.fileTypes) {
+            if (fileType.matches(file)) {
+                type = fileType;
                 break;
             }
         }

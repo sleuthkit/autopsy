@@ -55,6 +55,18 @@ import org.xml.sax.SAXException;
 public class XMLUtil {
 
     /**
+     * Creates a W3C DOM document.
+     *
+     * @return The document object.
+     * @throws ParserConfigurationException
+     */
+    public static Document createDoc() throws ParserConfigurationException {
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = builderFactory.newDocumentBuilder();
+        return builder.newDocument();
+    }
+
+    /**
      * Utility to validate XML files against pre-defined schema files.
      *
      * The schema files are extracted automatically when this function is

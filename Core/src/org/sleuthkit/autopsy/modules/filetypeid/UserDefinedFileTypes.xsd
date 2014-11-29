@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+    
+    <xs:simpleType name="stringType">
+        <xs:restriction base="xs:string">
+            <xsd:minLength value="1" />
+        </xs:restriction>
+    </xs:simpleType>    
+
+    <xs:simpleType name="verbatimStringType">
+        <xs:restriction base="stringType">
+            <xs:whiteSpace value="preserve"/>
+        </xs:restriction>
+    </xs:simpleType>    
+               
+    <xs:element name="signatureType">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:enumeration value="RAW"/>
+                <xs:enumeration value="ASCII"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+      
+    <xs:element name="filetypes">
+        <xs:complexType>
+            <xs:sequence>    
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="typename" type="verbatimStringType"/>
+                            <xs:element name="signature">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="bytes" type="stringType"/>
+                                        <xs:element name="offset" type="xs:nonNegativeInteger"/>
+                                        <xs:attribute name="type" type="signatureType"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:attribute name="alert" type="xs:boolean"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>         
+</xs:schema>

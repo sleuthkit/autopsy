@@ -18,27 +18,28 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
+//import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypes.FileType;
+import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypes.UserDefinedFileTypesException;
 
 /**
  * A panel to allow a user to make custom file type definitions.
  */
 final class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
-    
-//    private final HashMap<String, FileTypeDefinitionsManager.FileTypeDefinition> fileTypeDefs;
+
+    private final HashMap<String, FileType> fileTypes;
 //    private final ListModel<String> fileTypesListModel;
 
     /**
      * Creates a panel to allow a user to make custom file type definitions.
      */
     FileTypeIdSettingsPanel() {
-        this.fileTypeDefs = new HashMap<>();
+        this.fileTypes = new HashMap<>();
         initComponents();
     }
 
@@ -49,41 +50,44 @@ final class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel {
     public void saveSettings() {
         this.store();
     }
-    
+
     /**
      * RJCTODO
      */
     void load() {
-//        try {
-//            this.fileTypeDefs.clear();
-//            DefaultListModel<String> fileTypesListModel = new DefaultListModel<>();
-//            for (FileTypeDefinition fileTypeDef : FileTypeDefinitionsManager.getFileTypeDefinitions()) {
-//                this.fileTypeDefs.put(fileTypeDef.getTypeName(), fileTypeDef);
-//                fileTypesListModel.addElement(fileTypeDef.getTypeName());
-//            }
-//            this.typesList.setModel(fileTypesListModel);
-//        } catch (IOException ex) {
-//            // RJCTODO
-//        }
+        try {
+            this.fileTypes.clear();
+            DefaultListModel<String> fileTypesListModel = new DefaultListModel<>();
+            for (FileType fileType : UserDefinedFileTypes.getFileTypes()) {
+                this.fileTypes.put(fileType.getTypeName(), fileType);
+                fileTypesListModel.addElement(fileType.getTypeName());
+            }
+            this.typesList.setModel(fileTypesListModel);
+        } catch (UserDefinedFileTypesException ex) {
+            // RJCTODO
+        }
     }
 
     /**
      * RJCTODO
      */
     void store() {
-//        try {
-//            ListModel<String> fileTypesListModel = this.typesList.getModel();
-//            List<FileTypeDefinitionsManager.FileTypeDefinition> newFileTypeDefs = new ArrayList<>();            
-//            for (int i = 0; i < fileTypesListModel.getSize(); ++i) {
-//                String typeName = fileTypesListModel.getElementAt(i);
-//                newFileTypeDefs.add(this.fileTypeDefs.get(typeName));
-//            }
-//            FileTypeDefinitionsManager.setFileTypeDefinitions(newFileTypeDefs);
-//        } catch (IOException ex) {
-//            // RJCTODO            
-//        }
+        try {
+            ListModel<String> fileTypesListModel = this.typesList.getModel();
+            List<FileType> newFileTypes = new ArrayList<>();
+            for (int i = 0; i < fileTypesListModel.getSize(); ++i) {
+                String typeName = fileTypesListModel.getElementAt(i);
+                newFileTypes.add(this.fileTypes.get(typeName));
+            }
+            UserDefinedFileTypes.setFileTypes(newFileTypes);
+        } catch (UserDefinedFileTypesException ex) {
+            // RJCTODO            
+        }
     }
-    
+
+    /**
+     * RJCTODO
+     */
     boolean valid() {
         // RJCTODO            
         return true;
