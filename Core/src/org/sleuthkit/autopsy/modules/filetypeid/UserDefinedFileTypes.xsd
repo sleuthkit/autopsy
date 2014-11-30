@@ -15,36 +15,35 @@
         </xs:restriction>
     </xs:simpleType>    
                
-    <xs:element name="signatureType">
-        <xs:simpleType>
-            <xs:restriction base="xs:string">
-                <xs:enumeration value="RAW"/>
-                <xs:enumeration value="ASCII"/>
-            </xs:restriction>
-        </xs:simpleType>
-    </xs:element>
-      
+    <xs:simpleType name="sigInterpretationType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="RAW"/>
+            <xs:enumeration value="ASCII"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="signatureType">
+        <xs:sequence>
+            <xs:element name="bytes" type="stringType"/>
+            <xs:element name="offset" type="xs:nonNegativeInteger"/>
+            <xs:attribute name="type" type="sigInterpretationType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="fileType">
+        <xs:sequence>
+            <xs:element name="typename" type="verbatimStringType"/>
+            <xs:element name="signature" type="signatureType"/>
+            <xs:attribute name="alert" type="xs:boolean"/>
+        </xs:sequence>
+    </xs:complexType>
+                  
     <xs:element name="filetypes">
         <xs:complexType>
             <xs:sequence>    
-                <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype">
-                    <xs:complexType>
-                        <xs:sequence>
-                            <xs:element name="typename" type="verbatimStringType"/>
-                            <xs:element name="signature">
-                                <xs:complexType>
-                                    <xs:sequence>
-                                        <xs:element name="bytes" type="stringType"/>
-                                        <xs:element name="offset" type="xs:nonNegativeInteger"/>
-                                        <xs:attribute name="type" type="signatureType"/>
-                                    </xs:sequence>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:attribute name="alert" type="xs:boolean"/>
-                        </xs:sequence>
-                    </xs:complexType>
-                </xs:element>
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype" type="fileType">
             </xs:sequence>
         </xs:complexType>
     </xs:element>         
+    
 </xs:schema>

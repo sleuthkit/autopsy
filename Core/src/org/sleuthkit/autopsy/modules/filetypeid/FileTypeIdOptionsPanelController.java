@@ -45,12 +45,11 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
 
     @Override
     public void cancel() {
-        // need not do anything special, if no changes have been persisted yet
     }
 
     @Override
     public boolean isValid() {
-        return getPanel().valid();
+        return true;
     }
 
     @Override
@@ -60,7 +59,7 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
 
     @Override
     public HelpCtx getHelpCtx() {
-        return null; // new HelpCtx("...ID") if you have a help set
+        return null;
     }
 
     @Override

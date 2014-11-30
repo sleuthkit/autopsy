@@ -1,18 +1,33 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2014 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.Arrays;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a named file type characterized by a file signature.
  */
-class FileType {
+final class FileType {
 
     private final String typeName;
     private final Signature signature;
@@ -27,9 +42,9 @@ class FileType {
      * @param alert A flag indicating whether the user wishes to be alerted when
      * a file matching this type is encountered.
      */
-    FileType(String typeName, Signature signature, boolean alert) {
+    FileType(String typeName, final Signature signature, boolean alert) {
         this.typeName = typeName;
-        this.signature = signature;
+        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
         this.alert = alert;
     }
 
@@ -48,16 +63,16 @@ class FileType {
      * @return The file signature.
      */
     Signature getSignature() {
-        return this.signature;
+        return new Signature(this.signature.getSignatureBytes(), this.signature.getOffset(), this.signature.getType());
     }
 
     /**
      * Determines whether or not a given file is an instance of this file type.
      *
-     * @param file The file to test
+     * @param file The file to test.
      * @return True or false.
      */
-    boolean matches(AbstractFile file) {
+    boolean matches(final AbstractFile file) {
         return this.signature.containedIn(file);
     }
 
@@ -72,10 +87,12 @@ class FileType {
     }
 
     /**
-     * Represents a file signature consisting of a sequence of bytes at a
-     * specific offset within a file.
+     * A file signature consisting of a sequence of bytes at a specific offset
+     * within a file.
      */
-    static class Signature {
+    static final class Signature {
+
+        private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
         /**
          * The way the signature byte sequence should be interpreted.
@@ -90,16 +107,16 @@ class FileType {
         private final Type type;
 
         /**
-         * Creates a representation of a file signature consisting of a sequence
-         * of bytes at a specific offset within a file.
+         * Creates a file signature consisting of a sequence of bytes at a
+         * specific offset within a file.
          *
          * @param signatureBytes The signature bytes
          * @param offset The offset of the signature bytes.
          * @param type The interpretation of the signature bytes (e.g., raw
          * bytes, an ASCII string).
          */
-        Signature(byte[] signatureBytes, long offset, Type type) {
-            this.signatureBytes = signatureBytes;
+        Signature(final byte[] signatureBytes, long offset, Type type) {
+            this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = type;
         }
@@ -138,12 +155,13 @@ class FileType {
          * @param file The file to test
          * @return True or false.
          */
-        boolean containedIn(AbstractFile file) {
+        boolean containedIn(final AbstractFile file) {
             try {
                 byte[] buffer = new byte[this.signatureBytes.length];
                 int bytesRead = file.read(buffer, offset, this.signatureBytes.length);
                 return ((bytesRead == this.signatureBytes.length) && (Arrays.equals(buffer, this.signatureBytes)));
             } catch (TskCoreException ex) {
+                Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex);
                 return false;
             }
         }

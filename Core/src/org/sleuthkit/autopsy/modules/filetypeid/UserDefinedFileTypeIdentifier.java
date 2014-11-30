@@ -20,39 +20,34 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Does file type identification with user-defined file types.
+ * Does file type identification for user-defined file types.
  */
 final class UserDefinedFileTypeIdentifier {
 
     private final List<FileType> fileTypes;
 
     /**
-     * Creates an object that does file type identification with user-defined
-     * file types. Does not load the file type definitions.
+     * Creates an object that can do file type identification for user-defined
+     * file types.
      */
     UserDefinedFileTypeIdentifier() {
         this.fileTypes = new ArrayList<>();
+        List<FileType> fileTypeDefs = UserDefinedFileTypesManager.getInstance().getFileTypes();
+        this.fileTypes.addAll(fileTypeDefs);
     }
 
     /**
-     * Loads the set of user-defined file types.
-     */
-    void loadFileTypes() throws UserDefinedFileTypes.UserDefinedFileTypesException {
-        this.fileTypes.clear();
-        this.fileTypes.addAll(UserDefinedFileTypes.getFileTypes());
-    }
-
-    /**
-     * Attempts to identify a file using the set of user-defined file type
-     * file types.
+     * Attempts to identify a file using the set of user-defined file type file
+     * types.
      *
      * @param file The file to type.
      * @return A FileType object or null if identification fails.
      */
-    FileType identify(AbstractFile file) {
+    FileType identify(final AbstractFile file) {
         FileType type = null;
         for (FileType fileType : this.fileTypes) {
             if (fileType.matches(file)) {
