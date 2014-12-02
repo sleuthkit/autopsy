@@ -57,7 +57,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Contacts");
+            errors.add("Error getting Contacts"); //NOI18N
         }
 
         try {
@@ -67,7 +67,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Call Logs");
+            errors.add("Error getting Call Logs"); //NOI18N
         }
 
         try {
@@ -77,7 +77,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Text Messages");
+            errors.add("Error getting Text Messages"); //NOI18N
         }
 
         try {
@@ -87,7 +87,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Tango Messages");
+            errors.add("Error getting Tango Messages"); //NOI18N
         }
 
         try {
@@ -97,7 +97,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Words with Friends Messages");
+            errors.add("Error getting Words with Friends Messages"); //NOI18N
         }
 
         try {
@@ -107,7 +107,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Google Map Locations");
+            errors.add("Error getting Google Map Locations"); //NOI18N
         }
 
         try {
@@ -117,14 +117,14 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 return IngestModule.ProcessResult.OK;
             }
         } catch (Exception e) {
-            errors.add("Error getting Browser Locations");
+            errors.add("Error getting Browser Locations"); //NOI18N
         }
 
         try {
             CacheLocationAnalyzer.findGeoLocations();
             progressBar.progress(8);
         } catch (Exception e) {
-            errors.add("Error getting Cache Locations");
+            errors.add("Error getting Cache Locations"); //NOI18N
         }
 
         // create the final message for inbox
@@ -133,20 +133,20 @@ class AndroidIngestModule implements DataSourceIngestModule {
         IngestMessage.MessageType msgLevel = IngestMessage.MessageType.INFO;
         if (errors.isEmpty() == false) {
             msgLevel = IngestMessage.MessageType.ERROR;
-            errorMessage.append("Errors were encountered");
+            errorMessage.append("Errors were encountered"); //NOI18N
             for (String msg : errors) {
                 errorMessage.append("<li>").append(msg).append("</li>\n"); //NON-NLS
             }
             errorMessage.append("</ul>\n"); //NON-NLS
 
             if (errors.size() == 1) {
-                errorMsgSubject = "One error was found";
+                errorMsgSubject = "One error was found"; //NOI18N
             } else {
-                errorMsgSubject = "errors found: " + errors.size();
+                errorMsgSubject = "errors found: " + errors.size(); //NOI18N
             }
         } else {
-            errorMessage.append("No errors");
-            errorMsgSubject = "No errors";
+            errorMessage.append("No errors"); //NOI18N
+            errorMsgSubject = "No errors"; //NOI18N
         }
 
         services.postMessage(IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(), "Finished Analysis: " + errorMsgSubject, errorMessage.toString()));

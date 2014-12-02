@@ -44,7 +44,7 @@ class GoogleMapLocationAnalyzer {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='da_destination_history'"); //get exact file name
+            absFiles = skCase.findAllFilesWhere("name ='da_destination_history'"); //NOI18N //get exact file name
             if (absFiles.isEmpty()) {
                 return;
             }
@@ -54,11 +54,11 @@ class GoogleMapLocationAnalyzer {
                     ContentUtils.writeToFile(abstractFile, jFile);
                     findGeoLocationsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Google map locations", e);
+                    logger.log(Level.SEVERE, "Error parsing Google map locations", e); //NOI18N
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Google map locations", e);
+            logger.log(Level.SEVERE, "Error finding Google map locations", e); //NOI18N
         }
     }
 
@@ -71,27 +71,27 @@ class GoogleMapLocationAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
+            Class.forName("org.sqlite.JDBC"); //NOI18N //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NOI18N
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e); //NOI18N
             return;
         }
 
         try {
             resultSet = statement.executeQuery(
-                    "Select time,dest_lat,dest_lng,dest_title,dest_address,source_lat,source_lng FROM destination_history;");
+                    "Select time,dest_lat,dest_lng,dest_title,dest_address,source_lat,source_lng FROM destination_history;"); //NOI18N
 
             while (resultSet.next()) {
-                Long time = Long.valueOf(resultSet.getString("time")) / 1000;
-                String dest_title = resultSet.getString("dest_title");
-                String dest_address = resultSet.getString("dest_address");
+                Long time = Long.valueOf(resultSet.getString("time")) / 1000; //NOI18N
+                String dest_title = resultSet.getString("dest_title"); //NOI18N
+                String dest_address = resultSet.getString("dest_address"); //NOI18N
                 
-                double dest_lat = convertGeo(resultSet.getString("dest_lat"));
-                double dest_lng = convertGeo(resultSet.getString("dest_lng"));
-                double source_lat = convertGeo(resultSet.getString("source_lat"));
-                double source_lng = convertGeo(resultSet.getString("source_lng"));
+                double dest_lat = convertGeo(resultSet.getString("dest_lat")); //NOI18N
+                double dest_lng = convertGeo(resultSet.getString("dest_lng")); //NOI18N
+                double source_lat = convertGeo(resultSet.getString("source_lat")); //NOI18N
+                double source_lng = convertGeo(resultSet.getString("source_lng")); //NOI18N
                 
 
 //                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);//src
@@ -123,7 +123,7 @@ class GoogleMapLocationAnalyzer {
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing Google map locations to the Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing Google map locations to the Blackboard", e); //NOI18N
         } finally {
             try {
                 if (resultSet != null) {
@@ -132,7 +132,7 @@ class GoogleMapLocationAnalyzer {
                 statement.close();
                 connection.close();
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error closing the database", e);
+                logger.log(Level.SEVERE, "Error closing the database", e); //NOI18N
             }
         }
     }
