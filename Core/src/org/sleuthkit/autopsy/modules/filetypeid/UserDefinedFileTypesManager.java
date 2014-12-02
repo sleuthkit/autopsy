@@ -24,7 +24,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +35,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
@@ -51,8 +49,6 @@ final class UserDefinedFileTypesManager {
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
     private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypeDefinitions.xsd"; // NON-NLS
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; // NON-NLS
-    private static final String PROPERTIES_FILE_NAME = "UserFileTypeDefinitions"; //NON_NLS
-    private static final String DELETED_PREDEFINED_TYPES_KEY = "DeletedPredefinedTypes"; //NON_NLS
     private static final String FILE_TYPES_TAG_NAME = "filetypes"; // NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "filetype"; // NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; // NON-NLS
@@ -71,7 +67,7 @@ final class UserDefinedFileTypesManager {
     /**
      * Gets the user-defined file types manager.
      *
-     * @return A singleton UserDefinedFileTypesManager object.
+     * @return A singleton user-defined file types manager.
      */
     synchronized static UserDefinedFileTypesManager getInstance() {
         if (instance == null) {
@@ -85,55 +81,57 @@ final class UserDefinedFileTypesManager {
      * (e.g., MIME type) and signatures.
      */
     private UserDefinedFileTypesManager() {
-        createFileTypesForTesting();
-        createStandardPredefinedFileTypes();
-        removeDeletedPredefinedFileTypes();
-        initializeUserDefinedFileTypes();
-    }
-
-    /**
-     * Adds file types useful for testing this class to the in-memory mapping of
-     * file type names to predefined file types.
-     */
-    private void createFileTypesForTesting() {
-        /**
-         * RJCTODO: This code should be moved into a unit test.
-         */
-        if (true) {
-            /**
-             * Create a file type that should match $MBR in Small2 image.
-             */
-            this.predefinedFileTypes.put("predefinedRAW", new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), true));
-
-            /**
-             * Create a file type that should match test.txt in the Small2
-             * image.
-             */
-            try {
-                this.predefinedFileTypes.put("predefinedASCII", new FileType("predefinedASCII", new Signature("hello".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true));
-            } catch (UnsupportedEncodingException ex) {
-                logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
-            }
-        }
+        loadPredefinedFileTypes();
+        loadUserDefinedFileTypes();
     }
 
     /**
      * Adds standard predefined file types to the in-memory mapping of file type
      * names to predefined file types.
      */
-    private void createStandardPredefinedFileTypes() {
-    }
+    private void loadPredefinedFileTypes() {
+        // RJCTODO: Remove
+        /**
+         * Create a file type that should match $MBR in Small2 image.
+         */
+        this.fileTypes.put("predefinedRAW", new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), true));
 
-    /**
-     * Removes predefined file types deleted by the user from the in-memory
-     * mapping of file type names to predefined file types.
-     */
-    private void removeDeletedPredefinedFileTypes() {
-        String deletedTypes = ModuleSettings.getConfigSetting(PROPERTIES_FILE_NAME, DELETED_PREDEFINED_TYPES_KEY);
-        if (null != deletedTypes) {
-            for (String typeName : deletedTypes.split(", ")) {
-                this.predefinedFileTypes.remove(typeName);
-            }
+        /**
+         * Create a file type that should match test.txt in the Small2 image.
+         */
+        // RJCTODO: Remove
+        try {
+            this.fileTypes.put("predefinedASCII", new FileType("predefinedASCII", new Signature("hello".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true));
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
+        }
+
+        try {
+            // RJCTODO: Remove this code from TikaFileTypeDetector.java
+//        try {
+//            byte buf[];
+//            int len = abstractFile.read(buffer, 0, BUFFER_SIZE);
+//            if (len < BUFFER_SIZE) {
+//                buf = new byte[len];
+//                System.arraycopy(buffer, 0, buf, 0, len);
+//            } else {
+//                buf = buffer;
+//            }
+//            
+//            // the xml detection in Tika tries to parse the entire file and throws exceptions
+//            // for files that are not valid XML
+//            try {
+//                String tagHeader = new String(buf, 0, 5);
+//                if (tagHeader.equals("<?xml")) { //NON-NLS    
+//                    return "text/xml"; //NON-NLS
+//                }
+//            }
+//            catch (IndexOutOfBoundsException e) {
+//                // do nothing
+//            }
+            this.predefinedFileTypes.put("text/xml", new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), false));
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, "Unable to create 'text/xml' predefined file type definition", ex); //NON-NLS
         }
     }
 
@@ -141,26 +139,23 @@ final class UserDefinedFileTypesManager {
      * Reads user-defined file types into an in-memory mapping of file type
      * names to file types.
      */
-    private void initializeUserDefinedFileTypes() {
+    private void loadUserDefinedFileTypes() {
         try {
+
             /**
-             * Read the user-defined types from the backing XML file.
+             * Read the user-defined types from the backing XML file. These
+             * types are put into one map that will be used to write changes to
+             * the XML backing a file, and to another ,map where user-defined
+             * types overwrite predefined types of the same name.
              */
             String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
             File file = new File(filePath);
             if (file.exists() && file.canRead()) {
                 for (FileType fileType : XMLReader.readFileTypes(filePath)) {
                     userDefinedFileTypes.put(fileType.getTypeName(), fileType);
+                    fileTypes.put(fileType.getTypeName(), fileType);
                 }
             }
-
-            /**
-             * Combine the predefined and user-defined file types, with
-             * user-defined file types taking precedence over any predefined
-             * file types with the same type name.
-             */
-            fileTypes.putAll(predefinedFileTypes);
-            fileTypes.putAll(userDefinedFileTypes);
 
         } catch (InvalidXMLException ex) {
             // RJCTODO:
@@ -204,7 +199,6 @@ final class UserDefinedFileTypesManager {
      */
     synchronized void addFileTypes(Collection<FileType> newFileTypes) throws UserDefinedFileTypesException {
         for (FileType fileType : newFileTypes) {
-            deleteFromPredefinedTypes(fileType);
             userDefinedFileTypes.put(fileType.getTypeName(), fileType);
             fileTypes.put(fileType.getTypeName(), fileType);
         }
@@ -233,33 +227,10 @@ final class UserDefinedFileTypesManager {
      */
     synchronized void deleteFileTypes(Collection<FileType> deletedFileTypes) throws UserDefinedFileTypesException {
         for (FileType fileType : deletedFileTypes) {
-            deleteFromPredefinedTypes(fileType);
             userDefinedFileTypes.remove(fileType.getTypeName(), fileType);
             fileTypes.remove(fileType.getTypeName(), fileType);
         }
         saveUserDefinedTypes();
-    }
-
-    /**
-     * Removes a file type, if present, from the in-memory mapping of predefined
-     * file types and marks the predefined file type as deleted by the user.
-     *
-     * @param fileType The file type to delete.
-     */
-    private void deleteFromPredefinedTypes(FileType fileType) {
-        if (predefinedFileTypes.containsKey(fileType.getTypeName())) {
-            predefinedFileTypes.remove(fileType.getTypeName());
-            String deletedTypesSetting = ModuleSettings.getConfigSetting(PROPERTIES_FILE_NAME, DELETED_PREDEFINED_TYPES_KEY);
-            if (null != deletedTypesSetting) {
-                List<String> deletedTypes = Arrays.asList(deletedTypesSetting.split(", "));
-                if (!deletedTypes.contains(fileType.getTypeName())) {
-                    deletedTypesSetting += "," + fileType.getTypeName();
-                    ModuleSettings.setConfigSetting(PROPERTIES_FILE_NAME, DELETED_PREDEFINED_TYPES_KEY, deletedTypesSetting);
-                }
-            } else {
-                ModuleSettings.setConfigSetting(PROPERTIES_FILE_NAME, DELETED_PREDEFINED_TYPES_KEY, fileType.getTypeName());
-            }
-        }
     }
 
     /**

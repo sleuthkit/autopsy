@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
