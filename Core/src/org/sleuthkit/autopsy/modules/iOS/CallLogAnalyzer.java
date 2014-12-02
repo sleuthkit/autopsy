@@ -49,7 +49,7 @@ class CallLogAnalyzer {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //get exact file names 
+            absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //NOI18N //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }
@@ -61,11 +61,11 @@ class CallLogAnalyzer {
                     fileId = AF.getId();
                     findCallLogsInDB(dbPath, fileId);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Call logs", e);
+                    logger.log(Level.SEVERE, "Error parsing Call logs", e); //NOI18N
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Call logs", e);
+            logger.log(Level.SEVERE, "Error finding Call logs", e); //NOI18N
         }
     }
 
@@ -74,11 +74,11 @@ class CallLogAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
+            Class.forName("org.sqlite.JDBC"); //NOI18N //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NOI18N
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e); //NOI18N
         }
 
         Case currentCase = Case.getCurrentCase();
@@ -87,7 +87,7 @@ class CallLogAnalyzer {
             AbstractFile f = skCase.getAbstractFileById(fId);
             try {
                 resultSet = statement.executeQuery(
-                        "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;");
+                        "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;"); //NOI18N
 
                 BlackboardArtifact bba;
                 String name; // name of person dialed or called. null if unregistered
@@ -97,14 +97,14 @@ class CallLogAnalyzer {
                 String type; // 1 incoming, 2 outgoing, 3 missed
 
                 while (resultSet.next()) {
-                    name = resultSet.getString("name");
-                    number = resultSet.getString("number");
-                    duration = resultSet.getString("duration");
-                    date = resultSet.getString("date");
-                    type = resultSet.getString("type");
+                    name = resultSet.getString("name"); //NOI18N
+                    number = resultSet.getString("number"); //NOI18N
+                    duration = resultSet.getString("duration"); //NOI18N
+                    date = resultSet.getString("date"); //NOI18N
+                    type = resultSet.getString("type"); //NOI18N
                       
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                    if(type.equalsIgnoreCase("outgoing")) {
+                    if(type.equalsIgnoreCase("outgoing")) { //NOI18N
                         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
                     }
                     else { /// Covers INCOMING and MISSED
@@ -117,18 +117,18 @@ class CallLogAnalyzer {
 
                 }
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
+                logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e); //NOI18N
             } finally {
                 try {
                     resultSet.close();
                     statement.close();
                     connection.close();
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error closing the database", e);
+                    logger.log(Level.SEVERE, "Error closing the database", e); //NOI18N
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e); //NOI18N
         }
 
     }
