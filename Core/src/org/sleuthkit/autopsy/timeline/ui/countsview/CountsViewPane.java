@@ -124,7 +124,9 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
 
     private ContextMenu getContextMenu() {
 
-        ContextMenu chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new ActionGroup("Zoom History", new Back(controller), new Forward(controller))));
+        ContextMenu chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new ActionGroup(
+                NbBundle.getMessage(this.getClass(), "Timeline.ui.countsview.contextMenu.ActionGroup.zoomHistory.title"),
+                new Back(controller), new Forward(controller))));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
     }
@@ -397,7 +399,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                             barContextMenu = new ContextMenu();
                             barContextMenu.setAutoHide(true);
                             barContextMenu.getItems().addAll(
-                                    new MenuItem("Select Time Range") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.selectTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(interval, RootEventType.getInstance());
@@ -413,7 +416,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                             });
                                         }
                                     },
-                                    new MenuItem("Select Event Type") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.selectEventType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(filteredEvents.getSpanningInterval(), type);
@@ -426,7 +430,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                             });
                                         }
                                     },
-                                    new MenuItem("Select Time and Type") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.selectTimeandType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(interval, type);
@@ -435,7 +440,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                         }
                                     },
                                     new SeparatorMenuItem(),
-                                    new MenuItem("Zoom into Time Range") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.zoomIntoTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 if (interval.toDuration().isShorterThan(Seconds.ONE.toStandardDuration()) == false) {

@@ -36,6 +36,7 @@ import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -87,20 +88,20 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         filterTreeTable.setRowFactory((TreeTableView<Filter> param) -> {
             final TreeTableRow<Filter> row = new TreeTableRow<>();
 
-            MenuItem all = new MenuItem("all");
+            MenuItem all = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.all"));
             all.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setActive(Boolean.TRUE);
                 });
             });
-            MenuItem none = new MenuItem("none");
+            MenuItem none = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.none"));
             none.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setActive(Boolean.FALSE);
                 });
             });
 
-            MenuItem only = new MenuItem("only");
+            MenuItem only = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.only"));
             only.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -110,7 +111,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
                     }
                 });
             });
-            MenuItem others = new MenuItem("others");
+            MenuItem others = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.others"));
             others.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -121,7 +122,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
                 });
             });
             final ContextMenu rowMenu = new ContextMenu();
-            Menu select = new Menu("select");
+            Menu select = new Menu(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.select"));
             select.setOnAction(e -> {
                 row.getItem().setActive(!row.getItem().isActive());
             });
