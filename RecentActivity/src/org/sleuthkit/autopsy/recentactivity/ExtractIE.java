@@ -506,10 +506,11 @@ class ExtractIE extends Extract {
                                                                              "ExtractIE.parentModuleName.noSpace"), user));
                 bbart.addAttributes(bbattributes);
                 
-               
-                BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));                
+                if(!user.isEmpty()){
+                    BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+                    osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
+                                                         NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));  
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
             }                                    

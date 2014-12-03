@@ -57,6 +57,9 @@ sub pluginmain {
 	             "Windows\\CurrentVersion\\RunOnce",
 	             );
 	
+	my @alertpaths = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
 	foreach my $key_path (@paths) {
 	
 		my $key;
@@ -67,16 +70,23 @@ sub pluginmain {
 			my %vals = getKeyValues($key);
 			if (scalar(keys %vals) > 0) {
 				foreach my $v (keys %vals) {
-# check for "Temp" in the path/data					
-					if (grep(/[Tt]emp/,$vals{$v})) {
+					my $lc_path = lc($vals{$v});
+					foreach my $a (@alertpaths) {			
+						if (grep(/$a/,$lc_path)) {
 #						::alertMsg("ALERT: soft_run: Temp Path found: ".$key_path." : ".$v." -> ".$vals{$v});
-            ::alertMsg($lw."|ALERT|||Software\\".$key_path." Temp path: ".$v.": ".$vals{$v});
+            	::alertMsg($lw."|ALERT|||srun_tln: Software\\".$key_path." Temp path: ".$v.": ".$vals{$v});
+						}
 					}
 # check to see if the data ends in .com					
 					if ($vals{$v} =~ m/\.com$/ || $vals{$v} =~ m/\.bat$/ || $vals{$v} =~ m/\.pif$/) {
 #						::alertMsg("ALERT: soft_run: Path ends in \.com/\.bat/\.pif: ".$key_path." : ".$v." -> ".$vals{$v});
-						::alertMsg($lw."|ALERT|||Software\\".$key_path." ends in \.com/\.bat/\.pif: ".$v.": ".$vals{$v});
+						::alertMsg($lw."|ALERT|||srun_tln: Software\\".$key_path." ends in \.com/\.bat/\.pif: ".$v.": ".$vals{$v});
 					}					
+					
+					my @list = split(/:/,$vals{$v});
+					my $last = $list[scalar(@list) - 1];
+					::alertMsg($lw."|ALERT|||srun_tln: Poss. ADS found: ".$v.": ".$vals{$v}) if (grep(/:/,$last));
+					
 #					::rptMsg("  ".$v." - ".$vals{$v});
 				}
 #				::rptMsg("");
