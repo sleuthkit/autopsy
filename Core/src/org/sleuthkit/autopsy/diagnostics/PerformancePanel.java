@@ -34,6 +34,8 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -48,7 +50,8 @@ public class PerformancePanel extends javax.swing.JDialog {
      * Creates new form PerformancePanel
      */
     public PerformancePanel() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(), "Performance Diagnostics", true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
+              NbBundle.getMessage(PerformancePanel.class, "PerformancePanel.title"), true);
         initComponents();
     }
 
@@ -258,14 +261,15 @@ public class PerformancePanel extends javax.swing.JDialog {
         
         
         private void doCpuTest() {
-            final String msg = "Running CPU Test";
+            final String msg = NbBundle.getMessage(this.getClass(), "PerformancePanel.cpuTest.basemsg");
             
             MessageDigest md;
             long start = new Date().getTime();
             try {
-                md = MessageDigest.getInstance("MD5");
+                md = MessageDigest.getInstance("MD5"); // NON-NLS
             } catch (NoSuchAlgorithmException ex) {
-                setCpuLabel("MD5 Algo not found");
+                setCpuLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.cpuTest.cpuLabel.md5AlgNotFound.text"));
                 return;
             }
             
@@ -285,20 +289,22 @@ public class PerformancePanel extends javax.swing.JDialog {
             long end = new Date().getTime();
             cpuStats = (bytesRead / (1024 * 1024)) / ((end - start) / 1000);
             
-            setCpuLabel(cpuStats + " MB hashed / sec");
+            setCpuLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.cpuTest.cpuLabel.MBHashedPerSec.text",
+                                            cpuStats));
             setStatusMsg("");
         }
         
         private void doImgTest() {
             imgReadStats = 0;
-            setStatusMsg("Running Image Reading Test");
+            setStatusMsg(
+                    NbBundle.getMessage(this.getClass(), "PerformancePanel.imgTest.statusMsg.runningImgReadTest.text"));
             
             Case curCase;
             try {
                 curCase = Case.getCurrentCase();
             }
             catch (Exception e) {   
-                setImgLabel("Case Not Open");
+                setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 setStatusMsg("");
                 return;
             }
@@ -307,7 +313,7 @@ public class PerformancePanel extends javax.swing.JDialog {
             try {
                 dataSources = curCase.getDataSources();
             } catch (TskCoreException ex) {
-                setImgLabel("No Images In Case");
+                setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.noImgInCase.text"));
                 setStatusMsg("");
                 return;
             }
@@ -318,7 +324,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             }
             if (image == null) {
-                setImgLabel("No Images In Case");
+                setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.noImgInCase.text"));
                 setStatusMsg("");
                 return;
             }
@@ -356,25 +362,30 @@ public class PerformancePanel extends javax.swing.JDialog {
                 imgReadStats = (bytesRead / (1024 * 1024))  / elapsed;
             else
                 imgReadStats = 0;
-            setImgLabel(imgReadStats + " MB read / sec (" + bytesRead + ")");
+            setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.ImgTest.imgLabel.MBReadPerSec.text",
+                                            imgReadStats, bytesRead));
             setStatusMsg("");   
         }
         
         private void doFileReadTest() {
             fileReadStats = 0;
-            
+
+            // TODO: this is always true. Why display a "Skipped" label and then go on to run the test?
             if (true) {
-                setFileReadLabel("Skipped");
+                setFileReadLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.FileReadTest.fileReadLabel.skipped.text"));
             }
             
-            setStatusMsg("Running File Reading Test");
+            setStatusMsg(NbBundle.getMessage(this.getClass(),
+                                             "PerformancePanel.FileReadTest.statusMsg.runningFileReadTest.text"));
             
             Case curCase;
             try {
                 curCase = Case.getCurrentCase();
             }
             catch (Exception e) {   
-                setFileReadLabel("Case Not Open");
+                setFileReadLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 setStatusMsg("");
                 return;
             }
@@ -383,7 +394,8 @@ public class PerformancePanel extends javax.swing.JDialog {
             try {
                 dataSources = curCase.getDataSources();
             } catch (TskCoreException ex) {
-                setFileReadLabel("No Images In Case");
+                setFileReadLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.label.noImgInCase.text"));
                 setStatusMsg("");
                 return;
             }
@@ -394,14 +406,16 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             }
             if (image == null) {
-                setFileReadLabel("No Images In Case");
+                setFileReadLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.label.noImgInCase.text"));
                 setStatusMsg("");
                 return;
             }
             
             File file = new File(image.getPaths()[0]);
             if (file.exists() == false) {
-                setFileReadLabel("Image Path Doesn't Exist");
+                setFileReadLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.fileReadLabel.imgPathNotExist.text"));
                 setStatusMsg("");
                 return;
             }
@@ -410,7 +424,8 @@ public class PerformancePanel extends javax.swing.JDialog {
             try {
                 fileReader = new FileReader(file);
             } catch (FileNotFoundException ex) {
-                setFileReadLabel("Error making file reader");
+                setFileReadLabel(
+                        NbBundle.getMessage(this.getClass(), "PerformancePanel.fileReadLabel.errMakeFileReader.text"));
                 setStatusMsg("");
                 return;
             }
@@ -451,20 +466,22 @@ public class PerformancePanel extends javax.swing.JDialog {
                 fileReadStats = (bytesRead / (1024 * 1024))  / elapsed;
             else
                 fileReadStats = 0;
-            setFileReadLabel(fileReadStats + " MB read / sec (" + bytesRead + ")");
+            setFileReadLabel(
+                    NbBundle.getMessage(this.getClass(), "PerformancePanel.ImgTest.fileReadLabel.MBReadPerSec.text",
+                                        fileReadStats, bytesRead));
             setStatusMsg("");   
         }
         
         private void doDbTest() {
             dbStats = 0;
-            setStatusMsg("Running DB Test");
+            setStatusMsg(NbBundle.getMessage(this.getClass(), "PerformancePanel.dbTest.status.running"));
             
             Case curCase;
             try {
                 curCase = Case.getCurrentCase();
             }
             catch (Exception e) {
-                setDbLabel("Case Not Open");
+                setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 return;
             }
             
@@ -472,7 +489,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 SleuthkitCase tskCase = curCase.getSleuthkitCase();
                 long start = new Date().getTime();
 
-                List<AbstractFile> files = tskCase.findAllFilesWhere("obj_id < 50000");
+                List<AbstractFile> files = tskCase.findAllFilesWhere("obj_id < 50000"); // NON-NLS
                 
                 long end = new Date().getTime();
                 long elapsed = (end - start) / 1000;
@@ -481,9 +498,10 @@ public class PerformancePanel extends javax.swing.JDialog {
                 else
                     dbStats = 0;
             
-                setDbLabel(dbStats + " records / sec");
+                setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.dbTest.dbLabel.recordsPerSec.text",
+                                               dbStats));
             } catch (TskCoreException ex) {
-                setDbLabel("Error Performing Query");
+                setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.dbTest.dbLabel.errPerformQuery.text"));
             }
             
             setStatusMsg("");
@@ -494,7 +512,8 @@ public class PerformancePanel extends javax.swing.JDialog {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                setStatusMsg("Error: " + ex.getMessage());
+                setStatusMsg(NbBundle.getMessage(this.getClass(), "PerformancePanel.done.statusMsg.err.text",
+                                                 ex.getMessage()));
             }
             startButton.setEnabled(true);
         }
