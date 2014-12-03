@@ -37,6 +37,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
@@ -416,6 +418,9 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return;
         }
+        
+        // Keep a list of reported user accounts to avoid repeats
+        Set<String> reportedUserAccounts = new HashSet<String>();
 
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
@@ -506,10 +511,11 @@ class ExtractIE extends Extract {
                                                                              "ExtractIE.parentModuleName.noSpace"), user));
                 bbart.addAttributes(bbattributes);
                 
-                if(!user.isEmpty()){
+                if( (!user.isEmpty())  && (!reportedUserAccounts.contains(user))){
                     BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                     osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
                                                          NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));  
+                    reportedUserAccounts.add(user);
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
