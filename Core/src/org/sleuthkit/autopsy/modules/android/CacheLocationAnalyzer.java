@@ -43,7 +43,7 @@ class CacheLocationAnalyzer {
 
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name ='cache.cell' OR name='cache.wifi'");  //NOI18N  //get exact file names
+            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name ='cache.cell' OR name='cache.wifi'");  //NON-NLS  //get exact file names
 
             for (AbstractFile abstractFile : abstractFiles) {
                 try {
@@ -55,11 +55,11 @@ class CacheLocationAnalyzer {
 
                     findGeoLocationsInFile(jFile, abstractFile);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing cached Location files", e); //NOI18N
+                    logger.log(Level.SEVERE, "Error parsing cached Location files", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding cached Location files", e); //NOI18N
+            logger.log(Level.SEVERE, "Error finding cached Location files", e); //NON-NLS
         }
     }
 
@@ -124,7 +124,7 @@ class CacheLocationAnalyzer {
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing Cached GPS locations to Blackboard", e); //NOI18N
+            logger.log(Level.SEVERE, "Error parsing Cached GPS locations to Blackboard", e); //NON-NLS
         }
     }
 

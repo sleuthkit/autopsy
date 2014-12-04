@@ -43,7 +43,7 @@ class BrowserLocationAnalyzer {
     public static void findGeoLocations() {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name LIKE 'CachedGeoposition%.db'");  //NOI18N  //get exact file names
+            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name LIKE 'CachedGeoposition%.db'");  //NON-NLS  //get exact file names
 
             for (AbstractFile abstractFile : abstractFiles) {
                 try {
@@ -54,11 +54,11 @@ class BrowserLocationAnalyzer {
                     ContentUtils.writeToFile(abstractFile, jFile);
                     findGeoLocationsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Browser Location files", e); //NOI18N
+                    logger.log(Level.SEVERE, "Error parsing Browser Location files", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Browser Location files", e); //NOI18N
+            logger.log(Level.SEVERE, "Error finding Browser Location files", e); //NON-NLS
 
         }
     }
@@ -71,22 +71,22 @@ class BrowserLocationAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //NOI18N //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NOI18N
+            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error connecting to sql database", e); //NOI18N
+            logger.log(Level.SEVERE, "Error connecting to sql database", e); //NON-NLS
             return;
         }
 
         try {
             resultSet = statement.executeQuery(
-                    "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;"); //NOI18N
+                    "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;"); //NON-NLS
 
             while (resultSet.next()) {
-                Long timestamp = Long.valueOf(resultSet.getString("timestamp")) / 1000; //NOI18N
-                double latitude = Double.valueOf(resultSet.getString("latitude")); //NOI18N
-                double longitude = Double.valueOf(resultSet.getString("longitude")); //NOI18N
+                Long timestamp = Long.valueOf(resultSet.getString("timestamp")) / 1000; //NON-NLS
+                double latitude = Double.valueOf(resultSet.getString("latitude")); //NON-NLS
+                double longitude = Double.valueOf(resultSet.getString("longitude")); //NON-NLS
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, latitude));
@@ -96,7 +96,7 @@ class BrowserLocationAnalyzer {
                 //  bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy)); 
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error Putting artifacts to Blackboard", e); //NOI18N
+            logger.log(Level.SEVERE, "Error Putting artifacts to Blackboard", e); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
@@ -105,7 +105,7 @@ class BrowserLocationAnalyzer {
                 statement.close();
                 connection.close();
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error closing database", e); //NOI18N
+                logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
 

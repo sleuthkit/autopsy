@@ -45,18 +45,18 @@ class TangoMessageAnalyzer {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='tc.db' "); //NOI18N //get exact file names
+            absFiles = skCase.findAllFilesWhere("name ='tc.db' "); //NON-NLS //get exact file names
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
                     ContentUtils.writeToFile(abstractFile, jFile);
                     findTangoMessagesInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Tango messages", e); //NOI18N
+                    logger.log(Level.SEVERE, "Error parsing Tango messages", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Tango messages", e); //NOI18N
+            logger.log(Level.SEVERE, "Error finding Tango messages", e); //NON-NLS
         }
     }
 
@@ -69,31 +69,31 @@ class TangoMessageAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //NOI18N //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NOI18N
+            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e); //NOI18N
+            logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
             return;
         }
 
         try {
             resultSet = statement.executeQuery(
-                    "Select conv_id, create_time,direction,payload FROM messages ORDER BY create_time DESC;"); //NOI18N
+                    "Select conv_id, create_time,direction,payload FROM messages ORDER BY create_time DESC;"); //NON-NLS
 
             String conv_id; // seems to wrap around the message found in payload after decoding from base-64
             String direction; // 1 incoming, 2 outgoing
             String payload; // seems to be a base64 message wrapped by the conv_id
 
             while (resultSet.next()) {
-                conv_id = resultSet.getString("conv_id"); //NOI18N
-                Long create_time = Long.valueOf(resultSet.getString("create_time")) / 1000; //NOI18N
-                if (resultSet.getString("direction").equals("1")) { //NOI18N
-                    direction = "Incoming"; //NOI18N
+                conv_id = resultSet.getString("conv_id"); //NON-NLS
+                Long create_time = Long.valueOf(resultSet.getString("create_time")) / 1000; //NON-NLS
+                if (resultSet.getString("direction").equals("1")) { //NON-NLS
+                    direction = "Incoming"; //NON-NLS
                 } else {
-                    direction = "Outgoing"; //NOI18N
+                    direction = "Outgoing"; //NON-NLS
                 }
-                payload = resultSet.getString("payload"); //NOI18N
+                payload = resultSet.getString("payload"); //NON-NLS
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, create_time));
@@ -104,7 +104,7 @@ class TangoMessageAnalyzer {
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing Tango messages to the Blackboard", e); //NOI18N
+            logger.log(Level.SEVERE, "Error parsing Tango messages to the Blackboard", e); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
@@ -113,7 +113,7 @@ class TangoMessageAnalyzer {
                 statement.close();
                 connection.close();
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error closing database", e); //NOI18N
+                logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
     }
@@ -126,7 +126,7 @@ class TangoMessageAnalyzer {
             String Z = new String(decoded, "UTF-8");
             result = Z.split(wrapper)[1];
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error decoding a Tango message", e); //NOI18N
+            logger.log(Level.SEVERE, "Error decoding a Tango message", e); //NON-NLS
         }
         return result;
     }

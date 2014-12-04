@@ -44,7 +44,7 @@ class WWFMessageAnalyzer {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='WordsFramework' "); //NOI18N //get exact file names
+            absFiles = skCase.findAllFilesWhere("name ='WordsFramework' "); //NON-NLS //get exact file names
 
             for (AbstractFile abstractFile : absFiles) {
                 try {
@@ -53,11 +53,11 @@ class WWFMessageAnalyzer {
 
                     findWWFMessagesInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing WWF messages", e); //NOI18N
+                    logger.log(Level.SEVERE, "Error parsing WWF messages", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding WWF messages", e); //NOI18N
+            logger.log(Level.SEVERE, "Error finding WWF messages", e); //NON-NLS
         }
     }
 
@@ -74,23 +74,23 @@ class WWFMessageAnalyzer {
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e); //NOI18N
+            logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
             return;
         }
 
         try {
             resultSet = statement.executeQuery(
-                    "SELECT message,strftime('%s' ,created_at) as datetime,user_id,game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;"); //NOI18N
+                    "SELECT message,strftime('%s' ,created_at) as datetime,user_id,game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;"); //NON-NLS
 
             String message; // WWF Message
             String user_id; // the ID of the user who sent the message.
             String game_id; // ID of the game which the the message was sent.
 
             while (resultSet.next()) {
-                message = resultSet.getString("message"); //NOI18N
-                Long created_at = resultSet.getLong("datetime"); //NOI18N
-                user_id = resultSet.getString("user_id"); //NOI18N
-                game_id = resultSet.getString("game_id"); //NOI18N
+                message = resultSet.getString("message"); //NON-NLS
+                Long created_at = resultSet.getLong("datetime"); //NON-NLS
+                user_id = resultSet.getString("user_id"); //NON-NLS
+                game_id = resultSet.getString("game_id"); //NON-NLS
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, created_at));
@@ -100,7 +100,7 @@ class WWFMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "Words With Friends Message"));
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e); //NOI18N
+            logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
@@ -109,7 +109,7 @@ class WWFMessageAnalyzer {
                 statement.close();
                 connection.close();
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error closing database", e); //NOI18N
+                logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
     }
