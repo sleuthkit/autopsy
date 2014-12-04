@@ -25,13 +25,13 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * UI component used to set ingest job options for file type identifier ingest
  * modules.
  */
-final class FileTypeIdModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel {
+final class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     private final FileTypeIdModuleSettings settings;
 
     // NOTE: This was declared public, but was inaccessible because the class is 
     // not public
-    FileTypeIdModuleSettingsPanel(FileTypeIdModuleSettings settings) {
+    FileTypeIdIngestJobSettingsPanel(FileTypeIdModuleSettings settings) {
         this.settings = settings;
         initComponents();
         customizeComponents();
@@ -61,8 +61,8 @@ final class FileTypeIdModuleSettingsPanel extends IngestModuleIngestJobSettingsP
         skipKnownCheckBox = new javax.swing.JCheckBox();
 
         skipKnownCheckBox.setSelected(true);
-        skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.text")); // NOI18N
-        skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(FileTypeIdModuleSettingsPanel.class, "FileTypeIdModuleSettingsPanel.skipKnownCheckBox.toolTipText")); // NOI18N
+        skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdIngestJobSettingsPanel.class, "FileTypeIdIngestJobSettingsPanel.skipKnownCheckBox.text")); // NOI18N
+        skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(FileTypeIdIngestJobSettingsPanel.class, "FileTypeIdIngestJobSettingsPanel.skipKnownCheckBox.toolTipText")); // NOI18N
         skipKnownCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipKnownCheckBoxActionPerformed(evt);

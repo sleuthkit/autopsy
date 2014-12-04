@@ -82,7 +82,7 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      */
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        return new FileTypeIdSettingsPanel();
+        return new FileTypeIdGlobalSettingsPanel();
     }
     
     /**
@@ -111,7 +111,7 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
             throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
                     "FileTypeIdModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
-        return new FileTypeIdModuleSettingsPanel((FileTypeIdModuleSettings) settings);
+        return new FileTypeIdIngestJobSettingsPanel((FileTypeIdModuleSettings) settings);
     }
 
     /**

@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,21 +48,35 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 final class UserDefinedFileTypesManager {
 
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
-    private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypeDefinitions.xsd"; // NON-NLS
-    private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; // NON-NLS
-    private static final String FILE_TYPES_TAG_NAME = "filetypes"; // NON-NLS
-    private static final String FILE_TYPE_TAG_NAME = "filetype"; // NON-NLS
-    private static final String ALERT_ATTRIBUTE = "alert"; // NON-NLS
-    private static final String TYPE_NAME_TAG_NAME = "typename"; // NON-NLS
-    private static final String SIGNATURE_TAG_NAME = "signature"; // NON-NLS
-    private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; // NON-NLS
-    private static final String BYTES_TAG_NAME = "bytes"; // NON-NLS
-    private static final String OFFSET_TAG_NAME = "offset"; // NON-NLS
-    private static final String ENCODING = "UTF-8"; //NON-NLS
+    private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypeDefinitions.xsd"; //NON-NLS
+    private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
+    private static final String FILE_TYPES_TAG_NAME = "filetypes"; //NON-NLS
+    private static final String FILE_TYPE_TAG_NAME = "filetype"; //NON-NLS
+    private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
+    private static final String TYPE_NAME_TAG_NAME = "typename"; //NON-NLS
+    private static final String SIGNATURE_TAG_NAME = "signature"; //NON-NLS
+    private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
+    private static final String BYTES_TAG_NAME = "bytes"; //NON-NLS
+    private static final String OFFSET_TAG_NAME = "offset"; //NON-NLS
+    private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
     private static final String ASCII_ENCODING = "US-ASCII"; //NON-NLS
     private static UserDefinedFileTypesManager instance;
-    private final Map<String, FileType> predefinedFileTypes = new HashMap<>();
+
+    /**
+     * User-defined file types to be persisted to the user-defined file type
+     * definitions file are stored in this mapping of file type names to file
+     * types. Access to this map is guarded by the intrinsic lock of the
+     * user-defined file types manager for thread-safety.
+     */
     private final Map<String, FileType> userDefinedFileTypes = new HashMap<>();
+
+    /**
+     * The combined set of user-defined file types and file types predefined by
+     * Autopsy are stored in this mapping of file type names to file types. This
+     * is the current working set of file types. Access to this map is guarded
+     * by the intrinsic lock of the user-defined file types manager for
+     * thread-safety.
+     */
     private final Map<String, FileType> fileTypes = new HashMap<>();
 
     /**
@@ -70,10 +85,10 @@ final class UserDefinedFileTypesManager {
      * @return A singleton user-defined file types manager.
      */
     synchronized static UserDefinedFileTypesManager getInstance() {
-        if (instance == null) {
-            instance = new UserDefinedFileTypesManager();
+        if (UserDefinedFileTypesManager.instance == null) {
+            UserDefinedFileTypesManager.instance = new UserDefinedFileTypesManager();
         }
-        return instance;
+        return UserDefinedFileTypesManager.instance;
     }
 
     /**
@@ -90,7 +105,7 @@ final class UserDefinedFileTypesManager {
      * names to predefined file types.
      */
     private void loadPredefinedFileTypes() {
-        // RJCTODO: Remove
+        // RJCTODO: Remove test type
         /**
          * Create a file type that should match $MBR in Small2 image.
          */
@@ -99,11 +114,11 @@ final class UserDefinedFileTypesManager {
         /**
          * Create a file type that should match test.txt in the Small2 image.
          */
-        // RJCTODO: Remove
+        // RJCTODO: Remove test type
         try {
-            this.fileTypes.put("predefinedASCII", new FileType("predefinedASCII", new Signature("hello".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true));
+            this.fileTypes.put("predefinedASCII", new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true));
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
+            UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
         }
 
         try {
@@ -129,9 +144,13 @@ final class UserDefinedFileTypesManager {
 //            catch (IndexOutOfBoundsException e) {
 //                // do nothing
 //            }
-            this.predefinedFileTypes.put("text/xml", new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), false));
+            this.fileTypes.put("text/xml", new FileType("text/xml", new Signature("<?xml".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), false));
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Unable to create 'text/xml' predefined file type definition", ex); //NON-NLS
+            /**
+             * Using an all-or-none strategy.
+             */
+            UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to create predefined file type definitions", ex); //NON-NLS
+            this.fileTypes.clear();
         }
     }
 
@@ -141,29 +160,27 @@ final class UserDefinedFileTypesManager {
      */
     private void loadUserDefinedFileTypes() {
         try {
-
-            /**
-             * Read the user-defined types from the backing XML file. These
-             * types are put into one map that will be used to write changes to
-             * the XML backing a file, and to another ,map where user-defined
-             * types overwrite predefined types of the same name.
-             */
-            String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
+            String filePath = getFileTypeDefinitionsFilePath(UserDefinedFileTypesManager.USER_DEFINED_TYPE_DEFINITIONS_FILE);
             File file = new File(filePath);
             if (file.exists() && file.canRead()) {
                 for (FileType fileType : XMLReader.readFileTypes(filePath)) {
-                    userDefinedFileTypes.put(fileType.getTypeName(), fileType);
-                    fileTypes.put(fileType.getTypeName(), fileType);
+                    this.userDefinedFileTypes.put(fileType.getTypeName(), fileType);
+                    this.fileTypes.put(fileType.getTypeName(), fileType);
                 }
             }
 
-        } catch (InvalidXMLException ex) {
-            // RJCTODO:
+        } catch (UserDefinedFileTypesManager.InvalidXMLException ex) {
+            /**
+             * Using an all-or-none strategy.
+             */
+            UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to load user-defined types", ex); //NON-NLS
+            this.fileTypes.clear();
+            this.userDefinedFileTypes.clear();
         }
     }
 
     /**
-     * Gets the file types.
+     * Gets the user-defined file types.
      *
      * @return A mapping of file type names to file types, possibly empty.
      */
@@ -176,50 +193,50 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds a new file type definition, overwriting any file type with the same
-     * type name that already exists.
+     * Adds a new user-defined file type, overwriting any existing file type
+     * with the same type name.
      *
      * @param fileType The file type to add.
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
     synchronized void addFileType(FileType fileType) throws UserDefinedFileTypesException {
-        List<FileType> newFileTypes = new ArrayList<>();
-        newFileTypes.add(fileType);
-        addFileTypes(newFileTypes);
+        this.addFileTypes(Collections.singletonList(fileType));
     }
 
     /**
-     * Adds a set of new file types, overwriting any file types with the same
-     * type names that already exist.
+     * Adds a collection of new user-defined file types, overwriting any
+     * existing file types with the same type names.
      *
      * @param newFileTypes The file types to add.
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
     synchronized void addFileTypes(Collection<FileType> newFileTypes) throws UserDefinedFileTypesException {
+        /**
+         * It is safe to hold references to client-constructed file type objects
+         * because they are immutable.
+         */
         for (FileType fileType : newFileTypes) {
-            userDefinedFileTypes.put(fileType.getTypeName(), fileType);
-            fileTypes.put(fileType.getTypeName(), fileType);
+            this.userDefinedFileTypes.put(fileType.getTypeName(), fileType);
+            this.fileTypes.put(fileType.getTypeName(), fileType);
         }
-        saveUserDefinedTypes();
+        this.saveUserDefinedTypes();
     }
 
     /**
-     * Deletes a file type.
+     * Deletes a user-defined file type.
      *
      * @param fileType The file type to delete.
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
     synchronized void deleteFileType(FileType fileType) throws UserDefinedFileTypesException {
-        List<FileType> deletedFileTypes = new ArrayList<>();
-        deletedFileTypes.add(fileType);
-        deleteFileTypes(deletedFileTypes);
+        this.deleteFileTypes(Collections.singletonList(fileType));
     }
 
     /**
-     * Deletes a set of file types.
+     * Deletes a set of user-defined file types.
      *
      * @param deletedFileTypes The file types to delete.
      * @throws
@@ -227,21 +244,21 @@ final class UserDefinedFileTypesManager {
      */
     synchronized void deleteFileTypes(Collection<FileType> deletedFileTypes) throws UserDefinedFileTypesException {
         for (FileType fileType : deletedFileTypes) {
-            userDefinedFileTypes.remove(fileType.getTypeName(), fileType);
-            fileTypes.remove(fileType.getTypeName(), fileType);
+            this.userDefinedFileTypes.remove(fileType.getTypeName(), fileType);
+            this.fileTypes.remove(fileType.getTypeName(), fileType);
         }
-        saveUserDefinedTypes();
+        this.saveUserDefinedTypes();
     }
 
     /**
-     * Persist the user-defined file type definitions.
+     * Persists the user-defined file type definitions.
      *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
     private void saveUserDefinedTypes() throws UserDefinedFileTypesException {
-        String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-        writeFileTypes(userDefinedFileTypes.values(), filePath);
+        String filePath = UserDefinedFileTypesManager.getFileTypeDefinitionsFilePath(UserDefinedFileTypesManager.USER_DEFINED_TYPE_DEFINITIONS_FILE);
+        UserDefinedFileTypesManager.writeFileTypes(this.userDefinedFileTypes.values(), filePath);
     }
 
     /**
@@ -253,10 +270,10 @@ final class UserDefinedFileTypesManager {
      */
     private static void writeFileTypes(Collection<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
         try {
-            XMLWriter.writeFileTypes(fileTypes, filePath);
+            UserDefinedFileTypesManager.XMLWriter.writeFileTypes(fileTypes, filePath);
         } catch (ParserConfigurationException | IOException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Failed to write file types file", ex);
-            throw new UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
+            throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
         }
     }
 
@@ -291,9 +308,9 @@ final class UserDefinedFileTypesManager {
                 Element fileTypeElem = UserDefinedFileTypesManager.XMLWriter.createFileTypeElement(fileType, doc);
                 fileTypesElem.appendChild(fileTypeElem);
             }
-            if (!XMLUtil.saveDoc(HashDbManager.class, filePath, UserDefinedFileTypesManager.ENCODING, doc)) {
+            if (!XMLUtil.saveDoc(HashDbManager.class, filePath, UserDefinedFileTypesManager.ENCODING_FOR_XML_FILE, doc)) {
                 // RJCTODO: If time permits add XMLUtil that properly throws and deprecate this one
-                throw new IOException("Error saving user defined file types, see log for details"); // NON-NLS
+                throw new IOException("Error saving user defined file types, see log for details"); //NON-NLS
             }
         }
 
@@ -451,17 +468,18 @@ final class UserDefinedFileTypesManager {
             if (!textContent.isEmpty()) {
                 return textContent;
             } else {
-                throw new InvalidXMLException("File type " + tagName + " child element missing text content"); // NON-NLS
+                throw new InvalidXMLException("File type " + tagName + " child element missing text content"); //NON-NLS
             }
         } else {
-            throw new InvalidXMLException("File type element missing " + tagName + " child element"); // NON-NLS
+            throw new InvalidXMLException("File type element missing " + tagName + " child element"); //NON-NLS
         }
     }
 
     /**
-     * RJCTODO
+     * Used for exceptions when parsing user-defined types XML elements and
+     * attributes.
      */
-    static class InvalidXMLException extends Exception {
+    private static class InvalidXMLException extends Exception {
 
         InvalidXMLException(String message) {
             super(message);

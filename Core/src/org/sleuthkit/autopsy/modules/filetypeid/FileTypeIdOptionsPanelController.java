@@ -22,7 +22,7 @@ import org.openide.util.Lookup;
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})
 public final class FileTypeIdOptionsPanelController extends OptionsPanelController {
 
-    private FileTypeIdSettingsPanel panel;
+    private FileTypeIdGlobalSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
@@ -77,9 +77,9 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
         pcs.removePropertyChangeListener(l);
     }
 
-    private FileTypeIdSettingsPanel getPanel() {
+    private FileTypeIdGlobalSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new FileTypeIdSettingsPanel();
+            panel = new FileTypeIdGlobalSettingsPanel();
         }
         return panel;
     }

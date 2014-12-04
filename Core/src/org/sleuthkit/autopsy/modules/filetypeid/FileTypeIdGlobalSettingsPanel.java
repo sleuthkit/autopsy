@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.User
 /**
  * A panel to allow a user to make custom file type definitions.
  */
-final class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private final HashMap<String, FileType> fileTypes = new HashMap<>();
     private final HashMap<String, FileType> changedFileTypes = new HashMap<>();
@@ -39,7 +39,7 @@ final class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel impl
     /**
      * Creates a panel to allow a user to make custom file type definitions.
      */
-    FileTypeIdSettingsPanel() {
+    FileTypeIdGlobalSettingsPanel() {
         initComponents();
     }
 
@@ -139,40 +139,40 @@ final class FileTypeIdSettingsPanel extends IngestModuleGlobalSettingsPanel impl
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.mimeTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeLabel.text")); // NOI18N
 
-        mimeTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.mimeTypeTextField.text")); // NOI18N
+        mimeTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(signatureTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.signatureTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(signatureTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureTypeLabel.text")); // NOI18N
 
-        signatureTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.signatureTextField.text")); // NOI18N
+        signatureTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(offsetLabel, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.offsetLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(offsetLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetLabel.text")); // NOI18N
 
-        offsetTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.offsetTextField.text")); // NOI18N
+        offsetTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(newTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.newTypeButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.newTypeButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(deleteTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.deleteTypeButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.deleteTypeButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(saveTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.saveTypeButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(saveTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.saveTypeButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(hexPrefixLabel, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.hexPrefixLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hexPrefixLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.hexPrefixLabel.text")); // NOI18N
 
         signatureTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Bytes (Hex)", "String", " " }));
 
-        org.openide.awt.Mnemonics.setLocalizedText(signatureLabel, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.signatureLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(signatureLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureLabel.text")); // NOI18N
 
         jTextArea1.setEditable(false);
         jTextArea1.setColumns(20);
         jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(5);
-        jTextArea1.setText(org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.jTextArea1.text")); // NOI18N
+        jTextArea1.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jTextArea1.text")); // NOI18N
         jTextArea1.setWrapStyleWord(true);
         jScrollPane2.setViewportView(jTextArea1);
 
-        org.openide.awt.Mnemonics.setLocalizedText(postHitCheckBox, org.openide.util.NbBundle.getMessage(FileTypeIdSettingsPanel.class, "FileTypeIdSettingsPanel.postHitCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(postHitCheckBox, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.postHitCheckBox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
