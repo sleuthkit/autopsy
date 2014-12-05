@@ -63,6 +63,13 @@ final class UserDefinedFileTypesManager {
     private static UserDefinedFileTypesManager instance;
 
     /**
+     * Predefined file types are stored in this mapping of file type names to
+     * file types. Access to this map is guarded by the intrinsic lock of the
+     * user-defined file types manager for thread-safety.
+     */
+    private final Map<String, FileType> predefinedFileTypes = new HashMap<>();
+
+    /**
      * User-defined file types to be persisted to the user-defined file type
      * definitions file are stored in this mapping of file type names to file
      * types. Access to this map is guarded by the intrinsic lock of the
@@ -96,6 +103,10 @@ final class UserDefinedFileTypesManager {
      * (e.g., MIME type) and signatures.
      */
     private UserDefinedFileTypesManager() {
+        /**
+         * Load the predefined types first so that they can be overwritten by
+         * any user-defined types with the same names.
+         */
         loadPredefinedFileTypes();
         loadUserDefinedFileTypes();
     }
@@ -109,14 +120,16 @@ final class UserDefinedFileTypesManager {
         /**
          * Create a file type that should match $MBR in Small2 image.
          */
-        this.fileTypes.put("predefinedRAW", new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), true));
+        FileType fileType = new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), true);
+        this.addPredefinedFileType(fileType);
 
         /**
          * Create a file type that should match test.txt in the Small2 image.
          */
         // RJCTODO: Remove test type
         try {
-            this.fileTypes.put("predefinedASCII", new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true));
+            fileType = new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true);
+            this.addPredefinedFileType(fileType);
         } catch (UnsupportedEncodingException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
         }
@@ -144,14 +157,26 @@ final class UserDefinedFileTypesManager {
 //            catch (IndexOutOfBoundsException e) {
 //                // do nothing
 //            }
-            this.fileTypes.put("text/xml", new FileType("text/xml", new Signature("<?xml".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), false));
+            fileType = new FileType("text/xml", new Signature("<?xml".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), false);
+            this.addPredefinedFileType(fileType);
         } catch (UnsupportedEncodingException ex) {
             /**
-             * Using an all-or-none strategy.
+             * Using an all-or-none policy.
              */
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to create predefined file type definitions", ex); //NON-NLS
             this.fileTypes.clear();
         }
+    }
+
+    /**
+     * Adds a file type to the the predefined file types and combined file types
+     * maps.
+     *
+     * @param fileType The file type to add.
+     */
+    private void addPredefinedFileType(FileType fileType) {
+        this.predefinedFileTypes.put(fileType.getTypeName(), fileType);
+        this.fileTypes.put(fileType.getTypeName(), fileType);
     }
 
     /**
@@ -164,14 +189,13 @@ final class UserDefinedFileTypesManager {
             File file = new File(filePath);
             if (file.exists() && file.canRead()) {
                 for (FileType fileType : XMLReader.readFileTypes(filePath)) {
-                    this.userDefinedFileTypes.put(fileType.getTypeName(), fileType);
-                    this.fileTypes.put(fileType.getTypeName(), fileType);
+                    this.addUserDefinedFileType(fileType);
                 }
             }
 
         } catch (UserDefinedFileTypesManager.InvalidXMLException ex) {
             /**
-             * Using an all-or-none strategy.
+             * Using an all-or-none policy.
              */
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to load user-defined types", ex); //NON-NLS
             this.fileTypes.clear();
@@ -180,101 +204,79 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Gets the user-defined file types.
+     * Adds a file type to the the user-defined file types and combined file
+     * types maps.
+     *
+     * @param fileType The file type to add.
+     */
+    private void addUserDefinedFileType(FileType fileType) {
+        this.userDefinedFileTypes.put(fileType.getTypeName(), fileType);
+        this.fileTypes.put(fileType.getTypeName(), fileType);
+    }
+
+    /**
+     * Gets both the predefined and the user-defined file types.
      *
      * @return A mapping of file type names to file types, possibly empty.
      */
-    synchronized List<FileType> getFileTypes() {
+    synchronized Map<String, FileType> getFileTypes() {
         /**
          * It is safe to return references to the internal file type objects
          * because they are immutable.
          */
-        return new ArrayList<>(this.fileTypes.values());
+        return new HashMap<>(this.fileTypes);
     }
 
     /**
-     * Adds a new user-defined file type, overwriting any existing file type
-     * with the same type name.
+     * Gets the user-defined file types.
      *
-     * @param fileType The file type to add.
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @return A mapping of file type names to file types, possibly empty.
      */
-    synchronized void addFileType(FileType fileType) throws UserDefinedFileTypesException {
-        this.addFileTypes(Collections.singletonList(fileType));
-    }
-
-    /**
-     * Adds a collection of new user-defined file types, overwriting any
-     * existing file types with the same type names.
-     *
-     * @param newFileTypes The file types to add.
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
-     */
-    synchronized void addFileTypes(Collection<FileType> newFileTypes) throws UserDefinedFileTypesException {
+    synchronized Map<String, FileType> getUserDefinedFileTypes() {
         /**
-         * It is safe to hold references to client-constructed file type objects
+         * It is safe to return references to the internal file type objects
          * because they are immutable.
          */
-        for (FileType fileType : newFileTypes) {
-            this.userDefinedFileTypes.put(fileType.getTypeName(), fileType);
-            this.fileTypes.put(fileType.getTypeName(), fileType);
-        }
-        this.saveUserDefinedTypes();
+        return new HashMap<>(this.userDefinedFileTypes);
     }
 
     /**
-     * Deletes a user-defined file type.
+     * Sets the user-defined file types.
      *
-     * @param fileType The file type to delete.
+     * @param newFileTypes A mapping of file type names to user-defined
+     * file types.
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
-    synchronized void deleteFileType(FileType fileType) throws UserDefinedFileTypesException {
-        this.deleteFileTypes(Collections.singletonList(fileType));
-    }
-
-    /**
-     * Deletes a set of user-defined file types.
-     *
-     * @param deletedFileTypes The file types to delete.
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
-     */
-    synchronized void deleteFileTypes(Collection<FileType> deletedFileTypes) throws UserDefinedFileTypesException {
-        for (FileType fileType : deletedFileTypes) {
-            this.userDefinedFileTypes.remove(fileType.getTypeName(), fileType);
-            this.fileTypes.remove(fileType.getTypeName(), fileType);
-        }
-        this.saveUserDefinedTypes();
-    }
-
-    /**
-     * Persists the user-defined file type definitions.
-     *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
-     */
-    private void saveUserDefinedTypes() throws UserDefinedFileTypesException {
-        String filePath = UserDefinedFileTypesManager.getFileTypeDefinitionsFilePath(UserDefinedFileTypesManager.USER_DEFINED_TYPE_DEFINITIONS_FILE);
-        UserDefinedFileTypesManager.writeFileTypes(this.userDefinedFileTypes.values(), filePath);
-    }
-
-    /**
-     * Writes a set of file type definitions to a given file.
-     *
-     * @param fileTypes The file types.
-     * @param filePath The destination file.
-     * @throws UserDefinedFileTypesException
-     */
-    private static void writeFileTypes(Collection<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
+    synchronized void setUserDefinedFileTypes(Map<String, FileType> newFileTypes) throws UserDefinedFileTypesManager.UserDefinedFileTypesException {
         try {
-            UserDefinedFileTypesManager.XMLWriter.writeFileTypes(fileTypes, filePath);
+            /**
+             * Persist the user-defined file type definitions.
+             */
+            String filePath = UserDefinedFileTypesManager.getFileTypeDefinitionsFilePath(UserDefinedFileTypesManager.USER_DEFINED_TYPE_DEFINITIONS_FILE);
+            UserDefinedFileTypesManager.XMLWriter.writeFileTypes(newFileTypes.values(), filePath);
+
         } catch (ParserConfigurationException | IOException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Failed to write file types file", ex);
             throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
         }
+
+        /**
+         * Clear and reinitialize the user-defined file type map. It is safe to
+         * hold references to file type objects obtained for the caller because
+         * they are immutable.
+         */
+        this.userDefinedFileTypes.clear();
+        this.userDefinedFileTypes.putAll(newFileTypes);
+
+        /**
+         * Clear and reinitialize the combined file type map, loading the
+         * predefined types first so that they can be overwritten by any
+         * user-defined types with the same names.
+         */
+        this.fileTypes.clear();
+        this.fileTypes.putAll(this.predefinedFileTypes);
+        this.fileTypes.putAll(this.userDefinedFileTypes);
     }
 
     /**
