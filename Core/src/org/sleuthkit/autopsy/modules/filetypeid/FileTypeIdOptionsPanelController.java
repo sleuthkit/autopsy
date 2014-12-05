@@ -34,13 +34,8 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
 
     @Override
     public void applyChanges() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                getPanel().store();
-                changed = false;
-            }
-        });
+        getPanel().store();
+        changed = false;
     }
 
     @Override

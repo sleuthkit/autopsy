@@ -18,12 +18,17 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.xml.bind.DatatypeConverter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -34,20 +39,54 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
  */
 final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private static final String RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM = "Bytes (Hex)"; // RJCTODO: Bundle
-    private static final String ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM = "String (ASCII)"; // RJCTODO: Bundle
+    private static final String RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.rawItem");
+    private static final String ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.asciiItem");
+
+    /**
+     * These two fields are used to synthesize default names for user-defined
+     * types. This is a thread-safe implementation because there can be two
+     * instances of this panel at the same time due to the non-modal nature of
+     * the NetBeans options window and the fact that these panels can also be
+     * invoked via ingest job configuration panels. All interactions with
+     * instances of this panel should occur on the EDT, so this is defensive
+     * programming.
+     */
+    private static final String DEFAULT_TYPE_NAME_BASE = "userdefined/userdefined"; //NON-NLS
+    private static final AtomicInteger defaultTypeNameCounter = new AtomicInteger(1);
 
     /**
      * This mapping of file type names to file types is used to hold the types
-     * displayed in the file types list component.
+     * displayed in the file types list component via its list model.
      */
     private Map<String, FileType> fileTypes;
+    private DefaultListModel<String> typesListModel;
 
     /**
      * Creates a panel to allow a user to make custom file type definitions.
      */
     FileTypeIdGlobalSettingsPanel() {
-        initComponents();
+        this.initComponents();
+        this.customizeComponents();
+    }
+
+    /**
+     * Does component initialization in addition to the the Matisse generated
+     * initialization.
+     */
+    private void customizeComponents() {
+        /**
+         * Make a model for the file types list component.
+         */
+        this.typesListModel = new DefaultListModel<>();
+        this.typesList.setModel(this.typesListModel);
+        
+        /**
+         * Make a model for the signature type combo box component.
+         */
+        DefaultComboBoxModel<String> sigTypeComboBoxModel = new DefaultComboBoxModel<>();
+        sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+        sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+        this.signatureTypeComboBox.setModel(sigTypeComboBoxModel);        
     }
 
     /**
@@ -68,11 +107,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          * types list component.
          */
         this.fileTypes = UserDefinedFileTypesManager.getInstance().getUserDefinedFileTypes();
-        DefaultListModel<String> fileTypesListModel = new DefaultListModel<>();
-        for (FileType fileType : this.fileTypes.values()) {
-            fileTypesListModel.addElement(fileType.getTypeName());
-        }
-        this.typesList.setModel(fileTypesListModel);
+        this.setFileTypesListModel();
 
         /**
          * Add a selection listener to populate the file type details
@@ -84,17 +119,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          * If there is at least one user-defined file type, select it the file
          * types list component.
          */
-        if (!fileTypesListModel.isEmpty()) {
+        if (!this.typesListModel.isEmpty()) {
             this.typesList.setSelectedIndex(0);
         }
-
-        /**
-         * Make a model for the signature type combo box component.
-         */
-        DefaultComboBoxModel<String> sigTypeComboBoxModel = new DefaultComboBoxModel<>();
-        sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
-        sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
-        this.signatureTypeComboBox.setModel(sigTypeComboBoxModel);
     }
 
     /**
@@ -109,6 +136,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         }
     }
 
+    /**
+     * Selection listener for the file types list component.
+     */
     private class TypesListSelectionListener implements ListSelectionListener {
 
         @Override
@@ -132,18 +162,30 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * RJCTODO
+     * Sets the list model for the file types list component.
+     */
+    private void setFileTypesListModel() {
+        ArrayList<String> typeNames = new ArrayList(this.fileTypes.keySet());
+        Collections.sort(typeNames);
+        this.typesListModel.clear();
+        for (String typeName : typeNames) {
+            this.typesListModel.addElement(typeName);
+        }
+    }
+
+    /**
+     * Clears all of the components in the individual type details portion of
+     * the panel.
      */
     private void clearTypeDetailsComponents() {
         this.typesList.setSelectedIndex(-1);
-        this.mimeTypeTextField.setText(""); //NON-NLS // RJCTODO: Default name?
+        this.mimeTypeTextField.setText("");
         this.signatureTypeComboBox.setSelectedItem(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         this.signatureTextField.setText(""); //NON-NLS
         this.offsetTextField.setText(""); //NON-NLS
         this.postHitCheckBox.setSelected(false);
     }
 
-    // RJCTODO: Consider fixing OptionsPanel interface or writing story
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -153,7 +195,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
         typesScrollPane = new javax.swing.JScrollPane();
         typesList = new javax.swing.JList<String>();
         jSeparator1 = new javax.swing.JSeparator();
@@ -252,7 +293,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(signatureTypeLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(signatureTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(signatureTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(layout.createSequentialGroup()
@@ -325,7 +366,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void newTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTypeButtonActionPerformed
         this.clearTypeDetailsComponents();
-        // RJCTODO: Default name?
+        this.mimeTypeTextField.setText(FileTypeIdGlobalSettingsPanel.DEFAULT_TYPE_NAME_BASE + FileTypeIdGlobalSettingsPanel.defaultTypeNameCounter.getAndIncrement());
     }//GEN-LAST:event_newTypeButtonActionPerformed
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
@@ -337,32 +378,70 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void saveTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTypeButtonActionPerformed
         try {
+            /**
+             * Get the file type name.
+             */
             String typeName = this.mimeTypeTextField.getText();
             if (typeName.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "MIME type name cannot be empty.", "Missing MIME Type", JOptionPane.ERROR_MESSAGE); // RJCTODO: Bundle
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
+            /**
+             * Get the signature type.
+             */
+            FileType.Signature.Type sigType = this.signatureTypeComboBox.getSelectedItem() == FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM ? FileType.Signature.Type.RAW : FileType.Signature.Type.ASCII;
+
+            /**
+             * Get the signature bytes.
+             */
             String sigString = this.signatureTextField.getText();
             if (sigString.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Signature cannot be empty.", "Missing Signature", JOptionPane.ERROR_MESSAGE); // RJCTODO: Bundle
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignature.message"),
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignature.title"),
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            byte[] signatureBytes;
+            if (FileType.Signature.Type.RAW == sigType) {
+                signatureBytes = DatatypeConverter.parseHexBinary(sigString);
+            } else {
+                signatureBytes = sigString.getBytes(Charset.forName("UTF-8"));
+            }
 
+            /** 
+             * Get the offset.
+             */
             long offset = Long.parseUnsignedLong(this.offsetTextField.getText());
-
-            FileType.Signature.Type sigType = this.signatureTypeComboBox.getSelectedItem() == FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM ? FileType.Signature.Type.RAW : FileType.Signature.Type.ASCII;
-            FileType.Signature signature = new FileType.Signature(new byte[1], offset, sigType); // RJCTODO:
+            
+            /**
+             * Put it all together and reset the file types list component.
+             */
+            FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType); // RJCTODO:
             FileType fileType = new FileType(typeName, signature, this.postHitCheckBox.isSelected());
             this.fileTypes.put(typeName, fileType);
+            this.setFileTypesListModel();
+            this.typesList.setSelectedValue(fileType.getTypeName(), true);
+            
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "Offset is not a positive integer.", "Invalid Offset", JOptionPane.ERROR_MESSAGE); // RJCTODO: Bundle
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
+                        JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.message"),
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.title"),
+                        JOptionPane.ERROR_MESSAGE);            
         }
     }//GEN-LAST:event_saveTypeButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton deleteTypeButton;
     private javax.swing.JLabel hexPrefixLabel;
     private javax.swing.JScrollPane jScrollPane2;
