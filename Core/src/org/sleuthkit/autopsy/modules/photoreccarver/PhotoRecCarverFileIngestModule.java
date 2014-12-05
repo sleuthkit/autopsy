@@ -113,7 +113,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 PhotoRecCarverFileIngestModule.pathsByJob.put(this.context.getJobId(), new WorkingPaths(outputDirPath, tempDirPath));
             }
             catch (SecurityException | IOException | UnsupportedOperationException ex) {
-                throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "Utilities.cannotCreateOutputDir.message", ex.getLocalizedMessage()));
+                throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
             }
         }
     }
@@ -145,7 +145,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Check that we have roughly enough disk space left to complete the operation
             long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
             if ((file.getSize() * 2) > freeDiskSpace) {
-                logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to carve unallocated space.",
+                logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to carve unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
@@ -163,9 +163,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Scan the file with Unallocated Carver.
             ProcessBuilder processAndSettings = new ProcessBuilder(
                     "\"" + executableFile + "\"",
-                    "/d",
+                    "/d", // NON-NLS
                     "\"" + outputDirPath.toAbsolutePath() + File.separator + PHOTOREC_RESULTS_BASE + "\"",
-                    "/cmd",
+                    "/cmd", // NON-NLS
                     "\"" + tempFilePath.toFile() + "\"",
                     "search");  // NON_NLS
 
@@ -194,7 +194,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (null != tempFilePath && Files.exists(tempFilePath)) {
                     tempFilePath.toFile().delete();
                 }
-                logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}",
+                logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}", // NON-NLS
                         new Object[]{exitValue, file.getName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
