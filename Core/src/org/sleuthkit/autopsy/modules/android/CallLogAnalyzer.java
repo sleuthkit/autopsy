@@ -47,11 +47,11 @@ class CallLogAnalyzer {
 
     /** the where clause(without 'where' of sql select statement to choose call
      * log dbs, update the list of file names to include more files */
-    private static final String fileNameQuery = Stream.of("'logs.db'", "'contacts2.db'", "'contacts.db'")
-            .collect(Collectors.joining(" OR name = ", "name = ", ""));
+    private static final String fileNameQuery = Stream.of("'logs.db'", "'contacts2.db'", "'contacts.db'") //NON-NLS
+            .collect(Collectors.joining(" OR name = ", "name = ", "")); //NON-NLS
 
     /** the names of tables that potentially hold call logs in the dbs */
-    private static final Iterable<String> tableNames = Arrays.asList("calls", "logs");
+    private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
     public static void findCallLogs() {
         try {
@@ -63,11 +63,11 @@ class CallLogAnalyzer {
                     ContentUtils.writeToFile(abstractFile, file);
                     findCallLogsInDB(file.toString(), abstractFile);
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Error writing temporary call log db to disk", e);
+                    logger.log(Level.SEVERE, "Error writing temporary call log db to disk", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding call logs", e);
+            logger.log(Level.SEVERE, "Error finding call logs", e); //NON-NLS
         }
     }
 
@@ -76,20 +76,20 @@ class CallLogAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
              Statement statement = connection.createStatement();) {
 
             for (String tableName : tableNames) {
                 try (ResultSet resultSet = statement.executeQuery(
-                        "SELECT number,date,duration,type, name FROM " + tableName + " ORDER BY date DESC;");) {
-                    logger.log(Level.INFO, "Reading call log from table {0} in db {1}", new Object[]{tableName, DatabasePath});
+                        "SELECT number,date,duration,type, name FROM " + tableName + " ORDER BY date DESC;");) { //NON-NLS
+                    logger.log(Level.INFO, "Reading call log from table {0} in db {1}", new Object[]{tableName, DatabasePath}); //NON-NLS
                     while (resultSet.next()) {
                         Long date = resultSet.getLong("date") / 1000;
-                        final CallDirection direction = CallDirection.fromType(resultSet.getInt("type"));
+                        final CallDirection direction = CallDirection.fromType(resultSet.getInt("type")); //NON-NLS
                         String directionString = direction != null ? direction.getDisplayName() : "";
-                        final String number = resultSet.getString("number");
-                        final long duration = resultSet.getLong("duration");//duration of call is in seconds
-                        final String name = resultSet.getString("name");// name of person dialed or called. null if unregistered
+                        final String number = resultSet.getString("number"); //NON-NLS
+                        final long duration = resultSet.getLong("duration"); //NON-NLS  //duration of call is in seconds
+                        final String name = resultSet.getString("name"); //NON-NLS  // name of person dialed or called. null if unregistered
 
                         try {
                             BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
@@ -104,21 +104,21 @@ class CallLogAnalyzer {
                             bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, directionString));
                             bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
                         } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Error posting call log record to the Blackboard", ex);
+                            logger.log(Level.SEVERE, "Error posting call log record to the Blackboard", ex); //NON-NLS
                         }
                     }
                 } catch (SQLException e) {
-                    logger.log(Level.WARNING, "Could not read table {0} in db {1}", new Object[]{tableName, DatabasePath});
+                    logger.log(Level.WARNING, "Could not read table {0} in db {1}", new Object[]{tableName, DatabasePath}); //NON-NLS
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + DatabasePath, e);
+            logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + DatabasePath, e); //NON-NLS
         }
     }
 
     private static enum CallDirection {
 
-        INCOMING(1, "Incoming"), OUTGOING(2, "Outgoing"), MISSED(3, "Missed");
+        INCOMING(1, "Incoming"), OUTGOING(2, "Outgoing"), MISSED(3, "Missed"); //NON-NLS
 
         private final int type;
 
