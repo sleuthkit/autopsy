@@ -49,7 +49,7 @@ class TextMessageAnalyzer {
     void findTexts() {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //get exact file name
+            absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //NON-NLS //get exact file name
             if (absFiles.isEmpty()) {
                 return;
             }
@@ -61,11 +61,11 @@ class TextMessageAnalyzer {
                     fileId = AF.getId();
                     findTextsInDB(dbPath, fileId);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing text messages", e);
+                    logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding text messages", e);
+            logger.log(Level.SEVERE, "Error finding text messages", e); //NON-NLS
         }
     }
 
@@ -74,11 +74,11 @@ class TextMessageAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
+            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
         Case currentCase = Case.getCurrentCase();
@@ -87,7 +87,7 @@ class TextMessageAnalyzer {
             AbstractFile f = skCase.getAbstractFileById(fId);
             try {
                 resultSet = statement.executeQuery(
-                        "Select address,date,type,subject,body FROM sms;");
+                        "Select address,date,type,subject,body FROM sms;"); //NON-NLS
 
                 BlackboardArtifact bba;
                 String address; // may be phone number, or other addresses
@@ -96,11 +96,11 @@ class TextMessageAnalyzer {
                 String subject;//message subject
                 String body; //message body
                 while (resultSet.next()) {
-                    address = resultSet.getString("address");
-                    date = resultSet.getString("date");
-                    type = resultSet.getString("type");
-                    subject = resultSet.getString("subject");
-                    body = resultSet.getString("body");
+                    address = resultSet.getString("address"); //NON-NLS
+                    date = resultSet.getString("date"); //NON-NLS
+                    type = resultSet.getString("type"); //NON-NLS
+                    subject = resultSet.getString("subject"); //NON-NLS
+                    body = resultSet.getString("body"); //NON-NLS
 
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                     
@@ -122,18 +122,18 @@ class TextMessageAnalyzer {
                 }
 
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
+                logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
             } finally {
                 try {
                     resultSet.close();
                     statement.close();
                     connection.close();
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error closing database", e);
+                    logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         }
 
     }
