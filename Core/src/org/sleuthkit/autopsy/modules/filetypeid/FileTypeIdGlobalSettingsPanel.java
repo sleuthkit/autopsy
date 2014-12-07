@@ -35,7 +35,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
- * A panel to allow a user to make custom file type definitions.
+ * A panel to allow a user to make custom file type definitions. In addition to
+ * being an ingest module global settings panel, an instance of this class also
+ * appears in the NetBeans options dialog as an options panel.
  */
 final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
@@ -44,10 +46,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     /**
      * These two fields are used to synthesize default names for user-defined
-     * types. This is a thread-safe implementation because there can be two
-     * instances of this panel at the same time due to the non-modal nature of
-     * the NetBeans options window and the fact that these panels can also be
-     * invoked via ingest job configuration panels. All interactions with
+     * types. This is a thread-safe implementation. All interactions with
      * instances of this panel should occur on the EDT, so this is defensive
      * programming.
      */
@@ -55,11 +54,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private static final AtomicInteger defaultTypeNameCounter = new AtomicInteger(1);
 
     /**
-     * This mapping of file type names to file types is used to hold the types
-     * displayed in the file types list component via its list model.
+     * The list model for the file types list component of this panel is the set
+     * of type names of the user-defined file types. A mapping of the file type
+     * names to file type objects completes the model.
      */
-    private Map<String, FileType> fileTypes;
     private DefaultListModel<String> typesListModel;
+    private Map<String, FileType> fileTypes;
 
     /**
      * Creates a panel to allow a user to make custom file type definitions.
@@ -70,8 +70,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * Does component initialization in addition to the the Matisse generated
-     * initialization.
+     * Does child component initialization in addition to the the Matisse
+     * generated initialization.
      */
     private void customizeComponents() {
         /**
@@ -79,14 +79,14 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         this.typesListModel = new DefaultListModel<>();
         this.typesList.setModel(this.typesListModel);
-        
+
         /**
          * Make a model for the signature type combo box component.
          */
         DefaultComboBoxModel<String> sigTypeComboBoxModel = new DefaultComboBoxModel<>();
         sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
-        this.signatureTypeComboBox.setModel(sigTypeComboBoxModel);        
+        this.signatureTypeComboBox.setModel(sigTypeComboBoxModel);
     }
 
     /**
@@ -98,7 +98,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * Populates the child components.
+     * Populates the child components with file types obtained from the
+     * user-defined file types manager.
      */
     @Override
     public void load() {
@@ -413,11 +414,11 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 signatureBytes = sigString.getBytes(Charset.forName("UTF-8"));
             }
 
-            /** 
+            /**
              * Get the offset.
              */
             long offset = Long.parseUnsignedLong(this.offsetTextField.getText());
-            
+
             /**
              * Put it all together and reset the file types list component.
              */
@@ -426,17 +427,17 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             this.fileTypes.put(typeName, fileType);
             this.setFileTypesListModel();
             this.typesList.setSelectedValue(fileType.getTypeName(), true);
-            
+
         } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
-                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
-                        JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
+                    JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.message"),
-                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.title"),
-                        JOptionPane.ERROR_MESSAGE);            
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.message"),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.title"),
+                    JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_saveTypeButtonActionPerformed
 

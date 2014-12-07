@@ -110,7 +110,7 @@ final class FileType {
          * Creates a file signature consisting of a sequence of bytes at a
          * specific offset within a file.
          *
-         * @param signatureBytes The signature bytes
+         * @param signatureBytes The signature bytes.
          * @param offset The offset of the signature bytes.
          * @param type The interpretation of the signature bytes (e.g., raw
          * bytes, an ASCII string).
