@@ -43,7 +43,7 @@ class TextMessageAnalyzer {
     public static void findTexts() {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<AbstractFile> absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //get exact file name
+            List<AbstractFile> absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //NON-NLS //get exact file name
 
             for (AbstractFile abstractFile : absFiles) {
                 try {
@@ -51,11 +51,11 @@ class TextMessageAnalyzer {
                     ContentUtils.writeToFile(abstractFile, jFile);
                     findTextsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing text messages", e);
+                    logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding text messages", e);
+            logger.log(Level.SEVERE, "Error finding text messages", e); //NON-NLS
         }
     }
 
@@ -68,17 +68,17 @@ class TextMessageAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
+            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
             return;
         }
 
         try {
             resultSet = statement.executeQuery(
-                    "Select address,date,read,type,subject,body FROM sms;");
+                    "Select address,date,read,type,subject,body FROM sms;"); //NON-NLS
 
             String address; // may be phone number, or other addresses
 
@@ -87,15 +87,15 @@ class TextMessageAnalyzer {
             Integer read; // may be unread = 0, read = 1
             String body; //message body
             while (resultSet.next()) {
-                address = resultSet.getString("address");
-                Long date = Long.valueOf(resultSet.getString("date")) / 1000;
+                address = resultSet.getString("address"); //NON-NLS
+                Long date = Long.valueOf(resultSet.getString("date")) / 1000; //NON-NLS
                 
-                read = resultSet.getInt("read");
-                subject = resultSet.getString("subject");
-                body = resultSet.getString("body");
+                read = resultSet.getInt("read"); //NON-NLS
+                subject = resultSet.getString("subject"); //NON-NLS
+                body = resultSet.getString("body"); //NON-NLS
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
-                if (resultSet.getString("type").equals("1")) {
+                if (resultSet.getString("type").equals("1")) { //NON-NLS
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, "Incoming"));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, address));
                 } else {
@@ -111,7 +111,7 @@ class TextMessageAnalyzer {
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
@@ -120,7 +120,7 @@ class TextMessageAnalyzer {
                 statement.close();
                 connection.close();
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error closing database", e);
+                logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
     }

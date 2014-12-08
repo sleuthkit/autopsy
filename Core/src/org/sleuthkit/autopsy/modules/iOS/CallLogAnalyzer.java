@@ -49,7 +49,7 @@ class CallLogAnalyzer {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //get exact file names 
+            absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //NON-NLS //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }
@@ -61,11 +61,11 @@ class CallLogAnalyzer {
                     fileId = AF.getId();
                     findCallLogsInDB(dbPath, fileId);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Call logs", e);
+                    logger.log(Level.SEVERE, "Error parsing Call logs", e); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Call logs", e);
+            logger.log(Level.SEVERE, "Error finding Call logs", e); //NON-NLS
         }
     }
 
@@ -74,11 +74,11 @@ class CallLogAnalyzer {
             return;
         }
         try {
-            Class.forName("org.sqlite.JDBC"); //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath);
+            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            logger.log(Level.SEVERE, "Error opening database", e);
+            logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
         Case currentCase = Case.getCurrentCase();
@@ -87,7 +87,7 @@ class CallLogAnalyzer {
             AbstractFile f = skCase.getAbstractFileById(fId);
             try {
                 resultSet = statement.executeQuery(
-                        "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;");
+                        "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;"); //NON-NLS
 
                 BlackboardArtifact bba;
                 String name; // name of person dialed or called. null if unregistered
@@ -97,14 +97,14 @@ class CallLogAnalyzer {
                 String type; // 1 incoming, 2 outgoing, 3 missed
 
                 while (resultSet.next()) {
-                    name = resultSet.getString("name");
-                    number = resultSet.getString("number");
-                    duration = resultSet.getString("duration");
-                    date = resultSet.getString("date");
-                    type = resultSet.getString("type");
+                    name = resultSet.getString("name"); //NON-NLS
+                    number = resultSet.getString("number"); //NON-NLS
+                    duration = resultSet.getString("duration"); //NON-NLS
+                    date = resultSet.getString("date"); //NON-NLS
+                    type = resultSet.getString("type"); //NON-NLS
                       
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                    if(type.equalsIgnoreCase("outgoing")) {
+                    if(type.equalsIgnoreCase("outgoing")) { //NON-NLS
                         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
                     }
                     else { /// Covers INCOMING and MISSED
@@ -117,18 +117,18 @@ class CallLogAnalyzer {
 
                 }
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
+                logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e); //NON-NLS
             } finally {
                 try {
                     resultSet.close();
                     statement.close();
                     connection.close();
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error closing the database", e);
+                    logger.log(Level.SEVERE, "Error closing the database", e); //NON-NLS
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e);
+            logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e); //NON-NLS
         }
 
     }
