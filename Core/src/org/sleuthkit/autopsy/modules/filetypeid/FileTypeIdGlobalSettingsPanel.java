@@ -51,7 +51,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * programming.
      */
     private static final String DEFAULT_TYPE_NAME_BASE = "userdefined/userdefined"; //NON-NLS
-    private static final AtomicInteger defaultTypeNameCounter = new AtomicInteger(1);
+    private static final AtomicInteger defaultTypeNameCounter = new AtomicInteger(1); // RJCTODO: Need to save and init counter
 
     /**
      * The list model for the file types list component of this panel is the set
