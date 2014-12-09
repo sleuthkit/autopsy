@@ -70,11 +70,18 @@ public class IngestManager {
     private final AtomicLong ingestErrorMessagePosts = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots = new ConcurrentHashMap<>(); // Maps ingest thread ids to progress ingestThreadActivitySnapshots.    
     private final ConcurrentHashMap<String, Long> ingestModuleRunTimes = new ConcurrentHashMap<>();
-    private final Object processedFilesSnapshotLock = new Object();
-    private ProcessedFilesSnapshot processedFilesSnapshot = new ProcessedFilesSnapshot();
     private volatile IngestMessageTopComponent ingestMessageBox;
     private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
 
+    /**
+     * These static fields are used for the creation and management of ingest
+     * jobs in progress.
+     */
+    private static volatile boolean jobCreationIsEnabled;
+    private static final AtomicLong nextJobId = new AtomicLong(0L);
+    private static final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
+
+        
     /**
      * Ingest job events.
      */
@@ -388,10 +395,6 @@ public class IngestManager {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-        synchronized (processedFilesSnapshotLock) {
-            processedFilesSnapshot.incrementProcessedFilesCount();
-        }
-
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
@@ -779,29 +782,6 @@ public class IngestManager {
 
         String getFileName() {
             return fileName;
-        }
-    }
-
-    static final class ProcessedFilesSnapshot {
-
-        private final Date startTime;
-        private long processedFilesCount;
-
-        ProcessedFilesSnapshot() {
-            this.startTime = new Date();
-            this.processedFilesCount = 0;
-        }
-
-        void incrementProcessedFilesCount() {
-            ++processedFilesCount;
-        }
-
-        Date getStartTime() {
-            return startTime;
-        }
-
-        long getProcessedFilesCount() {
-            return processedFilesCount;
         }
     }
 
