@@ -30,11 +30,18 @@
         </xs:sequence>
     </xs:complexType>
 
+    <xs:complexType name="filesSetType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:attribute name="alert" type="xs:boolean"/>
+        </xs:sequence>
+    </xs:complexType>
+            
     <xs:complexType name="fileType">
         <xs:sequence>
-            <xs:element name="typename" type="verbatimStringType"/>
+            <xs:element name="mimetype" type="verbatimStringType"/>
             <xs:element name="signature" type="signatureType"/>
-            <xs:attribute name="alert" type="xs:boolean"/>
+            <xs:element name="filesset" type="filesSetType"/>
         </xs:sequence>
     </xs:complexType>
                   

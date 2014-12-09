@@ -29,32 +29,35 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class FileType {
 
-    private final String typeName;
+    private final String mimeType;
     private final Signature signature;
+    private final String filesSetName;
     private final boolean alert;
 
     /**
      * Creates a representation of a named file type characterized by a file
      * signature.
      *
-     * @param typeName The name of the file type.
+     * @param mimeType The mime type to associate with this file type.
      * @param signature The signature that characterizes the file type.
+     * @param filesSetName The interesting files set name
      * @param alert A flag indicating whether the user wishes to be alerted when
      * a file matching this type is encountered.
      */
-    FileType(String typeName, final Signature signature, boolean alert) {
-        this.typeName = typeName;
+    FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
+        this.mimeType = mimeType;
         this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        this.filesSetName = filesSetName;
         this.alert = alert;
     }
 
     /**
-     * Gets the name associated with this file type.
+     * Gets the MIME type associated with this file type.
      *
      * @return The type name.
      */
-    String getTypeName() {
-        return this.typeName;
+    String getMimeType() {
+        return this.mimeType;
     }
 
     /**
@@ -84,6 +87,14 @@ final class FileType {
      */
     boolean alertOnMatch() {
         return this.alert;
+    }
+    
+    /**
+     * Gets the interesting files set name assigned to this file type
+     * @return 
+     */
+    String getFilesSetName() {
+        return this.filesSetName;
     }
 
     /**

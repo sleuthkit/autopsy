@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -155,12 +156,58 @@ public class XMLUtil {
      * @param xmlPath the full path to the file to load
      * @param xsdPath the full path to the file to validate against
      */
+    // RJCTODO: Deprecate
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
         Document ret = loadDoc(clazz, xmlPath);
         if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
             Logger.getLogger(clazz.getName()).log(Level.WARNING, "Error loading XML file: could not validate against [{0}], results may not be accurate", xsdPath); //NON-NLS
         }
         return ret;
+    }
+
+    /**
+     * Used to consolidate more specific exception types.
+     */
+    public static class XmlUtilException extends Exception {
+
+        XmlUtilException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Loads and validates an XML document.
+     *
+     * @param docPath The full path to the file to load.
+     * @param schemaPath The full path to the file to validate against.
+     */
+    /**
+     * Loads and XML document and validates against a schema packaged as a
+     * class resource.
+     *
+     * @param <T> The name of the class associated with the resource.
+     * @param clazz The class associated with the resource.
+     * @param docPath The full path to the XML document.
+     * @param schemaResourceName The name of the schema resource
+     * @return A WC3 DOM representation of the document
+     * @throws IOException
+     * @throws org.sleuthkit.autopsy.coreutils.XMLUtil.XmlUtilException
+     */
+    public static <T> Document loadAndValidateDoc(Class<T> clazz, String docPath, String schemaResourceName) throws IOException, XmlUtilException {
+        try {
+            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = builderFactory.newDocumentBuilder();
+            Document doc = builder.parse(new FileInputStream(docPath));
+            PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
+            File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
+            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Schema schema = schemaFactory.newSchema(schemaFile);
+            Validator validator = schema.newValidator();
+            validator.validate(new DOMSource(doc), new DOMResult());
+            return doc;
+        } catch (ParserConfigurationException | SAXException ex) {
+            throw new XmlUtilException(ex.getLocalizedMessage());
+        }
     }
 
     /**
@@ -203,4 +250,5 @@ public class XMLUtil {
         }
         return success;
     }
+
 }

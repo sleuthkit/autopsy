@@ -41,8 +41,8 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 
 /**
- * Manages user-defined file types characterized by type names (e.g., MIME type)
- * and signatures.
+ * Manages user-defined file types characterized by MIME type, signature, and
+ * optional membership in an interesting files set.
  */
 final class UserDefinedFileTypesManager {
 
@@ -51,19 +51,20 @@ final class UserDefinedFileTypesManager {
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
     private static final String FILE_TYPES_TAG_NAME = "filetypes"; //NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "filetype"; //NON-NLS
-    private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
-    private static final String TYPE_NAME_TAG_NAME = "typename"; //NON-NLS
+    private static final String MIME_TYPE_TAG_NAME = "mimetype"; //NON-NLS
     private static final String SIGNATURE_TAG_NAME = "signature"; //NON-NLS
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
     private static final String BYTES_TAG_NAME = "bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "offset"; //NON-NLS
+    private static final String INTERESTING_FILES_SET_TAG_NAME = "filesset"; //NON-NLS
+    private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
     private static final String ASCII_ENCODING = "US-ASCII"; //NON-NLS
     private static UserDefinedFileTypesManager instance;
 
     /**
-     * Predefined file types are stored in this mapping of file type names to
-     * file types. Access to this map is guarded by the intrinsic lock of the
+     * Predefined file types are stored in this mapping of MIME types to file
+     * types. Access to this map is guarded by the intrinsic lock of the
      * user-defined file types manager for thread-safety.
      */
     private final Map<String, FileType> predefinedFileTypes = new HashMap<>();
@@ -78,17 +79,18 @@ final class UserDefinedFileTypesManager {
 
     /**
      * The combined set of user-defined file types and file types predefined by
-     * Autopsy are stored in this mapping of file type names to file types. This
-     * is the current working set of file types. Access to this map is guarded
-     * by the intrinsic lock of the user-defined file types manager for
+     * Autopsy are stored in this mapping of MIME types to file types. This is
+     * the current working set of file types. Access to this map is guarded by
+     * the intrinsic lock of the user-defined file types manager for
      * thread-safety.
      */
     private final Map<String, FileType> fileTypes = new HashMap<>();
 
     /**
-     * Gets the user-defined file types manager.
+     * Gets the manager of user-defined file types characterized by MIME type,
+     * signature, and optional membership in an interesting files set.
      *
-     * @return A singleton user-defined file types manager.
+     * @return The user-defined file types manager singleton.
      */
     synchronized static UserDefinedFileTypesManager getInstance() {
         if (UserDefinedFileTypesManager.instance == null) {
@@ -98,8 +100,8 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Creates a manager of user-defined file types characterized by type names
-     * (e.g., MIME type) and signatures.
+     * Creates a manager of user-defined file types characterized by MIME type,
+     * signature, and optional membership in an interesting files set.
      */
     private UserDefinedFileTypesManager() {
         /**
@@ -111,30 +113,30 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds standard predefined file types to the in-memory mapping of file type
-     * names to predefined file types.
+     * Adds the predefined file types to the in-memory mappings of MIME types to
+     * file types.
      */
     private void loadPredefinedFileTypes() {
-        // RJCTODO: Remove test type
+        // RJCTODO: Remove test file type.
         /**
          * Create a file type that should match $MBR in Small2 image.
          */
-        FileType fileType = new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), true);
+        FileType fileType = new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), "predefinedRAW", true);
         this.addPredefinedFileType(fileType);
 
         /**
          * Create a file type that should match test.txt in the Small2 image.
          */
-        // RJCTODO: Remove test type
+        // RJCTODO: Remove test file type.
         try {
-            fileType = new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), true);
+            fileType = new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "predefinedASCII", true);
             this.addPredefinedFileType(fileType);
         } catch (UnsupportedEncodingException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
         }
 
         try {
-            // RJCTODO: Remove this code from TikaFileTypeDetector.java
+            // RJCTODO: Remove this code from TikaFileTypeDetector.java.
 //        try {
 //            byte buf[];
 //            int len = abstractFile.read(buffer, 0, BUFFER_SIZE);
@@ -156,7 +158,7 @@ final class UserDefinedFileTypesManager {
 //            catch (IndexOutOfBoundsException e) {
 //                // do nothing
 //            }
-            fileType = new FileType("text/xml", new Signature("<?xml".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), false);
+            fileType = new FileType("text/xml", new Signature("<?xml".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false);
             this.addPredefinedFileType(fileType);
         } catch (UnsupportedEncodingException ex) {
             /**
@@ -174,13 +176,13 @@ final class UserDefinedFileTypesManager {
      * @param fileType The file type to add.
      */
     private void addPredefinedFileType(FileType fileType) {
-        this.predefinedFileTypes.put(fileType.getTypeName(), fileType);
-        this.fileTypes.put(fileType.getTypeName(), fileType);
+        this.predefinedFileTypes.put(fileType.getMimeType(), fileType);
+        this.fileTypes.put(fileType.getMimeType(), fileType);
     }
 
     /**
-     * Reads user-defined file types into an in-memory mapping of file type
-     * names to file types.
+     * Adds the user-defined file types to the in-memory mappings of MIME types
+     * to file types.
      */
     private void loadUserDefinedFileTypes() {
         try {
@@ -209,8 +211,8 @@ final class UserDefinedFileTypesManager {
      * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
-        this.userDefinedFileTypes.put(fileType.getTypeName(), fileType);
-        this.fileTypes.put(fileType.getTypeName(), fileType);
+        this.userDefinedFileTypes.put(fileType.getMimeType(), fileType);
+        this.fileTypes.put(fileType.getMimeType(), fileType);
     }
 
     /**
@@ -242,8 +244,8 @@ final class UserDefinedFileTypesManager {
     /**
      * Sets the user-defined file types.
      *
-     * @param newFileTypes A mapping of file type names to user-defined
-     * file types.
+     * @param newFileTypes A mapping of file type names to user-defined file
+     * types.
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
@@ -324,16 +326,15 @@ final class UserDefinedFileTypesManager {
          */
         private static Element createFileTypeElement(FileType fileType, Document doc) {
             /**
-             * Create a file type element with an alert attribute.
+             * Create a file type element.
              */
             Element fileTypeElem = doc.createElement(UserDefinedFileTypesManager.FILE_TYPE_TAG_NAME);
-            fileTypeElem.setAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
 
             /**
-             * Add a type name child element.
+             * Add a MIME type name child element.
              */
-            Element typeNameElem = doc.createElement(UserDefinedFileTypesManager.TYPE_NAME_TAG_NAME);
-            typeNameElem.setTextContent(fileType.getTypeName());
+            Element typeNameElem = doc.createElement(UserDefinedFileTypesManager.MIME_TYPE_TAG_NAME);
+            typeNameElem.setTextContent(fileType.getMimeType());
             fileTypeElem.appendChild(typeNameElem);
 
             /**
@@ -358,6 +359,14 @@ final class UserDefinedFileTypesManager {
             offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
             signatureElem.appendChild(offsetElem);
 
+            /**
+             * Add a files set child element with an alert attribute.
+             */
+            Element filesSetElem = doc.createElement(UserDefinedFileTypesManager.INTERESTING_FILES_SET_TAG_NAME);
+            filesSetElem.setTextContent(fileType.getFilesSetName());
+            filesSetElem.setAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
+            fileTypeElem.appendChild(filesSetElem);
+
             return fileTypeElem;
         }
     }
@@ -380,7 +389,7 @@ final class UserDefinedFileTypesManager {
             String xsdPathString = xsdPath.toAbsolutePath().toString();
             File file = new File(xsdPathString);
             if (file.exists() && file.canRead()) {
-                Document doc = XMLUtil.loadDoc(UserDefinedFileTypesManager.XMLReader.class, filePath, xsdPathString);
+                Document doc = XMLUtil.loadAndValidateDoc(UserDefinedFileTypesManager.XMLReader.class, filePath, xsdPathString);
                 if (doc != null) {
                     Element fileTypesElem = doc.getDocumentElement();
                     if (fileTypesElem != null && fileTypesElem.getNodeName().equals(UserDefinedFileTypesManager.FILE_TYPES_TAG_NAME)) {
@@ -401,26 +410,26 @@ final class UserDefinedFileTypesManager {
          *
          * @param fileTypeElem The XML element.
          * @return A file type object.
-         * @throws UserDefinedFileTypesException
+         * @throws
+         * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.InvalidXMLException
          */
-        private static FileType parseFileType(Element fileTypeElem) throws InvalidXMLException {
+        private static FileType parseFileType(Element fileTypeElem) throws InvalidXMLException, IllegalArgumentException, NumberFormatException {
             /**
-             * Get the alert attribute.
+             * Get the mime type child element.
              */
-            String alertAttribute = fileTypeElem.getAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE);
-            boolean alert = Boolean.parseBoolean(alertAttribute);
+            String mimeType = UserDefinedFileTypesManager.getChildElementTextContent(fileTypeElem, UserDefinedFileTypesManager.MIME_TYPE_TAG_NAME);
 
             /**
-             * Get the type name child element.
+             * Get the signature child element. The check here is essentially a
+             * "sanity check" since the XML was already validated using the XSD
+             * file.
              */
-            String typeName = UserDefinedFileTypesManager.getChildElementTextContent(fileTypeElem, UserDefinedFileTypesManager.TYPE_NAME_TAG_NAME);
-
-            /**
-             * Get the signature child element.
-             */
-            Element signatureElem;
             NodeList signatureElems = fileTypeElem.getElementsByTagName(UserDefinedFileTypesManager.SIGNATURE_TAG_NAME);
-            signatureElem = (Element) signatureElems.item(0);
+            if (signatureElems.getLength() < 1) {
+            } else {
+                throw new InvalidXMLException("Missing " + UserDefinedFileTypesManager.SIGNATURE_TAG_NAME + " child element"); //NON-NLS
+            }
+            Element signatureElem = (Element) signatureElems.item(0);
 
             /**
              * Get the signature (interpretation) type attribute from the
@@ -432,7 +441,7 @@ final class UserDefinedFileTypesManager {
             /**
              * Get the signature bytes.
              */
-            String sigBytesString = UserDefinedFileTypesManager.getChildElementTextContent(signatureElem, UserDefinedFileTypesManager.TYPE_NAME_TAG_NAME);
+            String sigBytesString = UserDefinedFileTypesManager.getChildElementTextContent(signatureElem, UserDefinedFileTypesManager.BYTES_TAG_NAME);
             byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
 
             /**
@@ -442,10 +451,23 @@ final class UserDefinedFileTypesManager {
             long offset = DatatypeConverter.parseLong(offsetString);
 
             /**
+             * Get the interesting files set element.
+             */
+            NodeList filesSetElems = fileTypeElem.getElementsByTagName(UserDefinedFileTypesManager.INTERESTING_FILES_SET_TAG_NAME);
+            Element filesSetElem = (Element) filesSetElems.item(0);
+            String filesSetName = filesSetElem.getTextContent();
+
+            /**
+             * Get the alert attribute from the interesting files set element.
+             */
+            String alertAttribute = filesSetElem.getAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE);
+            boolean alert = Boolean.parseBoolean(alertAttribute);
+
+            /**
              * Put it all together.
              */
             Signature signature = new Signature(signatureBytes, offset, signatureType);
-            return new FileType(typeName, signature, alert);
+            return new FileType(mimeType, signature, filesSetName, alert);
         }
     }
 
@@ -469,10 +491,10 @@ final class UserDefinedFileTypesManager {
             if (!textContent.isEmpty()) {
                 return textContent;
             } else {
-                throw new InvalidXMLException("File type " + tagName + " child element missing text content"); //NON-NLS
+                throw new InvalidXMLException(tagName + " child element missing text content"); //NON-NLS
             }
         } else {
-            throw new InvalidXMLException("File type element missing " + tagName + " child element"); //NON-NLS
+            throw new InvalidXMLException("Missing " + tagName + " child element"); //NON-NLS
         }
     }
 
