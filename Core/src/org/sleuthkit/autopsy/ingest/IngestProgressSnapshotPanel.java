@@ -170,7 +170,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         }
 
         private void refresh() {
-            jobSnapshots = IngestJob.getJobSnapshots();
+            jobSnapshots = IngestManager.getInstance().getIngestJobSnapshots();
             fireTableDataChanged();
         }
 

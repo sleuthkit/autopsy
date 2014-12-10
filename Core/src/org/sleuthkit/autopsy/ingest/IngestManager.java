@@ -52,28 +52,84 @@ import org.sleuthkit.datamodel.Content;
  */
 public class IngestManager {
 
+    private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
+    private static IngestManager instance = null;
+
+    /**
+     * The ingest manager assigns a unique ID to each ingest job and maintains a
+     * mapping of job IDs to jobs.
+     */
+    private final AtomicLong nextJobId = new AtomicLong(0L);
+    private final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
+
+    /**
+     * Each runnable/callable task the ingest manager farms out to a thread pool
+     * is given a unique thread/task ID.
+     */
+    private final AtomicLong nextThreadId = new AtomicLong(0L);
+
+    /**
+     * Ingest jobs are started on a pool thread by ingest job starters. A
+     * mapping of thread/task IDs to the result objects associated with each
+     * ingest job starter is maintained to provide handles that can be used to
+     * cancel the ingest job starter.
+     */
+    private final ConcurrentHashMap<Long, Future<Void>> ingestJobStarters = new ConcurrentHashMap<>();
+    private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
+
+    /**
+     * Ingest jobs use an ingest task scheduler to break themselves down into
+     * data source level and file level tasks. The ingest scheduler puts these
+     * ingest tasks into queues for execution on ingest manager pool threads by
+     * ingest task executers. There is a single data source level ingest thread
+     * and a user configurable number of file level ingest threads.
+     */
     private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
     private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
     private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
-    private static final int MAX_ERROR_MESSAGE_POSTS = 200;
-    private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private static IngestManager instance = null;
-    private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
-    private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
-    private final IngestMonitor ingestMonitor = new IngestMonitor();
-    private final ExecutorService startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
+    private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
     private final ExecutorService dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
     private final ExecutorService fileIngestThreadPool;
+
+    /**
+     * The ingest manager uses the property change feature from Java Beans as an
+     * event publishing mechanism. There are two kinds of events, ingest job
+     * events and ingest module events. Property changes are fired by ingest
+     * event publishers on a pool thread.
+     */
+    private final PropertyChangeSupport ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
+    private final PropertyChangeSupport ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
     private final ExecutorService fireIngestEventsThreadPool = Executors.newSingleThreadExecutor();
-    private final AtomicLong nextThreadId = new AtomicLong(0L);
-    private final ConcurrentHashMap<Long, Future<Void>> ingestJobStarters = new ConcurrentHashMap<>(); // Maps thread ids to cancellation handles.
+
+    /**
+     * The ingest manager uses an ingest monitor to determine when system
+     * resources are under pressure. If the monitor detects such a situation, it
+     * calls back to the ingest manager to cancel all ingest jobs in progress.
+     */
+    private final IngestMonitor ingestMonitor = new IngestMonitor();
+
+    /**
+     * The ingest manager provides access to a top component that is used by
+     * ingest module to post messages for the user. A count of the posts is used
+     * as a cap to avoid bogging down the application.
+     */
+    private static final int MAX_ERROR_MESSAGE_POSTS = 200;
+    private volatile IngestMessageTopComponent ingestMessageBox;
     private final AtomicLong ingestErrorMessagePosts = new AtomicLong(0L);
+
+    /**
+     * The ingest manager supports reporting of ingest processing progress by
+     * collecting snapshots of the activities of the ingest threads, ingest job
+     * progress, and ingest module run times.
+     */
     private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots = new ConcurrentHashMap<>(); // Maps ingest thread ids to progress ingestThreadActivitySnapshots.    
     private final ConcurrentHashMap<String, Long> ingestModuleRunTimes = new ConcurrentHashMap<>();
-    private final Object processedFilesSnapshotLock = new Object();
-    private ProcessedFilesSnapshot processedFilesSnapshot = new ProcessedFilesSnapshot();
-    private volatile IngestMessageTopComponent ingestMessageBox;
-    private int numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
+
+    /**
+     * The ingest job creation capability of the ingest manager can be turned on
+     * and off to support an orderly shut down of the application.
+     */
+    private volatile boolean jobCreationIsEnabled;
 
     /**
      * Ingest job events.
@@ -185,7 +241,7 @@ public class IngestManager {
      * @return True or false.
      */
     public boolean isIngestRunning() {
-        return IngestJob.ingestJobsAreRunning();
+        return !this.jobsById.isEmpty();
     }
 
     /**
@@ -198,7 +254,9 @@ public class IngestManager {
         }
 
         // Cancel all the jobs already created.
-        IngestJob.cancelAllJobs();
+        for (IngestJob job : this.jobsById.values()) {
+            job.cancel();
+        }
     }
 
     /**
@@ -329,12 +387,12 @@ public class IngestManager {
     }
 
     void handleCaseOpened() {
-        IngestJob.jobCreationEnabled(true);
+        this.jobCreationIsEnabled = true;
         clearIngestMessageBox();
     }
 
     void handleCaseClosed() {
-        IngestJob.jobCreationEnabled(false);
+        this.jobCreationIsEnabled = false;
         cancelAllIngestJobs();
         clearIngestMessageBox();
     }
@@ -344,6 +402,42 @@ public class IngestManager {
             ingestMessageBox.clearMessages();
         }
         ingestErrorMessagePosts.set(0);
+    }
+
+    /**
+     * Starts an ingest job for a data source.
+     *
+     * @param dataSource The data source to ingest.
+     * @param settings The settings for the job.
+     * @return A collection of ingest module start up errors, empty on success.
+     */
+    private List<IngestModuleError> startJob(Content dataSource, IngestJobSettings settings) {
+        List<IngestModuleError> errors = new ArrayList<>();
+        if (this.jobCreationIsEnabled) {
+            long jobId = this.nextJobId.incrementAndGet();
+            IngestJob job = new IngestJob(jobId, dataSource, settings);
+            this.jobsById.put(jobId, job);
+            errors = job.start(settings.getEnabledIngestModuleTemplates());
+            if (errors.isEmpty() && job.hasIngestPipeline()) {
+                this.fireIngestJobStarted(jobId);
+                IngestManager.logger.log(Level.INFO, "Ingest job {0} started", jobId);
+            } else {
+                this.jobsById.remove(jobId);
+            }
+        }
+        return errors;
+    }
+
+    void finishJob(IngestJob job) {
+        long jobId = job.getId();
+        this.jobsById.remove(jobId);
+        if (!job.isCancelled()) {
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId);
+            this.fireIngestJobCompleted(jobId);
+        } else {
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId);
+            this.fireIngestJobCancelled(jobId);
+        }
     }
 
     /**
@@ -388,10 +482,6 @@ public class IngestManager {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-        synchronized (processedFilesSnapshotLock) {
-            processedFilesSnapshot.incrementProcessedFilesCount();
-        }
-
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
@@ -533,6 +623,19 @@ public class IngestManager {
     }
 
     /**
+     * Gets snapshots of the state of all running ingest jobs.
+     *
+     * @return A list of ingest job state snapshots.
+     */
+    List<IngestJob.IngestJobSnapshot> getIngestJobSnapshots() {
+        List<IngestJob.IngestJobSnapshot> snapShots = new ArrayList<>();
+        for (IngestJob job : this.jobsById.values()) {
+            snapShots.add(job.getSnapshot());
+        }
+        return snapShots;
+    }
+
+    /**
      * Creates and starts an ingest job, i.e., processing by ingest modules, for
      * each data source in a collection of data sources.
      */
@@ -608,7 +711,7 @@ public class IngestManager {
                     /**
                      * Start an ingest job for this data source.
                      */
-                    List<IngestModuleError> errors = IngestJob.startJob(dataSource, this.settings);
+                    List<IngestModuleError> errors = IngestManager.this.startJob(dataSource, this.settings);
                     if (!errors.isEmpty() && this.doStartupErrorsMsgBox) {
                         StringBuilder moduleStartUpErrors = new StringBuilder();
                         for (IngestModuleError error : errors) {
@@ -779,29 +882,6 @@ public class IngestManager {
 
         String getFileName() {
             return fileName;
-        }
-    }
-
-    static final class ProcessedFilesSnapshot {
-
-        private final Date startTime;
-        private long processedFilesCount;
-
-        ProcessedFilesSnapshot() {
-            this.startTime = new Date();
-            this.processedFilesCount = 0;
-        }
-
-        void incrementProcessedFilesCount() {
-            ++processedFilesCount;
-        }
-
-        Date getStartTime() {
-            return startTime;
-        }
-
-        long getProcessedFilesCount() {
-            return processedFilesCount;
         }
     }
 
