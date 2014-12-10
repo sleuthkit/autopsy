@@ -63,11 +63,12 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
 
     /**
-     * Each runnable/callable task the ingest manager farms out to a thread pool
-     * is given a unique thread/task ID.
+     * Each runnable/callable task the ingest manager submits to its thread
+     * pools is given a unique thread/task ID.
      */
-    private final AtomicLong nextThreadId = new AtomicLong(0L);
-
+    // TODO: It is no longer necessary to have multiple thread pools.
+    private final AtomicLong nextThreadId = new AtomicLong(0L);    
+        
     /**
      * Ingest jobs are started on a pool thread by ingest job starters. A
      * mapping of thread/task IDs to the result objects associated with each

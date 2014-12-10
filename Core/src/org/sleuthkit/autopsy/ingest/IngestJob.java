@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -44,7 +43,7 @@ final class IngestJob {
     private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
 
     /**
-     * These fields define the ingest job: a unique ID supplied by the ingest
+     * These fields define an ingest job: a unique ID supplied by the ingest
      * manager, the user's ingest job settings, and the data source to be
      * processed.
      */
@@ -80,9 +79,9 @@ final class IngestJob {
     private final Object stageCompletionCheckLock;
 
     /**
-     * There is a data source level ingest modules pipeline for both the first
-     * stage and the second stage. Longer running, lower priority data source
-     * level ingest modules belong in the second stage pipeline.
+     * An ingest job has separate data source level ingest module pipelines for
+     * each processing stage. Longer running, lower priority modules belong in
+     * the second stage pipeline.
      */
     private final Object dataSourceIngestPipelineLock;
     private DataSourceIngestPipeline firstStageDataSourceIngestPipeline;
@@ -90,27 +89,34 @@ final class IngestJob {
     private DataSourceIngestPipeline currentDataSourceIngestPipeline;
 
     /**
-     * There is a collection of identical file level ingest module pipelines,
-     * one for each file level ingest thread in the ingest manager.
+     * An ingest job has a collection of identical file level ingest module
+     * pipelines, one for each file level ingest thread in the ingest manager.
      */
-    private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
-
+    private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;    
+    
     /**
-     * The task scheduler singleton is responsible for creating and scheduling
-     * the ingest tasks that make up this ingest jobs.
+     * An ingest job supports cancellation of either the currently running data
+     * source level ingest module or the entire ingest job.
+     */
+    private volatile boolean currentDataSourceIngestModuleCancelled;
+    private volatile boolean cancelled;
+        
+    /**
+     * An ingest job uses the task scheduler singleton to create and queue the
+     * ingest tasks that make up the job.
      */
     private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
-
+        
     /**
-     * These fields are used to provide data source level task progress bars for
-     * the job.
+     * These fields are used to report data source level ingest progress for the
+     * ingest job.
      */
     private final Object dataSourceIngestProgressLock;
     private ProgressHandle dataSourceIngestProgress;
 
     /**
-     * These fields are used to provide file level ingest task progress bars for
-     * the job.
+     * These fields are used to report file level ingest task progress for the
+     * ingest job.
      */
     private final Object fileIngestProgressLock;
     private final List<String> filesInProgress;
@@ -119,24 +125,16 @@ final class IngestJob {
     private ProgressHandle fileIngestProgress;
 
     /**
-     * These fields support cancellation of either the currently running data
-     * source level ingest module or the entire ingest job.
+     * This field is used to record the creation of the ingest job.
      */
-    private volatile boolean currentDataSourceIngestModuleCancelled;
-    private volatile boolean cancelled;
-
-    /**
-     * This field is used for generating ingest job diagnostic data.
-     */
-    private final long startTime;
+    private final long createTime;
 
     /**
      * Constructs an ingest job.
      *
      * @param id The identifier assigned to the job.
      * @param dataSource The data source to be ingested.
-     * @param processUnallocatedSpace Whether or not unallocated space should be
-     * processed during the ingest job.
+     * @param settings The settings for the ingest job.
      */
     IngestJob(long id, Content dataSource, IngestJobSettings settings) {
         this.id = id;
@@ -149,7 +147,7 @@ final class IngestJob {
         this.fileIngestProgressLock = new Object();
         this.stage = IngestJob.Stages.INITIALIZATION;
         this.stageCompletionCheckLock = new Object();
-        this.startTime = new Date().getTime();
+        this.createTime = new Date().getTime();
     }
 
     /**
@@ -934,13 +932,13 @@ final class IngestJob {
         private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
 
         /**
-         * Constructs an object to stores basic diagnostic statistics for an
+         * Constructs an object to store basic diagnostic statistics for an
          * ingest job.
          */
         IngestJobSnapshot() {
             this.jobId = IngestJob.this.id;
             this.dataSource = IngestJob.this.dataSource.getName();
-            this.startTime = IngestJob.this.startTime;
+            this.startTime = IngestJob.this.createTime;
             synchronized (IngestJob.this.fileIngestProgressLock) {
                 this.processedFiles = IngestJob.this.processedFiles;
                 this.estimatedFilesToProcess = IngestJob.this.estimatedFilesToProcess;
