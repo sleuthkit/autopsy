@@ -56,10 +56,9 @@ public class IngestManager {
     private static IngestManager instance = null;
 
     /**
-     * When ingest job creation is enabled, the ingest manager assigns a unique
-     * ID to each ingest job and maintains a mapping of job IDs to jobs.
+     * The ingest manager assigns a unique ID to each ingest job and maintains a
+     * mapping of job IDs to jobs.
      */
-    private volatile boolean jobCreationIsEnabled;
     private final AtomicLong nextJobId = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
 
@@ -125,6 +124,12 @@ public class IngestManager {
      */
     private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots = new ConcurrentHashMap<>(); // Maps ingest thread ids to progress ingestThreadActivitySnapshots.    
     private final ConcurrentHashMap<String, Long> ingestModuleRunTimes = new ConcurrentHashMap<>();
+
+    /**
+     * The ingest job creation capability of the ingest manager can be turned on
+     * and off to support an orderly shut down of the application.
+     */
+    private volatile boolean jobCreationIsEnabled;
 
     /**
      * Ingest job events.
@@ -425,7 +430,7 @@ public class IngestManager {
 
     void finishJob(IngestJob job) {
         long jobId = job.getId();
-        this.jobsById.remove(jobId);        
+        this.jobsById.remove(jobId);
         if (!job.isCancelled()) {
             IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId);
             this.fireIngestJobCompleted(jobId);
@@ -434,7 +439,7 @@ public class IngestManager {
             this.fireIngestJobCancelled(jobId);
         }
     }
-    
+
     /**
      * Called each time a module in a data source pipeline starts
      *
@@ -629,7 +634,7 @@ public class IngestManager {
         }
         return snapShots;
     }
-        
+
     /**
      * Creates and starts an ingest job, i.e., processing by ingest modules, for
      * each data source in a collection of data sources.
