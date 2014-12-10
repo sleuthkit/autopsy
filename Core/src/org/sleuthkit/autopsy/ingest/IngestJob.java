@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
@@ -45,35 +44,16 @@ final class IngestJob {
     private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
 
     /**
-     * The task scheduler singleton is responsible for creating and scheduling
-     * the ingest tasks that make up ingest jobs.
-     */
-    private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
-
-    /**
-     * These static fields are used for the creation and management of ingest
-     * jobs in progress.
-     */
-    private static volatile boolean jobCreationIsEnabled;
-    private static final AtomicLong nextJobId = new AtomicLong(0L);
-    private static final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
-
-    /**
-     * These fields define the ingest job, including its ingest pipelines. Note
-     * that there is a collection of multiple copies of the file ingest
-     * pipeline, one for each file ingest thread.
+     * These fields define the ingest job: a unique ID supplied by the ingest
+     * manager, the user's ingest job settings, and the data source to be
+     * processed.
      */
     private final long id;
-    private final Content dataSource;
     private final IngestJobSettings ingestJobSettings;
-    private final Object dataSourceIngestPipelineLock;
-    private DataSourceIngestPipeline firstStageDataSourceIngestPipeline;
-    private DataSourceIngestPipeline secondStageDataSourceIngestPipeline;
-    private DataSourceIngestPipeline currentDataSourceIngestPipeline;
-    private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
+    private final Content dataSource;
 
     /**
-     * An ingest runs in stages.
+     * An ingest job runs in stages.
      */
     private static enum Stages {
 
@@ -98,6 +78,28 @@ final class IngestJob {
     };
     private Stages stage;
     private final Object stageCompletionCheckLock;
+
+    /**
+     * There is a data source level ingest modules pipeline for both the first
+     * stage and the second stage. Longer running, lower priority data source
+     * level ingest modules belong in the second stage pipeline.
+     */
+    private final Object dataSourceIngestPipelineLock;
+    private DataSourceIngestPipeline firstStageDataSourceIngestPipeline;
+    private DataSourceIngestPipeline secondStageDataSourceIngestPipeline;
+    private DataSourceIngestPipeline currentDataSourceIngestPipeline;
+
+    /**
+     * There is a collection of identical file level ingest module pipelines,
+     * one for each file level ingest thread in the ingest manager.
+     */
+    private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
+
+    /**
+     * The task scheduler singleton is responsible for creating and scheduling
+     * the ingest tasks that make up this ingest jobs.
+     */
+    private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
 
     /**
      * These fields are used to provide data source level task progress bars for
@@ -129,70 +131,6 @@ final class IngestJob {
     private final long startTime;
 
     /**
-     * Enables and disables ingest job creation.
-     *
-     * @param enabled True or false.
-     */
-    static void jobCreationEnabled(boolean enabled) {
-        IngestJob.jobCreationIsEnabled = enabled;
-    }
-
-    /**
-     * Starts an ingest job for a data source.
-     *
-     * @param dataSource The data source to ingest.
-     * @param settings The settings for the job.
-     * @return A collection of ingest module start up errors, empty on success.
-     */
-    static List<IngestModuleError> startJob(Content dataSource, IngestJobSettings settings) {
-        List<IngestModuleError> errors = new ArrayList<>();
-        if (IngestJob.jobCreationIsEnabled) {
-            long jobId = nextJobId.incrementAndGet();
-            IngestJob job = new IngestJob(jobId, dataSource, settings);
-            IngestJob.jobsById.put(jobId, job);
-            errors = job.start(settings.getEnabledIngestModuleTemplates());
-            if (errors.isEmpty() && job.hasIngestPipeline()) {
-                IngestManager.getInstance().fireIngestJobStarted(jobId);
-                IngestJob.logger.log(Level.INFO, "Ingest job {0} started", jobId);
-            } else {
-                IngestJob.jobsById.remove(jobId);
-            }
-        }
-        return errors;
-    }
-
-    /**
-     * Queries whether or not ingest jobs are running.
-     *
-     * @return True or false.
-     */
-    static boolean ingestJobsAreRunning() {
-        return !jobsById.isEmpty();
-    }
-
-    /**
-     * Gets snapshots of the state of all running ingest jobs.
-     *
-     * @return A list of ingest job state snapshots.
-     */
-    static List<IngestJobSnapshot> getJobSnapshots() {
-        List<IngestJobSnapshot> snapShots = new ArrayList<>();
-        for (IngestJob job : IngestJob.jobsById.values()) {
-            snapShots.add(job.getSnapshot());
-        }
-        return snapShots;
-    }
-
-    /**
-     * Cancels all running ingest jobs.
-     */
-    static void cancelAllJobs() {
-        for (IngestJob job : jobsById.values()) {
-            job.cancel();
-        }
-    }
-
-    /**
      * Constructs an ingest job.
      *
      * @param id The identifier assigned to the job.
@@ -200,10 +138,9 @@ final class IngestJob {
      * @param processUnallocatedSpace Whether or not unallocated space should be
      * processed during the ingest job.
      */
-    private IngestJob(long id, Content dataSource, IngestJobSettings settings) {
+    IngestJob(long id, Content dataSource, IngestJobSettings settings) {
         this.id = id;
         this.dataSource = dataSource;
-        
         this.ingestJobSettings = settings;
         this.dataSourceIngestPipelineLock = new Object();
         this.fileIngestPipelines = new LinkedBlockingQueue<>();
@@ -575,7 +512,7 @@ final class IngestJob {
      *
      * @return A collection of ingest module startup errors, empty on success.
      */
-    private List<IngestModuleError> start(List<IngestModuleTemplate> ingestModuleTemplates) {
+    List<IngestModuleError> start(List<IngestModuleTemplate> ingestModuleTemplates) {
         this.createIngestPipelines(ingestModuleTemplates);
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
@@ -738,7 +675,7 @@ final class IngestJob {
      *
      * @return True or false.
      */
-    private boolean hasIngestPipeline() {
+    boolean hasIngestPipeline() {
         return this.hasFirstStageDataSourceIngestPipeline()
                 || this.hasFileIngestPipeline()
                 || this.hasSecondStageDataSourceIngestPipeline();
@@ -952,14 +889,7 @@ final class IngestJob {
             }
         }
 
-        IngestJob.jobsById.remove(this.id);
-        if (!this.isCancelled()) {
-            logger.log(Level.INFO, "Ingest job {0} completed", this.id);
-            IngestManager.getInstance().fireIngestJobCompleted(this.id);
-        } else {
-            logger.log(Level.INFO, "Ingest job {0} cancelled", this.id);
-            IngestManager.getInstance().fireIngestJobCancelled(this.id);
-        }
+        IngestManager.getInstance().finishJob(this);
     }
 
     /**
@@ -986,9 +916,8 @@ final class IngestJob {
      *
      * @return An ingest job statistics object.
      */
-    private IngestJobSnapshot getSnapshot() {
+    IngestJobSnapshot getSnapshot() {
         return new IngestJobSnapshot();
-
     }
 
     /**
