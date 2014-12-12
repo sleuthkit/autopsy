@@ -75,14 +75,14 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     @FXML
     void initialize() {
-        assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'.";
+        assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         applyButton.setOnAction(e -> {
             controller.pushFilters(filterTreeTable.getRoot().getValue().copyOf());
         });
 
         //remove column headers via css.
-        filterTreeTable.getStylesheets().addAll(getClass().getResource("FilterTable.css").toExternalForm());
+        filterTreeTable.getStylesheets().addAll(getClass().getResource("FilterTable.css").toExternalForm()); // NON-NLS
 
         //use row factory as hook to attach context menus to.
         filterTreeTable.setRowFactory((TreeTableView<Filter> param) -> {
@@ -143,8 +143,8 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     }
 
     public FilterSetPanel() {
-        FXMLConstructor.construct(this, "FilterSetPanel.fxml");
-        expansionMap.put("Event Type Filter", Boolean.TRUE);
+        FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
+        expansionMap.put(NbBundle.getMessage(this.getClass(), "FilterSetPanel.eventTypeFilter.title"), Boolean.TRUE);
     }
 
     @Override

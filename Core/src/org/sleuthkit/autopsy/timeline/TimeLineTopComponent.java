@@ -133,11 +133,11 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             filterTab.setClosable(false);
             filterTab.setContent(filtersPanel);
-            filterTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/funnel.png"));
+            filterTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/funnel.png")); // NON-NLS
 
             eventsTab.setClosable(false);
             eventsTab.setContent(navPanel);
-            eventsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png"));
+            eventsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
 
             tabPane.getTabs().addAll(filterTab, eventsTab);
             VBox.setVgrow(tabPane, Priority.ALWAYS);

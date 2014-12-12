@@ -30,6 +30,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
 import javafx.util.StringConverter;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -87,7 +88,7 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
     }
 
     public ZoomSettingsPane() {
-        FXMLConstructor.construct(this, "ZoomSettingsPane.fxml");
+        FXMLConstructor.construct(this, "ZoomSettingsPane.fxml"); // NON-NLS
     }
 
     @Override
@@ -98,11 +99,15 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         Back back = new Back(controller);
         backButton.disableProperty().bind(back.disabledProperty());
         backButton.setOnAction(back);
-        backButton.setTooltip(new Tooltip("Back: " + back.getAccelerator().getName()));
+        backButton.setTooltip(new Tooltip(
+                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.backButton.toolTip.text",
+                                    back.getAccelerator().getName())));
         Forward forward = new Forward(controller);
         forwardButton.disableProperty().bind(forward.disabledProperty());
         forwardButton.setOnAction(forward);
-        forwardButton.setTooltip(new Tooltip("Forward: " + forward.getAccelerator().getName()));
+        forwardButton.setTooltip(new Tooltip(
+                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.forwardButton.toolTip.text",
+                                    forward.getAccelerator().getName())));
 
     }
 

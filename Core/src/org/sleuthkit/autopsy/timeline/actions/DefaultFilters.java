@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.actions;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -35,7 +36,7 @@ public class DefaultFilters extends Action {
     private FilteredEventsModel eventsModel;
 
     public DefaultFilters(final TimeLineController controller) {
-        super("apply default filters");
+        super(NbBundle.getMessage(DefaultFilters.class, "DefaultFilters.action.name.text"));
         this.controller = controller;
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {

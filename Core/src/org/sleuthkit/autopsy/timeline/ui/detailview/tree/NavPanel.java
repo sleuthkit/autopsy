@@ -74,7 +74,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     public NavPanel() {
 
-        FXMLConstructor.construct(this, "NavPanel.fxml");
+        FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS
     }
 
     public void setChart(DetailViewPane detailViewPane) {
@@ -121,7 +121,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     @FXML
     void initialize() {
-        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'.";
+        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'."; // NON-NLS
 
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
@@ -141,7 +141,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         protected void updateItem(NavTreeNode item, boolean empty) {
             super.updateItem(item, empty);
             if (item != null) {
-                final String text = item.getDescription() + " (" + item.getCount() + ")";
+                final String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
                 setText(text);
                 setTooltip(new Tooltip(text));
                 Rectangle rect = new Rectangle(24, 24);

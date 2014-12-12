@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 
 /**
@@ -157,7 +158,7 @@ public class ZoomParams {
 
     @Override
     public String toString() {
-        return "zoom state: " + getTimeRange().toString();
+        return NbBundle.getMessage(this.getClass(), "ZoomParams.toString", getTimeRange().toString());
     }
 
 }

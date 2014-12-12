@@ -67,7 +67,8 @@ public class OpenTimelineAction extends CallableSystemAction {
         final Case currentCase = Case.getCurrentCase();
 
         if (currentCase.hasData() == false) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error creating timeline, there are no data sources.");
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                          NbBundle.getMessage(this.getClass(), "OpenTimeLineAction.msgdlg.text"));
             LOGGER.log(Level.INFO, "Error creating timeline, there are no data sources.");// NON-NLS
             return;
         }

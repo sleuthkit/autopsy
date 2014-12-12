@@ -61,6 +61,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.joda.time.DateTime;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -287,7 +288,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
     @Override
     protected Task<Boolean> getUpdateTask() {
 
-        return new LoggedTask<Boolean>("Update Details", true) {
+        return new LoggedTask<Boolean>(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.name"), true) {
 
             @Override
             protected Boolean call() throws Exception {
@@ -301,13 +302,13 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 });
 
                 updateProgress(-1, 1);
-                updateMessage("preparing");
+                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
 
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRange().get());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
 
-                updateMessage("querying db");
+                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
                 aggregatedEvents.setAll(filteredEvents.getAggregatedEvents());
 
                 Platform.runLater(() -> {
@@ -330,7 +331,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                         break;
                     }
                     updateProgress(i++, size);
-                    updateMessage("updating ui");
+                    updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
                     final XYChart.Data<DateTime, AggregateEvent> xyData = new BarChart.Data<>(new DateTime(e.getSpan().getStartMillis()), e);
 
                     Platform.runLater(() -> {
@@ -396,15 +397,15 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         private Label truncateSliderLabel;
 
         public DetailViewSettingsPane() {
-            FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml");
+            FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
         @FXML
         void initialize() {
-            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
-            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
-            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
-            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
+            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             bandByTypeBox.selectedProperty().bindBidirectional(chart.getBandByType());
             truncateAllBox.selectedProperty().bindBidirectional(chart.getTruncateAll());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.getOneEventPerRow());

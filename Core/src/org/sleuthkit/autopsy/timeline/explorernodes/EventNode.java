@@ -49,13 +49,13 @@ class EventNode extends DisplayableItemNode {
     EventNode(TimeLineEvent eventById, AbstractFile file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(eventById, file, artifact));
         this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase());
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase()); // NON-NLS
     }
 
     EventNode(TimeLineEvent eventById, AbstractFile file) {
         super(Children.LEAF, Lookups.fixed(eventById, file));
         this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase());
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase()); // NON-NLS
     }
 
     @Override
@@ -67,7 +67,7 @@ class EventNode extends DisplayableItemNode {
             s.put(properties);
         }
 
-        final TimeProperty timePropery = new TimeProperty("time", "Date/Time", "time ", getDateTimeString());
+        final TimeProperty timePropery = new TimeProperty("time", "Date/Time", "time ", getDateTimeString()); // NON-NLS
 
         TimeLineController.getTimeZone().addListener((Observable observable) -> {
             try {
@@ -77,12 +77,12 @@ class EventNode extends DisplayableItemNode {
             }
         });
 
-        properties.put(new NodeProperty<>("icon", "Icon", "icon", true)); //gets overriden with icon
+        properties.put(new NodeProperty<>("icon", "Icon", "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(timePropery);
-        properties.put(new NodeProperty<>("description", "Description", "description", e.getFullDescription()));
-        properties.put(new NodeProperty<>("eventBaseType", "Base Type", "base type", e.getType().getSuperType().getDisplayName()));
-        properties.put(new NodeProperty<>("eventSubType", "Sub Type", "sub type", e.getType().getDisplayName()));
-        properties.put(new NodeProperty<>("Known", "Known", "known", e.getKnown().toString()));
+        properties.put(new NodeProperty<>("description", "Description", "description", e.getFullDescription())); // NON-NLS
+        properties.put(new NodeProperty<>("eventBaseType", "Base Type", "base type", e.getType().getSuperType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("eventSubType", "Sub Type", "sub type", e.getType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("Known", "Known", "known", e.getKnown().toString())); // NON-NLS
 
         return s;
     }
@@ -113,7 +113,7 @@ class EventNode extends DisplayableItemNode {
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> dinv) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
     class TimeProperty extends PropertySupport.ReadWrite<String> {
@@ -140,7 +140,7 @@ class EventNode extends DisplayableItemNode {
         public void setValue(String t) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
             String oldValue = getValue();
             value = t;
-            firePropertyChange("time", oldValue, t);
+            firePropertyChange("time", oldValue, t); // NON-NLS
         }
     }
 }

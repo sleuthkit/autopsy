@@ -67,6 +67,7 @@ import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
@@ -219,9 +220,10 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
             }
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
 
-                chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action("Place Marker") {
+                chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action(
+                        NbBundle.getMessage(this.getClass(), "EventDetailChart.chartContextMenu.placeMarker.name")) {
                     {
-                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true)));
+                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true))); // NON-NLS
                         setEventHandler((ActionEvent t) -> {
                             if (guideLine == null) {
                                 guideLine = new GuideLine(0, 0, 0, getHeight(), dateAxis);
@@ -242,7 +244,9 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
                         });
                     }
 
-                }, new ActionGroup("Zoom History", new Back(controller),
+                }, new ActionGroup(
+                        NbBundle.getMessage(this.getClass(), "EventDetailChart.contextMenu.zoomHistory.name"),
+                        new Back(controller),
                         new Forward(controller))));
                 chartContextMenu.setAutoHide(true);
                 chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
@@ -392,7 +396,7 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
     @Override
     protected synchronized void dataItemChanged(Data<DateTime, AggregateEvent> data) {
         //TODO: can we use this to help with local detail level adjustment -jm
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override

@@ -53,16 +53,16 @@ public class StatusBar extends ToolBar implements TimeLineUI {
     private Label messageLabel;
 
     public StatusBar() {
-        FXMLConstructor.construct(this, "StatusBar.fxml");
+        FXMLConstructor.construct(this, "StatusBar.fxml"); // NON-NLS
     }
 
     @FXML
     void initialize() {
-        assert refreshLabel != null : "fx:id=\"refreshLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert spacer != null : "fx:id=\"spacer\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert taskLabel != null : "fx:id=\"taskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert messageLabel != null : "fx:id=\"messageLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
+        assert refreshLabel != null : "fx:id=\"refreshLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert spacer != null : "fx:id=\"spacer\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert taskLabel != null : "fx:id=\"taskLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert messageLabel != null : "fx:id=\"messageLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         refreshLabel.setVisible(false);
         taskLabel.setVisible(false);
         HBox.setHgrow(spacer, Priority.ALWAYS);

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.events.type;
 import java.util.Arrays;
 import java.util.List;
 import javafx.scene.image.Image;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
@@ -28,7 +29,7 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
  */
 public enum BaseTypes implements EventType {
 
-    FILE_SYSTEM("File System", "blue-document.png") {
+    FILE_SYSTEM(NbBundle.getMessage(BaseTypes.class, "BaseTypes.fileSystem.name"), "blue-document.png") { // NON-NLS
 
                 @Override
                 public List<? extends EventType> getSubTypes() {
@@ -40,7 +41,7 @@ public enum BaseTypes implements EventType {
                     return FileSystemTypes.valueOf(string);
                 }
             },
-    WEB_ACTIVITY("Web Activity", "web-file.png") {
+    WEB_ACTIVITY(NbBundle.getMessage(BaseTypes.class, "BaseTypes.webActivity.name"), "web-file.png") { // NON-NLS
 
                 @Override
                 public List<? extends EventType> getSubTypes() {
@@ -52,7 +53,7 @@ public enum BaseTypes implements EventType {
                     return WebTypes.valueOf(string);
                 }
             },
-    MISC_TYPES("Misc Types", "block.png") {
+    MISC_TYPES(NbBundle.getMessage(BaseTypes.class, "BaseTypes.miscTypes.name"), "block.png") { // NON-NLS
 
                 @Override
                 public List<? extends EventType> getSubTypes() {
@@ -93,7 +94,7 @@ public enum BaseTypes implements EventType {
     private BaseTypes(String displayName, String iconBase) {
         this.displayName = displayName;
         this.iconBase = iconBase;
-        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true);
+        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true); // NON-NLS
     }
 
     @Override

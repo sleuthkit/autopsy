@@ -64,6 +64,7 @@ import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -194,17 +195,17 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     public VisualizationPanel(NavPanel navPanel) {
         this.navPanel = navPanel;
-        FXMLConstructor.construct(this, "VisualizationPanel.fxml");
+        FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     protected void initialize() {
-        assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'.";
-        assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'.";
-        assert startPicker != null : "fx:id=\"startPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'.";
-        assert rangeHistogramStack != null : "fx:id=\"rangeHistogramStack\" was not injected: check your FXML file 'ViewWrapper.fxml'.";
-        assert countsToggle != null : "fx:id=\"countsToggle\" was not injected: check your FXML file 'VisToggle.fxml'.";
-        assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'.";
+        assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
+        assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
+        assert startPicker != null : "fx:id=\"startPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
+        assert rangeHistogramStack != null : "fx:id=\"rangeHistogramStack\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
+        assert countsToggle != null : "fx:id=\"countsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
+        assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
 
         HBox.setHgrow(leftSeperator, Priority.ALWAYS);
         HBox.setHgrow(rightSeperator, Priority.ALWAYS);
@@ -253,7 +254,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         /* this padding attempts to compensates for the fact that the
          * rangeslider track doesn't extend to edge of node,and so the
          * histrogram doesn't quite line up with the rangeslider */
-        histogramBox.setStyle("   -fx-padding: 0,0.5em,0,.5em; ");
+        histogramBox.setStyle("   -fx-padding: 0,0.5em,0,.5em; "); // NON-NLS
 
         zoomMenuButton.getItems().clear();
         for (ZoomRanges b : ZoomRanges.values()) {
@@ -416,12 +417,13 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             histogramTask.cancel(true);
         }
 
-        histogramTask = new LoggedTask<Void>("Rebuild Histogram", true) {
+        histogramTask = new LoggedTask<Void>(
+                NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.title"), true) {
 
             @Override
             protected Void call() throws Exception {
 
-                updateMessage("preparing");
+                updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.preparing"));
 
                 long max = 0;
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
@@ -434,7 +436,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage("resetting ui");
+                    updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.resetUI"));
 
                 });
 
@@ -451,7 +453,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
                     start = end;
 
-                    updateMessage("querying db");
+                    updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.queryDb"));
                     //query for current range
                     long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                     bins.add(count);
@@ -461,7 +463,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                     final double fMax = Math.log(max);
                     final ArrayList<Long> fbins = new ArrayList<>(bins);
                     Platform.runLater(() -> {
-                        updateMessage("updating ui");
+                        updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.updateUI2"));
 
                         histogramBox.getChildren().clear();
 
@@ -479,7 +481,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                                 Tooltip.install(bar, new Tooltip(bin.toString()));
                             });
                             bar.setEffect(lighting);
-                            //they each get equal width to fill the histogram horizontaly
+                            //they each get equal width to fill the histogram horizontally
                             HBox.setHgrow(bar, Priority.ALWAYS);
                             histogramBox.getChildren().add(bar);
                         }
@@ -555,15 +557,15 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
         public NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
-            FXMLConstructor.construct(this, "NoEventsDialog.fxml");
+            FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
 
         }
 
         @FXML
         void initialize() {
-            assert resetFiltersButton != null : "fx:id=\"resetFiltersButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'.";
-            assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'.";
-            assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'.";
+            assert resetFiltersButton != null : "fx:id=\"resetFiltersButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
+            assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
+            assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
             Action zoomOutAction = new ZoomOut(controller);
             zoomButton.setOnAction(zoomOutAction);

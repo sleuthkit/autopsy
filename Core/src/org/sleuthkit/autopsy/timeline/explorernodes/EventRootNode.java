@@ -25,6 +25,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
@@ -110,7 +111,7 @@ public class EventRootNode extends DisplayableItemNode {
                     }
 
                 } catch (TskCoreException tskCoreException) {
-                    LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", tskCoreException);
+                    LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", tskCoreException); // NON-NLS
                     return null;
                 }
             } else {
@@ -123,8 +124,12 @@ public class EventRootNode extends DisplayableItemNode {
 
         public TooManyNode(int size) {
             super(Children.LEAF);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/info-icon-16.png");
-            setDisplayName("Too many events to display.  Maximum = " + MAX_EVENTS_TO_DISPLAY + ". But there are " + size + " to display.");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/info-icon-16.png"); // NON-NLS
+            setDisplayName(
+                    NbBundle.getMessage(this.getClass(),
+                                        "EventRoodNode.tooManyNode.displayName",
+                                        MAX_EVENTS_TO_DISPLAY,
+                                        size));
         }
     }
 }

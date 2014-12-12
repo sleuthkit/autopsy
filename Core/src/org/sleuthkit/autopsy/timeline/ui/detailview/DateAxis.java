@@ -67,7 +67,7 @@ final class DateAxis extends Axis<DateTime> {
 
         @Override
         public String getName() {
-            return "lowerBound";
+            return "lowerBound"; // NON-NLS
         }
     };
 
@@ -105,7 +105,7 @@ final class DateAxis extends Axis<DateTime> {
 
         @Override
         public String getName() {
-            return "upperBound";
+            return "upperBound"; // NON-NLS
         }
     };
 

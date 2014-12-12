@@ -47,7 +47,7 @@ public class TimeZonePanel extends TitledPane {
 
     static private String getTimeZoneString(final TimeZone timeZone) {
         final String id = ZoneOffset.ofTotalSeconds(timeZone.getOffset(System.currentTimeMillis()) / 1000).getId();
-        final String timeZoneString = "(GMT" + ("Z".equals(id) ? "+00:00" : id) + ") " + timeZone.getID() + " [" + timeZone.getDisplayName(timeZone.observesDaylightTime() && timeZone.inDaylightTime(new Date()), TimeZone.SHORT) + "]";
+        final String timeZoneString = "(GMT" + ("Z".equals(id) ? "+00:00" : id) + ") " + timeZone.getID() + " [" + timeZone.getDisplayName(timeZone.observesDaylightTime() && timeZone.inDaylightTime(new Date()), TimeZone.SHORT) + "]"; // NON-NLS
         return timeZoneString;
     }
 
@@ -65,6 +65,6 @@ public class TimeZonePanel extends TitledPane {
     }
 
     public TimeZonePanel() {
-        FXMLConstructor.construct(this, "TimeZonePanel.fxml");
+        FXMLConstructor.construct(this, "TimeZonePanel.fxml"); // NON-NLS
     }
 }

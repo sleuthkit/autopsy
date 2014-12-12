@@ -18,13 +18,17 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
+import org.openide.util.NbBundle;
+
 /**
  *
  *
  */
 public enum EventTypeZoomLevel {
 
-    ROOT_TYPE("Root Type"), BASE_TYPE("Base Type"), SUB_TYPE("Sub Type");
+    ROOT_TYPE(NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.rootType")), BASE_TYPE(
+            NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.baseType")), SUB_TYPE(
+            NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.subType"));
 
     public String getDisplayName() {
         return displayName;

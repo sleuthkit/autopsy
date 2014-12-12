@@ -55,6 +55,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -68,8 +69,8 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
 public class AggregateEventNode extends StackPane {
 
-    private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png");
-    private final static Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png");
+    private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
+    private final static Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
 
     private static final CornerRadii CORNER_RADII = new CornerRadii(3);
 
@@ -181,7 +182,7 @@ public class AggregateEventNode extends StackPane {
         spanFill = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
         setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         setCursor(Cursor.HAND);
-        spanRegion.setStyle("-fx-border-width:2 0 2 2; -fx-border-radius: 2; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor) + ";");
+        spanRegion.setStyle("-fx-border-width:2 0 2 2; -fx-border-radius: 2; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor) + ";"); // NON-NLS
         spanRegion.setBackground(spanFill);
 
         //set up mouse hover effect and tooltip
@@ -228,10 +229,11 @@ public class AggregateEventNode extends StackPane {
     }
 
     private void installTooltip() {
-        Tooltip.install(AggregateEventNode.this, new Tooltip(getEvent().getEventIDs().size() + " " + getEvent().getType() + " events\n"
-                + getEvent().getDescription()
-                + "\nbetween " + getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter())
-                + "\nand      " + getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter())));
+        Tooltip.install(AggregateEventNode.this, new Tooltip(
+                NbBundle.getMessage(this.getClass(), "AggregateEventNode.installTooltip.text",
+                                    getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
+                                    getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
+                                    getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))));
     }
 
     public Pane getSubNodePane() {
@@ -284,7 +286,7 @@ public class AggregateEventNode extends StackPane {
                         ? "    ..." + StringUtils.substringAfter(description, parentEventNode.getEvent().getDescription())
                         : description;
                 descrLabel.setText(description);
-                countLabel.setText(((size == 1) ? "" : " (" + size + ")"));
+                countLabel.setText(((size == 1) ? "" : " (" + size + ")")); // NON-NLS
                 break;
         }
     }
@@ -310,12 +312,12 @@ public class AggregateEventNode extends StackPane {
     void applyHighlightEffect(boolean applied) {
 
         if (applied) {
-            descrLabel.setStyle("-fx-font-weight: bold;");
+            descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
             spanFill = new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
             setBackground(new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
         } else {
-            descrLabel.setStyle("-fx-font-weight: normal;");
+            descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
             spanFill = new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
             setBackground(new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
@@ -366,7 +368,8 @@ public class AggregateEventNode extends StackPane {
             final Interval span = event.getSpan().withEndMillis(event.getSpan().getEndMillis() + 1000);
 
             //make a task to load the subnodes
-            LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>("Load sub events", true) {
+            LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>(
+                    NbBundle.getMessage(this.getClass(), "AggregateEventNode.loggedTask.name"), true) {
 
                 @Override
                 protected List<AggregateEventNode> call() throws Exception {

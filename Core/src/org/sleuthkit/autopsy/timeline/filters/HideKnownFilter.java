@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import org.openide.util.NbBundle;
+
 /**
  * Filter to hide known files
  */
@@ -25,7 +27,7 @@ public class HideKnownFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return "Hide Known Files";
+        return NbBundle.getMessage(this.getClass(), "hideKnownFilter.displayName.text");
     }
 
     public HideKnownFilter() {
@@ -43,7 +45,7 @@ public class HideKnownFilter extends AbstractFilter {
 
     @Override
     public String getHTMLReportString() {
-        return "hide known" + getStringCheckBox();
+        return "hide known" + getStringCheckBox();// NON-NLS
     }
 
     @Override
