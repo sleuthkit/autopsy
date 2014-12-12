@@ -429,7 +429,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        parent.setVisible(false);
+        parent.dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed

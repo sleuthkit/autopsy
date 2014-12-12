@@ -29,6 +29,7 @@ import javax.swing.JFrame;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -41,7 +42,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static Dimension DIMENSIONS = new Dimension(750, 400);
 
     public StartupWindow() {
-        super(new JFrame(TITLE), TITLE, true);
+        super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         init();
     }
 
