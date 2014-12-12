@@ -29,10 +29,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJob job;
+    private final DataSourceIngestJob job;
     private final List<FileIngestModuleDecorator> modules = new ArrayList<>();
 
-    FileIngestPipeline(IngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+    FileIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
         this.job = job;
 
         // Create an ingest module instance from each file ingest module 

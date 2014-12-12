@@ -56,10 +56,8 @@ public class IngestManager {
     private static IngestManager instance = null;
 
     /**
-     * The ingest manager assigns a unique ID to each ingest job and maintains a
-     * mapping of job IDs to jobs.
+     * The ingest manager maintains a mapping of ingest job IDs to ingest jobs.
      */
-    private final AtomicLong nextJobId = new AtomicLong(0L);
     private final ConcurrentHashMap<Long, IngestJob> jobsById = new ConcurrentHashMap<>();
 
     /**
@@ -67,8 +65,8 @@ public class IngestManager {
      * pools is given a unique thread/task ID.
      */
     // TODO: It is no longer necessary to have multiple thread pools.
-    private final AtomicLong nextThreadId = new AtomicLong(0L);    
-        
+    private final AtomicLong nextThreadId = new AtomicLong(0L);
+
     /**
      * Ingest jobs are started on a pool thread by ingest job starters. A
      * mapping of thread/task IDs to the result objects associated with each
@@ -216,13 +214,18 @@ public class IngestManager {
 
     /**
      * Starts an ingest job, i.e., processing by ingest modules, for each data
-     * source in a collection of data sources.
+     * source in a collection of data sources. Note that if the provide UI
+     * argument is set to true, it is assumed this method is being called on the
+     * EDT and a worker thread will be dispatched to start the job.
      *
      * @param dataSources The data sources to be processed.
      * @param settings The ingest job settings.
-     * @param doMessageBoxes Whether or not to display message boxes for errors.
+     * @param provideUI Whether or not to support user interaction, e.g.,
+     * showing message boxes and reporting progress through the NetBeans
+     * Progress API.
+     * @return The ingest job that was started
      */
-    public synchronized void startIngestJobs(Collection<Content> dataSources, IngestJobSettings settings, boolean doMessageBoxes) {
+    public synchronized void startIngestJobs(Collection<Content> dataSources, IngestJobSettings settings, boolean provideUI) {
         if (!isIngestRunning()) {
             clearIngestMessageBox();
         }
@@ -232,7 +235,7 @@ public class IngestManager {
         }
 
         long taskId = nextThreadId.incrementAndGet();
-        Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobsStarter(taskId, dataSources, settings, doMessageBoxes));
+        Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobsStarter(taskId, dataSources, settings, provideUI));
         ingestJobStarters.put(taskId, task);
     }
 
@@ -406,19 +409,19 @@ public class IngestManager {
     }
 
     /**
-     * Starts an ingest job for a data source.
+     * Starts an ingest job for a collection of data sources.
      *
-     * @param dataSource The data source to ingest.
+     * @param dataSource The data sources to ingest.
      * @param settings The settings for the job.
      * @return A collection of ingest module start up errors, empty on success.
      */
-    private List<IngestModuleError> startJob(Content dataSource, IngestJobSettings settings) {
+    private List<IngestModuleError> startJob(Collection<Content> dataSources, IngestJobSettings settings) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (this.jobCreationIsEnabled) {
-            long jobId = this.nextJobId.incrementAndGet();
-            IngestJob job = new IngestJob(jobId, dataSource, settings);
+            IngestJob job = new IngestJob(dataSources, settings);
+            long jobId = job.getId();
             this.jobsById.put(jobId, job);
-            errors = job.start(settings.getEnabledIngestModuleTemplates());
+            errors = job.start();
             if (errors.isEmpty() && job.hasIngestPipeline()) {
                 this.fireIngestJobStarted(jobId);
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} started", jobId);
@@ -628,10 +631,10 @@ public class IngestManager {
      *
      * @return A list of ingest job state snapshots.
      */
-    List<IngestJob.IngestJobSnapshot> getIngestJobSnapshots() {
-        List<IngestJob.IngestJobSnapshot> snapShots = new ArrayList<>();
+    List<DataSourceIngestJob.IngestJobSnapshot> getIngestJobSnapshots() {
+        List<DataSourceIngestJob.IngestJobSnapshot> snapShots = new ArrayList<>();
         for (IngestJob job : this.jobsById.values()) {
-            snapShots.add(job.getSnapshot());
+            snapShots.addAll(job.getSnapshot());
         }
         return snapShots;
     }
@@ -684,61 +687,35 @@ public class IngestManager {
                         return true;
                     }
                 });
-                progress.start(dataSources.size());
+                progress.start();
 
                 /**
-                 * Try to start the ingest jobs.
+                 * Try to start the ingest job.
                  */
-                int workUnitsCompleted = 0;
-                for (Content dataSource : this.dataSources) {
-
-                    /**
-                     * Cancellation check.
-                     */
-                    if (Thread.currentThread().isInterrupted()) {
-                        return null;
+                List<IngestModuleError> errors = IngestManager.this.startJob(this.dataSources, this.settings);
+                if (!errors.isEmpty() && this.doStartupErrorsMsgBox) {
+                    StringBuilder moduleStartUpErrors = new StringBuilder();
+                    for (IngestModuleError error : errors) {
+                        String moduleName = error.getModuleDisplayName();
+                        moduleStartUpErrors.append(moduleName);
+                        moduleStartUpErrors.append(": ");
+                        moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
+                        moduleStartUpErrors.append("\n");
                     }
-
-                    /**
-                     * Add a "subtitle" to the display name of the progress bar
-                     * to indicate an ingest job is being started for this data
-                     * source.
-                     */
-                    String progressMessage = NbBundle.getMessage(this.getClass(),
-                            "IngestManager.StartIngestJobsTask.run.progressingDisplayName",
-                            dataSource.getName());
-                    progress.progress(progressMessage);
-
-                    /**
-                     * Start an ingest job for this data source.
-                     */
-                    List<IngestModuleError> errors = IngestManager.this.startJob(dataSource, this.settings);
-                    if (!errors.isEmpty() && this.doStartupErrorsMsgBox) {
-                        StringBuilder moduleStartUpErrors = new StringBuilder();
-                        for (IngestModuleError error : errors) {
-                            String moduleName = error.getModuleDisplayName();
-                            moduleStartUpErrors.append(moduleName);
-                            moduleStartUpErrors.append(": ");
-                            moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
-                            moduleStartUpErrors.append("\n");
-                        }
-                        StringBuilder notifyMessage = new StringBuilder();
-                        notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg"));
-                        notifyMessage.append("\n");
-                        notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution"));
-                        notifyMessage.append("\n");
-                        notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList",
-                                moduleStartUpErrors.toString()));
-                        notifyMessage.append("\n\n");
-                        JOptionPane.showMessageDialog(null, notifyMessage.toString(),
-                                NbBundle.getMessage(this.getClass(),
-                                        "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
-                    }
-
-                    progress.progress(progressMessage, ++workUnitsCompleted);
+                    StringBuilder notifyMessage = new StringBuilder();
+                    notifyMessage.append(NbBundle.getMessage(this.getClass(),
+                            "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg"));
+                    notifyMessage.append("\n");
+                    notifyMessage.append(NbBundle.getMessage(this.getClass(),
+                            "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution"));
+                    notifyMessage.append("\n");
+                    notifyMessage.append(NbBundle.getMessage(this.getClass(),
+                            "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList",
+                            moduleStartUpErrors.toString()));
+                    notifyMessage.append("\n\n");
+                    JOptionPane.showMessageDialog(null, notifyMessage.toString(),
+                            NbBundle.getMessage(this.getClass(),
+                                    "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
                 }
 
                 return null;
