@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJob {
 
-    private static final AtomicLong nextJobId = new AtomicLong(0L);
+    private static final AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final Map<Long, DataSourceIngestJob> dataSourceJobs;
     private boolean cancelled;
@@ -46,7 +46,7 @@ public final class IngestJob {
      * @param settings The ingest job settings.
      */
     IngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        this.id = IngestJob.nextJobId.getAndIncrement();
+        this.id = IngestJob.nextId.getAndIncrement();
         this.dataSourceJobs = new HashMap<>();
         for (Content dataSource : dataSources) {
             DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings);
@@ -54,36 +54,82 @@ public final class IngestJob {
         }
     }
 
+    /**
+     * Gets the unique identifier assigned to this ingest job.
+     *
+     * @return The job identifier.
+     */
     public long getId() {
         return this.id;
     }
 
-    synchronized public ProgressSnapshot getProgressSnapshot() {
+    /**
+     * Gets a snapshot of the state and performance of this ingest job.
+     *
+     * @return The snapshot.
+     */
+    synchronized public Snapshot getSnapshot() {
+        // TODO: There are race conditions here that can be easily fixed by 
+        // eliminating the child jobs per plan.
         DataSourceIngestModuleHandle moduleHandle = null;
         Date fileAnalysisStartTime = null;
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
+            /**
+             * Only one data source ingest module should be running at a time,
+             * so grab the first one. There is a race condition here.
+             */
             DataSourceIngestPipeline.DataSourceIngestModuleDecorator module = dataSourceJob.getCurrentDataSourceIngestModule();
             if (null != module) {
                 moduleHandle = new DataSourceIngestModuleHandle(dataSourceJob.getId(), module);
             }
-            // RJCTODO: File analysis time thing
+            
+            
         }
 
-        return new ProgressSnapshot(moduleHandle, fileAnalysisStartTime, this.cancelled);
+        return new Snapshot(moduleHandle, fileAnalysisStartTime, this.cancelled);
     }
 
-    synchronized public void cancelDataSourceIngestModule(DataSourceIngestModuleHandle module) {
+    /**
+     * Gets snapshots of the state and performance of this ingest job's child
+     * data source ingest jobs.
+     *
+     * @return A list of data source ingest job snapshots.
+     */
+    synchronized List<DataSourceIngestJob.Snapshot> getDetailedSnapshot() {
+        List<DataSourceIngestJob.Snapshot> snapshots = new ArrayList<>();
+        for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
+            snapshots.add(dataSourceJob.getSnapshot());
+        }
+        return snapshots;
+    }
+
+    /**
+     *
+     * @param module
+     */
+    synchronized public void cancelIngestModule(DataSourceIngestModuleHandle module) {
         DataSourceIngestJob dataSourceJob = this.dataSourceJobs.get(module.dataSourceIngestJobId);
         // RJCTODO: check equality, etc.
     }
 
+    /**
+     * Requests cancellation of this ingest job, i.e., a shutdown of its data
+     * source level and file level ingest pipelines.
+     */
     synchronized public void cancel() {
         for (DataSourceIngestJob job : this.dataSourceJobs.values()) {
             job.cancel();
         }
-        this.cancelled = true;
+        this.cancelled = true; // RJCTODO: make children push cancellation up
     }
 
+    /**
+     * Queries whether or not cancellation of this ingest job, i.e., a shutdown
+     * of its data source level and file level ingest pipelines, has been
+     * requested.
+     *
+     * @return True or false.
+     */
     synchronized public boolean isCancelled() {
         return this.cancelled;
     }
@@ -91,13 +137,13 @@ public final class IngestJob {
     /**
      * A thread-safe snapshot of ingest job progress.
      */
-    public static final class ProgressSnapshot {
+    public static final class Snapshot {
 
         private final DataSourceIngestModuleHandle dataSourceModule;
         private final Date fileAnalysisStartTime;
         private final boolean cancelled;
 
-        private ProgressSnapshot(DataSourceIngestModuleHandle dataSourceModule, Date fileAnalysisStartTime, boolean cancelled) {
+        private Snapshot(DataSourceIngestModuleHandle dataSourceModule, Date fileAnalysisStartTime, boolean cancelled) {
             this.dataSourceModule = dataSourceModule;
             this.fileAnalysisStartTime = fileAnalysisStartTime;
             this.cancelled = cancelled;
@@ -127,6 +173,11 @@ public final class IngestJob {
 
     }
 
+    /**
+     * A handle to a data source level ingest module that can be used to get
+     * basic information about the module and to request cancellation, i.e.,
+     * shut down, of the module.
+     */
     public static class DataSourceIngestModuleHandle {
 
         private final long dataSourceIngestJobId;
@@ -149,9 +200,9 @@ public final class IngestJob {
     }
 
     /**
-     * Starts up the ingest pipelines and ingest progress bars.
+     * Starts up the ingest pipelines and ingest progress bars for this job.
      *
-     * @return A collection of ingest module startup errors, empty on success.
+     * @return A collection of ingest module start up errors, empty on success.
      */
     List<IngestModuleError> start() {
         boolean hasIngestPipeline = false;
@@ -164,7 +215,7 @@ public final class IngestJob {
     }
 
     /**
-     * Checks to see if this job has at least one ingest pipeline.
+     * Checks to see if this ingest job has at least one ingest pipeline.
      *
      * @return True or false.
      */
@@ -191,18 +242,5 @@ public final class IngestJob {
             IngestManager.getInstance().finishJob(this);
         }
     }
-    
-    /**
-     * Gets a snapshot of this job's state and performance.
-     *
-     * @return A list of 
-     */
-    List<DataSourceIngestJob.IngestJobSnapshot> getSnapshot() {
-        List<DataSourceIngestJob.IngestJobSnapshot> snapshots = new ArrayList<>();
-        for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
-            snapshots.add(dataSourceJob.getSnapshot());
-        }        
-        return snapshots;
-    }
-    
+
 }

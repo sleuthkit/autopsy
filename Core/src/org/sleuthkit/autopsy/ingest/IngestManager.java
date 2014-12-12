@@ -631,10 +631,10 @@ public class IngestManager {
      *
      * @return A list of ingest job state snapshots.
      */
-    List<DataSourceIngestJob.IngestJobSnapshot> getIngestJobSnapshots() {
-        List<DataSourceIngestJob.IngestJobSnapshot> snapShots = new ArrayList<>();
+    List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
+        List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
         for (IngestJob job : this.jobsById.values()) {
-            snapShots.addAll(job.getSnapshot());
+            snapShots.addAll(job.getDetailedSnapshot());
         }
         return snapShots;
     }

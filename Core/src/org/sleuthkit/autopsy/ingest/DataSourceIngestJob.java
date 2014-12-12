@@ -329,6 +329,15 @@ final class DataSourceIngestJob {
     }
 
     /**
+     * Queries whether or not this job is running file ingest.
+     *
+     * @return True or false.
+     */
+    boolean fileIngestIsRunning() {
+        return ((DataSourceIngestJob.Stages.FIRST == this.stage) && this.hasFileIngestPipeline());
+    }
+    
+    /**
      * Updates the display name of the data source level ingest progress bar.
      *
      * @param displayName The new display name.
@@ -932,14 +941,14 @@ final class DataSourceIngestJob {
      *
      * @return An ingest job statistics object.
      */
-    IngestJobSnapshot getSnapshot() {
-        return new IngestJobSnapshot();
+    Snapshot getSnapshot() {
+        return new Snapshot();
     }
 
     /**
      * Stores basic diagnostic statistics for an ingest job.
      */
-    class IngestJobSnapshot {
+    class Snapshot {
 
         private final long jobId;
         private final String dataSource;
@@ -953,7 +962,7 @@ final class DataSourceIngestJob {
          * Constructs an object to store basic diagnostic statistics for an
          * ingest job.
          */
-        IngestJobSnapshot() {
+        Snapshot() {
             this.jobId = DataSourceIngestJob.this.id;
             this.dataSource = DataSourceIngestJob.this.dataSource.getName();
             this.startTime = DataSourceIngestJob.this.createTime;

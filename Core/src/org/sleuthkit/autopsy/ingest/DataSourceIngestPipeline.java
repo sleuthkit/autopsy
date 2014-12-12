@@ -25,9 +25,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A pipeline consisting of a sequence of data source level ingest modules. The
- * pipeline starts the modules, runs them in sequential order, and shuts them
- * down.
+ * This class manages a sequence of data source level ingest modules. It starts
+ * the modules, runs data sources through them, and shuts them down when data
+ * source level ingest is complete.
  */
 final class DataSourceIngestPipeline {
 
@@ -37,9 +37,9 @@ final class DataSourceIngestPipeline {
     private volatile DataSourceIngestModuleDecorator currentModule;
 
     /**
-     * Constructs a pipeline consisting of a sequence of data source level
-     * ingest modules. The pipeline starts the modules, runs them in sequential
-     * order, and shuts them down.
+     * Constructs an object that manages a sequence of data source level ingest
+     * modules. It starts the modules, runs data sources through them, and shuts
+     * them down when data source level ingest is complete.
      *
      * @param job The ingest job to which this pipeline belongs.
      * @param moduleTemplates The ingest module templates that define the
@@ -127,7 +127,7 @@ final class DataSourceIngestPipeline {
     DataSourceIngestModuleDecorator getCurrentlyRunningModule() {
         return this.currentModule;
     }
-    
+
     /**
      * This class decorates a data source level ingest module with a display
      * name and a start time.
@@ -143,7 +143,7 @@ final class DataSourceIngestPipeline {
          * with a display name and a running time.
          *
          * @param module The data source level ingest module to be decorated.
-         * @param displayName
+         * @param displayName The display name.
          */
         DataSourceIngestModuleDecorator(DataSourceIngestModule module, String displayName) {
             this.module = module;
@@ -168,14 +168,14 @@ final class DataSourceIngestPipeline {
         String getDisplayName() {
             return this.displayName;
         }
-        
+
         /**
          * Sets the start time to the current time.
          */
         void setStartTime() {
             this.startTime = new Date();
         }
-        
+
         /**
          * Gets the time the decorated ingest module started processing the data
          * source.
@@ -202,7 +202,7 @@ final class DataSourceIngestPipeline {
             this.startTime = new Date();
             return this.module.process(dataSource, statusHelper);
         }
-        
+
     }
-    
+
 }
