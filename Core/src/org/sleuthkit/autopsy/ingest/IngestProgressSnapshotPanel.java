@@ -163,7 +163,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         private final String[] columnNames = {"Job ID", 
             "Data Source", "Start", "Num Processed", "Files/Sec", "In Progress", "Files Queued", "Dir Queued", "Root Queued", "DS Queued"};
-        private List<IngestJob.IngestJobSnapshot> jobSnapshots;
+        private List<DataSourceIngestJob.Snapshot> jobSnapshots;
 
         private IngestJobTableModel() {
             refresh();
@@ -191,7 +191,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestJob.IngestJobSnapshot snapShot = jobSnapshots.get(rowIndex);
+            DataSourceIngestJob.Snapshot snapShot = jobSnapshots.get(rowIndex);
             Object cellValue;
             switch (columnIndex) {
                 case 0:

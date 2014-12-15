@@ -29,7 +29,7 @@ final class FileIngestTask extends IngestTask {
 
     private final AbstractFile file;
 
-    FileIngestTask(IngestJob job, AbstractFile file) {
+    FileIngestTask(DataSourceIngestJob job, AbstractFile file) {
         super(job);
         this.file = file;
     }
@@ -53,8 +53,8 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestJob job = getIngestJob();
-        IngestJob otherJob = other.getIngestJob();
+        DataSourceIngestJob job = getIngestJob();
+        DataSourceIngestJob otherJob = other.getIngestJob();
         if (job != otherJob && (job == null || !job.equals(otherJob))) {
             return false;
         }
