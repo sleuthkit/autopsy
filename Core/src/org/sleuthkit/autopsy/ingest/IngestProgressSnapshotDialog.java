@@ -37,8 +37,7 @@ public final class IngestProgressSnapshotDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestProgressSnapshotDialog.title.text");
     private static final Dimension DIMENSIONS = new Dimension(500, 300);
-    private JDialog pseudoOwner = null;
-
+    
     /**
      * Constructs a non-modal instance of the dialog with its own frame.
      */
@@ -54,8 +53,8 @@ public final class IngestProgressSnapshotDialog extends JDialog {
      */
     public IngestProgressSnapshotDialog(Container owner, Boolean shouldBeModal) {
         super((Window) owner, TITLE, ModalityType.MODELESS);
-        if (shouldBeModal) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
-            pseudoOwner = (JDialog) owner;
+        if (shouldBeModal && owner instanceof JDialog) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
+            final JDialog pseudoOwner = (JDialog) owner;
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) { // Put it back to how it was before we manipulated it.
