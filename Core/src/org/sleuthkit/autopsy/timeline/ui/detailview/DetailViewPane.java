@@ -37,14 +37,7 @@ import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.control.Slider;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.effect.Effect;
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.KP_DOWN;
@@ -396,6 +389,33 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         @FXML
         private Label truncateSliderLabel;
 
+        @FXML
+        private MenuButton advancedLayoutOptionsButtonLabel;
+
+        @FXML
+        private CustomMenuItem bandByTypeBoxMenuItem;
+
+        @FXML
+        private CustomMenuItem oneEventPerRowBoxMenuItem;
+
+        @FXML
+        private CustomMenuItem truncateAllBoxMenuItem;
+
+        @FXML
+        private CustomMenuItem truncateSliderLabelMenuItem;
+
+        @FXML
+        private CustomMenuItem showRadioMenuItem;
+
+        @FXML
+        private CustomMenuItem countsRadioMenuItem;
+
+        @FXML
+        private CustomMenuItem hiddenRadioMenuItem;
+
+        @FXML
+        private SeparatorMenuItem descVisibilitySeparatorMenuItem;
+
         public DetailViewSettingsPane() {
             FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
@@ -410,6 +430,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
             truncateAllBox.selectedProperty().bindBidirectional(chart.getTruncateAll());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.getOneEventPerRow());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
+            truncateSliderLabel.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSliderLabel.text"));
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
                     chart.getTruncateWidth().set(truncateWidthSlider.getValue());
@@ -427,6 +448,28 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                     chart.getDescrVisibility().set(DescriptionVisibility.HIDDEN);
                 }
             });
+
+            advancedLayoutOptionsButtonLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
+            bandByTypeBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBox.text"));
+            bandByTypeBoxMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBoxMenuItem.text"));
+            oneEventPerRowBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBox.text"));
+            oneEventPerRowBoxMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
+            truncateAllBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBox.text"));
+            truncateAllBoxMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBoxMenuItem.text"));
+            truncateSliderLabelMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSlideLabelMenuItem.text"));
+            descVisibilitySeparatorMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.descVisSeparatorMenuItem.text"));
+            showRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadioMenuItem.text"));
+            showRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadio.text"));
+            countsRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadioMenuItem.text"));
+            countsRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadio.text"));
+            hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
+            hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
         }
 
     }

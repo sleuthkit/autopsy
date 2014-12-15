@@ -112,6 +112,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
         setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
 
+        timeZonePanel.setText(NbBundle.getMessage(this.getClass(), "TimeLineTopComponent.timeZonePanel.text"));
         customizeComponents();
     }
 

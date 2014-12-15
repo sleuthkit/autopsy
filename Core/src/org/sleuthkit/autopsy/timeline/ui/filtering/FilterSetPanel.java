@@ -80,6 +80,8 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         applyButton.setOnAction(e -> {
             controller.pushFilters(filterTreeTable.getRoot().getValue().copyOf());
         });
+        applyButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.applyButton.text"));
+        defaultButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.defaultButton.text"));
 
         //remove column headers via css.
         filterTreeTable.getStylesheets().addAll(getClass().getResource("FilterTable.css").toExternalForm()); // NON-NLS
@@ -136,10 +138,12 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         treeColumn.setCellFactory(col -> new FilterCheckBoxCell());
+        treeColumn.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.treeColumn.text"));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
+        legendColumn.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.legendColumn.text"));
     }
 
     public FilterSetPanel() {

@@ -26,12 +26,7 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -68,6 +63,9 @@ public class NavPanel extends BorderPane implements TimeLineView {
      */
     @FXML
     private TreeView< NavTreeNode> eventsTree;
+
+    @FXML
+    private Label eventsTreeLabel;
 
     @FXML
     private ComboBox<Comparator<TreeItem<NavTreeNode>>> sortByBox;
@@ -131,6 +129,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
         eventsTree.setShowRoot(false);
         eventsTree.setCellFactory((TreeView<NavTreeNode> p) -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        eventsTreeLabel.setText("Sort By:");
     }
 
     /** A tree cell to display {@link NavTreeNode}s. Shows the description, and

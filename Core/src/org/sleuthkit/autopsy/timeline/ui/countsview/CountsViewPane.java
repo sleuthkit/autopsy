@@ -38,12 +38,7 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.Lighting;
@@ -511,6 +506,9 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         private ToggleGroup scaleGroup;
 
         @FXML
+        private Label scaleLabel;
+
+        @FXML
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
@@ -523,6 +521,10 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                     scale.set(ScaleType.LOGARITHMIC);
                 }
             });
+
+            logRadio.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.logRadio.text"));
+            linearRadio.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.linearRadio.text"));
+            scaleLabel.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.scaleLabel.text"));
         }
 
         public CountsViewSettingsPane() {

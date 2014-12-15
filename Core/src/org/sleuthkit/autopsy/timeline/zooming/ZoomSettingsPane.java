@@ -25,10 +25,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TitledPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.util.StringConverter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -68,6 +65,21 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
     @FXML
     private Slider timeUnitSlider;
 
+    @FXML
+    private Label descrLODLabel;
+
+    @FXML
+    private Label typeZoomLabel;
+
+    @FXML
+    private Label timeUnitLabel;
+
+    @FXML
+    private Label zoomLabel;
+
+    @FXML
+    private Label historyLabel;
+
     private TimeLineController controller;
 
     private FilteredEventsModel filteredEvents;
@@ -85,6 +97,12 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         typeZoomSlider.setLabelFormatter(new TypeZoomConverter());
         descrLODSlider.setMax(DescriptionLOD.values().length - 1);
         descrLODSlider.setLabelFormatter(new DescrLODConverter());
+        descrLODLabel.setText(
+                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.descrLODLabel.text"));
+        typeZoomLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.typeZoomLabel.text"));
+        timeUnitLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.timeUnitLabel.text"));
+        zoomLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.zoomLabel.text"));
+        historyLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.historyLabel.text"));
     }
 
     public ZoomSettingsPane() {

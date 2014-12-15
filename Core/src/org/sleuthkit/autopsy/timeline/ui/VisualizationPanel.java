@@ -34,15 +34,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.Button;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Separator;
-import javafx.scene.control.TitledPane;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToolBar;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -113,7 +105,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
 
-    //// time range selection componenets
+    //// time range selection components
     @FXML
     protected MenuButton zoomMenuButton;
 
@@ -228,6 +220,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
             });
         }
+        countsToggle.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.countsToggle.text"));
+        detailsToggle.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.detailsToggle.text"));
 
         //setup rangeslider
         rangeSlider.setOpacity(.7);
@@ -269,6 +263,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             });
             zoomMenuButton.getItems().add(menuItem);
         }
+        zoomMenuButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.zoomMenuButton.text"));
 
         zoomOutButton.setOnAction(e -> {
             controller.pushZoomOutTime();
@@ -288,6 +283,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             //pass snapshot to save action
             new SaveSnapshot(controller, snapshot).handle(event);
         });
+
+        snapShotButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.snapShotButton.text"));
     }
 
 //    /**
@@ -555,6 +552,18 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         @FXML
         private Button zoomButton;
 
+        @FXML
+        private Label visualizationModeLabel;
+
+        @FXML
+        private Label noEventsDialogLabel;
+
+        @FXML
+        private Label startLabel;
+
+        @FXML
+        private Label endLabel;
+
         public NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
@@ -567,6 +576,14 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
+            visualizationModeLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "VisualizationPanel.visualizationModeLabel.text"));
+            noEventsDialogLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "VisualizationPanel.noEventsDialogLabel.text"));
+            zoomButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.zoomButton.text"));
+            startLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.startLabel.text"));
+            endLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.endLabel.text"));
+
             Action zoomOutAction = new ZoomOut(controller);
             zoomButton.setOnAction(zoomOutAction);
             zoomButton.disableProperty().bind(zoomOutAction.disabledProperty());
@@ -577,6 +594,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             Action defaultFiltersAction = new DefaultFilters(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
+            resetFiltersButton.setText(
+                    NbBundle.getMessage(this.getClass(), "VisualizationPanel.resetFiltersButton.text"));
         }
     }
 }

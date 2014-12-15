@@ -13,7 +13,7 @@
                   <top>
                     <ToolBar>
                       <items>
-                        <Label text="Sort By:" />
+                        <Label fx:id="eventsTreeLabel" />
                         <ComboBox fx:id="sortByBox">
                           <items>
                             <FXCollections fx:factory="observableArrayList">
