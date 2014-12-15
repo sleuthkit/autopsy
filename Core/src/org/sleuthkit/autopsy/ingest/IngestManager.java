@@ -213,19 +213,15 @@ public class IngestManager {
     }
 
     /**
-     * Starts an ingest job, i.e., processing by ingest modules, for each data
-     * source in a collection of data sources. Note that if the provide UI
-     * argument is set to true, it is assumed this method is being called on the
-     * EDT and a worker thread will be dispatched to start the job.
+     * Starts an ingest job for a collection of data sources.
      *
      * @param dataSources The data sources to be processed.
      * @param settings The ingest job settings.
-     * @param provideUI Whether or not to support user interaction, e.g.,
-     * showing message boxes and reporting progress through the NetBeans
-     * Progress API.
+     * @param doUI Whether or not to support user interaction, e.g., showing
+     * message boxes and reporting progress through the NetBeans Progress API.
      * @return The ingest job that was started
      */
-    public synchronized void startIngestJobs(Collection<Content> dataSources, IngestJobSettings settings, boolean provideUI) {
+    public synchronized void startIngestJobs(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         if (!isIngestRunning()) {
             clearIngestMessageBox();
         }
@@ -234,9 +230,17 @@ public class IngestManager {
             ingestMonitor.start();
         }
 
-        long taskId = nextThreadId.incrementAndGet();
-        Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobsStarter(taskId, dataSources, settings, provideUI));
-        ingestJobStarters.put(taskId, task);
+        if (doUI) {
+            /**
+             * Assume request is from code running on the EDT and dispatch to a
+             * worker thread.
+             */
+            long taskId = nextThreadId.incrementAndGet();
+            Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobStarter(taskId, dataSources, settings, doUI));
+            ingestJobStarters.put(taskId, task);
+        } else {
+            this.startJob(dataSources, settings);
+        }
     }
 
     /**
@@ -245,6 +249,8 @@ public class IngestManager {
      * @return True or false.
      */
     public boolean isIngestRunning() {
+        // RJCTODO: This may return the wrong answer if an IngestJobStarter has 
+        // been dispatched to the startIngestJobsThreadPool.
         return !this.jobsById.isEmpty();
     }
 
@@ -640,10 +646,9 @@ public class IngestManager {
     }
 
     /**
-     * Creates and starts an ingest job, i.e., processing by ingest modules, for
-     * each data source in a collection of data sources.
+     * Creates and starts an ingest job for a collection of data sources.
      */
-    private final class IngestJobsStarter implements Callable<Void> {
+    private final class IngestJobStarter implements Callable<Void> {
 
         private final long threadId;
         private final Collection<Content> dataSources;
@@ -651,7 +656,7 @@ public class IngestManager {
         private final boolean doStartupErrorsMsgBox;
         private ProgressHandle progress;
 
-        IngestJobsStarter(long threadId, Collection<Content> dataSources, IngestJobSettings settings, boolean doMessageDialogs) {
+        IngestJobStarter(long threadId, Collection<Content> dataSources, IngestJobSettings settings, boolean doMessageDialogs) {
             this.threadId = threadId;
             this.dataSources = dataSources;
             this.settings = settings;

@@ -26,14 +26,17 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * This class manages a sequence of file level ingest modules. It starts the
  * modules, runs files through them, and shuts them down when file level ingest
- * is complete.
+ * is complete. 
+ * <p>
+ * This class is not thread-safe.
  */
 final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final DataSourceIngestJob job;
-    private final List<FileIngestModuleDecorator> modules = new ArrayList<>();
+    private final List<PipelineModule> modules = new ArrayList<>();
     private Date startTime;
+    private boolean running;
 
     /**
      * Constructs an object that manages a sequence of file level ingest
@@ -53,24 +56,15 @@ final class FileIngestPipeline {
          */
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
-                FileIngestModuleDecorator module = new FileIngestModuleDecorator(template.createFileIngestModule(), template.getModuleName());
+                PipelineModule module = new PipelineModule(template.createFileIngestModule(), template.getModuleName());
                 modules.add(module);
             }
         }
     }
 
     /**
-     * Returns the time when the pipeline began processing files.
-     *
-     * @return The file processing start time, may be null.
-     */
-    Date getProcessingStartTime() {
-        return this.startTime;
-    }
-
-    /**
-     * Queries whether or not the pipeline has been configured with at least one
-     * file level ingest module.
+     * Queries whether or not this pipeline has been configured with at least
+     * one file level ingest module.
      *
      * @return True or false.
      */
@@ -79,35 +73,54 @@ final class FileIngestPipeline {
     }
 
     /**
-     * Start up all of the modules in the pipeline.
+     * Starts up all of the modules in the pipeline.
      *
-     * @return List of errors or empty list if no errors
+     * @return List of start up errors, possibly empty.
      */
     List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : this.modules) {
+        if (this.running) {
+            throw new IllegalStateException("Attempt to start up a pipeline that is already running"); //NON-NLS
+        }
+
+        for (PipelineModule module : this.modules) {
             try {
                 module.startUp(new IngestJobContext(this.job));
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
+        this.running = true;
         return errors;
+    }
+
+    /**
+     * Returns the start up time of the pipeline.
+     *
+     * @return The file processing start time, may be null.
+     */
+    Date getStartTime() {
+        return this.startTime;
     }
 
     /**
      * Runs a file through the ingest modules in sequential order.
      *
      * @param task A file level ingest task containing a file to be processed.
-     * @return A list of ingest module errors, possible empty.
+     * @return A list of processing errors, possible empty.
      */
     List<IngestModuleError> process(FileIngestTask task) {
+        if (!this.running) {
+            throw new IllegalStateException("Attempt to process a file with pipeline that is not running"); //NON-NLS
+        }
+
         if (null == this.startTime) {
             this.startTime = new Date();
         }
+
         List<IngestModuleError> errors = new ArrayList<>();
         AbstractFile file = task.getFile();
-        for (FileIngestModuleDecorator module : this.modules) {
+        for (PipelineModule module : this.modules) {
             try {
                 FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
                 module.process(file);
@@ -126,9 +139,18 @@ final class FileIngestPipeline {
         return errors;
     }
 
+    /**
+     * Shuts down all of the modules in the pipeline.
+     *
+     * @return A list of shut down errors, possibly empty.
+     */
     List<IngestModuleError> shutDown() {
+        if (!this.running) {
+            throw new IllegalStateException("Attempt to shut down a pipeline that is not running"); //NON-NLS
+        }
+
         List<IngestModuleError> errors = new ArrayList<>();
-        for (FileIngestModuleDecorator module : this.modules) {
+        for (PipelineModule module : this.modules) {
             try {
                 module.shutDown();
             } catch (Throwable ex) { // Catch-all exception firewall
@@ -139,9 +161,18 @@ final class FileIngestPipeline {
     }
 
     /**
+     * Queries whether or not this file ingest level pipeline is running.
+     *
+     * @return True or false.
+     */
+    boolean isRunning() {
+        return this.running;
+    }
+
+    /**
      * This class decorates a file level ingest module with a display name.
      */
-    private static final class FileIngestModuleDecorator implements FileIngestModule {
+    private static final class PipelineModule implements FileIngestModule {
 
         private final FileIngestModule module;
         private final String displayName;
@@ -153,7 +184,7 @@ final class FileIngestPipeline {
          * @param module The file level ingest module to be decorated.
          * @param displayName The display name.
          */
-        FileIngestModuleDecorator(FileIngestModule module, String displayName) {
+        PipelineModule(FileIngestModule module, String displayName) {
             this.module = module;
             this.displayName = displayName;
         }
@@ -168,7 +199,7 @@ final class FileIngestPipeline {
         }
 
         /**
-         * Gets a module name suitable for display in a UI.
+         * Gets display name of the decorated ingest module.
          *
          * @return The display name.
          */

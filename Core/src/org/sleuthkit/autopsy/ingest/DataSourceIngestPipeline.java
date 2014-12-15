@@ -28,13 +28,15 @@ import org.sleuthkit.datamodel.Content;
  * This class manages a sequence of data source level ingest modules. It starts
  * the modules, runs data sources through them, and shuts them down when data
  * source level ingest is complete.
+ * <p>
+ * This class is not thread-safe.
  */
 final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final DataSourceIngestJob job;
-    private final List<DataSourceIngestModuleDecorator> modules = new ArrayList<>();
-    private volatile DataSourceIngestModuleDecorator currentModule;
+    private final List<PipelineModule> modules = new ArrayList<>();
+    private volatile PipelineModule currentModule;
 
     /**
      * Constructs an object that manages a sequence of data source level ingest
@@ -54,7 +56,7 @@ final class DataSourceIngestPipeline {
          */
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
-                DataSourceIngestModuleDecorator module = new DataSourceIngestModuleDecorator(template.createDataSourceIngestModule(), template.getModuleName());
+                PipelineModule module = new PipelineModule(template.createDataSourceIngestModule(), template.getModuleName());
                 modules.add(module);
             }
         }
@@ -76,7 +78,7 @@ final class DataSourceIngestPipeline {
      */
     List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (DataSourceIngestModuleDecorator module : modules) {
+        for (PipelineModule module : modules) {
             try {
                 module.startUp(new IngestJobContext(this.job));
             } catch (Throwable ex) { // Catch-all exception firewall
@@ -96,7 +98,7 @@ final class DataSourceIngestPipeline {
     List<IngestModuleError> process(DataSourceIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = task.getDataSource();
-        for (DataSourceIngestModuleDecorator module : modules) {
+        for (PipelineModule module : modules) {
             try {
                 module.setStartTime();
                 this.currentModule = module;
@@ -124,7 +126,7 @@ final class DataSourceIngestPipeline {
     /**
      * Gets the currently running module.
      */
-    DataSourceIngestModuleDecorator getCurrentlyRunningModule() {
+    PipelineModule getCurrentlyRunningModule() {
         return this.currentModule;
     }
 
@@ -132,7 +134,7 @@ final class DataSourceIngestPipeline {
      * This class decorates a data source level ingest module with a display
      * name and a start time.
      */
-    static class DataSourceIngestModuleDecorator implements DataSourceIngestModule {
+    static class PipelineModule implements DataSourceIngestModule {
 
         private final DataSourceIngestModule module;
         private final String displayName;
@@ -145,7 +147,7 @@ final class DataSourceIngestPipeline {
          * @param module The data source level ingest module to be decorated.
          * @param displayName The display name.
          */
-        DataSourceIngestModuleDecorator(DataSourceIngestModule module, String displayName) {
+        PipelineModule(DataSourceIngestModule module, String displayName) {
             this.module = module;
             this.displayName = displayName;
             this.startTime = new Date();

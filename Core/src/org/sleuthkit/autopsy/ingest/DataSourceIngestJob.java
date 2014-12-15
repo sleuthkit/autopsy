@@ -920,7 +920,7 @@ final class DataSourceIngestJob {
      *
      * @return The currently running module, may be null.
      */
-    DataSourceIngestPipeline.DataSourceIngestModuleDecorator getCurrentDataSourceIngestModule() {
+    DataSourceIngestPipeline.PipelineModule getCurrentDataSourceIngestModule() {
         if (null != this.currentDataSourceIngestPipeline) {
             return this.currentDataSourceIngestPipeline.getCurrentlyRunningModule();
         } else {
