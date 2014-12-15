@@ -31,6 +31,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -130,7 +131,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         eventsTree.setCellFactory((TreeView<NavTreeNode> p) -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        eventsTreeLabel.setText("Sort By:");
+        eventsTreeLabel.setText(NbBundle.getMessage(this.getClass(), "NavPanel.eventsTreeLabel.text"));
     }
 
     /** A tree cell to display {@link NavTreeNode}s. Shows the description, and
