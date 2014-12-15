@@ -221,7 +221,7 @@ public class IngestManager {
      * message boxes and reporting progress through the NetBeans Progress API.
      * @return The ingest job that was started
      */
-    public synchronized void startIngestJobs(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
+    public synchronized void startIngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         if (!isIngestRunning()) {
             clearIngestMessageBox();
         }
