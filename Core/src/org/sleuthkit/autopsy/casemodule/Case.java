@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.EventQueue;
 import java.awt.Frame;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -1078,7 +1077,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     //case change helper
-    private static void doCaseChange(final Case toChangeTo) {
+    private static void doCaseChange(Case toChangeTo) {
         logger.log(Level.INFO, "Changing Case to: " + toChangeTo); //NON-NLS
         if (toChangeTo != null) { // new case is open
 
@@ -1086,49 +1085,39 @@ public class Case implements SleuthkitCase.ErrorObserver {
             Case.clearTempFolder();
             checkSubFolders(toChangeTo);
 
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    // enable these menus
-                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+            // enable these menus
+            CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+            CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+            CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+            CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-                    if (toChangeTo.hasData()) {
-                        // open all top components
-                        CoreComponentControl.openCoreWindows();
-                    } else {
-                        // close all top components
-                        CoreComponentControl.closeCoreWindows();
-                    }
-                }
-            });
-
+            if (toChangeTo.hasData()) {
+                // open all top components
+                CoreComponentControl.openCoreWindows();
+            } else {
+                // close all top components
+                CoreComponentControl.closeCoreWindows();
+            }
         } else { // case is closed
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    // close all top components first
-                    CoreComponentControl.closeCoreWindows();
+            // close all top components first
+            CoreComponentControl.closeCoreWindows();
 
-                    // disable these menus
-                    CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+            // disable these menus
+            CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+            CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+            CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+            CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
 
-                    //clear pending notifications
-                    MessageNotifyUtil.Notify.clear();
+            //clear pending notifications
+            MessageNotifyUtil.Notify.clear();
 
-                    Frame f = WindowManager.getDefault().getMainWindow();
-                    f.setTitle(Case.getAppName()); // set the window name to just application name
 
-                    //try to force gc to happen
-                    System.gc();
-                    System.gc();
-                }
-            });
+            Frame f = WindowManager.getDefault().getMainWindow();
+            f.setTitle(Case.getAppName()); // set the window name to just application name
+
+            //try to force gc to happen
+            System.gc();
+            System.gc();
         }
 
         //log memory usage after case changed
@@ -1141,13 +1130,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static void doCaseNameChange(String newCaseName) {
         // update case name
         if (!newCaseName.equals("")) {
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    Frame f = WindowManager.getDefault().getMainWindow();
-                    f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
-                }
-            });
+            Frame f = WindowManager.getDefault().getMainWindow();
+            f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
         }
     }
 
