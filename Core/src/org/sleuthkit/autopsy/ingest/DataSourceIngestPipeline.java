@@ -25,9 +25,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * This class manages a sequence of data source level ingest modules. It starts
- * the modules, runs data sources through them, and shuts them down when data
- * source level ingest is complete.
+ * This class manages a sequence of data source level ingest modules for a data
+ * source ingest job. It starts the modules, runs data sources through them, and
+ * shuts them down when data source level ingest is complete.
  * <p>
  * This class is not thread-safe.
  */
@@ -37,13 +37,14 @@ final class DataSourceIngestPipeline {
     private final DataSourceIngestJob job;
     private final List<PipelineModule> modules = new ArrayList<>();
     private volatile PipelineModule currentModule;
+    private boolean running;
 
     /**
      * Constructs an object that manages a sequence of data source level ingest
      * modules. It starts the modules, runs data sources through them, and shuts
      * them down when data source level ingest is complete.
      *
-     * @param job The ingest job to which this pipeline belongs.
+     * @param job The data source ingest job to which this pipeline belongs.
      * @param moduleTemplates The ingest module templates that define the
      * pipeline.
      */
@@ -63,7 +64,7 @@ final class DataSourceIngestPipeline {
     }
 
     /**
-     * Indicates whether or not there are any modules in this pipeline.
+     * Indicates whether or not there are any ingest modules in this pipeline.
      *
      * @return True or false.
      */
@@ -77,6 +78,10 @@ final class DataSourceIngestPipeline {
      * @return A list of ingest module startup errors, possibly empty.
      */
     List<IngestModuleError> startUp() {
+        if (this.running) {
+            throw new IllegalStateException("Attempt to start up a pipeline that is already running"); //NON-NLS
+        }
+
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : modules) {
             try {
@@ -93,9 +98,13 @@ final class DataSourceIngestPipeline {
      *
      * @param task A data source level ingest task containing a data source to
      * be processed.
-     * @return A list of ingest module errors, possible empty.
+     * @return A list of processing errors, possible empty.
      */
     List<IngestModuleError> process(DataSourceIngestTask task) {
+        if (!this.running) {
+            throw new IllegalStateException("Attempt to process with pipeline that is not running"); //NON-NLS
+        }
+
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = task.getDataSource();
         for (PipelineModule module : modules) {
@@ -125,6 +134,8 @@ final class DataSourceIngestPipeline {
 
     /**
      * Gets the currently running module.
+     *
+     * @return The module, possibly null.
      */
     PipelineModule getCurrentlyRunningModule() {
         return this.currentModule;

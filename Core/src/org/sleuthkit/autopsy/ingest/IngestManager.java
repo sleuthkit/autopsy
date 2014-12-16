@@ -239,7 +239,7 @@ public class IngestManager {
             Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobStarter(taskId, dataSources, settings, doUI));
             ingestJobStarters.put(taskId, task);
         } else {
-            this.startJob(dataSources, settings);
+            this.startJob(dataSources, settings, doUI);
         }
     }
 
@@ -419,12 +419,13 @@ public class IngestManager {
      *
      * @param dataSource The data sources to ingest.
      * @param settings The settings for the job.
+     * @param doUI Whether or not to interact with the UI
      * @return A collection of ingest module start up errors, empty on success.
      */
-    private List<IngestModuleError> startJob(Collection<Content> dataSources, IngestJobSettings settings) {
+    private List<IngestModuleError> startJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings);
+            IngestJob job = new IngestJob(dataSources, settings, doUI);
             long jobId = job.getId();
             this.jobsById.put(jobId, job);
             errors = job.start();
@@ -697,7 +698,7 @@ public class IngestManager {
                 /**
                  * Try to start the ingest job.
                  */
-                List<IngestModuleError> errors = IngestManager.this.startJob(this.dataSources, this.settings);
+                List<IngestModuleError> errors = IngestManager.this.startJob(this.dataSources, this.settings, true);
                 if (!errors.isEmpty() && this.doStartupErrorsMsgBox) {
                     StringBuilder moduleStartUpErrors = new StringBuilder();
                     for (IngestModuleError error : errors) {
