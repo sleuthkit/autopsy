@@ -44,12 +44,13 @@ public final class IngestJob {
      *
      * @param dataSources The data sources to be ingested.
      * @param settings The ingest job settings.
+     * @param doUI Whether or not to do UI interactions.
      */
-    IngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+    IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.dataSourceJobs = new HashMap<>();
         for (Content dataSource : dataSources) {
-            DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings);
+            DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings, doUI);
             this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
         }
     }
@@ -97,7 +98,7 @@ public final class IngestJob {
      *
      * @return A list of data source ingest job progress snapshots.
      */
-    synchronized List<DataSourceIngestJob.Snapshot> getDetailedSnapshot() {
+    synchronized List<DataSourceIngestJob.Snapshot> getDetailedSnapshot() { // RJCTODO: Consider renaming
         List<DataSourceIngestJob.Snapshot> snapshots = new ArrayList<>();
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             snapshots.add(dataSourceJob.getSnapshot());
@@ -114,11 +115,9 @@ public final class IngestJob {
      * @param module The handle of the data source ingest module to be canceled,
      * which can obtained from a progress snapshot.
      */
-    synchronized public void cancelIngestModule(DataSourceIngestModuleHandle module) {
-        DataSourceIngestJob dataSourceJob = this.dataSourceJobs.get(module.dataSourceIngestJobId);
-        // RJCTODO: Pass through the cancellation request.
-    }
-
+    
+// RJCTODO    
+    
     /**
      * Requests cancellation of the data source level and file level ingest
      * modules of this ingest job. Returns immediately, but there may be a delay
@@ -252,6 +251,10 @@ public final class IngestJob {
          */
         public Date startTime() {
             return this.module.getStartTime();
+        }
+        
+        public void cancel() {
+            // RJCTODO:
         }
 
     }

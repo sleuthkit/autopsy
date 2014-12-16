@@ -93,9 +93,13 @@ final class DataSourceIngestJob {
 
     /**
      * An ingest job has a collection of identical file level ingest module
-     * pipelines, one for each file level ingest thread in the ingest manager.
+     * pipelines, one for each file level ingest thread in the ingest manager. A
+     * blocking queue is used to dole out the pipelines to the threads and an
+     * ordinary list is used when the ingest job needs to access the pipelines
+     * to query their status.
      */
-    private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelines;
+    private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelinesForThreads;
+    private final List<FileIngestPipeline> fileIngestPipelines;
 
     /**
      * An ingest job supports cancellation of either the currently running data
@@ -109,6 +113,8 @@ final class DataSourceIngestJob {
      * ingest tasks that make up the job.
      */
     private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
+
+    private final boolean doUI;
 
     /**
      * These fields are used to report data source level ingest progress for the
@@ -139,14 +145,17 @@ final class DataSourceIngestJob {
      * part.
      * @param dataSource The data source to be ingested.
      * @param settings The settings for the ingest job.
+     * @param doUI Whether or not to display progress bars.
      */
-    DataSourceIngestJob(IngestJob parentJob, Content dataSource, IngestJobSettings settings) {
+    DataSourceIngestJob(IngestJob parentJob, Content dataSource, IngestJobSettings settings, boolean doUI) {
         this.parentJob = parentJob;
         this.id = DataSourceIngestJob.nextJobId.getAndIncrement();
         this.dataSource = dataSource;
         this.settings = settings;
+        this.doUI = doUI;
         this.dataSourceIngestPipelineLock = new Object();
-        this.fileIngestPipelines = new LinkedBlockingQueue<>();
+        this.fileIngestPipelinesForThreads = new LinkedBlockingQueue<>();
+        this.fileIngestPipelines = new ArrayList<>();
         this.filesInProgress = new ArrayList<>();
         this.dataSourceIngestProgressLock = new Object();
         this.fileIngestProgressLock = new Object();
@@ -156,7 +165,7 @@ final class DataSourceIngestJob {
     }
 
     /**
-     * Gets the identifier assigned to this job.
+     * Gets the unique identifier of this job.
      *
      * @return The job identifier.
      */
@@ -174,8 +183,8 @@ final class DataSourceIngestJob {
     }
 
     /**
-     * Gets whether or not unallocated space should be processed as part of this
-     * job.
+     * Indicates whether or not unallocated space should be processed as part of
+     * this job.
      *
      * @return True or false.
      */
@@ -239,7 +248,7 @@ final class DataSourceIngestJob {
                  * Get a file ingest pipeline not currently in use by another
                  * file ingest thread.
                  */
-                FileIngestPipeline pipeline = this.fileIngestPipelines.take();
+                FileIngestPipeline pipeline = this.fileIngestPipelinesForThreads.take();
                 if (!pipeline.isEmpty()) {
                     /**
                      * Get the file to process.
@@ -288,7 +297,7 @@ final class DataSourceIngestJob {
                  * Relinquish the pipeline so it can be reused by another file
                  * ingest thread.
                  */
-                this.fileIngestPipelines.put(pipeline);
+                this.fileIngestPipelinesForThreads.put(pipeline);
             }
         } finally {
             /**
@@ -336,7 +345,7 @@ final class DataSourceIngestJob {
     boolean fileIngestIsRunning() {
         return ((DataSourceIngestJob.Stages.FIRST == this.stage) && this.hasFileIngestPipeline());
     }
-    
+
     /**
      * Updates the display name of the data source level ingest progress bar.
      *
@@ -591,7 +600,9 @@ final class DataSourceIngestJob {
         try {
             int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
             for (int i = 0; i < numberOfFileIngestThreads; ++i) {
-                this.fileIngestPipelines.put(new FileIngestPipeline(this, fileIngestModuleTemplates));
+                FileIngestPipeline pipeline = new FileIngestPipeline(this, fileIngestModuleTemplates);
+                this.fileIngestPipelinesForThreads.put(pipeline);
+                this.fileIngestPipelines.add(pipeline);
             }
         } catch (InterruptedException ex) {
             /**
@@ -664,7 +675,7 @@ final class DataSourceIngestJob {
              * it is possible, if unlikely, that no file ingest tasks were
              * actually scheduled since there are files that get filtered out by
              * the tasks scheduler. In this special case, an ingest thread will
-             * never to check for completion of this stage of the job.
+             * never get to check for completion of this stage of the job.
              */
             this.checkForStageCompleted();
         }
@@ -719,7 +730,8 @@ final class DataSourceIngestJob {
      * @return True or false.
      */
     private boolean hasFileIngestPipeline() {
-        return (this.fileIngestPipelines.peek().isEmpty() == false);
+        // RJCTODO: Consider going to the list instead...what if the pipelines are all checked out by threads?
+        return (this.fileIngestPipelinesForThreads.peek().isEmpty() == false);
     }
 
     /**
@@ -738,7 +750,7 @@ final class DataSourceIngestJob {
         errors.addAll(this.secondStageDataSourceIngestPipeline.startUp());
 
         // Start up the file ingest pipelines (one per file ingest thread). 
-        for (FileIngestPipeline pipeline : this.fileIngestPipelines) {
+        for (FileIngestPipeline pipeline : this.fileIngestPipelinesForThreads) {
             errors.addAll(pipeline.startUp());
             if (!errors.isEmpty()) {
                 // If there are start up errors, the ingest job will not proceed 
@@ -749,13 +761,14 @@ final class DataSourceIngestJob {
                 // pipeline. There is no need to complete starting up all of the 
                 // file ingest pipeline copies since any additional start up 
                 // errors are likely redundant.
-                while (!this.fileIngestPipelines.isEmpty()) {
-                    pipeline = this.fileIngestPipelines.poll();
+                while (!this.fileIngestPipelinesForThreads.isEmpty()) {
+                    pipeline = this.fileIngestPipelinesForThreads.poll();
                     List<IngestModuleError> shutDownErrors = pipeline.shutDown();
                     if (!shutDownErrors.isEmpty()) {
                         logIngestModuleErrors(shutDownErrors);
                     }
                 }
+                this.fileIngestPipelines.clear();
                 break;
             }
         }
@@ -850,13 +863,14 @@ final class DataSourceIngestJob {
         // required for the data source ingest pipeline because data source 
         // ingest modules do not have a shutdown() method.
         List<IngestModuleError> errors = new ArrayList<>();
-        while (!this.fileIngestPipelines.isEmpty()) {
-            FileIngestPipeline pipeline = fileIngestPipelines.poll();
+        while (!this.fileIngestPipelinesForThreads.isEmpty()) {
+            FileIngestPipeline pipeline = fileIngestPipelinesForThreads.poll();
             errors.addAll(pipeline.shutDown());
         }
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
         }
+        this.fileIngestPipelines.clear();
 
         // Finish the first stage data source ingest progress bar, if it hasn't 
         // already been finished.
@@ -953,6 +967,9 @@ final class DataSourceIngestJob {
         private final long jobId;
         private final String dataSource;
         private final long startTime;
+        private final DataSourceIngestPipeline.PipelineModule dataSourceLevelModule;
+        private final boolean fileIngestRunning;
+        private final Date fileIngestStartTime;
         private final long processedFiles;
         private final long estimatedFilesToProcess;
         private final long snapShotTime;
@@ -966,6 +983,27 @@ final class DataSourceIngestJob {
             this.jobId = DataSourceIngestJob.this.id;
             this.dataSource = DataSourceIngestJob.this.dataSource.getName();
             this.startTime = DataSourceIngestJob.this.createTime;
+
+            /**
+             * Get a snapshot of data source level ingest.
+             */
+            this.dataSourceLevelModule = DataSourceIngestJob.this.getCurrentDataSourceIngestModule();
+
+            /**
+             * Get a snapshot of file level ingest.
+             */
+            boolean fileIngestIsRunning = false;
+            Date fileIngestStart = null;
+            for (FileIngestPipeline pipeline : DataSourceIngestJob.this.fileIngestPipelines) {
+                if (pipeline.isRunning()) {
+                    fileIngestIsRunning = true;
+                    if (null == fileIngestStart || pipeline.getStartTime().before(fileIngestStart)) {
+                        fileIngestStart = pipeline.getStartTime();
+                    }
+                }
+            }
+            this.fileIngestRunning = fileIngestIsRunning;
+            this.fileIngestStartTime = fileIngestStart;
             synchronized (DataSourceIngestJob.this.fileIngestProgressLock) {
                 this.processedFiles = DataSourceIngestJob.this.processedFiles;
                 this.estimatedFilesToProcess = DataSourceIngestJob.this.estimatedFilesToProcess;
