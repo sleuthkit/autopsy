@@ -91,12 +91,8 @@ final class FileIngestPipeline {
      * @return List of start up errors, possibly empty.
      */
     synchronized List<IngestModuleError> startUp() {
-        if (this.running) {
-            throw new IllegalStateException("Attempt to start up a pipeline that is already running"); //NON-NLS
-        }
-        this.running = true;
         this.startTime = new Date();
-
+        this.running = true;
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : this.modules) {
             try {
@@ -115,10 +111,6 @@ final class FileIngestPipeline {
      * @return A list of processing errors, possible empty.
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
-        if (!this.running) {
-            throw new IllegalStateException("Attempt to process file with pipeline that is not running"); //NON-NLS
-        }
-
         List<IngestModuleError> errors = new ArrayList<>();
         AbstractFile file = task.getFile();
         for (PipelineModule module : this.modules) {
@@ -146,10 +138,6 @@ final class FileIngestPipeline {
      * @return A list of shut down errors, possibly empty.
      */
     synchronized List<IngestModuleError> shutDown() {
-        if (!this.running) {
-            throw new IllegalStateException("Attempt to shut down a pipeline that is not running"); //NON-NLS
-        }
-
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : this.modules) {
             try {
