@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import java.awt.*;
+import java.awt.EventQueue;
+import java.awt.Font;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
