@@ -211,7 +211,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            IngestManager.getInstance().startIngestJob(newContents, ingestJobSettingsPanel.getSettings(), true);
+            IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettingsPanel.getSettings(), true);
             progressPanel.setStateFinished();
         }
     }
