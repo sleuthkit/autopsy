@@ -87,6 +87,6 @@ public final class IngestJobConfigurator {
      */
     @Deprecated
     public void startIngestJobs(List<Content> dataSources) {
-        IngestManager.getInstance().startIngestJob(dataSources, this.settings, true);
+        IngestManager.getInstance().queueIngestJob(dataSources, this.settings, true);
     }
 }
