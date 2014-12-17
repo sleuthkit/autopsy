@@ -660,13 +660,13 @@ final class DataSourceIngestJob {
                 FileIngestPipeline pipeline = this.fileIngestPipelinesQueue.take();
                 if (!pipeline.isEmpty()) {
                     AbstractFile file = task.getFile();
-                    ++this.processedFiles; // RJCTODO: This was previously inside the lock
 
-                    if (this.runInteractively) {
-                        /**
-                         * Update the file ingest progress bar.
-                         */
-                        synchronized (this.fileIngestProgressLock) {
+                    synchronized (this.fileIngestProgressLock) {
+                        ++this.processedFiles;
+                        if (this.runInteractively) {
+                            /**
+                             * Update the file ingest progress bar.
+                             */
                             if (this.processedFiles <= this.estimatedFilesToProcess) {
                                 this.fileIngestProgress.progress(file.getName(), (int) this.processedFiles);
                             } else {
