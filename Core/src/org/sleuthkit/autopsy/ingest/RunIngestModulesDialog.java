@@ -199,7 +199,7 @@ public final class RunIngestModulesDialog extends JDialog {
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
         if (startIngestJob) {
-            IngestManager.getInstance().queueIngestJob(RunIngestModulesDialog.this.dataSources, ingestJobSettings, true);
+            IngestManager.getInstance().queueIngestJob(RunIngestModulesDialog.this.dataSources, ingestJobSettings);
         }
         setVisible(false);
         dispose();
