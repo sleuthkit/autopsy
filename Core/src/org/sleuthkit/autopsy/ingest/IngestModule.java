@@ -81,4 +81,10 @@ public interface IngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     void startUp(IngestJobContext context) throws IngestModuleException;
+
+    /**
+     * TODO: The next time an API change is legal, add a cancel() method and
+     * remove the "ingest job is canceled" queries from the IngestJobContext
+     * class.
+     */
 }

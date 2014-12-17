@@ -80,13 +80,13 @@ public final class IngestJobConfigurator {
     }
 
     /**
-     * Launches ingest jobs for one or more data sources using the ingest job
+     * Launches ingest job for one or more data sources using the ingest job
      * settings for the specified context.
      *
      * @param dataSources The data sources to ingest.
      */
     @Deprecated
     public void startIngestJobs(List<Content> dataSources) {
-        IngestManager.getInstance().startIngestJobs(dataSources, this.settings, true);
+        IngestManager.getInstance().queueIngestJob(dataSources, this.settings, true);
     }
 }
