@@ -38,10 +38,10 @@ public interface FileIngestModule extends IngestModule {
     /**
      * Invoked by Autopsy when an ingest job is completed (either because the
      * data has been analyzed or because the job was canceled - check
-     * IngestJobContext.isJobCancelled()), before the ingest module instance is
-     * discarded. The module should respond by doing things like releasing
-     * private resources, submitting final results, and posting a final ingest
-     * message.
+     * IngestJobContext.fileIngestIsCancelled()), before the ingest module
+     * instance is discarded. The module should respond by doing things like
+     * releasing private resources, submitting final results, and posting a
+     * final ingest message.
      */
     void shutDown();
 }

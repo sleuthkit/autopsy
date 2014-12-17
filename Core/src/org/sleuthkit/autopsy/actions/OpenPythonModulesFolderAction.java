@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.actions.OpenPythonModulesFolderAction")
 @ActionRegistration(displayName = "#CTL_OpenPythonModulesFolderAction", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 1400)
-@NbBundle.Messages("CTL_OpenPythonModulesFolderAction=Python Plugins")
 public final class OpenPythonModulesFolderAction extends SystemAction implements ActionListener {
 
     private static final Logger logger = Logger.getLogger(OpenPythonModulesFolderAction.class.getName());

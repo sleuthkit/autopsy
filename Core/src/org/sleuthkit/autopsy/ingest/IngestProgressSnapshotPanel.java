@@ -163,14 +163,14 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         private final String[] columnNames = {"Job ID", 
             "Data Source", "Start", "Num Processed", "Files/Sec", "In Progress", "Files Queued", "Dir Queued", "Root Queued", "DS Queued"};
-        private List<IngestJob.IngestJobSnapshot> jobSnapshots;
+        private List<DataSourceIngestJob.Snapshot> jobSnapshots;
 
         private IngestJobTableModel() {
             refresh();
         }
 
         private void refresh() {
-            jobSnapshots = IngestJob.getJobSnapshots();
+            jobSnapshots = IngestManager.getInstance().getIngestJobSnapshots();
             fireTableDataChanged();
         }
 
@@ -191,7 +191,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestJob.IngestJobSnapshot snapShot = jobSnapshots.get(rowIndex);
+            DataSourceIngestJob.Snapshot snapShot = jobSnapshots.get(rowIndex);
             Object cellValue;
             switch (columnIndex) {
                 case 0:
@@ -202,7 +202,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     break;
                 case 2:
                     SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-                    cellValue = dateFormat.format(new Date(snapShot.getStartTime()));
+                    cellValue = dateFormat.format(new Date(snapShot.getJobStartTime()));
                     break;
                 case 3:
                     cellValue = snapShot.getFilesProcessed();
@@ -429,7 +429,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        parent.setVisible(false);
+        parent.dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed

@@ -33,7 +33,6 @@ import org.openide.util.Lookup;
         keywordsCategory = "InterestingItemDefinitions",
         position = 5
 )
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_InterestingItemDefinitions=Interesting Item Definitions", "OptionsCategory_Keywords_InterestingItemDefinitions=InterestingItemDefinitions"})
 public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
 
     private InterestingItemDefsPanel panel;

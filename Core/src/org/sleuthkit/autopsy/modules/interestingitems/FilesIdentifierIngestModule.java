@@ -109,7 +109,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     artifact.addAttribute(ruleNameAttribute);
 
                 } catch (TskCoreException ex) {
-                    FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex);
+                    FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N
                 }
             }
         }
