@@ -36,7 +36,6 @@ final class DataSourceIngestPipeline {
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final DataSourceIngestJob job;
     private final List<PipelineModule> modules = new ArrayList<>();
-    private boolean running;
     private volatile PipelineModule currentModule;
 
     /**
@@ -73,10 +72,6 @@ final class DataSourceIngestPipeline {
      * @return A list of ingest module startup errors, possibly empty.
      */
     synchronized List<IngestModuleError> startUp() {
-        if (this.running) {
-            throw new IllegalStateException("Attempt to start up a pipeline that is already running"); //NON-NLS
-        }
-
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : modules) {
             try {
@@ -96,10 +91,6 @@ final class DataSourceIngestPipeline {
      * @return A list of processing errors, possible empty.
      */
     synchronized List<IngestModuleError> process(DataSourceIngestTask task) {
-        if (!this.running) {
-            throw new IllegalStateException("Attempt to process with pipeline that is not running"); //NON-NLS
-        }
-
         List<IngestModuleError> errors = new ArrayList<>();
         Content dataSource = task.getDataSource();
         for (PipelineModule module : modules) {
