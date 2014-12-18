@@ -166,24 +166,8 @@ public class XMLUtil {
     }
 
     /**
-     * Used to consolidate more specific exception types.
-     */
-    public static class XmlUtilException extends Exception {
-
-        XmlUtilException(String message) {
-            super(message);
-        }
-    }
-
-    /**
-     * Loads and validates an XML document.
-     *
-     * @param docPath The full path to the file to load.
-     * @param schemaPath The full path to the file to validate against.
-     */
-    /**
-     * Loads and XML document and validates against a schema packaged as a
-     * class resource.
+     * Loads an XML document into a WC3 DOM and validates it against a schema
+     * packaged as a class resource.
      *
      * @param <T> The name of the class associated with the resource.
      * @param clazz The class associated with the resource.
@@ -193,21 +177,25 @@ public class XMLUtil {
      * @throws IOException
      * @throws org.sleuthkit.autopsy.coreutils.XMLUtil.XmlUtilException
      */
-    public static <T> Document loadAndValidateDoc(Class<T> clazz, String docPath, String schemaResourceName) throws IOException, XmlUtilException {
-        try {
-            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            Document doc = builder.parse(new FileInputStream(docPath));
-            PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
-            File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
-            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            Schema schema = schemaFactory.newSchema(schemaFile);
-            Validator validator = schema.newValidator();
-            validator.validate(new DOMSource(doc), new DOMResult());
-            return doc;
-        } catch (ParserConfigurationException | SAXException ex) {
-            throw new XmlUtilException(ex.getLocalizedMessage());
-        }
+    public static <T> Document loadAndValidateDoc(Class<T> clazz, String docPath, String schemaResourceName) throws IOException, ParserConfigurationException, SAXException {
+        /**
+         * Parse the XML file into a DOM.
+         */
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = builderFactory.newDocumentBuilder();
+        Document doc = builder.parse(new FileInputStream(docPath));
+        
+        /**
+         * Extract the schema and validate the DOM. 
+         */
+        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
+        File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
+        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema schema = schemaFactory.newSchema(schemaFile);
+        Validator validator = schema.newValidator();
+        validator.validate(new DOMSource(doc), new DOMResult());
+        
+        return doc;
     }
 
     /**
@@ -220,7 +208,7 @@ public class XMLUtil {
      */
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
-        xf.setAttribute("indent-number", new Integer(1)); //NON-NLS
+        xf.setAttribute("indent-number", 1); //NON-NLS
         boolean success = false;
         try {
             Transformer xformer = xf.newTransformer();
