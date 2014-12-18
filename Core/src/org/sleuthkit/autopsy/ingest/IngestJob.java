@@ -111,7 +111,7 @@ public final class IngestJob {
         boolean fileIngestIsRunning = false;
         Date fileIngestStartTime = null;
         for (DataSourceIngestJob.Snapshot snapshot : this.getDataSourceIngestJobSnapshots()) {
-            if (null != moduleHandle) {
+            if (null == moduleHandle) {
                 DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
                 if (null != module) {
                     moduleHandle = new DataSourceIngestModuleHandle(this.dataSourceJobs.get(snapshot.getJobId()), module);
