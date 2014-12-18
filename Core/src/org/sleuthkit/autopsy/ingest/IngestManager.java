@@ -470,7 +470,8 @@ public class IngestManager {
     }
 
     /**
-     * Queries whether or not any ingest jobs are in progress.
+     * Queries whether or not any ingest jobs are in progress, at least at the
+     * moment of the query.
      *
      * @return True or false.
      */
