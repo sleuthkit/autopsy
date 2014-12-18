@@ -88,10 +88,11 @@ final class FileType {
     boolean alertOnMatch() {
         return this.alert;
     }
-    
+
     /**
-     * Gets the interesting files set name assigned to this file type
-     * @return 
+     * Gets the interesting files set name assigned to this file type.
+     *
+     * @return The files set name, possibly empty.
      */
     String getFilesSetName() {
         return this.filesSetName;

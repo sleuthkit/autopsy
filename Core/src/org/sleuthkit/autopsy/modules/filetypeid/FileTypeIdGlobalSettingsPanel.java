@@ -45,18 +45,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private static final String ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.asciiItem");
 
     /**
-     * These two fields are used to synthesize default names for user-defined
-     * types. This is a thread-safe implementation. All interactions with
-     * instances of this panel should occur on the EDT, so this is defensive
-     * programming.
-     */
-    private static final String DEFAULT_TYPE_NAME_BASE = "userdefined/userdefined"; //NON-NLS
-    private static final AtomicInteger defaultTypeNameCounter = new AtomicInteger(1); // RJCTODO: Need to save and init counter
-
-    /**
      * The list model for the file types list component of this panel is the set
      * of type names of the user-defined file types. A mapping of the file type
-     * names to file type objects completes the model.
+     * names to file type objects lies behind the list model.
      */
     private DefaultListModel<String> typesListModel;
     private Map<String, FileType> fileTypes;
@@ -70,24 +61,18 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * Does child component initialization in addition to the the Matisse
-     * generated initialization.
+     * Does child component initialization in addition to that done by the
+     * Matisse generated code.
      */
     private void customizeComponents() {
-        /**
-         * Make a model for the file types list component.
-         */
         this.typesListModel = new DefaultListModel<>();
         this.typesList.setModel(this.typesListModel);
 
-        /**
-         * Make a model for the signature type combo box component.
-         */
         DefaultComboBoxModel<String> sigTypeComboBoxModel = new DefaultComboBoxModel<>();
         sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         this.signatureTypeComboBox.setModel(sigTypeComboBoxModel);
-        
+
         this.filesSetNameTextField.setEnabled(false);
     }
 
@@ -100,35 +85,20 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * Populates the child components with file types obtained from the
-     * user-defined file types manager.
+     * @inheritDoc
      */
     @Override
     public void load() {
-        /**
-         * Get the user-defined file types and set up a list model for the file
-         * types list component.
-         */
         this.fileTypes = UserDefinedFileTypesManager.getInstance().getUserDefinedFileTypes();
         this.setFileTypesListModel();
-
-        /**
-         * Add a selection listener to populate the file type details
-         * display/edit components.
-         */
         this.typesList.addListSelectionListener(new TypesListSelectionListener());
-
-        /**
-         * If there is at least one user-defined file type, select it the file
-         * types list component.
-         */
         if (!this.typesListModel.isEmpty()) {
             this.typesList.setSelectedIndex(0);
         }
     }
 
     /**
-     * Stores any changes to the user-defined types.
+     * @inheritDoc
      */
     @Override
     public void store() {
@@ -158,6 +128,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                     FileTypeIdGlobalSettingsPanel.this.signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
                     FileTypeIdGlobalSettingsPanel.this.offsetTextField.setText(Long.toString(signature.getOffset()));
                     FileTypeIdGlobalSettingsPanel.this.postHitCheckBox.setSelected(fileType.alertOnMatch());
+                    FileTypeIdGlobalSettingsPanel.this.filesSetNameTextField.setText(fileType.getFilesSetName());
                     FileTypeIdGlobalSettingsPanel.this.deleteTypeButton.setEnabled(true);
                 }
             }
@@ -187,6 +158,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         this.signatureTextField.setText(""); //NON-NLS
         this.offsetTextField.setText(""); //NON-NLS
         this.postHitCheckBox.setSelected(false);
+        this.filesSetNameTextField.setText("");
     }
 
     /**
@@ -372,7 +344,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void newTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTypeButtonActionPerformed
         this.clearTypeDetailsComponents();
-        this.mimeTypeTextField.setText(FileTypeIdGlobalSettingsPanel.DEFAULT_TYPE_NAME_BASE + FileTypeIdGlobalSettingsPanel.defaultTypeNameCounter.getAndIncrement());
     }//GEN-LAST:event_newTypeButtonActionPerformed
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
@@ -429,16 +400,16 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
              */
             String filesSetName = this.filesSetNameTextField.getText();
             if (this.postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
-                    JOptionPane.ERROR_MESSAGE);                
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
+                        JOptionPane.ERROR_MESSAGE);
             }
-            
+
             /**
              * Put it all together and reset the file types list component.
              */
-            FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType); // RJCTODO:
+            FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
             FileType fileType = new FileType(typeName, signature, filesSetName, this.postHitCheckBox.isSelected());
             this.fileTypes.put(typeName, fileType);
             this.setFileTypesListModel();
@@ -460,7 +431,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed
         this.filesSetNameTextField.setEnabled(this.postHitCheckBox.isSelected());
     }//GEN-LAST:event_postHitCheckBoxActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteTypeButton;

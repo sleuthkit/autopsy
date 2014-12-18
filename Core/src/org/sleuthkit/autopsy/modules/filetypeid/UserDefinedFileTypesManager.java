@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this schemaFile except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
@@ -34,17 +35,16 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import javax.xml.bind.DatatypeConverter;
-import org.openide.util.Exceptions;
+import javax.xml.transform.TransformerException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.xml.sax.SAXException;
 
 /**
- * Manages user-defined schemaFile types characterized by MIME type, signature,
- * and optional membership in an interesting files set.
+ * Manages user-defined file types characterized by MIME type, signature, and
+ * optional membership in an interesting files set.
  */
 final class UserDefinedFileTypesManager {
 
@@ -65,35 +65,34 @@ final class UserDefinedFileTypesManager {
     private static UserDefinedFileTypesManager instance;
 
     /**
-     * Predefined schemaFile types are stored in this mapping of MIME types to
-     * schemaFile types. Access to this map is guarded by the intrinsic lock of
-     * the user-defined schemaFile types manager for thread-safety.
+     * Predefined file types are stored in this mapping of MIME types to file
+     * types. Access to this map is guarded by the intrinsic lock of the
+     * user-defined file types manager for thread-safety.
      */
     private final Map<String, FileType> predefinedFileTypes = new HashMap<>();
 
     /**
-     * User-defined schemaFile types to be persisted to the user-defined
-     * schemaFile type definitions schemaFile are stored in this mapping of
-     * schemaFile type names to schemaFile types. Access to this map is guarded
-     * by the intrinsic lock of the user-defined schemaFile types manager for
-     * thread-safety.
+     * File types to be persisted to the user-defined file type definitions file
+     * are stored in this mapping of MIME types to file types. Access to this
+     * map is guarded by the intrinsic lock of the user-defined file types
+     * manager for thread-safety.
      */
     private final Map<String, FileType> userDefinedFileTypes = new HashMap<>();
 
     /**
-     * The combined set of user-defined schemaFile types and schemaFile types
-     * predefined by Autopsy are stored in this mapping of MIME types to
-     * schemaFile types. This is the current working set of schemaFile types.
-     * Access to this map is guarded by the intrinsic lock of the user-defined
-     * schemaFile types manager for thread-safety.
+     * The combined set of user-defined file types and file types predefined by
+     * Autopsy are stored in this mapping of MIME types to file types. This is
+     * the current working set of file types. Access to this map is guarded by
+     * the intrinsic lock of the user-defined file types manager for
+     * thread-safety.
      */
     private final Map<String, FileType> fileTypes = new HashMap<>();
-
+    
     /**
-     * Gets the manager of user-defined schemaFile types characterized by MIME
-     * type, signature, and optional membership in an interesting files set.
+     * Gets the manager of user-defined file types characterized by MIME type,
+     * signature, and optional membership in an interesting files set.
      *
-     * @return The user-defined schemaFile types manager singleton.
+     * @return The user-defined file types manager singleton.
      */
     synchronized static UserDefinedFileTypesManager getInstance() {
         if (UserDefinedFileTypesManager.instance == null) {
@@ -103,8 +102,8 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Creates a manager of user-defined schemaFile types characterized by MIME
-     * type, signature, and optional membership in an interesting files set.
+     * Creates a manager of user-defined file types characterized by MIME type,
+     * signature, and optional membership in an interesting files set.
      */
     private UserDefinedFileTypesManager() {
         /**
@@ -116,11 +115,11 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds the predefined schemaFile types to the in-memory mappings of MIME
-     * types to schemaFile types.
+     * Adds the predefined file types to the in-memory mappings of MIME types to
+     * file types.
      */
     private void loadPredefinedFileTypes() {
-        // RJCTODO: Remove test schemaFile type.
+        // RJCTODO: Remove test file type.
         /**
          * Create a file type that should match $MBR in Small2 image.
          */
@@ -130,7 +129,7 @@ final class UserDefinedFileTypesManager {
         /**
          * Create a file type that should match test.txt in the Small2 image.
          */
-        // RJCTODO: Remove test schemaFile type.
+        // RJCTODO: Remove test file type.
         try {
             fileType = new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "predefinedASCII", true);
             this.addPredefinedFileType(fileType);
@@ -150,7 +149,7 @@ final class UserDefinedFileTypesManager {
 //                buf = buffer;
 //            }
 //            
-//            // the xml detection in Tika tries to parse the entire schemaFile and throws exceptions
+//            // the xml detection in Tika tries to parse the entire file and throws exceptions
 //            // for files that are not valid XML
 //            try {
 //                String tagHeader = new String(buf, 0, 5);
@@ -173,10 +172,10 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds a schemaFile type to the the predefined schemaFile types and
-     * combined schemaFile types maps.
+     * Adds a predefined file type to the in-memory mappings of MIME types to
+     * file types.
      *
-     * @param fileType The schemaFile type to add.
+     * @param fileType The file type to add.
      */
     private void addPredefinedFileType(FileType fileType) {
         this.predefinedFileTypes.put(fileType.getMimeType(), fileType);
@@ -184,15 +183,15 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds the user-defined schemaFile types to the in-memory mappings of MIME
-     * types to schemaFile types.
+     * Adds the user-defined file types to the in-memory mappings of MIME types
+     * to file types.
      */
     private void loadUserDefinedFileTypes() {
         try {
             String filePath = getFileTypeDefinitionsFilePath(UserDefinedFileTypesManager.USER_DEFINED_TYPE_DEFINITIONS_FILE);
             File file = new File(filePath);
             if (file.exists() && file.canRead()) {
-                for (FileType fileType : XMLReader.readFileTypes(filePath)) {
+                for (FileType fileType : XmlReader.readFileTypes(filePath)) {
                     this.addUserDefinedFileType(fileType);
                 }
             }
@@ -204,14 +203,14 @@ final class UserDefinedFileTypesManager {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to load user-defined types", ex); //NON-NLS
             this.fileTypes.clear();
             this.userDefinedFileTypes.clear();
-        } 
+        }
     }
 
     /**
-     * Adds a schemaFile type to the the user-defined schemaFile types and
-     * combined schemaFile types maps.
+     * Adds a user-defined file type to the in-memory mappings of MIME types to
+     * file types.
      *
-     * @param fileType The schemaFile type to add.
+     * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
         this.userDefinedFileTypes.put(fileType.getMimeType(), fileType);
@@ -219,10 +218,9 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Gets both the predefined and the user-defined schemaFile types.
+     * Gets both the predefined and the user-defined file types.
      *
-     * @return A mapping of schemaFile type names to schemaFile types, possibly
-     * empty.
+     * @return A mapping of file type names to file types, possibly empty.
      */
     synchronized Map<String, FileType> getFileTypes() {
         /**
@@ -233,10 +231,9 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Gets the user-defined schemaFile types.
+     * Gets the user-defined file types.
      *
-     * @return A mapping of schemaFile type names to schemaFile types, possibly
-     * empty.
+     * @return A mapping of file type names to file types, possibly empty.
      */
     synchronized Map<String, FileType> getUserDefinedFileTypes() {
         /**
@@ -247,22 +244,20 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Sets the user-defined schemaFile types.
+     * Sets the user-defined file types.
      *
-     * @param newFileTypes A mapping of schemaFile type names to user-defined
-     * schemaFile types.
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @param newFileTypes A mapping of file type names to user-defined file
+     * types.
      */
     synchronized void setUserDefinedFileTypes(Map<String, FileType> newFileTypes) throws UserDefinedFileTypesManager.UserDefinedFileTypesException {
         try {
-            /**
-             * Persist the user-defined file type definitions.
-             */
             String filePath = UserDefinedFileTypesManager.getFileTypeDefinitionsFilePath(UserDefinedFileTypesManager.USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            UserDefinedFileTypesManager.XMLWriter.writeFileTypes(newFileTypes.values(), filePath);
+            UserDefinedFileTypesManager.XmlWriter.writeFileTypes(newFileTypes.values(), filePath);
 
-        } catch (ParserConfigurationException | IOException ex) {
+        } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
+            UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Failed to write file types file", ex);
+            throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
+        } catch (IOException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Failed to write file types file", ex);
             throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
         }
@@ -286,10 +281,10 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Gets the absolute path of a schemaFile type definitions schemaFile.
+     * Gets the absolute path of a file type definitions file.
      *
-     * @param fileName The name of the schemaFile.
-     * @return The absolute path to the schemaFile.
+     * @param fileName The name of the file.
+     * @return The absolute path to the file.
      */
     private static String getFileTypeDefinitionsFilePath(String fileName) {
         Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), fileName);
@@ -297,109 +292,133 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Provides a mechanism for writing a set of schemaFile type definitions to
-     * an XML schemaFile.
+     * Provides a mechanism for writing a set of file type definitions to an XML
+     * file.
      */
-    private static class XMLWriter {
+    private static class XmlWriter {
 
         /**
-         * Writes a set of schemaFile type definitions to an XML schemaFile.
+         * Writes a set of file type definitions to an XML file.
          *
-         * @param signatures A collection of schemaFile types.
-         * @param filePath The path to the destination schemaFile.
+         * @param fileTypes A collection of file types.
+         * @param filePath The path to the destination file.
+         * @throws ParserConfigurationException
+         * @throws IOException
+         * @throws FileNotFoundException
+         * @throws UnsupportedEncodingException
+         * @throws TransformerException
          */
-        private static void writeFileTypes(Collection<FileType> fileTypes, String filePath) throws ParserConfigurationException, IOException {
-            Document doc = XMLUtil.createDoc();
+        private static void writeFileTypes(Collection<FileType> fileTypes, String filePath) throws ParserConfigurationException, IOException, FileNotFoundException, UnsupportedEncodingException, TransformerException {
+            Document doc = XMLUtil.createDocument();
             Element fileTypesElem = doc.createElement(UserDefinedFileTypesManager.FILE_TYPES_TAG_NAME);
             doc.appendChild(fileTypesElem);
             for (FileType fileType : fileTypes) {
-                Element fileTypeElem = UserDefinedFileTypesManager.XMLWriter.createFileTypeElement(fileType, doc);
+                Element fileTypeElem = UserDefinedFileTypesManager.XmlWriter.createFileTypeElement(fileType, doc);
                 fileTypesElem.appendChild(fileTypeElem);
             }
-            if (!XMLUtil.saveDoc(HashDbManager.class, filePath, UserDefinedFileTypesManager.ENCODING_FOR_XML_FILE, doc)) {
-                // RJCTODO: If time permits add XMLUtil that properly throws and deprecate this one
-                throw new IOException("Error saving user defined file types, see log for details"); //NON-NLS
-            }
+            XMLUtil.saveDocument(doc, UserDefinedFileTypesManager.ENCODING_FOR_XML_FILE, filePath);
         }
 
         /**
-         * Creates an XML representation of a schemaFile type.
+         * Creates an XML representation of a file type.
          *
-         * @param fileType The schemaFile type object.
-         * @param doc The DOM document to use to create the XML.
+         * @param fileType The file type object.
+         * @param doc The WC3 DOM object to use to create the XML.
          * @return An XML element.
          */
         private static Element createFileTypeElement(FileType fileType, Document doc) {
-            /**
-             * Create a file type element.
-             */
             Element fileTypeElem = doc.createElement(UserDefinedFileTypesManager.FILE_TYPE_TAG_NAME);
+            XmlWriter.addMimeTypeElement(fileType, fileTypeElem, doc);
+            XmlWriter.addSignatureElement(fileType, fileTypeElem, doc);
+            XmlWriter.addInterestingFilesSetElement(fileType, fileTypeElem, doc);
+            XmlWriter.addAlertAttribute(fileType, fileTypeElem);
+            return fileTypeElem;
+        }
 
-            /**
-             * Add a MIME type name child element.
-             */
+        /**
+         * Add a MIME type child element to a file type XML element.
+         *
+         * @param fileType The file type to use as a content source.
+         * @param fileTypeElem The parent file type element.
+         * @param doc The WC3 DOM object to use to create the XML.
+         */
+        private static void addMimeTypeElement(FileType fileType, Element fileTypeElem, Document doc) {
             Element typeNameElem = doc.createElement(UserDefinedFileTypesManager.MIME_TYPE_TAG_NAME);
             typeNameElem.setTextContent(fileType.getMimeType());
             fileTypeElem.appendChild(typeNameElem);
+        }
 
-            /**
-             * Add a signature child element with a type attribute.
-             */
+        /**
+         * Add a signature child element to a file type XML element.
+         *
+         * @param fileType The file type to use as a content source.
+         * @param fileTypeElem The parent file type element.
+         * @param doc The WC3 DOM object to use to create the XML.
+         */
+        private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
             Signature signature = fileType.getSignature();
             Element signatureElem = doc.createElement(UserDefinedFileTypesManager.SIGNATURE_TAG_NAME);
-            signatureElem.setAttribute(UserDefinedFileTypesManager.SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
-            fileTypeElem.appendChild(signatureElem);
 
-            /**
-             * Add a bytes child element to the signature element.
-             */
             Element bytesElem = doc.createElement(UserDefinedFileTypesManager.BYTES_TAG_NAME);
             bytesElem.setTextContent(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
             signatureElem.appendChild(bytesElem);
 
-            /**
-             * Add an offset child element to the signature element.
-             */
             Element offsetElem = doc.createElement(UserDefinedFileTypesManager.OFFSET_TAG_NAME);
             offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
             signatureElem.appendChild(offsetElem);
 
-            /**
-             * Add a files set child element with an alert attribute.
-             */
+            signatureElem.setAttribute(UserDefinedFileTypesManager.SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
+            fileTypeElem.appendChild(signatureElem);
+        }
+
+        /**
+         * Add an interesting files set element to a file type XML element.
+         *
+         * @param fileType The file type to use as a content source.
+         * @param fileTypeElem The parent file type element.
+         * @param doc The WC3 DOM object to use to create the XML.
+         */
+        private static void addInterestingFilesSetElement(FileType fileType, Element fileTypeElem, Document doc) {
             Element filesSetElem = doc.createElement(UserDefinedFileTypesManager.INTERESTING_FILES_SET_TAG_NAME);
             filesSetElem.setTextContent(fileType.getFilesSetName());
-            filesSetElem.setAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
             fileTypeElem.appendChild(filesSetElem);
-
-            return fileTypeElem;
         }
+
+        /**
+         * Add an alert attribute to a file type XML element.
+         *
+         * @param fileType The file type to use as a content source.
+         * @param fileTypeElem The parent file type element.
+         */
+        private static void addAlertAttribute(FileType fileType, Element fileTypeElem) {
+            fileTypeElem.setAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
+        }
+
     }
 
     /**
-     * Provides a mechanism for reading a set of schemaFile type definitions
-     * from an XML schemaFile.
+     * Provides a mechanism for reading a set of file type definitions from an
+     * XML file.
      */
-    private static class XMLReader {
+    private static class XmlReader {
 
         /**
-         * Reads a set of schemaFile type definitions from an XML schemaFile.
+         * Reads a set of file type definitions from an XML file.
          *
-         * @param filePath The path to the XML schemaFile.
-         * @return A collection of schemaFile types read from the XML
-         * schemaFile.
+         * @param filePath The path to the XML file.
+         * @return A collection of file types read from the XML file.
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
             List<FileType> fileTypes = new ArrayList<>();
             Path schemaFilePath = Paths.get(PlatformUtil.getUserConfigDirectory(), UserDefinedFileTypesManager.FILE_TYPE_DEFINITIONS_SCHEMA_FILE);
-            Document doc = XMLUtil.loadAndValidateDoc(UserDefinedFileTypesManager.XMLReader.class, filePath, schemaFilePath.toAbsolutePath().toString());
+            Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.XmlReader.class, schemaFilePath.toAbsolutePath().toString());
             if (doc != null) {
                 Element fileTypesElem = doc.getDocumentElement();
                 if (fileTypesElem != null && fileTypesElem.getNodeName().equals(UserDefinedFileTypesManager.FILE_TYPES_TAG_NAME)) {
                     NodeList fileTypeElems = fileTypesElem.getElementsByTagName(UserDefinedFileTypesManager.FILE_TYPE_TAG_NAME);
                     for (int i = 0; i < fileTypeElems.getLength(); ++i) {
                         Element fileTypeElem = (Element) fileTypeElems.item(i);
-                        FileType fileType = UserDefinedFileTypesManager.XMLReader.parseFileType(fileTypeElem);
+                        FileType fileType = XmlReader.parseFileType(fileTypeElem);
                         fileTypes.add(fileType);
                     }
                 }
@@ -408,94 +427,99 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Parse a schemaFile type definition from a schemaFile type XML
-         * element.
+         * Gets a file type definition from a file type XML element.
          *
          * @param fileTypeElem The XML element.
-         * @return A schemaFile type object.
-         * @throws
+         * @return A file type object.
+         * @throws IllegalArgumentException
+         * @throws NumberFormatException
          */
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
-            /**
-             * Get the mime type child element.
-             */
-            String mimeType = UserDefinedFileTypesManager.getChildElementTextContent(fileTypeElem, UserDefinedFileTypesManager.MIME_TYPE_TAG_NAME);
+            String mimeType = XmlReader.parseMimeType(fileTypeElem);
+            Signature signature = XmlReader.parseSignature(fileTypeElem);
+            String filesSetName = XmlReader.parseInterestingFilesSet(fileTypeElem);
+            boolean alert = XmlReader.parseAlert(fileTypeElem);
+            return new FileType(mimeType, signature, filesSetName, alert);
+        }
 
-            /**
-             * Get the signature child element.
-             */
+        /**
+         * Gets the MIME type from a file type XML element.
+         *
+         * @param fileTypeElem The element
+         * @return A MIME type string.
+         */
+        private static String parseMimeType(Element fileTypeElem) {
+            return getChildElementTextContent(fileTypeElem, UserDefinedFileTypesManager.MIME_TYPE_TAG_NAME);
+        }
+
+        /**
+         * Gets the signature from a file type XML element.
+         *
+         * @param fileTypeElem The XML element.
+         * @return The signature.
+         */
+        private static Signature parseSignature(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
             NodeList signatureElems = fileTypeElem.getElementsByTagName(UserDefinedFileTypesManager.SIGNATURE_TAG_NAME);
             Element signatureElem = (Element) signatureElems.item(0);
 
-            /**
-             * Get the signature (interpretation) type attribute from the
-             * signature child element.
-             */
             String sigTypeAttribute = signatureElem.getAttribute(UserDefinedFileTypesManager.SIGNATURE_TYPE_ATTRIBUTE);
             Signature.Type signatureType = Signature.Type.valueOf(sigTypeAttribute);
 
-            /**
-             * Get the signature bytes.
-             */
-            String sigBytesString = UserDefinedFileTypesManager.getChildElementTextContent(signatureElem, UserDefinedFileTypesManager.BYTES_TAG_NAME);
+            String sigBytesString = getChildElementTextContent(signatureElem, UserDefinedFileTypesManager.BYTES_TAG_NAME);
             byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
 
-            /**
-             * Get the offset.
-             */
-            String offsetString = UserDefinedFileTypesManager.getChildElementTextContent(signatureElem, UserDefinedFileTypesManager.OFFSET_TAG_NAME);
+            String offsetString = getChildElementTextContent(signatureElem, UserDefinedFileTypesManager.OFFSET_TAG_NAME);
             long offset = DatatypeConverter.parseLong(offsetString);
 
-            /**
-             * Get the interesting files set element.
-             */
+            return new Signature(signatureBytes, offset, signatureType);
+        }
+
+        /**
+         * Gets the interesting files set name from a file type XML element.
+         *
+         * @param fileTypeElem The XML element.
+         * @return The files set name, possibly empty.
+         */
+        private static String parseInterestingFilesSet(Element fileTypeElem) {
+            String filesSetName = "";
             NodeList filesSetElems = fileTypeElem.getElementsByTagName(UserDefinedFileTypesManager.INTERESTING_FILES_SET_TAG_NAME);
-            Element filesSetElem = (Element) filesSetElems.item(0);
-            String filesSetName = filesSetElem.getTextContent();
-
-            /**
-             * Get the alert attribute from the interesting files set element.
-             */
-            String alertAttribute = filesSetElem.getAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE);
-            boolean alert = Boolean.parseBoolean(alertAttribute);
-
-            /**
-             * Put it all together.
-             */
-            Signature signature = new Signature(signatureBytes, offset, signatureType);
-            return new FileType(mimeType, signature, filesSetName, alert);
+            if (filesSetElems.getLength() > 0) {
+                Element filesSetElem = (Element) filesSetElems.item(0);
+                filesSetName = filesSetElem.getTextContent();
+            }
+            return filesSetName;
         }
-    }
 
-    /**
-     * Gets the text content of a single child element. Assumes the elements
-     * have already been validated.
-     *
-     * @param elem The parent element.
-     * @param tagName The tag name of the child element.
-     * @return The text content.
-     */
-    private static String getChildElementTextContent(Element elem, String tagName) {
-        NodeList childElems = elem.getElementsByTagName(tagName);
-        Element childElem = (Element) childElems.item(0);
-        return childElem.getTextContent();
-    }
-
-    /**
-     * Used for throwing exceptions when parsing user-defined types XML elements
-     * and attributes.
-     */
-    private static class InvalidXMLException extends Exception {
-
-        InvalidXMLException(String message) {
-            super(message);
+        /**
+         * Gets the alert attribute from a file type XML element.
+         *
+         * @param fileTypeElem The XML element.
+         * @return True or false;
+         */
+        private static boolean parseAlert(Element fileTypeElem) {
+            String alertAttribute = fileTypeElem.getAttribute(UserDefinedFileTypesManager.ALERT_ATTRIBUTE);
+            return Boolean.parseBoolean(alertAttribute);
         }
+
+        /**
+         * Gets the text content of a single child element.
+         *
+         * @param elem The parent element.
+         * @param tagName The tag name of the child element.
+         * @return The text content.
+         */
+        private static String getChildElementTextContent(Element elem, String tagName) {
+            NodeList childElems = elem.getElementsByTagName(tagName);
+            Element childElem = (Element) childElems.item(0);
+            return childElem.getTextContent();
+        }
+
     }
 
     /**
      * Used to translate more implementation-details-specific exceptions (which
      * are logged by this class) into more generic exceptions for propagation to
-     * clients of the user-defined schemaFile types manager.
+     * clients of the user-defined file types manager.
      */
     static class UserDefinedFileTypesException extends Exception {
 

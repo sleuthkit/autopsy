@@ -26,14 +26,7 @@
         <xs:sequence>
             <xs:element name="bytes" type="stringType"/>
             <xs:element name="offset" type="xs:nonNegativeInteger"/>
-            <xs:attribute name="type" type="sigInterpretationType"/>
-        </xs:sequence>
-    </xs:complexType>
-
-    <xs:complexType name="filesSetType">
-        <xs:sequence>
-            <xs:element name="name" type="xs:string"/>
-            <xs:attribute name="alert" type="xs:boolean"/>
+            <xs:attribute name="type" type="sigInterpretationType" use="required"/>
         </xs:sequence>
     </xs:complexType>
             
@@ -41,7 +34,8 @@
         <xs:sequence>
             <xs:element name="mimetype" type="verbatimStringType"/>
             <xs:element name="signature" type="signatureType"/>
-            <xs:element name="filesset" type="filesSetType"/>
+            <xs:element minOccurs="0" maxOccurs="1" name="filesset" type="stringType"/>
+            <xs:attribute name="alert" type="xs:boolean" use="required"/>
         </xs:sequence>
     </xs:complexType>
                   

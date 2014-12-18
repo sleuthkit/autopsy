@@ -56,15 +56,98 @@ import org.xml.sax.SAXException;
 public class XMLUtil {
 
     /**
-     * Creates a W3C DOM document.
+     * Creates a W3C DOM.
      *
      * @return The document object.
      * @throws ParserConfigurationException
      */
-    public static Document createDoc() throws ParserConfigurationException {
+    public static Document createDocument() throws ParserConfigurationException {
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = builderFactory.newDocumentBuilder();
         return builder.newDocument();
+    }
+
+    /**
+     * Loads an XML document into a WC3 DOM and validates it using a schema
+     * packaged as a class resource.
+     *
+     * @param <T> The name of the class associated with the resource.
+     * @param docPath The full path to the XML document.
+     * @param clazz The class associated with the schema resource.
+     * @param schemaResourceName The name of the schema resource.
+     * @return The WC3 DOM document object.
+     * @throws IOException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     */
+    public static <T> Document loadDocument(String docPath, Class<T> clazz, String schemaResourceName) throws IOException, ParserConfigurationException, SAXException {
+        Document doc = loadDocument(docPath);
+        validateDocument(doc, clazz, schemaResourceName);
+        return doc;
+    }
+
+    /**
+     * Loads an XML document into a WC3 DOM.
+     *
+     * @param docPath The full path to the XML document.
+     * @return The WC3 DOM document object.
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public static Document loadDocument(String docPath) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = builderFactory.newDocumentBuilder();
+        Document doc = builder.parse(new FileInputStream(docPath));
+        return doc;
+    }
+
+    /**
+     * Validates a WC3 DOM using a schema packaged as a class resource.
+     *
+     * @param doc
+     * @param clazz
+     * @param schemaResourceName
+     * @throws SAXException
+     * @throws IOException
+     */
+    public static <T> void validateDocument(final Document doc, Class<T> clazz, String schemaResourceName) throws SAXException, IOException {
+        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
+        File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
+        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema schema = schemaFactory.newSchema(schemaFile);
+        Validator validator = schema.newValidator();
+        validator.validate(new DOMSource(doc), new DOMResult());
+    }
+
+    /**
+     * Saves a WC3 DOM by writing it to an XML document.
+     *
+     * @param doc The WC3 DOM document object.
+     * @param docPath The full path to the XML document.
+     * @param encoding Encoding scheme to use for the XML document, e.g.,
+     * "UTF-8."
+     * @throws TransformerConfigurationException
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException
+     * @throws TransformerException
+     * @throws IOException
+     */
+    public static void saveDocument(final Document doc, String encoding, String docPath) throws TransformerConfigurationException, FileNotFoundException, UnsupportedEncodingException, TransformerException, IOException {
+        TransformerFactory xf = TransformerFactory.newInstance();
+        xf.setAttribute("indent-number", 1); //NON-NLS
+        Transformer xformer = xf.newTransformer();
+        xformer.setOutputProperty(OutputKeys.METHOD, "xml"); //NON-NLS
+        xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
+        xformer.setOutputProperty(OutputKeys.ENCODING, encoding);
+        xformer.setOutputProperty(OutputKeys.STANDALONE, "yes"); //NON-NLS
+        xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
+        File file = new File(docPath);
+        try (FileOutputStream stream = new FileOutputStream(file)) {
+            Result out = new StreamResult(new OutputStreamWriter(stream, encoding));
+            xformer.transform(new DOMSource(doc), out);
+            stream.flush();
+        }
     }
 
     /**
@@ -84,6 +167,7 @@ public class XMLUtil {
      * IngestModuleLoader.
      *
      */
+    // RJCTODO: Deprecate.
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
         try {
             PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
@@ -121,6 +205,7 @@ public class XMLUtil {
      * IngestModuleLoader.
      *
      */
+    // RJCTODO: Deprecate.
     public static <T> boolean xmlIsValid(Document doc, Class<T> clazz, String type) {
         DOMSource dms = new DOMSource(doc);
         return xmlIsValid(dms, clazz, type);
@@ -132,6 +217,7 @@ public class XMLUtil {
      * @param clazz the class this method is invoked from
      * @param xmlPath the full path to the file to load
      */
+    // RJCTODO: Deprecate.
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath) {
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = null;
@@ -166,39 +252,6 @@ public class XMLUtil {
     }
 
     /**
-     * Loads an XML document into a WC3 DOM and validates it against a schema
-     * packaged as a class resource.
-     *
-     * @param <T> The name of the class associated with the resource.
-     * @param clazz The class associated with the resource.
-     * @param docPath The full path to the XML document.
-     * @param schemaResourceName The name of the schema resource
-     * @return A WC3 DOM representation of the document
-     * @throws IOException
-     * @throws org.sleuthkit.autopsy.coreutils.XMLUtil.XmlUtilException
-     */
-    public static <T> Document loadAndValidateDoc(Class<T> clazz, String docPath, String schemaResourceName) throws IOException, ParserConfigurationException, SAXException {
-        /**
-         * Parse the XML file into a DOM.
-         */
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = builderFactory.newDocumentBuilder();
-        Document doc = builder.parse(new FileInputStream(docPath));
-        
-        /**
-         * Extract the schema and validate the DOM. 
-         */
-        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
-        File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
-        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        Schema schema = schemaFactory.newSchema(schemaFile);
-        Validator validator = schema.newValidator();
-        validator.validate(new DOMSource(doc), new DOMResult());
-        
-        return doc;
-    }
-
-    /**
      * Saves XML files to disk
      *
      * @param clazz the class this method is invoked from
@@ -206,6 +259,7 @@ public class XMLUtil {
      * @param encoding to encoding, such as "UTF-8", to encode the file with
      * @param doc the document to save
      */
+    // RJCTODO: Deprecate.
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
         xf.setAttribute("indent-number", 1); //NON-NLS
