@@ -8,14 +8,13 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_FileTypeId",
-        iconBase = "org/sleuthkit/autopsy/corecomponents/display-options.png",
+        iconBase = "org/sleuthkit/autopsy/modules/filetypeid/user-defined-file-types-settings.png",
         keywords = "#OptionsCategory_Keywords_FileTypeId",
         keywordsCategory = "FileTypeId"
 )

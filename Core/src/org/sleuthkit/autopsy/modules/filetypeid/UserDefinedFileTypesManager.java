@@ -45,6 +45,18 @@ import org.xml.sax.SAXException;
 /**
  * Manages user-defined file types characterized by MIME type, signature, and
  * optional membership in an interesting files set.
+ * <p>
+ * Note that this class exposes a very simple get/set API that operates on the
+ * user-defined file types as a complete set - there is no concept of adding,
+ * editing or deleting file types singly. This works because this class is not
+ * exposed outside of this ingest module package and is ONLY used in a very
+ * specific paradigm where there is a single modal writer of file types in the
+ * form of a global settings panel that disables itself when ingest is running
+ * so that multiple readers in the form of file ingest modules get a consistent
+ * set of file type definitions. Moreover, there is no enforcement of compliance
+ * with this paradigm by this class - it merely participates in the scheme.
+ * <p>
+ * Thread-safe.
  */
 final class UserDefinedFileTypesManager {
 
@@ -87,7 +99,7 @@ final class UserDefinedFileTypesManager {
      * thread-safety.
      */
     private final Map<String, FileType> fileTypes = new HashMap<>();
-    
+
     /**
      * Gets the manager of user-defined file types characterized by MIME type,
      * signature, and optional membership in an interesting files set.

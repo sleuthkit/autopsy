@@ -25,36 +25,39 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents a named file type characterized by a file signature.
+ * Represents a file type characterized by a file signature.
+ * <p>
+ * Thread-safe.
  */
 final class FileType {
 
     private final String mimeType;
     private final Signature signature;
-    private final String filesSetName;
+    private final String interestingFilesSetName;
     private final boolean alert;
 
     /**
-     * Creates a representation of a named file type characterized by a file
+     * Creates a representation of a file type characterized by a file
      * signature.
      *
      * @param mimeType The mime type to associate with this file type.
      * @param signature The signature that characterizes the file type.
-     * @param filesSetName The interesting files set name
-     * @param alert A flag indicating whether the user wishes to be alerted when
-     * a file matching this type is encountered.
+     * @param filesSetName The name of an interesting files set that includes
+     * files of this type.
+     * @param alert Whether the user wishes to be alerted when a file matching
+     * this type is encountered.
      */
     FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
         this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
-        this.filesSetName = filesSetName;
+        this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
 
     /**
      * Gets the MIME type associated with this file type.
      *
-     * @return The type name.
+     * @return The MIME type.
      */
     String getMimeType() {
         return this.mimeType;
@@ -63,14 +66,14 @@ final class FileType {
     /**
      * Gets the signature associated with this file type.
      *
-     * @return The file signature.
+     * @return The signature.
      */
     Signature getSignature() {
         return new Signature(this.signature.getSignatureBytes(), this.signature.getOffset(), this.signature.getType());
     }
 
     /**
-     * Determines whether or not a given file is an instance of this file type.
+     * Determines whether or not a file is an instance of this file type.
      *
      * @param file The file to test.
      * @return True or false.
@@ -90,17 +93,20 @@ final class FileType {
     }
 
     /**
-     * Gets the interesting files set name assigned to this file type.
+     * Gets the name of an interesting files set that includes files of this
+     * type.
      *
-     * @return The files set name, possibly empty.
+     * @return The interesting files set name, possibly empty.
      */
     String getFilesSetName() {
-        return this.filesSetName;
+        return this.interestingFilesSetName;
     }
 
     /**
      * A file signature consisting of a sequence of bytes at a specific offset
      * within a file.
+     * <p>
+     * Thread-safe.
      */
     static final class Signature {
 
@@ -170,7 +176,7 @@ final class FileType {
         boolean containedIn(final AbstractFile file) {
             try {
                 byte[] buffer = new byte[this.signatureBytes.length];
-                int bytesRead = file.read(buffer, offset, this.signatureBytes.length);
+                int bytesRead = file.read(buffer, this.offset, this.signatureBytes.length);
                 return ((bytesRead == this.signatureBytes.length) && (Arrays.equals(buffer, this.signatureBytes)));
             } catch (TskCoreException ex) {
                 Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex);

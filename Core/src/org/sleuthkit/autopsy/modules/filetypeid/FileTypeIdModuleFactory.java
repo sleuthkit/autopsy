@@ -35,6 +35,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
 
     /**
+     * Make this a singleton since it is a ingest job event listener that never
+     * de-registers.
+     */
+    FileTypeIdGlobalSettingsPanel globalSettingsPanel;
+
+    /**
      * @inheritDoc
      */
     @Override
@@ -82,9 +88,12 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      */
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        return new FileTypeIdGlobalSettingsPanel();
+        if (null == globalSettingsPanel) {
+            globalSettingsPanel = new FileTypeIdGlobalSettingsPanel();
+        }
+        return globalSettingsPanel;
     }
-    
+
     /**
      * @inheritDoc
      */

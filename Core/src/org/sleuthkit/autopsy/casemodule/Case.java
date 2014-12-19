@@ -167,7 +167,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @throws IllegalStateException if there is no case open.
      */
-    public static Case getCurrentCase() {
+    public static Case getCurrentCase() throws IllegalStateException {
         if (currentCase != null) {
             return currentCase;
         } else {
