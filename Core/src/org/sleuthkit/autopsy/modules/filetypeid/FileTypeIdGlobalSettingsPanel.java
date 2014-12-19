@@ -22,7 +22,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
@@ -46,8 +45,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     /**
      * The list model for the file types list component of this panel is the set
-     * of type names of the user-defined file types. A mapping of the file type
-     * names to file type objects lies behind the list model.
+     * of MIME types associated with the user-defined file types. A mapping of
+     * the MIME types to file type objects lies behind the list model. This map
+     * is obtained from the user-defined types manager.
      */
     private DefaultListModel<String> typesListModel;
     private Map<String, FileType> fileTypes;
@@ -73,6 +73,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         sigTypeComboBoxModel.addElement(FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         this.signatureTypeComboBox.setModel(sigTypeComboBoxModel);
 
+        this.postHitCheckBox.setSelected(false);
         this.filesSetNameTextField.setEnabled(false);
     }
 
@@ -105,7 +106,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         try {
             UserDefinedFileTypesManager.getInstance().setUserDefinedFileTypes(this.fileTypes);
         } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
-            // RJCTODO            
+            JOptionPane.showMessageDialog(null,
+                    ex.getLocalizedMessage(),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -120,10 +124,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 if (FileTypeIdGlobalSettingsPanel.this.typesList.getSelectedIndex() == -1) {
                     FileTypeIdGlobalSettingsPanel.this.deleteTypeButton.setEnabled(false);
                 } else {
-                    String typeName = FileTypeIdGlobalSettingsPanel.this.typesList.getSelectedValue();
-                    FileType fileType = FileTypeIdGlobalSettingsPanel.this.fileTypes.get(typeName);
+                    String mimeType = FileTypeIdGlobalSettingsPanel.this.typesList.getSelectedValue();
+                    FileType fileType = FileTypeIdGlobalSettingsPanel.this.fileTypes.get(mimeType);
                     Signature signature = fileType.getSignature();
-                    FileTypeIdGlobalSettingsPanel.this.mimeTypeTextField.setText(typeName);
+                    FileTypeIdGlobalSettingsPanel.this.mimeTypeTextField.setText(mimeType);
                     FileType.Signature.Type sigType = fileType.getSignature().getType();
                     FileTypeIdGlobalSettingsPanel.this.signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
                     FileTypeIdGlobalSettingsPanel.this.offsetTextField.setText(Long.toString(signature.getOffset()));
@@ -139,11 +143,11 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * Sets the list model for the file types list component.
      */
     private void setFileTypesListModel() {
-        ArrayList<String> typeNames = new ArrayList(this.fileTypes.keySet());
-        Collections.sort(typeNames);
+        ArrayList<String> mimeTypes = new ArrayList(this.fileTypes.keySet());
+        Collections.sort(mimeTypes);
         this.typesListModel.clear();
-        for (String typeName : typeNames) {
-            this.typesListModel.addElement(typeName);
+        for (String mimeType : mimeTypes) {
+            this.typesListModel.addElement(mimeType);
         }
     }
 
@@ -393,7 +397,16 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             /**
              * Get the offset.
              */
-            long offset = Long.parseUnsignedLong(this.offsetTextField.getText());
+            long offset;
+            try {
+                offset = Long.parseUnsignedLong(this.offsetTextField.getText());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
+                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             /**
              * Get the interesting files set details.

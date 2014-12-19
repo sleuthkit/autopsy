@@ -32,6 +32,8 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
@@ -45,6 +47,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private final UserDefinedFileTypeIdentifier userDefinedFileTypeIdentifier;
     private final TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
 
     /**
@@ -72,6 +75,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
+        this.userDefinedFileTypeIdentifier = new UserDefinedFileTypeIdentifier();
     }
 
     /**
@@ -87,12 +91,12 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * @inheritDoc
      */
     @Override
-    public ProcessResult process(AbstractFile abstractFile) {
+    public ProcessResult process(AbstractFile file) {
         /**
          * Skip unallocated space and unused blocks files.
          */
-        if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
 
             return ProcessResult.OK;
         }
@@ -100,7 +104,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         /**
          * Skip known files if configured to do so.
          */
-        if (settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if (settings.skipKnownFiles() && (file.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
@@ -108,18 +112,30 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          * Filter out very small files to minimize false positives.
          */
         // RJCTODO: Make this size a setting
-        if (abstractFile.getSize() < MIN_FILE_SIZE) {
+        if (file.getSize() < MIN_FILE_SIZE) {
             return ProcessResult.OK;
         }
 
         try {
             long startTime = System.currentTimeMillis();
+            FileType fileType = this.userDefinedFileTypeIdentifier.identify(file);
+            if (null != fileType) {
+                BlackboardArtifact getInfoArtifact = file.getGenInfoArtifact();
+                BlackboardAttribute typeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
+                getInfoArtifact.addAttribute(typeAttr);
 
-            // RJCTODO: Add code here to use nay user-defined signstures first;
-            // if there is a match, post a intersting file hit, if the user has
-            // elected alerts
-            tikaDetector.detectAndSave(abstractFile);
+                if (fileType.alertOnMatch()) {
+                    String moduleName = FileTypeIdModuleFactory.getModuleName();
+                    BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, fileType.getFilesSetName());
+                    artifact.addAttribute(setNameAttribute);
+                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, fileType.getMimeType());
+                    artifact.addAttribute(ruleNameAttribute);
+                }
 
+            } else {
+                tikaDetector.detectAndSave(file);
+            }
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
         } catch (TskException ex) {
