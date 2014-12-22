@@ -63,14 +63,14 @@ final class UserDefinedFileTypesManager {
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
     private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypeDefinitions.xsd"; //NON-NLS
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
-    private static final String FILE_TYPES_TAG_NAME = "filetypes"; //NON-NLS
-    private static final String FILE_TYPE_TAG_NAME = "filetype"; //NON-NLS
-    private static final String MIME_TYPE_TAG_NAME = "mimetype"; //NON-NLS
-    private static final String SIGNATURE_TAG_NAME = "signature"; //NON-NLS
+    private static final String FILE_TYPES_TAG_NAME = "FileTypes"; //NON-NLS
+    private static final String FILE_TYPE_TAG_NAME = "FileType"; //NON-NLS
+    private static final String MIME_TYPE_TAG_NAME = "MimeType"; //NON-NLS
+    private static final String SIGNATURE_TAG_NAME = "Signature"; //NON-NLS
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
-    private static final String BYTES_TAG_NAME = "bytes"; //NON-NLS
-    private static final String OFFSET_TAG_NAME = "offset"; //NON-NLS
-    private static final String INTERESTING_FILES_SET_TAG_NAME = "filesset"; //NON-NLS
+    private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
+    private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
+    private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
     private static final String ASCII_ENCODING = "US-ASCII"; //NON-NLS
@@ -135,7 +135,7 @@ final class UserDefinedFileTypesManager {
         /**
          * Create a file type that should match $MBR in Small2 image.
          */
-        FileType fileType = new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), "predefinedRAW", true);
+        FileType fileType = new FileType("predefinedRAW", new Signature(new byte[]{(byte) 0x66, (byte) 0x73, (byte) 0x00}, 8L, FileType.Signature.Type.RAW), "Suspicious", true);
         this.addPredefinedFileType(fileType);
 
         /**
@@ -143,7 +143,7 @@ final class UserDefinedFileTypesManager {
          */
         // RJCTODO: Remove test file type.
         try {
-            fileType = new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "predefinedASCII", true);
+            fileType = new FileType("predefinedASCII", new Signature("hello".getBytes(UserDefinedFileTypesManager.ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "Benign", true);
             this.addPredefinedFileType(fileType);
         } catch (UnsupportedEncodingException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Unable to create 'predefinedASCII' predefined file type definition", ex); //NON-NLS
@@ -422,8 +422,8 @@ final class UserDefinedFileTypesManager {
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
             List<FileType> fileTypes = new ArrayList<>();
-            Path schemaFilePath = Paths.get(PlatformUtil.getUserConfigDirectory(), UserDefinedFileTypesManager.FILE_TYPE_DEFINITIONS_SCHEMA_FILE);
-            Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.XmlReader.class, schemaFilePath.toAbsolutePath().toString());
+//            Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.XmlReader.class, UserDefinedFileTypesManager.FILE_TYPE_DEFINITIONS_SCHEMA_FILE); RJCTODO
+            Document doc = XMLUtil.loadDocument(filePath);
             if (doc != null) {
                 Element fileTypesElem = doc.getDocumentElement();
                 if (fileTypesElem != null && fileTypesElem.getNodeName().equals(UserDefinedFileTypesManager.FILE_TYPES_TAG_NAME)) {

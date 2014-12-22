@@ -113,9 +113,9 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          * Filter out very small files to minimize false positives.
          */
         // RJCTODO: Make this size a setting
-        if (file.getSize() < MIN_FILE_SIZE) {
-            return ProcessResult.OK;
-        }
+//        if (file.getSize() < MIN_FILE_SIZE) {
+//            return ProcessResult.OK;
+//        }
 
         try {
             long startTime = System.currentTimeMillis();

@@ -88,6 +88,7 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
         if (null == globalSettingsPanel) {
             globalSettingsPanel = new FileTypeIdGlobalSettingsPanel();
         }
+        globalSettingsPanel.load();
         return globalSettingsPanel;
     }
 

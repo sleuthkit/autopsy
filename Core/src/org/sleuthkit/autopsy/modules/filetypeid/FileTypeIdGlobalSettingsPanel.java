@@ -147,6 +147,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         mimeTypeTextField.getDocument().addDocumentListener(listener);
         offsetTextField.getDocument().addDocumentListener(listener);
         signatureTextField.getDocument().addDocumentListener(listener);
+        filesSetNameTextField.getDocument().addDocumentListener(listener);
     }
 
     /**
@@ -186,13 +187,13 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         boolean fileTypeIsSelected = typesList.getSelectedIndex() != -1;
         deleteTypeButton.setEnabled(!ingestIsRunning && fileTypeIsSelected);
-
+        
         boolean requiredFieldsPopulated
                 = !mimeTypeTextField.getText().isEmpty()
                 && !offsetTextField.getText().isEmpty()
                 && !signatureTextField.getText().isEmpty()
-                && postHitCheckBox.isSelected() ? !filesSetNameTextField.getText().isEmpty() : true;
-        saveTypeButton.setEnabled(!ingestIsRunning && fileTypeIsSelected && requiredFieldsPopulated);
+                && (postHitCheckBox.isSelected() ? !filesSetNameTextField.getText().isEmpty() : true);
+        saveTypeButton.setEnabled(!ingestIsRunning && requiredFieldsPopulated);
 
         ingestRunningWarningLabel.setVisible(ingestIsRunning);
     }
@@ -234,6 +235,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             Signature signature = fileType.getSignature();
             FileType.Signature.Type sigType = signature.getType();
             signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+            this.signatureTextField.setText(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
             offsetTextField.setText(Long.toString(signature.getOffset()));
             postHitCheckBox.setSelected(fileType.alertOnMatch());
             filesSetNameTextField.setText(fileType.getFilesSetName());
@@ -576,6 +578,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed
         filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
+        enableButtons();
     }//GEN-LAST:event_postHitCheckBoxActionPerformed
 
     private void signatureTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signatureTypeComboBoxActionPerformed

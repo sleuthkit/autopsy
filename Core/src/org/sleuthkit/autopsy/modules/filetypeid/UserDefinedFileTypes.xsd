@@ -24,22 +24,22 @@
 
     <xs:complexType name="signatureType">
         <xs:sequence>
-            <xs:element name="bytes" type="stringType"/>
-            <xs:element name="offset" type="xs:nonNegativeInteger"/>
-            <xs:attribute name="type" type="sigInterpretationType" use="required"/>
+            <xs:element name="Bytes" type="stringType"/>
+            <xs:element name="Offset" type="xs:nonNegativeInteger"/>
+            <xs:attribute name="Type" type="sigInterpretationType" use="required"/>
         </xs:sequence>
     </xs:complexType>
             
-    <xs:complexType name="fileType">
+    <xs:complexType name="FileType">
         <xs:sequence>
-            <xs:element name="mimetype" type="verbatimStringType"/>
-            <xs:element name="signature" type="signatureType"/>
-            <xs:element minOccurs="0" maxOccurs="1" name="filesset" type="stringType"/>
+            <xs:element name="Mimetype" type="verbatimStringType"/>
+            <xs:element name="Signature" type="signatureType"/>
+            <xs:element minOccurs="0" maxOccurs="1" name="InterestingFileSset" type="stringType"/>
             <xs:attribute name="alert" type="xs:boolean" use="required"/>
         </xs:sequence>
     </xs:complexType>
                   
-    <xs:element name="filetypes">
+    <xs:element name="FileTypes">
         <xs:complexType>
             <xs:sequence>    
                 <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype" type="fileType">
