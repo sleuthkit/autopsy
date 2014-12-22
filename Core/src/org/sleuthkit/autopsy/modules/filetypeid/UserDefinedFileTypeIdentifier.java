@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -26,14 +27,25 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 final class UserDefinedFileTypeIdentifier {
 
-    private final Map<String, FileType> fileTypes;
+    private Map<String, FileType> fileTypes;
 
     /**
      * Creates an object that can do file type identification for user-defined
      * file types.
      */
     UserDefinedFileTypeIdentifier() {
-        this.fileTypes = UserDefinedFileTypesManager.getInstance().getFileTypes();
+        fileTypes = new HashMap<>();
+    }
+
+    /**
+     * Gets the user-defined file types from the user-defined file types
+     * manager.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     */
+    void loadFileTypes() throws UserDefinedFileTypesManager.UserDefinedFileTypesException {
+        fileTypes = UserDefinedFileTypesManager.getInstance().getFileTypes();
     }
 
     /**

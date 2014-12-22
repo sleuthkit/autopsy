@@ -5,7 +5,7 @@
     
     <xs:simpleType name="stringType">
         <xs:restriction base="xs:string">
-            <xsd:minLength value="1" />
+            <xs:minLength value="1"/>
         </xs:restriction>
     </xs:simpleType>    
 
@@ -26,23 +26,23 @@
         <xs:sequence>
             <xs:element name="Bytes" type="stringType"/>
             <xs:element name="Offset" type="xs:nonNegativeInteger"/>
-            <xs:attribute name="type" type="sigInterpretationType" use="required"/>
         </xs:sequence>
+        <xs:attribute name="type" type="sigInterpretationType" use="required"/>
     </xs:complexType>
             
-    <xs:complexType name="FileType">
+    <xs:complexType name="fileType">
         <xs:sequence>
-            <xs:element name="Mimetype" type="verbatimStringType"/>
+            <xs:element name="MimeType" type="verbatimStringType"/>
             <xs:element name="Signature" type="signatureType"/>
             <xs:element minOccurs="0" maxOccurs="1" name="InterestingFileSset" type="stringType"/>
-            <xs:attribute name="alert" type="xs:boolean" use="required"/>
         </xs:sequence>
+        <xs:attribute name="alert" type="xs:boolean" use="required"/>
     </xs:complexType>
                   
     <xs:element name="FileTypes">
         <xs:complexType>
             <xs:sequence>    
-                <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype" type="fileType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="FileType" type="fileType"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>         

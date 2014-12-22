@@ -30,6 +30,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -211,37 +213,31 @@ public class PlatformUtil {
      *
      * @param resourceClass class in the same package as the resourceFile to
      * extract
-     * @param resourceFile resource file name to extract
+     * @param resourceFileName Name of the resource file to extract
      * @param overWrite true to overwrite an existing resource
      * @return true if extracted, false otherwise (if file already exists)
      * @throws IOException exception thrown if extract the file failed for IO
      * reasons
      */
-    public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFile, boolean overWrite) throws IOException {
-        final File userDir = new File(getUserConfigDirectory());
-
-        final File resourceFileF = new File(userDir + File.separator + resourceFile);
-        if (resourceFileF.exists() && !overWrite) {
+    public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFileName, boolean overWrite) throws IOException {
+        Path resourceFilePath = Paths.get(getUserConfigDirectory(), resourceFileName);
+        final File resourceFile = resourceFilePath.toFile();
+        if (resourceFile.exists() && !overWrite) {
             return false;
         }
         
-        resourceFileF.getParentFile().mkdirs();
+        InputStream inputStream = resourceClass.getResourceAsStream(resourceFileName);
+        if (null == inputStream) {
+            return false;
+        }
 
-        InputStream inputStream = resourceClass.getResourceAsStream(resourceFile);
-
-        OutputStream out = null;
+        resourceFile.getParentFile().mkdirs();
         try (InputStream in = new BufferedInputStream(inputStream)) {
-
-            OutputStream outFile = new FileOutputStream(resourceFileF);
-            out = new BufferedOutputStream(outFile);
-            int readBytes;
-            while ((readBytes = in.read()) != -1) {
-                out.write(readBytes);
-            }
-        } finally {
-            if (out != null) {
-                out.flush();
-                out.close();
+            try (OutputStream out = new BufferedOutputStream(new FileOutputStream(resourceFile))) {
+                int readBytes;
+                while ((readBytes = in.read()) != -1) {
+                    out.write(readBytes);
+                }
             }
         }
         return true;

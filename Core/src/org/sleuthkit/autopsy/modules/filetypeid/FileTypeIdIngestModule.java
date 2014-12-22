@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.HashMap;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -43,7 +45,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
-    private static final long MIN_FILE_SIZE = 512;
     private final FileTypeIdModuleSettings settings;
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
@@ -76,7 +77,13 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
-        this.userDefinedFileTypeIdentifier = new UserDefinedFileTypeIdentifier();
+        userDefinedFileTypeIdentifier = new UserDefinedFileTypeIdentifier();
+        try {
+            userDefinedFileTypeIdentifier.loadFileTypes();
+        } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
+            logger.log(Level.SEVERE, "Failed to load file types", ex);
+            MessageNotifyUtil.Notify.error(FileTypeIdModuleFactory.getModuleName(), ex.getMessage());            
+        }
     }
 
     /**
@@ -112,11 +119,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         /**
          * Filter out very small files to minimize false positives.
          */
-        // RJCTODO: Make this size a setting
-//        if (file.getSize() < MIN_FILE_SIZE) {
-//            return ProcessResult.OK;
-//        }
-
+        if (settings.skipSmallFiles() && file.getSize() < settings.minFileSizeInBytes()) {
+            return ProcessResult.OK;
+        }
+        
         try {
             long startTime = System.currentTimeMillis();
             FileType fileType = this.userDefinedFileTypeIdentifier.identify(file);
@@ -133,7 +139,8 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
                     /**
                      * Use the MIME type as the category, i.e., the rule that
-                     * determined this file belongs to the interesting files set.
+                     * determined this file belongs to the interesting files
+                     * set.
                      */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
