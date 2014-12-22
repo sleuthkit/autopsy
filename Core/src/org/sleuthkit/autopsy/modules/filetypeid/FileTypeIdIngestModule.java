@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
+// TODO: This class does not need to be public.
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
@@ -120,15 +121,20 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             long startTime = System.currentTimeMillis();
             FileType fileType = this.userDefinedFileTypeIdentifier.identify(file);
             if (null != fileType) {
+                String moduleName = FileTypeIdModuleFactory.getModuleName();
                 BlackboardArtifact getInfoArtifact = file.getGenInfoArtifact();
-                BlackboardAttribute typeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
+                BlackboardAttribute typeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), moduleName, fileType.getMimeType());
                 getInfoArtifact.addAttribute(typeAttr);
 
                 if (fileType.alertOnMatch()) {
-                    String moduleName = FileTypeIdModuleFactory.getModuleName();
                     BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                     BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, fileType.getFilesSetName());
                     artifact.addAttribute(setNameAttribute);
+
+                    /**
+                     * Use the MIME type as the category, i.e., the rule that
+                     * determined this file belongs to the interesting files set.
+                     */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
                 }

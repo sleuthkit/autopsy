@@ -33,6 +33,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -57,6 +58,14 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private DefaultListModel<String> typesListModel;
     private Map<String, FileType> fileTypes;
+
+    /**
+     * This panel implements a property change listener that listens to ingest
+     * job events to disable the buttons on the panel if ingest is running. This
+     * is done to prevent changes to user-defined types while the type
+     * definitions are in use.
+     */
+    IngestJobEventPropertyChangeListener ingestJobEventsListener;
 
     /**
      * Creates a panel to allow a user to make custom file type definitions.
@@ -110,9 +119,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                     }
                 }
             }
-        });        
+        });
     }
-    
+
     /**
      * Adds listeners to the text fields that enable and disable the buttons on
      * the panel.
@@ -144,20 +153,27 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * Add a property change listener that listens to ingest job events to
      * disable the buttons on the panel if ingest is running. This is done to
      * prevent changes to user-defined types while the type definitions are in
-     * use. the components in sync with file ingest.
+     * use.
      */
     private void addIngestJobEventsListener() {
-        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        enableButtons();
-                    }
-                });
-            }
-        });
+        ingestJobEventsListener = new IngestJobEventPropertyChangeListener();
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventsListener);
+    }
+
+    /**
+     * A property change listener that listens to ingest job events.
+     */
+    private class IngestJobEventPropertyChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    enableButtons();
+                }
+            });
+        }
     }
 
     /**
@@ -177,7 +193,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 && !signatureTextField.getText().isEmpty()
                 && postHitCheckBox.isSelected() ? !filesSetNameTextField.getText().isEmpty() : true;
         saveTypeButton.setEnabled(!ingestIsRunning && fileTypeIsSelected && requiredFieldsPopulated);
-        
+
         ingestRunningWarningLabel.setVisible(ingestIsRunning);
     }
 
@@ -207,21 +223,21 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * Sets all of the components in the individual type details portion of the
+     * Populates all of the components in the file type details portion of the
      * panel based on the current selection in the file types list.
      */
     private void populateTypeDetailsComponents() {
         String mimeType = typesList.getSelectedValue();
         FileType fileType = fileTypes.get(mimeType);
         if (null != fileType) {
-            Signature signature = fileType.getSignature();
             mimeTypeTextField.setText(mimeType);
-            FileType.Signature.Type sigType = fileType.getSignature().getType();
+            Signature signature = fileType.getSignature();
+            FileType.Signature.Type sigType = signature.getType();
             signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
             offsetTextField.setText(Long.toString(signature.getOffset()));
             postHitCheckBox.setSelected(fileType.alertOnMatch());
             filesSetNameTextField.setText(fileType.getFilesSetName());
-        } 
+        }
         enableButtons();
     }
 
@@ -233,6 +249,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         typesList.setSelectedIndex(-1);
         mimeTypeTextField.setText(""); //NON-NLS
         signatureTypeComboBox.setSelectedItem(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+        hexPrefixLabel.setVisible(true);
         signatureTextField.setText(""); //NON-NLS
         offsetTextField.setText(""); //NON-NLS
         postHitCheckBox.setSelected(false);
@@ -263,7 +280,17 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     public void saveSettings() {
         store();
     }
-    
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    @SuppressWarnings("FinalizeDeclaration")
+    protected void finalize() throws Throwable {
+        IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventsListener);
+        super.finalize();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -470,13 +497,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         String typeName = typesList.getSelectedValue();
         fileTypes.remove(typeName);
         clearTypeDetailsComponents();
-        typesList.setSelectedIndex(-1);
     }//GEN-LAST:event_deleteTypeButtonActionPerformed
 
     private void saveTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTypeButtonActionPerformed
         try {
             /**
-             * Get the file type name.
+             * Get the MIME type.
              */
             String typeName = mimeTypeTextField.getText();
             if (typeName.isEmpty()) {
@@ -513,16 +539,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             /**
              * Get the offset.
              */
-            long offset;
-            try {
-                offset = Long.parseUnsignedLong(offsetTextField.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
-                        NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            long offset = Long.parseUnsignedLong(offsetTextField.getText());
 
             /**
              * Get the interesting files set details.

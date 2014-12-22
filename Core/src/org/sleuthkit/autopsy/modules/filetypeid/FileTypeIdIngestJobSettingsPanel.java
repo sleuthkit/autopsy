@@ -25,12 +25,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * UI component used to set ingest job options for file type identifier ingest
  * modules.
  */
-final class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
+class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     private final FileTypeIdModuleSettings settings;
 
-    // NOTE: This was declared public, but was inaccessible because the class is 
-    // not public
     FileTypeIdIngestJobSettingsPanel(FileTypeIdModuleSettings settings) {
         this.settings = settings;
         initComponents();
@@ -44,7 +42,11 @@ final class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettin
     public IngestModuleIngestJobSettings getSettings() {
         return settings;
     }
-    
+
+    /**
+     * Does child component initialization in addition to that done by the
+     * Matisse generated code.
+     */
     private void customizeComponents() {
         skipKnownCheckBox.setSelected(settings.skipKnownFiles());
     }

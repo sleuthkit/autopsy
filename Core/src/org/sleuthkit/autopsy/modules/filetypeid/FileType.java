@@ -27,9 +27,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Represents a file type characterized by a file signature.
  * <p>
- * Thread-safe.
+ * Thread-safe (immutable).
  */
-final class FileType {
+class FileType {
 
     private final String mimeType;
     private final Signature signature;
@@ -41,9 +41,9 @@ final class FileType {
      * signature.
      *
      * @param mimeType The mime type to associate with this file type.
-     * @param signature The signature that characterizes the file type.
+     * @param signature The signature that characterizes this file type.
      * @param filesSetName The name of an interesting files set that includes
-     * files of this type.
+     * files of this type, may be the empty string.
      * @param alert Whether the user wishes to be alerted when a file matching
      * this type is encountered.
      */
@@ -60,7 +60,7 @@ final class FileType {
      * @return The MIME type.
      */
     String getMimeType() {
-        return this.mimeType;
+        return mimeType;
     }
 
     /**
@@ -69,7 +69,7 @@ final class FileType {
      * @return The signature.
      */
     Signature getSignature() {
-        return new Signature(this.signature.getSignatureBytes(), this.signature.getOffset(), this.signature.getType());
+        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
     }
 
     /**
@@ -79,7 +79,7 @@ final class FileType {
      * @return True or false.
      */
     boolean matches(final AbstractFile file) {
-        return this.signature.containedIn(file);
+        return signature.containedIn(file);
     }
 
     /**
@@ -89,7 +89,7 @@ final class FileType {
      * @return True or false.
      */
     boolean alertOnMatch() {
-        return this.alert;
+        return alert;
     }
 
     /**
@@ -99,16 +99,16 @@ final class FileType {
      * @return The interesting files set name, possibly empty.
      */
     String getFilesSetName() {
-        return this.interestingFilesSetName;
+        return interestingFilesSetName;
     }
 
     /**
      * A file signature consisting of a sequence of bytes at a specific offset
      * within a file.
      * <p>
-     * Thread-safe.
+     * Thread-safe (immutable).
      */
-    static final class Signature {
+    static class Signature {
 
         private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
@@ -145,7 +145,7 @@ final class FileType {
          * @return The byte sequence as an array of bytes.
          */
         byte[] getSignatureBytes() {
-            return Arrays.copyOf(this.signatureBytes, this.signatureBytes.length);
+            return Arrays.copyOf(signatureBytes, signatureBytes.length);
         }
 
         /**
@@ -154,7 +154,7 @@ final class FileType {
          * @return The offset.
          */
         long getOffset() {
-            return this.offset;
+            return offset;
         }
 
         /**
@@ -163,7 +163,7 @@ final class FileType {
          * @return The signature type.
          */
         Type getType() {
-            return this.type;
+            return type;
         }
 
         /**
@@ -175,10 +175,15 @@ final class FileType {
          */
         boolean containedIn(final AbstractFile file) {
             try {
-                byte[] buffer = new byte[this.signatureBytes.length];
-                int bytesRead = file.read(buffer, this.offset, this.signatureBytes.length);
-                return ((bytesRead == this.signatureBytes.length) && (Arrays.equals(buffer, this.signatureBytes)));
+                byte[] buffer = new byte[signatureBytes.length];
+                int bytesRead = file.read(buffer, offset, signatureBytes.length);
+                return ((bytesRead == signatureBytes.length) && (Arrays.equals(buffer, signatureBytes)));
             } catch (TskCoreException ex) {
+                /**
+                 * This exception is caught rather than propagated because files
+                 * in images are not always consistent with their file system
+                 * meta data making for read errors.
+                 */
                 Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex);
                 return false;
             }

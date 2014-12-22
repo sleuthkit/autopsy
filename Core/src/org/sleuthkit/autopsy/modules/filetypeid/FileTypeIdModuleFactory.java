@@ -31,13 +31,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 /**
  * A factory that creates file ingest modules that determine the types of files.
  */
+// TODO: This class does not need to be public.
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
 
-    /**
-     * Make this a singleton since it is a ingest job event listener that never
-     * de-registers.
-     */
     FileTypeIdGlobalSettingsPanel globalSettingsPanel;
 
     /**

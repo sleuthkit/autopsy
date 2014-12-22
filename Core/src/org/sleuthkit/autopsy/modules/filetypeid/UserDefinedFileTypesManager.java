@@ -268,10 +268,10 @@ final class UserDefinedFileTypesManager {
 
         } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Failed to write file types file", ex);
-            throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
+            throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage());
         } catch (IOException ex) {
             UserDefinedFileTypesManager.logger.log(Level.SEVERE, "Failed to write file types file", ex);
-            throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage()); // RJCTODO: Create a bundled message
+            throw new UserDefinedFileTypesManager.UserDefinedFileTypesException(ex.getLocalizedMessage());
         }
 
         /**

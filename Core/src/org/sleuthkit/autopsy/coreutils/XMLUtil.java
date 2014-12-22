@@ -167,7 +167,7 @@ public class XMLUtil {
      * IngestModuleLoader.
      *
      */
-    // RJCTODO: Deprecate.
+    // TODO: Deprecate.
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
         try {
             PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
@@ -205,7 +205,7 @@ public class XMLUtil {
      * IngestModuleLoader.
      *
      */
-    // RJCTODO: Deprecate.
+    // TODO: Deprecate.
     public static <T> boolean xmlIsValid(Document doc, Class<T> clazz, String type) {
         DOMSource dms = new DOMSource(doc);
         return xmlIsValid(dms, clazz, type);
@@ -217,7 +217,7 @@ public class XMLUtil {
      * @param clazz the class this method is invoked from
      * @param xmlPath the full path to the file to load
      */
-    // RJCTODO: Deprecate.
+    // TODO: Deprecate.
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath) {
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = null;
@@ -242,7 +242,7 @@ public class XMLUtil {
      * @param xmlPath the full path to the file to load
      * @param xsdPath the full path to the file to validate against
      */
-    // RJCTODO: Deprecate
+    // TODO: Deprecate
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath, String xsdPath) {
         Document ret = loadDoc(clazz, xmlPath);
         if (!XMLUtil.xmlIsValid(ret, clazz, xsdPath)) {
@@ -259,7 +259,7 @@ public class XMLUtil {
      * @param encoding to encoding, such as "UTF-8", to encode the file with
      * @param doc the document to save
      */
-    // RJCTODO: Deprecate.
+    // TODO: Deprecate.
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
         xf.setAttribute("indent-number", 1); //NON-NLS
