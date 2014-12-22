@@ -26,7 +26,7 @@
         <xs:sequence>
             <xs:element name="Bytes" type="stringType"/>
             <xs:element name="Offset" type="xs:nonNegativeInteger"/>
-            <xs:attribute name="Type" type="sigInterpretationType" use="required"/>
+            <xs:attribute name="type" type="sigInterpretationType" use="required"/>
         </xs:sequence>
     </xs:complexType>
             
@@ -42,7 +42,7 @@
     <xs:element name="FileTypes">
         <xs:complexType>
             <xs:sequence>    
-                <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype" type="fileType">
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="filetype" type="fileType"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>         

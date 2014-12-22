@@ -118,12 +118,6 @@ final class UserDefinedFileTypesManager {
      * signature, and optional membership in an interesting files set.
      */
     private UserDefinedFileTypesManager() {
-        /**
-         * Load the predefined types first so that they can be overwritten by
-         * any user-defined types with the same names.
-         */
-        loadPredefinedFileTypes();
-        loadUserDefinedFileTypes();
     }
 
     /**
@@ -236,6 +230,13 @@ final class UserDefinedFileTypesManager {
      */
     synchronized Map<String, FileType> getFileTypes() {
         /**
+         * Load the predefined types first so that they can be overwritten by
+         * any user-defined types with the same names.
+         */
+        loadPredefinedFileTypes();
+        loadUserDefinedFileTypes();
+                
+        /**
          * It is safe to return references to the internal file type objects
          * because they are immutable.
          */
@@ -248,6 +249,13 @@ final class UserDefinedFileTypesManager {
      * @return A mapping of file type names to file types, possibly empty.
      */
     synchronized Map<String, FileType> getUserDefinedFileTypes() {
+        /**
+         * Load the predefined types first so that they can be overwritten by
+         * any user-defined types with the same names.
+         */
+        loadPredefinedFileTypes();
+        loadUserDefinedFileTypes();
+                
         /**
          * It is safe to return references to the internal file type objects
          * because they are immutable.
@@ -422,8 +430,8 @@ final class UserDefinedFileTypesManager {
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
             List<FileType> fileTypes = new ArrayList<>();
-//            Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.XmlReader.class, UserDefinedFileTypesManager.FILE_TYPE_DEFINITIONS_SCHEMA_FILE); RJCTODO
-            Document doc = XMLUtil.loadDocument(filePath);
+            Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.class, UserDefinedFileTypesManager.FILE_TYPE_DEFINITIONS_SCHEMA_FILE);
+//            Document doc = XMLUtil.loadDocument(filePath);
             if (doc != null) {
                 Element fileTypesElem = doc.getDocumentElement();
                 if (fileTypesElem != null && fileTypesElem.getNodeName().equals(UserDefinedFileTypesManager.FILE_TYPES_TAG_NAME)) {
