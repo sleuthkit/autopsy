@@ -23,23 +23,30 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 /**
  * Ingest job options for the file type identifier ingest module instances.
  */
+// TODO: This class does not need to be public.
 public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-    private volatile boolean skipKnownFiles = true;
+    private static final long MIN_FILE_SIZE_IN_BYTES = 512;
+    private boolean skipKnownFiles = true;
+    private boolean skipSmallFiles = true;
 
     FileTypeIdModuleSettings() {
     }
 
-    FileTypeIdModuleSettings(boolean skipKnownFiles) {
+    FileTypeIdModuleSettings(boolean skipKnownFiles, boolean skipSmallFiles) {
         this.skipKnownFiles = skipKnownFiles;
+        this.skipSmallFiles = skipSmallFiles;
     }
-    
+
+    /**
+     * @inheritDoc
+     */
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
-    }    
-    
+    }
+
     void setSkipKnownFiles(boolean enabled) {
         skipKnownFiles = enabled;
     }
@@ -47,4 +54,17 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
     boolean skipKnownFiles() {
         return skipKnownFiles;
     }
+
+    void setSkipSmallFiles(boolean enabled) {
+        this.skipSmallFiles = enabled;
+    }
+
+    boolean skipSmallFiles() {
+        return skipSmallFiles;
+    }
+    
+    long minFileSizeInBytes() {
+        return MIN_FILE_SIZE_IN_BYTES;
+    }
+
 }

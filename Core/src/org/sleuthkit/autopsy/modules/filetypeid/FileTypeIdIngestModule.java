@@ -20,127 +20,38 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.HashMap;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
+// TODO: This class does not need to be public.
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
-    private static final long MIN_FILE_SIZE = 512;
     private final FileTypeIdModuleSettings settings;
-    private long jobId;  
-
+    private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
+    private final UserDefinedFileTypeIdentifier userDefinedFileTypeIdentifier;
+    private final TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
 
-    private static class IngestJobTotals {
-        long matchTime = 0;
-        long numFiles = 0;
-    }
-    
-    /**
-     * Update the match time total and increment num of files for this job
-     * @param ingestJobId  
-     * @param matchTimeInc amount of time to add
-     */
-    private static synchronized void addToTotals(long ingestJobId, long matchTimeInc) {
-        IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(ingestJobId);
-        if (ingestJobTotals == null) {
-            ingestJobTotals = new IngestJobTotals();
-            totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
-        }        
-        
-        ingestJobTotals.matchTime += matchTimeInc;
-        ingestJobTotals.numFiles++;
-        totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
-    }
-    
-    FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
-        this.settings = settings;
-    }
-
-    @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {
-        jobId = context.getJobId();
-        refCounter.incrementAndGet(jobId);
-    }    
-    
-    @Override
-    public ProcessResult process(AbstractFile abstractFile) {
-        // skip non-files
-        if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
-
-            return ProcessResult.OK;
-        }
-
-        if (settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
-            return ProcessResult.OK;
-        }
-
-        if (abstractFile.getSize() < MIN_FILE_SIZE) {
-            return ProcessResult.OK;
-        }
-
-        try {
-            long startTime = System.currentTimeMillis();
-            tikaDetector.detectAndSave(abstractFile);
-            addToTotals(jobId, (System.currentTimeMillis() - startTime)); //add match time
-            return ProcessResult.OK;
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
-            return ProcessResult.ERROR;
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
-            return ProcessResult.ERROR;
-        }
-    }
-
-    @Override
-    public void shutDown() {
-        // We only need to post the summary msg from the last module per job
-        if (refCounter.decrementAndGet(jobId) == 0) {
-            IngestJobTotals jobTotals;
-            synchronized(this) {
-                jobTotals = totalsForIngestJobs.remove(jobId);
-            }
-            if (jobTotals != null) {
-                StringBuilder detailsSb = new StringBuilder();
-                detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-                detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
-                detailsSb.append("<tr><td>") //NON-NLS
-                        .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
-                        .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n"); //NON-NLS
-                detailsSb.append("<tr><td>") //NON-NLS
-                        .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
-                        .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
-                detailsSb.append("</table>"); //NON-NLS
-                IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(),
-                        "FileTypeIdIngestModule.complete.srvMsg.text"),
-                        detailsSb.toString()));
-            }
-        }
-    }
-    
     /**
      * Validate if a given mime type is in the detector's registry.
      *
@@ -157,4 +68,157 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         TikaFileTypeDetector detector = new TikaFileTypeDetector();
         return detector.isMimeTypeDetectable(mimeType);
     }
+
+    /**
+     * Creates an ingest module that detects the type of a file based on
+     * signature (magic) values. Posts results to the blackboard.
+     *
+     * @param settings The ingest module settings.
+     */
+    FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
+        this.settings = settings;
+        userDefinedFileTypeIdentifier = new UserDefinedFileTypeIdentifier();
+        try {
+            userDefinedFileTypeIdentifier.loadFileTypes();
+        } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
+            logger.log(Level.SEVERE, "Failed to load file types", ex);
+            MessageNotifyUtil.Notify.error(FileTypeIdModuleFactory.getModuleName(), ex.getMessage());            
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        jobId = context.getJobId();
+        refCounter.incrementAndGet(jobId);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public ProcessResult process(AbstractFile file) {
+        
+        String name = file.getName();
+        
+        /**
+         * Skip unallocated space and unused blocks files.
+         */
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
+
+            return ProcessResult.OK;
+        }
+
+        /**
+         * Skip known files if configured to do so.
+         */
+        if (settings.skipKnownFiles() && (file.getKnown() == FileKnown.KNOWN)) {
+            return ProcessResult.OK;
+        }
+
+        /**
+         * Filter out very small files to minimize false positives.
+         */
+        if (settings.skipSmallFiles() && file.getSize() < settings.minFileSizeInBytes()) {
+            return ProcessResult.OK;
+        }
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            FileType fileType = this.userDefinedFileTypeIdentifier.identify(file);
+            if (null != fileType) {
+                String moduleName = FileTypeIdModuleFactory.getModuleName();
+                BlackboardArtifact getInfoArtifact = file.getGenInfoArtifact();
+                BlackboardAttribute typeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), moduleName, fileType.getMimeType());
+                getInfoArtifact.addAttribute(typeAttr);
+
+                if (fileType.alertOnMatch()) {
+                    BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, fileType.getFilesSetName());
+                    artifact.addAttribute(setNameAttribute);
+
+                    /**
+                     * Use the MIME type as the category, i.e., the rule that
+                     * determined this file belongs to the interesting files
+                     * set.
+                     */
+                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, fileType.getMimeType());
+                    artifact.addAttribute(ruleNameAttribute);
+                }
+
+            } else {
+                tikaDetector.detectAndSave(file);
+            }
+            addToTotals(jobId, (System.currentTimeMillis() - startTime));
+            return ProcessResult.OK;
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
+            return ProcessResult.ERROR;
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void shutDown() {
+        /**
+         * If this is the instance of this module for this ingest job, post a
+         * summary message to the ingest messages box.
+         */
+        if (refCounter.decrementAndGet(jobId) == 0) {
+            IngestJobTotals jobTotals;
+            synchronized (this) {
+                jobTotals = totalsForIngestJobs.remove(jobId);
+            }
+            if (jobTotals != null) {
+                StringBuilder detailsSb = new StringBuilder();
+                detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+                detailsSb.append("<tr><td>").append(FileTypeIdModuleFactory.getModuleName()).append("</td></tr>"); //NON-NLS
+                detailsSb.append("<tr><td>") //NON-NLS
+                        .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalProcTime"))
+                        .append("</td><td>").append(jobTotals.matchTime).append("</td></tr>\n"); //NON-NLS
+                detailsSb.append("<tr><td>") //NON-NLS
+                        .append(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.complete.totalFiles"))
+                        .append("</td><td>").append(jobTotals.numFiles).append("</td></tr>\n"); //NON-NLS
+                detailsSb.append("</table>"); //NON-NLS
+                IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileTypeIdModuleFactory.getModuleName(),
+                        NbBundle.getMessage(this.getClass(),
+                                "FileTypeIdIngestModule.complete.srvMsg.text"),
+                        detailsSb.toString()));
+            }
+        }
+    }
+
+    /**
+     * Update the match time total and increment number of files processed for
+     * this ingest job.
+     *
+     * @param jobId The ingest job identifier.
+     * @param matchTimeInc Amount of time to add.
+     */
+    private static synchronized void addToTotals(long jobId, long matchTimeInc) {
+        IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(jobId);
+        if (ingestJobTotals == null) {
+            ingestJobTotals = new IngestJobTotals();
+            totalsForIngestJobs.put(jobId, ingestJobTotals);
+        }
+
+        ingestJobTotals.matchTime += matchTimeInc;
+        ingestJobTotals.numFiles++;
+        totalsForIngestJobs.put(jobId, ingestJobTotals);
+    }
+
+    private static class IngestJobTotals {
+
+        long matchTime = 0;
+        long numFiles = 0;
+    }
+
 }

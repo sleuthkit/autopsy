@@ -24,69 +24,121 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * An factory that creates file ingest modules that determine the types of
- * files.
+ * A factory that creates file ingest modules that determine the types of files.
  */
+// TODO: This class does not need to be public.
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
 
+    FileTypeIdGlobalSettingsPanel globalSettingsPanel;
+
+    /**
+     * @inheritDoc
+     */
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
 
+    /**
+     * Gets the module display name.
+     *
+     * @return The name string.
+     */
     static String getModuleName() {
         return NbBundle.getMessage(FileTypeIdIngestModule.class,
                 "FileTypeIdIngestModule.moduleName.text");
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(FileTypeIdIngestModule.class,
                 "FileTypeIdIngestModule.moduleDesc.text");
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public String getModuleVersionNumber() {
         return Version.getVersion();
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean hasGlobalSettingsPanel() {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+        if (null == globalSettingsPanel) {
+            globalSettingsPanel = new FileTypeIdGlobalSettingsPanel();
+        }
+        globalSettingsPanel.load();
+        return globalSettingsPanel;
+    }
+
+    /**
+     * @inheritDoc
+     */
     @Override
     public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
         return new FileTypeIdModuleSettings();
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public boolean hasIngestJobSettingsPanel() {
         return true;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
             throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                                                                   "FileTypeIdModuleFactory.getIngestJobSettingsPanel.exception.msg"));
-        }        
-        return new FileTypeIdModuleSettingsPanel((FileTypeIdModuleSettings) settings);
+                    "FileTypeIdModuleFactory.getIngestJobSettingsPanel.exception.msg"));
+        }
+        return new FileTypeIdIngestJobSettingsPanel((FileTypeIdModuleSettings) settings);
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public boolean isFileIngestModuleFactory() {
         return true;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         assert settings instanceof FileTypeIdModuleSettings;
         if (!(settings instanceof FileTypeIdModuleSettings)) {
             throw new IllegalArgumentException(
                     NbBundle.getMessage(this.getClass(), "FileTypeIdModuleFactory.createFileIngestModule.exception.msg"));
-        }        
+        }
         return new FileTypeIdIngestModule((FileTypeIdModuleSettings) settings);
     }
 }
