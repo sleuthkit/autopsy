@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +34,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -61,10 +63,13 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     /**
      * This panel implements a property change listener that listens to ingest
-     * job events to disable the buttons on the panel if ingest is running. This
-     * is done to prevent changes to user-defined types while the type
-     * definitions are in use.
+     * job events so it can disable the buttons on the panel if ingest is
+     * running. This is done to prevent changes to user-defined types while the
+     * type definitions are in use.
      */
+    // TODO: Disabling during ingest would not be necessary if the file ingest
+    // modules obtained and shared a per data source ingest job snapshot of the
+    // file type definitions.
     IngestJobEventPropertyChangeListener ingestJobEventsListener;
 
     /**
@@ -107,6 +112,11 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         signatureTypeComboBox.setSelectedItem(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
     }
 
+    /**
+     * Adds a listener to the types list component so that the components in the
+     * file type details section of the panel can be populated and cleared based
+     * on the selection in the list.
+     */
     private void addTypeListSelectionListener() {
         typesList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -156,6 +166,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * prevent changes to user-defined types while the type definitions are in
      * use.
      */
+    // TODO: Disabling during ingest would not be necessary if the file ingest
+    // modules obtained and shared a per data source ingest job snapshot of the
+    // file type definitions.    
     private void addIngestJobEventsListener() {
         ingestJobEventsListener = new IngestJobEventPropertyChangeListener();
         IngestManager.getInstance().addIngestJobEventListener(ingestJobEventsListener);
@@ -239,11 +252,25 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         String mimeType = typesList.getSelectedValue();
         FileType fileType = fileTypes.get(mimeType);
         if (null != fileType) {
-            mimeTypeTextField.setText(mimeType);
+            mimeTypeTextField.setText(fileType.getMimeType());
             Signature signature = fileType.getSignature();
             FileType.Signature.Type sigType = signature.getType();
             signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
-            this.signatureTextField.setText(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
+            String signatureBytes;
+            if (Signature.Type.RAW == signature.getType()) {
+                signatureBytes = DatatypeConverter.printHexBinary(signature.getSignatureBytes());
+            } else {
+                try {
+                    signatureBytes = new String(signature.getSignatureBytes(), "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            ex.getLocalizedMessage(),
+                            NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    signatureBytes = "";
+                }
+            }
+            signatureTextField.setText(signatureBytes);
             offsetTextField.setText(Long.toString(signature.getOffset()));
             postHitCheckBox.setSelected(fileType.alertOnMatch());
             filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
@@ -499,16 +526,17 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                                     .addComponent(filesSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addComponent(typesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 219, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(deleteTypeButton)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(newTypeButton)
-                            .addComponent(saveTypeButton)))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(deleteTypeButton)
+                                .addComponent(saveTypeButton))))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(11, 11, 11)
                         .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ingestRunningWarningLabel)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteTypeButton, newTypeButton, saveTypeButton});

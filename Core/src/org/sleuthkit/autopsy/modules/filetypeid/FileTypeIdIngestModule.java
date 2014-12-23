@@ -100,6 +100,9 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
+        
+        String name = file.getName();
+        
         /**
          * Skip unallocated space and unused blocks files.
          */

@@ -56,7 +56,7 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
     }
 
     void setSkipSmallFiles(boolean enabled) {
-        this.skipKnownFiles = enabled;
+        this.skipSmallFiles = enabled;
     }
 
     boolean skipSmallFiles() {
