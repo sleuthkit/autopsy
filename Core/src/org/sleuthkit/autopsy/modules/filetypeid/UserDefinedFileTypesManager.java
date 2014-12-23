@@ -179,28 +179,6 @@ final class UserDefinedFileTypesManager {
      */
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         try {
-            // RJCTODO: Remove this code from TikaFileTypeDetector.java.
-//        try {
-//            byte buf[];
-//            int len = abstractFile.read(buffer, 0, BUFFER_SIZE);
-//            if (len < BUFFER_SIZE) {
-//                buf = new byte[len];
-//                System.arraycopy(buffer, 0, buf, 0, len);
-//            } else {
-//                buf = buffer;
-//            }
-//            
-//            // the xml detection in Tika tries to parse the entire file and throws exceptions
-//            // for files that are not valid XML
-//            try {
-//                String tagHeader = new String(buf, 0, 5);
-//                if (tagHeader.equals("<?xml")) { //NON-NLS    
-//                    return "text/xml"; //NON-NLS
-//                }
-//            }
-//            catch (IndexOutOfBoundsException e) {
-//                // do nothing
-//            }
             FileType fileType = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false);
             fileTypes.put(fileType.getMimeType(), fileType);
 

@@ -69,18 +69,6 @@ public class TikaFileTypeDetector {
                 buf = buffer;
             }
             
-            // the xml detection in Tika tries to parse the entire file and throws exceptions
-            // for files that are not valid XML
-            try {
-                String tagHeader = new String(buf, 0, 5);
-                if (tagHeader.equals("<?xml")) { //NON-NLS    
-                    return "text/xml"; //NON-NLS
-                }
-            }
-            catch (IndexOutOfBoundsException e) {
-                // do nothing
-            } 
-
             String mimetype = tikaInst.detect(buf, abstractFile.getName());
             // Remove tika's name out of the general types like msoffice and ooxml
             return mimetype.replace("tika-", ""); //NON-NLS
