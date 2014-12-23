@@ -23,17 +23,17 @@ import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Does file type identification for user-defined file types.
+ * Does file type detection for user-defined file types.
  */
-final class UserDefinedFileTypeIdentifier {
+final class UserDefinedFileTypeDetector {
 
     private Map<String, FileType> fileTypes;
 
     /**
-     * Creates an object that can do file type identification for user-defined
+     * Creates an object that can do file type detection for user-defined
      * file types.
      */
-    UserDefinedFileTypeIdentifier() {
+    UserDefinedFileTypeDetector() {
         fileTypes = new HashMap<>();
     }
 

@@ -49,7 +49,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private final UserDefinedFileTypeIdentifier userDefinedFileTypeIdentifier;
+    private final UserDefinedFileTypeDetector userDefinedFileTypeIdentifier;
     private final TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
 
     /**
@@ -77,7 +77,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
-        userDefinedFileTypeIdentifier = new UserDefinedFileTypeIdentifier();
+        userDefinedFileTypeIdentifier = new UserDefinedFileTypeDetector();
         try {
             userDefinedFileTypeIdentifier.loadFileTypes();
         } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
