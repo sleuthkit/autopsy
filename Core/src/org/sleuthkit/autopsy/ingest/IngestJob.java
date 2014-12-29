@@ -73,7 +73,7 @@ public final class IngestJob {
      *
      * @return True or false.
      */
-    boolean hasIngestPipeline() {
+    synchronized boolean hasIngestPipeline() {
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             if (dataSourceJob.hasIngestPipeline()) {
                 return true;
