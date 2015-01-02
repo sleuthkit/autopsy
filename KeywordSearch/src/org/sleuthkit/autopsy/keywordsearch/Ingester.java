@@ -268,7 +268,7 @@ class Ingester {
      * @param size
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException 
      */
-    private void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+     void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown

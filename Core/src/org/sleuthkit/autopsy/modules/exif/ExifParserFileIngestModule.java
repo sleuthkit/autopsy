@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -156,6 +158,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
+                indexArtifact(bba);
                 filesToFire = true;
             }
 
@@ -196,6 +199,19 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return ImageUtils.isJpegFileHeader(f);
     }
 
+    /**
+     * 
+     * @param artifact 
+     */
+    private void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
+        Case currentCase = Case.getCurrentCase();
+        
+        if (currentCase != null) {
+            KeywordSearchService kwsService = currentCase.getServices().getKeywordSearchService();
+            if (kwsService != null)
+                kwsService.indexArtifact(artifact);
+        }
+    }
     @Override
     public void shutDown() {
         // We only need to check for this final event on the last module per job
