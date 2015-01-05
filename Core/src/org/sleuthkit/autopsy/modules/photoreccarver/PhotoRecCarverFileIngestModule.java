@@ -175,7 +175,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             processAndSettings.redirectOutput(Redirect.appendTo(log));
 
             int exitValue = ExecUtil.execute(processAndSettings, new FileIngestModuleProcessTerminator(this.context));
-
+            
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
                 // cleanup the output path
@@ -205,13 +205,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             oldAuditFile.renameTo(newAuditFile);
 
             Path pathToRemove = Paths.get(outputDirPath.toAbsolutePath().toString());
-            DirectoryStream<Path> stream = Files.newDirectoryStream(pathToRemove);
-            for (Path entry : stream) {
-                if (Files.isDirectory(entry)) {
-                    FileUtil.deleteDir(new File(entry.toString()));
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(pathToRemove)) {
+                for (Path entry : stream) {
+                    if (Files.isDirectory(entry)) {
+                        FileUtil.deleteDir(new File(entry.toString()));
+                    }
                 }
             }
-
+            
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
             List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
