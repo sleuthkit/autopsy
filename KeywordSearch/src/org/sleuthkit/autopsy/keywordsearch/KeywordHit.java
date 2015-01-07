@@ -18,45 +18,80 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+
 /**
- * Stores the fact that file or an artifact associated had a keyword hit.
- * <p>
- * Instances of this class are immutable, so they are thread-safe.
+ * Stores the fact that file or an artifact had a keyword hit.
  */
 class KeywordHit {
 
-    private final String documentId;
+    private final String solrDocumentId;
     private final long objectId;
     private final int chunkId;
     private final String snippet;
+    private final AbstractFile file;
+    BlackboardArtifact artifact;
 
-    KeywordHit(String documentId, String snippet) {
-        this.documentId = documentId;
-        final int separatorIndex = documentId.indexOf(Server.ID_CHUNK_SEP);
+    KeywordHit(String solrDocumentId, String snippet) throws TskCoreException {
+        /**
+         * Store the Solr document id.
+         */
+        this.solrDocumentId = solrDocumentId;
+
+        /**
+         * Parse the Solr document id to get the object id and chunk id. There
+         * will only be a chunk if the text in the object was divided into
+         * chunks.
+         */
+        final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
         if (separatorIndex != -1) {
-            this.objectId = Long.parseLong(documentId.substring(0, separatorIndex));
-            this.chunkId = Integer.parseInt(documentId.substring(separatorIndex + 1));
+            this.objectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
+            this.chunkId = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
         } else {
-            this.objectId = Long.parseLong(documentId);
+            this.objectId = Long.parseLong(solrDocumentId);
             this.chunkId = 0;
         }
-        this.snippet = snippet;
+
+        /**
+         * Look up the file associated with the keyword hit. If the high order
+         * bit of the object id is set, the hit was for an artifact. In this
+         * case, look up the artifact as well.
+         */
+        SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
+        long fileId;
+        if (this.objectId < 0) {
+            long artifactId = this.objectId - 0x8000000000000000L;
+            this.artifact = caseDb.getBlackboardArtifact(artifactId);
+            fileId = artifact.getObjectID();
+        } else {
+            fileId = this.objectId;
+        }
+        this.file = caseDb.getAbstractFileById(fileId);
+        
+        /**
+         * Store the text snippet.
+         */
+        this.snippet = snippet;        
     }
 
-    String getDocumentId() {
-        return this.documentId;
+    String getSolrDocumentId() {
+        return this.solrDocumentId;
     }
 
     long getObjectId() {
         return this.objectId;
     }
 
-    int getChunkId() {
-        return this.chunkId;
+    boolean hasChunkId() {
+        return this.chunkId != 0;
     }
 
-    boolean isChunk() {
-        return this.chunkId != 0;
+    int getChunkId() {
+        return this.chunkId;
     }
 
     boolean hasSnippet() {
@@ -67,8 +102,16 @@ class KeywordHit {
         return this.snippet;
     }
 
+    AbstractFile getFile() {
+        return this.file;
+    }
+
+    BlackboardArtifact getArtifact() {
+        return this.artifact;
+    }
+
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj) { // RJCTODO: Fix
         if (null == obj) {
             return false;
         }
@@ -80,7 +123,7 @@ class KeywordHit {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode() { // RJCTODO: Fix
         int hash = 3;
         hash = 41 * hash + (int) this.objectId + this.chunkId;
         return hash;
