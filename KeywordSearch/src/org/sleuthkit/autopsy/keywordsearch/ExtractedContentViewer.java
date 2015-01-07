@@ -34,9 +34,12 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays marked-up (HTML) content for a Node. The sources are all the
@@ -86,25 +89,28 @@ public class ExtractedContentViewer implements DataContentViewer {
         // internal list
         sources.addAll(selectedNode.getLookup().lookupAll(TextMarkup.class));
 
-        
-        // if it doesn't have any SOLR content, then we won't add more sources
-        if (solrHasContent(selectedNode) == false) {
+        // Q: Can this be moved up? Is is possible to have "sources" when the
+        // node doesn't have a content object or the content size is 0?
+        Content content = selectedNode.getLookup().lookup(Content.class);
+        if (content == null || content.getSize() == 0) {
             setPanel(sources);
             return;
         }
-        
-        Content content = selectedNode.getLookup().lookup(Content.class);
-        if (content == null) {
-            return;
-        }
 
+        long objectId = getObjectId(selectedNode);
+        boolean isDir = content.accept(isDirVisitor);
+        
+        if (!isDir && solrHasContent(objectId) == false) {
+            setPanel(sources);
+            return;            
+        }
+                
         // make a new source for the raw content
-        TextMarkup rawSource = new RawTextMarkup(content);
+        TextMarkup rawSource = new RawTextMarkup(content, objectId);
         
         currentSource = rawSource;
         sources.add(rawSource);
       
-
         //init pages
         int currentPage = currentSource.getCurrentPage();
         if (currentPage == 0 && currentSource.hasNextPage()) {
@@ -181,7 +187,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             return true;
         }
 
-        return solrHasContent(node);
+        return solrHasContent(getObjectId(node));
     }
 
     @Override
@@ -227,30 +233,14 @@ public class ExtractedContentViewer implements DataContentViewer {
     /**
      * Check if Solr has extracted content for a given node
      *
-     * @param node
+     * @param objectId 
      * @return true if Solr has content, else false
      */
-    private boolean solrHasContent(Node node) {
-        Content content = node.getLookup().lookup(Content.class);
-        if (content == null) {
-            return false;
-        }
-
-        if (content.getSize() == 0) {
-            return false;
-        }
-
+    private boolean solrHasContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
-
-        boolean isDir = content.accept(isDirVisitor);
-        if (isDir) {
-            return false;
-        }
-
-        final long contentID = content.getId();
-
+        
         try {
-            return solrServer.queryIsIndexed(contentID);
+            return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
             return false;
@@ -260,7 +250,35 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
+    private Long getObjectId(Node node) {
+        Content content = node.getLookup().lookup(Content.class);
+        
+        if (content == null)
+            return 0L;
+        
+        long objectId = content.getId();
+        
+        BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
 
+        try {
+            // If this is a keyword hit artifact with an associated artifact it
+            // implies that the keyword hit is for an artifact instead of a file.
+            // In that case we need to use the original artifact id to query
+            // Solr.
+            if (art != null && art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                for (BlackboardAttribute attribute : art.getAttributes()) {
+                    if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID())
+                        objectId = attribute.getValueLong();
+                }
+            }
+        }
+        catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to retrieve attributes for artifact.", ex); //NON-NLS            
+        }
+        
+        return objectId;
+    }
+    
     private class NextFindActionListener implements ActionListener {
 
         @Override

@@ -357,6 +357,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
         }
+        
+        Long objectId = content.getId();
+        
         Lookup lookup = Lookup.getDefault();
         TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
         try {
@@ -370,6 +373,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
                 }
+                else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                    objectId = att.getValueLong();
+                }
             }
             if (keyword != null) {
                 boolean isRegexp = (regexp != null && !regexp.equals(""));
@@ -379,7 +385,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 } else {
                     origQuery = keyword;
                 }
-                return highlightFactory.createInstance(content, keyword, isRegexp, origQuery);
+                return highlightFactory.createInstance(content, objectId, keyword, isRegexp, origQuery);
             }
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
