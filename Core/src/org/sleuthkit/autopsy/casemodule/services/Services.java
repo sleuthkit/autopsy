@@ -26,6 +26,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceFactory;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -42,6 +45,7 @@ public class Services implements Closeable {
     // services
     private FileManager fileManager;
     private TagsManager tagsManager;
+    private KeywordSearchService keywordSearchService;
 
     public Services(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
@@ -51,6 +55,8 @@ public class Services implements Closeable {
         
         tagsManager = new TagsManager(tskCase);
         services.add(tagsManager);
+        
+        loadKeywordSearchService();
     }
     
     public FileManager getFileManager() {
@@ -61,11 +67,21 @@ public class Services implements Closeable {
         return tagsManager;
     }
 
+    public KeywordSearchService getKeywordSearchService() {
+        return keywordSearchService;
+    }
+    
     @Override
     public void close() throws IOException {
         // close all services
         for (Closeable service : services) {
             service.close();
         }
+    }
+    
+    private void loadKeywordSearchService() {
+        KeywordSearchServiceFactory factory = Lookup.getDefault().lookup(KeywordSearchServiceFactory.class);
+        keywordSearchService = factory.createKeywordSearchService();
+        services.add(keywordSearchService);
     }
 }
