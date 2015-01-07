@@ -49,7 +49,7 @@ class QueryResults {
     private KeywordSearchQuery keywordSearchQuery;
     
     // maps Keyword object to its hits
-    private Map<Keyword, List<ContentHit>> results = new HashMap<>();
+    private Map<Keyword, List<KeywordHit>> results = new HashMap<>();
     private KeywordList keywordList;
     
     QueryResults (KeywordSearchQuery query, KeywordList keywordList) {
@@ -57,7 +57,7 @@ class QueryResults {
         this.keywordList = keywordList;
     }
     
-    void addResult(Keyword keyword, List<ContentHit> hits) {
+    void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
     
@@ -69,7 +69,7 @@ class QueryResults {
         return keywordSearchQuery;
     }
     
-    List<ContentHit> getResults(Keyword keyword) {
+    List<KeywordHit> getResults(Keyword keyword) {
         return results.get(keyword);
     }
     
@@ -82,19 +82,18 @@ class QueryResults {
      * @param results
      * @return 
      */
-    LinkedHashMap<AbstractFile, ContentHit> getUniqueFiles() {
-        LinkedHashMap<AbstractFile, ContentHit> flattened = new LinkedHashMap<>();
-
+    List<KeywordHit> getUniqueFiles() {
+        List<KeywordHit> uniqueHits = new ArrayList<>();
         for (Keyword keyWord : getKeywords()) {
-            for (ContentHit hit : getResults(keyWord)) {
+            for (KeywordHit hit : getResults(keyWord)) {
                 AbstractFile abstractFile = hit.getContent();
                 //flatten, record first chunk encountered
-                if (!flattened.containsKey(abstractFile)) {
-                    flattened.put(abstractFile, hit);
+                if (!uniqueHits.containsKey(abstractFile)) {
+                    uniqueHits.put(abstractFile, hit);
                 }
             }
         }
-        return flattened;
+        return uniqueHits;
     }
     
 
@@ -105,7 +104,7 @@ class QueryResults {
      */
     Map<AbstractFile, Integer> getUniqueFiles(Keyword keyword) {
         Map<AbstractFile, Integer> ret = new LinkedHashMap<>();
-        for (ContentHit h : getResults(keyword)) {
+        for (KeywordHit h : getResults(keyword)) {
             AbstractFile f = h.getContent();
             if (!ret.containsKey(f)) {
                 ret.put(f, h.getChunkId());

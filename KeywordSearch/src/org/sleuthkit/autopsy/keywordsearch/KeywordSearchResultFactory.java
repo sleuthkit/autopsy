@@ -172,7 +172,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         int resID = 0;
 
         List<KeyValueQueryContent> tempList = new ArrayList<>();
-        final Map<AbstractFile, ContentHit> uniqueFileMap = queryResults.getUniqueFiles();
+        final Map<AbstractFile, KeywordHit> uniqueFileMap = queryResults.getUniqueFiles();
         for (final AbstractFile f : uniqueFileMap.keySet()) {
 
             //@@@ USE ConentHit in UniqueFileMap instead of the below search
@@ -187,7 +187,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * single snippet for it. 
              */
             
-            ContentHit chit = uniqueFileMap.get(f);
+            KeywordHit chit = uniqueFileMap.get(f);
             if (chit.hasSnippet()) {
                 setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, chit.getSnippet());
             }
@@ -254,9 +254,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 //find terms for this file hit
                 List<String> hitTerms = new ArrayList<>();
                 for (Keyword term : queryResults.getKeywords()) {
-                    List<ContentHit> hitList = queryResults.getResults(term);
+                    List<KeywordHit> hitList = queryResults.getResults(term);
 
-                    for (ContentHit h : hitList) {
+                    for (KeywordHit h : hitList) {
                         if (h.getContent().equals(f)) {
                             hitTerms.add(term.toString());
                             break; //go to next term

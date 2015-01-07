@@ -151,9 +151,9 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
             //organize the hits by page, filter as needed
             TreeSet<Integer> pagesSorted = new TreeSet<>();
             for (Keyword k : hits.getKeywords()) {
-                for (ContentHit hit : hits.getResults(k)) {
+                for (KeywordHit hit : hits.getResults(k)) {
                     int chunkID = hit.getChunkId();
-                    if (chunkID != 0 && contentId == hit.getId()) {
+                    if (chunkID != 0 && contentId == hit.getObjectId()) {
                         pagesSorted.add(chunkID);
                     }
                 }

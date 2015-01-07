@@ -232,9 +232,9 @@ class TermComponentQuery implements KeywordSearchQuery {
             }
             try {
                 QueryResults subResults = filesQuery.performQuery();
-                Set<ContentHit> filesResults = new HashSet<>();
+                Set<KeywordHit> filesResults = new HashSet<>();
                 for (Keyword key : subResults.getKeywords()) {
-                    List<ContentHit> keyRes = subResults.getResults(key);
+                    List<KeywordHit> keyRes = subResults.getResults(key);
                     resultSize += keyRes.size();
                     filesResults.addAll(keyRes);
                 }
