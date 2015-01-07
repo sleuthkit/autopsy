@@ -46,7 +46,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
     private static final String ANCHOR_PREFIX = HighlightedTextMarkup.class.getName() + "_";
 
-    private Content content;
+    private Long objectId;
     private String keywordHitQuery;
     private Server solrServer;
     private int numberPages;
@@ -64,8 +64,8 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    HighlightedTextMarkup(Content content, String keywordHitQuery, boolean isRegex) {
-        this.content = content;
+    HighlightedTextMarkup(Long objectId, String keywordHitQuery, boolean isRegex) {
+        this.objectId = objectId;
         this.keywordHitQuery = keywordHitQuery;
         this.isRegex = isRegex;
         this.group = true;
@@ -81,18 +81,18 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     }
 
     //when the results are not known and need to requery to get hits
-    HighlightedTextMarkup(Content content, String solrQuery, boolean isRegex, String originalQuery) {
-        this(content, solrQuery, isRegex);
+    HighlightedTextMarkup(Long objectId, String solrQuery, boolean isRegex, String originalQuery) {
+        this(objectId, solrQuery, isRegex);
         this.originalQuery = originalQuery;
     }
 
-    HighlightedTextMarkup(Content content, String solrQuery, boolean isRegex, QueryResults hits) {
-        this(content, solrQuery, isRegex);
+    HighlightedTextMarkup(Long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
+        this(objectId, solrQuery, isRegex);
         this.hits = hits;
     }
 
-    HighlightedTextMarkup(Content content, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
-        this(content, solrQuery, isRegex, hits);
+    HighlightedTextMarkup(Long objectId, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
+        this(objectId, solrQuery, isRegex, hits);
         this.group = group;
     }
 
@@ -104,12 +104,12 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
             return;
         }
         try {
-            this.numberPages = solrServer.queryNumFileChunks(content.getId());
+            this.numberPages = solrServer.queryNumFileChunks(this.objectId);
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId()); //NON-NLS
+            logger.log(Level.WARNING, "Could not get number pages for content: " + this.objectId); //NON-NLS
             return;
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId()); //NON-NLS
+            logger.log(Level.WARNING, "Could not get number pages for content: " + this.objectId); //NON-NLS
             return;
         }
 
@@ -122,7 +122,6 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
         //if has chunks, get pages with hits
         if (hasChunks) {
             //extract pages of interest, sorted
-            final long contentId = content.getId();
 
             /* If this is being called from the artifacts / dir tree, then we
              * need to perform the search to get the highlights. 
@@ -139,7 +138,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
                 keywords.add(keywordQuery);
                 KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
                 
-                chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, contentId));
+                chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
@@ -153,7 +152,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
             for (Keyword k : hits.getKeywords()) {
                 for (ContentHit hit : hits.getResults(k)) {
                     int chunkID = hit.getChunkId();
-                    if (chunkID != 0 && contentId == hit.getId()) {
+                    if (chunkID != 0 && this.objectId == hit.getId()) {
                         pagesSorted.add(chunkID);
                     }
                 }
@@ -333,9 +332,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
         q.setQuery(queryStr);
 
-        final long contentId = content.getId();
-
-        String contentIdStr = Long.toString(contentId);
+        String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
             contentIdStr += "_" + Integer.toString(this.currentPage);
         }
@@ -451,7 +448,9 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
     @Override
     // factory method to create an instance of this object
-    public TextMarkupLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery) {
-        return new HighlightedTextMarkup(c, keywordHitQuery, isRegex, originalQuery);
+    public TextMarkupLookup createInstance(Content content, Long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
+        // Note that the content object is not needed by the HighlightedTestMarkup object so
+        // we do not pass it through to its constructor.
+        return new HighlightedTextMarkup(objectId, keywordHitQuery, isRegex, originalQuery);
     }
 }
