@@ -152,8 +152,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
             for (Keyword k : hits.getKeywords()) {
                 for (KeywordHit hit : hits.getResults(k)) {
                     int chunkID = hit.getChunkId();
-                    if (chunkID != 0 && contentId == hit.getSolrObjectId()) {
-                    if (chunkID != 0 && this.objectId == hit.getId()) {
+                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
                         pagesSorted.add(chunkID);
                     }
                 }
