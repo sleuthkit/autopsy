@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.HashMap;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -68,14 +70,34 @@ public class SolrSearchService implements KeywordSearchService {
         if (artifactContents.isEmpty())
             return;
         
-        // Set the ID field for the document. We distinguish artifact
-        // content from file content by prepending "art-" to the
-        // artifact object id.
+        // To play by the rules of the existing text markup implementations,
+        // we need to (a) index the artifact contents in a "chunk" and 
+        // (b) create a separate index entry for the base artifact.
+        // We distinguish artifact content from file content by applying a 
+        // mask to the artifact id to make its value > 0x8000000000000000 (i.e. negative).
+
+        // First, create an index entry for the base artifact.
         HashMap<String, String> solrFields = new HashMap<>();
-        solrFields.put(Server.Schema.ID.toString(), "art-" + artifact.getArtifactID());
+        String documentId = Long.toString(0x8000000000000000L + artifact.getArtifactID());
+
+        solrFields.put(Server.Schema.ID.toString(), documentId);
         
         // Set the IMAGE_ID field.
         solrFields.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
+
+        try {
+            Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
+        }
+        catch (Ingester.IngesterException ex) {
+        }
+
+        // Next create the index entry for the document content.
+        // The content gets added to a single chunk. We may need to add chunking
+        // support later.
+        long chunkId = 1;
+
+        documentId += "_" + Long.toString(chunkId);
+        solrFields.replace(Server.Schema.ID.toString(), documentId);
         
         StringStream contentStream = new StringStream(artifactContents);
         
