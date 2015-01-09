@@ -570,7 +570,7 @@ public final class SearchRunner {
                 //translate to list of IDs that we keep track of
                 List<Long> queryTermResultsIDs = new ArrayList<>();
                 for (KeywordHit ch : queryTermResults) {
-                    queryTermResultsIDs.add(ch.getObjectId());
+                    queryTermResultsIDs.add(ch.getSolrObjectId());
                 }
 
                 List<Long> curTermResults = job.currentKeywordResults(keyword);
@@ -580,7 +580,7 @@ public final class SearchRunner {
                 } else {
                     //some AbstractFile hits already exist for this keyword
                     for (KeywordHit res : queryTermResults) {
-                        if (!curTermResults.contains(res.getObjectId())) {
+                        if (!curTermResults.contains(res.getSolrObjectId())) {
                             //add to new results
                             List<KeywordHit> newResultsFs = newResults.getResults(keyword);
                             if (newResultsFs == null) {
@@ -588,7 +588,7 @@ public final class SearchRunner {
                                 newResults.addResult(keyword, newResultsFs);
                             }
                             newResultsFs.add(res);
-                            curTermResults.add(res.getObjectId());
+                            curTermResults.add(res.getSolrObjectId());
                         }
                     }
                 }

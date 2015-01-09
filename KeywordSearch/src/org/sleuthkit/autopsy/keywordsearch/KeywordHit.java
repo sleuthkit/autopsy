@@ -25,16 +25,20 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Stores the fact that file or an artifact had a keyword hit.
+ * Stores the fact that file or an artifact associated with a file had a keyword
+ * hit. All instances make both the document id of the Solr document where the
+ * keyword was found and the file available to clients. Artifact keyword hits
+ * also make the artifact available to clients.
  */
 class KeywordHit {
 
+    private static final long ARTIFACT_ID_MAGIC = 0x8000000000000000L;
     private final String solrDocumentId;
-    private final long objectId;
+    private final long solrObjectId;
     private final int chunkId;
     private final String snippet;
     private final AbstractFile file;
-    BlackboardArtifact artifact;
+    private final BlackboardArtifact artifact;
 
     KeywordHit(String solrDocumentId, String snippet) throws TskCoreException {
         /**
@@ -43,16 +47,20 @@ class KeywordHit {
         this.solrDocumentId = solrDocumentId;
 
         /**
-         * Parse the Solr document id to get the object id and chunk id. There
-         * will only be a chunk if the text in the object was divided into
-         * chunks.
+         * Parse the Solr document id to get the Solr object id and chunk id.
+         * For a file hit, the Solr object id is the file's obj_id from the case
+         * database. For an artifact hit, the Solr object id is the artifact_id
+         * from the case database summed with a magic number to set the highest
+         * order bit. For every object (file or artifact) there will at least
+         * two Solr documents. One contains object metadata (chunk #1) and the
+         * second and subsequent documents contain chunks of the text.
          */
         final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
-        if (separatorIndex != -1) {
-            this.objectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
+        if (-1 != separatorIndex) {
+            this.solrObjectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
             this.chunkId = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
         } else {
-            this.objectId = Long.parseLong(solrDocumentId);
+            this.solrObjectId = Long.parseLong(solrDocumentId);
             this.chunkId = 0;
         }
 
@@ -63,27 +71,28 @@ class KeywordHit {
          */
         SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
         long fileId;
-        if (this.objectId < 0) {
-            long artifactId = this.objectId - 0x8000000000000000L;
+        if (this.solrObjectId < 0) {
+            long artifactId = this.solrObjectId - KeywordHit.ARTIFACT_ID_MAGIC;
             this.artifact = caseDb.getBlackboardArtifact(artifactId);
             fileId = artifact.getObjectID();
         } else {
-            fileId = this.objectId;
+            this.artifact = null;
+            fileId = this.solrObjectId;
         }
         this.file = caseDb.getAbstractFileById(fileId);
-        
+
         /**
          * Store the text snippet.
          */
-        this.snippet = snippet;        
+        this.snippet = snippet;
     }
 
     String getSolrDocumentId() {
         return this.solrDocumentId;
     }
 
-    long getObjectId() {
-        return this.objectId;
+    long getSolrObjectId() {
+        return this.solrObjectId;
     }
 
     boolean hasChunkId() {
@@ -106,12 +115,16 @@ class KeywordHit {
         return this.file;
     }
 
+    boolean isArtifactHit() {
+        return (null != this.artifact);
+    }
+
     BlackboardArtifact getArtifact() {
         return this.artifact;
     }
 
     @Override
-    public boolean equals(Object obj) { // RJCTODO: Fix
+    public boolean equals(Object obj) {
         if (null == obj) {
             return false;
         }
@@ -119,13 +132,13 @@ class KeywordHit {
             return false;
         }
         final KeywordHit other = (KeywordHit) obj;
-        return (this.objectId == other.objectId && this.chunkId == other.chunkId && this.snippet.equals(other.snippet));
+        return (this.solrObjectId == other.solrObjectId && this.chunkId == other.chunkId);
     }
 
     @Override
-    public int hashCode() { // RJCTODO: Fix
+    public int hashCode() {
         int hash = 3;
-        hash = 41 * hash + (int) this.objectId + this.chunkId;
+        hash = 41 * hash + (int) this.solrObjectId + this.chunkId;
         return hash;
     }
 

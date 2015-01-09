@@ -141,14 +141,14 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardArtifact bba;
         KeywordCachedArtifact writeResult;
         try {
-            bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            bba = hit.getFile().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordCachedArtifact(bba);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
@@ -173,6 +173,10 @@ class LuceneQuery implements KeywordSearchQuery {
             }
         }
 
+        if (hit.isArtifactHit()) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(), MODULE_NAME, hit.getArtifact().getArtifactID()));
+        }
+        
         try {
             bba.addAttributes(attributes); //write out to bb
             writeResult.add(attributes);
@@ -311,18 +315,6 @@ class LuceneQuery implements KeywordSearchQuery {
         return solrDocumentsWithMatches;
     }
 
-    /**
-     * RJCTODO: Update
-     * Utility method to create a ContentHit object from the various query
-     * result objects
-     *
-     * @param solrDoc Document to make object about
-     * @param highlightResponse Set of snippets to pull snippet from
-     * @param snippets True if user wants snippets to be displayed
-     * @param caseDb Current case
-     * @return
-     * @throws TskException
-     */
     private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException {
         /**
          * Get the first snippet from the document if keyword search is
@@ -345,15 +337,15 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @param query the keyword query for text to highlight. Lucene special
      * cahrs should already be escaped.
-     * @param contentID content id associated with the file
+     * @param solrObjectId The Solr object id associated with the file or artifact
      * @param isRegex whether the query is a regular expression (different Solr
      * fields are then used to generate the preview)
      * @param group whether the query should look for all terms grouped together
      * in the query order, or not
      * @return
      */
-    public static String querySnippet(String query, long contentID, boolean isRegex, boolean group) throws NoOpenCoreException {
-        return querySnippet(query, contentID, 0, isRegex, group);
+    public static String querySnippet(String query, long solrObjectId, boolean isRegex, boolean group) throws NoOpenCoreException {
+        return querySnippet(query, solrObjectId, 0, isRegex, group);
     }
 
     /**
@@ -361,7 +353,7 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @param query the keyword query for text to highlight. Lucene special
      * cahrs should already be escaped.
-     * @param contentID content id associated with the hit
+     * @param solrObjectId Solr object id associated with the hit
      * @param chunkID chunk id associated with the content hit, or 0 if no
      * chunks
      * @param isRegex whether the query is a regular expression (different Solr
@@ -370,7 +362,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * in the query order, or not
      * @return
      */
-    public static String querySnippet(String query, long contentID, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
+    public static String querySnippet(String query, long solrObjectId, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
         Server solrServer = KeywordSearch.getServer();
 
         String highlightField;
@@ -407,9 +399,9 @@ class LuceneQuery implements KeywordSearchQuery {
         String contentIDStr;
 
         if (chunkID == 0) {
-            contentIDStr = Long.toString(contentID);
+            contentIDStr = Long.toString(solrObjectId);
         } else {
-            contentIDStr = Server.getChunkIdString(contentID, chunkID);
+            contentIDStr = Server.getChunkIdString(solrObjectId, chunkID);
         }
 
         String idQuery = Server.Schema.ID.toString() + ":" + contentIDStr;

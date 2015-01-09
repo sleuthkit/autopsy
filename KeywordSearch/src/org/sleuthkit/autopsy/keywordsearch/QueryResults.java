@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Stores the results from running a SOLR query (which could contain multiple
+ * Stores the results from running a Solr query (which could contain multiple
  * keywords).
  *
  */
@@ -49,11 +48,21 @@ class QueryResults {
 
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
 
-    private KeywordSearchQuery keywordSearchQuery;
+    /**
+     * The query that generated the results.
+     */
+    private final KeywordSearchQuery keywordSearchQuery;
 
-    // maps Keyword object to its hits
-    private Map<Keyword, List<KeywordHit>> results = new HashMap<>();
-    private KeywordList keywordList;
+    /**
+     * A map of keywords to keyword hits.
+     */
+    private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
+
+    /**
+     * The list of keywords
+     */
+    // TODO: This is redundant. The keyword list is in the query. 
+    private final KeywordList keywordList;
 
     QueryResults(KeywordSearchQuery query, KeywordList keywordList) {
         this.keywordSearchQuery = query;
@@ -64,6 +73,7 @@ class QueryResults {
         results.put(keyword, hits);
     }
 
+    // TODO: This is redundant. The keyword list is in the query.  
     KeywordList getKeywordList() {
         return keywordList;
     }
@@ -81,16 +91,18 @@ class QueryResults {
     }
 
     /**
-     * Creates a blackboard artifacts for the hits. makes one artifact per
-     * keyword per file (i.e. if a keyword hits several times in the file, only
-     * one artifact is created)
+     * Writes the keyword hits encapsulated in this query result to the
+     * blackboard. Makes one artifact per keyword per searched object (file or
+     * artifact), i.e., if a keyword is found several times in the object, only
+     * one artifact is created.
      *
-     * @param listName
-     * @param progress can be null
-     * @param subProgress can be null
-     * @param notifyInbox flag indicating whether or not to call
-     * writeSingleFileInboxMessage() for each hit
-     * @return list of new artifactsPerFile
+     * @param progress Can be null.
+     * @param subProgress Can be null.
+     * @param worker The Swing worker that is writing the hits, needed to
+     * support cancellation.
+     * @param notifyInbox Whether or not write a message to the ingest messages
+     * inbox.
+     * @return The artifacts that were created.
      */
     Collection<BlackboardArtifact> writeAllHitsToBlackBoard(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
@@ -119,11 +131,10 @@ class QueryResults {
 
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
                 String termString = keyword.getQuery();
-                int chunkId = hit.getChunkId();
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                 String snippet;
                 try {
-                    snippet = LuceneQuery.querySnippet(snippetQuery, hit.getObjectId(), chunkId, !keywordSearchQuery.isLiteral(), true); // RJCTODO: IS this right?
+                    snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
                 } catch (NoOpenCoreException e) {
                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
                     //no reason to continue
@@ -133,12 +144,11 @@ class QueryResults {
                     continue;
                 }
                 if (snippet != null) {
-                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(termString, hit.getFile(), snippet, keywordList.getName()); // RJCTODO: Probably not right
-
+                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(termString, hit, snippet, keywordList.getName());
                     if (writeResult != null) {
                         newArtifacts.add(writeResult.getArtifact());
                         if (notifyInbox) {
-                            writeSingleFileInboxMessage(writeResult, hit.getFile()); // RJCTODO: Probably not right
+                            writeSingleFileInboxMessage(writeResult, hit.getFile()); // RJCTODO: Consider rewriting this message post code 
                         }
                     } else {
                         logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getFile(), keyword.toString()}); //NON-NLS
@@ -156,17 +166,11 @@ class QueryResults {
         return newArtifacts;
     }
 
-    /**
-     * RJCTODO: Update Get the unique set of files for a specific keyword
-     *
-     * @param keyword
-     * @return Map of Abstract files and the chunk with the first hit
-     */
     private List<KeywordHit> getOneHitPerObject(Keyword keyword) {
         List<KeywordHit> hits = new ArrayList<>();
         Set<Long> uniqueObjectIds = new HashSet<>();
         for (KeywordHit hit : getResults(keyword)) {
-            long objectId = hit.getObjectId();
+            long objectId = hit.getSolrObjectId();
             if (!uniqueObjectIds.contains(objectId)) {
                 uniqueObjectIds.add(objectId);
                 hits.add(hit);

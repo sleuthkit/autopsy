@@ -208,7 +208,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         Set<Long> uniqueObjectIds = new HashSet<>();
         for (Keyword keyWord : queryResults.getKeywords()) {
             for (KeywordHit hit : queryResults.getResults(keyWord)) {
-                long objectId = hit.getObjectId();
+                long objectId = hit.getSolrObjectId();
                 if (!uniqueObjectIds.contains(objectId)) {
                     uniqueObjectIds.add(objectId);
                     hits.add(hit);
