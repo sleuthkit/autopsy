@@ -187,7 +187,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             // we flattened the list of files to the unique files.            
             final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, file);
 
-            tempList.add(new KeyValueQueryContent(file.getName(), properties, ++id, file, highlightQueryEscaped, keywordSearchQuery, queryResults));
+            tempList.add(new KeyValueQueryContent(file.getName(), properties, ++id, hit.getSolrObjectId(), file, highlightQueryEscaped, keywordSearchQuery, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
@@ -288,7 +288,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedTextMarkup highlights = new HighlightedTextMarkup(content.getId(), queryStr, !key.getQuery().isLiteral(), false, hits);
+        HighlightedTextMarkup highlights = new HighlightedTextMarkup(key.solrObjectId, queryStr, !key.getQuery().isLiteral(), false, hits);
         return new KeywordSearchFilterNode(highlights, kvNode);
     }
 
@@ -298,6 +298,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      */
     class KeyValueQueryContent extends KeyValue {
 
+        private long solrObjectId;
         private Content content;
         private String queryStr;
         private QueryResults hits;
@@ -316,8 +317,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * @param hits Full set of search results (for all files!
          * @@@)
          */
-        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query, QueryResults hits) {
+        public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, String queryStr, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
+            this.solrObjectId = solrObjectId;
             this.content = content;
             this.queryStr = queryStr;
             this.hits = hits;
