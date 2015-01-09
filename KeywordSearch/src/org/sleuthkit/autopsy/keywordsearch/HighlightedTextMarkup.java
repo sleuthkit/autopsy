@@ -186,6 +186,10 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private HighlightedTextMarkup() {
     }
 
+    Long getObjectId() {
+        return this.objectId;
+    }
+    
     @Override
     public int getNumberPages() {
         return this.numberPages;
