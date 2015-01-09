@@ -404,7 +404,7 @@ class LuceneQuery implements KeywordSearchQuery {
             contentIDStr = Server.getChunkIdString(solrObjectId, chunkID);
         }
 
-        String idQuery = Server.Schema.ID.toString() + ":" + contentIDStr;
+        String idQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIDStr);
         q.setShowDebugInfo(DEBUG); //debug
         q.addFilterQuery(idQuery);
         q.addHighlightField(highlightField);
