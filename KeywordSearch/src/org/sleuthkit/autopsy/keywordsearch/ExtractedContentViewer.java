@@ -97,7 +97,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             return;
         }
 
-        long objectId = getObjectId(selectedNode);
+        long objectId = getDocumentId(selectedNode);
         boolean isDir = content.accept(isDirVisitor);
         
         if (!isDir && solrHasContent(objectId) == false) {
@@ -187,7 +187,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             return true;
         }
 
-        return solrHasContent(getObjectId(node));
+        return solrHasContent(getDocumentId(node));
     }
 
     @Override
@@ -251,25 +251,25 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     /**
-     * Get the correct object if for the given node. If the node contains a 
+     * Get the correct document id for the given node. If the node contains a 
      * keyword hit blackboard artifact that contains a TSK_ASSOCIATED_ARTIFACT 
-     * attribute, the object id is the artifact id of the associated artifact. 
-     * Otherwise the object id is obtained from the Content object.
+     * attribute, the document id is the artifact id of the associated artifact. 
+     * Otherwise the document id is obtained from the Content object.
      * @param node
      * @return Either the artifact id, file id or 0. 
      */
-    private Long getObjectId(Node node) {
+    private Long getDocumentId(Node node) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
 
         try {
             // If this is a keyword hit artifact with an associated artifact it
             // implies that the keyword hit is for an artifact instead of a file.
-            // In that case we need to use the original artifact id to query
-            // Solr.
+            // In that case we mask the original artifact id with 0x8000000000000000L
+            // to come up with the document id to use in the Solr query.
             if (art != null && art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 for (BlackboardAttribute attribute : art.getAttributes()) {
                     if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID())
-                        return attribute.getValueLong();
+                        return attribute.getValueLong() + 0x8000000000000000L;
                 }
             }
         }
