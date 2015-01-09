@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.lang.Long;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
@@ -37,6 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
-import org.apache.solr.client.solrj.util.ClientUtils;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 
 /**
@@ -860,6 +860,33 @@ public class Server {
     }
 
     /**
+     * Get the text contents for the given object id.
+     * @param objectID
+     * @return
+     * @throws NoOpenCoreException 
+     */
+     String getSolrContent(final long objectID) throws NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.getSolrContent(objectID, 0);
+    }
+
+    /**
+     * Get the text contents for the given object id and chunk id.
+     * @param objectID
+     * @param chunkID
+     * @return
+     * @throws NoOpenCoreException 
+     */
+     String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.getSolrContent(objectID, chunkID);
+        
+    }
+    /**
      * Method to return ingester instance
      *
      * @return ingester instance
@@ -1012,13 +1039,24 @@ public class Server {
             q.addFilterQuery(filterQuery);
             q.setFields(Schema.TEXT.toString());
             try {
-                // @@@ BC Make this more robust -> using get(1) bcause 0 is the file name in the multivalued output. 
-                ArrayList<String> values = (ArrayList<String>)solrCore.query(q).getResults().get(0).getFieldValue(Schema.TEXT.toString());
-                return values.get(1);
+                // Get the first result. 
+                SolrDocument solrDocument = solrCore.query(q).getResults().get(0);
+                if (solrDocument != null) {
+                    Collection<Object> fieldValues = solrDocument.getFieldValues(Schema.TEXT.toString());
+                    if (fieldValues.size() == 1)
+                        // The indexed text field for artifacts will only have a single value.
+                        return fieldValues.toArray(new String[0])[0];
+                    else
+                        // The indexed text for files has 2 values, the file name and the file content.
+                        // We return the file content value.
+                        return fieldValues.toArray(new String[0])[1];                        
+                }
             } catch (SolrServerException ex) {
                 logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
                 return null;
             }
+            
+            return null;
         }
 
         synchronized void close() throws KeywordSearchModuleException {
