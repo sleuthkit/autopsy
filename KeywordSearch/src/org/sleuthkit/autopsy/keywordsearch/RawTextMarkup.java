@@ -242,7 +242,7 @@ class RawTextMarkup implements TextMarkup {
 
         //not cached
         try {
-            String indexedText = solrServer.getSolrContent(content, chunkId);
+            String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
             cachedString = EscapeUtil.escapeHtml(indexedText).trim();
             StringBuilder sb = new StringBuilder(cachedString.length() + 20);
             sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
