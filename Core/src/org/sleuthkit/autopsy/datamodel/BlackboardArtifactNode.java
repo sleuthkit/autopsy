@@ -374,7 +374,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     regexp = att.getValueString();
                 }
                 else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                    objectId = att.getValueLong();
+                    objectId = att.getValueLong() + 0x8000000000000000L;
                 }
             }
             if (keyword != null) {
