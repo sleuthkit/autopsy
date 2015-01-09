@@ -252,31 +252,18 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     /**
      * Get the correct document id for the given node. If the node contains a 
-     * keyword hit blackboard artifact that contains a TSK_ASSOCIATED_ARTIFACT 
-     * attribute, the document id is the artifact id of the associated artifact. 
+     * HighlightedTextMarkup object, its object id will have been set. 
      * Otherwise the document id is obtained from the Content object.
      * @param node
      * @return Either the artifact id, file id or 0. 
      */
     private Long getDocumentId(Node node) {
-        BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-
-        try {
-            // If this is a keyword hit artifact with an associated artifact it
-            // implies that the keyword hit is for an artifact instead of a file.
-            // In that case we mask the original artifact id with 0x8000000000000000L
-            // to come up with the document id to use in the Solr query.
-            if (art != null && art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                for (BlackboardAttribute attribute : art.getAttributes()) {
-                    if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID())
-                        return attribute.getValueLong() + 0x8000000000000000L;
-                }
-            }
-        }
-        catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to retrieve attributes for artifact.", ex); //NON-NLS            
-        }
+        HighlightedTextMarkup markup = node.getLookup().lookup(HighlightedTextMarkup.class);
         
+        if (markup != null) {
+            return markup.getObjectId();
+        }
+                
         Content content = node.getLookup().lookup(Content.class);
         
         if (content != null)
