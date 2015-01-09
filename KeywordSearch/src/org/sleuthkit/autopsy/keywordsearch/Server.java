@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrException;
 
 /**
@@ -1004,7 +1005,7 @@ public class Server {
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
-            String filterQuery = Schema.ID.toString() + ":" + contentID;
+            String filterQuery = Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             if (chunkID != 0) {
                 filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
             }
@@ -1081,8 +1082,9 @@ public class Server {
          * @throws SolrServerException
          */
         private boolean queryIsIndexed(long contentID) throws SolrServerException {
+            String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             SolrQuery q = new SolrQuery("*:*");
-            q.addFilterQuery(Server.Schema.ID.toString() + ":" + Long.toString(contentID));
+            q.addFilterQuery(Server.Schema.ID.toString() + ":" + id);
             //q.setFields(Server.Schema.ID.toString());
             q.setRows(0);
             return (int) query(q).getResults().getNumFound() != 0;
@@ -1098,11 +1100,12 @@ public class Server {
          * @throws SolrServerException
          */
         private int queryNumFileChunks(long contentID) throws SolrServerException {
+            String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q =
-                    new SolrQuery(Server.Schema.ID + ":" + Long.toString(contentID) + Server.ID_CHUNK_SEP + "*");
+                    new SolrQuery(Server.Schema.ID + ":" + id + Server.ID_CHUNK_SEP + "*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
-        }
+        }        
     }
 
     class ServerAction extends AbstractAction {
