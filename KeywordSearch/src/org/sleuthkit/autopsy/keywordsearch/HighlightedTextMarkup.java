@@ -338,7 +338,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
         }
 
 
-        final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
+        final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
         q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
 
