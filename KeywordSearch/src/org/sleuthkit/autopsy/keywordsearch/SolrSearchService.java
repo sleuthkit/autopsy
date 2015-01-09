@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,13 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.HashMap;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -36,6 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * An implementation of the KeywordSearchService interface that uses
  * Solr for text indexing and search.
  */
+@ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
