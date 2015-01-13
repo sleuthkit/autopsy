@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -60,14 +61,40 @@ public class SolrSearchService implements KeywordSearchService {
         
         // Concatenate the string values of all attributes into a single 
         // "content" string to be indexed.
-        String artifactContents = "";
+        StringBuilder artifactContents = new StringBuilder();
         
         for (BlackboardAttribute attribute : artifact.getAttributes()) {
-            artifactContents += attribute.getDisplayString();
-            artifactContents += " ";
+            artifactContents.append(attribute.getAttributeTypeDisplayName());
+            artifactContents.append(" : ");
+
+            // This is ugly since it will need to updated any time a new
+            // TSK_DATETIME_* attribute is added. A slightly less ugly 
+            // alternative would be to assume that all date time attributes
+            // will have a name of the form "TSK_DATETIME*" and check
+            // attribute.getAttributeTypeName().startsWith("TSK_DATETIME*".
+            // The major problem with that approach is that it would require
+            // a round trip to the database to get the type name string.
+            // We have also discussed modifying BlackboardAttribute.getDisplayString()
+            // to magically format datetime attributes but that is complicated by
+            // the fact that BlackboardAttribute exists in Sleuthkit data model
+            // while the utility to determine the timezone to use is in ContentUtils
+            // in the Autopsy datamodel.
+            if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
+                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
+                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), abstractFile));
+            }
+            else
+                artifactContents.append(attribute.getDisplayString());
+            artifactContents.append(System.lineSeparator());
         }
         
-        if (artifactContents.isEmpty())
+        if (artifactContents.length() == 0)
             return;
         
         // To play by the rules of the existing text markup implementations,
@@ -99,7 +126,7 @@ public class SolrSearchService implements KeywordSearchService {
         documentId += "_" + Long.toString(chunkId);
         solrFields.replace(Server.Schema.ID.toString(), documentId);
         
-        StringStream contentStream = new StringStream(artifactContents);
+        StringStream contentStream = new StringStream(artifactContents.toString());
         
         try {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
