@@ -91,17 +91,28 @@ public final class ExtractAction extends AbstractAction {
         }
     }
     
-    private void extractFile(ActionEvent e, AbstractFile source) {
+    /**
+     * Called when user has selected a single file to extract
+     * @param e
+     * @param selectedFile Selected file
+     */
+    private void extractFile(ActionEvent e, AbstractFile selectedFile) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
-        fileChooser.setSelectedFile(new File(source.getName()));
+        // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
+        fileChooser.setSelectedFile(new File(selectedFile.getName().replace(':', '_')));
         if (fileChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
-            fileExtractionTasks.add(new FileExtractionTask(source, fileChooser.getSelectedFile()));
-            doFileExtraction(e, fileExtractionTasks);            
+            fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
+            runExtractionTasks(e, fileExtractionTasks);            
         }        
     }
         
+    /**
+     * Called when a user has selected multiple files to extract
+     * @param e
+     * @param selectedFiles Selected files
+     */
     private void extractFiles(ActionEvent e, Collection<? extends AbstractFile> selectedFiles) {
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -120,15 +131,17 @@ public final class ExtractAction extends AbstractAction {
                 }
             }
 
+            // make a task for each file
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             for (AbstractFile source : selectedFiles) {
-                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + source.getName())));
+                // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
+                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + source.getName().replace(':', '_'))));
             }            
-            doFileExtraction(e, fileExtractionTasks);            
+            runExtractionTasks(e, fileExtractionTasks);            
         }
     }
         
-    private void doFileExtraction(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
+    private void runExtractionTasks(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
         
         // verify all of the sources and destinations are OK
         for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext(); ) {
@@ -162,6 +175,7 @@ public final class ExtractAction extends AbstractAction {
             }
         }
 
+        // launch a thread to do the work
         if (!fileExtractionTasks.isEmpty()) {
             try {
                 FileExtracter extracter = new FileExtracter(fileExtractionTasks);    
@@ -187,6 +201,9 @@ public final class ExtractAction extends AbstractAction {
         }        
     }
         
+    /**
+     * Thread that does the actual extraction work
+     */
     private class FileExtracter extends SwingWorker<Object,Void> {
         private Logger logger = Logger.getLogger(FileExtracter.class.getName());
         private ProgressHandle progress;
