@@ -73,7 +73,7 @@ public final class IngestJob {
      *
      * @return True or false.
      */
-    boolean hasIngestPipeline() {
+    synchronized boolean hasIngestPipeline() {
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             if (dataSourceJob.hasIngestPipeline()) {
                 return true;
@@ -111,7 +111,7 @@ public final class IngestJob {
         boolean fileIngestIsRunning = false;
         Date fileIngestStartTime = null;
         for (DataSourceIngestJob.Snapshot snapshot : this.getDataSourceIngestJobSnapshots()) {
-            if (null != moduleHandle) {
+            if (null == moduleHandle) {
                 DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
                 if (null != module) {
                     moduleHandle = new DataSourceIngestModuleHandle(this.dataSourceJobs.get(snapshot.getJobId()), module);
@@ -257,6 +257,7 @@ public final class IngestJob {
 
         private final DataSourceIngestJob job;
         private final DataSourceIngestPipeline.PipelineModule module;
+        private final boolean cancelled;
 
         /**
          * Constructs a handle to a data source level ingest module that can be
@@ -270,6 +271,7 @@ public final class IngestJob {
         private DataSourceIngestModuleHandle(DataSourceIngestJob job, DataSourceIngestPipeline.PipelineModule module) {
             this.job = job;
             this.module = module;
+            this.cancelled = job.currentDataSourceIngestModuleIsCancelled();
         }
 
         /**
@@ -283,13 +285,23 @@ public final class IngestJob {
         }
 
         /**
-         * Returns the time the data source level ingest module associated with
+         * Gets the time the data source level ingest module associated with
          * this handle began processing.
          *
          * @return The module processing start time.
          */
         public Date startTime() {
             return this.module.getProcessingStartTime();
+        }
+
+        /**
+         * Queries whether or not cancellation of the data source level ingest
+         * module associated with this handle has been requested.
+         *
+         * @return True or false.
+         */
+        public boolean isCancelled() {
+            return this.cancelled;
         }
 
         /**
