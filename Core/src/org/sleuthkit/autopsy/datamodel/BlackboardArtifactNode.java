@@ -102,13 +102,18 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID()))); //NON-NLS
     }
 
+    /**
+     * Set the filter node display name. The value will either be the file name
+     * or something along the lines of e.g. "Messages Artifact" for keyword 
+     * hits on artifacts. 
+     */
     private void setDisplayName() {        
         String displayName = "";
         if (associated != null)
             displayName = associated.getName();
                 
         // If this is a node for a keyword hit on an artifact, we set the 
-        // the display name to be the artifact type name followed by " Artifact"
+        // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
         if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             try {
