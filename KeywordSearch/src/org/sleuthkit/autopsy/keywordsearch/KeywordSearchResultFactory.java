@@ -187,7 +187,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             // we flattened the list of files to the unique files.            
             final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, file);
 
-            tempList.add(new KeyValueQueryContent(file.getName(), properties, ++id, hit.getSolrObjectId(), file, highlightQueryEscaped, keywordSearchQuery, queryResults));
+            String name = file.getName();
+            if (hit.isArtifactHit())
+                name = hit.getArtifact().getDisplayName() + " Artifact"; // NON-NLS
+
+            tempList.add(new KeyValueQueryContent(name, properties, ++id, hit.getSolrObjectId(), file, highlightQueryEscaped, keywordSearchQuery, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
