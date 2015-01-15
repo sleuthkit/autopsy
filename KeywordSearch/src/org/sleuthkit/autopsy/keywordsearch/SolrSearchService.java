@@ -59,6 +59,13 @@ public class SolrSearchService implements KeywordSearchService {
         if (dataSource == null)
             return;
         
+        long artifactId = artifact.getArtifactID();
+        
+        // We only support artifact indexing for Autopsy versions that use
+        // the negative range for artifact ids.
+        if (artifactId > 0)
+            return;
+        
         // Concatenate the string values of all attributes into a single 
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -105,7 +112,7 @@ public class SolrSearchService implements KeywordSearchService {
 
         // First, create an index entry for the base artifact.
         HashMap<String, String> solrFields = new HashMap<>();
-        String documentId = Long.toString(0x8000000000000000L + artifact.getArtifactID());
+        String documentId = Long.toString(artifactId);
 
         solrFields.put(Server.Schema.ID.toString(), documentId);
         

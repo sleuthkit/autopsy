@@ -32,7 +32,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class KeywordHit {
 
-    private static final long ARTIFACT_ID_MAGIC = 0x8000000000000000L;
     private final String solrDocumentId;
     private final long solrObjectId;
     private final int chunkId;
@@ -72,8 +71,7 @@ class KeywordHit {
         SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
         long fileId;
         if (this.solrObjectId < 0) {
-            long artifactId = this.solrObjectId - KeywordHit.ARTIFACT_ID_MAGIC;
-            this.artifact = caseDb.getBlackboardArtifact(artifactId);
+            this.artifact = caseDb.getBlackboardArtifact(this.solrObjectId);
             fileId = artifact.getObjectID();
         } else {
             this.artifact = null;
