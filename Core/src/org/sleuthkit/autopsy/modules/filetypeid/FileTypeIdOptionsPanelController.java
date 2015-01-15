@@ -16,7 +16,8 @@ import org.openide.util.Lookup;
         categoryName = "#OptionsCategory_Name_FileTypeId",
         iconBase = "org/sleuthkit/autopsy/modules/filetypeid/user-defined-file-types-settings.png",
         keywords = "#OptionsCategory_Keywords_FileTypeId",
-        keywordsCategory = "FileTypeId"
+        keywordsCategory = "FileTypeId",
+        position = 5        
 )
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})
 public final class FileTypeIdOptionsPanelController extends OptionsPanelController {

@@ -307,26 +307,30 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        
+        /* OutlineView makes the first column be the result of node.getDisplayName with the icon.  This
+         * duplicates our first column, which is the file name, etc. So, pop that property off the list, but
+         * use its display name as the header for the column so that the header can change depending on the
+         * type of data being displayed.
+         *
+         * NOTE: This assumes that the first property is always the one tha duplicates getDisplayName().  This
+         * seems like a big assumption and could be made more robust. 
+         */
         if (props.size() > 0) {
             Node.Property<?> prop = props.remove(0);
             ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
 
 
-        // *********** Make the TreeTableView to be sortable ***************
-
-        //First property column is sortable, but also sorted initially, so
-        //initially this one will have the arrow icon:
-        if (props.size() > 0) {
-            props.get(0).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column. NON-NLS
-            props.get(0).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column. NON-NLS
-        }
-
-        // The rest of the columns are sortable, but not initially sorted,
-        // so initially will have no arrow icon:
+        // Get the columns setup with respect to names and sortability
         String[] propStrings = new String[props.size() * 2];
         for (int i = 0; i < props.size(); i++) {
             props.get(i).setValue("ComparableColumnTTV", Boolean.TRUE); //NON-NLS
+            //First property column is sorted initially
+            if (i == 0) {
+                props.get(i).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column. NON-NLS
+                props.get(i).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column. NON-NLS
+            }
             propStrings[2 * i] = props.get(i).getName();
             propStrings[2 * i + 1] = props.get(i).getDisplayName();
         }
