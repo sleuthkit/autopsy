@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ class RawTextMarkup implements TextMarkup {
     private boolean hasChunks = false;
     
     private final Content content;
-    private final Long objectId;
+    private final long objectId;
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
@@ -54,7 +54,7 @@ class RawTextMarkup implements TextMarkup {
      * @param content Used to get access to file names and "known" status.
      * @param objectId Either a file id or an artifact id.
      */
-    RawTextMarkup(Content content, Long objectId) {
+    RawTextMarkup(Content content, long objectId) {
         this.content = content;
         this.objectId = objectId;
         initialize();

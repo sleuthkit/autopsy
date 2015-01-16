@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -186,7 +186,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private HighlightedTextMarkup() {
     }
 
-    Long getObjectId() {
+    long getObjectId() {
         return this.objectId;
     }
     
@@ -452,7 +452,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
     @Override
     // factory method to create an instance of this object
-    public TextMarkupLookup createInstance(Content content, Long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
+    public TextMarkupLookup createInstance(Content content, long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
         // Note that the content object is not needed by the HighlightedTestMarkup object so
         // we do not pass it through to its constructor.
         return new HighlightedTextMarkup(objectId, keywordHitQuery, isRegex, originalQuery);
