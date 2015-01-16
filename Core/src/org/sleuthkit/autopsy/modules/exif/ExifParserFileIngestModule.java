@@ -158,7 +158,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                indexArtifact(bba);
                 filesToFire = true;
             }
 
@@ -199,19 +198,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return ImageUtils.isJpegFileHeader(f);
     }
 
-    /**
-     * 
-     * @param artifact 
-     */
-    private void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
-        Case currentCase = Case.getCurrentCase();
-        
-        if (currentCase != null) {
-            KeywordSearchService kwsService = currentCase.getServices().getKeywordSearchService();
-            if (kwsService != null)
-                kwsService.indexArtifact(artifact);
-        }
-    }
     @Override
     public void shutDown() {
         // We only need to check for this final event on the last module per job
