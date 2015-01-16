@@ -46,7 +46,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
     private static final String ANCHOR_PREFIX = HighlightedTextMarkup.class.getName() + "_";
 
-    private Long objectId;
+    private long objectId;
     private String keywordHitQuery;
     private Server solrServer;
     private int numberPages;
@@ -64,7 +64,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    HighlightedTextMarkup(Long objectId, String keywordHitQuery, boolean isRegex) {
+    HighlightedTextMarkup(long objectId, String keywordHitQuery, boolean isRegex) {
         this.objectId = objectId;
         this.keywordHitQuery = keywordHitQuery;
         this.isRegex = isRegex;
@@ -81,17 +81,17 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     }
 
     //when the results are not known and need to requery to get hits
-    HighlightedTextMarkup(Long objectId, String solrQuery, boolean isRegex, String originalQuery) {
+    HighlightedTextMarkup(long objectId, String solrQuery, boolean isRegex, String originalQuery) {
         this(objectId, solrQuery, isRegex);
         this.originalQuery = originalQuery;
     }
 
-    HighlightedTextMarkup(Long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
+    HighlightedTextMarkup(long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
         this(objectId, solrQuery, isRegex);
         this.hits = hits;
     }
 
-    HighlightedTextMarkup(Long objectId, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
+    HighlightedTextMarkup(long objectId, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
         this(objectId, solrQuery, isRegex, hits);
         this.group = group;
     }

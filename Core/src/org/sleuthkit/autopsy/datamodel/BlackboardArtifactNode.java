@@ -389,7 +389,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             return null;
         }
         
-        Long objectId = content.getId();
+        long objectId = content.getId();
         
         Lookup lookup = Lookup.getDefault();
         TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
