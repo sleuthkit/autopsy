@@ -31,7 +31,6 @@ import org.sleuthkit.datamodel.Content;
     /**
      * Create an instance of the given TextMarkupLookup object. 
      *
-     * @param content The Content object (file) for which to get highlights.
      * @param objectId Id of the object (file or artifact) for which to get highlights
      * @param keywordHitQuery keyword hit that needs to be highlighted
      * @param isRegex whether the original query was a regex query
@@ -39,5 +38,5 @@ import org.sleuthkit.datamodel.Content;
      * again to get all ContentHit results
      * @return 
      */
-    public TextMarkupLookup createInstance(Content content, long objectId, String keywordHitQuery, boolean isRegex, String originalQuery);
+    public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery);
 }

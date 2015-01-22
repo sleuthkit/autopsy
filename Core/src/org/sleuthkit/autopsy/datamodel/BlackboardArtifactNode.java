@@ -416,7 +416,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 } else {
                     origQuery = keyword;
                 }
-                return highlightFactory.createInstance(content, objectId, keyword, isRegexp, origQuery);
+                return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
             }
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS

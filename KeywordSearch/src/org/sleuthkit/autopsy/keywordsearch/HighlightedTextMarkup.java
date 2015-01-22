@@ -452,9 +452,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
     @Override
     // factory method to create an instance of this object
-    public TextMarkupLookup createInstance(Content content, long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
-        // Note that the content object is not needed by the HighlightedTestMarkup object so
-        // we do not pass it through to its constructor.
+    public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
         return new HighlightedTextMarkup(objectId, keywordHitQuery, isRegex, originalQuery);
     }
 }
