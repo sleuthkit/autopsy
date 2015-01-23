@@ -31,9 +31,8 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
         keywords = "#OptionsCategory_Keywords_InterestingItemDefinitions",
         keywordsCategory = "InterestingItemDefinitions",
-        position = 5
+        position = 6
 )
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_InterestingItemDefinitions=Interesting Item Definitions", "OptionsCategory_Keywords_InterestingItemDefinitions=InterestingItemDefinitions"})
 public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
 
     private InterestingItemDefsPanel panel;

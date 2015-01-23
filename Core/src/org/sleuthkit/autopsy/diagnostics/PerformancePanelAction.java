@@ -35,7 +35,6 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_PerformancePanelAction"
 )
 @ActionReference(path = "Menu/Help", position = 1437)
-@Messages("CTL_PerformancePanelAction=Performance Diagnostics")
 public final class PerformancePanelAction implements ActionListener {
 
     @Override

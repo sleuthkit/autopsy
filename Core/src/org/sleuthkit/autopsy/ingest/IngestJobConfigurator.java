@@ -38,8 +38,8 @@ public final class IngestJobConfigurator {
 
     /**
      * Constructs an ingest job launcher that creates and persists ingest job
-     * settings for a particular context and launches ingest jobs that
-     * process one or more data sources using the settings.
+     * settings for a particular context and launches ingest jobs that process
+     * one or more data sources using the settings.
      *
      * @param context The context identifier.
      */
@@ -50,8 +50,8 @@ public final class IngestJobConfigurator {
     }
 
     /**
-     * Gets any warnings generated when the persisted ingest job settings
-     * for the specified context are loaded or saved.
+     * Gets any warnings generated when the persisted ingest job settings for
+     * the specified context are loaded or saved.
      *
      * @return A collection of warning messages, possibly empty.
      */
@@ -80,16 +80,13 @@ public final class IngestJobConfigurator {
     }
 
     /**
-     * Launches ingest jobs for one or more data sources using the ingest job
+     * Launches ingest job for one or more data sources using the ingest job
      * settings for the specified context.
      *
      * @param dataSources The data sources to ingest.
      */
     @Deprecated
     public void startIngestJobs(List<Content> dataSources) {
-        IngestManager ingestManager = IngestManager.getInstance();
-        for (Content dataSource : dataSources) {
-            ingestManager.startIngestJob(dataSource, this.settings, true);
-        }
+        IngestManager.getInstance().queueIngestJob(dataSources, this.settings);
     }
 }

@@ -198,14 +198,9 @@ public final class RunIngestModulesDialog extends JDialog {
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
-
         if (startIngestJob) {
-            IngestManager ingestManager = IngestManager.getInstance();
-            for (Content dataSource : RunIngestModulesDialog.this.dataSources) {
-                ingestManager.startIngestJob(dataSource, ingestJobSettings, true);
-            }
+            IngestManager.getInstance().queueIngestJob(RunIngestModulesDialog.this.dataSources, ingestJobSettings);
         }
-
         setVisible(false);
         dispose();
     }

@@ -25,9 +25,9 @@ import org.netbeans.api.progress.ProgressHandle;
  */
 public class DataSourceIngestModuleProgress {
 
-    private final IngestJob job;
+    private final DataSourceIngestJob job;
 
-    DataSourceIngestModuleProgress(IngestJob job) {
+    DataSourceIngestModuleProgress(DataSourceIngestJob job) {
         this.job = job;
     }
 

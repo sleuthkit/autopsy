@@ -19,10 +19,14 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
@@ -33,12 +37,39 @@ public final class IngestProgressSnapshotDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestProgressSnapshotDialog.title.text");
     private static final Dimension DIMENSIONS = new Dimension(500, 300);
-
+    
     /**
      * Constructs a non-modal instance of the dialog with its own frame.
      */
     public IngestProgressSnapshotDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(), TITLE, false);
+        this((Window) WindowManager.getDefault().getMainWindow(), false);
+    }
+
+    /**
+     * Constructs an instance of the dialog with its own frame. Could be modal.
+     *
+     * @param owner - the owner of this dialog. If this dialog should be modal, the owner gets set to non modal.
+     * @param shouldBeModal - true if this should be modal, false otherwise.
+     */
+    public IngestProgressSnapshotDialog(Container owner, Boolean shouldBeModal) {
+        super((Window) owner, TITLE, ModalityType.MODELESS);
+        if (shouldBeModal && owner instanceof JDialog) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
+            final JDialog pseudoOwner = (JDialog) owner;
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) { // Put it back to how it was before we manipulated it.
+                    pseudoOwner.setVisible(false);
+                    pseudoOwner.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+                    pseudoOwner.toFront();
+                    pseudoOwner.setVisible(true);
+                }
+            });
+            pseudoOwner.setVisible(false);
+            pseudoOwner.setModalityType(Dialog.ModalityType.MODELESS);
+            pseudoOwner.toFront();
+            pseudoOwner.repaint();
+            pseudoOwner.setVisible(true);
+        }
         setResizable(true);
         setLayout(new BorderLayout());
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -49,6 +80,9 @@ public final class IngestProgressSnapshotDialog extends JDialog {
         add(new IngestProgressSnapshotPanel(this));
         pack();
         setResizable(false);
+        if (shouldBeModal) { // if called from a modal dialog, become modal, otherwise don't.
+            setModal(true);
+        }
         setVisible(true);
     }
 }

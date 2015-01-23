@@ -148,7 +148,7 @@ final class IngestTasksScheduler {
      * @throws InterruptedException if the calling thread is blocked due to a
      * full tasks queue and is interrupted.
      */
-    synchronized void scheduleIngestTasks(IngestJob job) {
+    synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
         // Scheduling of both a data source ingest task and file ingest tasks 
         // for a job must be an atomic operation. Otherwise, the data source 
         // task might be completed before the file tasks are scheduled, 
@@ -163,7 +163,7 @@ final class IngestTasksScheduler {
      *
      * @param job The job for which the tasks are to be scheduled.
      */
-    synchronized void scheduleDataSourceIngestTask(IngestJob job) {
+    synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
         DataSourceIngestTask task = new DataSourceIngestTask(job);
         this.tasksInProgress.add(task);
         try {
@@ -183,7 +183,7 @@ final class IngestTasksScheduler {
      *
      * @param job The job for which the tasks are to be scheduled.
      */
-    synchronized void scheduleFileIngestTasks(IngestJob job) {
+    synchronized void scheduleFileIngestTasks(DataSourceIngestJob job) {
         // Get the top level files for the data source associated with this job
         // and add them to the root directories priority queue.  
         List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
@@ -203,7 +203,7 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      * @param file The file to be associated with the task.
      */
-    synchronized void scheduleFileIngestTask(IngestJob job, AbstractFile file) {
+    synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
         FileIngestTask task = new FileIngestTask(job, file);
         if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
             this.tasksInProgress.add(task);
@@ -228,7 +228,7 @@ final class IngestTasksScheduler {
      * @param job The job for which the query is to be performed.
      * @return True or false.
      */
-    synchronized boolean tasksForJobAreCompleted(IngestJob job) {
+    synchronized boolean tasksForJobAreCompleted(DataSourceIngestJob job) {
         for (IngestTask task : tasksInProgress) {
             if (task.getIngestJob().getId() == job.getId()) {
                 return false;
@@ -245,7 +245,7 @@ final class IngestTasksScheduler {
      *
      * @param job The job for which the tasks are to to canceled.
      */
-    synchronized void cancelPendingTasksForIngestJob(IngestJob job) {
+    synchronized void cancelPendingTasksForIngestJob(DataSourceIngestJob job) {
         long jobId = job.getId();
         this.removeTasksForJob(this.rootDirectoryTasks, jobId);
         this.removeTasksForJob(this.directoryTasks, jobId);

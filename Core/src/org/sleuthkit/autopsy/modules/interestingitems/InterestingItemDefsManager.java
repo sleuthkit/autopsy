@@ -255,11 +255,11 @@ final class InterestingItemDefsManager extends Observable {
                     if (!rules.containsKey(rule.getName())) {
                         rules.put(rule.getName(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getName(), setName, filePath});
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getName(), setName, filePath}); //NOI18N
                         return;
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in interesting file sets definition file at {1}, discarding malformed set", new Object[]{setName, filePath});
+                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in interesting file sets definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); //NOI18N
                     return;
                 }
             }

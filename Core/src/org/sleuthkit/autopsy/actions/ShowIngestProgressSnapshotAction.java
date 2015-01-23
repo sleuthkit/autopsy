@@ -46,7 +46,6 @@ public final class ShowIngestProgressSnapshotAction extends SystemAction impleme
     @Override
     public void actionPerformed(ActionEvent e) {
         IngestProgressSnapshotDialog dialog = new IngestProgressSnapshotDialog();
-        dialog.setVisible(true);
     }
 
     @Override
