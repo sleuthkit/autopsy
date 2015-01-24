@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Insets;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -27,11 +28,14 @@ import javax.swing.BorderFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
 
 /**
  * Manages this module's lifecycle. Opens the startup dialog during startup.
@@ -65,6 +69,22 @@ public class Installer extends ModuleInstall {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
+                String caseFile = ""; //hold the path of case if such an argument has been passed in, such as when the .aut file is double clicked
+                Collection<? extends OptionProcessor> processors = Lookup.getDefault().lookupAll(OptionProcessor.class);
+                for (OptionProcessor processor : processors) {
+                    if (processor instanceof OpenFromArguments) {
+                        OpenFromArguments argsProcessor = (OpenFromArguments) processor;
+                        caseFile = argsProcessor.getArg();
+                    }
+                }
+                if (caseFile != null && !caseFile.equals("") && caseFile.contains(".aut")) {
+                    try {
+
+                        Case.open(caseFile);
+                        return;
+                    } catch (Exception e) {
+                    }
+                }
                 Case.invokeStartupDialog(); // bring up the startup dialog
             }
         });
