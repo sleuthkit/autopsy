@@ -3,6 +3,7 @@
 # Get contents of Run key from Software hive
 #
 # History:
+#   20130603 - updated alert functionality
 #   20130425 - added alertMsg() functionality
 #   20130329 - added additional keys
 #   20130314 - updated to include Policies keys
@@ -21,7 +22,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              version       => 20130425);
+              version       => 20130603);
 
 sub getConfig{return %config}
 
@@ -71,14 +72,11 @@ sub pluginmain {
 			my %vals = getKeyValues($key);
 			if (scalar(keys %vals) > 0) {
 				foreach my $v (keys %vals) {
-# check for "Temp" in the path/data					
-					if (grep(/[Tt]emp/,$vals{$v})) {
-						::alertMsg("ALERT: soft_run: Temp Path found: ".$key_path." : ".$v." -> ".$vals{$v});
-					}
-# check to see if the data ends in .com					
-					if ($vals{$v} =~ m/\.com$/ || $vals{$v} =~ m/\.bat$/ || $vals{$v} =~ m/\.pif$/) {
-						::alertMsg("ALERT: soft_run: Path ends in \.com/\.bat/\.pif: ".$key_path." : ".$v." -> ".$vals{$v});
-					}					
+# added 20130603					
+					alertCheckPath($vals{$v});
+					alertCheckExt($vals{$v});
+					alertCheckADS($vals{$v});
+										
 					::rptMsg("  ".$v." - ".$vals{$v});
 				}
 				::rptMsg("");
@@ -129,4 +127,43 @@ sub getKeyValues {
 	return %vals;
 }
 
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	$path = lc($path);
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: soft_run: ".$a." found in path: ".$path);              
+		}
+	}
+}
+
+#-----------------------------------------------------------
+# alertCheckExt()
+#-----------------------------------------------------------
+sub alertCheckExt {
+	my $path = shift;
+	$path = lc($path);
+	my @exts = ("\.com","\.bat","\.pif");
+	
+	foreach my $e (@exts) {
+		if ($path =~ m/$e$/) {
+			::alertMsg("ALERT: soft_run: ".$path." ends in ".$e);              
+		}
+	}
+}
+#-----------------------------------------------------------
+# alertCheckADS()
+#-----------------------------------------------------------
+sub alertCheckADS {
+	my $path = shift;
+	my @list = split(/\\/,$path);
+	my $last = $list[scalar(@list) - 1];
+	::alertMsg("ALERT: soft_run: Poss. ADS found in path: ".$path) if grep(/:/,$last);
+}
 1;

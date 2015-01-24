@@ -8,6 +8,9 @@
 # Usage: see "_syntax()" function
 #
 # Change History
+#   20130801 - added File::Spec support, for cross-platform compat.
+#   20130716 - added 'push(@INC,$str);' line based on suggestion from
+#              Hal Pomeranz to support Linux compatibility
 #   20130425 - added alertMsg() functionality, updated to v2.8
 #   20120506 - updated to v2.5 release
 #   20110516 - added -s & -u options for TLN support
@@ -24,6 +27,7 @@
 use strict;
 use Parse::Win32Registry qw(:REG_);
 use Getopt::Long;
+use File::Spec;
 
 # Included to permit compiling via Perl2Exe
 #perl2exe_include "Parse/Win32Registry.pm";
@@ -50,10 +54,16 @@ my $str = $0;
 ($^O eq "MSWin32") ? (@path = split(/\\/,$0))
                    : (@path = split(/\//,$0));
 $str =~ s/($path[scalar(@path) - 1])//;
-my $plugindir = $str."plugins/";
+
+# Suggested addition by Hal Pomeranz for compatibility with 
+# Linux
+#push(@INC,$str);
+
+#my $plugindir = $str."plugins/";
+my $plugindir = File::Spec->catfile("plugins");
 #print "Plugins Dir = ".$plugindir."\n";
 # End code update
-my $VERSION = "2\.8";
+my $VERSION = "2\.8_20130801";
 my @alerts = ();
 
 if ($config{help} || !%config) {
@@ -75,7 +85,8 @@ if ($config{list}) {
 	foreach my $p (@plugins) {
 		next unless ($p =~ m/\.pl$/);
 		my $pkg = (split(/\./,$p,2))[0];
-		$p = $plugindir.$p;
+#		$p = $plugindir.$p;
+		$p = File::Spec->catfile($plugindir,$p);
 		eval {
 			require $p;
 			my $hive    = $pkg->getHive();
@@ -116,7 +127,9 @@ if ($config{file}) {
 	}
 	foreach my $i (sort {$a <=> $b} keys %plugins) {
 		eval {
-			require "plugins/".$plugins{$i}."\.pl";
+#			require "plugins/".$plugins{$i}."\.pl";
+			my $plugin_file = File::Spec->catfile($plugindir,$plugins{$i}.".pl");
+			require $plugin_file;
 			$plugins{$i}->pluginmain($hive);
 		};
 		if ($@) {
@@ -158,7 +171,8 @@ if ($config{plugin}) {
 		
 # check to see if the plugin exists
 	my $plugin = $config{plugin};
-	my $pluginfile = $plugindir.$config{plugin}."\.pl";
+#	my $pluginfile = $plugindir.$config{plugin}."\.pl";
+	my $pluginfile = File::Spec->catfile($plugindir,$config{plugin}."\.pl");
 	die $pluginfile." not found.\n" unless (-e $pluginfile);
 	
 	eval {
@@ -247,7 +261,8 @@ sub parsePluginsFile {
 # Parse a file containing a list of plugins
 # Future versions of this tool may allow for the analyst to 
 # choose different plugins files	
-	my $pluginfile = $plugindir.$file;
+#	my $pluginfile = $plugindir.$file;
+	my $pluginfile = File::Spec->catfile($plugindir,$file);
 	if (-e $pluginfile) {
 		open(FH,"<",$pluginfile);
 		my $count = 1;

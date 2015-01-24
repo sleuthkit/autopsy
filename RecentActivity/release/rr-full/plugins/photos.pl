@@ -17,7 +17,7 @@ my %config = (hive          => "USRCLASS\.DAT",
 							hivemask      => 32,
 							output        => "report",
 							category      => "User Activity",
-              osmask        => 20, #Vista, Win7/Win2008R2
+              osmask        => 20, #not used at the moment
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,

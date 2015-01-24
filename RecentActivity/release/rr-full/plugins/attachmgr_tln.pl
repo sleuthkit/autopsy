@@ -66,7 +66,7 @@ sub pluginmain {
 # settings information derived from MS KB 883260					
 					::alertMsg($lw."|ALERT|||HKCU\\".$key_path." SaveZoneInformation value found: ".$data) if ($name eq "SaveZoneInformation");
 					::alertMsg($lw."|ALERT|||HKCU\\".$key_path." ScanWithAntiVirus value found: ".$data) if ($name eq "ScanWithAntiVirus");
-					::alertMsg($lw."|ALERT|||HKCU\\".$key_path." LowRiskFileTypes value includes exe: ".$data (if $name eq "LowRiskFileTypes" && grep(/exe/,$data));
+					::alertMsg($lw."|ALERT|||HKCU\\".$key_path." LowRiskFileTypes value includes exe: ".$data) if ($name eq "LowRiskFileTypes" && grep(/exe/,$data));
 				}
 			}
 			else {

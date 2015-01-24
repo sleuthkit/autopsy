@@ -1,7 +1,17 @@
 #-----------------------------------------------------------
 # usbstor
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# History:
+#   20141111 - updated check for key LastWrite times
+#		20141015 - added subkey LastWrite times
+#   20130630 - added FirstInstallDate, InstallDate query
+#   20080418 - created
+#
+# Ref:
+#   http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/
+#
+# copyright 2014 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package usbstor;
 use strict;
@@ -11,7 +21,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080418);
+              version       => 20141111);
 
 sub getConfig{return %config}
 
@@ -30,7 +40,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching usbstor v.".$VERSION);
 	::rptMsg("usbstor v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -65,29 +75,50 @@ sub pluginmain {
 					foreach my $k (@sk) {
 						my $serial = $k->get_name();
 						::rptMsg("  S/N: ".$serial." [".gmtime($k->get_timestamp())."]");
+# added 20141015; updated 20141111						
+						eval {
+							::rptMsg("  Device Parameters LastWrite: [".gmtime($k->get_subkey("Device Parameters")->get_timestamp())."]");
+						};
+						eval {
+							::rptMsg("  LogConf LastWrite          : [".gmtime($k->get_subkey("LogConf")->get_timestamp())."]");
+						};
+						eval {
+							::rptMsg("  Properties LastWrite       : [".gmtime($k->get_subkey("Properties")->get_timestamp())."]");
+						};
 						my $friendly;
 						eval {
 							$friendly = $k->get_value("FriendlyName")->get_data();
 						};
-						::rptMsg("    FriendlyName  : ".$friendly) if ($friendly ne "");
+						::rptMsg("    FriendlyName    : ".$friendly) if ($friendly ne "");
 						my $parent;
 						eval {
 							$parent = $k->get_value("ParentIdPrefix")->get_data();
 						};
 						::rptMsg("    ParentIdPrefix: ".$parent) if ($parent ne "");
-					}
+# Attempt to retrieve InstallDate/FirstInstallDate from Properties subkeys	
+# http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/					
+						
+						eval {
+							my $t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000064\\00000000")->get_value("Data")->get_data();
+							my ($t0,$t1) = unpack("VV",$t);
+							::rptMsg("    InstallDate     : ".gmtime(::getTime($t0,$t1))." UTC");
+							
+							$t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000")->get_value("Data")->get_data();
+							($t0,$t1) = unpack("VV",$t);
+							::rptMsg("    FirstInstallDate: ".gmtime(::getTime($t0,$t1))." UTC");
+						};
+						
+					}					
 				}
 				::rptMsg("");
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

@@ -424,6 +424,7 @@ sub parseShellItem {
  		else {
  			$item{name} = sprintf "Unknown Type (0x%x)",$type;
  			$str .= "\\".$item{name};
+# 			probe($dat);
  		}		
 		$cnt += $sz;
 	}
@@ -639,7 +640,23 @@ sub convertDOSDate {
 #		return gmtime(timegm($sec,$min,$hr,$day,($mon - 1),$yr));
 	}
 }
-
+#-----------------------------------------------------------
+# probe()
+#
+# Code the uses printData() to insert a 'probe' into a specific
+# location and display the data
+#
+# Input: binary data of arbitrary length
+# Output: Nothing, no return value.  Displays data to the console
+#-----------------------------------------------------------
+sub probe {
+	my $data = shift;
+	my @d = printData($data);
+	
+	foreach (0..(scalar(@d) - 1)) {
+		print $d[$_]."\n";
+	}
+}
 #-----------------------------------------------------------
 # printData()
 # subroutine used primarily for debugging; takes an arbitrary
@@ -649,38 +666,35 @@ sub convertDOSDate {
 sub printData {
 	my $data = shift;
 	my $len = length($data);
-	my $tag = 1;
-	my $cnt = 0;
+	
+	my @display = ();
 	
 	my $loop = $len/16;
 	$loop++ if ($len%16);
 	
 	foreach my $cnt (0..($loop - 1)) {
-#	while ($tag) {
+# How much is left?
 		my $left = $len - ($cnt * 16);
 		
 		my $n;
 		($left < 16) ? ($n = $left) : ($n = 16);
 
 		my $seg = substr($data,$cnt * 16,$n);
-		my @str1 = split(//,unpack("H*",$seg));
-
-		my @s3;
-		my $str = "";
-
-		foreach my $i (0..($n - 1)) {
-			$s3[$i] = $str1[$i * 2].$str1[($i * 2) + 1];
-			
-			if (hex($s3[$i]) > 0x1f && hex($s3[$i]) < 0x7f) {
-				$str .= chr(hex($s3[$i]));
-			}
-			else {
-				$str .= "\.";
-			}
+		my $lhs = "";
+		my $rhs = "";
+		foreach my $i ($seg =~ m/./gs) {
+# This loop is to process each character at a time.
+			$lhs .= sprintf(" %02X",ord($i));
+			if ($i =~ m/[ -~]/) {
+				$rhs .= $i;
+    	}
+    	else {
+				$rhs .= ".";
+     	}
 		}
-		my $h = join(' ',@s3);
-		::rptMsg(sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h);
+		$display[$cnt] = sprintf("0x%08X  %-50s %s",$cnt,$lhs,$rhs);
 	}
+	return @display;
 }
 
 1;		

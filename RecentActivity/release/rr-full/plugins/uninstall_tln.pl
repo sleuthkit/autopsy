@@ -20,7 +20,7 @@
 package uninstall_tln;
 use strict;
 
-my %config = (hive          => "Software",
+my %config = (hive          => "Software, NTUSER\.DAT",
               osmask        => 22,
               hasShortDescr => 1,
               hasDescr      => 0,
@@ -30,7 +30,7 @@ my %config = (hive          => "Software",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Gets contents of Uninstall keys (64- & 32-bit) from Software hive (TLN format)";	
+	return "Gets contents of Uninstall keys from Software, NTUSER\.DAT hives(TLN format)";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -45,7 +45,9 @@ sub pluginmain {
 	::logMsg("Launching uninstall v.".$VERSION);
 	
 	my @keys = ('Microsoft\\Windows\\CurrentVersion\\Uninstall',
-	            'Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall');
+	            'Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+	            'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall',                  # NTUSER.DAT
+	            'Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall');    # NTUSER.DAT
 	
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
@@ -87,7 +89,7 @@ sub pluginmain {
 	 		}
 		}
 		else {
-			::rptMsg($key_path." not found.");
+#			::rptMsg($key_path." not found.");
 		}
 	}
 }

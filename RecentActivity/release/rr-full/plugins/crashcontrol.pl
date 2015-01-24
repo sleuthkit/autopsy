@@ -1,11 +1,17 @@
 #-----------------------------------------------------------
 # crashcontrol.pl
 #
+# History:
+#   20131210 - updated to include ref/values for Win8/2012
+#   20081212 - created
+#
 # Ref: 
 #   http://support.microsoft.com/kb/254649
 #   http://support.microsoft.com/kb/274598
+#   http://blogs.technet.com/b/askcore/archive/2012/09/12/windows-8-and-windows-server-2012-automatic-memory-dump.aspx
 #
-# copyright 2008-2009 H. Carvey, keydet89@yahoo.com
+# copyright 2013 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package crashcontrol;
 use strict;
@@ -15,7 +21,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20081212);
+              version       => 20131210);
 
 sub getConfig{return %config}
 
@@ -80,7 +86,12 @@ sub pluginmain {
 				::rptMsg("SendAlert        = ".$sendalert);
 				::rptMsg("  Sends a \'net send\' pop-up if a crash occurs") if ($sendalert == 1);
 			};
-			
+
+# Needs to be updated once a value is seen			
+			eval {
+				my $lastcrash = $cc->get_value("LastCrashTime")->get_data();
+				::rptMsg("LastCrashTime        = ".$lastcrash);
+			};
 			
 		}	
 		else {
@@ -89,7 +100,7 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
+		
 	}
 }
 1;

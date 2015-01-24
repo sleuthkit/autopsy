@@ -3,6 +3,8 @@
 # Get contents of Run key from NTUSER.DAT hive
 #
 # Change History
+#   20140115 - added code to check for odd char in path
+#   20130603 - updated alert functionality
 #   20130425 - added alertMsg() functionality
 #   20120329 - added additional keys
 #   20130314 - updated to include Policies keys
@@ -26,7 +28,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              version       => 20130425);
+              version       => 20140115);
 
 sub getConfig{return %config}
 
@@ -73,14 +75,11 @@ sub pluginmain {
 			my %vals = getKeyValues($key);
 			if (scalar(keys %vals) > 0) {
 				foreach my $v (keys %vals) {
-# check for "Temp" in the path/data					
-					if (grep(/[Tt]emp/,$vals{$v})) {
-						::alertMsg("ALERT: user_run: Temp Path found: ".$key_path." : ".$v." -> ".$vals{$v});
-					}
-# check to see if the data ends in .com					
-					if ($vals{$v} =~ m/\.com$/ || $vals{$v} =~ m/\.bat$/) {
-						::alertMsg("ALERT: user_run: Path ends in \.com/\.bat: ".$key_path." : ".$v." -> ".$vals{$v});
-					}					
+# added 20130603					
+					alertCheckPath($vals{$v});
+					alertCheckExt($vals{$v});
+					alertCheckADS($vals{$v});
+
 					::rptMsg("  ".$v.": ".$vals{$v});
 				}
 			}
@@ -109,7 +108,7 @@ sub pluginmain {
 		eval {
 			$run = $key->get_value("Run")->get_data();
 			::rptMsg("Run value = ".$run);
-			::alertMsg("ALERT: user_run: ".$key_path." Run value found: ".$run);
+			::alertMsg("ALERT: user_run: ".$key_path." Run value found: ".$run) unless ($run eq "");
 		};
 		if ($@) {
 			::rptMsg("Run value not found.");
@@ -118,7 +117,7 @@ sub pluginmain {
 		eval {
 			$run = $key->get_value("run")->get_data();
 			::rptMsg("run value = ".$run);
-			::alertMsg("ALERT: user_run: ".$key_path." run value found: ".$run);
+			::alertMsg("ALERT: user_run: ".$key_path." run value found: ".$run) unless ($run eq "");
 		};
 		if ($@) {
 			::rptMsg("run value not found.");
@@ -128,7 +127,7 @@ sub pluginmain {
 		eval {
 			$load = $key->get_value("load")->get_data();
 			::rptMsg("load value = ".$load);
-			::alertMsg("ALERT: user_run: ".$key_path." load value found: ".$load);
+			::alertMsg("ALERT: user_run: ".$key_path." load value found: ".$load) unless ($load eq "");
 		};
 		if ($@) {
 			::rptMsg("load value not found.");
@@ -154,4 +153,54 @@ sub getKeyValues {
 	return %vals;
 }
 
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	$path = lc($path);
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: user_run: ".$a." found in path: ".$path);              
+		}
+	}
+	
+	my $cnt = 0;
+	my @list = split(//,$path);
+	foreach my $n (@list) {
+		my $ch = ord($n);
+#		print $n." - ".$ch."\n";
+		if ($ch < 0x20 || $ch > 0x7e) {
+			$cnt = 1;
+		}
+	}
+ 	::alertMsg("ALERT: user_run: Odd char in path: ".$path) if ($cnt > 0);
+}
+
+#-----------------------------------------------------------
+# alertCheckExt()
+#-----------------------------------------------------------
+sub alertCheckExt {
+	my $path = shift;
+	$path = lc($path);
+	my @exts = ("\.com","\.bat","\.pif");
+	
+	foreach my $e (@exts) {
+		if ($path =~ m/$e$/) {
+			::alertMsg("ALERT: user_run: ".$path." ends in ".$e);              
+		}
+	}
+}
+#-----------------------------------------------------------
+# alertCheckADS()
+#-----------------------------------------------------------
+sub alertCheckADS {
+	my $path = shift;
+	my @list = split(/\\/,$path);
+	my $last = $list[scalar(@list) - 1];
+	::alertMsg("ALERT: user_run: Poss. ADS found in path: ".$path) if grep(/:/,$last);
+}
 1;

@@ -4,7 +4,8 @@
 # Windows\CurrentVersion\Applets Recent File List values 
 #
 # Change history
-#
+#  20140723 - updated to address issues of keys/values not in existence
+#  20080324 - created
 #
 # References
 #
@@ -15,11 +16,12 @@ package applets;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
+              category      => "program execution",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080324);
+              version       => 20140723);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -37,7 +39,7 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching applets v.".$VERSION);
 	::rptMsg("applets v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -85,13 +87,14 @@ sub pluginmain {
 			::rptMsg("");
 			::rptMsg($key_path."\\".$reg_key);
 			::rptMsg("LastWrite Time ".gmtime($reg->get_timestamp())." (UTC)"); 
-			my $lastkey = $reg->get_value("LastKey")->get_data();
-			::rptMsg("RegEdit LastKey value -> ".$lastkey);
+			eval {
+				my $lastkey = $reg->get_value("LastKey")->get_data();
+				::rptMsg("RegEdit LastKey value -> ".$lastkey);
+			};
 		}		
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 

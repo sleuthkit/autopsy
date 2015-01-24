@@ -2,6 +2,10 @@
 # svcdll.pl
 # 
 # Change history
+#   20131010 - added checks for Derusbi, hcdloader malware
+#     - ServiceDll value ends in .dat
+#     - ServiceDll with no path
+#   20130603 - added alert functionality
 #   20091104 - created
 # 
 # Ref:
@@ -20,10 +24,11 @@ use strict;
 
 my %config = (hive          => "System",
               hasShortDescr => 1,
+              category      => "autostart",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20091104);
+              version       => 20130603);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -35,7 +40,7 @@ sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
-
+my ($dll, $name);
 #my %types = (0x001 => "Kernel driver",
 #             0x002 => "File system driver",
 #             0x004 => "Adapter",
@@ -54,7 +59,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching svcdll v.".$VERSION);
 	::rptMsg("svcdll v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -75,30 +80,8 @@ sub pluginmain {
 			my @subkeys = $svc->get_list_of_subkeys();
 			if (scalar (@subkeys) > 0) {
 				foreach my $s (@subkeys) {
-					my $name = $s->get_name();
-#					my $display;
-#					eval {
-#						$display = $s->get_value("DisplayName")->get_data();
-#					};
-					
-#					my $type;
-#					eval {
-#						$type = $s->get_value("Type")->get_data();
-#						$type = $types{$type} if (exists $types{$type});						
-#					};
+					$name = $s->get_name();
 
-#					my $image;
-#					eval {
-#						$image = $s->get_value("ImagePath")->get_data();
-#					};
-					
-#					my $start;
-#					eval {
-#						$start = $s->get_value("Start")->get_data();
-#						$start = $starts{$start} if (exists $starts{$start});
-#					};
-					
-					my $dll;
 					eval {
 						$dll = $s->get_subkey("Parameters")->get_value("ServiceDll")->get_data();
 						my $str = $name." -> ".$dll;
@@ -110,24 +93,64 @@ sub pluginmain {
 					::rptMsg(gmtime($t)."Z");
 					foreach my $item (@{$svcs{$t}}) {
 						::rptMsg("  ".$item);
+						
+						alertCheckPath($item);
+						alertCheckADS($item);
 					}
 					::rptMsg("");
 				}
 			}
 			else {
 				::rptMsg($s_path." has no subkeys.");
-				::logMsg("Error: ".$s_path." has no subkeys.");
 			}			
 		}
 		else {
 			::rptMsg($s_path." not found.");
-			::logMsg($s_path." not found.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
+}
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	my $lcpath = $path;
+	$lcpath =~ tr/[A-Z]/[a-z]/;
+
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data","wbem");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: svcdll: ".$a." found in path: ".$path);              
+		}
+	}
+	
+	if ($lcpath =~ m/\.dat$/) {
+		::alertMsg("ALERT: svcdll: Possible Derusbi infection: ".$path);
+	}
+	
+	if ($lcpath =~ m/\raswmi\.dll$/) {
+		::alertMsg("ALERT: svcdll: Possible hcdloader infection: ".$path);
+	}
+	
+	my @list = split(/\\/,$path);
+	if (scalar(@list) < 3) {
+		::alertMsg("ALERT: svcdll: Relative path detected: ".$path);
+	}
+}
+
+#-----------------------------------------------------------
+# alertCheckADS()
+#-----------------------------------------------------------
+sub alertCheckADS {
+	my $path = shift;
+	my @list = split(/\\/,$path);
+	my $last = $list[scalar(@list) - 1];
+	::alertMsg("ALERT: svcdll: Poss. ADS found in path: ".$path) if grep(/:/,$last);
 }
 
 1;

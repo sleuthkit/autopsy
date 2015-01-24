@@ -40,7 +40,7 @@ sub pluginmain {
 	
 	my %profiles;
 	
-	::logMsg("Launching profilelist v.".$VERSION);
+	#::logMsg("Launching profilelist v.".$VERSION);
 	::rptMsg("profilelist v.".$VERSION); # banner
     ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);

@@ -7,6 +7,6 @@ been warned!
 This software is released under the GNU Public License - 
 http://www.gnu.org/copyleft/gpl.html
 
-Specifically, GPL v3.0: http://www.gnu.org/licenses/quick-guide-gplv3.html
+Specifically, GPL v2.0: http://www.gnu.org/licenses/gpl-2.0.html
 
 Questions, comments, etc., can be sent to keydet89 at yahoo dot com.
