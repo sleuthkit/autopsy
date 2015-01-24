@@ -93,18 +93,8 @@ interface KeywordSearchQuery {
      * @return the escaped query string, or original string if no escaping done
      */
     public String getEscapedQueryString();
-    
-    
-    /**
-     * write results to blackboard per single term and file hit
-     * this method is useful if something else should keep track of partial results to write
-     * @param termHit term for only which to write results
-     * @param newFsHit AbstractFile for which to write results for this hit
-     * @param snippet snippet preview with hit context, or null if there is no snippet
-     * @param listName listname
-     * @return collection of results (with cached bb artifacts/attributes) created and written
-     */
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName);
+        
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName);
 
 }
 

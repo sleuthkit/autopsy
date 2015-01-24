@@ -29,6 +29,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -80,7 +81,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         //this.associated = getAssociatedContent(artifact);
         this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
-        this.setDisplayName(associated.getName());
+        this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
     }
 
@@ -97,11 +98,41 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         //this.associated = getAssociatedContent(artifact);
         this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
-        this.setDisplayName(associated.getName());
+        this.setDisplayName();
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID()))); //NON-NLS
-
     }
 
+    /**
+     * Set the filter node display name. The value will either be the file name
+     * or something along the lines of e.g. "Messages Artifact" for keyword 
+     * hits on artifacts. 
+     */
+    private void setDisplayName() {        
+        String displayName = "";
+        if (associated != null)
+            displayName = associated.getName();
+                
+        // If this is a node for a keyword hit on an artifact, we set the 
+        // display name to be the artifact type name followed by " Artifact"
+        // e.g. "Messages Artifact".
+        if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            try {
+                for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                    if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                        BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                        if (associatedArtifact != null) {
+                            displayName = associatedArtifact.getDisplayName() + " Artifact"; // NON-NLS
+                        }
+                    }
+                }
+            }
+            catch (TskCoreException ex) {
+                // Do nothing since the display name will be set to the file name.
+            }
+        }
+        this.setDisplayName(displayName);
+    }
+    
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -118,7 +149,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.name"),
                                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                                 NO_DESCR,
-                                associated.getName()));
+                                this.getDisplayName()));
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(),
@@ -352,11 +383,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         throw new IllegalArgumentException(
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
-
+                    
     private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
         }
+        
+        long objectId = content.getId();
+        
         Lookup lookup = Lookup.getDefault();
         TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
         try {
@@ -370,6 +404,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
                 }
+                else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                    objectId = att.getValueLong();
+                }
             }
             if (keyword != null) {
                 boolean isRegexp = (regexp != null && !regexp.equals(""));
@@ -379,7 +416,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 } else {
                     origQuery = keyword;
                 }
-                return highlightFactory.createInstance(content, keyword, isRegexp, origQuery);
+                return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
             }
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
