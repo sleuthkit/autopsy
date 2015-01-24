@@ -4,6 +4,7 @@
 # Can take considerable time to run; recommend running it via rip.exe
 #
 # History
+#   20130603 - added alert functionality
 #   20100227 - created
 #
 # References
@@ -19,7 +20,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20100227);
+              version       => 20130603);
 
 sub getConfig{return %config}
 
@@ -61,6 +62,13 @@ sub pluginmain {
 					$name .= "  ".$n unless ($n eq "");
 				};
 				
+			  eval {
+			  	my $path = $s->get_subkey("InprocServer32")->get_value("")->get_data();
+			  	alertCheckPath($path);
+			  	alertCheckADS($path);
+			  	
+			  };
+				
 				push(@{$clsid{$s->get_timestamp()}},$name);
 			}
 			
@@ -78,5 +86,31 @@ sub pluginmain {
 	else {
 		::rptMsg($key_path." not found.");
 	}
+}
+
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	$path = lc($path);
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: clsid: ".$a." found in path: ".$path);              
+		}
+	}
+}
+
+#-----------------------------------------------------------
+# alertCheckADS()
+#-----------------------------------------------------------
+sub alertCheckADS {
+	my $path = shift;
+	my @list = split(/\\/,$path);
+	my $last = $list[scalar(@list) - 1];
+	::alertMsg("ALERT: clsid: Poss. ADS found in path: ".$path) if grep(/:/,$last);
 }
 1;

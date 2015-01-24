@@ -4,14 +4,17 @@
 # contents of the TimeZoneInformation key
 # 
 # Change history
-#
+#   20130830 - updated
+#   20080324 - created
 #
 # References
 #   http://support.microsoft.com/kb/102986
 #   http://support.microsoft.com/kb/207563
+#   http://msdn.microsoft.com/en-us/library/windows/desktop/ms725481(v=vs.85).aspx
 #   
 # 
-# copyright 2008 H. Carvey
+# copyright 2013 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package timezone;
 use strict;
@@ -21,7 +24,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080324);
+              version       => 20130830);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -39,7 +42,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching timezone v.".$VERSION);
 	::rptMsg("timezone v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+   ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -65,26 +68,23 @@ sub pluginmain {
 				::rptMsg("  DaylightName   -> ".$tz_vals{"DaylightName"});
 				::rptMsg("  StandardName   -> ".$tz_vals{"StandardName"});
 				
-				my $bias   = $tz_vals{"Bias"}/60;
-				my $atbias = $tz_vals{"ActiveTimeBias"}/60;
-				
-				::rptMsg("  Bias           -> ".$tz_vals{"Bias"}." (".$bias." hours)");
-				::rptMsg("  ActiveTimeBias -> ".$tz_vals{"ActiveTimeBias"}." (".$atbias." hours)");
+				my $a = unpack("s",pack("S",$tz_vals{"ActiveTimeBias"}));
+				my $b = unpack("s",pack("S",$tz_vals{"Bias"}));
+
+				::rptMsg("  Bias           -> ".$b." (".($b/60)." hours)");
+				::rptMsg("  ActiveTimeBias -> ".$a." (".($a/60)." hours)");
 				
 			}
 			else {
 				::rptMsg($tz_path." has no values.");
-				::logMsg($tz_path." has no values.");
 			}
 		}
 		else {
 			::rptMsg($tz_path." could not be found.");
-			::logMsg($tz_path." could not be found.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

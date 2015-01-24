@@ -57,6 +57,9 @@ sub pluginmain {
 	           "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
 	           "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run");
 	
+	my @alertpaths = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	
@@ -69,16 +72,23 @@ sub pluginmain {
 			my %vals = getKeyValues($key);
 			if (scalar(keys %vals) > 0) {
 				foreach my $v (keys %vals) {
-# check for "Temp" in the path/data					
-					if (grep(/[Tt]emp/,$vals{$v})) {
-#						::alertMsg("ALERT: user_run: Temp Path found: ".$key_path." : ".$v." -> ".$vals{$v});
-						::alertMsg($lw."|ALERT|||HKCU\\".$key_path." Temp path found: ".$v.": ".$vals{$v});
+					my $lc_path = lc($vals{$v});
+					foreach my $a (@alertpaths) {			
+						if (grep(/$a/,$lc_path)) {
+#						::alertMsg("ALERT: soft_run: Temp Path found: ".$key_path." : ".$v." -> ".$vals{$v});
+            	::alertMsg($lw."|ALERT|||HKCU\\".$key_path." Temp path: ".$v.": ".$vals{$v});
+						}
 					}
 # check to see if the data ends in .com					
 					if ($vals{$v} =~ m/\.com$/ || $vals{$v} =~ m/\.bat$/ || $vals{$v} =~ m/\.pif$/) {
 #						::alertMsg("ALERT: user_run: Path ends in \.com/\.bat: ".$key_path." : ".$v." -> ".$vals{$v});
             ::alertMsg($lw."|ALERT|||HKCU\\".$key_path." \.com/\.bat/\.pif file found: ".$v.": ".$vals{$v});
 					}					
+					
+					my @list = split(/:/,$vals{$v});
+					my $last = $list[scalar(@list) - 1];
+					::alertMsg($lw."|ALERT|||Poss. ADS found: ".$v.": ".$vals{$v}) if (grep(/:/,$last));
+					
 #					::rptMsg("  ".$v.": ".$vals{$v});
 				}
 			}
@@ -108,7 +118,7 @@ sub pluginmain {
 			$run = $key->get_value("Run")->get_data();
 #			::rptMsg("Run value = ".$run);
 #			::alertMsg("ALERT: user_run: ".$key_path." Run value found: ".$run);
-			::alertMsg($lw."|ALERT|||HKCU\\".$key_path." Run value found: ".$run);
+			::alertMsg($lw."|ALERT|||urun_tln: HKCU\\".$key_path." Run value found: ".$run);
 		};
 		if ($@) {
 #			::rptMsg("Run value not found.");
@@ -118,7 +128,7 @@ sub pluginmain {
 			$run = $key->get_value("run")->get_data();
 #			::rptMsg("run value = ".$run);
 #			::alertMsg("ALERT: user_run: ".$key_path." run value found: ".$run);
-			::alertMsg($lw."|ALERT|||HKCU\\".$key_path." run value found: ".$run);
+			::alertMsg($lw."|ALERT|||urun_tln: HKCU\\".$key_path." run value found: ".$run);
 		};
 		if ($@) {
 #			::rptMsg("run value not found.");
@@ -129,7 +139,7 @@ sub pluginmain {
 			$load = $key->get_value("load")->get_data();
 #			::rptMsg("load value = ".$load);
 #			::alertMsg("ALERT: user_run: ".$key_path." load value found: ".$load);
-			::alertMsg($lw."|ALERT|||HKCU\\".$key_path." load value found: ".$load);
+			::alertMsg($lw."|ALERT|||urun_tln: HKCU\\".$key_path." load value found: ".$load);
 		};
 		if ($@) {
 #			::rptMsg("load value not found.");

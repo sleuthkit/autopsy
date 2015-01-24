@@ -39,7 +39,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching kb950582 v.".$VERSION);
 	::rptMsg("kb950582 v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	
@@ -72,7 +72,7 @@ sub pluginmain {
 			my $str = sprintf "%-20s 0x%x","NoDriveTypeAutoRun",$nodrive;
 			::rptMsg($str);
 		};
-		::rptMsg("Error: ".$@) if ($@);
+		::rptMsg("NoDriveTypeAutoRun value may not exist: ".$@) if ($@);
 
 # http://support.microsoft.com/kb/953252		
 		eval {

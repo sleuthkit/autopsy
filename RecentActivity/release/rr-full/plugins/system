@@ -25,7 +25,8 @@ nic2
 nolmhash
 pagefile
 prefetch
-productpolicy
+#This currently gets stuck in an infinite loop
+#productpolicy
 producttype
 rdpport
 routes
