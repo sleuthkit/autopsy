@@ -1384,6 +1384,12 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userName"), //TSK_USER_NAME
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId")})); //TSK_USER_ID
                 break;
+                
+            case TSK_REMOTE_DRIVE:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.localPath"), //TSK_LOCAL_PATH
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath")})); //TSK_REMOTE_PATH
+                break;
             default:
                 return null;
         }
@@ -1788,6 +1794,10 @@ import org.sleuthkit.datamodel.TskData;
                 case TSK_OS_ACCOUNT:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
+                    break;
+                case TSK_REMOTE_DRIVE:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID()));
                     break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
