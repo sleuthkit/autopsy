@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this content except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * Node factory that performs the keyword search and creates children nodes for
- * each file.
+ each content.
  *
  * Responsible for assembling nodes and columns in the right way and performing
  * lazy queries as needed.
@@ -171,12 +171,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
-            Content file = hit.getContent();
-            if (file instanceof AbstractFile) {
-                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile)file);
+            Content content = hit.getContent();
+            if (content instanceof AbstractFile) {
+                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile)content);
             }
             else {
-                properties.put(AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION.toString(), file.getName());
+                properties.put(AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION.toString(), content.getName());
             }
             
             /**
@@ -190,13 +190,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             //get unique match result files
             // BC: @@@ THis is really ineffecient.  We should keep track of this when
             // we flattened the list of files to the unique files.            
-            final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, file);
+            final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, content);
 
-            String name = file.getName();
+            String name = content.getName();
             if (hit.isArtifactHit())
                 name = hit.getArtifact().getDisplayName() + " Artifact"; // NON-NLS
 
-            tempList.add(new KeyValueQueryContent(name, properties, ++id, hit.getSolrObjectId(), file, highlightQueryEscaped, keywordSearchQuery, queryResults));
+            tempList.add(new KeyValueQueryContent(name, properties, ++id, hit.getSolrObjectId(), content, highlightQueryEscaped, keywordSearchQuery, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
@@ -205,8 +205,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //write to bb
         //cannot reuse snippet in BlackboardResultWriter
-        //because for regex searches in UI we compress results by showing a file per regex once (even if multiple term hits)
-        //whereas in bb we write every hit per file separately
+        //because for regex searches in UI we compress results by showing a content per regex once (even if multiple term hits)
+        //whereas in bb we write every hit per content separately
         new BlackboardResultWriter(queryResults, queryRequest.getQuery().getKeywordList().getName()).execute();
 
         return true;
@@ -251,7 +251,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 Keyword term = queryResults.getKeywords().iterator().next();
                 highlightQuery.append(term.toString());
             } else {
-                //find terms for this file hit
+                //find terms for this content hit
                 List<String> hitTerms = new ArrayList<>();
                 for (Keyword keyword : queryResults.getKeywords()) {
                     for (KeywordHit hit : queryResults.getResults(keyword)) {
@@ -318,7 +318,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * practice
          *
          * @param name File name that has hit.
-         * @param map Contains file metadata, snippets, etc. (property map)
+         * @param map Contains content metadata, snippets, etc. (property map)
          * @param id User incremented ID
          * @param content File that had the hit.
          * @param queryStr Query used in search
