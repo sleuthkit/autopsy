@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
