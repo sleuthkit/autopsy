@@ -171,9 +171,14 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
-            AbstractFile file = hit.getFile();
-            AbstractFsContentNode.fillPropertyMap(properties, file);
-
+            Content file = hit.getContent();
+            if (file instanceof AbstractFile) {
+                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile)file);
+            }
+            else {
+                properties.put(AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION.toString(), file.getName());
+            }
+            
             /**
              * Add a snippet property, if available.
              */
@@ -231,7 +236,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @param file
      * @return
      */
-    private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, AbstractFile file) {
+    private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
         String highlightQueryEscaped;
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
@@ -250,7 +255,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 List<String> hitTerms = new ArrayList<>();
                 for (Keyword keyword : queryResults.getKeywords()) {
                     for (KeywordHit hit : queryResults.getResults(keyword)) {
-                        if (hit.getFile().equals(file)) {
+                        if (hit.getContent().equals(content)) {
                             hitTerms.add(keyword.toString());
                             break; //go to next term
                         }

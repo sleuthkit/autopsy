@@ -43,6 +43,13 @@ public class SolrSearchService implements KeywordSearchService {
         if (artifact == null)
             return;
         
+        // We only support artifact indexing for Autopsy versions that use
+        // the negative range for artifact ids.
+        long artifactId = artifact.getArtifactID();
+        
+        if (artifactId > 0)
+            return;
+        
         Case currentCase = Case.getCurrentCase();
         if (currentCase == null)
             return;
@@ -51,19 +58,14 @@ public class SolrSearchService implements KeywordSearchService {
         if (sleuthkitCase == null)
             return;
         
+        Content dataSource;
         AbstractFile abstractFile = sleuthkitCase.getAbstractFileById(artifact.getObjectID());
-        if (abstractFile == null)
-            return;
+        if (abstractFile != null)
+            dataSource = abstractFile.getDataSource();
+        else
+            dataSource = sleuthkitCase.getContentById(artifact.getObjectID());
         
-        Content dataSource = abstractFile.getDataSource();
         if (dataSource == null)
-            return;
-        
-        long artifactId = artifact.getArtifactID();
-        
-        // We only support artifact indexing for Autopsy versions that use
-        // the negative range for artifact ids.
-        if (artifactId > 0)
             return;
         
         // Concatenate the string values of all attributes into a single 

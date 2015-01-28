@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Stores the results from running a Solr query (which could contain multiple
@@ -148,10 +149,10 @@ class QueryResults {
                     if (writeResult != null) {
                         newArtifacts.add(writeResult.getArtifact());
                         if (notifyInbox) {
-                            writeSingleFileInboxMessage(writeResult, hit.getFile()); // RJCTODO: Consider rewriting this message post code 
+                            writeSingleFileInboxMessage(writeResult, hit.getContent()); // RJCTODO: Consider rewriting this message post code 
                         }
                     } else {
-                        logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getFile(), keyword.toString()}); //NON-NLS
+                        logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
                     }
                 }
             }
@@ -185,7 +186,7 @@ class QueryResults {
      * @param written
      * @param hitFile
      */
-    private void writeSingleFileInboxMessage(KeywordCachedArtifact written, AbstractFile hitFile) {
+    private void writeSingleFileInboxMessage(KeywordCachedArtifact written, Content hitContent) {
         StringBuilder subjectSb = new StringBuilder();
         StringBuilder detailsSb = new StringBuilder();
 
@@ -222,7 +223,13 @@ class QueryResults {
         //file
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
-        detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
+        if (hitContent instanceof AbstractFile) {
+            AbstractFile hitFile = (AbstractFile)hitContent;
+            detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
+        }
+        else {
+            detailsSb.append("<td>").append(hitContent.getName()).append("</td>"); //NON-NLS
+        }
         detailsSb.append("</tr>"); //NON-NLS
 
         //list

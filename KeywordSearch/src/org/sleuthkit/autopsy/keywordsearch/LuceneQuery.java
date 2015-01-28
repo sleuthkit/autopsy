@@ -148,7 +148,7 @@ class LuceneQuery implements KeywordSearchQuery {
         BlackboardArtifact bba;
         KeywordCachedArtifact writeResult;
         try {
-            bba = hit.getFile().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordCachedArtifact(bba);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS

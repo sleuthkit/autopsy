@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -36,7 +37,7 @@ class KeywordHit {
     private final long solrObjectId;
     private final int chunkId;
     private final String snippet;
-    private final AbstractFile file;
+    private final Content content;
     private final BlackboardArtifact artifact;
 
     KeywordHit(String solrDocumentId, String snippet) throws TskCoreException {
@@ -47,10 +48,10 @@ class KeywordHit {
 
         /**
          * Parse the Solr document id to get the Solr object id and chunk id.
-         * For a file hit, the Solr object id is the file's obj_id from the case
-         * database. For an artifact hit, the Solr object id is the artifact_id
-         * from the case database summed with a magic number to set the highest
-         * order bit. For every object (file or artifact) there will at least
+         * The Solr object id will either be a file id or an artifact id from 
+         * the case database.
+         * 
+         * For every object (file or artifact) there will at least
          * two Solr documents. One contains object metadata (chunk #1) and the
          * second and subsequent documents contain chunks of the text.
          */
@@ -77,7 +78,7 @@ class KeywordHit {
             this.artifact = null;
             fileId = this.solrObjectId;
         }
-        this.file = caseDb.getAbstractFileById(fileId);
+        this.content = caseDb.getContentById(fileId);
 
         /**
          * Store the text snippet.
@@ -109,8 +110,8 @@ class KeywordHit {
         return this.snippet;
     }
 
-    AbstractFile getFile() {
-        return this.file;
+    Content getContent() {
+        return this.content;
     }
 
     boolean isArtifactHit() {
