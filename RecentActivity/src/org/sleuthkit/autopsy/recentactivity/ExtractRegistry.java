@@ -465,7 +465,6 @@ class ExtractRegistry extends Extract {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION.getTypeID(), parentModuleName, os));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID(), parentModuleName, procArch));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_NAME.getTypeID(), parentModuleName, procId));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEMP_DIR.getTypeID(), parentModuleName, tempDir));
 
                         // Check if there is already an OS_INFO artifact for this file and add to that if possible
