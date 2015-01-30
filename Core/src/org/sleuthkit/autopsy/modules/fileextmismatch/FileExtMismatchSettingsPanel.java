@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdIngestModule;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.modules.filetypeid.TikaFileTypeDetector;
 
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced
@@ -431,7 +432,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
+        if (!TikaFileTypeDetector.mimeTypeIsDetectable(newMime)) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));

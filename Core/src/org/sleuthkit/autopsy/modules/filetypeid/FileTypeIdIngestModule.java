@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.HashMap;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -31,17 +30,13 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
-import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
-// TODO: This class does not need to be public.
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
@@ -49,24 +44,30 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private final UserDefinedFileTypeDetector userDefinedFileTypeIdentifier;
     private final TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
 
     /**
      * Validate if a given mime type is in the detector's registry.
      *
+     * @deprecated Use TikaFileTypeDetector.mimeTypeIsDetectable instead.
      * @param mimeType Full string of mime type, e.g. "text/html"
      * @return true if detectable
      */
+    @Deprecated
     public static boolean isMimeTypeDetectable(String mimeType) {
-        /* This is an awkward place for this method because it is used only
-         * by the file extension mismatch panel.  But, it works.  
-         * We probabl dont' want to expose the tika class as the public
-         * method to do this and a single class just for this method
-         * seems a bit silly.
+        /**
+         * TODO: This is an awkward place for this method because it is used
+         * only by the file extension mismatch global settings panel. There used
+         * to be a comment here about not exposing the TikaFileTypeDetector
+         * class publicly, but this has already been done and actually makes
+         * more sense, given that the question is being asked of Apache's tika
+         * code. The cleanest approach would be to move the file type
+         * identification code into its own package, with the file type
+         * identification, the file extension mismatch identification, keyword
+         * search, and possibly the interesting items ingest modules as clients.
+         * I (RJC) recommend this for Autopsy 3.2.
          */
-        TikaFileTypeDetector detector = new TikaFileTypeDetector();
-        return detector.isMimeTypeDetectable(mimeType);
+        return TikaFileTypeDetector.mimeTypeIsDetectable(mimeType);
     }
 
     /**
@@ -77,12 +78,8 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
-        userDefinedFileTypeIdentifier = new UserDefinedFileTypeDetector();
-        try {
-            userDefinedFileTypeIdentifier.loadFileTypes();
-        } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
-            logger.log(Level.SEVERE, "Failed to load file types", ex);
-            MessageNotifyUtil.Notify.error(FileTypeIdModuleFactory.getModuleName(), ex.getMessage());            
+        if (!tikaDetector.userDefinedTypesAreLoaded()) {
+            MessageNotifyUtil.Notify.error(FileTypeIdModuleFactory.getModuleName(), "Failed to load user-defined file types for use in file type indentification.");
         }
     }
 
@@ -100,9 +97,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
-        
-        String name = file.getName();
-        
+
         /**
          * Skip unallocated space and unused blocks files.
          */
@@ -125,38 +120,17 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         if (settings.skipSmallFiles() && file.getSize() < settings.minFileSizeInBytes()) {
             return ProcessResult.OK;
         }
-        
+
+        /**
+         * Attempt to detect the file type. Do it within an exception firewall,
+         * so that any issues with reading file content or complaints from tika
+         * do not take the module down.
+         */
         try {
             long startTime = System.currentTimeMillis();
-            FileType fileType = this.userDefinedFileTypeIdentifier.identify(file);
-            if (null != fileType) {
-                String moduleName = FileTypeIdModuleFactory.getModuleName();
-                BlackboardArtifact getInfoArtifact = file.getGenInfoArtifact();
-                BlackboardAttribute typeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), moduleName, fileType.getMimeType());
-                getInfoArtifact.addAttribute(typeAttr);
-
-                if (fileType.alertOnMatch()) {
-                    BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, fileType.getFilesSetName());
-                    artifact.addAttribute(setNameAttribute);
-
-                    /**
-                     * Use the MIME type as the category, i.e., the rule that
-                     * determined this file belongs to the interesting files
-                     * set.
-                     */
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, fileType.getMimeType());
-                    artifact.addAttribute(ruleNameAttribute);
-                }
-
-            } else {
-                tikaDetector.detectAndSave(file);
-            }
+            tikaDetector.detectAndPostToBlackboard(file, FileTypeIdModuleFactory.getModuleName());
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
-            return ProcessResult.ERROR;
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
             return ProcessResult.ERROR;
