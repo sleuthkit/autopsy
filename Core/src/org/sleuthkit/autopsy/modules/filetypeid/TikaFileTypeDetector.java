@@ -67,8 +67,11 @@ public class TikaFileTypeDetector {
     }
 
     /**
-    /**
-     * Detect the MIME type of a file, posting it to the blackboard if detection succeeds.
+     * /**
+     * Detect the MIME type of a file, posting it to the blackboard if detection
+     * succeeds. Note if detection is successful, the substring "tika" will be
+     * removed from the returned MIME type name, e.g. "application/x-msoffice"
+     * will be returned instead of "application/x-tika-msoffice."
      *
      * @param file The file to test.
      * @param moduleName The name of the module posting to the blackboard.
@@ -88,11 +91,15 @@ public class TikaFileTypeDetector {
             BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), moduleName, mimeType);
             getInfoArt.addAttribute(batt);
         }
-        return mimeType;    
-    }    
-    
+        return mimeType;
+    }
+
     /**
-     * Detect the MIME type of a file, posting it to the blackboard if detection succeeds.
+     * Detect the MIME type of a file, posting it to the blackboard if detection
+     * succeeds. Note if detection is successful, the substring "tika" will be
+     * removed from the returned MIME type name, e.g. "application/x-msoffice"
+     * will be returned instead of "application/x-tika-msoffice."
+     *
      *
      * @deprecated Use detectAndPostToBlackboard instead.
      * @param file The file to test.
@@ -105,7 +112,10 @@ public class TikaFileTypeDetector {
     }
 
     /**
-     * Detect the MIME type of a file.
+     * Detect the MIME type of a file. Note if detection is successful, the
+     * substring "tika" will be removed from the returned MIME type name, e.g.
+     * "application/x-msoffice" will be returned instead of
+     * "application/x-tika-msoffice."
      *
      * @param file The file to test.
      * @return The MIME type name id detection was successful, null otherwise.
