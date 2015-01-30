@@ -488,7 +488,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (detectedFormat == null) {
                 TikaFileTypeDetector tikaFileTypeDetector = new TikaFileTypeDetector();
                 try {
-                    detectedFormat = tikaFileTypeDetector.detectAndSave(aFile);
+                    detectedFormat = tikaFileTypeDetector.detectAndPostToBlackboard(aFile, KeywordSearchModuleFactory.getModuleName());
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile); //NON-NLS
                     return;
