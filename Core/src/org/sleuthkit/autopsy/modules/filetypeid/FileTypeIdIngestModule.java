@@ -83,8 +83,9 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Failed to create file type detector", ex);
-            throw new IngestModuleException("Failed to create file type detector");
+            String errorMessage = "Failed to create file type detector";
+            logger.log(Level.SEVERE, errorMessage, ex);
+            throw new IngestModuleException(errorMessage);
         }        
     }
 
