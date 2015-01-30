@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -44,30 +43,24 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private final TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
+    private FileTypeDetector fileTypeDetector;
 
     /**
      * Validate if a given mime type is in the detector's registry.
      *
-     * @deprecated Use TikaFileTypeDetector.mimeTypeIsDetectable instead.
+     * @deprecated Use FileTypeDetector.mimeTypeIsDetectable(String mimeType)
+     * instead.
      * @param mimeType Full string of mime type, e.g. "text/html"
      * @return true if detectable
      */
     @Deprecated
     public static boolean isMimeTypeDetectable(String mimeType) {
-        /**
-         * TODO: This is an awkward place for this method because it is used
-         * only by the file extension mismatch global settings panel. There used
-         * to be a comment here about not exposing the TikaFileTypeDetector
-         * class publicly, but this has already been done and actually makes
-         * more sense, given that the question is being asked of Apache's tika
-         * code. The cleanest approach would be to move the file type
-         * identification code into its own package, with the file type
-         * identification, the file extension mismatch identification, keyword
-         * search, and possibly the interesting items ingest modules as clients.
-         * I (RJC) recommend this for Autopsy 3.2.
-         */
-        return TikaFileTypeDetector.mimeTypeIsDetectable(mimeType);
+        try {
+            return new FileTypeDetector().isDetectable(mimeType);
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, "Failed to create file type detector", ex);
+            return false;
+        }
     }
 
     /**
@@ -78,9 +71,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
-        if (!tikaDetector.userDefinedTypesAreLoaded()) {
-            MessageNotifyUtil.Notify.error(FileTypeIdModuleFactory.getModuleName(), "Failed to load user-defined file types for use in file type indentification.");
-        }
     }
 
     /**
@@ -90,6 +80,13 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            String errorMessage = "Failed to create file type detector";
+            logger.log(Level.SEVERE, errorMessage, ex);
+            throw new IngestModuleException(errorMessage);
+        }        
     }
 
     /**
@@ -115,24 +112,17 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         }
 
         /**
-         * Filter out very small files to minimize false positives.
-         */
-        if (settings.skipSmallFiles() && file.getSize() < settings.minFileSizeInBytes()) {
-            return ProcessResult.OK;
-        }
-
-        /**
          * Attempt to detect the file type. Do it within an exception firewall,
          * so that any issues with reading file content or complaints from tika
          * do not take the module down.
          */
         try {
             long startTime = System.currentTimeMillis();
-            tikaDetector.detectAndPostToBlackboard(file, FileTypeIdModuleFactory.getModuleName());
+            fileTypeDetector.detectAndPostToBlackboard(file);
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error while attempting to determine file type of file %d", file.getId()), e); //NON-NLS
             return ProcessResult.ERROR;
         }
     }
