@@ -109,7 +109,7 @@ final class DataSourceIngestPipeline {
             if (this.job.isCancelled()) {
                 break;
             } else if (this.job.currentDataSourceIngestModuleIsCancelled()) {
-                this.job.currentDataSourceIngestModuleCancellationCompleted();
+                this.job.currentDataSourceIngestModuleCancellationCompleted(currentModule.getDisplayName());
             }
         }
         this.currentModule = null;
