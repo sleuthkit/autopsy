@@ -28,19 +28,27 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
+/**
+ * @deprecated Use org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector
+ * instead.
+ */
+@Deprecated
 public class TikaFileTypeDetector {
 
     private static final Tika tikaInst = new Tika(); //calling detect() with this should be thread-safe
     private final int BUFFER_SIZE = 64 * 1024; //how many bytes to pass in
     private final byte buffer[] = new byte[BUFFER_SIZE];
-           
+
     /**
      * Detect the mime type of the passed in file and save it to the blackboard
+     *
+     * @deprecated Use FileTypeDetector.detectAndPostToBlackboard(AbstractFile
+     * file) instead.
      * @param abstractFile
      * @return mime type or null
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
+    @Deprecated
     public synchronized String detectAndSave(AbstractFile abstractFile) throws TskCoreException {
         String mimeType = detect(abstractFile);
         if (mimeType != null) {
@@ -53,11 +61,15 @@ public class TikaFileTypeDetector {
         }
         return mimeType;
     }
+
     /**
      * Detect the mime type of the passed in file
+     *
+     * @deprecated Use FileTypeDetector.detect(AbstractFile file) instead.
      * @param abstractFile
      * @return mime type of detected format or null
      */
+    @Deprecated
     public synchronized String detect(AbstractFile abstractFile) {
         try {
             byte buf[];
@@ -68,7 +80,7 @@ public class TikaFileTypeDetector {
             } else {
                 buf = buffer;
             }
-            
+
             String mimetype = tikaInst.detect(buf, abstractFile.getName());
             // Remove tika's name out of the general types like msoffice and ooxml
             return mimetype.replace("tika-", ""); //NON-NLS
@@ -83,9 +95,11 @@ public class TikaFileTypeDetector {
      * string "tika" from all MIME names, e.g. use "application/x-msoffice" NOT
      * "application/x-tika-msoffice"
      *
+     * @deprecated Use FileTypeDetector.isDetectable(String mimeType) instead.
      * @param mimeType Full string of mime type, e.g. "text/html"
      * @return true if detectable
      */
+    @Deprecated
     public boolean isMimeTypeDetectable(String mimeType) {
         boolean ret = false;
 
