@@ -19,22 +19,26 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Insets;
+import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Manages this module's lifecycle. Opens the startup dialog during startup.
+ * Manages this module's life cycle. Opens the startup dialog during startup.
  */
 public class Installer extends ModuleInstall {
 
@@ -50,7 +54,6 @@ public class Installer extends ModuleInstall {
 
     private Installer() {
         super();
-
     }
 
     @Override
@@ -62,9 +65,24 @@ public class Installer extends ModuleInstall {
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
 
+        /* Open the passed in case, if an aut file was double clicked. */
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
+                Collection<? extends OptionProcessor> processors = Lookup.getDefault().lookupAll(OptionProcessor.class);
+                for (OptionProcessor processor : processors) {
+                    if (processor instanceof OpenFromArguments) {
+                        OpenFromArguments argsProcessor = (OpenFromArguments) processor;
+                        String caseFile = argsProcessor.getDefaultArg();
+                        if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) {
+                            try {
+                                Case.open(caseFile);
+                                return;
+                            } catch (Exception e) {
+                            }
+                        }
+                    }
+                }
                 Case.invokeStartupDialog(); // bring up the startup dialog
             }
         });
@@ -114,24 +132,22 @@ public class Installer extends ModuleInstall {
             uiEntries.put(key, UIManager.get(key));
         }
         
-        
         //use Metal if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) { //NON-NLS
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
-                } catch (ClassNotFoundException | InstantiationException | 
+                } catch (ClassNotFoundException | InstantiationException |
                         IllegalAccessException | UnsupportedLookAndFeelException ex) {
                     logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
                 }
                 break;
             }
         }
-        
+
         // Overwrite the Metal menu item keys to use the Aqua versions
-        for(Map.Entry<Object,Object> entry : uiEntries.entrySet()) {
+        for (Map.Entry<Object,Object> entry : uiEntries.entrySet()) {
             UIManager.put(entry.getKey(), entry.getValue());
         }
-        
     }
 }

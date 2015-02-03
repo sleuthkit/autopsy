@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2013 Basis Technology Corp.
+ * Copyright 2012-2015 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -26,6 +26,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -33,24 +35,20 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class Services implements Closeable {
     
-    private SleuthkitCase tskCase;
-    
-    // NOTE: all new services added to Services class must be added to this list
-    // of services.
-    private List<Closeable> services = new ArrayList<>();
-    
-    // services
-    private FileManager fileManager;
-    private TagsManager tagsManager;
+    private final List<Closeable> services = new ArrayList<>();    
+    private final FileManager fileManager;
+    private final TagsManager tagsManager;
+    private final KeywordSearchService keywordSearchService;
 
     public Services(SleuthkitCase tskCase) {
-        this.tskCase = tskCase;
-        //create and initialize FileManager as early as possibly in the new/opened Case
         fileManager = new FileManager(tskCase);
         services.add(fileManager);
         
         tagsManager = new TagsManager(tskCase);
         services.add(tagsManager);
+        
+        keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+        services.add(keywordSearchService);
     }
     
     public FileManager getFileManager() {
@@ -61,11 +59,15 @@ public class Services implements Closeable {
         return tagsManager;
     }
 
+    public KeywordSearchService getKeywordSearchService() {
+        return keywordSearchService;
+    }
+    
     @Override
     public void close() throws IOException {
-        // close all services
         for (Closeable service : services) {
             service.close();
         }
     }
+    
 }

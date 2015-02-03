@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.datamodel.Content;
 
-
-
 /**
  * BC debugging notes: This seems to represent a combination of the content, query, isRegexp and origialQuery that can
  * be passed around. It is used by BlackboardArtifactNode.getHighlightLookup and getLookups to add the markup concept to the node. 
@@ -33,12 +31,12 @@ import org.sleuthkit.datamodel.Content;
     /**
      * Create an instance of the given TextMarkupLookup object. 
      *
-     * @param c content for which to get highlights
+     * @param objectId Id of the object (file or artifact) for which to get highlights
      * @param keywordHitQuery keyword hit that needs to be highlighted
      * @param isRegex whether the original query was a regex query
      * @param originalQuery (regex or literal) that may need to be performed
      * again to get all ContentHit results
      * @return 
      */
-    public TextMarkupLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery);
+    public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery);
 }

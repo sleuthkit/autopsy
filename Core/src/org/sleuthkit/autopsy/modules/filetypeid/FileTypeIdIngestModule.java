@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,8 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.HashMap;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -31,17 +29,13 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
-import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
-// TODO: This class does not need to be public.
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
@@ -49,24 +43,24 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private final UserDefinedFileTypeDetector userDefinedFileTypeIdentifier;
-    private final TikaFileTypeDetector tikaDetector = new TikaFileTypeDetector();
+    private FileTypeDetector fileTypeDetector;
 
     /**
      * Validate if a given mime type is in the detector's registry.
      *
+     * @deprecated Use FileTypeDetector.mimeTypeIsDetectable(String mimeType)
+     * instead.
      * @param mimeType Full string of mime type, e.g. "text/html"
      * @return true if detectable
      */
+    @Deprecated
     public static boolean isMimeTypeDetectable(String mimeType) {
-        /* This is an awkward place for this method because it is used only
-         * by the file extension mismatch panel.  But, it works.  
-         * We probabl dont' want to expose the tika class as the public
-         * method to do this and a single class just for this method
-         * seems a bit silly.
-         */
-        TikaFileTypeDetector detector = new TikaFileTypeDetector();
-        return detector.isMimeTypeDetectable(mimeType);
+        try {
+            return new FileTypeDetector().isDetectable(mimeType);
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, "Failed to create file type detector", ex);
+            return false;
+        }
     }
 
     /**
@@ -77,13 +71,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
         this.settings = settings;
-        userDefinedFileTypeIdentifier = new UserDefinedFileTypeDetector();
-        try {
-            userDefinedFileTypeIdentifier.loadFileTypes();
-        } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
-            logger.log(Level.SEVERE, "Failed to load file types", ex);
-            MessageNotifyUtil.Notify.error(FileTypeIdModuleFactory.getModuleName(), ex.getMessage());            
-        }
     }
 
     /**
@@ -93,6 +80,13 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            String errorMessage = "Failed to create file type detector";
+            logger.log(Level.SEVERE, errorMessage, ex);
+            throw new IngestModuleException(errorMessage);
+        }        
     }
 
     /**
@@ -100,9 +94,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
-        
-        String name = file.getName();
-        
+
         /**
          * Skip unallocated space and unused blocks files.
          */
@@ -120,45 +112,17 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         }
 
         /**
-         * Filter out very small files to minimize false positives.
+         * Attempt to detect the file type. Do it within an exception firewall,
+         * so that any issues with reading file content or complaints from tika
+         * do not take the module down.
          */
-        if (settings.skipSmallFiles() && file.getSize() < settings.minFileSizeInBytes()) {
-            return ProcessResult.OK;
-        }
-        
         try {
             long startTime = System.currentTimeMillis();
-            FileType fileType = this.userDefinedFileTypeIdentifier.identify(file);
-            if (null != fileType) {
-                String moduleName = FileTypeIdModuleFactory.getModuleName();
-                BlackboardArtifact getInfoArtifact = file.getGenInfoArtifact();
-                BlackboardAttribute typeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), moduleName, fileType.getMimeType());
-                getInfoArtifact.addAttribute(typeAttr);
-
-                if (fileType.alertOnMatch()) {
-                    BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, fileType.getFilesSetName());
-                    artifact.addAttribute(setNameAttribute);
-
-                    /**
-                     * Use the MIME type as the category, i.e., the rule that
-                     * determined this file belongs to the interesting files
-                     * set.
-                     */
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, fileType.getMimeType());
-                    artifact.addAttribute(ruleNameAttribute);
-                }
-
-            } else {
-                tikaDetector.detectAndSave(file);
-            }
+            fileTypeDetector.detectAndPostToBlackboard(file);
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error matching file signature", ex); //NON-NLS
-            return ProcessResult.ERROR;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error matching file signature", e); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error while attempting to determine file type of file %d", file.getId()), e); //NON-NLS
             return ProcessResult.ERROR;
         }
     }

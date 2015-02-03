@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.apache.tika.Tika;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -38,10 +35,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
-import org.sleuthkit.autopsy.modules.filetypeid.TikaFileTypeDetector;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -87,7 +83,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private boolean initialized = false;
     private long jobId;
     private long dataSourceId;   
-    private static AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
+    private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private IngestJobContext context;
@@ -486,15 +482,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
             // else, use FileType module to detect the format
             if (detectedFormat == null) {
-                TikaFileTypeDetector tikaFileTypeDetector = new TikaFileTypeDetector();
                 try {
-                    detectedFormat = tikaFileTypeDetector.detectAndSave(aFile);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile); //NON-NLS
+                    new FileTypeDetector().detectAndPostToBlackboard(aFile);
+                } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
                     return;
                 }
                 if (detectedFormat == null) {
-                    logger.log(Level.WARNING, "Could not detect format using tika for file: " + aFile); //NON-NLS
+                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
                     return;
                 } 
             }

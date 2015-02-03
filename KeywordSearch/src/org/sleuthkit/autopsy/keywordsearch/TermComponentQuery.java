@@ -166,7 +166,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     
 
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         //there is match actually in this file, create artifact only then
@@ -174,7 +174,7 @@ class TermComponentQuery implements KeywordSearchQuery {
         KeywordCachedArtifact writeResult;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         try {
-            bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordCachedArtifact(bba);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
@@ -195,6 +195,10 @@ class TermComponentQuery implements KeywordSearchQuery {
         //regex keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, keyword.getQuery()));
 
+        if (hit.isArtifactHit()) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(), MODULE_NAME, hit.getArtifact().getArtifactID()));
+        }
+                
         try {
             bba.addAttributes(attributes);
             writeResult.add(attributes);
@@ -232,9 +236,9 @@ class TermComponentQuery implements KeywordSearchQuery {
             }
             try {
                 QueryResults subResults = filesQuery.performQuery();
-                Set<ContentHit> filesResults = new HashSet<>();
+                Set<KeywordHit> filesResults = new HashSet<>();
                 for (Keyword key : subResults.getKeywords()) {
-                    List<ContentHit> keyRes = subResults.getResults(key);
+                    List<KeywordHit> keyRes = subResults.getResults(key);
                     resultSize += keyRes.size();
                     filesResults.addAll(keyRes);
                 }

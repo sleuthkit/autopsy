@@ -565,12 +565,12 @@ public final class SearchRunner {
             QueryResults newResults = new QueryResults(queryResult.getQuery(), queryResult.getKeywordList());
 
             for (Keyword keyword : queryResult.getKeywords()) {
-                List<ContentHit> queryTermResults = queryResult.getResults(keyword);
+                List<KeywordHit> queryTermResults = queryResult.getResults(keyword);
 
                 //translate to list of IDs that we keep track of
                 List<Long> queryTermResultsIDs = new ArrayList<>();
-                for (ContentHit ch : queryTermResults) {
-                    queryTermResultsIDs.add(ch.getId());
+                for (KeywordHit ch : queryTermResults) {
+                    queryTermResultsIDs.add(ch.getSolrObjectId());
                 }
 
                 List<Long> curTermResults = job.currentKeywordResults(keyword);
@@ -579,16 +579,16 @@ public final class SearchRunner {
                     newResults.addResult(keyword, queryTermResults);
                 } else {
                     //some AbstractFile hits already exist for this keyword
-                    for (ContentHit res : queryTermResults) {
-                        if (!curTermResults.contains(res.getId())) {
+                    for (KeywordHit res : queryTermResults) {
+                        if (!curTermResults.contains(res.getSolrObjectId())) {
                             //add to new results
-                            List<ContentHit> newResultsFs = newResults.getResults(keyword);
+                            List<KeywordHit> newResultsFs = newResults.getResults(keyword);
                             if (newResultsFs == null) {
                                 newResultsFs = new ArrayList<>();
                                 newResults.addResult(keyword, newResultsFs);
                             }
                             newResultsFs.add(res);
-                            curTermResults.add(res.getId());
+                            curTermResults.add(res.getSolrObjectId());
                         }
                     }
                 }

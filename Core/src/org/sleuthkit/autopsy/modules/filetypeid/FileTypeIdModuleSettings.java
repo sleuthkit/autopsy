@@ -27,16 +27,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-    private static final long MIN_FILE_SIZE_IN_BYTES = 512;
     private boolean skipKnownFiles = true;
-    private boolean skipSmallFiles = true;
+    private boolean skipSmallFiles = false; // No longer used.
 
     FileTypeIdModuleSettings() {
     }
 
-    FileTypeIdModuleSettings(boolean skipKnownFiles, boolean skipSmallFiles) {
+    FileTypeIdModuleSettings(boolean skipKnownFiles) {
         this.skipKnownFiles = skipKnownFiles;
-        this.skipSmallFiles = skipSmallFiles;
     }
 
     /**
@@ -54,17 +52,5 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
     boolean skipKnownFiles() {
         return skipKnownFiles;
     }
-
-    void setSkipSmallFiles(boolean enabled) {
-        this.skipSmallFiles = enabled;
-    }
-
-    boolean skipSmallFiles() {
-        return skipSmallFiles;
-    }
     
-    long minFileSizeInBytes() {
-        return MIN_FILE_SIZE_IN_BYTES;
-    }
-
 }
