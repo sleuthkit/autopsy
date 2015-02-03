@@ -190,7 +190,7 @@ public final class IngestJob {
              *
              * @return A data source name string.
              */
-            String getDataSource() {
+            public String getDataSource() {
                 return snapshot.getDataSource();
             }
 
@@ -198,9 +198,9 @@ public final class IngestJob {
              * Indicates whether or not the processing of the data source that
              * is the subject of this snapshot was canceled.
              *
-             * @return
+             * @return True or false.
              */
-            boolean isCancelled() {
+            public boolean isCancelled() {
                 return snapshot.isCancelled();
             }
 
@@ -211,7 +211,7 @@ public final class IngestJob {
              * @return A list of canceled data source level ingest module
              * display names, possibly empty.
              */
-            List<String> getCancelledDataSourceIngestModules() {
+            public List<String> getCancelledDataSourceIngestModules() {
                 return snapshot.getCancelledDataSourceIngestModules();
             }
 
