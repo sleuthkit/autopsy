@@ -320,7 +320,11 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportKML.getDefault"/>
             <attr name="position" intvalue="904"/>
         </file>
-        
+        <file name="org-sleuthkit-autopsy-modules-stix-STIXReportModule.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.modules.stix.STIXReportModule.getDefault"/>
+            <attr name="position" intvalue="910"/>
+        </file>
         <!--<folder name="JavaHelp">
             <file name="casemodule-helpset.xml" url="casemodule-helpset.xml">
                 <attr name="position" intvalue="3075"/>
