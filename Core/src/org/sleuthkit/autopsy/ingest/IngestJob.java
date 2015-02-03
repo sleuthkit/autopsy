@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -110,7 +111,9 @@ public final class IngestJob {
         DataSourceIngestModuleHandle moduleHandle = null;
         boolean fileIngestIsRunning = false;
         Date fileIngestStartTime = null;
+        List<DataSourceProgressSnapshot> dataSourceSnapshots = new ArrayList<>();
         for (DataSourceIngestJob.Snapshot snapshot : this.getDataSourceIngestJobSnapshots()) {
+            dataSourceSnapshots.add(new DataSourceProgressSnapshot(snapshot));
             if (null == moduleHandle) {
                 DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
                 if (null != module) {
@@ -125,7 +128,7 @@ public final class IngestJob {
                 fileIngestStartTime = childFileIngestStartTime;
             }
         }
-        return new ProgressSnapshot(moduleHandle, fileIngestIsRunning, fileIngestStartTime, this.cancelled);
+        return new ProgressSnapshot(moduleHandle, fileIngestIsRunning, fileIngestStartTime, this.cancelled, dataSourceSnapshots);
     }
 
     /**
@@ -179,6 +182,51 @@ public final class IngestJob {
     }
 
     /**
+     * A snapshot of the progress of an ingest job on the processing of a data
+     * source.
+     */
+    public static final class DataSourceProgressSnapshot {
+
+        private final DataSourceIngestJob.Snapshot snapshot;
+
+        private DataSourceProgressSnapshot(DataSourceIngestJob.Snapshot snapshot) {
+            this.snapshot = snapshot;
+        }
+
+        /**
+         * Gets the name of the data source that is the subject of this
+         * snapshot.
+         *
+         * @return A data source name string.
+         */
+        String getDataSource() {
+            return snapshot.getDataSource();
+        }
+
+        /**
+         * Indicates whether or not the processing of the data source that is
+         * the subject of this snapshot was canceled.
+         *
+         * @return
+         */
+        boolean isCancelled() {
+            return snapshot.isCancelled();
+        }
+
+        /**
+         * Gets a list of the display names of any canceled data source level
+         * ingest modules.
+         *
+         * @return A list of canceled data source level ingest module display
+         * names, possibly empty.
+         */
+        List<String> getCancelledDataSourceIngestModules() {
+            return snapshot.getCancelledDataSourceIngestModules();
+        }
+
+    }
+
+    /**
      * A snapshot of the progress of an ingest job.
      */
     public static final class ProgressSnapshot {
@@ -187,6 +235,7 @@ public final class IngestJob {
         private final boolean fileIngestRunning;
         private final Date fileIngestStartTime;
         private final boolean cancelled;
+        private final List<DataSourceProgressSnapshot> dataSourceProgressSnapshots;
 
         /**
          * Constructs a snapshot of ingest job progress.
@@ -199,12 +248,15 @@ public final class IngestJob {
          * be null.
          * @param cancelled Whether or not a cancellation request has been
          * issued.
+         * @param dataSourceProgressSnapshots Snapshots of the progress
+         * processing individual data sources.
          */
-        private ProgressSnapshot(DataSourceIngestModuleHandle dataSourceModule, boolean fileIngestRunning, Date fileIngestStartTime, boolean cancelled) {
+        private ProgressSnapshot(DataSourceIngestModuleHandle dataSourceModule, boolean fileIngestRunning, Date fileIngestStartTime, boolean cancelled, List<DataSourceProgressSnapshot> dataSourceProgressSnapshots) {
             this.dataSourceModule = dataSourceModule;
             this.fileIngestRunning = fileIngestRunning;
             this.fileIngestStartTime = fileIngestStartTime;
             this.cancelled = cancelled;
+            this.dataSourceProgressSnapshots = dataSourceProgressSnapshots; 
         }
 
         /**

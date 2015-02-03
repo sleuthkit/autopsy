@@ -970,7 +970,7 @@ final class DataSourceIngestJob {
     /**
      * Stores basic diagnostic statistics for a data source ingest job.
      */
-    class Snapshot {
+    final class Snapshot {
 
         private final String dataSource;
         private final long jobId;
@@ -1129,7 +1129,7 @@ final class DataSourceIngestJob {
             return this.tasksSnapshot.getRunningListSize();
         }
 
-        boolean getCancelled() {
+        boolean isCancelled() {
             return this.jobCancelled;
         }
         
