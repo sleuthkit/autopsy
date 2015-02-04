@@ -404,7 +404,7 @@ public class IngestManager {
         boolean success = false;
 
         if (this.jobCreationIsEnabled) {
-            if (runInteractively && jobsById.isEmpty()) { // RJCTODO: This is sort of broken
+            if (runInteractively && jobsById.isEmpty()) {
                 clearIngestMessageBox();
             }
 

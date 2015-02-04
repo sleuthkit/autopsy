@@ -70,6 +70,7 @@ sub pluginmain {
 #		::rptMsg($key_path);
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 #		::rptMsg("");
+		my $lw = $key->get_timestamp();
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {
 			foreach my $v (@vals) {

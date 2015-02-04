@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -180,9 +180,9 @@ class FileType {
                 return ((bytesRead == signatureBytes.length) && (Arrays.equals(buffer, signatureBytes)));
             } catch (TskCoreException ex) {
                 /**
-                 * This exception is caught rather than propagated because files
-                 * in images are not always consistent with their file system
-                 * meta data making for read errors.
+                 * This exception is swallowed rather than propagated because
+                 * files in images are not always consistent with their file
+                 * system meta data making for read errors.
                  */
                 Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex);
                 return false;

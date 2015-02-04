@@ -254,6 +254,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 case TSK_PROG_RUN:
                      in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
                     break;
+                case TSK_REMOTE_DRIVE:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
+                    break;    
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS

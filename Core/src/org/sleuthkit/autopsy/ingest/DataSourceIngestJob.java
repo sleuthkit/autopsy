@@ -19,10 +19,12 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -116,7 +118,8 @@ final class DataSourceIngestJob {
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private volatile boolean cancelled;
-
+    private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
+        
     /**
      * A data source ingest job uses the task scheduler singleton to create and
      * queue the ingest tasks that make up the job.
@@ -716,7 +719,7 @@ final class DataSourceIngestJob {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (DataSourceIngestJob.Stages.FIRST == this.stage) { // RJCTODO: Is this synchronized correctly
+        if (DataSourceIngestJob.Stages.FIRST == this.stage) {
             for (AbstractFile file : files) {
                 DataSourceIngestJob.taskScheduler.scheduleFileIngestTask(this, file);
             }
@@ -841,10 +844,13 @@ final class DataSourceIngestJob {
 
     /**
      * Rescind a temporary cancellation of data source level ingest that was
-     * used to stop a single data source level ingest module fro this job.
+     * used to stop a single data source level ingest module for this job.
+     * 
+     * @param moduleDisplayName The display name of the module that was stopped.
      */
-    void currentDataSourceIngestModuleCancellationCompleted() {
+    void currentDataSourceIngestModuleCancellationCompleted(String moduleDisplayName) {
         this.currentDataSourceIngestModuleCancelled = false;
+        this.cancelledDataSourceIngestModules.add(moduleDisplayName);
 
         if (this.runInteractively) {
             /**
@@ -964,7 +970,7 @@ final class DataSourceIngestJob {
     /**
      * Stores basic diagnostic statistics for a data source ingest job.
      */
-    class Snapshot {
+    final class Snapshot {
 
         private final String dataSource;
         private final long jobId;
@@ -976,6 +982,8 @@ final class DataSourceIngestJob {
         private final long processedFiles;
         private final long estimatedFilesToProcess;
         private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
+        private final boolean jobCancelled;
+        private final List<String> cancelledDataSourceModules;
 
         /**
          * Constructs an object to store basic diagnostic statistics for a data
@@ -1015,6 +1023,9 @@ final class DataSourceIngestJob {
              * Get a snapshot of the tasks currently in progress for this job.
              */
             this.tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
+
+            this.jobCancelled = cancelled;
+            this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
         }
 
         /**
@@ -1116,6 +1127,21 @@ final class DataSourceIngestJob {
 
         long getRunningListSize() {
             return this.tasksSnapshot.getRunningListSize();
+        }
+
+        boolean isCancelled() {
+            return this.jobCancelled;
+        }
+        
+        /**
+         * Gets a list of the display names of any canceled data source level ingest
+         * modules
+         *
+         * @return A list of canceled data source level ingest module display names,
+         * possibly empty.
+         */
+        List<String> getCancelledDataSourceIngestModules() {
+            return Collections.unmodifiableList(this.cancelledDataSourceModules);
         }
 
     }

@@ -37,6 +37,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
@@ -57,14 +59,16 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
 
 /**
- * Extracts activity from Internet Explorer browser, as well as recent documents in windows.
+ * Extracts activity from Internet Explorer browser, as well as recent documents
+ * in windows.
  */
 class ExtractIE extends Extract {
+
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
     private IngestServices services = IngestServices.getInstance();
     private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
-    private String JAVA_PATH;    
+    private String JAVA_PATH;
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
@@ -88,7 +92,7 @@ class ExtractIE extends Extract {
     /**
      * Finds the files storing bookmarks and creates artifacts
      */
-    private void getBookmark() {       
+    private void getBookmark() {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> favoritesFiles;
         try {
@@ -97,7 +101,7 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
-                                                     this.getName()));
+                            this.getName()));
             return;
         }
 
@@ -105,17 +109,17 @@ class ExtractIE extends Extract {
             logger.log(Level.INFO, "Didn't find any IE bookmark files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         for (AbstractFile fav : favoritesFiles) {
             if (fav.getSize() == 0) {
                 continue;
             }
-         
+
             if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
-            
+
             String url = getURLFromIEBookmarkFile(fav);
 
             String name = fav.getName();
@@ -126,27 +130,27 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), url));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), name));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), datetime));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"),
-                                                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), domain));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), domain));
             this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
     }
-    
+
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
         String line, url = "";
@@ -163,12 +167,12 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
-                                        fav.getName()));
+                            fav.getName()));
         } catch (IndexOutOfBoundsException ex) {
             logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
-                                        fav.getName()));
+                            fav.getName()));
         } finally {
             try {
                 reader.close();
@@ -176,14 +180,14 @@ class ExtractIE extends Extract {
                 logger.log(Level.WARNING, "Failed to close reader.", ex); //NON-NLS
             }
         }
-        
+
         return url;
     }
 
     /**
-     * Finds files that store cookies and adds artifacts for them. 
+     * Finds files that store cookies and adds artifacts for them.
      */
-    private void getCookie() { 
+    private void getCookie() {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         try {
@@ -199,7 +203,7 @@ class ExtractIE extends Extract {
             logger.log(Level.INFO, "Didn't find any IE cookies files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -216,7 +220,7 @@ class ExtractIE extends Extract {
                 logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
-                                            this.getName(), cookiesFile.getName()));
+                                this.getName(), cookiesFile.getName()));
                 continue;
             }
             String cookieString = new String(t);
@@ -231,24 +235,24 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), url));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), datetime));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), (name != null) ? name : ""));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), (name != null) ? name : ""));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), value));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), value));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"),
-                                                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "ExtractIE.parentModuleName.noSpace"), domain));
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.parentModuleName.noSpace"), domain));
             this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
@@ -256,7 +260,7 @@ class ExtractIE extends Extract {
     }
 
     /**
-     * Locates index.dat files, runs Pasco on them, and creates artifacts. 
+     * Locates index.dat files, runs Pasco on them, and creates artifacts.
      */
     private void getHistory() {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
@@ -268,8 +272,8 @@ class ExtractIE extends Extract {
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
             logger.log(Level.SEVERE, "Error finding pasco program "); //NON-NLS
             return;
-        } 
-       
+        }
+
         final String pascoHome = pascoRoot.getAbsolutePath();
         logger.log(Level.INFO, "Pasco2 home: {0}", pascoHome); //NON-NLS
 
@@ -278,7 +282,7 @@ class ExtractIE extends Extract {
 
         File resultsDir = new File(moduleTempResultsDir);
         resultsDir.mkdirs();
-     
+
         // get index.dat files
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> indexFiles;
@@ -286,7 +290,7 @@ class ExtractIE extends Extract {
             indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
         } catch (TskCoreException ex) {
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errGettingHistFiles",
-                                                     this.getName()));
+                    this.getName()));
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
             return;
         }
@@ -296,7 +300,7 @@ class ExtractIE extends Extract {
             logger.log(Level.INFO, msg);
             return;
         }
-        
+
         dataFound = true;
         String temps;
         String indexFileName;
@@ -319,7 +323,7 @@ class ExtractIE extends Extract {
                 logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
-                                            datFile.getAbsolutePath()));
+                                datFile.getAbsolutePath()));
                 continue;
             }
 
@@ -334,7 +338,7 @@ class ExtractIE extends Extract {
             if (bPascProcSuccess) {
                 parsePascoOutput(indexFile, filename);
                 foundHistory = true;
-                
+
                 //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
             } else {
@@ -343,7 +347,7 @@ class ExtractIE extends Extract {
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
         }
-        
+
         if (foundHistory) {
             services.fireModuleDataEvent(new ModuleDataEvent(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
@@ -351,7 +355,8 @@ class ExtractIE extends Extract {
     }
 
     /**
-     * Execute pasco on a single file that has been saved to disk. 
+     * Execute pasco on a single file that has been saved to disk.
+     *
      * @param indexFilePath Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
      * @return false on error
@@ -384,18 +389,20 @@ class ExtractIE extends Extract {
 
     /**
      * parse Pasco output and create artifacts
-     * @param origFile Original index.dat file that was analyzed to get this output
+     *
+     * @param origFile Original index.dat file that was analyzed to get this
+     * output
      * @param pascoOutputFileName name of pasco output file
      */
     private void parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
-        
+
         String fnAbs = moduleTempResultsDir + File.separator + pascoOutputFileName;
 
         File file = new File(fnAbs);
         if (file.exists() == false) {
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
-                                        file.getName()));
+                            file.getName()));
             logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
             return;
         }
@@ -412,10 +419,13 @@ class ExtractIE extends Extract {
         } catch (FileNotFoundException ex) {
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
-                                        file.getName()));
+                            file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return;
         }
+
+        // Keep a list of reported user accounts to avoid repeats
+        Set<String> reportedUserAccounts = new HashSet<String>();
 
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
@@ -473,7 +483,7 @@ class ExtractIE extends Extract {
                 } catch (ParseException e) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
-                                                this.getName()));
+                                    this.getName()));
                     logger.log(Level.SEVERE, "Error parsing Pasco results.", e); //NON-NLS
                 }
             }
@@ -482,38 +492,40 @@ class ExtractIE extends Extract {
                 BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.parentModuleName.noSpace"), realurl));
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), realurl));
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.parentModuleName.noSpace"), ftime));
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), ftime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.parentModuleName.noSpace"), ""));
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), ""));
                 // @@@ NOte that other browser modules are adding TITLE in hre for the title
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.parentModuleName.noSpace"),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.moduleName.text")));
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"),
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.moduleName.text")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.parentModuleName.noSpace"), domain));
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "ExtractIE.parentModuleName.noSpace"), user));
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), user));
                 bbart.addAttributes(bbattributes);
-                
-               
-                BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));                
+
+                if ((!user.isEmpty()) && (!reportedUserAccounts.contains(user))) {
+                    BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+                    osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
+                            NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));
+                    reportedUserAccounts.add(user);
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
-            }                                    
+            }
         }
-        fileScanner.close();        
+        fileScanner.close();
     }
 }

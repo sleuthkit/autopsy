@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,14 +37,26 @@ class RawTextMarkup implements TextMarkup {
     private int currentPage = 0;
     private boolean hasChunks = false;
     
-    private final Content currentContent;
+    private final Content content;
+    private final long objectId;
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
     private static final Logger logger = Logger.getLogger(RawTextMarkup.class.getName());
 
-    RawTextMarkup(Content content) {
-        currentContent = content;
+    /**
+     * Construct a new RawTextMarkup object for the given content and object id.
+     * This constructor needs both a content object and an object id because 
+     * the RawTextMarkup implementation attempts to provide useful messages in
+     * the text content viewer for (a) the case where a file has not been 
+     * indexed because known files are being skipped and (b) the case where the
+     * file content has not yet been indexed.
+     * @param content Used to get access to file names and "known" status.
+     * @param objectId Either a file id or an artifact id.
+     */
+    RawTextMarkup(Content content, long objectId) {
+        this.content = content;
+        this.objectId = objectId;
         initialize();
     }
     
@@ -52,8 +64,8 @@ class RawTextMarkup implements TextMarkup {
      * Return the ID that this object is associated with -- to help with caching
      * @return 
      */
-    public long getContentId() {
-        return currentContent.getId();
+    public long getObjectId() {
+        return this.objectId;
     }
 
     @Override
@@ -169,8 +181,7 @@ class RawTextMarkup implements TextMarkup {
 
         try {
             //add to page tracking if not there yet
-            final long contentID = currentContent.getId();
-            numPages = solrServer.queryNumFileChunks(contentID);
+            numPages = solrServer.queryNumFileChunks(this.objectId);
             if (numPages == 0) {
                 numPages = 1;
                 hasChunks = false;
@@ -204,11 +215,11 @@ class RawTextMarkup implements TextMarkup {
             //if no chunks, it is safe to assume there is no text content
             //because we are storing extracted text in chunks only
             //and the non-chunk stores meta-data only
-            String name = currentContent.getName();
+            String name = content.getName();
             String msg = null;
-            if (currentContent instanceof AbstractFile) {
+            if (content instanceof AbstractFile) {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
-                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) currentContent).getKnown());
+                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
                     msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
                 }
@@ -231,11 +242,8 @@ class RawTextMarkup implements TextMarkup {
 
         //not cached
         try {
-            String content = solrServer.getSolrContent(currentContent, chunkId);
-            if (content == null) {
-                
-            }
-            cachedString = EscapeUtil.escapeHtml(content).trim();
+            String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
+            cachedString = EscapeUtil.escapeHtml(indexedText).trim();
             StringBuilder sb = new StringBuilder(cachedString.length() + 20);
             sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
             cachedString = sb.toString();

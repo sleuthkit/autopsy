@@ -2,7 +2,13 @@
 # ie_version
 # Get IE version and build
 # 
-# copyright 2009 H. Carvey
+# History
+#   20140717 - updated to get svcUpdateVersion info
+#   20091016 - created
+#
+#
+# copyright 2014 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package ie_version;
 use strict;
@@ -12,7 +18,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20091016);
+              version       => 20140717);
 
 sub getConfig{return %config}
 
@@ -52,6 +58,16 @@ sub pluginmain {
 		eval {
 			$version= $key->get_value("Version")->get_data();
 			::rptMsg("IE Version = ".$version);
+		};
+		
+		eval {
+			my $svc_version= $key->get_value("svcUpdateVersion")->get_data();
+			::rptMsg("svcUpdateVersion (IE 10/11) = ".$svc_version);
+		};
+		
+		eval {
+			my $svc_version2= $key->get_value("svcVersion")->get_data();
+			::rptMsg("svcVersion (IE 10/11)       = ".$svc_version2);
 		};
 	}
 	else {

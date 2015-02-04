@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.lang.Long;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
@@ -37,6 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 
 /**
@@ -859,6 +860,33 @@ public class Server {
     }
 
     /**
+     * Get the text contents for the given object id.
+     * @param objectID
+     * @return
+     * @throws NoOpenCoreException 
+     */
+     String getSolrContent(final long objectID) throws NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.getSolrContent(objectID, 0);
+    }
+
+    /**
+     * Get the text contents for the given object id and chunk id.
+     * @param objectID
+     * @param chunkID
+     * @return
+     * @throws NoOpenCoreException 
+     */
+     String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.getSolrContent(objectID, chunkID);
+        
+    }
+    /**
      * Method to return ingester instance
      *
      * @return ingester instance
@@ -1004,20 +1032,31 @@ public class Server {
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
-            String filterQuery = Schema.ID.toString() + ":" + contentID;
+            String filterQuery = Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             if (chunkID != 0) {
                 filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
             }
             q.addFilterQuery(filterQuery);
             q.setFields(Schema.TEXT.toString());
             try {
-                // @@@ BC Make this more robust -> using get(1) bcause 0 is the file name in the multivalued output. 
-                ArrayList<String> values = (ArrayList<String>)solrCore.query(q).getResults().get(0).getFieldValue(Schema.TEXT.toString());
-                return values.get(1);
+                // Get the first result. 
+                SolrDocument solrDocument = solrCore.query(q).getResults().get(0);
+                if (solrDocument != null) {
+                    Collection<Object> fieldValues = solrDocument.getFieldValues(Schema.TEXT.toString());
+                    if (fieldValues.size() == 1)
+                        // The indexed text field for artifacts will only have a single value.
+                        return fieldValues.toArray(new String[0])[0];
+                    else
+                        // The indexed text for files has 2 values, the file name and the file content.
+                        // We return the file content value.
+                        return fieldValues.toArray(new String[0])[1];                        
+                }
             } catch (SolrServerException ex) {
                 logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
                 return null;
             }
+            
+            return null;
         }
 
         synchronized void close() throws KeywordSearchModuleException {
@@ -1081,8 +1120,9 @@ public class Server {
          * @throws SolrServerException
          */
         private boolean queryIsIndexed(long contentID) throws SolrServerException {
+            String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             SolrQuery q = new SolrQuery("*:*");
-            q.addFilterQuery(Server.Schema.ID.toString() + ":" + Long.toString(contentID));
+            q.addFilterQuery(Server.Schema.ID.toString() + ":" + id);
             //q.setFields(Server.Schema.ID.toString());
             q.setRows(0);
             return (int) query(q).getResults().getNumFound() != 0;
@@ -1098,11 +1138,12 @@ public class Server {
          * @throws SolrServerException
          */
         private int queryNumFileChunks(long contentID) throws SolrServerException {
+            String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q =
-                    new SolrQuery(Server.Schema.ID + ":" + Long.toString(contentID) + Server.ID_CHUNK_SEP + "*");
+                    new SolrQuery(Server.Schema.ID + ":" + id + Server.ID_CHUNK_SEP + "*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
-        }
+        }        
     }
 
     class ServerAction extends AbstractAction {

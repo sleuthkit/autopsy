@@ -5,7 +5,9 @@
 # Change history
 #   20121005 - created  Tested on XP & Win7 only (not Vista)
 #
-#
+# References:
+#   http://kurtaubuchon.blogspot.com/2011/11/start-menu-and-ie-favorites-artifacts.html
+#   http://journeyintoir.blogspot.com/2013/04/plugin-menuorder.html
 #		
 # copyright 2012 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com

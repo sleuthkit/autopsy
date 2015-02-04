@@ -4,13 +4,15 @@
 # References:
 #  http://msdn2.microsoft.com/en-us/library/a329t4ed(VS\.80)\.aspx
 #  CWDIllegalInDllSearch: http://support.microsoft.com/kb/2264107
+#  http://carnal0wnage.attackresearch.com/2012/04/privilege-escalation-via-sticky-keys.html
 #
 # Change history:
+#  20131007 - added Carnal0wnage reference
 #  20130425 - added alertMsg() functionality
 #  20130410 - added Wow6432Node support
 #  20100824 - added check for "CWDIllegalInDllSearch" value
 #
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2013 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package imagefile;
 use strict;
@@ -20,7 +22,8 @@ my %config = (hive          => "Software",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130425);
+              category      => "malware",
+              version       => 20131007);
 
 sub getConfig{return %config}
 sub getShortDescr {

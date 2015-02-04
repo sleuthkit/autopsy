@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,8 +32,8 @@ import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdIngestModule;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
  * Container panel for File Extension Mismatch Ingest Module advanced
@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
  */
 final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private static Logger logger = Logger.getLogger(FileExtMismatchSettingsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(FileExtMismatchSettingsPanel.class.getName());
     private HashMap<String, String[]> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
     private ArrayList<String> currentExtensions = null;
@@ -52,11 +52,19 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     private String selectedMime = "";
     private String selectedExt = "";
     ListSelectionModel lsm = null;
+    private FileTypeDetector fileTypeDetector;
 
     public FileExtMismatchSettingsPanel() {
         mimeTableModel = new MimeTableModel();
         extTableModel = new ExtTableModel();
 
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, "Failed to create file type detector", ex);
+            fileTypeDetector = null;
+        }
+        
         initComponents();
         customizeComponents();
     }
@@ -431,7 +439,8 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        if (!FileTypeIdIngestModule.isMimeTypeDetectable(newMime)) {
+        boolean mimeTypeDetectable = (null != fileTypeDetector) ? fileTypeDetector.isDetectable(newMime) : false;
+        if (!mimeTypeDetectable) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
                     "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));
@@ -666,7 +675,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                     ret = (Object) word;
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex); //NON-NLS
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
                     break;
             }
             return ret;
@@ -722,7 +731,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
 
-            if ((currentExtensions == null) || (currentExtensions.size() == 0) || (rowIndex > currentExtensions.size())) {
+            if ((currentExtensions == null) || (currentExtensions.isEmpty()) || (rowIndex > currentExtensions.size())) {
                 return "";
             }
             String word = currentExtensions.get(rowIndex);
@@ -731,7 +740,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                     ret = (Object) word;
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex); //NON-NLS
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
                     break;
             }
             return ret;

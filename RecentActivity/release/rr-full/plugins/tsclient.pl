@@ -38,7 +38,7 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching tsclient v.".$VERSION);
 	::rptMsg("Launching tsclient v.".$VERSION);
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n");
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 

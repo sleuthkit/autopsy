@@ -1,11 +1,17 @@
 #-----------------------------------------------------------
 # pagefile.pl
 #
-# Ref: 
+#  
 #
+# History:
+#  20140505 - updated by Corey Harrell <corey_harrell@yahoo.com>
+#  20081212 - created by H. Carvey, keydet89@yahoo.com
+#
+# Ref:
 #   http://support.microsoft.com/kb/314834 - ClearPagefileAtShutdown
 #
-# copyright 2008-2009 H. Carvey, keydet89@yahoo.com
+# copyright 2014 Corey Harrell (jIIr) http://journeyintoir.blogspot.com/
+# Corey Harrell <corey_harrell@yahoo.com>
 #-----------------------------------------------------------
 package pagefile;
 use strict;
@@ -15,7 +21,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20081212);
+              version       => 20140505);
 
 sub getConfig{return %config}
 
@@ -60,6 +66,11 @@ sub pluginmain {
 				::rptMsg("ClearPageFileAtShutdown = ".$cpf);
 			};
 			
+			eval {
+				my $cpf = $mm->get_value("PagingFiles")->get_data();
+				::rptMsg("PagingFiles = ".$cpf);
+			};
+			
 		}	
 		else {
 			::rptMsg($mm_path." not found.");
@@ -67,7 +78,6 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

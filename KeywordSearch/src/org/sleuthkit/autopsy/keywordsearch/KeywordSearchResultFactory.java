@@ -1,11 +1,11 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this content except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -21,13 +21,14 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
@@ -48,12 +49,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
  * Node factory that performs the keyword search and creates children nodes for
- * each file.
+ each content.
  *
  * Responsible for assembling nodes and columns in the right way and performing
  * lazy queries as needed.
@@ -65,23 +64,23 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     public static enum CommonPropertyTypes {
 
         KEYWORD {
-            @Override
-            public String toString() {
-                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName();
-            }
-        },
+                    @Override
+                    public String toString() {
+                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName();
+                    }
+                },
         REGEX {
-            @Override
-            public String toString() {
-                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
-            }
-        },
+                    @Override
+                    public String toString() {
+                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
+                    }
+                },
         CONTEXT {
-            @Override
-            public String toString() {
-                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName();
-            }
-        },
+                    @Override
+                    public String toString() {
+                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName();
+                    }
+                },
     }
     private Collection<QueryRequest> queryRequests;
     private final DataResultTopComponent viewer; //viewer driving this child node factory
@@ -91,7 +90,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         this.queryRequests = queryRequests;
         this.viewer = viewer;
     }
-
 
     /**
      * call this at least for the parent Node, to make sure all common
@@ -132,14 +130,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             initCommonProperties(map);
             final String query = queryRequest.getQueryString();
             setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-            setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!queryRequest.getQuery().isLiteral()));
+            setCommonProperty(map, CommonPropertyTypes.REGEX, !queryRequest.getQuery().isLiteral());
             createFlatKeys(queryRequest, toPopulate);
         }
 
         return true;
     }
-
-    
 
     /**
      *
@@ -147,71 +143,60 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @param toPopulate
      * @return
      */
-    protected boolean createFlatKeys(QueryRequest queryRequest, List<KeyValueQueryContent> toPopulate) {
+    private boolean createFlatKeys(QueryRequest queryRequest, List<KeyValueQueryContent> toPopulate) {
+        /**
+         * Check the validity of the requested query.
+         */
         final KeywordSearchQuery keywordSearchQuery = queryRequest.getQuery();
-
         if (!keywordSearchQuery.validate()) {
             //TODO mark the particular query node RED
             return false;
         }
 
-        //execute the query and get fscontents matching
+        /**
+         * Execute the requested query.
+         */
         QueryResults queryResults;
         try {
             queryResults = keywordSearchQuery.performQuery();
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not perform the query. ", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not perform the query " + keywordSearchQuery.getQueryString(), ex); //NON-NLS
             return false;
         }
 
-        
-        String listName = queryRequest.getQuery().getKeywordList().getName();
-        
-        final boolean literal_query = keywordSearchQuery.isLiteral();
-
-        int resID = 0;
-
+        int id = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
-        final Map<AbstractFile, ContentHit> uniqueFileMap = queryResults.getUniqueFiles();
-        for (final AbstractFile f : uniqueFileMap.keySet()) {
+        for (KeywordHit hit : getOneHitPerObject(queryResults)) {
+            /**
+             * Get file properties.
+             */
+            Map<String, Object> properties = new LinkedHashMap<>();
+            Content content = hit.getContent();
+            if (content instanceof AbstractFile) {
+                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile)content);
+            }
+            else {
+                properties.put(AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION.toString(), content.getName());
+            }
+            
+            /**
+             * Add a snippet property, if available.
+             */
+            if (hit.hasSnippet()) {
+                setCommonProperty(properties, CommonPropertyTypes.CONTEXT, hit.getSnippet());
+            }
 
             //@@@ USE ConentHit in UniqueFileMap instead of the below search
             //get unique match result files
-            Map<String, Object> resMap = new LinkedHashMap<>();
-
-            
             // BC: @@@ THis is really ineffecient.  We should keep track of this when
-            // we flattened the list of files to the unique files.
+            // we flattened the list of files to the unique files.            
+            final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, content);
 
-            /* Find a keyword in that file so that we can generate a
-             * single snippet for it. 
-             */
-            
-            ContentHit chit = uniqueFileMap.get(f);
-            if (chit.hasSnippet()) {
-                setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, chit.getSnippet());
-            }
-            
-//            boolean hitFound = false;
-//            for (String hitKey : queryResults.getKeywords()) {
-//                for (ContentHit contentHit : queryResults.getResults(hitKey)) {
-//                    if (contentHit.getContent().equals(f)) {
-//                        hitFound = true;
-//                        if (contentHit.hasSnippet() && (KeywordSearchUtil.escapeLuceneQuery(hitKey) != null)) {
-//                            setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, contentHit.getSnippet());
-//                        }
-//                        break;
-//                    }
-//                }
-//                if (hitFound) {
-//                    break;
-//                }
-//            }
-            if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
-                AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
-            }
-            final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, literal_query, queryResults, f);
-            tempList.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, keywordSearchQuery, queryResults));
+            String name = content.getName();
+            if (hit.isArtifactHit())
+                name = hit.getArtifact().getDisplayName() + " Artifact"; // NON-NLS
+
+            tempList.add(new KeyValueQueryContent(name, properties, ++id, hit.getSolrObjectId(), content, highlightQueryEscaped, keywordSearchQuery, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
@@ -220,11 +205,26 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //write to bb
         //cannot reuse snippet in BlackboardResultWriter
-        //because for regex searches in UI we compress results by showing a file per regex once (even if multiple term hits)
-        //whereas in bb we write every hit per file separately
-        new BlackboardResultWriter(queryResults, listName).execute();
+        //because for regex searches in UI we compress results by showing a content per regex once (even if multiple term hits)
+        //whereas in bb we write every hit per content separately
+        new BlackboardResultWriter(queryResults, queryRequest.getQuery().getKeywordList().getName()).execute();
 
         return true;
+    }
+
+    List<KeywordHit> getOneHitPerObject(QueryResults queryResults) {
+        List<KeywordHit> hits = new ArrayList<>();
+        Set<Long> uniqueObjectIds = new HashSet<>();
+        for (Keyword keyWord : queryResults.getKeywords()) {
+            for (KeywordHit hit : queryResults.getResults(keyWord)) {
+                long objectId = hit.getSolrObjectId();
+                if (!uniqueObjectIds.contains(objectId)) {
+                    uniqueObjectIds.add(objectId);
+                    hits.add(hit);
+                }
+            }
+        }
+        return hits;
     }
 
     /**
@@ -233,10 +233,10 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @param query
      * @param literal_query
      * @param queryResults
-     * @param f
+     * @param file
      * @return
      */
-    private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, AbstractFile f) {
+    private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
         String highlightQueryEscaped;
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
@@ -251,14 +251,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 Keyword term = queryResults.getKeywords().iterator().next();
                 highlightQuery.append(term.toString());
             } else {
-                //find terms for this file hit
+                //find terms for this content hit
                 List<String> hitTerms = new ArrayList<>();
-                for (Keyword term : queryResults.getKeywords()) {
-                    List<ContentHit> hitList = queryResults.getResults(term);
-
-                    for (ContentHit h : hitList) {
-                        if (h.getContent().equals(f)) {
-                            hitTerms.add(term.toString());
+                for (Keyword keyword : queryResults.getKeywords()) {
+                    for (KeywordHit hit : queryResults.getResults(keyword)) {
+                        if (hit.getContent().equals(content)) {
+                            hitTerms.add(keyword.toString());
                             break; //go to next term
                         }
                     }
@@ -288,7 +286,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         return highlightQueryEscaped;
     }
-    
+
     @Override
     protected Node createNodeForKey(KeyValueQueryContent key) {
         final Content content = key.getContent();
@@ -299,7 +297,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedTextMarkup highlights = new HighlightedTextMarkup(content, queryStr, !key.getQuery().isLiteral(), false, hits);
+        HighlightedTextMarkup highlights = new HighlightedTextMarkup(key.solrObjectId, queryStr, !key.getQuery().isLiteral(), false, hits);
         return new KeywordSearchFilterNode(highlights, kvNode);
     }
 
@@ -309,18 +307,18 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      */
     class KeyValueQueryContent extends KeyValue {
 
+        private long solrObjectId;
         private Content content;
         private String queryStr;
         private QueryResults hits;
         private KeywordSearchQuery query;
 
-        
         /**
          * NOTE Parameters are defined based on how they are currently used in
          * practice
          *
          * @param name File name that has hit.
-         * @param map Contains file metadata, snippets, etc. (property map)
+         * @param map Contains content metadata, snippets, etc. (property map)
          * @param id User incremented ID
          * @param content File that had the hit.
          * @param queryStr Query used in search
@@ -328,14 +326,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * @param hits Full set of search results (for all files!
          * @@@)
          */
-        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query, QueryResults hits) {
+        public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, String queryStr, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
+            this.solrObjectId = solrObjectId;
             this.content = content;
             this.queryStr = queryStr;
             this.hits = hits;
             this.query = query;
         }
-        
+
         Content getContent() {
             return content;
         }
@@ -353,7 +352,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         }
     }
 
-    
     /**
      * worker for writing results to bb, with progress bar, cancellation, and
      * central registry of workers to be stopped when case is closed
@@ -369,7 +367,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         private String listName;
         private QueryResults hits;
         private Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
-        private static final int QUERY_DISPLAY_LEN = 40;   
+        private static final int QUERY_DISPLAY_LEN = 40;
 
         BlackboardResultWriter(QueryResults hits, String listName) {
             this.hits = hits;
@@ -398,13 +396,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
             try {
                 progress = ProgressHandleFactory.createHandle(
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
-                        @Override
-                        public boolean cancel() {
-                            return BlackboardResultWriter.this.cancel(true);
-                        }
-                    });                
-                
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
+                            @Override
+                            public boolean cancel() {
+                                return BlackboardResultWriter.this.cancel(true);
+                            }
+                        });
+
                 // Create blackboard artifacts
                 newArtifacts = hits.writeAllHitsToBlackBoard(progress, null, this, false);
             } finally {

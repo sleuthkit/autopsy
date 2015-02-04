@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -50,8 +49,6 @@ class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPane
      */
     private void customizeComponents() {
         skipKnownCheckBox.setSelected(settings.skipKnownFiles());
-        skipSmallFilesCheckBox.setSelected(settings.skipSmallFiles());
-        skipSmallFilesCheckBox.setText(NbBundle.getMessage(FileTypeIdIngestJobSettingsPanel.class, "FileTypeIdIngestJobSettingsPanel.skipSmallFilesCheckBox.text", settings.minFileSizeInBytes()));
     }
     
     /**
@@ -64,7 +61,6 @@ class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPane
     private void initComponents() {
 
         skipKnownCheckBox = new javax.swing.JCheckBox();
-        skipSmallFilesCheckBox = new javax.swing.JCheckBox();
 
         skipKnownCheckBox.setSelected(true);
         skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdIngestJobSettingsPanel.class, "FileTypeIdIngestJobSettingsPanel.skipKnownCheckBox.text")); // NOI18N
@@ -75,32 +71,21 @@ class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPane
             }
         });
 
-        skipSmallFilesCheckBox.setText(org.openide.util.NbBundle.getMessage(FileTypeIdIngestJobSettingsPanel.class, "FileTypeIdIngestJobSettingsPanel.skipSmallFilesCheckBox.text")); // NOI18N
-        skipSmallFilesCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skipSmallFilesCheckBoxActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(skipSmallFilesCheckBox)
-                    .addComponent(skipKnownCheckBox))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(skipKnownCheckBox)
+                .addContainerGap(46, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(11, 11, 11)
                 .addComponent(skipKnownCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(skipSmallFilesCheckBox)
-                .addContainerGap(60, Short.MAX_VALUE))
+                .addContainerGap(86, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -108,12 +93,7 @@ class FileTypeIdIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPane
         settings.setSkipKnownFiles(skipKnownCheckBox.isSelected());
     }//GEN-LAST:event_skipKnownCheckBoxActionPerformed
 
-    private void skipSmallFilesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipSmallFilesCheckBoxActionPerformed
-        settings.setSkipSmallFiles(skipSmallFilesCheckBox.isSelected());
-    }//GEN-LAST:event_skipSmallFilesCheckBoxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox skipKnownCheckBox;
-    private javax.swing.JCheckBox skipSmallFilesCheckBox;
     // End of variables declaration//GEN-END:variables
 }

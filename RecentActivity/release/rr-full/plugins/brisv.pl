@@ -19,6 +19,7 @@ package brisv;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
+              category      => "malware",
               osmask        => 22,
               hasShortDescr => 1,
               hasDescr      => 0,

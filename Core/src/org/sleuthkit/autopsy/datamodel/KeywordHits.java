@@ -503,6 +503,12 @@ public class KeywordHits implements AutopsyVisitableItem {
                     return n;
                 }
 
+                // It is possible to get a keyword hit on artifacts generated
+                // for the underlying image in which case MAC times are not
+                // available/applicable/useful.
+                if (file == null)
+                    return n;
+                
                 n.addNodeProperty(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
                         NbBundle.getMessage(this.getClass(),
