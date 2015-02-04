@@ -1,0 +1,11 @@
+/*! \page how_to_open_file_search How To Open File Search
+    
+How to Open File Search
+To open the File Search, you can do one of the following thing:
+Right click an image and choose "Open File Search by Attributes".
+\image html open-file-search-component-1.PNG
+Select the "Tools" > "File Search by Attributes".
+\image html open-file-search-component-2.PNG
+<b>Note: The File Search Window is opened and closed automatically. If there's a case opened and there is at least one image inside that case, File Search Window can't be closed.</b>
+
+*/

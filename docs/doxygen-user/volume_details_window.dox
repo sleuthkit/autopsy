@@ -1,0 +1,9 @@
+/*! \page volume_details_window Volume Detail Window
+
+The Volume Details window shows you information about a volume. It shows information such as the starting sector, length, and description. You can view the information by right clicking on a volume in the tree and choosing "Volume Details".
+
+\image html show-volume-details.PNG
+An example is shown here:
+
+\image html volume-detail-window.PNG
+*/

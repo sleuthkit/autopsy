@@ -1,0 +1,11 @@
+/*! \page image_details_window Image Detail Window
+
+The Image Details window shows you basic information about a disk image. You can access it by right-clicking on an image in the tree and choosing "Image Details".
+
+\image html show-image-details.PNG
+
+An example is shown here:
+
+\image html image-detail-window.PNG
+
+*/

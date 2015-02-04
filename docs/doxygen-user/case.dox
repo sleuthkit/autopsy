@@ -1,0 +1,10 @@
+/*! \page case Case
+\section about_cases  About Cases
+In Autopsy, a "case" is a container concept for a set of input data sources (disk images, disk devices, logical files). The set of data could be from multiple drives in a single computer or from multiple computers. When you make a case, it will create a directory to hold all of the information. The directory will contain the main Autopsy configuration file, other module's configuration files, some databases, generated reports, and some other information (temporary files, cache files). The main Autopsy case configuration file as a .aut extension - that is the file used to "Open" the case. In general, it is recommended for the user not to modify any files in the Case directory and leave it to Autopsy manage it.
+If you want to view case details or edit some case information, use the Case Properties window.
+\subsection creating_a_case Creating a Case
+Refer to the Creating a Case page for more details.
+\subsection opening_a_case  Opening a Case
+To open a case, choose "Open Case" from the File menu or use the "Ctrl + O" keyboard shortcut. Navigate to the case directory and select the ".aut" file.
+
+*/

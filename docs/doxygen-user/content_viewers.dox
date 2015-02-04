@@ -1,0 +1,18 @@
+/*! \page content_viewers Content Viewers
+
+The Content Viewer area is in the lower right area of the interface. This area is used to view a specific file in a variety of formats. There are different tabs for different viewers. Not all tabs support all file types, so only some of them will be enabled. To display data in this area, a file must be selected from the Result Viewer window.
+
+The Content Viewer area is part of a plug-in framework. You can install modules that will add more viewer types. This section describes the viewers that come by default with Autopsy.
+
+Here's an example of a "Content Viewer" window:
+\image html content-viewer-window-example.PNG
+ 
+<b>Default Viewers</b>
+Currently, there are 5 main tabs on "Content Viewer" window:
+\li \subpage result_viewers
+\li \subpage hex_content_viewer
+\li \subpage string_content_viewer
+\li \subpage media_content_viewer
+\li \subpage text_content_viewer
+
+*/

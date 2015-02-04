@@ -1,0 +1,20 @@
+/*! \page file_search File Search
+
+\section about_file_search About File Search
+File Search tool can be accessed either from the Tools menu or by right-clicking on image node in the Data Explorer / Directory Tree. By using File Search, you can specify, filter, and show the directories and files that you want to see from the images in the current opened case. The File Search results will be populated in a brand new Table Result viewer on the right-hand side.
+Currently, Autopsy only supports 4 categories in File Search: Name, Size, Date, and Known Status based search.
+<b>Note: Currently File Search doesn't support regular expression, however the Keyword Search feature of Autopsy does also look in file names and it does support regular expressions, which can complimentary to the File Search.</b>
+
+\subsection how_to_open_file_search_subsection How to Open File Search
+To see how to open File Search, click \ref how_to_open_file_search "here".
+<b>Note: The File Search Window is opened and closed automatically. If there's a case opened and there is at least one image inside that case, File Search Window can't be closed.</b>
+
+\subsection how_to_use_file_search_subsection How to Use File Search
+To see how to use File Search, click \ref how_to_use_file_search "here".
+
+<b>Example</b>
+Here's an example of a File Search window:
+
+\image html file-search-top-component.PNG
+
+*/

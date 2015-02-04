@@ -1,0 +1,18 @@
+/*! \page directory_tree Directory Tree
+    
+\section about_data_explorer About Data Explorer (Directory Tree)
+The data explorer tree is a very important area of the interface. This is where you will start many of your analysis approaches and find saved results from automated procedures (ingest). The tree has three main areas:
+\li <b>Images:</b> \n Where you can find the directory tree hierarchy of the file systems in the images. Go here to navigate to a specific file or directory.
+\li <b>Views:</b> \n  Where you can view all of the files in the images, but organized by file type or dates instead of directories. Go here if you are looking for files of a given type or that were recently used.
+\li <b>Results:</b> \n  Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
+\li <b>Bookmarks:</b> \n  Where you can view all file and results that have been bookmarked for easy access.
+
+Below is an example of an Data Explorer Tree window:
+image html explorer-tree.PNG
+
+Also see 
+\subpage image_details_window,
+\subpage volume_details_window,
+\subpage extracting_unallocated_space
+
+*/
