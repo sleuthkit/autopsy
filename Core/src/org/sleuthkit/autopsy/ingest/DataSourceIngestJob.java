@@ -719,7 +719,7 @@ final class DataSourceIngestJob {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (DataSourceIngestJob.Stages.FIRST == this.stage) { // RJCTODO: Is this synchronized correctly
+        if (DataSourceIngestJob.Stages.FIRST == this.stage) {
             for (AbstractFile file : files) {
                 DataSourceIngestJob.taskScheduler.scheduleFileIngestTask(this, file);
             }
