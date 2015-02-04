@@ -719,7 +719,7 @@ final class DataSourceIngestJob {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (DataSourceIngestJob.Stages.FIRST == this.stage) { // RJCTODO: Is this synchronized correctly
+        if (DataSourceIngestJob.Stages.FIRST == this.stage) {
             for (AbstractFile file : files) {
                 DataSourceIngestJob.taskScheduler.scheduleFileIngestTask(this, file);
             }
@@ -970,7 +970,7 @@ final class DataSourceIngestJob {
     /**
      * Stores basic diagnostic statistics for a data source ingest job.
      */
-    class Snapshot {
+    final class Snapshot {
 
         private final String dataSource;
         private final long jobId;
@@ -1129,7 +1129,7 @@ final class DataSourceIngestJob {
             return this.tasksSnapshot.getRunningListSize();
         }
 
-        boolean getCancelled() {
+        boolean isCancelled() {
             return this.jobCancelled;
         }
         

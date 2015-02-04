@@ -149,7 +149,7 @@ class QueryResults {
                     if (writeResult != null) {
                         newArtifacts.add(writeResult.getArtifact());
                         if (notifyInbox) {
-                            writeSingleFileInboxMessage(writeResult, hit.getContent()); // RJCTODO: Consider rewriting this message post code 
+                            writeSingleFileInboxMessage(writeResult, hit.getContent()); 
                         }
                     } else {
                         logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
