@@ -666,6 +666,7 @@ INPUT                  = main.dox \
                          quick_start.dox \
                          image_viewer.dox \
                          timeline.dox \
+                         stix.dox \
                          case_mgmt.dox
 
 # This tag can be used to specify the character encoding of the source files

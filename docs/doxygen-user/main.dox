@@ -18,6 +18,7 @@ The following topics are available here:
 - \subpage case_mgmt_page
 - \subpage image_viewer_page
 - \subpage timeline_page
+- \subpage stix_page
 
 If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
 
