@@ -19,7 +19,7 @@ Currently, there are 5 main tabs on "Content Viewer" window:
 Result Content Viewer shows the artifacts (saved results) associated with the item selected in the Result Viewer.
 <b>Example</b>
 Below is an example of "Result Content Viewer" window:
-\image html deadimage
+\image html result-viewer-example.PNG
 
 \section hex_content_viewer Hex Content Viewer
 Hex Content Viewer shows you the raw and exact contents of a file. In this Hex Content Viewer, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
