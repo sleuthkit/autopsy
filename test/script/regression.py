@@ -845,15 +845,21 @@ class TestResultsDiffer(object):
         """
 
         try:
-            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines', 'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:\|Examiner:', gold_report_path, output_report_path]))
+            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+                                      'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
+                                      '\|Examiner:', gold_report_path, output_report_path]))
             print_report("", "REPORT COMPARISON", "The test reports matched the gold reports")
             return True
         except subprocess.CalledProcessError as e:
             if e.returncode == 1:
-                Errors.print_error("Error Code: 1\nThe HTML reports did not match.\nDiff Output: " + str((e.output).decode("utf-8")))
+                Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
+                diff_file = codecs.open(output_report_path + "\..\..\..\..\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file.write(str(e.output.decode("utf-8")))
                 return False
             if e.returncode == 2:
-                Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.\nDiff Output" + str((e.output).decode("utf-8")))
+                Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
+                diff_file = codecs.open(output_report_path + "\..\..\..\..\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file.write(str(e.output.decode("utf-8")))
                 return False
         except OSError as e:
             e.print_error()
