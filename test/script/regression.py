@@ -1,21 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf_8 -*-
 
- # Autopsy Forensic Browser
- #
- # Copyright 2013 Basis Technology Corp.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- #     http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
+# Autopsy Forensic Browser
+#
+# Copyright 2013 Basis Technology Corp.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from tskdbdiff import TskDbDiff, TskDbDiffException
 import codecs
@@ -85,6 +85,7 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 COMMON_LOG = "AutopsyErrors.txt"
 
 Day = 0
+
 
 def usage():
 	print ("-f PATH single file")
@@ -853,12 +854,12 @@ class TestResultsDiffer(object):
         except subprocess.CalledProcessError as e:
             if e.returncode == 1:
                 Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
-                diff_file = codecs.open(test_data.output_data + "\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
                 diff_file.write(str(e.output.decode("utf-8")))
                 return False
             if e.returncode == 2:
                 Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
-                diff_file = codecs.open(test_data.output_data + "\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
                 diff_file.write(str(e.output.decode("utf-8")))
                 return False
         except OSError as e:
