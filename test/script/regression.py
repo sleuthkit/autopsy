@@ -779,8 +779,7 @@ class TestResultsDiffer(object):
             # Compare html output
             gold_report_path = test_data.get_html_report_path(DBType.GOLD)
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-            passed = TestResultsDiffer._html_report_diff(gold_report_path,
-            output_report_path)
+            passed = TestResultsDiffer._html_report_diff(test_data)
             test_data.html_report_passed = passed
             
 
@@ -826,7 +825,7 @@ class TestResultsDiffer(object):
         else:
             return True
 
-    def _html_report_diff(gold_report_path, output_report_path):
+    def _html_report_diff(test_data):
         """Compare the output and gold html reports. Diff util is used for this purpose.
         Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
         is executed.
@@ -843,7 +842,8 @@ class TestResultsDiffer(object):
         Returns:
             true, if the reports match, false otherwise.
         """
-
+        gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+        output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
         try:
             (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
                                       'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
@@ -853,12 +853,12 @@ class TestResultsDiffer(object):
         except subprocess.CalledProcessError as e:
             if e.returncode == 1:
                 Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
-                diff_file = codecs.open(output_report_path + "\..\..\..\..\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file = codecs.open(test_data.output_data + "\HTML-Report-Diff.txt", "wb", "utf_8")
                 diff_file.write(str(e.output.decode("utf-8")))
                 return False
             if e.returncode == 2:
                 Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
-                diff_file = codecs.open(output_report_path + "\..\..\..\..\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file = codecs.open(test_data.output_data + "\HTML-Report-Diff.txt", "wb", "utf_8")
                 diff_file.write(str(e.output.decode("utf-8")))
                 return False
         except OSError as e:
