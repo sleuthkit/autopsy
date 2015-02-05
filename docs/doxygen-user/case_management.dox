@@ -1,4 +1,57 @@
 /*! \page case_management Cases and Data Sources
+\section case Case
+\subsection about_cases  About Cases
+In Autopsy, a "case" is a container concept for a \ref data_source "set of input data sources (disk images, disk devices, logical files)". The set of data could be from multiple drives in a single computer or from multiple computers. When you make a case, it will create a directory to hold all of the information. The directory will contain the main Autopsy configuration file, other module's configuration files, some databases, generated reports, and some other information (temporary files, cache files). The main Autopsy case configuration file as a .aut extension - that is the file used to "Open" the case. In general, it is recommended for the user not to modify any files in the Case directory and leave it to Autopsy manage it.
+If you want to view case details or edit some case information, use the \ref case_properties_window "Case Properties window".
+\subsubsection creating_a_case Creating a Case
+There are several ways to create a new case:
+- The opening window has a button to create a new case.
+- The "File" -> "New Case..." menu item
 
-Also see \subpage case, \subpage data_source, \subpage case_properties_window.
+The "New Case" wizard dialog will open and you will need to enter the case name and base directory. A directory for the case will be created inside of the "base directory". If the directory already exists, you will need to either delete the existing directory or choose a different combination of names.
+
+\image html case-newcase.png
+
+You will also be prompted for optional information, such as investigator name and case number.  
+
+After you create the case, you will be prompted to add a data source, as described in \ref adding_a_data_source. 
+\subsubsection opening_a_case  Opening a Case
+To open a case, choose "Open Case" from the File menu or use the "Ctrl + O" keyboard shortcut. Navigate to the case directory and select the ".aut" file.
+<!------------------------------>
+
+\section data_source Data Source
+\subsection about_data_source About Data Sources
+Autopsy supports 3 types of data sources that can be added to the Case:
+\li Disk Image (raw, Encase, etc). "Image" refers to a byte-for-byte copy of a hard drive or other storage media.
+\li Disk Device (physical or logical disk partition, plugged in the user machine and detected by Autopsy). Note: to correctly detect all devices, Autopsy needs to run as Administrator.
+\li Logical Files (files and folders on the user machine file system)
+User needs to select the data source type from the pull down menu in the Add Data Source wizard.
+To analyze a Data Source, user should use the Add Data Source Wizard to add it to a case.
+Autopsy populates an embedded database for each data source (image, disk device, logical files) that it imports. This database is a SQLite database and it contains all of the file system metadata from the input data source. The database is stored in the case directory, but the data source will stay in its original location. The data source must remain accessible for the duration of the analysis because the database contains only basic file system information (meta-data, not the actual content). The image / files are needed to retrieve file content.
+\subsection supported_image_formats Supported Image Formats
+Currently, Autopsy supports these image formats:
+\li Raw Single (For example: *.img, *.dd, *.raw, etc)
+\li Raw Split (For example: *.001, *.002, *.aa, *.ab, etc)
+\li EnCase (For example: *.e01, *e02, etc)
+<!-------------------------------->
+\subsection adding_a_data_source Adding A Data Source
+\li Go to "File" and select "Add Data Source..."
+\li Select the
+\image html add-data-source.PNG
+icon on the toolbar
+
+This will bring up the Add Data Source wizard. It will guide you through the process.
+
+<b>Here are some notes on what is going on during the process:</b> \n
+\li The first panel will ask you to select the data source type and browse for the data source (image or files located on the computer, or select the device detected). In case of adding a disk image, you will also need to specify the timezone that the disk image came from so that the dates and times can be properly displayed and converted. As soon as you click 'Next >', Autopsy will begin analyzing the disk image and populating the database in the background. \image html select-data-source-type.PNG
+\li The second panel allows you to choose which ingest modules to run on the image. Refer to the Image Ingest part of the help guide for more details. \image html select-ingest-modules.PNG
+\li The third panel provides a progress bar and information about the data source Autopsy is currently processing. If small enough, the input may have already finished processing, allowing you to continue past this panel. However, it may be necessary to wait for a short time while the database is populated. \image html data-source-progress-bar.PNG
+\li Once the input data source finishes adding, the ingest modules you selected will automatically run in the background. If the data source is processed before you select ingest modules, Autopsy will wait until you have done so.
+
+Note that in case of image, Autopsy will store the path to the image in its configuration file. If the image moves, then Autopsy will give an error because it can't find the image file and it will prompt user to point to the new image location.
+<!------------------------------------->
+\subsection removing_a_data_source Removing a Data Source
+You cannot currently remove an data source from a case.
+<!-------------------------------------->
+\subsection case_properties_window Case Properties Window
 */
