@@ -23,10 +23,8 @@ import java.util.Date;
 import java.util.TimeZone;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TitledPane;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
@@ -47,7 +45,7 @@ public class TimeZonePanel extends TitledPane {
 
     static private String getTimeZoneString(final TimeZone timeZone) {
         final String id = ZoneOffset.ofTotalSeconds(timeZone.getOffset(System.currentTimeMillis()) / 1000).getId();
-        final String timeZoneString = "(GMT" + ("Z".equals(id) ? "+00:00" : id) + ") " + timeZone.getID() + " [" + timeZone.getDisplayName(timeZone.observesDaylightTime() && timeZone.inDaylightTime(new Date()), TimeZone.SHORT) + "]";
+        final String timeZoneString = "(GMT" + ("Z".equals(id) ? "+00:00" : id) + ") " + timeZone.getID() + " [" + timeZone.getDisplayName(timeZone.observesDaylightTime() && timeZone.inDaylightTime(new Date()), TimeZone.SHORT) + "]"; // NON-NLS
         return timeZoneString;
     }
 
@@ -55,16 +53,21 @@ public class TimeZonePanel extends TitledPane {
     public void initialize() {
 
 //        localRadio.setText("Local Time Zone: " + getTimeZoneString(TimeZone.getDefault()));
-        localOtherGroup.selectedToggleProperty().addListener((ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) -> {
-            if (newValue == localRadio) {
-                TimeLineController.setTimeZone(TimeZone.getDefault());
-            } else {
-                TimeLineController.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
-            }
-        });
+        localRadio.setText(NbBundle.getMessage(this.getClass(), "TimeZonePanel.localRadio.text"));
+        otherRadio.setText(NbBundle.getMessage(this.getClass(), "TimeZonePanel.otherRadio.text"));
+        // The text field for this TimeZonePanel (TitlePane) object is set by the instantiating class (TimeLineTopComponent).
+
+        localOtherGroup.selectedToggleProperty().addListener(
+                (ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) -> {
+                    if (newValue == localRadio) {
+                        TimeLineController.setTimeZone(TimeZone.getDefault());
+                    } else {
+                        TimeLineController.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+                    }
+                });
     }
 
     public TimeZonePanel() {
-        FXMLConstructor.construct(this, "TimeZonePanel.fxml");
+        FXMLConstructor.construct(this, "TimeZonePanel.fxml"); // NON-NLS
     }
 }

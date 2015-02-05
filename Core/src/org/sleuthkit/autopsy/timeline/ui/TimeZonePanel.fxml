@@ -5,16 +5,16 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<fx:root alignment="TOP_LEFT" animated="false" collapsible="false" contentDisplay="RIGHT" minHeight="-Infinity" minWidth="-Infinity" text="Display Times In:" type="TitledPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root alignment="TOP_LEFT" animated="false" collapsible="false" contentDisplay="RIGHT" minHeight="-Infinity" minWidth="-Infinity" type="TitledPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
 <graphic>
 <HBox spacing="5.0">
-<children><RadioButton fx:id="localRadio" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" selected="true" text="Local Time Zone">
+<children><RadioButton fx:id="localRadio" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" selected="true">
 <HBox.margin>
 <Insets />
 </HBox.margin>
 <toggleGroup>
 <ToggleGroup fx:id="localOtherGroup" />
-</toggleGroup></RadioButton><RadioButton fx:id="otherRadio" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" text="GMT / UTC" toggleGroup="$localOtherGroup">
+</toggleGroup></RadioButton><RadioButton fx:id="otherRadio" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" toggleGroup="$localOtherGroup">
 <HBox.margin>
 <Insets />
 </HBox.margin></RadioButton>

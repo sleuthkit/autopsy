@@ -93,9 +93,13 @@ public class TimeLineResultView implements TimeLineView {
     private String getSummaryString() {
         if (controller.getSelectedTimeRange().get() != null) {
             final DateTimeFormatter zonedFormatter = TimeLineController.getZonedFormatter();
-            return controller.getSelectedTimeRange().get().getStart().withZone(TimeLineController.getJodaTimeZone()).toString(zonedFormatter)
-                    + " to "
-                    + controller.getSelectedTimeRange().get().getEnd().withZone(TimeLineController.getJodaTimeZone()).toString(zonedFormatter);
+            return NbBundle.getMessage(this.getClass(), "TimeLineResultView.startDateToEndDate.text",
+                                       controller.getSelectedTimeRange().get().getStart()
+                                                 .withZone(TimeLineController.getJodaTimeZone())
+                                                 .toString(zonedFormatter),
+                                       controller.getSelectedTimeRange().get().getEnd()
+                                                 .withZone(TimeLineController.getJodaTimeZone())
+                                                 .toString(zonedFormatter));
         }
         return "";
     }

@@ -105,27 +105,27 @@ public class RangeDivisionInfo {
             timeUnit = DateTimeFieldType.monthOfYear();
             long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
             long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivisionInfo(timeRange, Months.monthsIn(timeRange).getMonths() + 1, TimeUnits.MONTHS, DateTimeFormat.forPattern("YYYY'-'MMMM"), lower, upper);
+            return new RangeDivisionInfo(timeRange, Months.monthsIn(timeRange).getMonths() + 1, TimeUnits.MONTHS, DateTimeFormat.forPattern("YYYY'-'MMMM"), lower, upper); // NON-NLS
         } else if (Days.daysIn(timeRange).isGreaterThan(Days.THREE)) {
             timeUnit = DateTimeFieldType.dayOfMonth();
             long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
             long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivisionInfo(timeRange, Days.daysIn(timeRange).getDays() + 1, TimeUnits.DAYS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd"), lower, upper);
+            return new RangeDivisionInfo(timeRange, Days.daysIn(timeRange).getDays() + 1, TimeUnits.DAYS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd"), lower, upper); // NON-NLS
         } else if (Hours.hoursIn(timeRange).isGreaterThan(Hours.THREE)) {
             timeUnit = DateTimeFieldType.hourOfDay();
             long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
             long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivisionInfo(timeRange, Hours.hoursIn(timeRange).getHours() + 1, TimeUnits.HOURS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH"), lower, upper);
+            return new RangeDivisionInfo(timeRange, Hours.hoursIn(timeRange).getHours() + 1, TimeUnits.HOURS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH"), lower, upper); // NON-NLS
         } else if (Minutes.minutesIn(timeRange).isGreaterThan(Minutes.THREE)) {
             timeUnit = DateTimeFieldType.minuteOfHour();
             long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
             long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivisionInfo(timeRange, Minutes.minutesIn(timeRange).getMinutes() + 1, TimeUnits.MINUTES, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm"), lower, upper);
+            return new RangeDivisionInfo(timeRange, Minutes.minutesIn(timeRange).getMinutes() + 1, TimeUnits.MINUTES, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm"), lower, upper); // NON-NLS
         } else {
             timeUnit = DateTimeFieldType.secondOfMinute();
             long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
             long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivisionInfo(timeRange, Seconds.secondsIn(timeRange).getSeconds() + 1, TimeUnits.SECONDS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm':'ss"), lower, upper);
+            return new RangeDivisionInfo(timeRange, Seconds.secondsIn(timeRange).getSeconds() + 1, TimeUnits.SECONDS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm':'ss"), lower, upper); // NON-NLS
         }
     }
 

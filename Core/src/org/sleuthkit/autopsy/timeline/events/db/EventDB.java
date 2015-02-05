@@ -79,41 +79,41 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public class EventDB {
 
-    private static final String ARTIFACT_ID_COLUMN = "artifact_id";
+    private static final String ARTIFACT_ID_COLUMN = "artifact_id"; // NON-NLS
 
-    private static final String BASE_TYPE_COLUMN = "base_type";
+    private static final String BASE_TYPE_COLUMN = "base_type"; // NON-NLS
 
-    private static final String EVENT_ID_COLUMN = "event_id";
+    private static final String EVENT_ID_COLUMN = "event_id"; // NON-NLS
 
     //column name constants//////////////////////
-    private static final String FILE_ID_COLUMN = "file_id";
+    private static final String FILE_ID_COLUMN = "file_id"; // NON-NLS
 
-    private static final String FULL_DESCRIPTION_COLUMN = "full_description";
+    private static final String FULL_DESCRIPTION_COLUMN = "full_description"; // NON-NLS
 
-    private static final String KNOWN_COLUMN = "known_state";
+    private static final String KNOWN_COLUMN = "known_state"; // NON-NLS
 
-    private static final String LAST_ARTIFACT_ID_KEY = "last_artifact_id";
+    private static final String LAST_ARTIFACT_ID_KEY = "last_artifact_id"; // NON-NLS
 
-    private static final String LAST_OBJECT_ID_KEY = "last_object_id";
+    private static final String LAST_OBJECT_ID_KEY = "last_object_id"; // NON-NLS
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
 
-    private static final String MED_DESCRIPTION_COLUMN = "med_description";
+    private static final String MED_DESCRIPTION_COLUMN = "med_description"; // NON-NLS
 
-    private static final String SHORT_DESCRIPTION_COLUMN = "short_description";
+    private static final String SHORT_DESCRIPTION_COLUMN = "short_description"; // NON-NLS
 
-    private static final String SUB_TYPE_COLUMN = "sub_type";
+    private static final String SUB_TYPE_COLUMN = "sub_type"; // NON-NLS
 
-    private static final String TIME_COLUMN = "time";
+    private static final String TIME_COLUMN = "time"; // NON-NLS
 
-    private static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running";
+    private static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running"; // NON-NLS
 
     static {
         //make sure sqlite driver is loaded // possibly redundant
         try {
-            Class.forName("org.sqlite.JDBC");
+            Class.forName("org.sqlite.JDBC"); // NON-NLS
         } catch (ClassNotFoundException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to load sqlite JDBC driver", ex);
+            LOGGER.log(Level.SEVERE, "Failed to load sqlite JDBC driver", ex); // NON-NLS
         }
     }
 
@@ -128,14 +128,14 @@ public class EventDB {
      */
     public static EventDB getEventDB(String dbPath) {
         try {
-            EventDB eventDB = new EventDB(dbPath + File.separator + "events.db");
+            EventDB eventDB = new EventDB(dbPath + File.separator + "events.db"); // NON-NLS
 
             return eventDB;
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "sql error creating database connection", ex);
+            LOGGER.log(Level.SEVERE, "sql error creating database connection", ex); // NON-NLS
             return null;
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "error creating database connection", ex);
+            LOGGER.log(Level.SEVERE, "error creating database connection", ex); // NON-NLS
             return null;
         }
     }
@@ -156,14 +156,14 @@ public class EventDB {
         return filter.getSubFilters().stream()
                 .filter(Filter::isActive)
                 .map(EventDB::getSQLWhere)
-                .collect(Collectors.joining(" and ", "( ", ")"));
+                .collect(Collectors.joining(" and ", "( ", ")")); // NON-NLS
     }
 
     static String getSQLWhere(UnionFilter filter) {
         return filter.getSubFilters().stream()
                 .filter(Filter::isActive)
                 .map(EventDB::getSQLWhere)
-                .collect(Collectors.joining(" or ", "( ", ")"));
+                .collect(Collectors.joining(" or ", "( ", ")")); // NON-NLS
     }
 
     private static String getSQLWhere(Filter filter) {
@@ -185,14 +185,14 @@ public class EventDB {
         } else {
             return "1";
         }
-        result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result;
+        result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result; // NON-NLS
         //System.out.println(result);
         return result;
     }
 
     private static String getSQLWhere(HideKnownFilter filter) {
         return (filter.isActive())
-               ? "(known_state is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')"
+               ? "(known_state is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')" // NON-NLS
                : "1";
     }
 
@@ -202,9 +202,9 @@ public class EventDB {
                 return "1";
             }
             String strip = StringUtils.strip(filter.getText());
-            return "((" + MED_DESCRIPTION_COLUMN + " like '%" + strip + "%') or ("
-                    + FULL_DESCRIPTION_COLUMN + " like '%" + strip + "%') or ("
-                    + SHORT_DESCRIPTION_COLUMN + " like '%" + strip + "%'))";
+            return "((" + MED_DESCRIPTION_COLUMN + " like '%" + strip + "%') or (" // NON-NLS
+                    + FULL_DESCRIPTION_COLUMN + " like '%" + strip + "%') or (" // NON-NLS
+                    + SHORT_DESCRIPTION_COLUMN + " like '%" + strip + "%'))"; // NON-NLS
         } else {
             return "1";
         }
@@ -228,7 +228,7 @@ public class EventDB {
                 return "1"; //then collapse clause to true
             }
         }
-        return "(" + SUB_TYPE_COLUMN + " in (" + StringUtils.join(getActiveSubTypes(filter), ",") + "))";
+        return "(" + SUB_TYPE_COLUMN + " in (" + StringUtils.join(getActiveSubTypes(filter), ",") + "))"; // NON-NLS
     }
 
     private volatile Connection con;
@@ -274,13 +274,13 @@ public class EventDB {
         try (Statement stmt = con.createStatement();
              //You can't inject multiple values into one ? paramater in prepared statement,
              //so we make new statement each time...
-             ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) {
+             ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
             while (rs.next()) {
-                span = new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC);
+                span = new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC); // NON-NLS
 
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex);
+            LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -297,7 +297,7 @@ public class EventDB {
                 closeStatements();
                 con.close();
             } catch (SQLException ex) {
-                LOGGER.log(Level.WARNING, "Failed to close connection to evetns.db", ex);
+                LOGGER.log(Level.WARNING, "Failed to close connection to evetns.db", ex); // NON-NLS
             }
         }
         con = null;
@@ -305,7 +305,7 @@ public class EventDB {
 
     void commitTransaction(EventTransaction tr, Boolean notify) {
         if (tr.isClosed()) {
-            throw new IllegalArgumentException("can't close already closed transaction");
+            throw new IllegalArgumentException("can't close already closed transaction"); // NON-NLS
         }
         tr.commit(notify);
     }
@@ -314,9 +314,9 @@ public class EventDB {
         int result = -1;
         dbReadLock();
         //TODO convert this to prepared statement -jm
-        try (ResultSet rs = con.createStatement().executeQuery("select count(*) as count from events")) {
+        try (ResultSet rs = con.createStatement().executeQuery("select count(*) as count from events")) { // NON-NLS
             while (rs.next()) {
-                result = rs.getInt("count");
+                result = rs.getInt("count"); // NON-NLS
                 break;
             }
         } catch (SQLException ex) {
@@ -374,9 +374,9 @@ public class EventDB {
         //TODO: use prepared statement - jm
         dbWriteLock();
         try (Statement createStatement = con.createStatement()) {
-            createStatement.execute("drop table if exists events");
+            createStatement.execute("drop table if exists events"); // NON-NLS
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "could not drop old events table", ex);
+            LOGGER.log(Level.SEVERE, "could not drop old events table", ex); // NON-NLS
         } finally {
             dbWriteUnlock();
         }
@@ -393,11 +393,11 @@ public class EventDB {
 
         dbReadLock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
-             ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) {
+             ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
             while (rs.next()) {
 
-                long start2 = rs.getLong("start");
-                long end2 = rs.getLong("end");
+                long start2 = rs.getLong("start"); // NON-NLS
+                long end2 = rs.getLong("end"); // NON-NLS
 
                 if (end2 == 0) {
                     end2 = getMaxTime();
@@ -406,7 +406,7 @@ public class EventDB {
                 return new Interval(start2 * 1000, (end2 + 1) * 1000, TimeLineController.getJodaTimeZone());
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex); // NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -426,7 +426,7 @@ public class EventDB {
                 }
             }
         } catch (SQLException sqlEx) {
-            LOGGER.log(Level.SEVERE, "exception while querying for event with id = " + eventID, sqlEx);
+            LOGGER.log(Level.SEVERE, "exception while querying for event with id = " + eventID, sqlEx); // NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -444,7 +444,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         dbReadLock();
-        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + getSQLWhere(filter);
+        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + getSQLWhere(filter); // NON-NLS
         //System.out.println(query);
         try (Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -454,7 +454,7 @@ public class EventDB {
             }
 
         } catch (SQLException sqlEx) {
-            LOGGER.log(Level.SEVERE, "failed to execute query for event ids in range", sqlEx);
+            LOGGER.log(Level.SEVERE, "failed to execute query for event ids in range", sqlEx); // NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -475,10 +475,10 @@ public class EventDB {
         dbReadLock();
         try (ResultSet rs = getMaxTimeStmt.executeQuery()) {
             while (rs.next()) {
-                return rs.getLong("max");
+                return rs.getLong("max"); // NON-NLS
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -490,10 +490,10 @@ public class EventDB {
         dbReadLock();
         try (ResultSet rs = getMinTimeStmt.executeQuery()) {
             while (rs.next()) {
-                return rs.getLong("min");
+                return rs.getLong("min"); // NON-NLS
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex); // NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -519,49 +519,49 @@ public class EventDB {
             configureDB();
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem accessing  database", ex);
+            LOGGER.log(Level.SEVERE, "problem accessing  database", ex); // NON-NLS
         }
 
         dbWriteLock();
         try {
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE TABLE if not exists db_info "
-                        + " ( key TEXT, "
-                        + " value INTEGER, "
-                        + "PRIMARY KEY (key))";
+                String sql = "CREATE TABLE if not exists db_info " // NON-NLS
+                        + " ( key TEXT, " // NON-NLS
+                        + " value INTEGER, " // NON-NLS
+                        + "PRIMARY KEY (key))"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating  db_info table", ex);
+                LOGGER.log(Level.SEVERE, "problem creating  db_info table", ex); // NON-NLS
             }
 
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE TABLE if not exists events "
-                        + " (event_id INTEGER PRIMARY KEY, "
-                        + " file_id INTEGER, "
-                        + " artifact_id INTEGER, "
-                        + " time INTEGER, "
-                        + " sub_type INTEGER, "
-                        + " base_type INTEGER, "
-                        + " full_description TEXT, "
-                        + " med_description TEXT, "
-                        + " short_description TEXT, "
-                        + " known_state INTEGER)";
+                String sql = "CREATE TABLE if not exists events " // NON-NLS
+                        + " (event_id INTEGER PRIMARY KEY, " // NON-NLS
+                        + " file_id INTEGER, " // NON-NLS
+                        + " artifact_id INTEGER, " // NON-NLS
+                        + " time INTEGER, " // NON-NLS
+                        + " sub_type INTEGER, " // NON-NLS
+                        + " base_type INTEGER, " // NON-NLS
+                        + " full_description TEXT, " // NON-NLS
+                        + " med_description TEXT, " // NON-NLS
+                        + " short_description TEXT, " // NON-NLS
+                        + " known_state INTEGER)"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating  database table", ex);
+                LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
             }
 
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists file_idx ON events(file_id)";
+                String sql = "CREATE INDEX if not exists file_idx ON events(file_id)"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating file_idx", ex);
+                LOGGER.log(Level.SEVERE, "problem creating file_idx", ex); // NON-NLS
             }
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists artifact_idx ON events(artifact_id)";
+                String sql = "CREATE INDEX if not exists artifact_idx ON events(artifact_id)"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating artifact_idx", ex);
+                LOGGER.log(Level.SEVERE, "problem creating artifact_idx", ex); // NON-NLS
             }
 
             //for common queries the covering indexes below were better, but having the time index 'blocke' them
@@ -572,38 +572,38 @@ public class EventDB {
 //                LOGGER.log(Level.SEVERE, "problem creating time_idx", ex);
 //            }
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists sub_type_idx ON events(sub_type, time)";
+                String sql = "CREATE INDEX if not exists sub_type_idx ON events(sub_type, time)"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating sub_type_idx", ex);
+                LOGGER.log(Level.SEVERE, "problem creating sub_type_idx", ex); // NON-NLS
             }
 
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists base_type_idx ON events(base_type, time)";
+                String sql = "CREATE INDEX if not exists base_type_idx ON events(base_type, time)"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating base_type_idx", ex);
+                LOGGER.log(Level.SEVERE, "problem creating base_type_idx", ex); // NON-NLS
             }
 
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists known_idx ON events(known_state)";
+                String sql = "CREATE INDEX if not exists known_idx ON events(known_state)"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating known_idx", ex);
+                LOGGER.log(Level.SEVERE, "problem creating known_idx", ex); // NON-NLS
             }
 
             try {
                 insertRowStmt = prepareStatement(
-                        "INSERT INTO events (file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) "
-                        + "VALUES (?,?,?,?,?,?,?,?,?)");
+                        "INSERT INTO events (file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
+                        + "VALUES (?,?,?,?,?,?,?,?,?)"); // NON-NLS
 
-                getMaxTimeStmt = prepareStatement("select Max(time) as max from events");
-                getMinTimeStmt = prepareStatement("select Min(time) as min from events");
-                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?");
-                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)");
-                getDBInfoStmt = prepareStatement("select value from db_info where key = ?");
+                getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
+                getMinTimeStmt = prepareStatement("select Min(time) as min from events"); // NON-NLS
+                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?"); // NON-NLS
+                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)"); // NON-NLS
+                getDBInfoStmt = prepareStatement("select value from db_info where key = ?"); // NON-NLS
             } catch (SQLException sQLException) {
-                LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException);
+                LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
 
         } finally {
@@ -626,7 +626,7 @@ public class EventDB {
      */
     void insertEvent(long time, EventType type, Long objID, Long artifactID, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, EventTransaction tr) {
         if (tr.isClosed()) {
-            throw new IllegalArgumentException("can't update database with closed transaction");
+            throw new IllegalArgumentException("can't update database with closed transaction"); // NON-NLS
         }
         int typeNum;
         int superTypeNum;
@@ -667,7 +667,7 @@ public class EventDB {
             insertRowStmt.executeUpdate();
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to insert event", ex);
+            LOGGER.log(Level.SEVERE, "failed to insert event", ex); // NON-NLS
         } finally {
             dbWriteUnlock();
         }
@@ -683,10 +683,10 @@ public class EventDB {
     void openDBCon() {
         try {
             if (con == null || con.isClosed()) {
-                con = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+                con = DriverManager.getConnection("jdbc:sqlite:" + dbPath); // NON-NLS
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Failed to open connection to events.db", ex);
+            LOGGER.log(Level.WARNING, "Failed to open connection to events.db", ex); // NON-NLS
         }
     }
 
@@ -709,8 +709,8 @@ public class EventDB {
     boolean tableExists() {
         //TODO: use prepared statement - jm
         try (Statement createStatement = con.createStatement();
-             ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) {
-            if (executeQuery.getString("name").equals("events") == false) {
+             ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) { // NON-NLS
+            if (executeQuery.getString("name").equals("events") == false) { // NON-NLS
                 return false;
             }
         } catch (SQLException ex) {
@@ -730,26 +730,26 @@ public class EventDB {
         //this should match Sleuthkit db setupt
         try (Statement statement = con.createStatement()) {
             //reduce i/o operations, we have no OS crash recovery anyway
-            statement.execute("PRAGMA synchronous = OFF;");
+            statement.execute("PRAGMA synchronous = OFF;"); // NON-NLS
             //we don't use this feature, so turn it off for minimal speed up on queries
             //this is deprecated and not recomended
-            statement.execute("PRAGMA count_changes = OFF;");
+            statement.execute("PRAGMA count_changes = OFF;"); // NON-NLS
             //this made a big difference to query speed
-            statement.execute("PRAGMA temp_store = MEMORY");
+            statement.execute("PRAGMA temp_store = MEMORY"); // NON-NLS
             //this made a modest improvement in query speeds
-            statement.execute("PRAGMA cache_size = 50000");
+            statement.execute("PRAGMA cache_size = 50000"); // NON-NLS
             //we never delete anything so...
-            statement.execute("PRAGMA auto_vacuum = 0");
+            statement.execute("PRAGMA auto_vacuum = 0"); // NON-NLS
             //allow to query while in transaction - no need read locks
-            statement.execute("PRAGMA read_uncommitted = True;");
+            statement.execute("PRAGMA read_uncommitted = True;"); // NON-NLS
         } finally {
             dbWriteUnlock();
         }
 
         try {
-            LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode",
+            LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode", // NON-NLS
                                                  SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                                                                                ? "native" : "pure-java"));
+                                                                                ? "native" : "pure-java")); // NON-NLS
         } catch (Exception exception) {
         }
     }
@@ -795,9 +795,9 @@ public class EventDB {
         final boolean useSubTypes = (zoomLevel == EventTypeZoomLevel.SUB_TYPE);
 
         //get some info about the range of dates requested
-        final String queryString = "select count(*), " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN)
-                + " from events where time >= " + startTime + " and time < " + endTime + " and " + getSQLWhere(filter)
-                + " GROUP BY " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN);
+        final String queryString = "select count(*), " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
+                + " from events where time >= " + startTime + " and time < " + endTime + " and " + getSQLWhere(filter) // NON-NLS
+                + " GROUP BY " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN); // NON-NLS
 
         ResultSet rs = null;
         dbReadLock();
@@ -814,11 +814,11 @@ public class EventDB {
                                  ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN))
                                  : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
 
-                typeMap.put(type, rs.getLong("count(*)"));
+                typeMap.put(type, rs.getLong("count(*)")); // NON-NLS
             }
 
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "error getting count of events from db.", ex);
+            LOGGER.log(Level.SEVERE, "error getting count of events from db.", ex); // NON-NLS
         } finally {
             try {
                 rs.close();
@@ -876,10 +876,10 @@ public class EventDB {
 
         //get all agregate events in this time unit
         dbReadLock();
-        String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN)
-                + " from events where time >= " + start + " and time < " + end + " and " + getSQLWhere(filter)
-                + " group by interval, " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) + " , " + descriptionColumn
-                + " order by Min(time)";
+        String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
+                + " from events where time >= " + start + " and time < " + end + " and " + getSQLWhere(filter) // NON-NLS
+                + " group by interval, " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) + " , " + descriptionColumn // NON-NLS
+                + " order by Min(time)"; // NON-NLS
         //System.out.println(query);
         ResultSet rs = null;
         try (Statement stmt = con.createStatement(); // scoop up requested events in groups organized by interval, type, and desription
@@ -895,9 +895,9 @@ public class EventDB {
                 EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN)) : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
 
                 AggregateEvent aggregateEvent = new AggregateEvent(
-                        new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone()),
+                        new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone()), // NON-NLS
                         type,
-                        Arrays.asList(rs.getString("event_ids").split(",")),
+                        Arrays.asList(rs.getString("event_ids").split(",")), // NON-NLS
                         rs.getString(descriptionColumn), lod);
 
                 //put events in map from type/descrition -> event
@@ -967,16 +967,16 @@ public class EventDB {
             try (ResultSet rs = getDBInfoStmt.executeQuery()) {
                 long result = defaultValue;
                 while (rs.next()) {
-                    result = rs.getLong("value");
+                    result = rs.getLong("value"); // NON-NLS
                 }
                 return result;
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "failed to read key: " + key + " from db_info", ex);
+                LOGGER.log(Level.SEVERE, "failed to read key: " + key + " from db_info", ex); // NON-NLS
             } finally {
                 dbReadUnlock();
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to set key: " + key + " on getDBInfoStmt ", ex);
+            LOGGER.log(Level.SEVERE, "failed to set key: " + key + " on getDBInfoStmt ", ex); // NON-NLS
         }
 
         return defaultValue;
@@ -997,19 +997,19 @@ public class EventDB {
     private String getStrfTimeFormat(TimeUnits info) {
         switch (info) {
             case DAYS:
-                return "%Y-%m-%dT00:00:00";
+                return "%Y-%m-%dT00:00:00"; // NON-NLS
             case HOURS:
-                return "%Y-%m-%dT%H:00:00";
+                return "%Y-%m-%dT%H:00:00"; // NON-NLS
             case MINUTES:
-                return "%Y-%m-%dT%H:%M:00";
+                return "%Y-%m-%dT%H:%M:00"; // NON-NLS
             case MONTHS:
-                return "%Y-%m-01T00:00:00";
+                return "%Y-%m-01T00:00:00"; // NON-NLS
             case SECONDS:
-                return "%Y-%m-%dT%H:%M:%S";
+                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS
             case YEARS:
-                return "%Y-01-01T00:00:00";
+                return "%Y-01-01T00:00:00"; // NON-NLS
             default:
-                return "%Y-%m-%dT%H:%M:%S";
+                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS
         }
     }
 
@@ -1026,7 +1026,7 @@ public class EventDB {
             recordDBInfoStmt.setLong(2, value);
             recordDBInfoStmt.executeUpdate();
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to set dbinfo  key: " + key + " value: " + value, ex);
+            LOGGER.log(Level.SEVERE, "failed to set dbinfo  key: " + key + " value: " + value, ex); // NON-NLS
         } finally {
             dbWriteUnlock();
         }
@@ -1056,7 +1056,7 @@ public class EventDB {
                 con.setAutoCommit(false);
 
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "failed to set auto-commit to to false", ex);
+                LOGGER.log(Level.SEVERE, "failed to set auto-commit to to false", ex); // NON-NLS
             }
 
         }
@@ -1067,7 +1067,7 @@ public class EventDB {
                     con.rollback();
 
                 } catch (SQLException ex1) {
-                    LOGGER.log(Level.SEVERE, "Exception while attempting to rollback!!", ex1);
+                    LOGGER.log(Level.SEVERE, "Exception while attempting to rollback!!", ex1); // NON-NLS
                 } finally {
                     close();
                 }
@@ -1085,7 +1085,7 @@ public class EventDB {
 //                        fireNewEvents(newEvents);
                     }
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error commiting events.db.", ex);
+                    LOGGER.log(Level.SEVERE, "Error commiting events.db.", ex); // NON-NLS
                     rollback();
                 }
             }
@@ -1096,7 +1096,7 @@ public class EventDB {
                 try {
                     con.setAutoCommit(true);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex);
+                    LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex); // NON-NLS
                 } finally {
                     closed = true;
 
@@ -1112,10 +1112,10 @@ public class EventDB {
 
     public class MultipleTransactionException extends IllegalStateException {
 
-        private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO = "cannot have more than one open transaction";
+        private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "cannot have more than one open transaction"; // NON-NLS
 
         public MultipleTransactionException() {
-            super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO);
+            super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
         }
 
     }

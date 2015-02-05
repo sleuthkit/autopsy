@@ -30,6 +30,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 
@@ -249,7 +250,9 @@ public interface TimeLineChart<X> extends TimeLineView {
             final X start = getSpanStart();
             final X end = getSpanEnd();
             Tooltip.uninstall(this, tooltip);
-            tooltip = new Tooltip("Double-click to zoom into range:\n" + formatSpan(start) + " to " + formatSpan(end) + "\nRight-click to clear.");
+            tooltip = new Tooltip(
+                    NbBundle.getMessage(this.getClass(), "Timeline.ui.TimeLineChart.tooltip.text", formatSpan(start),
+                                        formatSpan(end)));
             Tooltip.install(this, tooltip);
         }
 

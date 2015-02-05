@@ -374,9 +374,9 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         label.relocate(labelX, 0);
 
         if (labelX == 0) { // first label has no border
-            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;");
+            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); // NON-NLS
         } else {  // subsequent labels have border on left to create dividers
-            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;");
+            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); // NON-NLS
         }
 
         branchPane.getChildren().add(label);

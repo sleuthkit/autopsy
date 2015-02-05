@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /** A singleton {@link } EventType to represent the root type of all event
@@ -81,12 +82,12 @@ public class RootEventType implements EventType {
 
     @Override
     public String getIconBase() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public String getDisplayName() {
-        return "Event Types";
+        return NbBundle.getMessage(this.getClass(), "RootEventType.eventTypes.name");
     }
 
     @Override

@@ -104,7 +104,10 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         setModel(this.controller.getEventsModel());
         //we have defered creating context menu until control is available
         contextMenu = ActionUtils.createContextMenu(
-                Arrays.asList(new ActionGroup("Zoom History", new Back(controller), new Forward(controller))));
+                Arrays.asList(new ActionGroup(
+                        NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
+                        new Back(controller),
+                        new Forward(controller))));
         contextMenu.setAutoHide(true);
     }
 

@@ -36,6 +36,7 @@ import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -74,33 +75,35 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     @FXML
     void initialize() {
-        assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'.";
+        assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         applyButton.setOnAction(e -> {
             controller.pushFilters(filterTreeTable.getRoot().getValue().copyOf());
         });
+        applyButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.applyButton.text"));
+        defaultButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.defaultButton.text"));
 
         //remove column headers via css.
-        filterTreeTable.getStylesheets().addAll(getClass().getResource("FilterTable.css").toExternalForm());
+        filterTreeTable.getStylesheets().addAll(getClass().getResource("FilterTable.css").toExternalForm()); // NON-NLS
 
         //use row factory as hook to attach context menus to.
         filterTreeTable.setRowFactory((TreeTableView<Filter> param) -> {
             final TreeTableRow<Filter> row = new TreeTableRow<>();
 
-            MenuItem all = new MenuItem("all");
+            MenuItem all = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.all"));
             all.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setActive(Boolean.TRUE);
                 });
             });
-            MenuItem none = new MenuItem("none");
+            MenuItem none = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.none"));
             none.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setActive(Boolean.FALSE);
                 });
             });
 
-            MenuItem only = new MenuItem("only");
+            MenuItem only = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.only"));
             only.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -110,7 +113,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
                     }
                 });
             });
-            MenuItem others = new MenuItem("others");
+            MenuItem others = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.others"));
             others.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -121,7 +124,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
                 });
             });
             final ContextMenu rowMenu = new ContextMenu();
-            Menu select = new Menu("select");
+            Menu select = new Menu(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.select"));
             select.setOnAction(e -> {
                 row.getItem().setActive(!row.getItem().isActive());
             });
@@ -135,15 +138,17 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         treeColumn.setCellFactory(col -> new FilterCheckBoxCell());
+        treeColumn.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.treeColumn.text"));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
+        legendColumn.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.legendColumn.text"));
     }
 
     public FilterSetPanel() {
-        FXMLConstructor.construct(this, "FilterSetPanel.fxml");
-        expansionMap.put("Event Type Filter", Boolean.TRUE);
+        FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
+        expansionMap.put(NbBundle.getMessage(this.getClass(), "FilterSetPanel.eventTypeFilter.title"), Boolean.TRUE);
     }
 
     @Override

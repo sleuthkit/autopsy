@@ -95,11 +95,11 @@ public class AggregateEvent {
     public static AggregateEvent merge(AggregateEvent ag1, AggregateEvent ag2) {
 
         if (ag1.getType() != ag2.getType()) {
-            throw new IllegalArgumentException(NbBundle.getMessage(AggregateEvent.class, "AggregateEvent.differentTypes"));
+            throw new IllegalArgumentException("aggregate events are not compatible they have different types");
         }
 
         if (!ag1.getDescription().equals(ag2.getDescription())) {
-            throw new IllegalArgumentException(NbBundle.getMessage(AggregateEvent.class, "AggregateEvent.differentDescriptions"));
+            throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
         }
         HashSet<Long> ids = new HashSet<>(ag1.getEventIDs());
         ids.addAll(ag2.getEventIDs());

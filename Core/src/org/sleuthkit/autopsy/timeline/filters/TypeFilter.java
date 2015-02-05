@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 
@@ -64,7 +65,11 @@ public class TypeFilter extends UnionFilter {
 
     @Override
     public String getDisplayName() {
-        return eventType == RootEventType.getInstance() ? "Event Type Filter" : eventType.getDisplayName();
+        if (eventType == RootEventType.getInstance()) {
+            return NbBundle.getMessage(this.getClass(), "TypeFilter.displayName.text");
+        } else {
+            return eventType.getDisplayName();
+        }
     }
 
     /** @return a color to use in GUI components representing this filter */
@@ -95,7 +100,7 @@ public class TypeFilter extends UnionFilter {
     public String getHTMLReportString() {
         String string = getEventType().getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>"));
+            string = string + " : " + getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
     }

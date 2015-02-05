@@ -37,14 +37,7 @@ import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.control.Slider;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.effect.Effect;
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.KP_DOWN;
@@ -61,6 +54,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.joda.time.DateTime;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -287,7 +281,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
     @Override
     protected Task<Boolean> getUpdateTask() {
 
-        return new LoggedTask<Boolean>("Update Details", true) {
+        return new LoggedTask<Boolean>(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.name"), true) {
 
             @Override
             protected Boolean call() throws Exception {
@@ -301,13 +295,13 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 });
 
                 updateProgress(-1, 1);
-                updateMessage("preparing");
+                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
 
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRange().get());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
 
-                updateMessage("querying db");
+                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
                 aggregatedEvents.setAll(filteredEvents.getAggregatedEvents());
 
                 Platform.runLater(() -> {
@@ -330,7 +324,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                         break;
                     }
                     updateProgress(i++, size);
-                    updateMessage("updating ui");
+                    updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
                     final XYChart.Data<DateTime, AggregateEvent> xyData = new BarChart.Data<>(new DateTime(e.getSpan().getStartMillis()), e);
 
                     Platform.runLater(() -> {
@@ -395,20 +389,48 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         @FXML
         private Label truncateSliderLabel;
 
+        @FXML
+        private MenuButton advancedLayoutOptionsButtonLabel;
+
+        @FXML
+        private CustomMenuItem bandByTypeBoxMenuItem;
+
+        @FXML
+        private CustomMenuItem oneEventPerRowBoxMenuItem;
+
+        @FXML
+        private CustomMenuItem truncateAllBoxMenuItem;
+
+        @FXML
+        private CustomMenuItem truncateSliderLabelMenuItem;
+
+        @FXML
+        private CustomMenuItem showRadioMenuItem;
+
+        @FXML
+        private CustomMenuItem countsRadioMenuItem;
+
+        @FXML
+        private CustomMenuItem hiddenRadioMenuItem;
+
+        @FXML
+        private SeparatorMenuItem descVisibilitySeparatorMenuItem;
+
         public DetailViewSettingsPane() {
-            FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml");
+            FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
         @FXML
         void initialize() {
-            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
-            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
-            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
-            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'.";
+            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             bandByTypeBox.selectedProperty().bindBidirectional(chart.getBandByType());
             truncateAllBox.selectedProperty().bindBidirectional(chart.getTruncateAll());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.getOneEventPerRow());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
+            truncateSliderLabel.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSliderLabel.text"));
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
                     chart.getTruncateWidth().set(truncateWidthSlider.getValue());
@@ -426,6 +448,28 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                     chart.getDescrVisibility().set(DescriptionVisibility.HIDDEN);
                 }
             });
+
+            advancedLayoutOptionsButtonLabel.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
+            bandByTypeBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBox.text"));
+            bandByTypeBoxMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBoxMenuItem.text"));
+            oneEventPerRowBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBox.text"));
+            oneEventPerRowBoxMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
+            truncateAllBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBox.text"));
+            truncateAllBoxMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBoxMenuItem.text"));
+            truncateSliderLabelMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSlideLabelMenuItem.text"));
+            descVisibilitySeparatorMenuItem.setText(
+                    NbBundle.getMessage(this.getClass(), "DetailViewPane.descVisSeparatorMenuItem.text"));
+            showRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadioMenuItem.text"));
+            showRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadio.text"));
+            countsRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadioMenuItem.text"));
+            countsRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadio.text"));
+            hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
+            hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
         }
 
     }

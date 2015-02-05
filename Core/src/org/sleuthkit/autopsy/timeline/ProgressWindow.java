@@ -65,10 +65,10 @@ public class ProgressWindow extends JFrame {
         });
 
         //progressBar.setIndeterminate(true);
-        setName("Timeline");
-        setTitle("Generating Timeline data");
+        setName(NbBundle.getMessage(TimeLineTopComponent.class, "Timeline.progressWindow.name"));
+        setTitle(NbBundle.getMessage(TimeLineTopComponent.class, "Timeline.progressWindow.title"));
         // Close the dialog when Esc is pressed
-        String cancelName = "cancel";
+        String cancelName = "cancel"; // NON-NLS
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
@@ -179,7 +179,12 @@ public class ProgressWindow extends JFrame {
     public void cancel() {
         SwingUtilities.invokeLater(() -> {
             if (isVisible()) {
-                int showConfirmDialog = JOptionPane.showConfirmDialog(ProgressWindow.this, "Do you want to cancel time line creation?", "Cancel timeline creation?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                int showConfirmDialog = JOptionPane.showConfirmDialog(ProgressWindow.this,
+                                                                      NbBundle.getMessage(TimeLineTopComponent.class,
+                                                                                          "Timeline.ProgressWindow.cancel.confdlg.msg"),
+                                                                      NbBundle.getMessage(TimeLineTopComponent.class,
+                                                                                          "Timeline.ProgressWindow.cancel.confdlg.detail"),
+                                                                      JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (showConfirmDialog == JOptionPane.YES_OPTION) {
                     close();
                 }

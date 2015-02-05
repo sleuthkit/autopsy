@@ -47,7 +47,7 @@ public abstract class AbstractFilter implements Filter {
 
     @Override
     public String getStringCheckBox() {
-        return "[" + (isActive() ? "x" : " ") + "]";
+        return "[" + (isActive() ? "x" : " ") + "]"; // NON-NLS
     }
 
   

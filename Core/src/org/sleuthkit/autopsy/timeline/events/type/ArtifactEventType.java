@@ -156,7 +156,7 @@ public interface ArtifactEventType extends EventType {
             }
 
             if (attrMap.get(type.getDateTimeAttrubuteType()) == null) {
-                Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0}  has no date/time attribute, skipping it.", artf.getArtifactID());
+                Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0}  has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
                 return null;
             }
             //use the hook provided by this subtype implementation

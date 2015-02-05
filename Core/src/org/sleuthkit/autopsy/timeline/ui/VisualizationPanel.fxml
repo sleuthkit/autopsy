@@ -15,7 +15,7 @@
             <items>
                 <HBox alignment="CENTER" BorderPane.alignment="CENTER">
                     <children>
-                        <Label text="Visualization Mode:">
+                        <Label fx:id="visualizationModeLabel">
                             <HBox.margin>
                                 <Insets right="5.0" />
                             </HBox.margin>
@@ -26,7 +26,7 @@
                              
                         <org.controlsfx.control.SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
                             <buttons>   
-                                <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true" text="Counts">
+                                <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
                                             <image>
@@ -38,7 +38,7 @@
                               <Font name="System Bold" size="16.0" />
                            </font>
                                 </ToggleButton>
-                                <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false" text="Details">
+                                <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
                                             <image>
@@ -62,7 +62,7 @@
                     </BorderPane.margin>
                 </HBox>
                 <Separator orientation="VERTICAL" />
-                <Button fx:id="snapShotButton" mnemonicParsing="false" text="Screenshot">
+                <Button fx:id="snapShotButton" mnemonicParsing="false">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>
@@ -99,7 +99,7 @@
                 <Separator />
                 <ToolBar>
                     <items>
-                        <Label contentDisplay="RIGHT" minWidth="-Infinity" text="Start:">
+                        <Label fx:id="startLabel" contentDisplay="RIGHT" minWidth="-Infinity">
                             <graphic>
                                 <LocalDateTimeTextField fx:id="startPicker" minWidth="200.0" prefWidth="200.0">
                                     <padding>
@@ -141,7 +141,7 @@
                                 </Button>
                             </children>
                         </HBox>
-                        <MenuButton fx:id="zoomMenuButton" mnemonicParsing="false" text="Zoom in/out to">
+                        <MenuButton fx:id="zoomMenuButton" mnemonicParsing="false">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
@@ -158,7 +158,7 @@
                                 <Insets left="10.0" right="10.0" />
                             </HBox.margin>
                         </Separator>
-                        <Label contentDisplay="RIGHT" minWidth="-Infinity" text="End:">
+                        <Label fx:id="endLabel" contentDisplay="RIGHT" minWidth="-Infinity">
                             <graphic>
                                 <LocalDateTimeTextField fx:id="endPicker" minWidth="200.0" nodeOrientation="LEFT_TO_RIGHT" prefWidth="200.0">
                                     <padding>

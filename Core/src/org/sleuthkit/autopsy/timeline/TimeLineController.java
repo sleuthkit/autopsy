@@ -98,7 +98,8 @@ public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
-    private static final String DO_REPOPULATE_MESSAGE = "The events databse was prevously populated while ingest was running.\n" + "Some events may not have been populated or may have been populated inaccurately.\n" + "Do you want to repopulate the events database now?";
+    private static final String DO_REPOPULATE_MESSAGE = NbBundle.getMessage(TimeLineController.class,
+                                                                            "Timeline.do_repopulate.msg");
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
@@ -107,7 +108,7 @@ public class TimeLineController {
     }
 
     public static DateTimeFormatter getZonedFormatter() {
-        return DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss").withZone(getJodaTimeZone());
+        return DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss").withZone(getJodaTimeZone()); // NON-NLS
     }
 
     public static DateTimeZone getJodaTimeZone() {
@@ -253,7 +254,7 @@ public class TimeLineController {
                 return false;
             }
         }
-        LOGGER.log(Level.INFO, "Beginning generation of timeline");
+        LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
         try {
             SwingUtilities.invokeLater(() -> {
                 if (mainFrame != null) {
@@ -286,7 +287,7 @@ public class TimeLineController {
                 });
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex);
+            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
             return false;
         }
         return true;
@@ -347,18 +348,18 @@ public class TimeLineController {
             }
 
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex);
+            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
         } catch (HeadlessException | MissingResourceException ex) {
-            LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex);
+            LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS
         }
     }
 
     @SuppressWarnings("deprecation")
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
-        try (ResultSet runQuery = sleuthkitCase.runQuery("select Max(artifact_id) as max_id from blackboard_artifacts")) {
+        try (ResultSet runQuery = sleuthkitCase.runQuery("select Max(artifact_id) as max_id from blackboard_artifacts")) { // NON-NLS
             while (runQuery.next()) {
-                caseLastArtfId = runQuery.getLong("max_id");
+                caseLastArtfId = runQuery.getLong("max_id"); // NON-NLS
             }
             sleuthkitCase.closeRunQuery(runQuery);
         } catch (SQLException ex) {
@@ -403,7 +404,7 @@ public class TimeLineController {
     }
 
     public void selectEventIDs(Collection<Long> events) {
-        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) {
+        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { // NON-NLS
             @Override
             protected Interval call() throws Exception {
                 return filteredEvents.getSpanningInterval(events);
@@ -419,10 +420,10 @@ public class TimeLineController {
                     }
                 } catch (InterruptedException ex) {
                     Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex);
+                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex); // NON-NLS
                 } catch (ExecutionException ex) {
                     Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex);
+                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex); // NON-NLS
                 }
             }
         };
@@ -435,8 +436,9 @@ public class TimeLineController {
      */
     synchronized private void showWindow() {
         if (mainFrame == null) {
-            LOGGER.log(Level.WARNING, "Tried to show timeline with invalid window. Rebuilding GUI.");
-            mainFrame = (TimeLineTopComponent) WindowManager.getDefault().findTopComponent("TimeLineTopComponent");
+            LOGGER.log(Level.WARNING, "Tried to show timeline with invalid window. Rebuilding GUI."); // NON-NLS
+            mainFrame = (TimeLineTopComponent) WindowManager.getDefault().findTopComponent(
+                    NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponentAction"));
             if (mainFrame == null) {
                 mainFrame = new TimeLineTopComponent();
             }
@@ -476,9 +478,12 @@ public class TimeLineController {
         if (newLOD == DescriptionLOD.FULL && count > 10_000) {
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
-                    "You are about to show details for " + NumberFormat.getInstance().format(count) + " events. This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
-                    "",
-                    JOptionPane.YES_NO_OPTION);
+                                                                  NbBundle.getMessage(this.getClass(),
+                                                                                      "Timeline.pushDescrLOD.confdlg.msg",
+                                                                                      NumberFormat.getInstance().format(count)),
+                                                                  NbBundle.getMessage(TimeLineTopComponent.class,
+                                                                                      "Timeline.pushDescrLOD.confdlg.details"),
+                                                                  JOptionPane.YES_NO_OPTION);
 
             shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
         }
@@ -533,7 +538,7 @@ public class TimeLineController {
     public void selectTimeAndType(Interval interval, EventType type) {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
-        final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) {
+        final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { // NON-NLS
             @Override
             protected Collection< Long> call() throws Exception {
                 synchronized (TimeLineController.this) {
@@ -551,10 +556,10 @@ public class TimeLineController {
                     }
                 } catch (InterruptedException ex) {
                     Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex);
+                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex);// NON-NLS
                 } catch (ExecutionException ex) {
                     Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex);
+                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex);// NON-NLS
                 }
             }
         };
@@ -625,7 +630,8 @@ public class TimeLineController {
     synchronized int showLastPopulatedWhileIngestingConfirmation() {
         return JOptionPane.showConfirmDialog(mainFrame,
                 DO_REPOPULATE_MESSAGE,
-                "re populate events?",
+                NbBundle.getMessage(TimeLineTopComponent.class,
+                                    "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
 

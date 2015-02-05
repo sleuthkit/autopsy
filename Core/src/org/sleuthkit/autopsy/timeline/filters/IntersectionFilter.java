@@ -7,6 +7,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.openide.util.NbBundle;
 
 /** Intersection(And) filter */
 public class IntersectionFilter extends CompoundFilter {
@@ -32,14 +33,16 @@ public class IntersectionFilter extends CompoundFilter {
 
     @Override
     public String getDisplayName() {
-        return "Intersection" + getSubFilters().stream()
-                .map(Filter::getDisplayName)
-                .collect(Collectors.joining(",", "[", "]"));
+        return NbBundle.getMessage(this.getClass(),
+                                   "IntersectionFilter.displayName.text",
+                                   getSubFilters().stream()
+                                                  .map(Filter::getDisplayName)
+                                                  .collect(Collectors.joining(",", "[", "]")));
     }
 
     @Override
     public String getHTMLReportString() {
-        return getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>"));
+        return getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
     }
 
     @Override

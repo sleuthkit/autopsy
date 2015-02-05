@@ -28,6 +28,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -92,7 +93,7 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
             } else if (item instanceof TextFilter) {
                 TextFilter f = (TextFilter) item;
                 TextField textField = new TextField();
-                textField.setPromptText("enter filter string");
+                textField.setPromptText(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.promptText"));
                 textField.textProperty().bindBidirectional(f.textProperty());
                 Platform.runLater(() -> {
                     setGraphic(textField);

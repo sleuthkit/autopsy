@@ -22,6 +22,7 @@ import java.util.Objects;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 
 /** Filter for text matching */
 public class TextFilter extends AbstractFilter {
@@ -41,7 +42,7 @@ public class TextFilter extends AbstractFilter {
     
     @Override
     public String getDisplayName() {
-        return "Text Filter";
+        return NbBundle.getMessage(this.getClass(), "TextFilter.displayName.text");
     }
     
     synchronized public String getText() {
@@ -62,7 +63,7 @@ public class TextFilter extends AbstractFilter {
     
     @Override
     public String getHTMLReportString() {
-        return "text like \"" + StringUtils.defaultIfBlank(text.getValue(), "") + "\"" + getStringCheckBox();
+        return "text like \"" + StringUtils.defaultIfBlank(text.getValue(), "") + "\"" + getStringCheckBox(); // NON-NLS
     }
     
     @Override
