@@ -40,7 +40,7 @@ import org.openide.util.Exceptions;
 public class FXMLConstructor {
 
     static public void construct(Node n, String fxmlFileName) {
-        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
+        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName; // NON-NLS
         System.out.println(name);
 
         try {

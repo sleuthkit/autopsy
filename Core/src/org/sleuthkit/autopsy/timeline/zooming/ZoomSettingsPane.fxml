@@ -13,7 +13,7 @@
             <children>
                 <GridPane alignment="CENTER" hgap="5.0" minHeight="-Infinity" minWidth="-Infinity" vgap="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
                     <children>
-                        <Label text="Description Detail:" GridPane.rowIndex="2">
+                        <Label fx:id="descrLODLabel" GridPane.rowIndex="2">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -23,7 +23,7 @@
                                 <Insets />
                             </GridPane.margin>
                         </Slider>
-                        <Label text="Event Type: " GridPane.rowIndex="1">
+                        <Label fx:id="typeZoomLabel" GridPane.rowIndex="1">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -33,7 +33,7 @@
                                 <Insets />
                             </GridPane.margin>
                         </Slider>
-                        <Label text="Time Units:" GridPane.valignment="CENTER">
+                        <Label fx:id="timeUnitLabel" GridPane.valignment="CENTER">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -66,7 +66,7 @@
             <left>
                 <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" spacing="5.0" BorderPane.alignment="CENTER_LEFT">
                     <children>
-                        <Label text="Zoom ">
+                        <Label fx:id="zoomLabel">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
@@ -79,7 +79,7 @@
                             </graphic>
                         </Label>
                         <Region maxWidth="1.7976931348623157E308" minWidth="60.0" HBox.hgrow="ALWAYS" />
-                        <Label text="History: " />
+                        <Label fx:id="historyLabel" />
                         <Button fx:id="backButton" mnemonicParsing="false" HBox.hgrow="SOMETIMES">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">

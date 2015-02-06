@@ -26,6 +26,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
@@ -157,7 +158,26 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         }
         
         endTable(sb);
+        
+        /* If we have a file system file, grab the more detailed metadata text too */
+        try {
+            if (file instanceof FsContent) {
+                FsContent fsFile = (FsContent) file;
+
+                sb.append("<hr /><pre>\n");
+                sb.append("From The Sleuth Kit istat Tool: <br /><br />");
+                for (String str : fsFile.getMetaDataText()) {
+                    sb.append(str).append("<br />");
+                }
+                sb.append("</pre>\n");
+            }
+        } catch (TskCoreException ex) {
+            sb.append("Error getting file metadata: ").append(ex.getLocalizedMessage());
+        }
+        
         setText(sb.toString());
+        jTextPane1.setCaretPosition(0);
+        this.setCursor(null);        
     }
 
     @Override

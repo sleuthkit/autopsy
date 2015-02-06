@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.events.type;
 import java.util.Collections;
 import java.util.List;
 import javafx.scene.image.Image;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
@@ -28,10 +29,10 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
  */
 public enum FileSystemTypes implements EventType {
 
-    FILE_MODIFIED("File Modified", "blue-document-attribute-m.png"),
-    FILE_ACCESSED("File Accessed", "blue-document-attribute-a.png"),
-    FILE_CREATED("File Created", "blue-document-attribute-b.png"),
-    FILE_CHANGED("File Changed", "blue-document-attribute-c.png");
+    FILE_MODIFIED(NbBundle.getMessage(FileSystemTypes.class, "FileSystemTypes.fileModified.name"), "blue-document-attribute-m.png"), // NON-NLS
+    FILE_ACCESSED(NbBundle.getMessage(FileSystemTypes.class, "FileSystemTypes.fileAccessed.name"), "blue-document-attribute-a.png"), // NON-NLS
+    FILE_CREATED(NbBundle.getMessage(FileSystemTypes.class, "FileSystemTypes.fileCreated.name"), "blue-document-attribute-b.png"), // NON-NLS
+    FILE_CHANGED(NbBundle.getMessage(FileSystemTypes.class, "FileSystemTypes.fileChanged.name"), "blue-document-attribute-c.png"); // NON-NLS
 
     private final String iconBase;
 
@@ -72,7 +73,7 @@ public enum FileSystemTypes implements EventType {
     private FileSystemTypes(String displayName, String iconBase) {
         this.displayName = displayName;
         this.iconBase = iconBase;
-        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true);
+        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true); // NON-NLS
     }
 
     @Override

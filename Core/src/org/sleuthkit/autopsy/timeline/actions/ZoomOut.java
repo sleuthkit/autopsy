@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.actions;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 
@@ -34,7 +35,7 @@ public class ZoomOut extends Action {
     private final FilteredEventsModel eventsModel;
 
     public ZoomOut(final TimeLineController controller) {
-        super("apply default filters");
+        super(NbBundle.getMessage(ZoomOut.class, "ZoomOut.action.name.text"));
         this.controller = controller;
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {

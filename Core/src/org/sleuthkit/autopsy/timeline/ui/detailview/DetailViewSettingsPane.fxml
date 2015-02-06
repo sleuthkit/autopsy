@@ -7,46 +7,46 @@
 
 <fx:root alignment="CENTER_LEFT" spacing="5.0" type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
   <children>
-      <MenuButton mnemonicParsing="false" text="Advanced Layout Options">
+      <MenuButton fx:id="advancedLayoutOptionsButtonLabel" mnemonicParsing="false">
         <items>
-            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Band by Type">
+            <CustomMenuItem fx:id="bandByTypeBoxMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-        <CheckBox fx:id="bandByTypeBox" mnemonicParsing="false" text="Band by Type">
+        <CheckBox fx:id="bandByTypeBox" mnemonicParsing="false">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding></CheckBox>
                </content>
             </CustomMenuItem>
-            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="One Event Per Row">
+            <CustomMenuItem fx:id="oneEventPerRowBoxMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-        <CheckBox fx:id="oneEventPerRowBox" mnemonicParsing="false" text="One Event Per Row">
+        <CheckBox fx:id="oneEventPerRowBox" mnemonicParsing="false">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding></CheckBox>
                </content>
             </CustomMenuItem>
             <SeparatorMenuItem mnemonicParsing="false" />
-            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Truncate Descriptions ">
+            <CustomMenuItem fx:id="truncateAllBoxMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-              <CheckBox fx:id="truncateAllBox" mnemonicParsing="false" text="Truncate Descriptions ">
+              <CheckBox fx:id="truncateAllBox" mnemonicParsing="false">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding></CheckBox>
                </content>
             </CustomMenuItem>
-            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="max description width (px)">
+            <CustomMenuItem fx:id="truncateSliderLabelMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-                  <Label fx:id="truncateSliderLabel" contentDisplay="BOTTOM" text="max description width (px):">
+                  <Label fx:id="truncateSliderLabel" contentDisplay="BOTTOM">
                      <graphic>
                         <Slider id="truncateAllSlider" fx:id="truncateWidthSlider" blockIncrement="50.0" disable="false" majorTickUnit="150.0" max="500.0" min="50.0" minorTickCount="0" prefHeight="33.0" prefWidth="150.0" showTickLabels="true" showTickMarks="false" value="200.0" />
                      </graphic>
                   </Label>
                </content>
             </CustomMenuItem>
-            <SeparatorMenuItem mnemonicParsing="false" text="Description Visibility" />
-          <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Show Full Description">
+            <SeparatorMenuItem fx:id="descVisibilitySeparatorMenuItem" mnemonicParsing="false" />
+          <CustomMenuItem fx:id="showRadioMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-                  <RadioButton fx:id="showRadio" mnemonicParsing="false" selected="true" text="Show Full Description">
+                  <RadioButton fx:id="showRadio" mnemonicParsing="false" selected="true">
 <toggleGroup>
 <ToggleGroup fx:id="descrVisibility" />
 </toggleGroup>
@@ -56,17 +56,17 @@
                   </RadioButton>
                </content>
             </CustomMenuItem>
-            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Show Counts Only">
+            <CustomMenuItem fx:id="countsRadioMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-                  <RadioButton fx:id="countsRadio" mnemonicParsing="false" text="Show Counts Only" toggleGroup="$descrVisibility">
+                  <RadioButton fx:id="countsRadio" mnemonicParsing="false" toggleGroup="$descrVisibility">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding></RadioButton>
                </content>
             </CustomMenuItem>
-            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Hide Description">
+            <CustomMenuItem fx:id="hiddenRadioMenuItem" hideOnClick="false" mnemonicParsing="false">
                <content>
-                  <RadioButton fx:id="hiddenRadio" mnemonicParsing="false" text="Hide Description" toggleGroup="$descrVisibility">
+                  <RadioButton fx:id="hiddenRadio" mnemonicParsing="false" toggleGroup="$descrVisibility">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding></RadioButton>

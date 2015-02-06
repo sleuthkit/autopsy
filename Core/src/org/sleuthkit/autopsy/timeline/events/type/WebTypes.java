@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -33,8 +34,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public enum WebTypes implements EventType, ArtifactEventType {
 
-    WEB_DOWNLOADS("Web Downloads",
-                  "downloads.png",
+    WEB_DOWNLOADS(NbBundle.getMessage(WebTypes.class, "WebTypes.webDownloads.name"),
+                  "downloads.png", // NON-NLS
                   BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD,
                   BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                   new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
@@ -52,40 +53,40 @@ public enum WebTypes implements EventType, ArtifactEventType {
                     String fileName = StringUtils.substringAfterLast(path, "/");
                     String url = getFullExtractor().apply(artf, attrMap);
 
-                    //TODO: review non default descritpion construction 
-                    String shortDescription = fileName + " from " + domain;
-                    String medDescription = fileName + " from " + url;
-                    String fullDescription = path + " from " + url;
+                    //TODO: review non default description construction
+                    String shortDescription = fileName + " from " + domain; // NON-NLS
+                    String medDescription = fileName + " from " + url; // NON-NLS
+                    String fullDescription = path + " from " + url; // NON-NLS
                     return new AttributeEventDescription(time, shortDescription, medDescription, fullDescription);
                 }
             },
-    //TODO: review description seperators
-    WEB_COOKIE("Web Cookies",
-               "cookies.png",
+    //TODO: review description separators
+    WEB_COOKIE(NbBundle.getMessage(WebTypes.class, "WebTypes.webCookies.name"),
+               "cookies.png", // NON-NLS
                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE,
                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
                new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
                new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
                new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE)),
-    //TODO: review description seperators
-    WEB_BOOKMARK("Web Bookmarks",
-                 "bookmarks.png",
+    //TODO: review description separators
+    WEB_BOOKMARK(NbBundle.getMessage(WebTypes.class, "WebTypes.webBookmarks.name"),
+                 "bookmarks.png", // NON-NLS
                  BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK,
                  BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                  new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
                  new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL),
                  new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE)),
-    //TODO: review description seperators
-    WEB_HISTORY("Web History",
-                "history.png",
+    //TODO: review description separators
+    WEB_HISTORY(NbBundle.getMessage(WebTypes.class, "WebTypes.webHistory.name"),
+                "history.png", // NON-NLS
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY,
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                 new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
                 new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL),
                 new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE)),
-    //TODO: review description seperators
-    WEB_SEARCH("Web Searches",
-               "searchquery.png",
+    //TODO: review description separators
+    WEB_SEARCH(NbBundle.getMessage(WebTypes.class, "WebTypes.webSearch.name"),
+               "searchquery.png", // NON-NLS
                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY,
                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT),
@@ -160,7 +161,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
         this.shortExtractor = shortExtractor;
         this.medExtractor = medExtractor;
         this.longExtractor = longExtractor;
-        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true);
+        this.image = new Image("org/sleuthkit/autopsy/timeline/images/" + iconBase, true); // NON-NLS
     }
 
     @Override

@@ -38,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
@@ -126,13 +127,13 @@ public class EventsRepository {
 
     /** @return min time (in seconds from unix epoch) */
     public Long getMaxTime() {
-        return maxCache.getUnchecked("max");
+        return maxCache.getUnchecked("max"); // NON-NLS
 //        return eventDB.getMaxTime();
     }
 
     /** @return max tie (in seconds from unix epoch) */
     public Long getMinTime() {
-        return minCache.getUnchecked("min");
+        return minCache.getUnchecked("min"); // NON-NLS
 //        return eventDB.getMinTime();
     }
 
@@ -218,7 +219,8 @@ public class EventsRepository {
 
         @Override
         protected Void doInBackground() throws Exception {
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, "(re)initializing events database", "")));
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
+                                                                                               "EventsRepository.progressWindow.msg.reinit_db"), "")));
             //reset database 
             //TODO: can we do more incremental updates? -jm
             eventDB.dropTable();
@@ -229,7 +231,8 @@ public class EventsRepository {
             List<Long> files = skCase.findAllFileIdsWhere(FILES_AND_DIRS_WHERE_CLAUSE);
 
             final int numFiles = files.size();
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, "populating mac events for files: ", "")));
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, NbBundle.getMessage(this.getClass(),
+                                                                                                     "EventsRepository.progressWindow.msg.populateMacEventsFiles"), "")));
 
             //insert file events into db
             int i = 1;
@@ -263,9 +266,11 @@ public class EventsRepository {
                             eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
                         }
 
-                        process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles, "populating mac events for files: ", f.getName())));
+                        process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
+                                                                                NbBundle.getMessage(this.getClass(),
+                                                                                                    "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
                     } catch (TskCoreException tskCoreException) {
-                        LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException);
+                        LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
                     }
                 }
                 i++;
@@ -283,7 +288,8 @@ public class EventsRepository {
                 }
             }
 
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, "commiting events db", "")));
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
+                                                                                               "EventsRepository.progressWindow.msg.commitingDb"), "")));
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -315,13 +321,15 @@ public class EventsRepository {
                 get();
 
             } catch (CancellationException ex) {
-                LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex);
+                LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.WARNING, "Exception while populating database.", ex);
-                JOptionPane.showMessageDialog(null, "There was a problem populating the timeline.  Not all events may be present or accurate. See the log for details.");
+                LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
+                JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                                                                        "EventsRepository.msgdlg.problem.text"));
             } catch (Exception ex) {
-                LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex);
-                JOptionPane.showMessageDialog(null, "There was a problem populating the timeline.  Not all events may be present or accurate. See the log for details.");
+                LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
+                JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                                                                        "EventsRepository.msgdlg.problem.text"));
             }
             r.run();  //execute post db population operation
         }
@@ -339,7 +347,10 @@ public class EventsRepository {
                 final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
                 final int numArtifacts = blackboardArtifacts.size();
 
-                process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts, "populating " + type.toString() + " events", "")));
+                process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
+                                                                        NbBundle.getMessage(this.getClass(),
+                                                                                            "EventsRepository.progressWindow.populatingXevents",
+                                                                                            type.toString()), "")));
 
                 int i = 0;
                 for (final BlackboardArtifact bbart : blackboardArtifacts) {
@@ -351,10 +362,13 @@ public class EventsRepository {
                     }
 
                     i++;
-                    process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts, "populating " + type.toString() + " events", "")));
+                    process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
+                                                                            NbBundle.getMessage(this.getClass(),
+                                                                                                "EventsRepository.progressWindow.populatingXevents",
+                                                                                                type.toString()), "")));
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex);
+                LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
             }
         }
     }

@@ -25,6 +25,7 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -66,14 +67,15 @@ public class OpenTimelineAction extends CallableSystemAction {
         final Case currentCase = Case.getCurrentCase();
 
         if (currentCase.hasData() == false) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error creating timeline, there are no data sources.");
-            LOGGER.log(Level.INFO, "Error creating timeline, there are no data sources.");
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                          NbBundle.getMessage(this.getClass(), "OpenTimeLineAction.msgdlg.text"));
+            LOGGER.log(Level.INFO, "Error creating timeline, there are no data sources.");// NON-NLS
             return;
         }
         synchronized (OpenTimelineAction.class) {
             if (timeLineController == null) {
                 timeLineController = new TimeLineController();
-                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");
+                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");// NON-NLS
             }
         }
         timeLineController.openTimeLine();
@@ -81,7 +83,7 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return "Timeline";
+        return NbBundle.getMessage(TimeLineTopComponent.class, "OpenTimelineAction.title");
     }
 
     @Override

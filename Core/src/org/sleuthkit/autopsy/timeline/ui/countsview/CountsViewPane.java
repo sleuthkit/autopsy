@@ -38,12 +38,7 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.Lighting;
@@ -124,14 +119,16 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
 
     private ContextMenu getContextMenu() {
 
-        ContextMenu chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new ActionGroup("Zoom History", new Back(controller), new Forward(controller))));
+        ContextMenu chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new ActionGroup(
+                NbBundle.getMessage(this.getClass(), "Timeline.ui.countsview.contextMenu.ActionGroup.zoomHistory.title"),
+                new Back(controller), new Forward(controller))));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
     }
 
     @Override
     protected Task<Boolean> getUpdateTask() {
-        return new LoggedTask<Boolean>("Updating Counts Graph", true) {
+        return new LoggedTask<Boolean>(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.name"), true) {
 
             @Override
             protected Boolean call() throws Exception {
@@ -139,7 +136,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                     return null;
                 }
                 updateProgress(-1, 1);
-                updateMessage("preparing update");
+                updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.prepUpdate"));
                 Platform.runLater(() -> {
                     setCursor(Cursor.WAIT);
                 });
@@ -156,7 +153,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
 
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage("resetting ui");
+                    updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.resetUI"));
                     eventTypeMap.clear();
                     dataSets.clear();
                     dateAxis.getCategories().clear();
@@ -207,15 +204,18 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                             xyData.nodeProperty().addListener((Observable o) -> {
                                 final Node node = xyData.getNode();
                                 if (node != null) {
-                                    node.setStyle("-fx-border-width: 2; -fx-border-color: " + ColorUtilities.getRGBCode(et.getSuperType().getColor()) + "; -fx-bar-fill: " + ColorUtilities.getRGBCode(et.getColor()));
+                                    node.setStyle("-fx-border-width: 2; -fx-border-color: " + ColorUtilities.getRGBCode(et.getSuperType().getColor()) + "; -fx-bar-fill: " + ColorUtilities.getRGBCode(et.getColor())); // NON-NLS
                                     node.setCursor(Cursor.HAND);
 
                                     node.setOnMouseEntered((MouseEvent event) -> {
                                         //defer tooltip creation till needed, this had a surprisingly large impact on speed of loading the chart
-                                        final Tooltip tooltip = new Tooltip(count + " " + et.getDisplayName() + " events\n"
-                                                + "between " + dateString + "\n"
-                                                + "and     "
-                                                + interval.getEnd().toString(rangeInfo.getTickFormatter()));
+                                        final Tooltip tooltip = new Tooltip(
+                                                NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
+                                                                    count,
+                                                                    et.getDisplayName(),
+                                                                    dateString,
+                                                                    interval.getEnd().toString(
+                                                                            rangeInfo.getTickFormatter())));
                                         tooltip.setGraphic(new ImageView(et.getFXImage()));
                                         Tooltip.install(node, tooltip);
                                         node.setEffect(new DropShadow(10, et.getColor()));
@@ -237,7 +237,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                             final double fmax = max;
 
                             Platform.runLater(() -> {
-                                updateMessage("updating counts");
+                                updateMessage(
+                                        NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.updatingCounts"));
                                 getSeries(et).getData().add(xyData);
                                 if (scale.get().equals(ScaleType.LINEAR)) {
                                     countAxis.setTickUnit(Math.pow(10, Math.max(0, Math.floor(Math.log10(fmax)) - 1)));
@@ -252,7 +253,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                             final double fmax = max;
 
                             Platform.runLater(() -> {
-                                updateMessage("updating counts");
+                                updateMessage(
+                                        NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.updatingCounts"));
                                 updateProgress(fp, rangeInfo.getPeriodsInRange());
                             });
                         }
@@ -260,7 +262,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                 }
 
                 Platform.runLater(() -> {
-                    updateMessage("wrapping up");
+                    updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.wrappingUp"));
                     updateProgress(1, 1);
                     layoutDateLabels();
                     setCursor(Cursor.NONE);
@@ -397,7 +399,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                             barContextMenu = new ContextMenu();
                             barContextMenu.setAutoHide(true);
                             barContextMenu.getItems().addAll(
-                                    new MenuItem("Select Time Range") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.selectTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(interval, RootEventType.getInstance());
@@ -413,7 +416,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                             });
                                         }
                                     },
-                                    new MenuItem("Select Event Type") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.selectEventType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(filteredEvents.getSpanningInterval(), type);
@@ -426,7 +430,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                             });
                                         }
                                     },
-                                    new MenuItem("Select Time and Type") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.selectTimeandType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(interval, type);
@@ -435,7 +440,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                         }
                                     },
                                     new SeparatorMenuItem(),
-                                    new MenuItem("Zoom into Time Range") {
+                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                                                     "Timeline.ui.countsview.menuItem.zoomIntoTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 if (interval.toDuration().isShorterThan(Seconds.ONE.toStandardDuration()) == false) {
@@ -500,9 +506,12 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         private ToggleGroup scaleGroup;
 
         @FXML
+        private Label scaleLabel;
+
+        @FXML
         void initialize() {
-            assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
-            assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'.";
+            assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
+            assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
             logRadio.setSelected(true);
             scaleGroup.selectedToggleProperty().addListener(observable -> {
                 if (scaleGroup.getSelectedToggle() == linearRadio) {
@@ -512,10 +521,14 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                     scale.set(ScaleType.LOGARITHMIC);
                 }
             });
+
+            logRadio.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.logRadio.text"));
+            linearRadio.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.linearRadio.text"));
+            scaleLabel.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.scaleLabel.text"));
         }
 
         public CountsViewSettingsPane() {
-            FXMLConstructor.construct(this, "CountsViewSettingsPane.fxml");
+            FXMLConstructor.construct(this, "CountsViewSettingsPane.fxml"); // NON-NLS
         }
     }
 

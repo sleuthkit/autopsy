@@ -26,16 +26,12 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -70,11 +66,14 @@ public class NavPanel extends BorderPane implements TimeLineView {
     private TreeView< NavTreeNode> eventsTree;
 
     @FXML
+    private Label eventsTreeLabel;
+
+    @FXML
     private ComboBox<Comparator<TreeItem<NavTreeNode>>> sortByBox;
 
     public NavPanel() {
 
-        FXMLConstructor.construct(this, "NavPanel.fxml");
+        FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS
     }
 
     public void setChart(DetailViewPane detailViewPane) {
@@ -121,7 +120,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     @FXML
     void initialize() {
-        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'.";
+        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'."; // NON-NLS
 
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
@@ -131,6 +130,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
         eventsTree.setShowRoot(false);
         eventsTree.setCellFactory((TreeView<NavTreeNode> p) -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        eventsTreeLabel.setText(NbBundle.getMessage(this.getClass(), "NavPanel.eventsTreeLabel.text"));
     }
 
     /** A tree cell to display {@link NavTreeNode}s. Shows the description, and
@@ -141,7 +142,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         protected void updateItem(NavTreeNode item, boolean empty) {
             super.updateItem(item, empty);
             if (item != null) {
-                final String text = item.getDescription() + " (" + item.getCount() + ")";
+                final String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
                 setText(text);
                 setTooltip(new Tooltip(text));
                 Rectangle rect = new Rectangle(24, 24);

@@ -24,6 +24,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import org.joda.time.DateTime;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
@@ -65,9 +66,8 @@ class GuideLine extends Line {
 
     private void setTooltip() {
         Tooltip.uninstall(this, tooltip);
-        tooltip = new Tooltip(formatSpan(getDateTime())
-                + "\nRight-click to remove."
-                + "\nRight-drag to reposition.");
+        tooltip = new Tooltip(
+                NbBundle.getMessage(this.getClass(), "Timeline.ui.detailview.tooltip.text", formatSpan(getDateTime())));
         Tooltip.install(this, tooltip);
     }
 

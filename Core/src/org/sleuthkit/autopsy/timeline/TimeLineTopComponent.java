@@ -37,7 +37,7 @@ import javafx.scene.layout.VBox;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
@@ -66,11 +66,6 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
-@Messages({
-    "CTL_TimeLineTopComponentAction=TimeLineTopComponent",
-    "CTL_TimeLineTopComponent=Timeline Window",
-    "HINT_TimeLineTopComponent=This is a Timeline window"
-})
 public final class TimeLineTopComponent extends TopComponent implements ExplorerManager.Provider, TimeLineUI {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineTopComponent.class.getName());
@@ -86,9 +81,11 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     ////jfx componenets that make up the interface
     private final FilterSetPanel filtersPanel = new FilterSetPanel();
 
-    private final Tab eventsTab = new Tab("Events");
+    private final Tab eventsTab = new Tab(
+            NbBundle.getMessage(TimeLineTopComponent.class, "TimeLineTopComponent.eventsTab.name"));
 
-    private final Tab filterTab = new Tab("Filters");
+    private final Tab filterTab = new Tab(
+            NbBundle.getMessage(TimeLineTopComponent.class, "TimeLineTopComponent.filterTab.name"));
 
     private final VBox leftVBox = new VBox(5);
 
@@ -111,10 +108,11 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
 
-        setName(Bundle.CTL_TimeLineTopComponent());
-        setToolTipText(Bundle.HINT_TimeLineTopComponent());
+        setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
+        setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
         setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
 
+        timeZonePanel.setText(NbBundle.getMessage(this.getClass(), "TimeLineTopComponent.timeZonePanel.text"));
         customizeComponents();
     }
 
@@ -136,11 +134,11 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             filterTab.setClosable(false);
             filterTab.setContent(filtersPanel);
-            filterTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/funnel.png"));
+            filterTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/funnel.png")); // NON-NLS
 
             eventsTab.setClosable(false);
             eventsTab.setContent(navPanel);
-            eventsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png"));
+            eventsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
 
             tabPane.getTabs().addAll(filterTab, eventsTab);
             VBox.setVgrow(tabPane, Priority.ALWAYS);

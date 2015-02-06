@@ -1,21 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf_8 -*-
 
- # Autopsy Forensic Browser
- #
- # Copyright 2013 Basis Technology Corp.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- #     http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
+# Autopsy Forensic Browser
+#
+# Copyright 2013 Basis Technology Corp.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from tskdbdiff import TskDbDiff, TskDbDiffException
 import codecs
@@ -85,6 +85,7 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 COMMON_LOG = "AutopsyErrors.txt"
 
 Day = 0
+
 
 def usage():
 	print ("-f PATH single file")
@@ -347,13 +348,13 @@ class TestRunner(object):
         os.chdir(zpdir)
         os.chdir("..")
         img_gold = "tmp"
-        img_archive = make_path(test_data.image_name+"-archive.zip")
-        comprssr = zipfile.ZipFile(img_archive, 'w',compression=zipfile.ZIP_DEFLATED)
+        img_archive = make_path(test_data.image_name + "-archive.zip")
+        comprssr = zipfile.ZipFile(img_archive, 'w', compression=zipfile.ZIP_DEFLATED)
         TestRunner.zipdir(img_gold, comprssr)
         comprssr.close()
         os.chdir(oldcwd)
         del_dir(test_config.img_gold)
-        okay = "Sucessfully rebuilt all gold standards."
+        okay = "Successfully rebuilt all gold standards."
         print_report(errors, "REBUILDING", okay)
 
     def zipdir(path, zip):
@@ -779,8 +780,7 @@ class TestResultsDiffer(object):
             # Compare html output
             gold_report_path = test_data.get_html_report_path(DBType.GOLD)
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-            passed = TestResultsDiffer._html_report_diff(gold_report_path,
-            output_report_path)
+            passed = TestResultsDiffer._html_report_diff(test_data)
             test_data.html_report_passed = passed
             
 
@@ -826,8 +826,15 @@ class TestResultsDiffer(object):
         else:
             return True
 
-    def _html_report_diff(gold_report_path, output_report_path):
-        """Compare the output and gold html reports.
+    def _html_report_diff(test_data):
+        """Compare the output and gold html reports. Diff util is used for this purpose.
+        Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
+        is executed.
+        Diff is recursively used to scan through the HTML report directories. Modify the <regex> to suit the needs.
+        Currently, the regex is set to match certain lines found on index.html and summary.html, and skip (read ignore)
+        them.
+        Diff returns 0 when there is no difference, 1 when there is difference, and 2 when there is trouble (trouble not
+        defined in the official documentation).
 
         Args:
             gold_report_path: a pathto_Dir, the gold HTML report directory
@@ -836,33 +843,24 @@ class TestResultsDiffer(object):
         Returns:
             true, if the reports match, false otherwise.
         """
+        gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+        output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
         try:
-            gold_html_files = get_files_by_ext(gold_report_path, ".html")
-            output_html_files = get_files_by_ext(output_report_path, ".html")
-
-            #ensure both reports have the same number of files and are in the same order
-            if(len(gold_html_files) != len(output_html_files)):
-                msg = "The reports did not have the same number or files."
-                msg += "One of the reports may have been corrupted."
-                Errors.print_error(msg)
-            else:
-                gold_html_files.sort()
-                output_html_files.sort()
-
-            total = {"Gold": 0, "New": 0}
-            for gold, output in zip(gold_html_files, output_html_files):
-                count = TestResultsDiffer._compare_report_files(gold, output)
-                total["Gold"] += count[0]
-                total["New"] += count[1]
-
-            okay = "The test report matches the gold report."
-            errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
-            print_report(errors, "REPORT COMPARISON", okay)
-
-            if total["Gold"] == total["New"]:
-                return True
-            else:
-                Errors.print_error("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
+            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+                                      'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
+                                      '\|Examiner:', gold_report_path, output_report_path]))
+            print_report("", "REPORT COMPARISON", "The test reports matched the gold reports")
+            return True
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 1:
+                Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
+                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file.write(str(e.output.decode("utf-8")))
+                return False
+            if e.returncode == 2:
+                Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
+                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
+                diff_file.write(str(e.output.decode("utf-8")))
                 return False
         except OSError as e:
             e.print_error()
@@ -872,41 +870,6 @@ class TestResultsDiffer(object):
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
             return False
-
-    def _compare_report_files(gold_path, output_path):
-        """Compares the two specified report html files.
-
-        Args:
-            a_path: a pathto_File, the first html report file
-            b_path: a pathto_File, the second html report file
-
-        Returns:
-            a tuple of (Nat, Nat), which represent the length of each
-            unordered list in the html report files, or (0, 0) if the
-            lenghts are the same.
-        """
-        gold_file = open(gold_path, encoding='utf-8')
-        output_file = open(output_path, encoding='utf-8')
-        goldHtml = gold_file.read()
-        outputHtml = output_file.read()
-        goldHtml = goldHtml[goldHtml.find("<ul>"):]
-        outputHtml = outputHtml[outputHtml.find("<ul>"):]
-
-        # Determine how many 50-byte sequences there are
-        # @@@ I really don't understand this test...
-        #    BC: My guess is that it is this vague to deal with time
-        #    stamps about when the report was generated, but this 
-        #    should really be doing an exact match and ignoring that
-        #    type of error (or stripping the date out of the report 
-        #    before diff).  Showing the user a diff would be useful.
-        gold_list = TestResultsDiffer._splitByLen(goldHtml, 50)
-        output_list = TestResultsDiffer._splitByLen(outputHtml, 50)
-        if not len(gold_list) == len(output_list):
-            ex = (len(gold_list), len(output_list))
-            print(output_path + " is different size " + str(ex))
-            return ex
-        else:
-            return (0, 0)
 
     def _run_time_diff(test_data, old_time_path):
         """ Compare run times for this run, and the run previous.
@@ -934,10 +897,6 @@ class TestResultsDiffer(object):
             diff = str(diff)[:str(diff).find('.') + 3]
             print("This run took " + diff + "% longer to run than the last run.") 
             return False
-
-    # Split a string into an array of string of the given size
-    def _splitByLen(input, size):
-        return [input[start:start+size] for start in range(0, len(input), size)]
 
 
 class Reports(object):
@@ -1235,6 +1194,7 @@ class Reports(object):
         return (len(search_log_set(type, "OutOfMemoryError", test_data)) +
                 len(search_log_set(type, "OutOfMemoryException", test_data)))
 
+
 class Logs(object):
 
     def generate_log_data(test_data):
@@ -1439,6 +1399,7 @@ def get_exceptions(test_data):
             log.close()
     return exceptions
 
+
 def get_warnings(test_data):
     """Get a list of the warnings listed in the common log.
 
@@ -1455,6 +1416,7 @@ def get_warnings(test_data):
             warnings.append(line)
     common_log.close()
     return warnings
+
 
 def copy_logs(test_data):
     """Copy the Autopsy generated logs to output directory.
@@ -1481,15 +1443,19 @@ def copy_logs(test_data):
         print_error(test_data,str(e) + "\n")
         logging.warning(traceback.format_exc())
 
+
 def setDay():
     global Day
     Day = int(strftime("%d", localtime()))
 
+
 def getLastDay():
     return Day
 
+
 def getDay():
     return int(strftime("%d", localtime()))
+
 
 def newDay():
     return getLastDay() != getDay()
@@ -1498,6 +1464,7 @@ def newDay():
 # Exception classes to manage "acceptable" thrown exceptions #
 #         versus unexpected and fatal exceptions            #
 #------------------------------------------------------------#
+
 
 class FileNotFoundException(Exception):
     """
@@ -1516,6 +1483,7 @@ class FileNotFoundException(Exception):
     def error(self):
         error = "Error: File could not be found at:\n" + self.file + "\n"
         return error
+
 
 class DirNotFoundException(Exception):
     """
@@ -1751,6 +1719,8 @@ class Args(object):
 ####
 # Helper Functions
 ####
+
+
 def search_logs(string, test_data):
     """Search through all the known log files for a given string.
 
@@ -1770,6 +1740,7 @@ def search_logs(string, test_data):
                 results.append(line)
         log.close()
     return results
+
 
 def search_log(log, string, test_data):
     """Search the given log for any instances of a given string.
@@ -1797,6 +1768,8 @@ def search_log(log, string, test_data):
 
 # Search through all the the logs of the given type
 # Types include autopsy, tika, and solr
+
+
 def search_log_set(type, string, test_data):
     """Search through all logs to the given type for the given string.
 
@@ -1819,6 +1792,7 @@ def search_log_set(type, string, test_data):
             log.close()
     return results
 
+
 def find_msg_in_log_set(string, test_data):
    """Count how many strings of a certain type are in a log set.
 
@@ -1836,7 +1810,8 @@ def find_msg_in_log_set(string, test_data):
       # there weren't any matching messages found
       pass
    return count
-            
+
+
 def find_msg_in_log(log, string, test_data):
    """Get the strings of a certain type that are in a log.
 
@@ -1853,6 +1828,7 @@ def find_msg_in_log(log, string, test_data):
       # there weren't any matching messages found
       pass
    return lines
+
 
 def clear_dir(dir):
     """Clears all files from a directory and remakes it.
@@ -1871,6 +1847,7 @@ def clear_dir(dir):
         print(str(e))
         return False;
 
+
 def del_dir(dir):
     """Delete the given directory.
 
@@ -1885,6 +1862,7 @@ def del_dir(dir):
         print_error(test_data,"Error: Cannot delete the given directory:")
         print_error(test_data,dir + "\n")
         return False;
+
 
 def get_file_in_dir(dir, ext):
     """Returns the first file in the given directory with the given extension.
@@ -1905,6 +1883,7 @@ def get_file_in_dir(dir, ext):
     except:
         raise DirNotFoundException(dir)
 
+
 def find_file_in_dir(dir, name, ext):
     """Find the file with the given name in the given directory.
 
@@ -1921,6 +1900,7 @@ def find_file_in_dir(dir, name, ext):
         raise FileNotFoundException(dir)
     except:
         raise DirNotFoundException(dir)
+
 
 def copyErrorFiles(attachments, test_config):
     """Move email attachments to the location specified in the config file.

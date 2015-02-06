@@ -25,6 +25,7 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineUI;
@@ -53,17 +54,20 @@ public class StatusBar extends ToolBar implements TimeLineUI {
     private Label messageLabel;
 
     public StatusBar() {
-        FXMLConstructor.construct(this, "StatusBar.fxml");
+        FXMLConstructor.construct(this, "StatusBar.fxml"); // NON-NLS
     }
 
     @FXML
     void initialize() {
-        assert refreshLabel != null : "fx:id=\"refreshLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert spacer != null : "fx:id=\"spacer\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert taskLabel != null : "fx:id=\"taskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert messageLabel != null : "fx:id=\"messageLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
+        assert refreshLabel != null : "fx:id=\"refreshLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert spacer != null : "fx:id=\"spacer\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert taskLabel != null : "fx:id=\"taskLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
+        assert messageLabel != null : "fx:id=\"messageLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         refreshLabel.setVisible(false);
+        refreshLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.refreshLabel.text"));
+        messageLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.messageLabel.text"));
+        taskLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.taskLabel.text"));
         taskLabel.setVisible(false);
         HBox.setHgrow(spacer, Priority.ALWAYS);
     }
