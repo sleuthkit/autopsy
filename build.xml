@@ -200,6 +200,9 @@
         <exec executable="doxygen" dir="${basedir}/docs/doxygen">
             <arg value="Doxyfile"/>
         </exec>
+        <exec executable="doxygen" dir="${basedir}/docs/doxygen-user">
+            <arg value="Doxyfile"/>
+        </exec>
     </target>
     
     <target name="check-release">
