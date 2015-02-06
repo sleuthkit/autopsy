@@ -14,14 +14,21 @@ Help Topics
 The following topics are available here:
 
 - \subpage installation_page
-- \subpage quick_start_page
-- \subpage case_mgmt_page
-- \subpage image_viewer_page
-- \subpage timeline_page
+- \subpage quick_start_guide "Quick Start Guide"
+- \subpage overview "Overview"
+- \subpage case_management "Case Management"
+- \subpage hash_database_management_window "Hash Database Management Window"
+- \subpage keyword_search "Keyword Search"
+- \subpage ingest "Ingest"
+- \subpage data_explorer "Data Explorers"
+- \subpage directory_tree "Directory Tree"
+- \subpage file_search "File Search"
+- \subpage result_viewers "Result Viewers"
+- \subpage content_viewers "Content Viewers"
+- \subpage image_viewer
+- \subpage timeline
 - \subpage stix_page
 
 If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
 
 */
-
-

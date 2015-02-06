@@ -1,0 +1,44 @@
+/*! \page directory_tree Directory Tree
+    
+\section about_data_explorer About Data Explorer (Directory Tree)
+The data explorer tree is a very important area of the interface. This is where you will start many of your analysis approaches and find saved results from automated procedures (ingest). The tree has three main areas:
+\li <b>Images:</b> \n Where you can find the directory tree hierarchy of the file systems in the images. Go here to navigate to a specific file or directory.
+\li <b>Views:</b> \n  Where you can view all of the files in the images, but organized by file type or dates instead of directories. Go here if you are looking for files of a given type or that were recently used.
+\li <b>Results:</b> \n  Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
+\li <b>Bookmarks:</b> \n  Where you can view all file and results that have been bookmarked for easy access.
+
+Below is an example of an Data Explorer Tree window:
+image html explorer-tree.PNG
+
+\section image_details_window Image Detail Window
+
+The Image Details window shows you basic information about a disk image. You can access it by right-clicking on an image in the tree and choosing "Image Details".
+
+\image html show-image-details.PNG
+
+An example is shown here:
+
+\image html image-detail-window.PNG
+
+\section volume_details_window Volume Detail Window
+
+The Volume Details window shows you information about a volume. It shows information such as the starting sector, length, and description. You can view the information by right clicking on a volume in the tree and choosing "Volume Details".
+
+\image html show-volume-details.PNG
+An example is shown here:
+
+\image html volume-detail-window.PNG
+
+\section extracting_unallocated_space Extracting Unallocated Space
+
+Unallocated space are chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
+\li Individual Blocks Underneath a volume, there is a folder named Unalloc. This folder contains all the individual unallocated blocks as the image is storing them. You can right click and extract them the same way you can extract any other type of file in the Directory Tree.
+\li Single Files There are two ways to extract unallocated space as a single file. Right clicking on a volume and selecting "Extract Unallocated Space as Single File" will concatenate all the unallocated files into a single, continuous file for the volume. The second way is to right click on an image, and select "Extract Unallocated Space to Single Files". This option will extract one single file for each volume in the image. Progress on extraction is sent to the progress bar in the bottom right. Progress is based on number of files concatenated. These files are stored in the Export folder under the case directory. Files are named according to ImageName-Unalloc-ImageObjectID-VolumeID.dat This naming scheme ensures that no duplicate file names will occur even if an there are two images with the same name in a case.
+
+Below is where to find the single file extraction option
+
+\image html extracting-unallocated-space.PNG
+
+
+
+*/

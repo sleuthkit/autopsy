@@ -1,4 +1,4 @@
-/*! \page case_mgmt_page Cases and Data Sources
+/*! \page case_management Cases and Data Sources
 
 \section case_mgmt_cases Cases
 
@@ -58,17 +58,17 @@ Regardless of the type of data source, there are some common steps in the proces
 
 1) You will be prompted to specify the data source to add (details are provided below)
 
-\image html case-addds.png
+\image html select-data-source-type.PNG
 
 2) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
 
 3) While it is examining the data source, you will be prompted with a list of ingest modules to enable. 
 
-\image html case-modules.png
+\image html select-ingest-modules.PNG
 
 4) After you configure the ingest modules, you may need to wait for Autopsy to finish its basic examination of the data source. 
 
-\image html case-progress.png
+\image html data-source-progress-bar.PNG
 
 5) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
 

@@ -1,0 +1,60 @@
+/*! \page ingest Ingest
+
+    
+<b>Image Ingest</b> \n
+Autopsy tries to automate as many things as possible for the user. There are many tasks that will always be performed in a digital investigation and they normally involve some type of image or file analysis and extraction of a certain type of information. The analysis can be a lengthy process, especially for large images and when a number of types of analysis needs to be performed.
+
+Ingest is a technique of automating these tasks. Autopsy allows to run these lengthy analysis tasks in the background, while the user can browse the application interface and review the ingest results as their appear. Ingest is similar to triage. Autopsy attempts to process files inside the ingested image in such order so that the more interesting files (user-related files) are processed files.
+
+The ingest process begins after the basic file system information has been added to the database. A series of ingest modules (described in a following section) run automatically behind the scenes and make their results available as soon as possible. Autopsy is designed so that these results are reported to the user in real-time, and even for very large images to be processed there can be initial results available minutes, sometimes seconds after the analysis has started.
+
+You can start image ingest in two ways. When you add an image with the Add Data Source wizard, you will be shown the list of ingest modules and you can choose which you want to run. You can also launch the Ingest Manager run ingest by right clicking on an image in the explorer tree and choosing "Restart Image Ingest".
+
+Once ingest is started, you can review the currently running ingest tasks in the task bar on the bottom-right corner of the main window. The ingest tasks can be canceled by the user if so desired.
+
+<b>Note: sometimes the cancellation process make take several seconds or more to complete cleanly, depending on what the ingest module was currently doing. </b>
+
+The ingest message inbox will provide notifications when the particular ingest modules start and finish running. There may also be error notifications, and result notifications sent by specific ingest modules.
+
+The results from the ingest modules can typically be found in the Results area of the explorer tree. However, some modules may choose to write results to a local file or to some other location and not make them available in the UI.
+
+<b>Ingest Modules</b> \n
+An ingest module is responsible for extracting data from and searching images. Different modules will do different things. Examples include:
+\li Calculate MD5 hash of each file
+\li Lookup MD5 hash in database
+\li Detect file type of each file
+\li Keyword search each file
+\li Extract web artifacts (downloads, history, installed programs, web search engine queries, etc.)
+\li Extract Email messages
+\li Extract connected device IDs.
+\li Extract EXIF meta-data from picture files
+
+<b>Configuring Ingest Modules</b> \n
+There are two places to configure ingest modules. When the Ingest Manager is launched, there may be a small set of options the module allows you to edit directly in the Ingest Manager. Additionally, the Ingest Manager may display an "Advanced" button, which will open up a larger configuration menu with more available settings. This advanced configuration menu can often be found in the "Tools" > "Options" menu, along with the advanced settings for numerous other ingest modules.
+
+Before launching ingest, you should go over the modules configuration by selecting every module in the list and review the current ingest module settings. Some modules need to be configured at least the first time Autopsy is used to have default configuration populated, otherwise they won't perform any analysis. Changing the modules configuration will potentially affect number of results found, it might also affect the total time required for ingest to run and how fast the results are reported in real-time.
+
+<b>Adding Ingest Modules</b> \n
+Ingest modules can be created by third-party-developers and can be added independently of Autopsy. This can be done through Autopsy's plugin manager. This is accessible through the "Tools" > "Plugins" menu. Currently, the best way to add an ingest module is by navigating to the module's NBM file after choosing "Add Plugin..." in the "Downloaded" tab of the plugin manager. Autopsy will require a restart after any modules are installed in order to properly load and display them.
+
+<!---------------------------->
+
+\section message_inbox Message Inbox
+\subsection ingest_message_inbox Ingest Message Inbox
+The ingest message inbox is used by Autopsy to provide real-time updates during ingest. To open the inbox, click on the yellow warning sign in the top/right corner of the Autopsy window. The sign can display a number of incoming unread (not yet clicked) messages during ingest in its upper-right corner.
+
+\image html inbox-button.PNG
+
+Ingest modules are able to post messages when notable events occur, such as a keyword or hash database hit. If a module posts many similar messages in a short time span, the inbox will group those messages so that unique updates are not lost among the noise.
+
+The grouped messages are colored with different shades to indicate their importance; if a message group contains a lower number of unique messages, it is potentially more important than another group with a large number of unique messages. The more unique important messages have a lighter background color.
+
+The ingest messages can be sorted by uniqueness/importance, or by chronological order in which they had appeared.
+
+A message can be clicked to view the message details. When a message is clicked, it is marked as "read". When updates are posted with regard to a specific result or file, the message is linked to that file and the buttons in the top/right corner of the message details view can be used to browse to that data.
+
+\image html inbox-main-screen.PNG
+
+\image html inbox-detail-screen.PNG
+
+*/
