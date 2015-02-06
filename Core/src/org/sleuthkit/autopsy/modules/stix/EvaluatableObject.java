@@ -67,6 +67,7 @@ abstract class EvaluatableObject {
     public void addWarning(String a_newWarning) {
         if ((warnings == null) || warnings.isEmpty()) {
             warnings = a_newWarning;
+            return;
         }
         warnings = warnings + ", " + a_newWarning;
     }

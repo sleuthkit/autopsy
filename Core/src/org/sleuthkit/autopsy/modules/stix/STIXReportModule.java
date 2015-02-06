@@ -55,6 +55,7 @@ import org.mitre.cybox.objects.WindowsNetworkShare;
 import org.mitre.cybox.objects.AccountObjectType;
 import org.mitre.cybox.objects.SystemObjectType;
 import org.mitre.cybox.objects.URLHistory;
+import org.mitre.cybox.objects.DomainName;
 import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -306,7 +307,7 @@ public class STIXReportModule implements GeneralReportModule {
         int count = 0;
 
         for (StixArtifactData s : result.getArtifacts()) {
-            
+
             // Figure out what name to use for this indicator. If it has a title, 
             // use that. Otherwise use the ID. If both are missing, use a
             // generic heading.
@@ -585,6 +586,8 @@ public class STIXReportModule implements GeneralReportModule {
             evalObj = new EvalSystemObj((SystemObjectType) obj.getProperties(), id, spacing);
         } else if (obj.getProperties() instanceof URLHistory) {
             evalObj = new EvalURLHistoryObj((URLHistory) obj.getProperties(), id, spacing);
+        } else if (obj.getProperties() instanceof DomainName) {
+            evalObj = new EvalDomainObj((DomainName) obj.getProperties(), id, spacing);
         } else if (obj.getProperties() instanceof WindowsRegistryKey) {
             evalObj = new EvalRegistryObj((WindowsRegistryKey) obj.getProperties(), id, spacing, registryFileData);
         } else {

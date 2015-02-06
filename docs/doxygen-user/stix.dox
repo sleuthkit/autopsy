@@ -21,9 +21,13 @@ Quick Start
 
 Supported CybOX Objects
 =======================
+
 - Address Object
     - Address_Value
 
+- Domain Name Object
+    - Value
+	
 - Email Message Object
     - To
     - CC
@@ -83,6 +87,8 @@ Supported CybOX Objects
 
 - Win User Account Object
     - SID
+	
+See http://cybox.mitre.org for more information on CybOX Objects.
 
 Limitations
 ===========
