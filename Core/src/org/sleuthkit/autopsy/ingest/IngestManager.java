@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -226,10 +227,10 @@ public class IngestManager {
         this.ingestErrorMessagePosts = new AtomicLong(0L);
         this.ingestMonitor = new IngestMonitor();
         this.ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
-        this.fireIngestEventsThreadPool = Executors.newSingleThreadExecutor();
+        this.fireIngestEventsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build());
         this.ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
-        this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor();
-        this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor();
+        this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build());
+        this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build());
         this.nextThreadId = new AtomicLong(0L);
         this.jobsById = new ConcurrentHashMap<>();
         this.ingestJobStarters = new ConcurrentHashMap<>();
@@ -241,7 +242,7 @@ public class IngestManager {
             numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
             UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
         }
-        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads);
+        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads, new ThreadFactoryBuilder().setNameFormat("IM-file-ingest-%d").build());
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
