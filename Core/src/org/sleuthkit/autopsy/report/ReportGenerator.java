@@ -894,15 +894,15 @@ import org.sleuthkit.datamodel.TskData;
         ResultSet rs = null;
         try {
             // Query for keywords, grouped by list
-            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path" + //NON-NLS
-                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
-                                           "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
-                                                 "AND (att2.artifact_id = art.artifact_id) " +  //NON-NLS
-                                                 "AND (att3.artifact_id = art.artifact_id) " +  //NON-NLS
+            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att.value_text AS keyword, att.value_text AS preview, att.value_text AS list, f.name AS name, f.parent_path AS parent_path" + //NON-NLS
+                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
+                                           "WHERE (att.artifact_id = art.artifact_id) " + //NON-NLS
+                                                 "AND (att.artifact_id = art.artifact_id) " +  //NON-NLS
+                                                 "AND (att.artifact_id = art.artifact_id) " +  //NON-NLS
                                                  "AND (f.obj_id = art.obj_id) " + //NON-NLS
-                                                 "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " + //NON-NLS
-                                                 "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
-                                                 "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
+                                                 "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " + //NON-NLS
+                                                 "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
+                                                 "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
                                                  "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
                                            "ORDER BY list, keyword, parent_path, name"); //NON-NLS
             String currentKeyword = "";
