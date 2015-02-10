@@ -904,7 +904,7 @@ import org.sleuthkit.datamodel.TskData;
                                                  "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
                                                  "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
                                                  "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
-                                           "ORDER BY list, keyword, parent_path name"); //NON-NLS
+                                           "ORDER BY list, keyword, parent_path, name"); //NON-NLS
             String currentKeyword = "";
             String currentList = "";
             while (rs.next()) {
