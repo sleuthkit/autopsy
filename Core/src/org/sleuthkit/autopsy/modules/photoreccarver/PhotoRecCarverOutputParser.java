@@ -111,10 +111,35 @@ class PhotoRecCarverOutputParser {
                 for (int rangeIndex = 0; rangeIndex < fileRanges.getLength(); ++rangeIndex) {
                     Long img_offset = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("img_offset")); //NON-NLS
                     Long len = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("len")); //NON-NLS
-                    tskRanges.add(new TskFileRange(af.convertToImgOffset(img_offset), len, rangeIndex));
+                    
+                    // Verify PhotoRec's output
+                    long imageByteStart = af.convertToImgOffset(0);
+                    long imageByteEnd = imageByteStart + af.getSize();
+
+                    long fileByteStart = af.convertToImgOffset(img_offset);
+                    long fileByteEnd = fileByteStart + len;
+                    
+                    if (fileByteStart < imageByteStart || fileByteStart >= imageByteEnd) {
+                        // This better never happen... Data for this file is corrupted. Skip it.
+                        continue;
+                    }
+                    
+                    if (fileByteEnd > imageByteEnd) {
+                        long overshoot = fileByteEnd - imageByteEnd;
+                        if (fileSize > overshoot) {
+                            fileSize = fileSize - overshoot;
+                        } else {
+                            // This better never happen... Data for this file is corrupted. Skip it.
+                            continue;
+                        }
+                    }                    
+
+                    tskRanges.add(new TskFileRange(fileByteStart, len, rangeIndex));
                 }
-                carvedFileContainer.add(
-                        new CarvedFileContainer(fileName, fileSize, id, tskRanges));
+                
+                if (!tskRanges.isEmpty()) {
+                    carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, tskRanges));
+                }
             }
             return fileManager.addCarvedFiles(carvedFileContainer);
         }
