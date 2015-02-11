@@ -58,6 +58,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         AVG(10),
         SLOW(5),
         SLOWEST(1),
+        NONE(Integer.MAX_VALUE),
         DEFAULT(5);
         private final int time;
 
