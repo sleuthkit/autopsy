@@ -108,7 +108,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         if (out != null) {
             try {
                 out.close();
-            } catch (IOException ex) {
+            } catch (IOException | NullPointerException ex) {
             }
         }
         out = null;
@@ -311,7 +311,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         try {
             FileUtil.createFolder(new File(this.path));
             FileUtil.createFolder(new File(this.thumbsPath));
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Unable to make HTML report folder."); //NON-NLS
         }
         // Write the basic files
@@ -330,7 +330,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         if (out != null) {
             try {
                 out.close();
-            } catch (IOException ex) {
+            } catch (IOException | NullPointerException ex) {
                 logger.log(Level.WARNING, "Could not close the output writer when ending report.", ex); //NON-NLS
             }
         }
@@ -349,10 +349,15 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         String title = dataTypeToFileName(name);
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + ".html"), "UTF-8")); //NON-NLS
+            if(out == null)
+                throw new NullPointerException();
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "File not found: {0}", ex); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.SEVERE, "Unrecognized encoding"); //NON-NLS
+        }
+        catch(NullPointerException ex){
+            logger.log(Level.SEVERE, "BufferedWriter could not create an output stream", ex);
         }
         
         try {
@@ -367,7 +372,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             out.write(page.toString());
             currentDataType = name;
             rowCount = 0;
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write page head: {0}", ex); //NON-NLS
         }
     }
@@ -381,14 +386,14 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         dataTypes.put(currentDataType, rowCount);
         try {
             out.write("</div>\n</body>\n</html>\n"); //NON-NLS
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
             if(out != null) {
                 try {
                     out.flush();
                     out.close();
-                } catch (IOException ex) {
+                } catch (IOException | NullPointerException ex) {
                     logger.log(Level.WARNING, "Could not close the output writer when ending data type.", ex); //NON-NLS
                 }
                 out = null;
@@ -408,7 +413,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         
         try {
             out.write(set.toString());
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write set: {0}", ex); //NON-NLS
         }
     }
@@ -420,7 +425,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public void endSet() {
         try {
             out.write("</div>\n"); //NON-NLS
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write end of set: {0}", ex); //NON-NLS
         }
     }
@@ -439,7 +444,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         index.append("</ul>\n"); //NON-NLS
         try {
             out.write(index.toString());
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to add set index: {0}", ex); //NON-NLS
         }
     }
@@ -452,7 +457,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public void addSetElement(String elementName) {
         try {
             out.write("<h4>" + elementName + "</h4>\n"); //NON-NLS
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write set element: {0}", ex); //NON-NLS
         }
     }
@@ -472,7 +477,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         
         try {
             out.write(ele.toString());
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write table start: {0}", ex); //NON-NLS
         }
     }
@@ -500,7 +505,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         
         try {
             out.write(htmlOutput.toString());
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write table start: {0}", ex); //NON-NLS
         }
     }
@@ -512,7 +517,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public void endTable() {
         try {
             out.write("</table>\n"); //NON-NLS
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write end of table: {0}", ex); //NON-NLS
         }
     }
@@ -833,7 +838,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     cssOut.flush();
                     cssOut.close();
                 }
-            } catch (IOException ex) {
+            } catch (IOException | NullPointerException ex) {
             }
         }
     }
@@ -874,7 +879,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     indexOut.flush();
                     indexOut.close();
                 }
-            } catch (IOException ex) {
+            } catch (IOException | NullPointerException ex) {
             }
         }
     }
@@ -915,7 +920,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 try {
                     navOut.flush();
                     navOut.close();
-                } catch (IOException ex) {
+                } catch (IOException | NullPointerException ex) {
                     logger.log(Level.WARNING, "Could not close navigation out writer."); //NON-NLS
                 }
             }
@@ -953,7 +958,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             output.close();
             
            
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex); //NON-NLS
         } finally {
             if (output != null) {
@@ -965,7 +970,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             } if (in != null) {
                 try {
                     in.close();
-                } catch (IOException ex) {
+                } catch (IOException | NullPointerException ex) {
                 }
             }
         }
@@ -1095,7 +1100,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             logger.log(Level.SEVERE, "Could not find summary.html file to write to."); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.SEVERE, "Did not recognize encoding when writing summary.hmtl."); //NON-NLS
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Error creating Writer for summary.html."); //NON-NLS
         } finally {
             try {
@@ -1103,7 +1108,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     out.flush();
                     out.close();
                 }
-            } catch (IOException ex) {
+            } catch (IOException | NullPointerException ex) {
             }
         }
     }
@@ -1118,7 +1123,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             FileObject from = FileUtil.toFileObject(thumbFile);
             FileObject dest = FileUtil.toFileObject(to);
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
         }
         
