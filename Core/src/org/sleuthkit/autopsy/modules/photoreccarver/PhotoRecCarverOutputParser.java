@@ -94,10 +94,6 @@ class PhotoRecCarverOutputParser {
             // create and initialize the list to put into the database
             List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
             
-            List<TskFileRange> ranges = af.getRanges();
-            TskFileRange lastRange = ranges.get(ranges.size() - 1);
-            long imageByteEnd = lastRange.getByteStart() + lastRange.getByteLen();           
-
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
                 entry = (Element) fileObjects.item(fileIndex);
                 fileNames = entry.getElementsByTagName("filename"); //NON-NLS
@@ -124,10 +120,11 @@ class PhotoRecCarverOutputParser {
                         logger.log(Level.INFO, "Error while parsing PhotoRec output for file {0}", fileName); //NON-NLS
                         continue;
                     }
-                    
-                    long fileByteEnd = fileByteStart + len;                    
-                    if (fileByteEnd > imageByteEnd) {
-                        long overshoot = fileByteEnd - imageByteEnd;
+
+                    // check that carved file is within unalloc block
+                    long fileByteEnd = img_offset + len;     
+                    if (fileByteEnd > af.getSize()) {
+                        long overshoot = fileByteEnd - af.getSize();
                         if (fileSize > overshoot) {
                             fileSize = fileSize - overshoot;
                         } else {
