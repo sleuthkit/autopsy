@@ -93,6 +93,10 @@ class PhotoRecCarverOutputParser {
 
             // create and initialize the list to put into the database
             List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
+            
+            List<TskFileRange> ranges = af.getRanges();
+            TskFileRange lastRange = ranges.get(ranges.size() - 1);
+            long imageByteEnd = lastRange.getByteStart() + lastRange.getByteLen();           
 
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
                 entry = (Element) fileObjects.item(fileIndex);
@@ -109,21 +113,19 @@ class PhotoRecCarverOutputParser {
                 
                 List<TskFileRange> tskRanges = new ArrayList<>();
                 for (int rangeIndex = 0; rangeIndex < fileRanges.getLength(); ++rangeIndex) {
+                    
                     Long img_offset = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("img_offset")); //NON-NLS
                     Long len = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("len")); //NON-NLS
                     
                     // Verify PhotoRec's output
-                    long imageByteStart = af.convertToImgOffset(0);
-                    long imageByteEnd = imageByteStart + af.getSize();
-
                     long fileByteStart = af.convertToImgOffset(img_offset);
-                    long fileByteEnd = fileByteStart + len;
-                    
-                    if (fileByteStart < imageByteStart || fileByteStart >= imageByteEnd) {
+                    if (fileByteStart == -1) {
                         // This better never happen... Data for this file is corrupted. Skip it.
+                        logger.log(Level.INFO, "Error while parsing PhotoRec output for file {0}", fileName); //NON-NLS
                         continue;
                     }
                     
+                    long fileByteEnd = fileByteStart + len;                    
                     if (fileByteEnd > imageByteEnd) {
                         long overshoot = fileByteEnd - imageByteEnd;
                         if (fileSize > overshoot) {
