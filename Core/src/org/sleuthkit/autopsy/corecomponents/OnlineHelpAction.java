@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Desktop;
+import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URISyntaxException;
+import java.net.URI;
 import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -33,6 +36,9 @@ import org.openide.util.NbBundle.Messages;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+/**
+ * Implements a hyperlink to the Online Documentation.
+ */
 @ActionID(
         category = "Help",
         id = "org.sleuthkit.autopsy.corecomponents.OnlineHelpAction"
@@ -47,26 +53,47 @@ import java.util.logging.Logger;
 @Messages("CTL_OnlineHelpAction=Online Documentation")
 public final class OnlineHelpAction implements ActionListener {
 
-    private URL url;
+    private URI uri;
     private static final Logger Logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
         // TODO implement action body                                   
     try {   
-        url = new URL(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP")); // NOI18N
-        showUrl();
-    } catch (MalformedURLException ex) {
-        Logger.log(Level.SEVERE, "Unable to load Online DOcumentation", ex);
+        uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP")); // NOI18N
+        viewOnlineHelp();
+    } catch (URISyntaxException ex) {
+        Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex);
     }
-    url = null;
+    uri = null;
     }
     
-        private void showUrl() {
-        if (url != null) {
-            org.openide.awt.StatusDisplayer.getDefault().setStatusText(NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
-            HtmlBrowser.URLDisplayer.getDefault().showURL(url);
-        }
+    /**
+     * Displays the Online Documentation in the system browser. 
+     * If not available, displays it in the built-in OpenIDE HTML Browser.
+     */
+    private void viewOnlineHelp() {
+        if (uri != null) {
+            // Display URL in the SYstem browser
+            if(Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                try {
+                    desktop.browse(uri);
+                } catch (IOException ex) {
+                    // TODO Auto-generated catch block
+                    Logger.log(Level.SEVERE, "Unable to launch the system browser", ex);
+                }
+            }
+            else {
+                org.openide.awt.StatusDisplayer.getDefault().setStatusText(NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
+                try {
+                    HtmlBrowser.URLDisplayer.getDefault().showURL(uri.toURL());
+                }
+                catch(MalformedURLException ex){
+                    Logger.log(Level.SEVERE, "Unable to launch the built-in browser", ex);
+                } 
+            }
+         }
     }
     
 }
