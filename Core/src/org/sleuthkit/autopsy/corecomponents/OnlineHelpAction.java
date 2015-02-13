@@ -36,6 +36,7 @@ import org.openide.util.NbBundle.Messages;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Implements a hyperlink to the Online Documentation.
  */
@@ -59,23 +60,23 @@ public final class OnlineHelpAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         // TODO implement action body                                   
-    try {   
-        uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP")); // NOI18N
-        viewOnlineHelp();
-    } catch (URISyntaxException ex) {
-        Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex);
+        try {
+            uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP")); // NOI18N
+            viewOnlineHelp();
+        } catch (URISyntaxException ex) {
+            Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex);
+        }
+        uri = null;
     }
-    uri = null;
-    }
-    
+
     /**
-     * Displays the Online Documentation in the system browser. 
-     * If not available, displays it in the built-in OpenIDE HTML Browser.
+     * Displays the Online Documentation in the system browser. If not
+     * available, displays it in the built-in OpenIDE HTML Browser.
      */
     private void viewOnlineHelp() {
         if (uri != null) {
             // Display URL in the SYstem browser
-            if(Desktop.isDesktopSupported()){
+            if (Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
                 try {
                     desktop.browse(uri);
@@ -83,17 +84,15 @@ public final class OnlineHelpAction implements ActionListener {
                     // TODO Auto-generated catch block
                     Logger.log(Level.SEVERE, "Unable to launch the system browser", ex);
                 }
-            }
-            else {
+            } else {
                 org.openide.awt.StatusDisplayer.getDefault().setStatusText(NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
                 try {
                     HtmlBrowser.URLDisplayer.getDefault().showURL(uri.toURL());
-                }
-                catch(MalformedURLException ex){
+                } catch (MalformedURLException ex) {
                     Logger.log(Level.SEVERE, "Unable to launch the built-in browser", ex);
-                } 
+                }
             }
-         }
+        }
     }
-    
+
 }
