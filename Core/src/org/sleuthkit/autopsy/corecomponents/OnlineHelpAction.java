@@ -60,13 +60,7 @@ public final class OnlineHelpAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         // TODO implement action body                                   
-        try {
-            uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP")); // NOI18N
-            viewOnlineHelp();
-        } catch (URISyntaxException ex) {
-            Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex);
-        }
-        uri = null;
+        viewOnlineHelp();
     }
 
     /**
@@ -74,6 +68,11 @@ public final class OnlineHelpAction implements ActionListener {
      * available, displays it in the built-in OpenIDE HTML Browser.
      */
     private void viewOnlineHelp() {
+        try {
+            uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP"));
+        } catch (URISyntaxException ex) {
+            Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex);
+        }
         if (uri != null) {
             // Display URL in the SYstem browser
             if (Desktop.isDesktopSupported()) {
