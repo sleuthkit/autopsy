@@ -93,7 +93,7 @@ class PhotoRecCarverOutputParser {
 
             // create and initialize the list to put into the database
             List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
-
+            
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
                 entry = (Element) fileObjects.item(fileIndex);
                 fileNames = entry.getElementsByTagName("filename"); //NON-NLS
@@ -109,12 +109,36 @@ class PhotoRecCarverOutputParser {
                 
                 List<TskFileRange> tskRanges = new ArrayList<>();
                 for (int rangeIndex = 0; rangeIndex < fileRanges.getLength(); ++rangeIndex) {
+                    
                     Long img_offset = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("img_offset")); //NON-NLS
                     Long len = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("len")); //NON-NLS
-                    tskRanges.add(new TskFileRange(af.convertToImgOffset(img_offset), len, rangeIndex));
+                    
+                    // Verify PhotoRec's output
+                    long fileByteStart = af.convertToImgOffset(img_offset);
+                    if (fileByteStart == -1) {
+                        // This better never happen... Data for this file is corrupted. Skip it.
+                        logger.log(Level.INFO, "Error while parsing PhotoRec output for file {0}", fileName); //NON-NLS
+                        continue;
+                    }
+
+                    // check that carved file is within unalloc block
+                    long fileByteEnd = img_offset + len;     
+                    if (fileByteEnd > af.getSize()) {
+                        long overshoot = fileByteEnd - af.getSize();
+                        if (fileSize > overshoot) {
+                            fileSize = fileSize - overshoot;
+                        } else {
+                            // This better never happen... Data for this file is corrupted. Skip it.
+                            continue;
+                        }
+                    }                    
+
+                    tskRanges.add(new TskFileRange(fileByteStart, len, rangeIndex));
                 }
-                carvedFileContainer.add(
-                        new CarvedFileContainer(fileName, fileSize, id, tskRanges));
+                
+                if (!tskRanges.isEmpty()) {
+                    carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, tskRanges));
+                }
             }
             return fileManager.addCarvedFiles(carvedFileContainer);
         }
