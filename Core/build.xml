@@ -8,9 +8,7 @@
     
     
     
-    <target name="javahelp">
-         
-    </target>
+
      
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
