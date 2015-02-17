@@ -4,8 +4,7 @@
 Overview
 -----
 
-This is the User's Guide for the open source Autopsy platform (http://www.sleuthkit.org/autopsy/). 
-It is a work in progress. We are moving documentation from the JavaHelp system to this document. 
+This is the User's Guide for the open source Autopsy platform (http://www.sleuthkit.org/autopsy/).  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it.  This is the user guide to help you use the tool. If you are looking for the developer's guide to help you develop modules, it can be found at http://www.sleuthkit.org/autopsy/docs/api-docs/3.1/.
 
 Note that Autopsy 3 is a complete rewrite from Autopsy 2 and none of this document is relevant to Autopsy 2.
 
@@ -15,19 +14,23 @@ The following topics are available here:
 
 - \subpage installation_page
 - \subpage quick_start_guide "Quick Start Guide"
-- \subpage overview "Overview"
-- \subpage case_management "Case Management"
-- \subpage hash_database_management_window "Hash Database Management Window"
-- \subpage keyword_search "Keyword Search"
-- \subpage ingest "Ingest"
-- \subpage data_explorer "Data Explorers"
-- \subpage directory_tree "Directory Tree"
-- \subpage file_search "File Search"
-- \subpage result_viewers "Result Viewers"
-- \subpage content_viewers "Content Viewers"
-- \subpage image_viewer
-- \subpage timeline
-- \subpage stix_page
+- \subpage workflow_page 
+- Cases and Adding Data Sources
+ - \subpage cases_page
+ - \subpage ds_page
+- Automated Analysis
+ - \subpage ingest "Ingest"
+  - \subpage hash_database_management_window "Hash Database Management Window"
+  - \subpage keyword_search "Keyword Search"
+- Manual Analysis
+ - \subpage directory_tree "Directory Tree"
+ - \subpage file_search "File Search"
+ - \subpage result_viewers "Result Viewers"
+ - \subpage content_viewers "Content Viewers"
+ - \subpage image_viewer
+ - \subpage timeline
+ - \subpage stix_page
+- Reporting
 
 If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
 
