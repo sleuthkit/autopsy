@@ -893,7 +893,7 @@ import org.sleuthkit.datamodel.TskData;
             // @@@ There is a bug in here.  We should use the tags in the below code
             // so that we only report the lists that we will later provide with real
             // hits.  If no keyord hits are tagged, then we make the page for nothing.
-            listsRs = skCase.runQuery("SELECT att.value_text AS list" + //NON-NLS
+            listsRs = skCase.runQuery("SELECT att.value_text AS list " + //NON-NLS
                                                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
                                                 "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
                                                     "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
