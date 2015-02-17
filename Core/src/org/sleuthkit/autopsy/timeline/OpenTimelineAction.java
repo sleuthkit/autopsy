@@ -54,7 +54,9 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen() && fxInited && Case.getCurrentCase().hasData();
+        /** we disabled the check to hasData() because if it is executed while a
+         * data source is being added, it blocks the edt */
+        return Case.isCaseOpen() && fxInited;// && Case.getCurrentCase().hasData();
     }
 
     @Override
@@ -68,8 +70,8 @@ public class OpenTimelineAction extends CallableSystemAction {
 
         if (currentCase.hasData() == false) {
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                          NbBundle.getMessage(this.getClass(), "OpenTimeLineAction.msgdlg.text"));
-            LOGGER.log(Level.INFO, "Error creating timeline, there are no data sources.");// NON-NLS
+                    NbBundle.getMessage(this.getClass(), "OpenTimeLineAction.msgdlg.text"));
+            LOGGER.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
             return;
         }
         synchronized (OpenTimelineAction.class) {
