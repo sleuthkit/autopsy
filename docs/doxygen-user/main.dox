@@ -20,7 +20,7 @@ The following topics are available here:
  - \subpage ds_page
 - Automated Analysis
  - \subpage ingest "Ingest"
-  - \subpage hash_database_management_window "Hash Database Management Window"
+  - \subpage hash_db_page 
   - \subpage keyword_search "Keyword Search"
 - Manual Analysis
  - \subpage directory_tree "Directory Tree"

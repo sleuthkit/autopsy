@@ -1,4 +1,10 @@
-/*! \page hash_database_management_window Hash Database Management Window
+/*! \page hash_db_page  Hash Database Lookup Module
+
+Autopsy has an ingest module that calculates hash values and looks up the hash values in a database to determine if the file is known bad, known (in general), or unknown. This page outlines that module and its configuration.
+
+
+\section hash_db_config Configuring the module
+
 
 The Hash Database Management window is where you can set and update your hash database information. Hash databases are used to identify files that are 'known'.
 \li Known good files are those that can be safely ignored. This set of files frequently includes standard OS and application files. Ignoring such uninteresting to the investigator files, can greatly reduce image analysis time.
