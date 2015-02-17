@@ -93,10 +93,10 @@ import org.sleuthkit.datamodel.TskData;
      * MessageNotifyUtil used to display bubble notification.
      * @param listOfErrors List of strings explaining the errors.
      */
-    private static void displayReportErrors(List<String> listOfErrors){
-        if(!listOfErrors.isEmpty()){
+    private void displayReportErrors(){
+        if(!errorList.isEmpty()){
             String errorString = "";
-            for(String error : listOfErrors)
+            for(String error : errorList)
                 errorString += error + "\n";
             MessageNotifyUtil.Notify.error("Errors during report generation: ", errorString);
             return;
@@ -285,7 +285,7 @@ import org.sleuthkit.datamodel.TskData;
             // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex ) { }
             finally{
-                displayReportErrors(errorList);
+                displayReportErrors();
                 errorList.clear();
             }
         }
@@ -393,7 +393,7 @@ import org.sleuthkit.datamodel.TskData;
             // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex ) { }
             finally{
-                displayReportErrors(errorList);
+                displayReportErrors();
                 errorList.clear();
             }
         }
@@ -668,7 +668,7 @@ import org.sleuthkit.datamodel.TskData;
             // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex ) { }
             finally{
-                displayReportErrors(errorList);
+                displayReportErrors();
                 errorList.clear();
             }
         }
