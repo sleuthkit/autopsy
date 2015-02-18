@@ -1,0 +1,10 @@
+/*! \page workflow_page Autopsy Workflow
+
+Analyzing data in Autopsy uses the following workflow:
+-# A case is created (see \ref cases_page)
+-# One or more data sources are added (see \ref ds_page)
+-# Ingest modules automatically analyze the data sources to extract information
+-# Manual analysis is performed to identify the evidence.
+-# Reports are generated. 
+
+*/
