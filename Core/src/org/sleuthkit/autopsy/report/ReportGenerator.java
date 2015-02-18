@@ -357,7 +357,7 @@ import org.sleuthkit.datamodel.TskData;
             for (FileReportModule module : fileModules) {
                 module.endTable();
                 module.endReport();
-                fileProgress.get(module).complete();
+                fileProgress.get(module).complete(false);
             }
             
             return 0;
@@ -458,7 +458,7 @@ import org.sleuthkit.datamodel.TskData;
 
             // finish progress, wrap up
             for (TableReportModule module : tableModules) {
-                tableProgress.get(module).complete();
+                tableProgress.get(module).complete(false);
                 module.endReport();
             }
             

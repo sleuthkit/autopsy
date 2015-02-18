@@ -79,7 +79,10 @@ public class STIXReportModule implements GeneralReportModule {
     private final boolean skipShortCircuit = true;
 
     private BufferedWriter output = null;
-
+   
+    // Keep track of whether any errors occur during processing
+    private boolean hasErrors = false;
+    
     // Hidden constructor for the report
     private STIXReportModule() {
     }
@@ -118,28 +121,28 @@ public class STIXReportModule implements GeneralReportModule {
             MessageNotifyUtil.Notify.show("STIXReportModule",
                     "Unable to open STIX report file " + reportPath,
                     MessageNotifyUtil.MessageType.ERROR);
-            progressPanel.complete();
-            progressPanel.updateStatusLabel("Completed with errors");
+            hasErrors = true;
+            progressPanel.complete(hasErrors);
             return;
         }
 
-        // Keep track of whether any errors occur during processing
-        boolean hadErrors = false;
 
         // Process the file/directory name entry
         String stixFileName = configPanel.getStixFile();
         File stixFile = new File(stixFileName);
 
-        if (!stixFile.exists()) {
+        try{
+            if(!stixFile.exists()){
+                throw new Exception();
+            }
+        }
+        catch(Exception ex){
+            MessageNotifyUtil.Message.show("Unable to open STIX file/directory", MessageNotifyUtil.MessageType.ERROR);
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName));
-            MessageNotifyUtil.Notify.show("STIXReportModule",
-                    "Unable to open STIX file/directory " + stixFileName,
-                    MessageNotifyUtil.MessageType.ERROR);
-            progressPanel.complete();
-            progressPanel.updateStatusLabel("Could not open file/directory " + stixFileName);
+            hasErrors = true;
+            progressPanel.complete(hasErrors);
             return;
         }
-
         // Store the path
         ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName);
 
@@ -164,7 +167,7 @@ public class STIXReportModule implements GeneralReportModule {
                 MessageNotifyUtil.Notify.show("STIXReportModule",
                         ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
-                hadErrors = true;
+                  hasErrors = true;
             }
         }
 
@@ -174,15 +177,13 @@ public class STIXReportModule implements GeneralReportModule {
                 output.close();
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error closing STIX report file %s", reportPath), ex);
+                hasErrors = true;
             }
         }
 
         // Set the progress bar to done. If any errors occurred along the way, modify
         // the "complete" message to indicate this.
-        progressPanel.complete();
-        if (hadErrors) {
-            progressPanel.updateStatusLabel("Completed with errors");
-        }
+        progressPanel.complete(hasErrors);
     }
 
     /**
@@ -232,6 +233,7 @@ public class STIXReportModule implements GeneralReportModule {
             return stix;
         } catch (JAXBException ex) {
             logger.log(Level.SEVERE, String.format("Unable to load STIX file %s", stixFileName), ex.getLocalizedMessage());
+            hasErrors = true;
             throw new TskCoreException("Error loading STIX file (" + ex.toString() + ")");
         }
     }
@@ -366,6 +368,7 @@ public class STIXReportModule implements GeneralReportModule {
                 output.write("\r\nObservable results:\r\n" + resultStr + "\r\n\r\n");
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing to STIX report file %s", reportPath), ex);
+                hasErrors = true;
             }
         }
     }
@@ -387,6 +390,7 @@ public class STIXReportModule implements GeneralReportModule {
                 output.write(header + "\r\n\r\n");
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing to STIX report file %s", reportPath), ex);
+                hasErrors = true;
             }
 
         }

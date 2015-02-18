@@ -84,6 +84,7 @@ class ReportKML implements GeneralReportModule {
         String reportPath2 = path + "ReportKML.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
+        boolean hasErrors = false;
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
         // Check if ingest has finished
@@ -331,19 +332,23 @@ class ReportKML implements GeneralReportModule {
                                                                                     "ReportKML.genReport.srcModuleName.text"), "");
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
+                    hasErrors = true;
                 } catch (TskCoreException ex) {
                     String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
                     logger.log(Level.SEVERE, errorMessage, ex);
+                    hasErrors = true;
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not write the KML report.", ex); //NON-NLS
+                hasErrors = true;
             }
-            progressPanel.complete();
+            progressPanel.complete(hasErrors);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
+            hasErrors = true;
         }
         progressPanel.increment();
-        progressPanel.complete();
+        progressPanel.complete(hasErrors);
     }
 
     public static void copyFileUsingStream(AbstractFile file, File jFile) throws IOException {
