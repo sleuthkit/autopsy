@@ -143,16 +143,6 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(hasErrors);
             return;
         }
-/*        if (!stixFile.exists()) {
-            logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName));
-            //MessageNotifyUtil.Notify.show("STIXReportModule",
-            //        "Unable to open STIX file/directory " + stixFileName,
-            //        MessageNotifyUtil.MessageType.ERROR);
-            progressPanel.complete();
-            progressPanel.updateStatusLabel("Could not open file/directory " + stixFileName);
-            return;
-        }
-*/
         // Store the path
         ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName);
 
@@ -177,7 +167,6 @@ public class STIXReportModule implements GeneralReportModule {
                 MessageNotifyUtil.Notify.show("STIXReportModule",
                         ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
-//                hadErrors = true;
                   hasErrors = true;
             }
         }
