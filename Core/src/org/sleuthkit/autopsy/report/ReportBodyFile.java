@@ -76,7 +76,7 @@ import org.sleuthkit.datamodel.*;
         reportPath = path + "BodyFile.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
-        
+        boolean hasErrors = false;
         // Run query to get all files
         
         try {
@@ -147,6 +147,7 @@ import org.sleuthkit.datamodel.*;
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not write the temp body file report.", ex); //NON-NLS
+                hasErrors = true;
             } finally {
                 try {
                     if (out != null) {
@@ -159,12 +160,14 @@ import org.sleuthkit.datamodel.*;
                     }
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
+                    hasErrors = true;
                 } catch (TskCoreException ex) {
                     String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
                     logger.log(Level.SEVERE, errorMessage, ex);
+                    hasErrors = true;
                 }                    
             }
-            progressPanel.complete();
+            progressPanel.complete(hasErrors);
         }  catch(TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         } 
