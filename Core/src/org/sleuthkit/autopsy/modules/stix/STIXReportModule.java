@@ -122,7 +122,7 @@ public class STIXReportModule implements GeneralReportModule {
                     "Unable to open STIX report file " + reportPath,
                     MessageNotifyUtil.MessageType.ERROR);
             hasErrors = true;
-            progressPanel.complete(hasErrors);
+            progressPanel.errored();
             return;
         }
 
@@ -131,18 +131,13 @@ public class STIXReportModule implements GeneralReportModule {
         String stixFileName = configPanel.getStixFile();
         File stixFile = new File(stixFileName);
 
-        try{
-            if(!stixFile.exists()){
-                throw new Exception();
-            }
-        }
-        catch(Exception ex){
-            MessageNotifyUtil.Message.show("Unable to open STIX file/directory", MessageNotifyUtil.MessageType.ERROR);
+      if (!stixFile.exists()) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName));
-            hasErrors = true;
-            progressPanel.complete(hasErrors);
+            MessageNotifyUtil.Message.error("Unable to open STIX file/directory " + stixFileName);
+            progressPanel.errored();
             return;
         }
+      
         // Store the path
         ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName);
 
@@ -183,7 +178,10 @@ public class STIXReportModule implements GeneralReportModule {
 
         // Set the progress bar to done. If any errors occurred along the way, modify
         // the "complete" message to indicate this.
-        progressPanel.complete(hasErrors);
+        if(hasErrors)
+                progressPanel.errored();
+        else
+                progressPanel.complete();
     }
 
     /**

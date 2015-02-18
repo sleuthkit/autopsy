@@ -35,7 +35,8 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         QUEUING,
         RUNNING,
         COMPLETE,
-        CANCELED
+        CANCELED,
+        ERRORED
     }
 
     /**
@@ -229,28 +230,43 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * This will fill the JProgressBar, update the cancelButton to completed,
      * and disallow any cancellation of this report.
      */
-    public void complete(boolean hasErrors) {
+    public void complete() {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 if (STATUS != ReportStatus.CANCELED) {
                     STATUS = ReportStatus.COMPLETE;
-                    if(hasErrors){
-                        reportProgressBar.setForeground(Color.red);
-                        processingLabel.setForeground(Color.red);
-                        processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
-                        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete_with_errors.png")));
-                    }else{
-                        processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
-                        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
-                    }
-                    reportProgressBar.setValue(reportProgressBar.getMaximum());               
+                    processingLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
+                    reportProgressBar.setValue(reportProgressBar.getMaximum());
+                    cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
                     cancelButton.setToolTipText(
                             NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
                 }
             }
         });
         // Do something with the button to change the icon and make not clickable
+    }
+     /**
+     * Declare the report generation had errors.
+     * This will fill the JProgressBar, update the cancelButton to completed,
+     * and disallow any cancellation of this report.
+     */
+    public void errored(){
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (STATUS != ReportStatus.CANCELED) {
+                    STATUS = ReportStatus.ERRORED;
+                    processingLabel.setForeground(Color.red);
+                    processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
+                    reportProgressBar.setValue(reportProgressBar.getMaximum());
+                    cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete_with_errors.png"))); //NON-NLS
+                    cancelButton.setToolTipText(
+                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                }
+            }
+        });    
     }
 
     /**

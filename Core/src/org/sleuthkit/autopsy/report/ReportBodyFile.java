@@ -167,7 +167,10 @@ import org.sleuthkit.datamodel.*;
                     hasErrors = true;
                 }                    
             }
-            progressPanel.complete(hasErrors);
+            if(hasErrors)
+                progressPanel.errored();
+            else
+                progressPanel.complete();
         }  catch(TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         } 

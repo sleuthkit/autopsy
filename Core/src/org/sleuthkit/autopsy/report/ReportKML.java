@@ -342,13 +342,19 @@ class ReportKML implements GeneralReportModule {
                 logger.log(Level.WARNING, "Could not write the KML report.", ex); //NON-NLS
                 hasErrors = true;
             }
-            progressPanel.complete(hasErrors);
+            if(hasErrors)
+                progressPanel.errored();
+            else
+                progressPanel.complete();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
             hasErrors = true;
         }
         progressPanel.increment();
-        progressPanel.complete(hasErrors);
+        if(hasErrors)
+                progressPanel.errored();
+            else
+                progressPanel.complete();
     }
 
     public static void copyFileUsingStream(AbstractFile file, File jFile) throws IOException {
