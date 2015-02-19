@@ -132,9 +132,7 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (!stixFile.exists()) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName));
-            MessageNotifyUtil.Notify.show("STIXReportModule",
-                    "Unable to open STIX file/directory " + stixFileName,
-                    MessageNotifyUtil.MessageType.ERROR);
+            MessageNotifyUtil.Message.error("Unable to open STIX file/directory" + stixFileName);
             progressPanel.complete();
             progressPanel.updateStatusLabel("Could not open file/directory " + stixFileName);
             return;
