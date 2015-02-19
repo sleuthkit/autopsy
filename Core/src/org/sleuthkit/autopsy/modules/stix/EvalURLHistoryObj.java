@@ -50,7 +50,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
         setWarnings("");
 
         if ((obj.getBrowserInformation() == null) && (obj.getURLHistoryEntries() == null)) {
-            return new ObservableResult(id, "URLHistoryObject: No browser info or history entries found",
+            return new ObservableResult(id, "URLHistoryObject: No browser info or history entries found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -64,7 +64,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
             if (obj.getBrowserInformation().getName() != null) {
                 haveBrowserName = true;
             }
-            baseSearchString = "Browser \"" + obj.getBrowserInformation().getName() + "\"";
+            baseSearchString = "Browser \"" + obj.getBrowserInformation().getName() + "\""; //NON-NLS
         }
 
         // Matching artifacts
@@ -89,41 +89,41 @@ class EvalURLHistoryObj extends EvaluatableObject {
                 if ((entry.getURL() != null) && (entry.getURL().getValue() != null)) {
                     haveURL = true;
                     if (!searchString.isEmpty()) {
-                        searchString += " and ";
+                        searchString += " and "; //NON-NLS
                     }
-                    searchString += "URL \"" + entry.getURL().getValue().getValue() + "\"";
+                    searchString += "URL \"" + entry.getURL().getValue().getValue() + "\""; //NON-NLS
                 }
 
                 if ((entry.getReferrerURL() != null) && (entry.getReferrerURL().getValue() != null)) {
                     haveReferrer = true;
                     if (!searchString.isEmpty()) {
-                        searchString += " and ";
+                        searchString += " and "; //NON-NLS
                     }
-                    searchString += "Referrer \"" + entry.getReferrerURL().getValue().getValue() + "\"";
+                    searchString += "Referrer \"" + entry.getReferrerURL().getValue().getValue() + "\""; //NON-NLS
                 }
 
                 if (entry.getUserProfileName() != null) {
                     haveUserProfile = true;
                     if (!searchString.isEmpty()) {
-                        searchString += " and ";
+                        searchString += " and "; //NON-NLS
                     }
-                    searchString += "UserProfile \"" + entry.getUserProfileName().getValue() + "\"";
+                    searchString += "UserProfile \"" + entry.getUserProfileName().getValue() + "\""; //NON-NLS
                 }
 
                 if (entry.getPageTitle() != null) {
                     havePageTitle = true;
                     if (!searchString.isEmpty()) {
-                        searchString += " and ";
+                        searchString += " and "; //NON-NLS
                     }
-                    searchString += "Page title \"" + entry.getPageTitle().getValue() + "\"";
+                    searchString += "Page title \"" + entry.getPageTitle().getValue() + "\""; //NON-NLS
                 }
 
                 if ((entry.getHostname() != null) && (entry.getHostname().getHostnameValue() != null)) {
                     haveHostname = true;
                     if (!searchString.isEmpty()) {
-                        searchString += " and ";
+                        searchString += " and "; //NON-NLS
                     }
-                    searchString += "Hostname \"" + entry.getHostname().getHostnameValue().getValue() + "\"";
+                    searchString += "Hostname \"" + entry.getHostname().getHostnameValue().getValue() + "\""; //NON-NLS
                 }
 
                 if (!finalResultsStr.isEmpty()) {
@@ -133,7 +133,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
 
                 if (!(haveURL || haveHostname || haveReferrer
                         || havePageTitle || haveUserProfile || haveBrowserName)) {
-                    return new ObservableResult(id, "URLHistoryObject: No evaluatable fields found",
+                    return new ObservableResult(id, "URLHistoryObject: No evaluatable fields found", //NON-NLS
                             spacing, ObservableResult.ObservableState.INDETERMINATE, null);
                 }
 
@@ -160,7 +160,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                                             entry.getURL().getValue().getApplyCondition(),
                                             attr.getValueString());
                                 } else {
-                                    addWarning("Non-AnyURIObjectPropertyType found in URL value field");
+                                    addWarning("Non-AnyURIObjectPropertyType found in URL value field"); //NON-NLS
                                 }
                             }
                             if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())
@@ -176,7 +176,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                                             entry.getURL().getValue().getApplyCondition(),
                                             attr.getValueString());
                                 } else {
-                                    addWarning("Non-AnyURIObjectPropertyType found in URL value field");
+                                    addWarning("Non-AnyURIObjectPropertyType found in URL value field"); //NON-NLS
                                 }
                             }
                             if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID())
@@ -208,7 +208,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                     }
 
                 } catch (TskCoreException ex) {
-                    return new ObservableResult(id, "URLHistoryObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+                    return new ObservableResult(id, "URLHistoryObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                             spacing, ObservableResult.ObservableState.INDETERMINATE, null);
                 }
 
@@ -217,14 +217,14 @@ class EvalURLHistoryObj extends EvaluatableObject {
             if (!finalHits.isEmpty()) {
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                 for (BlackboardArtifact a : finalHits) {
-                    artData.add(new StixArtifactData(a.getObjectID(), id, "URLHistory"));
+                    artData.add(new StixArtifactData(a.getObjectID(), id, "URLHistory")); //NON-NLS
                 }
-                return new ObservableResult(id, "URLHistoryObject: Found at least one match for " + finalResultsStr,
+                return new ObservableResult(id, "URLHistoryObject: Found at least one match for " + finalResultsStr, //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
             // Didn't find any matches
-            return new ObservableResult(id, "URLHistoryObject: No matches found for " + finalResultsStr,
+            return new ObservableResult(id, "URLHistoryObject: No matches found for " + finalResultsStr, //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
 
         } else if (haveBrowserName) {
@@ -256,23 +256,23 @@ class EvalURLHistoryObj extends EvaluatableObject {
                 if (!finalHits.isEmpty()) {
                     List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                     for (BlackboardArtifact a : finalHits) {
-                        artData.add(new StixArtifactData(a.getObjectID(), id, "URLHistory"));
+                        artData.add(new StixArtifactData(a.getObjectID(), id, "URLHistory")); //NON-NLS
                     }
-                    return new ObservableResult(id, "URLHistoryObject: Found at least one match",
+                    return new ObservableResult(id, "URLHistoryObject: Found at least one match", //NON-NLS
                             spacing, ObservableResult.ObservableState.TRUE, artData);
                 }
 
                 // Didn't find any matches
-                return new ObservableResult(id, "URLHistoryObject: No matches found for " + baseSearchString,
+                return new ObservableResult(id, "URLHistoryObject: No matches found for " + baseSearchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.FALSE, null);
             } catch (TskCoreException ex) {
-                return new ObservableResult(id, "URLHistoryObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+                return new ObservableResult(id, "URLHistoryObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                         spacing, ObservableResult.ObservableState.INDETERMINATE, null);
             }
 
         } else {
             // Nothing to search for
-            return new ObservableResult(id, "URLHistoryObject: No evaluatable fields found",
+            return new ObservableResult(id, "URLHistoryObject: No evaluatable fields found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -286,25 +286,25 @@ class EvalURLHistoryObj extends EvaluatableObject {
         List<String> fieldNames = new ArrayList<String>();
 
         if (entry.getUserProfileName() != null) {
-            fieldNames.add("User_Profile_Name");
+            fieldNames.add("User_Profile_Name"); //NON-NLS
         }
         if (entry.getVisitCount() != null) {
-            fieldNames.add("Visit_Count");
+            fieldNames.add("Visit_Count"); //NON-NLS
         }
         if (entry.getManuallyEnteredCount() != null) {
-            fieldNames.add("Manually_Entered_Count");
+            fieldNames.add("Manually_Entered_Count"); //NON-NLS
         }
         if (entry.getModificationDateTime() != null) {
-            fieldNames.add("Modification_DateTime");
+            fieldNames.add("Modification_DateTime"); //NON-NLS
         }
         if (entry.getExpirationDateTime() != null) {
-            fieldNames.add("Expiration_DateTime");
+            fieldNames.add("Expiration_DateTime"); //NON-NLS
         }
         if (entry.getFirstVisitDateTime() != null) {
-            fieldNames.add("First_Visit_DateTime");
+            fieldNames.add("First_Visit_DateTime"); //NON-NLS
         }
         if (entry.getLastVisitDateTime() != null) {
-            fieldNames.add("Last_Visit_DateTime");
+            fieldNames.add("Last_Visit_DateTime"); //NON-NLS
         }
 
         String warningStr = "";
@@ -315,6 +315,6 @@ class EvalURLHistoryObj extends EvaluatableObject {
             warningStr += name;
         }
 
-        addWarning("Unsupported URL_History_Entry field(s): " + warningStr);
+        addWarning("Unsupported URL_History_Entry field(s): " + warningStr); //NON-NLS
     }
 }

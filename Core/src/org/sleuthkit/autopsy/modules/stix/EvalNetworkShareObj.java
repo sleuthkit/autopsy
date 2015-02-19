@@ -49,35 +49,35 @@ class EvalNetworkShareObj extends EvaluatableObject {
         setWarnings("");
 
         if ((obj.getNetname() == null) && (obj.getLocalPath() == null)) {
-            return new ObservableResult(id, "NetworkShareObjet: No remote name or local path found",
+            return new ObservableResult(id, "NetworkShareObjet: No remote name or local path found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
         // For displaying what we were looking for in the results
         String searchString = "";
         if (obj.getNetname() != null) {
-            searchString += "Netname \"" + obj.getNetname().getValue() + "\"";
+            searchString += "Netname \"" + obj.getNetname().getValue() + "\""; //NON-NLS
 
             // The apply conditions ALL or NONE probably won't work correctly. Neither seems
             // all that likely to come up in practice, so just give a warning.
             if ((obj.getNetname().getApplyCondition() != null)
                     && (obj.getNetname().getApplyCondition() != ConditionApplicationEnum.ANY)) {
-                addWarning("Apply condition " + obj.getNetname().getApplyCondition().value()
-                        + " may not work correctly");
+                addWarning("Apply condition " + obj.getNetname().getApplyCondition().value() //NON-NLS
+                        + " may not work correctly"); //NON-NLS
             }
         }
         if (obj.getLocalPath() != null) {
             if (!searchString.isEmpty()) {
-                searchString += " and ";
+                searchString += " and "; //NON-NLS
             }
-            searchString += "LocalPath \"" + obj.getLocalPath().getValue() + "\"";
+            searchString += "LocalPath \"" + obj.getLocalPath().getValue() + "\""; //NON-NLS
 
             // Same as above - the apply conditions ALL or NONE probably won't work correctly. Neither seems
             // all that likely to come up in practice, so just give a warning.
             if ((obj.getLocalPath().getApplyCondition() != null)
                     && (obj.getLocalPath().getApplyCondition() != ConditionApplicationEnum.ANY)) {
-                addWarning("Apply condition " + obj.getLocalPath().getApplyCondition().value()
-                        + " may not work correctly");
+                addWarning("Apply condition " + obj.getLocalPath().getApplyCondition().value() //NON-NLS
+                        + " may not work correctly"); //NON-NLS
             }
         }
 
@@ -119,17 +119,17 @@ class EvalNetworkShareObj extends EvaluatableObject {
             if (!finalHits.isEmpty()) {
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                 for (BlackboardArtifact a : finalHits) {
-                    artData.add(new StixArtifactData(a.getObjectID(), id, "NetworkShare"));
+                    artData.add(new StixArtifactData(a.getObjectID(), id, "NetworkShare")); //NON-NLS
                 }
-                return new ObservableResult(id, "NetworkShareObject: Found a match for " + searchString,
+                return new ObservableResult(id, "NetworkShareObject: Found a match for " + searchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
             // Didn't find any matches
-            return new ObservableResult(id, "NetworkObject: No matches found for " + searchString,
+            return new ObservableResult(id, "NetworkObject: No matches found for " + searchString, //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "NetworkObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "NetworkObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
     }
@@ -138,13 +138,13 @@ class EvalNetworkShareObj extends EvaluatableObject {
         List<String> fieldNames = new ArrayList<String>();
 
         if (obj.getCurrentUses() != null) {
-            fieldNames.add("Current_Uses");
+            fieldNames.add("Current_Uses"); //NON-NLS
         }
         if (obj.getMaxUses() != null) {
-            fieldNames.add("Max_Uses");
+            fieldNames.add("Max_Uses"); //NON-NLS
         }
         if (obj.getType() != null) {
-            fieldNames.add("Type");
+            fieldNames.add("Type"); //NON-NLS
         }
 
         String warningStr = "";
@@ -155,7 +155,7 @@ class EvalNetworkShareObj extends EvaluatableObject {
             warningStr += name;
         }
 
-        addWarning("Unsupported field(s): " + warningStr);
+        addWarning("Unsupported field(s): " + warningStr); //NON-NLS
     }
 
 }

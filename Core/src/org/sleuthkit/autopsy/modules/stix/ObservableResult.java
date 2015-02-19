@@ -30,9 +30,9 @@ class ObservableResult {
 
     public enum ObservableState {
 
-        TRUE("true         "),
-        FALSE("false        "),
-        INDETERMINATE("indeterminate");
+        TRUE("true         "), //NON-NLS
+        FALSE("false        "), //NON-NLS
+        INDETERMINATE("indeterminate"); //NON-NLS
 
         private final String label;
 
