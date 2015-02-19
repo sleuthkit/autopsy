@@ -301,10 +301,10 @@ public class PlatformUtil {
      * system, false otherwise.
      */
     public static boolean is64BitOS() {
-        if (System.getProperty("os.name").contains("Windows")) {
-            return (System.getenv("ProgramFiles(x86)") != null);
+        if (System.getProperty("os.name").contains("Windows")) { //NON-NLS
+            return (System.getenv("ProgramFiles(x86)") != null); //NON-NLS
         } else {
-            return (System.getProperty("os.arch").contains("64"));
+            return (System.getProperty("os.arch").contains("64")); //NON-NLS
         }
     }
 
