@@ -203,6 +203,9 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
         }
         tableModel.resync();
+
+        int keywordListPosition = listsTable.getRowCount() - 1;
+        listsTable.setRowSelectionInterval(keywordListPosition, keywordListPosition);
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
