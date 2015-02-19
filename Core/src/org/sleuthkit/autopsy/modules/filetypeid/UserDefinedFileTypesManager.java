@@ -179,7 +179,7 @@ final class UserDefinedFileTypesManager {
      */
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         try {
-            FileType fileType = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false);
+            FileType fileType = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
         } catch (UnsupportedEncodingException ex) {

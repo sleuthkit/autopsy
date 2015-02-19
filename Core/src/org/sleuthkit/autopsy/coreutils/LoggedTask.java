@@ -48,7 +48,7 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
     @Override
     protected void failed() {
         super.failed();
-        LOGGER.log(Level.SEVERE, getTitle() + " failed!", getException());
+        LOGGER.log(Level.SEVERE, getTitle() + " failed!", getException()); //NON-NLS
 
     }
 
@@ -66,7 +66,7 @@ public abstract class LoggedTask<T> extends Task<T> implements Cancellable {
         try {
             get();
         } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, getTitle() + " threw unexpected exception: ", ex);
+            LOGGER.log(Level.SEVERE, getTitle() + " threw unexpected exception: ", ex); // NON-NLS
         }
         if (logStateChanges) {
             // LOGGER.log(Level.INFO, "{0} succeeded", getTitle());
