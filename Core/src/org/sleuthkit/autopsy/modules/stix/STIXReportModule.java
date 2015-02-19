@@ -128,6 +128,20 @@ public class STIXReportModule implements GeneralReportModule {
 
         // Process the file/directory name entry
         String stixFileName = configPanel.getStixFile();
+        if (stixFileName == null) {
+            logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized ");
+            MessageNotifyUtil.Message.error("No STIX file/directory provided  ");
+            progressPanel.complete();
+            progressPanel.updateStatusLabel("No STIX file/directory provided  ");
+            return;
+        }
+        if (stixFileName.isEmpty()) {
+            logger.log(Level.SEVERE, "No STIX file/directory provided ");
+            MessageNotifyUtil.Message.error("No STIX file/directory provided  ");
+            progressPanel.complete();
+            progressPanel.updateStatusLabel("No STIX file/directory provided  ");
+            return;
+        }
         File stixFile = new File(stixFileName);
 
         if (!stixFile.exists()) {
