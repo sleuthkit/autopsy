@@ -71,7 +71,7 @@ public final class OnlineHelpAction implements ActionListener {
         try {
             uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP"));
         } catch (URISyntaxException ex) {
-            Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex);
+            Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex); //NON-NLS
         }
         if (uri != null) {
             // Display URL in the SYstem browser
@@ -81,14 +81,14 @@ public final class OnlineHelpAction implements ActionListener {
                     desktop.browse(uri);
                 } catch (IOException ex) {
                     // TODO Auto-generated catch block
-                    Logger.log(Level.SEVERE, "Unable to launch the system browser", ex);
+                    Logger.log(Level.SEVERE, "Unable to launch the system browser", ex); //NON-NLS
                 }
             } else {
                 org.openide.awt.StatusDisplayer.getDefault().setStatusText(NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
                 try {
                     HtmlBrowser.URLDisplayer.getDefault().showURL(uri.toURL());
                 } catch (MalformedURLException ex) {
-                    Logger.log(Level.SEVERE, "Unable to launch the built-in browser", ex);
+                    Logger.log(Level.SEVERE, "Unable to launch the built-in browser", ex); //NON-NLS
                 }
             }
         }

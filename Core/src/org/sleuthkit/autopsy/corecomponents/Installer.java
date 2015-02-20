@@ -34,6 +34,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -74,7 +75,7 @@ public class Installer extends ModuleInstall {
                     if (processor instanceof OpenFromArguments) {
                         OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                         String caseFile = argsProcessor.getDefaultArg();
-                        if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) {
+                        if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
                             try {
                                 Case.open(caseFile);
                                 return;
@@ -96,6 +97,17 @@ public class Installer extends ModuleInstall {
 
     }
 
+    @Override
+    public void close() {
+        try {
+            if (Case.isCaseOpen())
+                Case.getCurrentCase().closeCase();
+        }
+        catch (CaseActionException ex) {
+            logger.log(Level.WARNING, "Error closing case. ", ex); //NON-NLS            
+        }
+    }
+    
     private void setupLAF() {
 
         //TODO apply custom skinning 

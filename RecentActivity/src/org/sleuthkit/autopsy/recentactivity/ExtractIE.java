@@ -365,7 +365,7 @@ class ExtractIE extends Extract {
         boolean success = true;
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
-            final String errFileFullPath = moduleTempResultsDir + File.separator + outputFileName + ".err";
+            final String errFileFullPath = moduleTempResultsDir + File.separator + outputFileName + ".err"; //NON-NLS
             logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS   
             List<String> commandLine = new ArrayList<>();
             commandLine.add(JAVA_PATH);
