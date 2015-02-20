@@ -58,7 +58,7 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         try {
             about = new ImageIcon(new URL("nbdocs:/org/netbeans/core/startup/splash.gif"));
         } catch (MalformedURLException ex) {
-            Logger.log(Level.INFO, "failed to load aout window image", ex);
+            Logger.log(Level.INFO, "failed to load about window image", ex); //NON-NLS
         }
         initComponents();
         logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -115,7 +115,7 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         jScrollPane2.setViewportView(description);
 
         verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
-        verboseLoggingButton.setText("Activate verbose logging");
+        verboseLoggingButton.setText(NbBundle.getMessage(this.getClass(), "AboutWindowPanel.actVerboseLogging.text"));
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 activateVerboseLogging(evt);
