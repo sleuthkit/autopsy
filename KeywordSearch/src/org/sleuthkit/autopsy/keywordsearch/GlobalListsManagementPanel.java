@@ -198,6 +198,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             writer.addList(listName, new ArrayList<Keyword>());
         }
         tableModel.resync();
+
+        //This loop selects the recently ADDED keywordslist in the JTable
         for (int i = 0; i < listsTable.getRowCount(); i++) {
             if (listsTable.getValueAt(i, 0).equals(listName)) {
                 listsTable.getSelectionModel().addSelectionInterval(i, i);
@@ -214,6 +216,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         chooser.setFileFilter(filter);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
+        String listName = null;
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selFile = chooser.getSelectedFile();
@@ -245,12 +248,13 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
             for (KeywordList list : toImport) {
                 //check name collisions
-                if (writer.listExists(list.getName())) {
+                listName = list.getName();
+                if (writer.listExists(listName)) {
                     Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
                     int choice = JOptionPane.showOptionDialog(this,
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", list.getName()),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
                             JOptionPane.YES_NO_CANCEL_OPTION,
                             JOptionPane.QUESTION_MESSAGE,
@@ -281,8 +285,16 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         }
         tableModel.resync();
-    }//GEN-LAST:event_importButtonActionPerformed
 
+        //This loop selects the recently IMPORTED keywordslist in the JTable
+        if (listName != null) {
+            for (int i = 0; i < listsTable.getRowCount(); i++) {
+                if (listsTable.getValueAt(i, 0).equals(listName)) {
+                    listsTable.getSelectionModel().addSelectionInterval(i, i);
+                }
+            }
+        }
+    }//GEN-LAST:event_importButtonActionPerformed
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
         if(evt.getKeyCode() == KeyEvent.VK_DELETE) {
             int[] selected = listsTable.getSelectedRows();
