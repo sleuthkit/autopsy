@@ -227,10 +227,10 @@ public class IngestManager {
         this.ingestErrorMessagePosts = new AtomicLong(0L);
         this.ingestMonitor = new IngestMonitor();
         this.ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
-        this.fireIngestEventsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build());
+        this.fireIngestEventsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS
         this.ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
-        this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build());
-        this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build());
+        this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS
+        this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS
         this.nextThreadId = new AtomicLong(0L);
         this.jobsById = new ConcurrentHashMap<>();
         this.ingestJobStarters = new ConcurrentHashMap<>();
@@ -242,7 +242,7 @@ public class IngestManager {
             numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
             UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
         }
-        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads, new ThreadFactoryBuilder().setNameFormat("IM-file-ingest-%d").build());
+        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads, new ThreadFactoryBuilder().setNameFormat("IM-file-ingest-%d").build()); //NON-NLS
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
             startFileIngestThread();
         }
@@ -416,11 +416,11 @@ public class IngestManager {
             List<IngestModuleError> errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
-                IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId());
+                IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
                 success = true;
             } else {
                 this.jobsById.remove(job.getId());
-                IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId());
+                IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (this.runInteractively) {
                     EventQueue.invokeLater(new Runnable() {
 
@@ -462,10 +462,10 @@ public class IngestManager {
         long jobId = job.getId();
         this.jobsById.remove(jobId);
         if (!job.isCancelled()) {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId);
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
             this.fireIngestJobCompleted(jobId);
         } else {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId);
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
             this.fireIngestJobCancelled(jobId);
         }
     }
@@ -664,7 +664,7 @@ public class IngestManager {
      * @param duration
      */
     private void incrementModuleRunTime(String moduleName, Long duration) {
-        if (moduleName.equals("IDLE")) {
+        if (moduleName.equals("IDLE")) { //NON-NLS
             return;
         }
 
