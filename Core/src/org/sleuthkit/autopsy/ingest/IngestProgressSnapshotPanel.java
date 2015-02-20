@@ -96,7 +96,8 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.startTime"),
             NbBundle.getMessage(this.getClass(),
             "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.elapsedTime"),
-            "Job ID"};
+            NbBundle.getMessage(this.getClass(),
+            "IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.jobID")};
         private List<IngestManager.IngestThreadActivitySnapshot> snapshots;
 
         private IngestThreadActivitySnapshotsTableModel() {
@@ -161,8 +162,24 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     
     private class IngestJobTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Job ID", 
-            "Data Source", "Start", "Num Processed", "Files/Sec", "In Progress", "Files Queued", "Dir Queued", "Root Queued", "DS Queued"};
+        private final String[] columnNames = {NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.dataSource"),
+                                              NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.start"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.numProcessed"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.filesPerSec"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.inProgress"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.filesQueued"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.dirQueued"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.rootQueued"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "IngestJobTableModel.colName.dsQueued")};
         private List<DataSourceIngestJob.Snapshot> jobSnapshots;
 
         private IngestJobTableModel() {
@@ -271,7 +288,9 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             }
             
         }
-        private final String[] columnNames = {"Module", "Duration"};
+        private final String[] columnNames = {NbBundle.getMessage(this.getClass(), "ModuleTableModel.colName.module"),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "ModuleTableModel.colName.duration")};
         private final List<ModuleStats> moduleStats = new ArrayList<>();
         private long totalTime;
         
