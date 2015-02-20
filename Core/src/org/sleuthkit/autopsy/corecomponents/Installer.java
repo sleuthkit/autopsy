@@ -75,7 +75,7 @@ public class Installer extends ModuleInstall {
                     if (processor instanceof OpenFromArguments) {
                         OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                         String caseFile = argsProcessor.getDefaultArg();
-                        if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) {
+                        if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
                             try {
                                 Case.open(caseFile);
                                 return;
