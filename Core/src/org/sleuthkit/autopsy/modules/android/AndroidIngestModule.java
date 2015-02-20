@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
@@ -45,7 +47,9 @@ class AndroidIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(), "Started Analysis"));
+        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(),
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "AndroidIngestModule.processing.startedAnalysis")));
 
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
@@ -149,7 +153,10 @@ class AndroidIngestModule implements DataSourceIngestModule {
             errorMsgSubject = "No errors"; //NON-NLS
         }
 
-        services.postMessage(IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(), "Finished Analysis: " + errorMsgSubject, errorMessage.toString()));
+        services.postMessage(IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(),
+                                                         NbBundle.getMessage(this.getClass(),
+                                                                             "AndroidIngestModule.processing.finishedAnalysis",
+                                                                             errorMsgSubject), errorMessage.toString()));
 
         return IngestModule.ProcessResult.OK;
     }
