@@ -132,17 +132,21 @@ public class STIXReportModule implements GeneralReportModule {
         // Process the file/directory name entry
         String stixFileName = configPanel.getStixFile();
         if (stixFileName == null) {
-            logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized ");
-            MessageNotifyUtil.Message.error("No STIX file/directory provided  ");
+            logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
+            MessageNotifyUtil.Message.error(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
             progressPanel.complete();
-            progressPanel.updateStatusLabel("No STIX file/directory provided  ");
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             return;
         }
         if (stixFileName.isEmpty()) {
-            logger.log(Level.SEVERE, "No STIX file/directory provided ");
-            MessageNotifyUtil.Message.error("No STIX file/directory provided  ");
+            logger.log(Level.SEVERE, "No STIX file/directory provided "); //NON-NLS
+            MessageNotifyUtil.Message.error(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
             progressPanel.complete();
-            progressPanel.updateStatusLabel("No STIX file/directory provided  ");
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             return;
         }
         File stixFile = new File(stixFileName);
