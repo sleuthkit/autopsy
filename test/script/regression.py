@@ -299,7 +299,10 @@ class TestRunner(object):
         copied = False
 
         for file in glob.glob(test_data.output_path + "/*-Diff.txt"):
-            shutil.copy(file, test_data.main_config.args.output_folder + "/")
+            print(os.path.basename(file))
+            # Eg. copies HTML-Report-Diff.txt to <Image-name>-HTML-Report-Diff.txt
+            shutil.copy(file, test_data.main_config.args.output_folder +
+                        "/" + test_data.image + "-" + os.path.basename(file))
             copied = True
         if not copied:
             print_report([], "NO DIFF FILES COPIED FROM " + test_data.output_path, "")
