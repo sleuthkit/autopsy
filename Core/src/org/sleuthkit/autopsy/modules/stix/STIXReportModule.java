@@ -114,12 +114,15 @@ public class STIXReportModule implements GeneralReportModule {
             File file = new File(reportPath);
             output = new BufferedWriter(new FileWriter(file));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to open STIX report file %s", reportPath), ex);
-            MessageNotifyUtil.Notify.show("STIXReportModule",
-                    "Unable to open STIX report file " + reportPath,
+            logger.log(Level.SEVERE, String.format("Unable to open STIX report file %s", reportPath), ex); //NON-NLS
+            MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
+                                          NbBundle.getMessage(this.getClass(),
+                                                              "STIXReportModule.notifyMsg.unableToOpenReportFile",
+                                                              reportPath),
                     MessageNotifyUtil.MessageType.ERROR);
             progressPanel.complete();
-            progressPanel.updateStatusLabel("Completed with errors");
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
             return;
         }
 
@@ -129,31 +132,38 @@ public class STIXReportModule implements GeneralReportModule {
         // Process the file/directory name entry
         String stixFileName = configPanel.getStixFile();
         if (stixFileName == null) {
-            logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized ");
-            MessageNotifyUtil.Message.error("No STIX file/directory provided  ");
+            logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
+            MessageNotifyUtil.Message.error(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
             progressPanel.complete();
-            progressPanel.updateStatusLabel("No STIX file/directory provided  ");
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             return;
         }
         if (stixFileName.isEmpty()) {
-            logger.log(Level.SEVERE, "No STIX file/directory provided ");
-            MessageNotifyUtil.Message.error("No STIX file/directory provided  ");
+            logger.log(Level.SEVERE, "No STIX file/directory provided "); //NON-NLS
+            MessageNotifyUtil.Message.error(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
             progressPanel.complete();
-            progressPanel.updateStatusLabel("No STIX file/directory provided  ");
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             return;
         }
         File stixFile = new File(stixFileName);
 
         if (!stixFile.exists()) {
-            logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName));
-            MessageNotifyUtil.Message.error("Unable to open STIX file/directory" + stixFileName);
+            logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName)); //NON-NLS
+            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                                                                "STIXReportModule.notifyMsg.unableToOpenFileDir",
+                                                                stixFileName));
             progressPanel.complete();
-            progressPanel.updateStatusLabel("Could not open file/directory " + stixFileName);
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
             return;
         }
 
         // Store the path
-        ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName);
+        ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName); //NON-NLS
 
         // Create array of stix file(s)
         File[] stixFiles;
@@ -172,8 +182,8 @@ public class STIXReportModule implements GeneralReportModule {
             try {
                 processFile(file.getAbsolutePath(), progressPanel);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex);
-                MessageNotifyUtil.Notify.show("STIXReportModule",
+                logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
+                MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
                         ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
                 hadErrors = true;
@@ -185,7 +195,7 @@ public class STIXReportModule implements GeneralReportModule {
             try {
                 output.close();
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing STIX report file %s", reportPath), ex);
+                logger.log(Level.SEVERE, String.format("Error closing STIX report file %s", reportPath), ex); //NON-NLS
             }
         }
 
@@ -193,7 +203,8 @@ public class STIXReportModule implements GeneralReportModule {
         // the "complete" message to indicate this.
         progressPanel.complete();
         if (hadErrors) {
-            progressPanel.updateStatusLabel("Completed with errors");
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
         }
     }
 
@@ -237,14 +248,14 @@ public class STIXReportModule implements GeneralReportModule {
         try {
             // Create STIXPackage object from xml.
             File file = new File(stixFileName);
-            JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:"
-                    + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2");
+            JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
+                    + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
             return stix;
         } catch (JAXBException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to load STIX file %s", stixFileName), ex.getLocalizedMessage());
-            throw new TskCoreException("Error loading STIX file (" + ex.toString() + ")");
+            logger.log(Level.SEVERE, String.format("Unable to load STIX file %s", stixFileName), ex.getLocalizedMessage()); //NON-NLS
+            throw new TskCoreException("Error loading STIX file (" + ex.toString() + ")"); //NON-NLS
         }
     }
 
@@ -328,15 +339,17 @@ public class STIXReportModule implements GeneralReportModule {
             } else if (ind.getId() != null) {
                 s.createArtifact(ind.getId().toString());
             } else {
-                s.createArtifact("Unnamed indicator(s)");
+                s.createArtifact("Unnamed indicator(s)"); //NON-NLS
             }
 
             // Trying to protect against the case where we end up with tons of artifacts
             // for a single observable because the condition was not restrictive enough
             count++;
             if (count > 1000) {
-                MessageNotifyUtil.Notify.show("STIXReportModule",
-                        "Too many STIX-related artifacts generated for " + ind.getId() + ". Only saving first 1000.",
+                MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "STIXReportModule.notifyMsg.tooManyArtifactsgt1000",
+                                                                  ind.getId()),
                         MessageNotifyUtil.MessageType.INFO);
                 break;
             }
@@ -356,28 +369,28 @@ public class STIXReportModule implements GeneralReportModule {
             try {
                 if (found) {
                     output.write("----------------\r\n"
-                            + "Found indicator:\r\n");
+                            + "Found indicator:\r\n"); //NON-NLS
                 } else {
                     output.write("-----------------------\r\n"
-                            + "Did not find indicator:\r\n");
+                            + "Did not find indicator:\r\n"); //NON-NLS
                 }
                 if (ind.getTitle() != null) {
-                    output.write("Title: " + ind.getTitle() + "\r\n");
+                    output.write("Title: " + ind.getTitle() + "\r\n"); //NON-NLS
                 } else {
                     output.write("\r\n");
                 }
                 if (ind.getId() != null) {
-                    output.write("ID: " + ind.getId() + "\r\n");
+                    output.write("ID: " + ind.getId() + "\r\n"); //NON-NLS
                 }
 
                 if (ind.getDescription() != null) {
                     String desc = ind.getDescription().getValue();
                     desc = desc.trim();
-                    output.write("Description: " + desc + "\r\n");
+                    output.write("Description: " + desc + "\r\n"); //NON-NLS
                 }
-                output.write("\r\nObservable results:\r\n" + resultStr + "\r\n\r\n");
+                output.write("\r\nObservable results:\r\n" + resultStr + "\r\n\r\n"); //NON-NLS
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error writing to STIX report file %s", reportPath), ex);
+                logger.log(Level.SEVERE, String.format("Error writing to STIX report file %s", reportPath), ex); //NON-NLS
             }
         }
     }
@@ -398,7 +411,7 @@ public class STIXReportModule implements GeneralReportModule {
                 output.write("### " + a_fileName + " ###\r\n");
                 output.write(header + "\r\n\r\n");
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error writing to STIX report file %s", reportPath), ex);
+                logger.log(Level.SEVERE, String.format("Error writing to STIX report file %s", reportPath), ex); //NON-NLS
             }
 
         }
@@ -446,7 +459,7 @@ public class STIXReportModule implements GeneralReportModule {
      */
     private ObservableResult evaluateObservableComposition(ObservableCompositionType comp, String spacing) throws TskCoreException {
         if (comp.getOperator() == null) {
-            throw new TskCoreException("No operator found in composition");
+            throw new TskCoreException("No operator found in composition"); //NON-NLS
         }
 
         if (comp.getObservables() != null) {
@@ -525,7 +538,7 @@ public class STIXReportModule implements GeneralReportModule {
                 return result;
             }
         } else {
-            throw new TskCoreException("No observables found in list");
+            throw new TskCoreException("No observables found in list"); //NON-NLS
         }
     }
 
@@ -567,7 +580,7 @@ public class STIXReportModule implements GeneralReportModule {
             return result;
         }
 
-        throw new TskCoreException("Error loading/finding object for observable " + obs.getIdref());
+        throw new TskCoreException("Error loading/finding object for observable " + obs.getIdref()); //NON-NLS
     }
 
     /**
@@ -609,7 +622,7 @@ public class STIXReportModule implements GeneralReportModule {
             if ((type.lastIndexOf(".") + 1) < type.length()) {
                 type = type.substring(type.lastIndexOf(".") + 1);
             }
-            return new ObservableResult(id, type + " not supported",
+            return new ObservableResult(id, type + " not supported", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 

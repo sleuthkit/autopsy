@@ -50,7 +50,7 @@ class EvalAddressObj extends EvaluatableObject {
         setWarnings("");
 
         if (obj.getAddressValue() == null) {
-            return new ObservableResult(id, "AddressObject: No address value field found",
+            return new ObservableResult(id, "AddressObject: No address value field found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -60,8 +60,8 @@ class EvalAddressObj extends EvaluatableObject {
         // would ever appear in practice. 
         if (((obj.getAddressValue().getApplyCondition() != null)
                 && (obj.getAddressValue().getApplyCondition() == ConditionApplicationEnum.NONE))) {
-            return new ObservableResult(id, "AddressObject: Can not process apply condition " + obj.getAddressValue().getApplyCondition().toString()
-                    + " on Address object", spacing, ObservableResult.ObservableState.INDETERMINATE, null);
+            return new ObservableResult(id, "AddressObject: Can not process apply condition " + obj.getAddressValue().getApplyCondition().toString() //NON-NLS
+                    + " on Address object", spacing, ObservableResult.ObservableState.INDETERMINATE, null); //NON-NLS
         }
 
         // Set warnings for any unsupported fields
@@ -76,7 +76,7 @@ class EvalAddressObj extends EvaluatableObject {
             boolean everyPartMatched = true;
             List<BlackboardArtifact> combinedArts = new ArrayList<BlackboardArtifact>();
             String searchString = "";
-            String[] parts = origAddressStr.split("##comma##");
+            String[] parts = origAddressStr.split("##comma##"); //NON-NLS
 
             for (String addressStr : parts) {
 
@@ -85,9 +85,9 @@ class EvalAddressObj extends EvaluatableObject {
 
                     if ((obj.getAddressValue().getApplyCondition() != null)
                             && (obj.getAddressValue().getApplyCondition() == ConditionApplicationEnum.ALL)) {
-                        searchString += " AND ";
+                        searchString += " AND "; //NON-NLS
                     } else {
-                        searchString += " OR ";
+                        searchString += " OR "; //NON-NLS
                     }
                 }
                 searchString += addressStr;
@@ -138,24 +138,24 @@ class EvalAddressObj extends EvaluatableObject {
             if ((obj.getAddressValue().getApplyCondition() != null)
                     && (obj.getAddressValue().getApplyCondition() == ConditionApplicationEnum.ALL)
                     && (!everyPartMatched)) {
-                return new ObservableResult(id, "AddressObject: No matches for " + searchString,
+                return new ObservableResult(id, "AddressObject: No matches for " + searchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.FALSE, null);
             }
 
             if (!combinedArts.isEmpty()) {
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                 for (BlackboardArtifact a : combinedArts) {
-                    artData.add(new StixArtifactData(a.getObjectID(), id, "AddressObject"));
+                    artData.add(new StixArtifactData(a.getObjectID(), id, "AddressObject")); //NON-NLS
                 }
-                return new ObservableResult(id, "AddressObject: Found a match for " + searchString,
+                return new ObservableResult(id, "AddressObject: Found a match for " + searchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
-            return new ObservableResult(id, "AddressObject: Found no matches for " + searchString,
+            return new ObservableResult(id, "AddressObject: Found no matches for " + searchString, //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
 
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "AddressObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "AddressObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
     }
@@ -167,10 +167,10 @@ class EvalAddressObj extends EvaluatableObject {
         List<String> fieldNames = new ArrayList<String>();
 
         if (obj.getVLANName() != null) {
-            fieldNames.add("VLAN_Name");
+            fieldNames.add("VLAN_Name"); //NON-NLS
         }
         if (obj.getVLANName() != null) {
-            fieldNames.add("VLAN_Num");
+            fieldNames.add("VLAN_Num"); //NON-NLS
         }
 
         String warningStr = "";
@@ -181,6 +181,6 @@ class EvalAddressObj extends EvaluatableObject {
             warningStr += name;
         }
 
-        addWarning("Unsupported field(s): " + warningStr);
+        addWarning("Unsupported field(s): " + warningStr); //NON-NLS
     }
 }

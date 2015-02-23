@@ -59,15 +59,15 @@ class StixArtifactData {
 
         String setName;
         if (a_title != null) {
-            setName = "STIX Indicator - " + a_title;
+            setName = "STIX Indicator - " + a_title; //NON-NLS
         } else {
-            setName = "STIX Indicator - (no title)";
+            setName = "STIX Indicator - (no title)"; //NON-NLS
         }
 
         BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), "Stix", setName));
-        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), "Stix", observableId));
-        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), "Stix", objType));
+        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), "Stix", setName)); //NON-NLS
+        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), "Stix", observableId)); //NON-NLS
+        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), "Stix", objType)); //NON-NLS
     }
 
     public void print() {
