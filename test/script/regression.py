@@ -300,13 +300,13 @@ class TestRunner(object):
 
         for file in glob.glob(test_data.output_path + "/*-Diff.txt"):
             # Eg. copies HTML-Report-Diff.txt to <Image-name>-HTML-Report-Diff.txt
-            shutil.copy(file, test_data.main_config.args.output_folder +
+            shutil.copy(file, test_data.main_config.args.diff_files_output_folder +
                         "/" + test_data.image + "-" + os.path.basename(file))
             copied = True
         if not copied:
             print_report([], "NO DIFF FILES COPIED FROM " + test_data.output_path, "")
         else:
-            print_report([], "DIFF OUTPUT COPIED TO " + test_data.main_config.args.output_folder, "")
+            print_report([], "DIFF OUTPUT COPIED TO " + test_data.main_config.args.diff_files_output_folder, "")
 
     def _handle_exception(test_data):
         """If running in exception mode, print exceptions to log.
@@ -1649,7 +1649,7 @@ class Args(object):
         self.exception_string = ""
         self.fr = False
         self.copy_diff_files = False
-        self.output_folder = ""
+        self.diff_files_output_folder = ""
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -1713,7 +1713,7 @@ class Args(object):
                         return False
                     nxtproc.append(arg)
                     self.copy_diff_files = True
-                    self.output_folder = arg
+                    self.diff_files_output_folder = arg
                 except:
                     print("Error: No output folder given.\n")
                     return False
