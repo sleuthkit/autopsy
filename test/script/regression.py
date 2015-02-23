@@ -9,7 +9,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,6 +40,7 @@ import zipfile
 import zlib
 from regression_utils import *
 import shutil
+import glob
 import ntpath
 #
 # Please read me...
@@ -88,15 +89,16 @@ Day = 0
 
 
 def usage():
-	print ("-f PATH single file")
-	print ("-r rebuild")
-	print ("-l PATH path to config file")
-	print ("-u Ignore unallocated space")
-	print ("-k Do not delete SOLR index")
-	print ("-v verbose mode")
-	print ("-e ARG Enable exception mode with given string")
-	print ("-h help")
-	print ("-fr Do not download new images each time")
+    print("-f PATH single file")
+    print("-r rebuild")
+    print("-l PATH path to config file")
+    print("-u Ignore unallocated space")
+    print("-k Do not delete SOLR index")
+    print("-o PATH path to output folder for Diff files")
+    print("-v verbose mode")
+    print("-e ARG Enable exception mode with given string")
+    print("-h help")
+    print("-fr Do not download new images each time")
 
 
 #----------------------#
@@ -112,15 +114,15 @@ def main():
     test_config = TestConfiguration(args)
 
     # Download images unless they asked not to
-    if(not args.fr):
+    if (not args.fr):
         antin = ["ant"]
         antin.append("-f")
-        antin.append(os.path.join("..","..","build.xml"))
+        antin.append(os.path.join("..", "..", "build.xml"))
         antin.append("test-download-imgs")
         if SYS is OS.CYGWIN:
             subprocess.call(antin)
         elif SYS is OS.WIN:
-            theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
+            theproc = subprocess.Popen(antin, shell=True, stdout=subprocess.PIPE)
             theproc.communicate()
 
     # Otherwise test away!
@@ -138,12 +140,12 @@ class TestRunner(object):
         """
 
         #  get list of test images to process
-        test_data_list = [ TestData(image, test_config) for image in test_config.images ]
+        test_data_list = [TestData(image, test_config) for image in test_config.images]
 
         Reports.html_add_images(test_config.html_log, test_config.images)
 
         # Test each image
-        logres =[]
+        logres = []
         for test_data in test_data_list:
             Errors.clear_print_logs()
             if not (test_config.args.rebuild or os.path.exists(test_data.gold_archive)):
@@ -165,16 +167,18 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-        
+
         Reports.write_html_foot(test_config.html_log)
-       
+
         # This code was causing errors with paths, so its disabled 
-        #if test_config.jenkins:
+        # if test_config.jenkins:
         #    copyErrorFiles(Errors.errors_out, test_config)
 
-        if all([ test_data.overall_passed for test_data in test_data_list ]):
-            pass 
+        if all([test_data.overall_passed for test_data in test_data_list]):
+            pass
         else:
+            if test_data.main_config.args.copy_diff_files:
+                TestRunner._copy_diff_files(test_data)
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
@@ -197,15 +201,15 @@ class TestRunner(object):
         logging.debug(test_data.image_name)
         logging.debug("--------------------")
         TestRunner._run_ant(test_data)
-        time.sleep(2) # Give everything a second to process
+        time.sleep(2)  # Give everything a second to process
 
         try:
             # Dump the database before we diff or use it for rebuild
             TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
-            test_data.get_sorted_data_path(DBType.OUTPUT))
+                                     test_data.get_sorted_data_path(DBType.OUTPUT))
         except sqlite3.OperationalError as e:
             print("Ingest did not run properly.",
-            "Make sure no other instances of Autopsy are open and try again.")
+                  "Make sure no other instances of Autopsy are open and try again.")
             sys.exit(1)
 
         # merges logs into a single log for later diff / rebuild
@@ -238,31 +242,31 @@ class TestRunner(object):
         print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
-        
+
         # run time test only for the specific jenkins test
-        if test_data.main_config.timing: 
+        if test_data.main_config.timing:
             if test_data.main_config.timing:
                 old_time_path = test_data.get_run_time_path()
                 passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
                 test_data.run_time_passed = passed
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed and
-            test_data.run_time_passed)
+                                        test_data.errors_diff_passed and test_data.db_diff_passed and
+                                        test_data.run_time_passed)
         # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed)
+                                        test_data.errors_diff_passed and test_data.db_diff_passed)
 
         Reports.generate_reports(test_data)
-        if(not test_data.overall_passed):
-            diffFiles = [ f for f in os.listdir(test_data.output_path) if os.path.isfile(os.path.join(test_data.output_path,f)) ]
+        if (not test_data.overall_passed):
+            diffFiles = [f for f in os.listdir(test_data.output_path) if
+                         os.path.isfile(os.path.join(test_data.output_path, f))]
             for f in diffFiles:
-               if f.endswith("Diff.txt"):
-                  Errors.add_errors_out(os.path.join(test_data.output_path, f))
+                if f.endswith("Diff.txt"):
+                    Errors.add_errors_out(os.path.join(test_data.output_path, f))
             Errors.add_errors_out(test_data.common_log_path)
         return logres
-
 
     def _extract_gold(test_data):
         """Extract gold archive file to output/gold/tmp/
@@ -287,6 +291,26 @@ class TestRunner(object):
         else:
             print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
 
+    def _copy_diff_files(test_data):
+        """Copies the Diff-txt files from the output directory to a specified location
+        Args:
+            test_data: the TestData
+        """
+        copied = False
+
+        for file in glob.glob(test_data.output_path + "/*-Diff.txt"):
+            print(os.path.basename(file))
+            # Eg. copies HTML-Report-Diff.txt to <Image-name>-HTML-Report-Diff.txt
+            shutil.copy(file, test_data.main_config.args.output_folder +
+                        "/" + test_data.image + "-" + os.path.basename(file))
+            copied = True
+        if not copied:
+            print_report([], "NO DIFF FILES COPIED FROM " + test_data.output_path, "")
+        else:
+            print_report([], "DIFF OUTPUT COPIED TO " + test_data.main_config.args.output_folder, "")
+
+
+
     def _handle_exception(test_data):
         """If running in exception mode, print exceptions to log.
 
@@ -296,7 +320,7 @@ class TestRunner(object):
         if test_data.main_config.args.exception:
             exceptions = search_logs(test_data.main_config.args.exception_string, test_data)
             okay = ("No warnings or exceptions found containing text '" +
-            test_data.main_config.args.exception_string + "'.")
+                    test_data.main_config.args.exception_string + "'.")
             print_report(exceptions, "EXCEPTION", okay)
 
     def rebuild(test_data):
@@ -325,7 +349,7 @@ class TestRunner(object):
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             shutil.copy(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
+            error_pth = make_path(tmpdir, test_data.image_name + "SortedErrors.txt")
             shutil.copy(test_data.sorted_log, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
@@ -378,8 +402,8 @@ class TestRunner(object):
         test_data.ant = ["ant"]
         test_data.ant.append("-v")
         test_data.ant.append("-f")
-    #   case.ant.append(case.build_path)
-        test_data.ant.append(os.path.join("..","..","Testing","build.xml"))
+        #   case.ant.append(case.build_path)
+        test_data.ant.append(os.path.join("..", "..", "Testing", "build.xml"))
         test_data.ant.append("regression-test")
         test_data.ant.append("-l")
         test_data.ant.append(test_data.antlog_dir)
@@ -389,9 +413,9 @@ class TestRunner(object):
         test_data.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
         test_data.ant.append("-Dgold_path=" + test_config.gold)
         test_data.ant.append("-Dout_path=" +
-        make_local_path(test_data.output_path))
+                             make_local_path(test_data.output_path))
         if test_config.jenkins:
-            test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
+            test_data.ant.append("-Ddiff_dir=" + test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
@@ -403,7 +427,7 @@ class TestRunner(object):
         if SYS is OS.CYGWIN:
             subprocess.call(test_data.ant, stdout=subprocess.PIPE)
         elif SYS is OS.WIN:
-            theproc = subprocess.Popen(test_data.ant, shell = True, stdout=subprocess.PIPE)
+            theproc = subprocess.Popen(test_data.ant, shell=True, stdout=subprocess.PIPE)
             theproc.communicate()
         antout.close()
 
@@ -473,16 +497,16 @@ class TestData(object):
         self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
         self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
         self.test_dbdump = make_path(self.output_path, self.image_name +
-        "DBDump.txt")
+                                     "DBDump.txt")
         self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
         self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
         self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
-        self.image_name + "-archive.zip")
+                                      self.image_name + "-archive.zip")
         self.logs_dir = make_path(self.output_path, "logs")
         self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
-        "ModuleOutput", "KeywordSearch")
+                                    "ModuleOutput", "KeywordSearch")
         # Results and Info
         self.html_report_passed = False
         self.errors_diff_passed = False
@@ -518,9 +542,9 @@ class TestData(object):
         Args:
             DBType: the DBType of the path to be generated.
         """
-        if(db_type == DBType.GOLD):
+        if (db_type == DBType.GOLD):
             db_path = make_path(self.gold_data_dir, DB_FILENAME)
-        elif(db_type == DBType.OUTPUT):
+        elif (db_type == DBType.OUTPUT):
             db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
         else:
             db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
@@ -532,7 +556,7 @@ class TestData(object):
         Args:
             DBType: the DBType of the path to be generated.
         """
-        if(html_type == DBType.GOLD):
+        if (html_type == DBType.GOLD):
             return make_path(self.gold_data_dir, "Report")
         else:
             # Autopsy creates an HTML report folder in the form AutopsyTestCase DATE-TIME
@@ -583,7 +607,7 @@ class TestData(object):
             file_name: a String, the filename of the path to be generated
         """
         full_filename = self.image_name + file_name
-        if(file_type == DBType.GOLD):
+        if (file_type == DBType.GOLD):
             return make_path(self.gold_data_dir, full_filename)
         else:
             return make_path(self.output_path, full_filename)
@@ -629,7 +653,7 @@ class TestConfiguration(object):
         self.args = args
         # Paths:
         self.output_dir = ""
-        self.input_dir = make_local_path("..","input")
+        self.input_dir = make_local_path("..", "input")
         self.gold = make_path("..", "output", "gold")
         self.img_gold = make_path(self.gold, 'tmp')
         # Logs:
@@ -676,17 +700,21 @@ class TestConfiguration(object):
             logres = []
             counts = {}
             if parsed_config.getElementsByTagName("indir"):
-                self.input_dir = parsed_config.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
+                self.input_dir = parsed_config.getElementsByTagName("indir")[0].getAttribute("value").encode().decode(
+                    "utf_8")
             if parsed_config.getElementsByTagName("global_csv"):
-                self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
+                self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute(
+                    "value").encode().decode("utf_8")
                 self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
-                self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+                self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode(
+                    "utf_8")
                 self.img_gold = make_path(self.gold, 'tmp')
             if parsed_config.getElementsByTagName("jenkins"):
                 self.jenkins = True
                 if parsed_config.getElementsByTagName("diffdir"):
-                    self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
+                    self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute(
+                        "value").encode().decode("utf_8")
             else:
                 self.jenkins = False
             if parsed_config.getElementsByTagName("timing"):
@@ -704,8 +732,8 @@ class TestConfiguration(object):
 
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
-        if(not dir_exists(make_path("..", "output", "results"))):
-            os.makedirs(make_path("..", "output", "results",))
+        if (not dir_exists(make_path("..", "output", "results"))):
+            os.makedirs(make_path("..", "output", "results", ))
         self.output_dir = make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
@@ -725,7 +753,7 @@ class TestConfiguration(object):
         """Initialize the list of images to run tests on."""
         for element in parsed_config.getElementsByTagName("image"):
             value = element.getAttribute("value").encode().decode("utf_8")
-            print ("Image in Config File: " + value)
+            print("Image in Config File: " + value)
             if file_exists(value):
                 self.images.append(value)
             else:
@@ -736,13 +764,15 @@ class TestConfiguration(object):
         # Sanity check to see if there are obvious gold images that we are not testing
         gold_count = 0
         for file in os.listdir(self.gold):
-            if not(file == 'tmp'):
-                gold_count+=1
+            if not (file == 'tmp'):
+                gold_count += 1
 
         if (image_count > gold_count):
-            print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
+            print(
+                "******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
         elif (image_count < gold_count):
-            print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
+            print(
+                "******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
 
 
 #-------------------------------------------------#
@@ -764,8 +794,9 @@ class TestResultsDiffer(object):
             output_dir = test_data.output_path
             gold_bb_dump = test_data.get_sorted_data_path(DBType.GOLD)
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
-            test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
-            gold_dump=gold_dump).run_diff())
+            test_data.db_diff_passed = all(
+                TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
+                          gold_dump=gold_dump).run_diff())
 
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
@@ -774,7 +805,7 @@ class TestResultsDiffer(object):
             output_errors = test_data.get_sorted_errors_path(DBType.OUTPUT)
             gold_errors = test_data.get_sorted_errors_path(DBType.GOLD)
             passed = TestResultsDiffer._compare_text(output_errors, gold_errors,
-            replace)
+                                                     replace)
             test_data.errors_diff_passed = passed
 
             # Compare html output
@@ -782,7 +813,7 @@ class TestResultsDiffer(object):
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
             passed = TestResultsDiffer._html_report_diff(test_data)
             test_data.html_report_passed = passed
-            
+
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -806,7 +837,7 @@ class TestResultsDiffer(object):
             pre-process: (optional) a function of String -> String that will be
             called on each input file before the diff, if specified.
         """
-        if(not file_exists(output_file)):
+        if (not file_exists(output_file)):
             return False
         output_data = codecs.open(output_file, "r", "utf_8").read()
         gold_data = codecs.open(gold_file, "r", "utf_8").read()
@@ -815,12 +846,13 @@ class TestResultsDiffer(object):
             output_data = process(output_data)
             gold_data = process(gold_data)
 
-        if (not(gold_data == output_data)):
+        if (not (gold_data == output_data)):
             diff_path = os.path.splitext(os.path.basename(output_file))[0]
             diff_path += "-Diff.txt"
             diff_file = codecs.open(diff_path, "wb", "utf_8")
+            print(diff_path)
             dffcmdlst = ["diff", output_file, gold_file]
-            subprocess.call(dffcmdlst, stdout = diff_file)
+            subprocess.call(dffcmdlst, stdout=diff_file)
             Errors.add_errors_out(diff_path)
             return False
         else:
@@ -883,19 +915,19 @@ class TestResultsDiffer(object):
         line = file.readline()
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
-        
+
         newtime = test_data.total_ingest_time
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
         # run the test, 5% tolerance
-        if oldtime * 1.05 >=  newtime: # new run was faster
+        if oldtime * 1.05 >= newtime:  # new run was faster
             return True
-        else: # old run was faster
+        else:  # old run was faster
             print("The last run took: " + str(oldtime))
             print("This run took: " + str(newtime))
             diff = ((newtime / oldtime) * 100) - 100
             diff = str(diff)[:str(diff).find('.') + 3]
-            print("This run took " + diff + "% longer to run than the last run.") 
+            print("This run took " + diff + "% longer to run than the last run.")
             return False
 
 
@@ -911,10 +943,10 @@ class Reports(object):
             Reports._generate_csv(test_data.main_config.global_csv, test_data)
         else:
             Reports._generate_csv(test_data.main_config.csv, test_data)
-        
+
         if test_data.main_config.timing:
             Reports._write_time(test_data)
-            
+
     def _generate_html(test_data):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
@@ -1004,13 +1036,14 @@ class Reports(object):
             info += "<td>" + str(test_data.indexed_chunks) + "</td></tr>"
             info += "<tr><td>Out Of Disk Space:\
                              <p style='font-size: 11px;'>(will skew other test results)</p></td>"
-            info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) + "</td></tr>"
-#            info += "<tr><td>TSK Objects Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_objs) + "</td></tr>"
-#            info += "<tr><td>Artifacts Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_artifacts)+ "</td></tr>"
-#            info += "<tr><td>Attributes Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_attrs) + "</td></tr>"
+            info += "<td>" + str(len(
+                search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) + "</td></tr>"
+            #            info += "<tr><td>TSK Objects Count:</td>"
+            #            info += "<td>" + str(test_data.db_diff_results.output_objs) + "</td></tr>"
+            #            info += "<tr><td>Artifacts Count:</td>"
+            #            info += "<td>" + str(test_data.db_diff_results.output_artifacts)+ "</td></tr>"
+            #            info += "<tr><td>Attributes Count:</td>"
+            #            info += "<td>" + str(test_data.db_diff_results.output_attrs) + "</td></tr>"
             info += "</table>\
                     </div>"
             # For all the general print statements in the test_config
@@ -1098,36 +1131,36 @@ class Reports(object):
         with open(csv_path, "a") as csv:
             # Variables that need to be written
             vars = []
-            vars.append( test_data.image_file )
-            vars.append( test_data.image_name )
-            vars.append( test_data.main_config.output_dir )
-            vars.append( socket.gethostname() )
-            vars.append( test_data.autopsy_version )
-            vars.append( test_data.heap_space )
-            vars.append( test_data.start_date )
-            vars.append( test_data.end_date )
-            vars.append( test_data.total_test_time )
-            vars.append( test_data.total_ingest_time )
-            vars.append( test_data.service_times )
-            vars.append( str(len(get_exceptions(test_data))) )
-            vars.append( str(Reports._get_num_memory_errors("autopsy", test_data)) )
-            vars.append( str(Reports._get_num_memory_errors("tika", test_data)) )
-            vars.append( str(Reports._get_num_memory_errors("solr", test_data)) )
-            vars.append( str(len(search_log_set("autopsy", "TskCoreException", test_data))) )
-            vars.append( str(len(search_log_set("autopsy", "TskDataException", test_data))) )
-            vars.append( str(test_data.ingest_messages) )
-            vars.append( str(test_data.indexed_files) )
-            vars.append( str(test_data.indexed_chunks) )
-            vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
-#            vars.append( str(test_data.db_diff_results.output_objs) )
-#            vars.append( str(test_data.db_diff_results.output_artifacts) )
-#            vars.append( str(test_data.db_diff_results.output_objs) )
-            vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
-#            vars.append( test_data.db_diff_results.get_artifact_comparison() )
-#            vars.append( test_data.db_diff_results.get_attribute_comparison() )
-            vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
-            vars.append( str(test_data.html_report_passed) )
-            vars.append( test_data.ant_to_string() )
+            vars.append(test_data.image_file)
+            vars.append(test_data.image_name)
+            vars.append(test_data.main_config.output_dir)
+            vars.append(socket.gethostname())
+            vars.append(test_data.autopsy_version)
+            vars.append(test_data.heap_space)
+            vars.append(test_data.start_date)
+            vars.append(test_data.end_date)
+            vars.append(test_data.total_test_time)
+            vars.append(test_data.total_ingest_time)
+            vars.append(test_data.service_times)
+            vars.append(str(len(get_exceptions(test_data))))
+            vars.append(str(Reports._get_num_memory_errors("autopsy", test_data)))
+            vars.append(str(Reports._get_num_memory_errors("tika", test_data)))
+            vars.append(str(Reports._get_num_memory_errors("solr", test_data)))
+            vars.append(str(len(search_log_set("autopsy", "TskCoreException", test_data))))
+            vars.append(str(len(search_log_set("autopsy", "TskDataException", test_data))))
+            vars.append(str(test_data.ingest_messages))
+            vars.append(str(test_data.indexed_files))
+            vars.append(str(test_data.indexed_chunks))
+            vars.append(str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))))
+            #            vars.append( str(test_data.db_diff_results.output_objs) )
+            #            vars.append( str(test_data.db_diff_results.output_artifacts) )
+            #            vars.append( str(test_data.db_diff_results.output_objs) )
+            vars.append(make_local_path("gold", test_data.image_name, DB_FILENAME))
+            #            vars.append( test_data.db_diff_results.get_artifact_comparison() )
+            #            vars.append( test_data.db_diff_results.get_attribute_comparison() )
+            vars.append(make_local_path("gold", test_data.image_name, "standard.html"))
+            vars.append(str(test_data.html_report_passed))
+            vars.append(test_data.ant_to_string())
             # Join it together with a ", "
             output = "|".join(vars)
             output += "\n"
@@ -1159,12 +1192,12 @@ class Reports(object):
             titles.append("Indexed Files Count")
             titles.append("Indexed File Chunks Count")
             titles.append("Out Of Disk Space")
-#            titles.append("Tsk Objects Count")
-#            titles.append("Artifacts Count")
-#            titles.append("Attributes Count")
+            #            titles.append("Tsk Objects Count")
+            #            titles.append("Artifacts Count")
+            #            titles.append("Attributes Count")
             titles.append("Gold Database Name")
-#            titles.append("Artifacts Comparison")
-#            titles.append("Attributes Comparison")
+            #            titles.append("Artifacts Comparison")
+            #            titles.append("Attributes Comparison")
             titles.append("Gold Report Name")
             titles.append("Report Comparison")
             titles.append("Ant Command Line")
@@ -1196,7 +1229,6 @@ class Reports(object):
 
 
 class Logs(object):
-
     def generate_log_data(test_data):
         """Find and handle relevent data from the Autopsy logs.
 
@@ -1237,13 +1269,13 @@ class Logs(object):
                 for line in log:
                     line = line.replace(rep_path, "test_data")
                     if line.startswith("Exception"):
-                        common_log.write(file +": " +  line)
+                        common_log.write(file + ": " + line)
                     elif line.startswith("Error"):
-                        common_log.write(file +": " +  line)
+                        common_log.write(file + ": " + line)
                     elif line.startswith("SEVERE"):
-                        common_log.write(file +":" +  line)
+                        common_log.write(file + ":" + line)
                     else:
-                        warning_log.write(file +": " +  line)
+                        warning_log.write(file + ": " + line)
                 log.close()
             common_log.write("\n")
             common_log.close()
@@ -1291,16 +1323,16 @@ class Logs(object):
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
-            
+
             message_line_count = find_msg_in_log_set("Ingest messages count:", test_data)
             test_data.indexed_files = message_line_count
-            
+
             files_line_count = find_msg_in_log_set("Indexed files count:", test_data)
             test_data.indexed_files = files_line_count
-            
+
             chunks_line_count = find_msg_in_log_set("Indexed file chunks count:", test_data)
             test_data.indexed_chunks = chunks_line_count
-            
+
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to find the required information to fill test_config data.")
             Errors.print_error(str(e) + "\n")
@@ -1314,10 +1346,10 @@ class Logs(object):
                 # Kind of forcing our way into getting this data
                 # If this format changes, the tester will break
                 i = words.index("secs.")
-                times = words[i-4] + " "
-                times += words[i-3] + " "
-                times += words[i-2] + " "
-                times += words[i-1] + " "
+                times = words[i - 4] + " "
+                times += words[i - 3] + " "
+                times += words[i - 2] + " "
+                times += words[i - 1] + " "
                 times += words[i]
                 service_list.append(times)
             test_data.service_times = "; ".join(service_list)
@@ -1430,7 +1462,8 @@ def copy_logs(test_data):
         shutil.copytree(log_dir, test_data.logs_dir)
 
         # copy logs from userdir0/var/log
-        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
+        log_dir = os.path.join("..", "..", "Testing", "build", "test", "qa-functional", "work", "userdir0", "var",
+                               "log/")
         for log in os.listdir(log_dir):
             if log.find("log"):
                 new_name = log_dir + "userdir0." + log
@@ -1439,8 +1472,8 @@ def copy_logs(test_data):
                 shutil.copy(new_name, test_data.logs_dir)
                 shutil.move(new_name, log)
     except OSError as e:
-        print_error(test_data,"Error: Failed to copy the logs.")
-        print_error(test_data,str(e) + "\n")
+        print_error(test_data, "Error: Failed to copy the logs.")
+        print_error(test_data, str(e) + "\n")
         logging.warning(traceback.format_exc())
 
 
@@ -1460,6 +1493,7 @@ def getDay():
 def newDay():
     return getLastDay() != getDay()
 
+
 #------------------------------------------------------------#
 # Exception classes to manage "acceptable" thrown exceptions #
 #         versus unexpected and fatal exceptions            #
@@ -1472,6 +1506,7 @@ class FileNotFoundException(Exception):
     they will throw a FileNotFoundException unless the purpose
     is to return False.
     """
+
     def __init__(self, file):
         self.file = file
         self.strerror = "FileNotFoundException: " + file
@@ -1490,6 +1525,7 @@ class DirNotFoundException(Exception):
     If a directory cannot be found by a helper function,
     it will throw this exception
     """
+
     def __init__(self, dir):
         self.dir = dir
         self.strerror = "DirNotFoundException: " + dir
@@ -1563,6 +1599,7 @@ class DiffResults(object):
         attribute_comp: a listof_String, describing the differences
         passed: a boolean, did the diff pass?
     """
+
     def __init__(self, tsk_diff):
         """Inits a DiffResults
 
@@ -1614,6 +1651,7 @@ class Args(object):
         exception_sring: a String representing and exception name
         fr: a boolean indicating whether gold standard images will be downloaded
     """
+
     def __init__(self):
         self.single = False
         self.single_file = ""
@@ -1627,6 +1665,8 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
+        self.copy_diff_files = False
+        self.output_folder = ""
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -1636,16 +1676,16 @@ class Args(object):
         while sys.argv:
             arg = sys.argv.pop(0)
             nxtproc.append(arg)
-            if(arg == "-f"):
+            if (arg == "-f"):
                 arg = sys.argv.pop(0)
                 print("Running on a single file:")
                 print(path_fix(arg) + "\n")
                 self.single = True
                 self.single_file = path_fix(arg)
-            elif(arg == "-r" or arg == "--rebuild"):
+            elif (arg == "-r" or arg == "--rebuild"):
                 print("Running in rebuild mode.\n")
                 self.rebuild = True
-            elif(arg == "-l" or arg == "--list"):
+            elif (arg == "-l" or arg == "--list"):
                 try:
                     arg = sys.argv.pop(0)
                     nxtproc.append(arg)
@@ -1656,17 +1696,17 @@ class Args(object):
                 except:
                     print("Error: No configuration file given.\n")
                     return False
-            elif(arg == "-u" or arg == "--unallocated"):
-               print("Ignoring unallocated space.\n")
-               self.unallocated = True
-            elif(arg == "-k" or arg == "--keep"):
+            elif (arg == "-u" or arg == "--unallocated"):
+                print("Ignoring unallocated space.\n")
+                self.unallocated = True
+            elif (arg == "-k" or arg == "--keep"):
                 print("Keeping the Solr index.\n")
                 self.keep = True
-            elif(arg == "-v" or arg == "--verbose"):
+            elif (arg == "-v" or arg == "--verbose"):
                 print("Running in verbose mode:")
                 print("Printing all thrown exceptions.\n")
                 self.verbose = True
-            elif(arg == "-e" or arg == "--exception"):
+            elif (arg == "-e" or arg == "--exception"):
                 try:
                     arg = sys.argv.pop(0)
                     nxtproc.append(arg)
@@ -1682,6 +1722,18 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
+            elif arg == "-o" or arg == "--output":
+                try:
+                    arg = sys.argv.pop(0)
+                    if not os.path.exists(arg):
+                        print("Invalid output folder given.\n")
+                        return False
+                    nxtproc.append(arg)
+                    self.copy_diff_files = True
+                    self.output_folder = arg
+                except:
+                    print("Error: No output folder given.\n")
+                    return False
             else:
                 print(usage())
                 return False
@@ -1700,21 +1752,22 @@ class Args(object):
             print("Cannot run both from config file and on a single file.")
             return False
         if self.list:
-           if not file_exists(self.config_file):
-               print("Configuration file does not exist at:",
-               self.config_file)
-               return False
+            if not file_exists(self.config_file):
+                print("Configuration file does not exist at:",
+                      self.config_file)
+                return False
         elif self.single:
-           if not file_exists(self.single_file):
-               msg = "Image file does not exist at: " + self.single_file
-               return False
+            if not file_exists(self.single_file):
+                msg = "Image file does not exist at: " + self.single_file
+                return False
         if (not self.single) and (not self.ignore) and (not self.list):
-           self.config_file = "config.xml"
-           if not file_exists(self.config_file):
-               msg = "Configuration file does not exist at: " + self.config_file
-               return False
+            self.config_file = "config.xml"
+            if not file_exists(self.config_file):
+                msg = "Configuration file does not exist at: " + self.config_file
+                return False
 
         return True
+
 
 ####
 # Helper Functions
@@ -1766,6 +1819,7 @@ def search_log(log, string, test_data):
     except:
         raise FileNotFoundException(logs_path)
 
+
 # Search through all the the logs of the given type
 # Types include autopsy, tika, and solr
 
@@ -1794,40 +1848,40 @@ def search_log_set(type, string, test_data):
 
 
 def find_msg_in_log_set(string, test_data):
-   """Count how many strings of a certain type are in a log set.
+    """Count how many strings of a certain type are in a log set.
 
-   Args:
-      string: the String to search for.
-      test_data: the TestData containing the logs to search.
-   Returns:
-      an int, the number of occurances of the string type.
-   """
-   count = 0
-   try:
-      line = search_log_set("autopsy", string, test_data)[0]
-      count = int(line.rstrip().split(": ")[2])
-   except (Exception) as e:
-      # there weren't any matching messages found
-      pass
-   return count
+    Args:
+       string: the String to search for.
+       test_data: the TestData containing the logs to search.
+    Returns:
+       an int, the number of occurances of the string type.
+    """
+    count = 0
+    try:
+        line = search_log_set("autopsy", string, test_data)[0]
+        count = int(line.rstrip().split(": ")[2])
+    except (Exception) as e:
+        # there weren't any matching messages found
+        pass
+    return count
 
 
 def find_msg_in_log(log, string, test_data):
-   """Get the strings of a certain type that are in a log.
+    """Get the strings of a certain type that are in a log.
 
-   Args:
-      string: the String to search for.
-      test_data: the TestData containing the log to search.
-   Returns:
-      a listof_String, the lines on which the String was found. 
-   """
-   lines = []
-   try:
-      lines = search_log("autopsy.log.0", string, test_data)[0]
-   except (Exception) as e:
-      # there weren't any matching messages found
-      pass
-   return lines
+    Args:
+       string: the String to search for.
+       test_data: the TestData containing the log to search.
+    Returns:
+       a listof_String, the lines on which the String was found.
+    """
+    lines = []
+    try:
+        lines = search_log("autopsy.log.0", string, test_data)[0]
+    except (Exception) as e:
+        # there weren't any matching messages found
+        pass
+    return lines
 
 
 def clear_dir(dir):
@@ -1842,8 +1896,8 @@ def clear_dir(dir):
         os.makedirs(dir)
         return True;
     except OSError as e:
-        print_error(test_data,"Error: Cannot clear the given directory:")
-        print_error(test_data,dir + "\n")
+        print_error(test_data, "Error: Cannot clear the given directory:")
+        print_error(test_data, dir + "\n")
         print(str(e))
         return False;
 
@@ -1859,8 +1913,8 @@ def del_dir(dir):
             shutil.rmtree(dir)
         return True;
     except:
-        print_error(test_data,"Error: Cannot delete the given directory:")
-        print_error(test_data,dir + "\n")
+        print_error(test_data, "Error: Cannot delete the given directory:")
+        print_error(test_data, dir + "\n")
         return False;
 
 
@@ -1912,7 +1966,7 @@ def copyErrorFiles(attachments, test_config):
     """
     call = ['pwd']
     subprocess.call(call)
-   
+
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:
@@ -1925,10 +1979,11 @@ def copyErrorFiles(attachments, test_config):
         destination = os.path.join(test_config.diff_dir, filename)
         call = ['cp', file, destination]
         subprocess.call(call)
-        
+
 
 class OS:
-  LINUX, MAC, WIN, CYGWIN = range(4)
+    LINUX, MAC, WIN, CYGWIN = range(4)
+
 
 if __name__ == "__main__":
 
