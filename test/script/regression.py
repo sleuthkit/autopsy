@@ -174,11 +174,11 @@ class TestRunner(object):
         # if test_config.jenkins:
         #    copyErrorFiles(Errors.errors_out, test_config)
 
-
         if all([test_data.overall_passed for test_data in test_data_list]):
             pass
         else:
-            TestRunner._copy_diff_files(test_data)
+            if test_data.main_config.args.copy_diff_output:
+                TestRunner._copy_diff_files(test_data)
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
