@@ -41,6 +41,7 @@ import zlib
 from regression_utils import *
 import shutil
 import ntpath
+import glob
 #
 # Please read me...
 #
@@ -93,6 +94,7 @@ def usage():
 	print ("-l PATH path to config file")
 	print ("-u Ignore unallocated space")
 	print ("-k Do not delete SOLR index")
+	print("-o PATH path to output folder for Diff files")
 	print ("-v verbose mode")
 	print ("-e ARG Enable exception mode with given string")
 	print ("-h help")
@@ -175,6 +177,8 @@ class TestRunner(object):
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
         else:
+            if test_data.main_config.args.copy_diff_files:
+                TestRunner._copy_diff_files(test_data)
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
@@ -286,6 +290,23 @@ class TestRunner(object):
                 print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
         else:
             print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
+
+    def _copy_diff_files(test_data):
+        """Copies the Diff-txt files from the output directory to a specified location
+        Args:
+            test_data: the TestData
+        """
+        copied = False
+
+        for file in glob.glob(test_data.output_path + "/*-Diff.txt"):
+            # Eg. copies HTML-Report-Diff.txt to <Image-name>-HTML-Report-Diff.txt
+            shutil.copy(file, test_data.main_config.args.diff_files_output_folder +
+                        "/" + test_data.image + "-" + os.path.basename(file))
+            copied = True
+        if not copied:
+            print_report([], "NO DIFF FILES COPIED FROM " + test_data.output_path, "")
+        else:
+            print_report([], "DIFF OUTPUT COPIED TO " + test_data.main_config.args.diff_files_output_folder, "")
 
     def _handle_exception(test_data):
         """If running in exception mode, print exceptions to log.
@@ -1627,6 +1648,8 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
+        self.copy_diff_files = False
+        self.diff_files_output_folder = ""
 
     def parse(self):
         """Get the command line arguments and parse them."""
@@ -1682,6 +1705,18 @@ class Args(object):
             elif arg == "-fr" or arg == "--forcerun":
                 print("Not downloading new images")
                 self.fr = True
+            elif arg == "-o" or arg == "--output":
+                try:
+                    arg = sys.argv.pop(0)
+                    if not os.path.exists(arg):
+                        print("Invalid output folder given.\n")
+                        return False
+                    nxtproc.append(arg)
+                    self.copy_diff_files = True
+                    self.diff_files_output_folder = arg
+                except:
+                    print("Error: No output folder given.\n")
+                    return False
             else:
                 print(usage())
                 return False
