@@ -177,7 +177,7 @@ class TestRunner(object):
         if all([test_data.overall_passed for test_data in test_data_list]):
             pass
         else:
-            if test_data.main_config.args.copy_diff_output:
+            if test_data.main_config.args.copy_diff_files:
                 TestRunner._copy_diff_files(test_data)
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
@@ -1665,7 +1665,7 @@ class Args(object):
         self.exception = False
         self.exception_string = ""
         self.fr = False
-        self.copy_diff_output = False
+        self.copy_diff_files = False
         self.output_folder = ""
 
     def parse(self):
@@ -1729,7 +1729,7 @@ class Args(object):
                         print("Invalid output folder given.\n")
                         return False
                     nxtproc.append(arg)
-                    self.copy_diff_output = True
+                    self.copy_diff_files = True
                     self.output_folder = arg
                 except:
                     print("Error: No output folder given.\n")
