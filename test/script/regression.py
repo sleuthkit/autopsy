@@ -177,8 +177,6 @@ class TestRunner(object):
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass 
         else:
-            if test_data.main_config.args.copy_diff_files:
-                TestRunner._copy_diff_files(test_data)
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
@@ -265,6 +263,9 @@ class TestRunner(object):
                if f.endswith("Diff.txt"):
                   Errors.add_errors_out(os.path.join(test_data.output_path, f))
             Errors.add_errors_out(test_data.common_log_path)
+            # Diff files are copied to user-specified folder for every ingested image test_data_list.
+            if test_data.main_config.args.copy_diff_files:
+                TestRunner._copy_diff_files(test_data)
         return logres
 
 
