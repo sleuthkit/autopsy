@@ -280,7 +280,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
                 break;
             }
         } catch (TskCoreException ex) {            
-            logger.log(Level.WARNING, "Couldn't obtain file attributes for file: " + archiveFile.toString(), ex);       
+            logger.log(Level.WARNING, "Couldn't obtain file attributes for file: " + archiveFile.toString(), ex); //NON-NLS
         }     
         
         if (detectedFormat == null) {
@@ -288,7 +288,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
             
             // if we don't have attribute info then use file extension
             String extension = archiveFile.getNameExtension();
-            if ("rar".equals(extension))
+            if ("rar".equals(extension)) //NON-NLS
             {
                 // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
                 // it will be opened incorrectly when using 7zip's built-in auto-detect functionality
@@ -298,7 +298,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
             // Otherwise open the archive using 7zip's built-in auto-detect functionality
             return null;
         }
-        else if (detectedFormat.contains("application/x-rar-compressed"))
+        else if (detectedFormat.contains("application/x-rar-compressed")) //NON-NLS
         {
             // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
             // it will be opened incorrectly when using 7zip's built-in auto-detect functionality

@@ -48,22 +48,22 @@ class EvalDomainObj extends EvaluatableObject {
         setWarnings("");
 
         if (obj.getValue() == null) {
-            return new ObservableResult(id, "DomainObject: No domain value field found",
+            return new ObservableResult(id, "DomainObject: No domain value field found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
         // Since we have single URL artifacts, ALL and NONE conditions probably don't make sense to test
         if (!((obj.getValue().getApplyCondition() == null)
                 || (obj.getValue().getApplyCondition() == ConditionApplicationEnum.ANY))) {
-            return new ObservableResult(id, "URIObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString()
-                    + " on URI object", spacing, ObservableResult.ObservableState.INDETERMINATE, null);
+            return new ObservableResult(id, "URIObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString() //NON-NLS
+                    + " on URI object", spacing, ObservableResult.ObservableState.INDETERMINATE, null); //NON-NLS
         }
 
         // If the condition is not "CONTAINS", add a warning that it's being ignored
         if ((obj.getValue().getCondition() != null)
                 && (obj.getValue().getCondition() != ConditionTypeEnum.CONTAINS)) {
-            addWarning("Warning: Ignoring condition " + obj.getValue().getCondition().toString()
-                    + " on DomainName - using substring comparison");
+            addWarning("Warning: Ignoring condition " + obj.getValue().getCondition().toString() //NON-NLS
+                    + " on DomainName - using substring comparison"); //NON-NLS
         }
 
         Case case1 = Case.getCurrentCase();
@@ -96,18 +96,18 @@ class EvalDomainObj extends EvaluatableObject {
             if (!finalHits.isEmpty()) {
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                 for (BlackboardArtifact a : finalHits) {
-                    artData.add(new StixArtifactData(a.getObjectID(), id, "DomainNameObject"));
+                    artData.add(new StixArtifactData(a.getObjectID(), id, "DomainNameObject")); //NON-NLS
                 }
-                return new ObservableResult(id, "DomainNameObject: Found a match for " + obj.getValue().getValue().toString()
+                return new ObservableResult(id, "DomainNameObject: Found a match for " + obj.getValue().getValue().toString() //NON-NLS
                         + " " + getPrintableWarnings(),
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
-            return new ObservableResult(id, "DomainNameObject: Found no matches for " + obj.getValue().getValue().toString()
+            return new ObservableResult(id, "DomainNameObject: Found no matches for " + obj.getValue().getValue().toString() //NON-NLS
                     + " " + getPrintableWarnings(),
                     spacing, ObservableResult.ObservableState.FALSE, null);
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "DomainNameObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "DomainNameObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 

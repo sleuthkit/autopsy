@@ -276,13 +276,16 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 super.get(); //block and get all exceptions thrown while doInBackground()
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
-                mediaPane.setProgressLabelText("media buffering was canceled");
+                mediaPane.setProgressLabelText(
+                        NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingCancelled"));
             } catch (InterruptedException ex) {
                 logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
-                mediaPane.setProgressLabelText("media buffering was interrupted");
+                mediaPane.setProgressLabelText(
+                        NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingInterrupted"));
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
-                mediaPane.setProgressLabelText("Error writing video to disk");
+                mediaPane.setProgressLabelText(
+                        NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.errorWritingVideoToDisk"));
             } finally {
                 progress.finish();
                 if (!this.isCancelled()) {

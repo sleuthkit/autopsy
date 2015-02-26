@@ -147,7 +147,7 @@ public final class ExecUtil {
             if (process.isAlive()) {
                 killProcess(process);
             }
-            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0));
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0)); // NON-NLS
             Thread.currentThread().interrupt();
         }
         return process.exitValue();

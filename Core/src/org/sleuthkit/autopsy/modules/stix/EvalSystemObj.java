@@ -66,14 +66,14 @@ class EvalSystemObj extends EvaluatableObject {
 
         if (obj.getHostname() != null) {
             haveHostname = true;
-            searchString = "Hostname \"" + obj.getHostname().getValue().toString() + "\"";
+            searchString = "Hostname \"" + obj.getHostname().getValue().toString() + "\""; //NON-NLS
         }
         if(obj.getProcessorArchitecture() != null){
             haveProcArch = true;
             if(! searchString.isEmpty()){
-                searchString += " and ";
+                searchString += " and "; //NON-NLS
             }
-            searchString += "Processor architecture \"" + obj.getProcessorArchitecture().getValue().toString() + "\"";
+            searchString += "Processor architecture \"" + obj.getProcessorArchitecture().getValue().toString() + "\""; //NON-NLS
         }
 
         WindowsSystem winSysObj = null;
@@ -83,44 +83,44 @@ class EvalSystemObj extends EvaluatableObject {
             if (winSysObj.getProductID() != null) {
                 haveProductID = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "Product ID \"" + winSysObj.getProductID().getValue().toString() + "\"";
+                searchString += "Product ID \"" + winSysObj.getProductID().getValue().toString() + "\""; //NON-NLS
             }
             if (winSysObj.getProductName() != null) {
                 haveProductName = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "Product Name \"" + winSysObj.getProductName().getValue().toString() + "\"";
+                searchString += "Product Name \"" + winSysObj.getProductName().getValue().toString() + "\""; //NON-NLS
             }
             if (winSysObj.getRegisteredOrganization() != null) {
                 haveOrganization = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "Registered Org \"" + winSysObj.getRegisteredOrganization().getValue().toString() + "\"";
+                searchString += "Registered Org \"" + winSysObj.getRegisteredOrganization().getValue().toString() + "\""; //NON-NLS
             }
             if (winSysObj.getRegisteredOwner() != null) {
                 haveOwner = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "Registered Owner \"" + winSysObj.getRegisteredOwner().getValue().toString() + "\"";
+                searchString += "Registered Owner \"" + winSysObj.getRegisteredOwner().getValue().toString() + "\""; //NON-NLS
             }
             if (winSysObj.getWindowsSystemDirectory() != null) {
                 haveSystemRoot = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "System root \"" + winSysObj.getWindowsSystemDirectory().getValue().toString() + "\"";
+                searchString += "System root \"" + winSysObj.getWindowsSystemDirectory().getValue().toString() + "\""; //NON-NLS
             }
             if (winSysObj.getWindowsTempDirectory() != null) {
                 haveTempDir = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "Temp dir \"" + winSysObj.getWindowsTempDirectory().getValue().toString() + "\"";
+                searchString += "Temp dir \"" + winSysObj.getWindowsTempDirectory().getValue().toString() + "\""; //NON-NLS
             }
         }
 
@@ -128,7 +128,7 @@ class EvalSystemObj extends EvaluatableObject {
         if (!(haveHostname || haveProcArch
                 || haveTempDir || haveProductName || haveSystemRoot || haveProductID
                 || haveOwner || haveOrganization)) {
-            return new ObservableResult(id, "SystemObject: No evaluatable fields found",
+            return new ObservableResult(id, "SystemObject: No evaluatable fields found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -204,21 +204,21 @@ class EvalSystemObj extends EvaluatableObject {
                 if (!finalHits.isEmpty()) {
                     List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                     for (BlackboardArtifact a : finalHits) {
-                        artData.add(new StixArtifactData(a.getObjectID(), id, "System"));
+                        artData.add(new StixArtifactData(a.getObjectID(), id, "System")); //NON-NLS
                     }
-                    return new ObservableResult(id, "SystemObject: Found a match for " + searchString,
+                    return new ObservableResult(id, "SystemObject: Found a match for " + searchString, //NON-NLS
                             spacing, ObservableResult.ObservableState.TRUE, artData);
                 }
 
                 // Didn't find any matches
-                return new ObservableResult(id, "SystemObject: No matches found for " + searchString,
+                return new ObservableResult(id, "SystemObject: No matches found for " + searchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.FALSE, null);
             } else {
-                return new ObservableResult(id, "SystemObject: No OS artifacts found",
+                return new ObservableResult(id, "SystemObject: No OS artifacts found", //NON-NLS
                         spacing, ObservableResult.ObservableState.INDETERMINATE, null);
             }
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "SystemObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "SystemObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
     }
@@ -230,62 +230,62 @@ class EvalSystemObj extends EvaluatableObject {
         List<String> fieldNames = new ArrayList<String>();
 
         if (obj.getAvailablePhysicalMemory() != null) {
-            fieldNames.add("Available_Physical_Memory");
+            fieldNames.add("Available_Physical_Memory"); //NON-NLS
         }
         if (obj.getBIOSInfo() != null) {
-            fieldNames.add("BIOS_Info");
+            fieldNames.add("BIOS_Info"); //NON-NLS
         }
         if (obj.getDate() != null) {
-            fieldNames.add("Date");
+            fieldNames.add("Date"); //NON-NLS
         }
         if (obj.getLocalTime() != null) {
-            fieldNames.add("Local_Time");
+            fieldNames.add("Local_Time"); //NON-NLS
         }
         if (obj.getNetworkInterfaceList() != null) {
-            fieldNames.add("Network_Interface_List");
+            fieldNames.add("Network_Interface_List"); //NON-NLS
         }
         if (obj.getOS() != null) {
-            fieldNames.add("OS");
+            fieldNames.add("OS"); //NON-NLS
         }
         if(obj.getProcessor() != null){
-            fieldNames.add("Processor");
+            fieldNames.add("Processor"); //NON-NLS
         }
         if (obj.getSystemTime() != null) {
-            fieldNames.add("System_Time");
+            fieldNames.add("System_Time"); //NON-NLS
         }
         if (obj.getTimezoneDST() != null) {
-            fieldNames.add("Timezone_DST");
+            fieldNames.add("Timezone_DST"); //NON-NLS
         }
         if (obj.getTimezoneStandard() != null) {
-            fieldNames.add("Timezone_Standard");
+            fieldNames.add("Timezone_Standard"); //NON-NLS
         }
         if (obj.getTotalPhysicalMemory() != null) {
-            fieldNames.add("Total_Physical_Memory");
+            fieldNames.add("Total_Physical_Memory"); //NON-NLS
         }
         if (obj.getUptime() != null) {
-            fieldNames.add("Uptime");
+            fieldNames.add("Uptime"); //NON-NLS
         }
         if (obj.getUsername() != null) {
-            fieldNames.add("Username");
+            fieldNames.add("Username"); //NON-NLS
         }
 
         if (obj instanceof WindowsSystem) {
             WindowsSystem winSysObj = (WindowsSystem) obj;
 
             if (winSysObj.getDomains() != null) {
-                fieldNames.add("Domain");
+                fieldNames.add("Domain"); //NON-NLS
             }
             if (winSysObj.getGlobalFlagList() != null) {
-                fieldNames.add("Global_Flag_List");
+                fieldNames.add("Global_Flag_List"); //NON-NLS
             }
             if (winSysObj.getNetBIOSName() != null) {
-                fieldNames.add("NetBIOS_Name");
+                fieldNames.add("NetBIOS_Name"); //NON-NLS
             }
             if (winSysObj.getOpenHandleList() != null) {
-                fieldNames.add("Open_Handle_List");
+                fieldNames.add("Open_Handle_List"); //NON-NLS
             }
             if (winSysObj.getWindowsDirectory() != null) {
-                fieldNames.add("Windows_Directory");
+                fieldNames.add("Windows_Directory"); //NON-NLS
             }
         }
 
@@ -297,6 +297,6 @@ class EvalSystemObj extends EvaluatableObject {
             warningStr += name;
         }
 
-        addWarning("Unsupported field(s): " + warningStr);
+        addWarning("Unsupported field(s): " + warningStr); //NON-NLS
     }
 }

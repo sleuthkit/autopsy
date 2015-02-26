@@ -29,7 +29,7 @@ public class ColorUtilities {
     }
 
     public static String getRGBCode(Color color) {
-        return String.format("#%02X%02X%02X%02X",
+        return String.format("#%02X%02X%02X%02X", //NON-NLS
                 (int) (color.getRed() * 255),
                 (int) (color.getGreen() * 255),
                 (int) (color.getBlue() * 255),

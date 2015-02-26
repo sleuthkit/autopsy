@@ -125,7 +125,7 @@ class EvalEmailObj extends EvaluatableObject {
 
         // Make sure at least one test had some data
         if ((!hadToFields) && (!hadFromField) && (!hadCcFields) && (!hadSubjectField)) {
-            return new ObservableResult(id, "EmailMessage: Could not find any parsable EmailMessage fields "
+            return new ObservableResult(id, "EmailMessage: Could not find any parsable EmailMessage fields " //NON-NLS
                     + getPrintableWarnings(),
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
@@ -133,7 +133,7 @@ class EvalEmailObj extends EvaluatableObject {
         // Check if there were more fields that aren't currently supported
         String fieldNames = getListOfUnsupportedFields();
         if (fieldNames.length() > 0) {
-            addWarning("Unsupported field(s) found: " + fieldNames);
+            addWarning("Unsupported field(s) found: " + fieldNames); //NON-NLS
         }
 
         // Find the artifacts that matched all of the fields
@@ -159,7 +159,7 @@ class EvalEmailObj extends EvaluatableObject {
 
         if (!finalHitsStarted) {
             // We didn't find any fields that could be evaluated
-            return new ObservableResult(id, "EmailMessage: EmailObj parsing incomplete " + getPrintableWarnings(),
+            return new ObservableResult(id, "EmailMessage: EmailObj parsing incomplete " + getPrintableWarnings(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -167,12 +167,12 @@ class EvalEmailObj extends EvaluatableObject {
         if (finalHits.size() > 0) {
             List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
             for (BlackboardArtifact a : finalHits) {
-                artData.add(new StixArtifactData(a.getObjectID(), id, "EmailMessage"));
+                artData.add(new StixArtifactData(a.getObjectID(), id, "EmailMessage")); //NON-NLS
             }
-            return new ObservableResult(id, "EmailMessage: " + finalHits.size() + " matching artifacts found " + getPrintableWarnings(),
+            return new ObservableResult(id, "EmailMessage: " + finalHits.size() + " matching artifacts found " + getPrintableWarnings(), //NON-NLS
                     spacing, ObservableResult.ObservableState.TRUE, artData);
         } else {
-            return new ObservableResult(id, "EmailMessage: No matching artifacts found " + getPrintableWarnings(),
+            return new ObservableResult(id, "EmailMessage: No matching artifacts found " + getPrintableWarnings(), //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
         }
     }
@@ -203,69 +203,69 @@ class EvalEmailObj extends EvaluatableObject {
         String fieldNames = "";
         if (obj.getHeader() != null) {
             if (obj.getHeader().getReceivedLines() != null) {
-                fieldNames += "Received_Lines ";
+                fieldNames += "Received_Lines "; //NON-NLS
             }
             if (obj.getHeader().getBCC() != null) {
-                fieldNames += "BCC ";
+                fieldNames += "BCC "; //NON-NLS
             }
             if (obj.getHeader().getInReplyTo() != null) {
-                fieldNames += "In_Reply_To ";
+                fieldNames += "In_Reply_To "; //NON-NLS
             }
             if (obj.getHeader().getDate() != null) {
-                fieldNames += "Date ";
+                fieldNames += "Date "; //NON-NLS
             }
             if (obj.getHeader().getMessageID() != null) {
-                fieldNames += "Message_ID ";
+                fieldNames += "Message_ID "; //NON-NLS
             }
             if (obj.getHeader().getSender() != null) {
-                fieldNames += "Sender ";
+                fieldNames += "Sender "; //NON-NLS
             }
             if (obj.getHeader().getReplyTo() != null) {
-                fieldNames += "Reply_To ";
+                fieldNames += "Reply_To "; //NON-NLS
             }
             if (obj.getHeader().getErrorsTo() != null) {
-                fieldNames += "Errors_To ";
+                fieldNames += "Errors_To "; //NON-NLS
             }
             if (obj.getHeader().getBoundary() != null) {
-                fieldNames += "Boundary ";
+                fieldNames += "Boundary "; //NON-NLS
             }
             if (obj.getHeader().getContentType() != null) {
-                fieldNames += "Content_Type ";
+                fieldNames += "Content_Type "; //NON-NLS
             }
             if (obj.getHeader().getMIMEVersion() != null) {
-                fieldNames += "MIME_Version ";
+                fieldNames += "MIME_Version "; //NON-NLS
             }
             if (obj.getHeader().getPrecedence() != null) {
-                fieldNames += "Precedence ";
+                fieldNames += "Precedence "; //NON-NLS
             }
             if (obj.getHeader().getUserAgent() != null) {
-                fieldNames += "User_Agent ";
+                fieldNames += "User_Agent "; //NON-NLS
             }
             if (obj.getHeader().getXMailer() != null) {
-                fieldNames += "X_Mailer ";
+                fieldNames += "X_Mailer "; //NON-NLS
             }
             if (obj.getHeader().getXOriginatingIP() != null) {
-                fieldNames += "X_Originiating_IP ";
+                fieldNames += "X_Originiating_IP "; //NON-NLS
             }
             if (obj.getHeader().getXPriority() != null) {
-                fieldNames += "X_Priority ";
+                fieldNames += "X_Priority "; //NON-NLS
             }
 
         }
         if (obj.getEmailServer() != null) {
-            fieldNames += "Email_Server ";
+            fieldNames += "Email_Server "; //NON-NLS
         }
         if (obj.getRawBody() != null) {
-            fieldNames += "Raw_Body ";
+            fieldNames += "Raw_Body "; //NON-NLS
         }
         if (obj.getRawHeader() != null) {
-            fieldNames += "Raw_Header ";
+            fieldNames += "Raw_Header "; //NON-NLS
         }
         if (obj.getAttachments() != null) {
-            fieldNames += "Attachments ";
+            fieldNames += "Attachments "; //NON-NLS
         }
         if (obj.getLinks() != null) {
-            fieldNames += "Links ";
+            fieldNames += "Links "; //NON-NLS
         }
 
         return fieldNames;

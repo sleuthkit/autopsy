@@ -53,7 +53,7 @@ class EvalAccountObj extends EvaluatableObject {
         //   UserAccount: Home_Directory, Username
         //   WinUserAccount: SID
         if (!(obj instanceof UserAccountObjectType)) {
-            return new ObservableResult(id, "AccountObject: Can not process \"Account\" - need a User_Account or Windows_User_Account",
+            return new ObservableResult(id, "AccountObject: Can not process \"Account\" - need a User_Account or Windows_User_Account", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -68,14 +68,14 @@ class EvalAccountObj extends EvaluatableObject {
         UserAccountObjectType userAccountObj = (UserAccountObjectType) obj;
         if (userAccountObj.getHomeDirectory() != null) {
             haveHomeDir = true;
-            searchString = "HomeDir \"" + userAccountObj.getHomeDirectory().getValue().toString() + "\"";
+            searchString = "HomeDir \"" + userAccountObj.getHomeDirectory().getValue().toString() + "\""; //NON-NLS
         }
         if (userAccountObj.getUsername() != null) {
             haveUsername = true;
             if (!searchString.isEmpty()) {
-                searchString += " and ";
+                searchString += " and "; //NON-NLS
             }
-            searchString += "Username \"" + userAccountObj.getUsername().getValue().toString() + "\"";
+            searchString += "Username \"" + userAccountObj.getUsername().getValue().toString() + "\""; //NON-NLS
         }
 
         WindowsUserAccount winUserObj = null;
@@ -85,14 +85,14 @@ class EvalAccountObj extends EvaluatableObject {
             if (winUserObj.getSecurityID() != null) {
                 haveSID = true;
                 if (!searchString.isEmpty()) {
-                    searchString += " and ";
+                    searchString += " and "; //NON-NLS
                 }
-                searchString += "SID \"" + winUserObj.getSecurityID().getValue().toString() + "\"";
+                searchString += "SID \"" + winUserObj.getSecurityID().getValue().toString() + "\""; //NON-NLS
             }
         }
 
         if (!(haveHomeDir || haveUsername || haveSID)) {
-            return new ObservableResult(id, "AccountObject: No evaluatable fields found",
+            return new ObservableResult(id, "AccountObject: No evaluatable fields found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -141,17 +141,17 @@ class EvalAccountObj extends EvaluatableObject {
             if (!finalHits.isEmpty()) {
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                 for (BlackboardArtifact a : finalHits) {
-                    artData.add(new StixArtifactData(a.getObjectID(), id, "Account"));
+                    artData.add(new StixArtifactData(a.getObjectID(), id, "Account")); //NON-NLS
                 }
-                return new ObservableResult(id, "AccountObject: Found a match for " + searchString,
+                return new ObservableResult(id, "AccountObject: Found a match for " + searchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
             // Didn't find any matches
-            return new ObservableResult(id, "AccountObject: No matches found for " + searchString,
+            return new ObservableResult(id, "AccountObject: No matches found for " + searchString, //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "AccountObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "AccountObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -164,43 +164,43 @@ class EvalAccountObj extends EvaluatableObject {
         List<String> fieldNames = new ArrayList<String>();
 
         if (obj.getDescription() != null) {
-            fieldNames.add("Description");
+            fieldNames.add("Description"); //NON-NLS
         }
         if (obj.getDomain() != null) {
-            fieldNames.add("Domain");
+            fieldNames.add("Domain"); //NON-NLS
         }
         if (obj.getAuthentications() != null) {
-            fieldNames.add("Authentication");
+            fieldNames.add("Authentication"); //NON-NLS
         }
         if (obj.getCreationDate() != null) {
-            fieldNames.add("Creation_Date");
+            fieldNames.add("Creation_Date"); //NON-NLS
         }
         if (obj.getModifiedDate() != null) {
-            fieldNames.add("Modified_Date");
+            fieldNames.add("Modified_Date"); //NON-NLS
         }
         if (obj.getLastAccessedTime() != null) {
-            fieldNames.add("Last_Accessed_Time");
+            fieldNames.add("Last_Accessed_Time"); //NON-NLS
         }
 
         if (obj instanceof UserAccountObjectType) {
             UserAccountObjectType userAccountObj = (UserAccountObjectType) obj;
             if (userAccountObj.getFullName() != null) {
-                fieldNames.add("Full_Name");
+                fieldNames.add("Full_Name"); //NON-NLS
             }
             if (userAccountObj.getGroupList() != null) {
-                fieldNames.add("Group_List");
+                fieldNames.add("Group_List"); //NON-NLS
             }
             if (userAccountObj.getLastLogin() != null) {
-                fieldNames.add("Last_Login");
+                fieldNames.add("Last_Login"); //NON-NLS
             }
             if (userAccountObj.getPrivilegeList() != null) {
-                fieldNames.add("Privilege_List");
+                fieldNames.add("Privilege_List"); //NON-NLS
             }
             if (userAccountObj.getScriptPath() != null) {
-                fieldNames.add("Script_Path");
+                fieldNames.add("Script_Path"); //NON-NLS
             }
             if (userAccountObj.getUserPasswordAge() != null) {
-                fieldNames.add("User_Password_Age");
+                fieldNames.add("User_Password_Age"); //NON-NLS
             }
         }
 
@@ -208,7 +208,7 @@ class EvalAccountObj extends EvaluatableObject {
             WindowsUserAccount winUserObj = (WindowsUserAccount) obj;
 
             if (winUserObj.getSecurityType() != null) {
-                fieldNames.add("Security_Type");
+                fieldNames.add("Security_Type"); //NON-NLS
             }
         }
 
@@ -220,7 +220,7 @@ class EvalAccountObj extends EvaluatableObject {
             warningStr += name;
         }
 
-        addWarning("Unsupported field(s): " + warningStr);
+        addWarning("Unsupported field(s): " + warningStr); //NON-NLS
     }
 
 }

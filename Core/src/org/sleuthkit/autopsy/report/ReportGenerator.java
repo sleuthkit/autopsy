@@ -98,7 +98,8 @@ import org.sleuthkit.datamodel.TskData;
             String errorString = "";
             for(String error : errorList)
                 errorString += error + "\n";
-            MessageNotifyUtil.Notify.error("Errors during report generation: ", errorString);
+            MessageNotifyUtil.Notify.error(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.notifyErr.errsDuringRptGen"), errorString);
             return;
         }        
     }
@@ -116,7 +117,7 @@ import org.sleuthkit.datamodel.TskData;
         try {
             FileUtil.createFolder(new File(this.reportPath));
         } catch (IOException ex) {
-            errorList.add("Failed to make report folder, may be unable to generate reports. ");
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
             logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
             return;
         }
@@ -576,7 +577,7 @@ import org.sleuthkit.datamodel.TskData;
                 tags = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
             }
             catch (TskCoreException ex) {
-                errorList.add("Failed to get content tags. ");
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
                 logger.log(Level.SEVERE, "failed to get content tags", ex); //NON-NLS
                 return;
             }
@@ -689,7 +690,7 @@ import org.sleuthkit.datamodel.TskData;
                 tags = Case.getCurrentCase().getServices().getTagsManager().getAllBlackboardArtifactTags();
             }
             catch (TskCoreException ex) {
-                errorList.add("Failed to get blackboard artifact tags. ");
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifactTags"));
                 logger.log(Level.SEVERE, "failed to get blackboard artifact tags", ex); //NON-NLS
                 return;
             }
@@ -795,7 +796,8 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(artifactTag.getArtifact().getObjectID());
             } catch (TskCoreException ex) {
-                errorList.add("Error while getting content from a blackboard artifact to report on. ");
+                errorList.add(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.errGetContentFromBBArtifact"));
                 logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex); //NON-NLS
                 return;
             }
@@ -868,13 +870,13 @@ import org.sleuthkit.datamodel.TskData;
                  try {
                      artifacts.add(new ArtifactData(artifact, skCase.getBlackboardAttributes(artifact), uniqueTagNames));
                  } catch (TskCoreException ex) {
-                     errorList.add("Failed to get Blackboard Attributes when generating report. ");
+                     errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBAttribs"));
                      logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex); //NON-NLS
                  }
              }
          } 
          catch (TskCoreException ex) {
-             errorList.add("Failed to get Blackboard Artifacts when generating report. ");
+             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifacts"));
              logger.log(Level.SEVERE, "Failed to get Blackboard Artifacts when generating report.", ex); //NON-NLS
          }
         return artifacts;
@@ -918,7 +920,7 @@ import org.sleuthkit.datamodel.TskData;
             }
         }
         catch (SQLException ex) {
-            errorList.add("Failed to query keyword lists. ");
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
             logger.log(Level.SEVERE, "Failed to query keyword lists.", ex); //NON-NLS
             return;
         } finally {
@@ -975,7 +977,8 @@ import org.sleuthkit.datamodel.TskData;
                  try {
                     uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
                 } catch (TskCoreException ex) {
-                    errorList.add("Failed to get Abstract File by ID. ");
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
                     logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
                 }
 
@@ -1023,7 +1026,7 @@ import org.sleuthkit.datamodel.TskData;
                 module.endDataType();
             }
         } catch (SQLException ex) {
-            errorList.add("Failed to query keywords. ");
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
             logger.log(Level.SEVERE, "Failed to query keywords.", ex); //NON-NLS
         } finally {
             if (rs != null) {
@@ -1063,7 +1066,7 @@ import org.sleuthkit.datamodel.TskData;
                                             ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
             }
         } catch (SQLException ex) {     
-            errorList.add("Failed to query hashset lists. ");
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetLists"));
             logger.log(Level.SEVERE, "Failed to query hashset lists.", ex); //NON-NLS
             return;
         } finally {
@@ -1114,7 +1117,8 @@ import org.sleuthkit.datamodel.TskData;
                 try {
                     uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
                 } catch (TskCoreException ex) {
-                    errorList.add("Failed to get Abstract File from ID. ");
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileFromID"));
                     logger.log(Level.WARNING, "Failed to get Abstract File from ID.", ex); //NON-NLS
                     return;
                 }
@@ -1149,7 +1153,7 @@ import org.sleuthkit.datamodel.TskData;
                 module.endDataType();
             }
         } catch (SQLException ex) {
-            errorList.add("Failed to query hashsets hits. ");
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetHits"));
             logger.log(Level.SEVERE, "Failed to query hashsets hits.", ex); //NON-NLS
         } finally {
             if (rs != null) {
@@ -1521,7 +1525,7 @@ import org.sleuthkit.datamodel.TskData;
             }
         }
         catch (TskCoreException ex) {
-            errorList.add("Failed to get Abstract File by ID. ");
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
             logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
         }
         return "";
@@ -1589,7 +1593,8 @@ import org.sleuthkit.datamodel.TskData;
                             rowData.set(i, "");
                     }
                 } catch (TskCoreException ex) {
-                    errorList.add("Core exception while generating row data for artifact report. ");
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.coreExceptionWhileGenRptRow"));
                     logger.log(Level.WARNING, "Core exception while generating row data for artifact report.", ex); //NON-NLS
                     rowData = Collections.<String>emptyList();
                 }
