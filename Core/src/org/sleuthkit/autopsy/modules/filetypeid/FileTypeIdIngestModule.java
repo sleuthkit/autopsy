@@ -58,7 +58,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             return new FileTypeDetector().isDetectable(mimeType);
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Failed to create file type detector", ex);
+            logger.log(Level.SEVERE, "Failed to create file type detector", ex); //NON-NLS
             return false;
         }
     }
@@ -83,7 +83,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            String errorMessage = "Failed to create file type detector";
+            String errorMessage = "Failed to create file type detector"; //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
             throw new IngestModuleException(errorMessage);
         }        

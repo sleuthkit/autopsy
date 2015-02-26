@@ -19,7 +19,8 @@ import org.openide.util.Lookup;
         keywordsCategory = "FileTypeId",
         position = 5        
 )
-@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})
+// moved messages to Bundle.properties
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})
 public final class FileTypeIdOptionsPanelController extends OptionsPanelController {
 
     private FileTypeIdGlobalSettingsPanel panel;

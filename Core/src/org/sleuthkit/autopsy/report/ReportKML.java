@@ -196,16 +196,17 @@ class ReportKML implements GeneralReportModule {
                         }
                     }
                     
-                    // @@@ Shoudl do something more fancy with these in KML and store them as a single point. 
+                    // @@@ Should do something more fancy with these in KML and store them as a single point.
                     String display = name;
                     if (display.isEmpty()) 
                         display = location;
                     
                     if (lon != 0 && lat != 0) {
-                        out.write(lat + ";" + lon + ";;" + display + " (Start)\n");
+                        out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongStartPoint", lat, lon, display));
                     }
                     if (destlat != 0 && destlon != 0) {
-                        out.write(destlat + ";" + destlon + ";;" + display + " (End)\n");
+                        out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongEndPoint", destlat, destlon,
+                                                      display));
                     }
                 }
                 
@@ -370,7 +371,7 @@ class ReportKML implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "ReportKML.kml";
+        return "ReportKML.kml"; //NON-NLS
     }
 
     @Override

@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import java.awt.EventQueue;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.UnsupportedEncodingException;
@@ -413,7 +413,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         hintTextArea.setEditable(false);
         hintTextArea.setColumns(20);
-        hintTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        hintTextArea.setFont(hintTextArea.getFont().deriveFont(Font.PLAIN, 11)); // NON-NLS
         hintTextArea.setLineWrap(true);
         hintTextArea.setRows(5);
         hintTextArea.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.hintTextArea.text")); // NOI18N

@@ -86,14 +86,14 @@ abstract class EvaluatableObject {
             BlackboardAttribute.ATTRIBUTE_TYPE attrType) throws TskCoreException {
 
         if (item.getValue() == null) {
-            throw new TskCoreException("Error: Value field is null");
+            throw new TskCoreException("Error: Value field is null"); //NON-NLS
         }
 
         if (item.getCondition() == null) {
-            addWarning("Warning: No condition given for " + attrType.getDisplayName() + " field, using substring comparison");
+            addWarning("Warning: No condition given for " + attrType.getDisplayName() + " field, using substring comparison"); //NON-NLS
         } else if (item.getCondition() != ConditionTypeEnum.CONTAINS) {
-            addWarning("Warning: Ignoring condition " + item.getCondition() + " for "
-                    + attrType.getDisplayName() + " field and doing substring comparison");
+            addWarning("Warning: Ignoring condition " + item.getCondition() + " for " //NON-NLS
+                    + attrType.getDisplayName() + " field and doing substring comparison"); //NON-NLS
         }
 
         List<BlackboardArtifact> hits = null;
@@ -101,7 +101,7 @@ abstract class EvaluatableObject {
             Case case1 = Case.getCurrentCase();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
-            String[] parts = item.getValue().toString().split("##comma##");
+            String[] parts = item.getValue().toString().split("##comma##"); //NON-NLS
 
             if ((item.getApplyCondition() == null)
                     || (item.getApplyCondition() == ConditionApplicationEnum.ANY)) {
@@ -139,7 +139,7 @@ abstract class EvaluatableObject {
                     }
                 }
             } else {
-                throw new TskCoreException("Error: Can not apply NONE condition in search");
+                throw new TskCoreException("Error: Can not apply NONE condition in search"); //NON-NLS
             }
         } catch (TskCoreException ex) {
             addWarning(ex.getLocalizedMessage());
@@ -159,7 +159,7 @@ abstract class EvaluatableObject {
     public static boolean compareStringObject(StringObjectPropertyType stringObj, String strField)
             throws TskCoreException {
         if (stringObj.getValue() == null) {
-            throw new TskCoreException("Error: Value field is null");
+            throw new TskCoreException("Error: Value field is null"); //NON-NLS
         }
 
         String valueStr = stringObj.getValue().toString();
@@ -184,10 +184,10 @@ abstract class EvaluatableObject {
             throws TskCoreException {
 
         if (valueStr == null) {
-            throw new TskCoreException("Error: Value field is null");
+            throw new TskCoreException("Error: Value field is null"); //NON-NLS
         }
 
-        String[] parts = valueStr.split("##comma##");
+        String[] parts = valueStr.split("##comma##"); //NON-NLS
         String lowerFieldName = strField.toLowerCase();
 
         for (String value : parts) {
@@ -206,7 +206,7 @@ abstract class EvaluatableObject {
             } else if (condition == ConditionTypeEnum.ENDS_WITH) {
                 partialResult = lowerFieldName.endsWith(value.toLowerCase());
             } else {
-                throw new TskCoreException("Could not process condition " + condition.value() + " on " + value);
+                throw new TskCoreException("Could not process condition " + condition.value() + " on " + value); //NON-NLS
             }
 
             // Do all the short-circuiting

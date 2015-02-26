@@ -184,7 +184,7 @@ class FileType {
                  * files in images are not always consistent with their file
                  * system meta data making for read errors.
                  */
-                Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex);
+                Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex); //NON-NLS
                 return false;
             }
         }
