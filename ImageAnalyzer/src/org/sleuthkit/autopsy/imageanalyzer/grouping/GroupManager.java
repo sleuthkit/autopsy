@@ -486,6 +486,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     }
 
     // @@@ This was kind of slow in the profiler.  Maybe we should cache it.
+    // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
     public List<Long> getFileIDsWithCategory(Category category) throws TskCoreException {
 
         try {
@@ -502,6 +503,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     }
                 }
 
+                //System.out.println("countAllFiles: " + db.countAllFiles());
+                //System.out.println("countFiles: " + db.countFiles());
                 return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")");
             } else {
 
@@ -512,6 +515,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         files.add(ct.getContent().getId());
                     }
                 }
+                //System.out.println(" Found " + files.size() + " files in category " + category.getDisplayName());
 
                 return files;
             }
@@ -519,6 +523,41 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
             throw ex;
         }
+    }
+    
+    public int countFilesWithCategory(Category category) throws TskCoreException {
+        try {
+            if (category == Category.ZERO) {
+
+                //List<Long> files = new ArrayList<>();
+                int allOtherCatCount = 0;
+                TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
+                for (TagName tn : tns) {
+                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
+                    for (ContentTag ct : contentTags) {
+                        if (ct.getContent() instanceof AbstractFile && ImageAnalyzerModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                            allOtherCatCount++;
+                        }
+                    }
+                }
+                return (db.countAllFiles() - allOtherCatCount);
+            } else {
+
+                int fileCount = 0;
+                List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
+                for (ContentTag ct : contentTags) {
+                    if (ct.getContent() instanceof AbstractFile && ImageAnalyzerModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                        fileCount++;
+                    }
+                }
+
+                return fileCount;
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
+            throw ex;
+        }        
+    
     }
 
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {

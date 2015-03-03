@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category; // TEMP
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
@@ -486,6 +487,7 @@ public final class ImageAnalyzerController {
 
         @Override
         public void run() {
+            
             // nearly infinite loop waiting for tasks
             while (true) {
                 if (cancelled) {
@@ -599,6 +601,53 @@ public final class ImageAnalyzerController {
 
         public UpdateFileTask(AbstractFile f) {
             super(f);
+            // TEMP TEMP TEMP
+            /*
+            if(f.getName().startsWith("a")){
+                try{
+                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.ONE.getTagName(), "");
+                }
+                catch (TskCoreException ex){
+                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
+                    
+                }
+            }
+            if(f.getName().startsWith("b")){
+                try{
+                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.TWO.getTagName(), "");
+                }
+                catch (TskCoreException ex){
+                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
+                    
+                }
+            }
+            if(f.getName().startsWith("c")){
+                try{
+                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.THREE.getTagName(), "");
+                }
+                catch (TskCoreException ex){
+                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
+                    
+                }
+            }
+            if(f.getName().startsWith("d")){
+                try{
+                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.FOUR.getTagName(), "");
+                }
+                catch (TskCoreException ex){
+                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
+                    
+                }
+            }
+            if(f.getName().startsWith("e")){
+                try{
+                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.FIVE.getTagName(), "");
+                }
+                catch (TskCoreException ex){
+                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
+                    
+                }
+            }*/
         }
 
         /**
@@ -606,6 +655,7 @@ public final class ImageAnalyzerController {
          */
         @Override
         public void run() {
+            
             DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
             db.updateFile(drawableFile);
         }
