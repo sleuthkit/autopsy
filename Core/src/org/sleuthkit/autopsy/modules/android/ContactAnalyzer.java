@@ -65,21 +65,21 @@ class ContactAnalyzer {
 
     /**
      *
-     * @param DatabasePath
+     * @param databasePath
      * @param fId Will create artifact from a database given by the path The
      * fileId will be the Abstract file associated with the artifacts
      */
-    private static void findContactsInDB(String DatabasePath, AbstractFile f) {
+    private static void findContactsInDB(String databasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
         Statement statement = null;
 
-        if (DatabasePath == null || DatabasePath.isEmpty()) {
+        if (databasePath == null || databasePath.isEmpty()) {
             return;
         }
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
+            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
@@ -122,7 +122,7 @@ class ContactAnalyzer {
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error parsing Contacts to Blackboard", e); //NON-NLS
+            logger.log(Level.WARNING, "Unable to execute contacts SQL query against {0}", databasePath); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
