@@ -121,8 +121,10 @@ class ContactAnalyzer {
                 oldName = name;
             }
 
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Unable to execute contacts SQL query against {0}", databasePath); //NON-NLS
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, "Unable to execute contacts SQL query against {0} : {1}", new Object[]{databasePath, e}); //NON-NLS
+        } catch (TskCoreException e) {
+            logger.log(Level.SEVERE, "Error posting to blackboard", e); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
