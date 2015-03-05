@@ -75,7 +75,7 @@ public final class JythonModuleLoader {
                         Scanner fileScanner = new Scanner(script);
                         while (fileScanner.hasNextLine()) {
                             String line = fileScanner.nextLine();
-                            if (line.startsWith("class ") && filter.accept(line)) {
+                            if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
                                     objects.add( createObjectFromScript(script, className, interfaceClass));
@@ -102,24 +102,24 @@ public final class JythonModuleLoader {
     private static <T> T createObjectFromScript(File script, String className, Class<T> interfaceClass) {
         // Make a "fresh" interpreter every time to avoid name collisions, etc.
         PythonInterpreter interpreter = new PythonInterpreter();
-        
+
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
         // with it.
-        interpreter.exec("import sys");
+        interpreter.exec("import sys"); //NON-NLS
         String path = Matcher.quoteReplacement(script.getParent());
-        interpreter.exec("sys.path.append('" + path + "')");
+        interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
 
         // Execute the script and create an instance of the desired class.
         interpreter.execfile(script.getAbsolutePath());
-        interpreter.exec("obj = " + className + "()");
-
+        interpreter.exec("obj = " + className + "()"); //NON-NLS
+        
         // Returns an INSTANCE of interfaceClass. Causes problem.
-        T obj = interpreter.get("obj", interfaceClass);
+        T obj = interpreter.get("obj", interfaceClass); //NON-NLS
 
         // Remove the directory where the Python script resides from the Python
         // module search path.
-        interpreter.exec("sys.path.remove('" + path + "')");
+        interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
 
         return obj;
     }
@@ -128,8 +128,8 @@ public final class JythonModuleLoader {
 
         @Override
         public boolean accept(File dir, String name) {
-            return name.endsWith(".py");
-        }
+            return name.endsWith(".py"); //NON-NLS
+        } //NON-NLS
     }
     
     private static interface LineFilter {
@@ -141,14 +141,14 @@ public final class JythonModuleLoader {
 
         @Override
         public boolean accept(String line) {
-            return (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory"));           
+            return (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory")); //NON-NLS
         }        
     }
     
     private static class GeneralReportModuleDefFilter implements LineFilter {
         @Override
         public boolean accept(String line) {
-            return (line.contains("GeneralReportModuleAdapter") || line.contains("GeneralReportModule"));           
+            return (line.contains("GeneralReportModuleAdapter") || line.contains("GeneralReportModule")); //NON-NLS
         }                
     }
 }
