@@ -1,3 +1,14 @@
+---------------- VERSION 3.1.2  --------------
+Improvements:
+- New PhotoRec carving ingest module
+- Regripper output is avaiable as a report instead of TOOL_OUTPUT artifact
+- Updated version of RegRipper
+- New STIX/Cybox report module (manually run after image has been analyzed)
+- File type module supports user defined file types and can alert when they are found
+- More artifacts are extracted from registry
+- Metadata tab in lower right now also shows istat (TSK) output for more metadata details
+- User docs were moved online (http://sleuthkit.org/autopsy/docs/user-docs/3.1/)
+
 ---------------- VERSION 3.1.1  --------------
 Improvements:
 - New time line feature
