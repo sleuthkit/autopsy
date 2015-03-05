@@ -36,6 +36,7 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.python.util.PythonObjectInputStream;
 
 /**
  * Encapsulates the ingest job settings for a particular context such as the Add
@@ -288,7 +289,17 @@ public class IngestJobSettings {
         if (settingsFile.exists()) {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
-            } catch (IOException | ClassNotFoundException ex) {
+            } catch(NullPointerException ex){
+                try {
+                    // Reading serialized Jython module settings using NbObjectInputStream.readObject throws a NullPointerException
+                    PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()));
+                    settings = (IngestModuleIngestJobSettings) in.readObject();
+                } catch( IOException | ClassNotFoundException exception) {
+                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
+                    logger.log(Level.WARNING, warning, exception);
+                    this.warnings.add(warning);
+                }
+            }catch (IOException | ClassNotFoundException ex) {
                 String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
                 logger.log(Level.WARNING, warning, ex);
                 this.warnings.add(warning);
