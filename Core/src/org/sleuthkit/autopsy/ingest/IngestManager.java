@@ -367,7 +367,6 @@ public class IngestManager {
         if (this.jobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, this.runInteractively);
             if (job.hasIngestPipeline()) {
-                this.jobsById.put(job.getId(), job);
                 long taskId = nextThreadId.incrementAndGet();
                 Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobStarter(taskId, job));
                 ingestJobStarters.put(taskId, task);
@@ -386,7 +385,6 @@ public class IngestManager {
         if (this.jobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, this.runInteractively);
             if (job.hasIngestPipeline()) {
-                this.jobsById.put(job.getId(), job);
                 if (this.startIngestJob(job)) {
                     return job;
                 }
@@ -403,9 +401,11 @@ public class IngestManager {
      */
     private boolean startIngestJob(IngestJob job) {
         boolean success = false;
-
         if (this.jobCreationIsEnabled) {
-            if (runInteractively && jobsById.isEmpty()) {
+            /**
+             * TODO: This is not really reliable.
+             */
+            if (runInteractively && jobsById.size() == 1) {
                 clearIngestMessageBox();
             }
 
@@ -413,6 +413,13 @@ public class IngestManager {
                 ingestMonitor.start();
             }
 
+            /**
+             * Add the job to the jobs map now so that isIngestRunning() will
+             * return true while the modules read global settings during start
+             * up. This works because the core global settings panels restrict
+             * changes while analysis is in progress.
+             */
+            this.jobsById.put(job.getId(), job);
             List<IngestModuleError> errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
@@ -420,6 +427,9 @@ public class IngestManager {
                 success = true;
             } else {
                 this.jobsById.remove(job.getId());
+                for (IngestModuleError error : errors) {
+                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module", error.getModuleDisplayName()), error.getModuleError()); //NON-NLS
+                }
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (this.runInteractively) {
                     EventQueue.invokeLater(new Runnable() {
@@ -452,8 +462,6 @@ public class IngestManager {
                     });
                 }
             }
-        } else {
-            this.jobsById.remove(job.getId());
         }
         return success;
     }
@@ -488,7 +496,9 @@ public class IngestManager {
             handle.cancel(true);
         }
 
-        // Cancel all the jobs already created.
+        // Cancel all the jobs already created. Force a stack trace for the log
+        // message.
+        logger.log(Level.INFO, "Cancelling all ingest jobs", new Exception("Cancelling all ingest jobs"));
         for (IngestJob job : this.jobsById.values()) {
             job.cancel();
         }
