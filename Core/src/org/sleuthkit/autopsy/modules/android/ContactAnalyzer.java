@@ -109,10 +109,12 @@ class ContactAnalyzer {
                         while (rs2.next()) {
                             columnList.add(rs2.getString("COLUMN_NAME"));
                         }
-                    } catch (Exception ex) {
+                    } catch (SQLException ex) {
+                        logger.log(Level.SEVERE, "Error getting metadata from the the Database");
                     }
                 }
-            } catch (Exception ex) {
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error getting metadata from the the Database.");
             }
             String query = "";
             if (columnList.contains("mimetype") && columnList.contains("data1") && tableList.contains("name_raw_contact") && 
