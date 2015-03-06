@@ -320,6 +320,9 @@ public class IngestJobSettings {
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
         String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        //Check if it's a python module class.
+        if(fileName.startsWith("org.python.proxies."))
+            fileName = fileName.replaceAll("[$][\\d]+.settings", ".settings");
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }
