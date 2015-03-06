@@ -119,7 +119,7 @@ final class DataSourceIngestJob {
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private volatile boolean cancelled;
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
-        
+
     /**
      * A data source ingest job uses the task scheduler singleton to create and
      * queue the ingest tasks that make up the job.
@@ -346,8 +346,10 @@ final class DataSourceIngestJob {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+                logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
+                logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id});
                 this.startSecondStage();
             }
         }
@@ -432,10 +434,13 @@ final class DataSourceIngestJob {
          * Schedule the first stage tasks.
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
+            logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
             DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
+            logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id});
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
+            logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id});
             DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this);
 
             /**
@@ -454,6 +459,7 @@ final class DataSourceIngestJob {
      * Starts the second stage of this ingest job.
      */
     private void startSecondStage() {
+        logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
         this.stage = DataSourceIngestJob.Stages.SECOND;
         if (this.runInteractively) {
             this.startDataSourceIngestProgressBar();
@@ -461,6 +467,7 @@ final class DataSourceIngestJob {
         synchronized (this.dataSourceIngestPipelineLock) {
             this.currentDataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
         }
+        logger.log(Level.INFO, "Scheduling second stage data source level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
         DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
     }
 
@@ -549,6 +556,8 @@ final class DataSourceIngestJob {
      * job and starts the second stage, if appropriate.
      */
     private void finishFirstStage() {
+        logger.log(Level.INFO, "Finished first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+
         // Shut down the file ingest pipelines. Note that no shut down is
         // required for the data source ingest pipeline because data source 
         // ingest modules do not have a shutdown() method.
@@ -595,6 +604,7 @@ final class DataSourceIngestJob {
      * Shuts down the ingest pipelines and progress bars for this job.
      */
     private void finish() {
+        logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
         this.stage = DataSourceIngestJob.Stages.FINALIZATION;
 
         if (this.runInteractively) {
@@ -845,7 +855,7 @@ final class DataSourceIngestJob {
     /**
      * Rescind a temporary cancellation of data source level ingest that was
      * used to stop a single data source level ingest module for this job.
-     * 
+     *
      * @param moduleDisplayName The display name of the module that was stopped.
      */
     void currentDataSourceIngestModuleCancellationCompleted(String moduleDisplayName) {
@@ -954,7 +964,7 @@ final class DataSourceIngestJob {
      */
     private void logIngestModuleErrors(List<IngestModuleError> errors) {
         for (IngestModuleError error : errors) {
-            DataSourceIngestJob.logger.log(Level.SEVERE, error.getModuleDisplayName() + " experienced an error", error.getModuleError()); //NON-NLS
+            DataSourceIngestJob.logger.log(Level.SEVERE, String.format("%s experienced an error analyzing %s (jobId=%d)", error.getModuleDisplayName(), dataSource.getName(), this.id), error.getModuleError()); //NON-NLS
         }
     }
 
@@ -1132,13 +1142,13 @@ final class DataSourceIngestJob {
         boolean isCancelled() {
             return this.jobCancelled;
         }
-        
+
         /**
-         * Gets a list of the display names of any canceled data source level ingest
-         * modules
+         * Gets a list of the display names of any canceled data source level
+         * ingest modules
          *
-         * @return A list of canceled data source level ingest module display names,
-         * possibly empty.
+         * @return A list of canceled data source level ingest module display
+         * names, possibly empty.
          */
         List<String> getCancelledDataSourceIngestModules() {
             return Collections.unmodifiableList(this.cancelledDataSourceModules);
