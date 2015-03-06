@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.DatabaseMetaData;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -92,44 +93,55 @@ class ContactAnalyzer {
             // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             //sorted by name, so phonenumber/email would be consecutive for a person if they exist.
             //safely building the query.
+            //lists of tables and columns is created. These lists are referred while building a query.
+            List<String> tableList = new ArrayList<>();
+            List<String> columnList = new ArrayList<>();
+            try {
+                DatabaseMetaData metadata = connection.getMetaData();
+                String tableName = "";
+                ResultSet rs1 = metadata.getTables(null, null, "%", null);
+                while (rs1.next()) {
+                    tableName = rs1.getString("TABLE_NAME");
+                    tableList.add(tableName);
+                    //populate the list of columns
+                    try {
+                        ResultSet rs2 = metadata.getColumns(null, null, tableName, null);
+                        while (rs2.next()) {
+                            columnList.add(rs2.getString("COLUMN_NAME"));
+                        }
+                    } catch (Exception ex) {
+                    }
+                }
+            } catch (Exception ex) {
+            }
             String query = "";
-            QueryValidator qv = new QueryValidator(connection);
-            if (qv.columnExists("mimeType") && qv.columnExists("data1") && qv.tableExists("name_raw_contact") && qv.columnExists("display_name") && qv.tableExists("raw_contacts") && qv.tableExists("contacts")) {
+            if (columnList.contains("mimetype") && columnList.contains("data1") && tableList.contains("name_raw_contact") && 
+                    columnList.contains("display_name") && tableList.contains("raw_contacts")) {
                 query += "SELECT mimetype, data1, name_raw_contact.display_name AS display_name FROM raw_contacts ";
-                if (qv.columnExists("contact_id") && qv.columnExists("_id")) {
+                if (tableList.contains("contacts") && tableList.contains("raw_contacts") && columnList.contains("contact_id") && columnList.contains("_id")) {
                 query += "JOIN contacts ON (raw_contacts.contact_id=contacts._id) ";
                 }
-                if (qv.tableExists("raw_contacts") && qv.columnExists("name_raw_contact_id") && qv.columnExists("_id")) {
+                if (tableList.contains("raw_contacts") && columnList.contains("name_raw_contact_id") && columnList.contains("_id")) {
                     query += "JOIN raw_contacts AS name_raw_contact ON(name_raw_contact_id=name_raw_contact._id) ";
                 }
-                if (qv.tableExists("data") && qv.columnExists("raw_contact_id") && qv.columnExists("_id")) {
+                if (tableList.contains("data") && columnList.contains("raw_contact_id") && columnList.contains("_id")) {
                     query += "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) ";
                 }
-                if (qv.tableExists("mimetypes") && qv.columnExists("mimetype_id") && qv.columnExists("_id")) {
+                if (tableList.contains("mimetypes") && columnList.contains("mimetype_id") && columnList.contains("_id")) {
                     query += "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) ";
 
                 }
-                if (qv.columnExists("mimetype") && qv.columnExists("mimetype")) {
+                if (columnList.contains("mimetype") && columnList.contains("mimetype")) {
                     query += "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2' ";
 
                 }
-                if (qv.tableExists("name_raw_contact") && qv.columnExists("display_name"))
+                if (tableList.contains("name_raw_contact") && columnList.contains("display_name"))
                     query += "ORDER BY name_raw_contact.display_name ASC;";
             }
             
             else {
                 logger.log(Level.SEVERE, "The will not be executed. Contains non-existing column names/table names. ");
             }
-/*        
-            resultSet = statement.executeQuery(
-                    "SELECT mimetype,data1, name_raw_contact.display_name AS display_name \n" //NON-NLS
-                    + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
-                    + "JOIN raw_contacts AS name_raw_contact ON(name_raw_contact_id=name_raw_contact._id) " //NON-NLS
-                    + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
-                    + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
-                    + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
-                    + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
-*/
             resultSet = statement.executeQuery(query);
             BlackboardArtifact bba;
             bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
@@ -170,50 +182,5 @@ class ContactAnalyzer {
             }
         }
 
-    }
-
-    private static class QueryValidator {
-
-        List<String> tableList;
-        //Should rather be list of list of columns
-        List<String> columnList;
-
-        QueryValidator(Connection connection) {
-            //populate the list of tables
-            try {
-                DatabaseMetaData metadata = connection.getMetaData();
-                String tableName = "";
-                ResultSet rs1 = metadata.getTables(null, null, "%", null);
-                while (rs1.next()) {
-                    tableName = rs1.getString("TABLE_NAME");
-                    tableList.add(tableName);
-                    //populate the list of columns
-                    try {
-                        ResultSet rs2 = metadata.getColumns(null, null, tableName, null);
-                        while (rs2.next()) {
-                            columnList.add(rs2.getString("COLUMN_NAME"));
-                        }
-                    } catch (Exception ex) {
-                    }
-                }
-            } catch (Exception ex) {
-            }
-        }
-
-        Boolean tableExists(String tableName) {
-            if (tableList.contains(tableName)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        Boolean columnExists(String columnName) {
-            if (columnList.contains(columnName)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
     }
 }
