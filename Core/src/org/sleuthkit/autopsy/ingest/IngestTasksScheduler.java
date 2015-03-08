@@ -251,7 +251,6 @@ final class IngestTasksScheduler {
         this.removeTasksForJob(this.directoryTasks, jobId);
         this.removeTasksForJob(this.pendingFileTasks, jobId);
         this.removeTasksForJob(this.pendingDataSourceTasks, jobId);
-        this.removeTasksForJob(this.tasksInProgress, jobId);
         this.shuffleFileTaskQueues();
     }
 
@@ -465,6 +464,7 @@ final class IngestTasksScheduler {
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
             if (task.getIngestJob().getId() == jobId) {
+                this.tasksInProgress.remove(task);                
                 iterator.remove();
             }
         }
