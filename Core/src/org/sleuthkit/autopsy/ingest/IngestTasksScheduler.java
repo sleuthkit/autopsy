@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -95,7 +97,7 @@ final class IngestTasksScheduler {
      * when the task is completed, at which time the task will be removed from
      * this list.
      */
-    private final List<IngestTask> tasksInProgress;
+    private final Set<IngestTask> tasksInProgress;
 
     /**
      * Gets the ingest tasks scheduler singleton.
@@ -117,7 +119,7 @@ final class IngestTasksScheduler {
         this.directoryTasks = new ArrayList<>();
         this.pendingFileTasks = new LinkedBlockingDeque<>();
         this.fileTasksDispenser = new FileIngestTaskQueue();
-        this.tasksInProgress = new ArrayList<>();
+        this.tasksInProgress = new HashSet<>();
     }
 
     /**
