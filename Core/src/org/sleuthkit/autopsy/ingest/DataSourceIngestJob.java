@@ -973,8 +973,8 @@ final class DataSourceIngestJob {
      *
      * @return An ingest job statistics object.
      */
-    Snapshot getSnapshot() {
-        return new Snapshot();
+    Snapshot getSnapshot(boolean getIngestTasksSnapshot) {
+        return new Snapshot(getIngestTasksSnapshot);
     }
 
     /**
@@ -999,7 +999,7 @@ final class DataSourceIngestJob {
          * Constructs an object to store basic diagnostic statistics for a data
          * source ingest job.
          */
-        Snapshot() {
+        Snapshot(boolean getIngestTasksSnapshot) {
             this.dataSource = DataSourceIngestJob.this.dataSource.getName();
             this.jobId = DataSourceIngestJob.this.id;
             this.jobStartTime = DataSourceIngestJob.this.createTime;
@@ -1020,22 +1020,23 @@ final class DataSourceIngestJob {
                 }
             }
 
-            /**
-             * Get processed file statistics.
-             */
-            synchronized (DataSourceIngestJob.this.fileIngestProgressLock) {
-                this.processedFiles = DataSourceIngestJob.this.processedFiles;
-                this.estimatedFilesToProcess = DataSourceIngestJob.this.estimatedFilesToProcess;
-                this.snapShotTime = new Date().getTime();
-            }
-
-            /**
-             * Get a snapshot of the tasks currently in progress for this job.
-             */
-            this.tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
-
             this.jobCancelled = cancelled;
             this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
+                        
+            if (getIngestTasksSnapshot) {
+                synchronized (DataSourceIngestJob.this.fileIngestProgressLock) {
+                    this.processedFiles = DataSourceIngestJob.this.processedFiles;
+                    this.estimatedFilesToProcess = DataSourceIngestJob.this.estimatedFilesToProcess;
+                    this.snapShotTime = new Date().getTime();
+                }
+                this.tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
+                
+            } else {
+                this.processedFiles = 0;
+                this.estimatedFilesToProcess = 0;
+                this.snapShotTime = new Date().getTime();
+                this.tasksSnapshot = null;
+            }
         }
 
         /**
@@ -1120,22 +1121,37 @@ final class DataSourceIngestJob {
         }
 
         long getRootQueueSize() {
+            if (null == this.tasksSnapshot) {
+                return 0;
+            }
             return this.tasksSnapshot.getRootQueueSize();
         }
 
         long getDirQueueSize() {
+            if (null == this.tasksSnapshot) {
+                return 0;
+            }
             return this.tasksSnapshot.getDirectoryTasksQueueSize();
         }
 
         long getFileQueueSize() {
+            if (null == this.tasksSnapshot) {
+                return 0;
+            }
             return this.tasksSnapshot.getFileQueueSize();
         }
 
         long getDsQueueSize() {
+            if (null == this.tasksSnapshot) {
+                return 0;
+            }
             return this.tasksSnapshot.getDsQueueSize();
         }
 
         long getRunningListSize() {
+            if (null == this.tasksSnapshot) {
+                return 0;
+            }
             return this.tasksSnapshot.getRunningListSize();
         }
 
