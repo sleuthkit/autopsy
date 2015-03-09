@@ -290,9 +290,8 @@ public class IngestJobSettings {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch(NullPointerException ex){
-                try {
-                    // Reading serialized Jython module settings using NbObjectInputStream.readObject throws a NullPointerException
-                    PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()));
+                try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                    // Reading serialized Jython module settings using NbObjectInputStream.readObject throws a NullPointerException                 
                     settings = (IngestModuleIngestJobSettings) in.readObject();
                 } catch( IOException | ClassNotFoundException exception) {
                     String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
@@ -320,9 +319,10 @@ public class IngestJobSettings {
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
         String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
-        //Check if it's a python module class.
+        // Check if it's a python module class.
+        // In case of python module class, remove the <instance number> from the fileName.
         if(fileName.startsWith("org.python.proxies."))
-            fileName = fileName.replaceAll("[$][\\d]+.settings", ".settings");
+            fileName = fileName.replaceAll("[$][\\d]+.settings$", "\\$.settings");
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }

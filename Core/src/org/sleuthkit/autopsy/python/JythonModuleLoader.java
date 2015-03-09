@@ -112,9 +112,10 @@ public final class JythonModuleLoader {
 
         // Execute the script and create an instance of the desired class.
         interpreter.execfile(script.getAbsolutePath());
+        // Importing the appropriate class from the Py Script which contains multiple classes.
+        interpreter.exec("from " + script.getName().replaceAll(".py", "") + " import " + className);
         interpreter.exec("obj = " + className + "()"); //NON-NLS
         
-        // Returns an INSTANCE of interfaceClass. Causes problem.
         T obj = interpreter.get("obj", interfaceClass); //NON-NLS
 
         // Remove the directory where the Python script resides from the Python
