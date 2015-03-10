@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.core;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -198,6 +199,9 @@ public class Installer extends ModuleInstall {
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }
+        }
+        for (Handler h : logger.getHandlers()) {
+            h.close();   //must call h.close or a .LCK file will remain.
         }
     }
 }
