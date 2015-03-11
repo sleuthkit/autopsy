@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 
@@ -28,6 +29,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -109,7 +111,14 @@ public class AddContentTagAction extends AddTagAction {
                         continue;
                     }                    
                 }
-                
+                // check if the same tag is being added for the same abstract file.
+                List<ContentTag> contentTagList = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
+                for (ContentTag contentTag : contentTagList) {
+                    if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName()) && contentTag.getContent().getId() == file.getId()) {
+                        // Notify the user that the same tag is being assigned to the same file.
+                        return;
+                    }
+                }
                 Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);            
             }
             catch (TskCoreException ex) {                        
