@@ -27,6 +27,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -115,7 +116,9 @@ public class AddContentTagAction extends AddTagAction {
                 List<ContentTag> contentTagList = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
                 for (ContentTag contentTag : contentTagList) {
                     if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName()) && contentTag.getContent().getId() == file.getId()) {
-                        // Notify the user that the same tag is being assigned to the same file.
+                        MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                                                                "AddContentTagAction.tagExists",
+                                                                file.getName(), tagName.getDisplayName()));
                         return;
                     }
                 }
