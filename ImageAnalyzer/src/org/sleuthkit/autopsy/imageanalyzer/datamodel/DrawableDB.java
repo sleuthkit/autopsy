@@ -690,9 +690,9 @@ public class DrawableDB {
         dbReadLock();
         try {
             List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
-
-            
+  
             try{
+                // In testing, this method appears to be a lot faster than doing one large select statement
                 for(Long fileID:fileIDsInGroup){
                     Statement stmt = con.createStatement();
                     ResultSet analyzedQuery = stmt.executeQuery("select analyzed from drawable_files where obj_id = " + fileID);
@@ -700,22 +700,19 @@ public class DrawableDB {
                         if(analyzedQuery.getInt(ANALYZED) == 0){
                             return false;
                         }
-                        //System.out.println("fileID = " + fileID + ",   analyzed = " + analyzedQuery.getInt(ANALYZED));
                     }
-                    System.out.println("## Group is fully analyzed!!!");
                     return true;
                 }
            
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
-                System.out.println("Error: " + ex.getLocalizedMessage());
             }
             /*
+            // Old method
             try (Statement stmt = con.createStatement();
                     //Can't make this a preprared statement because of the IN ( ... )
                     ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
                 while (analyzedQuery.next()) {
-                    //System.out.println("Full group result: " + analyzedQuery.getInt(ANALYZED) + "\n");
                     return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
                 }
             } catch (SQLException ex) {
@@ -771,7 +768,6 @@ public class DrawableDB {
             }
             dbReadUnlock();
         }
-        //System.out.println("Found " + ret.size() + " files matching " + sqlWhereClause);
         return ret;
     }
     

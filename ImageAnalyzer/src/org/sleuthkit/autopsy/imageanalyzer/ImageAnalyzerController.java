@@ -58,7 +58,6 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category; // TEMP
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupManager;
 import org.sleuthkit.autopsy.imageanalyzer.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imageanalyzer.gui.NoGroupsDialog;
@@ -496,9 +495,11 @@ public final class ImageAnalyzerController {
                 try {
                     // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
+
                     if (it.cancelled == false) {
                         it.run();
                     }
+                    
                     Platform.runLater(() -> {
                         queueSizeProperty.set(workQueue.size());
                     });
@@ -598,56 +599,9 @@ public final class ImageAnalyzerController {
      * task that updates one file in database with results from ingest
      */
     private class UpdateFileTask extends FileTask {
-
+        
         public UpdateFileTask(AbstractFile f) {
             super(f);
-            // TEMP TEMP TEMP
-            /*
-            if(f.getName().startsWith("a")){
-                try{
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.ONE.getTagName(), "");
-                }
-                catch (TskCoreException ex){
-                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
-                    
-                }
-            }
-            if(f.getName().startsWith("b")){
-                try{
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.TWO.getTagName(), "");
-                }
-                catch (TskCoreException ex){
-                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
-                    
-                }
-            }
-            if(f.getName().startsWith("c")){
-                try{
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.THREE.getTagName(), "");
-                }
-                catch (TskCoreException ex){
-                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
-                    
-                }
-            }
-            if(f.getName().startsWith("d")){
-                try{
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.FOUR.getTagName(), "");
-                }
-                catch (TskCoreException ex){
-                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
-                    
-                }
-            }
-            if(f.getName().startsWith("e")){
-                try{
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(f, Category.FIVE.getTagName(), "");
-                }
-                catch (TskCoreException ex){
-                    System.out.println(" FAIL FAIL" + ex.getLocalizedMessage());
-                    
-                }
-            }*/
         }
 
         /**
@@ -655,7 +609,6 @@ public final class ImageAnalyzerController {
          */
         @Override
         public void run() {
-            
             DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
             db.updateFile(drawableFile);
         }
@@ -665,7 +618,7 @@ public final class ImageAnalyzerController {
      * task that updates one file in database with results from ingest
      */
     private class RemoveFileTask extends FileTask {
-
+        
         public RemoveFileTask(AbstractFile f) {
             super(f);
         }
