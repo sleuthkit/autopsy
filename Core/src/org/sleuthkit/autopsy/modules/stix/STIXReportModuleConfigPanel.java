@@ -37,17 +37,17 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
         initComponents();
 
         // Set the default path to the last one used
-        if ((ModuleSettings.getConfigSetting("STIX", "defaultPath") != null)
-                && (!ModuleSettings.getConfigSetting("STIX", "defaultPath").isEmpty())) {
-            jTextField1.setText(ModuleSettings.getConfigSetting("STIX", "defaultPath"));
-            stixFile = ModuleSettings.getConfigSetting("STIX", "defaultPath");
+        if ((ModuleSettings.getConfigSetting("STIX", "defaultPath") != null) //NON-NLS
+                && (!ModuleSettings.getConfigSetting("STIX", "defaultPath").isEmpty())) { //NON-NLS
+            jTextField1.setText(ModuleSettings.getConfigSetting("STIX", "defaultPath")); //NON-NLS
+            stixFile = ModuleSettings.getConfigSetting("STIX", "defaultPath"); //NON-NLS
         }
 
         // Set the results checkbox to the last one used
-        if ((ModuleSettings.getConfigSetting("STIX", "showAllResults") != null)
-                && (!ModuleSettings.getConfigSetting("STIX", "showAllResults").isEmpty())) {
+        if ((ModuleSettings.getConfigSetting("STIX", "showAllResults") != null) //NON-NLS
+                && (!ModuleSettings.getConfigSetting("STIX", "showAllResults").isEmpty())) { //NON-NLS
 
-            if (ModuleSettings.getConfigSetting("STIX", "showAllResults").equals("true")) {
+            if (ModuleSettings.getConfigSetting("STIX", "showAllResults").equals("true")) { //NON-NLS
                 jCheckBox1.setSelected(true);
                 showAllResults = true;
             } else {
@@ -177,9 +177,9 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
         showAllResults = jCheckBox1.isSelected();
         if (showAllResults) {
-            ModuleSettings.setConfigSetting("STIX", "showAllResults", "true");
+            ModuleSettings.setConfigSetting("STIX", "showAllResults", "true"); //NON-NLS
         } else {
-            ModuleSettings.setConfigSetting("STIX", "showAllResults", "false");
+            ModuleSettings.setConfigSetting("STIX", "showAllResults", "false"); //NON-NLS
         }
     }//GEN-LAST:event_jCheckBox1ActionPerformed
 

@@ -19,9 +19,9 @@ The following topics are available here:
  - \subpage cases_page
  - \subpage ds_page
 - Automated Analysis
- - \subpage ingest "Ingest"
-  - \subpage hash_db_page 
-  - \subpage keyword_search "Keyword Search"
+ - \subpage ingest_page "Ingest Modules"
+ - \subpage hash_db_page 
+ - \subpage keyword_search 
 - Manual Analysis
  - \subpage directory_tree "Directory Tree"
  - \subpage file_search "File Search"
@@ -31,6 +31,7 @@ The following topics are available here:
  - \subpage timeline
  - \subpage stix_page
 - Reporting
+- \subpage module_install_page
 
 If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
 

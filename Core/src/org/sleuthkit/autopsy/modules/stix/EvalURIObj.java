@@ -49,20 +49,20 @@ class EvalURIObj extends EvaluatableObject {
         setWarnings("");
 
         if (obj.getValue() == null) {
-            return new ObservableResult(id, "URIObject: No URI value field found",
+            return new ObservableResult(id, "URIObject: No URI value field found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
         String addressStr = obj.getValue().getValue().toString();
 
         // Strip off http:// or https://
         String modifiedAddressStr = addressStr.toLowerCase();
-        modifiedAddressStr = modifiedAddressStr.replaceAll("http(s)?://", "");
+        modifiedAddressStr = modifiedAddressStr.replaceAll("http(s)?://", ""); //NON-NLS
 
         // Since we have single URL artifacts, ALL and NONE conditions probably don't make sense to test
         if (!((obj.getValue().getApplyCondition() == null)
                 || (obj.getValue().getApplyCondition() == ConditionApplicationEnum.ANY))) {
-            return new ObservableResult(id, "URIObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString()
-                    + " on URI object", spacing, ObservableResult.ObservableState.INDETERMINATE, null);
+            return new ObservableResult(id, "URIObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString() //NON-NLS
+                    + " on URI object", spacing, ObservableResult.ObservableState.INDETERMINATE, null); //NON-NLS
         }
 
         Case case1 = Case.getCurrentCase();
@@ -115,7 +115,7 @@ class EvalURIObj extends EvaluatableObject {
                         String modifiedAttrString = attr.getValueString();
                         if (modifiedAttrString != null) {
                             modifiedAttrString = modifiedAttrString.toLowerCase();
-                            modifiedAttrString = modifiedAttrString.replaceAll("http(s)?://", "");
+                            modifiedAttrString = modifiedAttrString.replaceAll("http(s)?://", ""); //NON-NLS
                         }
 
                         if (compareStringObject(modifiedAddressStr, obj.getValue().getCondition(),
@@ -129,18 +129,18 @@ class EvalURIObj extends EvaluatableObject {
             if (!finalHits.isEmpty()) {
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                 for (BlackboardArtifact a : finalHits) {
-                    artData.add(new StixArtifactData(a.getObjectID(), id, "UriObject"));
+                    artData.add(new StixArtifactData(a.getObjectID(), id, "UriObject")); //NON-NLS
                 }
-                return new ObservableResult(id, "UriObject: Found a match for " + addressStr,
+                return new ObservableResult(id, "UriObject: Found a match for " + addressStr, //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
-            return new ObservableResult(id, "URIObject: Found no matches for " + addressStr,
+            return new ObservableResult(id, "URIObject: Found no matches for " + addressStr, //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
             /*}*/
 
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "URIObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "URIObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 

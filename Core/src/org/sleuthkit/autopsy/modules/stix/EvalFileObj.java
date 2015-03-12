@@ -66,7 +66,7 @@ class EvalFileObj extends EvaluatableObject {
 
         if (obj.getSizeInBytes() != null) {
             try {
-                String newClause = processULongObject(obj.getSizeInBytes(), "size");
+                String newClause = processULongObject(obj.getSizeInBytes(), "size"); //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } catch (TskCoreException ex) {
                 addWarning(ex.getLocalizedMessage());
@@ -75,7 +75,7 @@ class EvalFileObj extends EvaluatableObject {
 
         if (obj.getFileName() != null) {
             try {
-                String newClause = processStringObject(obj.getFileName(), "name");
+                String newClause = processStringObject(obj.getFileName(), "name"); //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } catch (TskCoreException ex) {
                 addWarning(ex.getLocalizedMessage());
@@ -85,18 +85,18 @@ class EvalFileObj extends EvaluatableObject {
         if (obj.getFileExtension() != null) {
             if ((obj.getFileExtension().getCondition() == null)
                     || (obj.getFileExtension().getCondition() == ConditionTypeEnum.EQUALS)) {
-                String newClause = "name LIKE \'%" + obj.getFileExtension().getValue() + "\'";
+                String newClause = "name LIKE \'%" + obj.getFileExtension().getValue() + "\'"; //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } else {
                 addWarning(
-                        "Could not process condition " + obj.getFileExtension().getCondition().value() + " on file extension");
+                        "Could not process condition " + obj.getFileExtension().getCondition().value() + " on file extension"); //NON-NLS
             }
         }
 
         if (obj.getFilePath() != null) {
             try {
 
-                String[] parts = obj.getFilePath().getValue().toString().split("##comma##");
+                String[] parts = obj.getFilePath().getValue().toString().split("##comma##"); //NON-NLS
                 String finalPathStr = "";
 
                 for (String filePath : parts) {
@@ -126,13 +126,13 @@ class EvalFileObj extends EvaluatableObject {
 
                     // Reconstruct the path string (which may be multi-part)
                     if (!finalPathStr.isEmpty()) {
-                        finalPathStr += "##comma##";
+                        finalPathStr += "##comma##"; //NON-NLS
                     }
                     finalPathStr += currentFilePath;
                 }
 
                 String newClause = processStringObject(finalPathStr, obj.getFilePath().getCondition(),
-                        obj.getFilePath().getApplyCondition(), "parent_path");
+                        obj.getFilePath().getApplyCondition(), "parent_path"); //NON-NLS
 
                 whereClause = addClause(whereClause, newClause);
             } catch (TskCoreException ex) {
@@ -142,7 +142,7 @@ class EvalFileObj extends EvaluatableObject {
 
         if (obj.getCreatedTime() != null) {
             try {
-                String newClause = processTimestampObject(obj.getCreatedTime(), "crtime");
+                String newClause = processTimestampObject(obj.getCreatedTime(), "crtime"); //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } catch (TskCoreException ex) {
                 addWarning(ex.getLocalizedMessage());
@@ -151,7 +151,7 @@ class EvalFileObj extends EvaluatableObject {
 
         if (obj.getModifiedTime() != null) {
             try {
-                String newClause = processTimestampObject(obj.getModifiedTime(), "mtime");
+                String newClause = processTimestampObject(obj.getModifiedTime(), "mtime"); //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } catch (TskCoreException ex) {
                 addWarning(ex.getLocalizedMessage());
@@ -160,7 +160,7 @@ class EvalFileObj extends EvaluatableObject {
 
         if (obj.getAccessedTime() != null) {
             try {
-                String newClause = processTimestampObject(obj.getAccessedTime(), "atime");
+                String newClause = processTimestampObject(obj.getAccessedTime(), "atime"); //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } catch (TskCoreException ex) {
                 addWarning(ex.getLocalizedMessage());
@@ -170,14 +170,14 @@ class EvalFileObj extends EvaluatableObject {
         if (obj.getHashes() != null) {
             for (HashType h : obj.getHashes().getHashes()) {
                 if (h.getSimpleHashValue() != null) {
-                    if (h.getType().getValue().equals("MD5")) {
-                        String newClause = "md5=\'" + h.getSimpleHashValue().getValue() + "\'";
+                    if (h.getType().getValue().equals("MD5")) { //NON-NLS
+                        String newClause = "md5=\'" + h.getSimpleHashValue().getValue() + "\'"; //NON-NLS
                         whereClause = addClause(whereClause, newClause);
                     } else {
-                        addWarning("Could not process hash type " + h.getType().getValue().toString());
+                        addWarning("Could not process hash type " + h.getType().getValue().toString()); //NON-NLS
                     }
                 } else {
-                    addWarning("Could not process non-simple hash value");
+                    addWarning("Could not process non-simple hash value"); //NON-NLS
                 }
             }
         }
@@ -192,7 +192,7 @@ class EvalFileObj extends EvaluatableObject {
                             String newClause = processNumericFields(result,
                                     winExe.getHeaders().getFileHeader().getTimeDateStamp().getCondition(),
                                     winExe.getHeaders().getFileHeader().getTimeDateStamp().getApplyCondition(),
-                                    "crtime");
+                                    "crtime"); //NON-NLS
                             whereClause = addClause(whereClause, newClause);
                         } catch (TskCoreException ex) {
                             addWarning(ex.getLocalizedMessage());
@@ -204,7 +204,7 @@ class EvalFileObj extends EvaluatableObject {
 
         String unsupportedFields = listUnsupportedFields();
         if (!unsupportedFields.isEmpty()) {
-            addWarning("Unsupported fields: " + unsupportedFields);
+            addWarning("Unsupported fields: " + unsupportedFields); //NON-NLS
         }
 
         if (whereClause.length() > 0) {
@@ -217,10 +217,10 @@ class EvalFileObj extends EvaluatableObject {
 
                         List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                         for (AbstractFile a : matchingFiles) {
-                            artData.add(new StixArtifactData(a, id, "FileObject"));
+                            artData.add(new StixArtifactData(a, id, "FileObject")); //NON-NLS
                         }
 
-                        return new ObservableResult(id, "FileObject: Found " + matchingFiles.size() + " matches for " + whereClause + getPrintableWarnings(),
+                        return new ObservableResult(id, "FileObject: Found " + matchingFiles.size() + " matches for " + whereClause + getPrintableWarnings(), //NON-NLS
                                 spacing, ObservableResult.ObservableState.TRUE, artData);
                     } else {
 
@@ -277,12 +277,12 @@ class EvalFileObj extends EvaluatableObject {
                                 //    passedTests = false;
                                 //}
                                 if (formatsFound.isEmpty()) {
-                                    addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString()
-                                            + " (no file formats found)");
+                                    addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
+                                            + " (no file formats found)"); //NON-NLS
                                 } else {
                                     if (!foundMatch) {
-                                        addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString()
-                                                + " against " + formatsFound);
+                                        addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
+                                                + " against " + formatsFound); //NON-NLS
                                     }
                                 }
                             }
@@ -294,32 +294,32 @@ class EvalFileObj extends EvaluatableObject {
 
                         if (secondaryHits.isEmpty()) {
 
-                            return new ObservableResult(id, "FileObject: Found " + matchingFiles.size() + " matches for " + whereClause
-                                    + " but none for secondary tests on " + listSecondaryFields() + getPrintableWarnings(),
+                            return new ObservableResult(id, "FileObject: Found " + matchingFiles.size() + " matches for " + whereClause //NON-NLS
+                                    + " but none for secondary tests on " + listSecondaryFields() + getPrintableWarnings(), //NON-NLS
                                     spacing, ObservableResult.ObservableState.FALSE, null);
                         } else {
                             List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
                             for (AbstractFile a : secondaryHits) {
-                                artData.add(new StixArtifactData(a, id, "FileObject"));
+                                artData.add(new StixArtifactData(a, id, "FileObject")); //NON-NLS
                             }
-                            return new ObservableResult(id, "FileObject: Found " + secondaryHits.size() + " matches for " + whereClause
-                                    + " and secondary tests on " + listSecondaryFields() + getPrintableWarnings(),
+                            return new ObservableResult(id, "FileObject: Found " + secondaryHits.size() + " matches for " + whereClause //NON-NLS
+                                    + " and secondary tests on " + listSecondaryFields() + getPrintableWarnings(), //NON-NLS
                                     spacing, ObservableResult.ObservableState.TRUE, artData);
                         }
                     }
                 } else {
-                    return new ObservableResult(id, "FileObject: Found no matches for " + whereClause + getPrintableWarnings(),
+                    return new ObservableResult(id, "FileObject: Found no matches for " + whereClause + getPrintableWarnings(), //NON-NLS
                             spacing, ObservableResult.ObservableState.FALSE, null);
                 }
             } catch (TskCoreException ex) {
-                return new ObservableResult(id, "FileObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+                return new ObservableResult(id, "FileObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                         spacing, ObservableResult.ObservableState.INDETERMINATE, null);
             }
         } else {
 
         }
 
-        return new ObservableResult(id, "FileObject: No evaluatable fields " + getPrintableWarnings(), spacing,
+        return new ObservableResult(id, "FileObject: No evaluatable fields " + getPrintableWarnings(), spacing, //NON-NLS
                 ObservableResult.ObservableState.INDETERMINATE, null);
     }
 
@@ -333,11 +333,11 @@ class EvalFileObj extends EvaluatableObject {
         String secondaryFields = "";
 
         if (obj.isIsMasqueraded() != null) {
-            secondaryFields += "is_masqueraded ";
+            secondaryFields += "is_masqueraded "; //NON-NLS
         }
 
         if (obj.getFileFormat() != null) {
-            secondaryFields += "File_Format ";
+            secondaryFields += "File_Format "; //NON-NLS
         }
 
         return secondaryFields;
@@ -352,58 +352,58 @@ class EvalFileObj extends EvaluatableObject {
         String unsupportedFields = "";
 
         if (obj.isIsPacked() != null) {
-            unsupportedFields += "is_packed ";
+            unsupportedFields += "is_packed "; //NON-NLS
         }
         if (obj.getDevicePath() != null) {
-            unsupportedFields += "Device_Path ";
+            unsupportedFields += "Device_Path "; //NON-NLS
         }
         if (obj.getFullPath() != null) {
-            unsupportedFields += "Full_Path ";
+            unsupportedFields += "Full_Path "; //NON-NLS
         }
         if (obj.getMagicNumber() != null) {
-            unsupportedFields += "Magic_Number ";
+            unsupportedFields += "Magic_Number "; //NON-NLS
         }
         if (obj.getDigitalSignatures() != null) {
-            unsupportedFields += "Digital_Signatures ";
+            unsupportedFields += "Digital_Signatures "; //NON-NLS
         }
         if (obj.getFileAttributesList() != null) {
-            unsupportedFields += "File_Attributes_List ";
+            unsupportedFields += "File_Attributes_List "; //NON-NLS
         }
         if (obj.getPermissions() != null) {
-            unsupportedFields += "Permissions ";
+            unsupportedFields += "Permissions "; //NON-NLS
         }
         if (obj.getUserOwner() != null) {
-            unsupportedFields += "User_Owner ";
+            unsupportedFields += "User_Owner "; //NON-NLS
         }
         if (obj.getPackerList() != null) {
-            unsupportedFields += "Packer_List ";
+            unsupportedFields += "Packer_List "; //NON-NLS
         }
         if (obj.getPeakEntropy() != null) {
-            unsupportedFields += "Peak_Entropy ";
+            unsupportedFields += "Peak_Entropy "; //NON-NLS
         }
         if (obj.getSymLinks() != null) {
-            unsupportedFields += "Sym_Links ";
+            unsupportedFields += "Sym_Links "; //NON-NLS
         }
         if (obj.getByteRuns() != null) {
-            unsupportedFields += "Bytes_Runs ";
+            unsupportedFields += "Bytes_Runs "; //NON-NLS
         }
         if (obj.getExtractedFeatures() != null) {
-            unsupportedFields += "Extracted_Features ";
+            unsupportedFields += "Extracted_Features "; //NON-NLS
         }
         if (obj.getEncryptionAlgorithm() != null) {
-            unsupportedFields += "Encryption_Algorithm ";
+            unsupportedFields += "Encryption_Algorithm "; //NON-NLS
         }
         if (obj.getDecryptionKey() != null) {
-            unsupportedFields += "Decryption_Key ";
+            unsupportedFields += "Decryption_Key "; //NON-NLS
         }
         if (obj.getCompressionMethod() != null) {
-            unsupportedFields += "Compression_Method ";
+            unsupportedFields += "Compression_Method "; //NON-NLS
         }
         if (obj.getCompressionVersion() != null) {
-            unsupportedFields += "Compression_Version ";
+            unsupportedFields += "Compression_Version "; //NON-NLS
         }
         if (obj.getCompressionComment() != null) {
-            unsupportedFields += "Compression_Comment ";
+            unsupportedFields += "Compression_Comment "; //NON-NLS
         }
 
         return unsupportedFields;
@@ -417,8 +417,8 @@ class EvalFileObj extends EvaluatableObject {
      * @throws ParseException
      */
     private static long convertTimestamp(String timeStr) throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); //NON-NLS
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //NON-NLS
         Date parsedDate = dateFormat.parse(timeStr);
 
         Long unixTime = parsedDate.getTime() / 1000;
@@ -463,10 +463,10 @@ class EvalFileObj extends EvaluatableObject {
             String fullClause = "";
 
             if (valueStr.isEmpty()) {
-                throw new TskCoreException("Empty value field");
+                throw new TskCoreException("Empty value field"); //NON-NLS
             }
 
-            String[] parts = valueStr.split("##comma##");
+            String[] parts = valueStr.split("##comma##"); //NON-NLS
 
             for (String valuePart : parts) {
                 String partialClause;
@@ -486,7 +486,7 @@ class EvalFileObj extends EvaluatableObject {
                 } else if (typeCondition == ConditionTypeEnum.LESS_THAN_OR_EQUAL) {
                     partialClause = fieldName + "<=" + valuePart;
                 } else {
-                    throw new TskCoreException("Could not process condition " + typeCondition.value() + " on " + fieldName);
+                    throw new TskCoreException("Could not process condition " + typeCondition.value() + " on " + fieldName); //NON-NLS
                 }
 
                 if (fullClause.isEmpty()) {
@@ -495,16 +495,16 @@ class EvalFileObj extends EvaluatableObject {
                         fullClause += "( ";
                     }
                     if (applyCondition == ConditionApplicationEnum.NONE) {
-                        fullClause += " NOT ";
+                        fullClause += " NOT "; //NON-NLS
                     }
                     fullClause += partialClause;
                 } else {
                     if (applyCondition == ConditionApplicationEnum.ALL) {
-                        fullClause += " AND " + partialClause;
+                        fullClause += " AND " + partialClause; //NON-NLS
                     } else if (applyCondition == ConditionApplicationEnum.NONE) {
-                        fullClause += " AND NOT " + partialClause;
+                        fullClause += " AND NOT " + partialClause; //NON-NLS
                     } else {
-                        fullClause += " OR " + partialClause;
+                        fullClause += " OR " + partialClause; //NON-NLS
                     }
                 }
             }
@@ -517,19 +517,19 @@ class EvalFileObj extends EvaluatableObject {
         } else {
             // I don't think apply conditions make sense for these two.
             if (typeCondition == ConditionTypeEnum.INCLUSIVE_BETWEEN) {
-                String[] parts = valueStr.split("##comma##");
+                String[] parts = valueStr.split("##comma##"); //NON-NLS
                 if (parts.length != 2) {
-                    throw new TskCoreException("Unexpected number of arguments in INCLUSIVE_BETWEEN on " + fieldName
+                    throw new TskCoreException("Unexpected number of arguments in INCLUSIVE_BETWEEN on " + fieldName //NON-NLS
                             + "(" + valueStr + ")");
                 }
-                return (fieldName + ">=" + parts[0] + " AND " + fieldName + "<=" + parts[1]);
+                return (fieldName + ">=" + parts[0] + " AND " + fieldName + "<=" + parts[1]); //NON-NLS
             } else {
-                String[] parts = valueStr.split("##comma##");
+                String[] parts = valueStr.split("##comma##"); //NON-NLS
                 if (parts.length != 2) {
-                    throw new TskCoreException("Unexpected number of arguments in EXCLUSIVE_BETWEEN on " + fieldName
+                    throw new TskCoreException("Unexpected number of arguments in EXCLUSIVE_BETWEEN on " + fieldName //NON-NLS
                             + "(" + valueStr + ")");
                 }
-                return (fieldName + ">" + parts[0] + " AND " + fieldName + "<" + parts[1]);
+                return (fieldName + ">" + parts[0] + " AND " + fieldName + "<" + parts[1]); //NON-NLS
             }
         }
     }
@@ -564,13 +564,13 @@ class EvalFileObj extends EvaluatableObject {
             throws TskCoreException {
 
         String fullClause = "";
-        String lowerFieldName = "lower(" + fieldName + ")";
+        String lowerFieldName = "lower(" + fieldName + ")"; //NON-NLS
 
         if (valueStr.isEmpty()) {
-            throw new TskCoreException("Empty value field");
+            throw new TskCoreException("Empty value field"); //NON-NLS
         }
 
-        String[] parts = valueStr.split("##comma##");
+        String[] parts = valueStr.split("##comma##"); //NON-NLS
 
         for (String value : parts) {
             String lowerValue = value.toLowerCase();
@@ -581,15 +581,15 @@ class EvalFileObj extends EvaluatableObject {
             } else if (condition == ConditionTypeEnum.DOES_NOT_EQUAL) {
                 partialClause = lowerFieldName + " !=\'%" + lowerValue + "%\'";
             } else if (condition == ConditionTypeEnum.CONTAINS) {
-                partialClause = lowerFieldName + " LIKE \'%" + lowerValue + "%\'";
+                partialClause = lowerFieldName + " LIKE \'%" + lowerValue + "%\'"; //NON-NLS
             } else if (condition == ConditionTypeEnum.DOES_NOT_CONTAIN) {
-                partialClause = lowerFieldName + " NOT LIKE \'%" + lowerValue + "%\'";
+                partialClause = lowerFieldName + " NOT LIKE \'%" + lowerValue + "%\'"; //NON-NLS
             } else if (condition == ConditionTypeEnum.STARTS_WITH) {
-                partialClause = lowerFieldName + " LIKE \'" + lowerValue + "%\'";
+                partialClause = lowerFieldName + " LIKE \'" + lowerValue + "%\'"; //NON-NLS
             } else if (condition == ConditionTypeEnum.ENDS_WITH) {
-                partialClause = lowerFieldName + " LIKE \'%" + lowerValue + "\'";
+                partialClause = lowerFieldName + " LIKE \'%" + lowerValue + "\'"; //NON-NLS
             } else {
-                throw new TskCoreException("Could not process condition " + condition.value() + " on " + fieldName);
+                throw new TskCoreException("Could not process condition " + condition.value() + " on " + fieldName); //NON-NLS
             }
 
             if (fullClause.isEmpty()) {
@@ -598,16 +598,16 @@ class EvalFileObj extends EvaluatableObject {
                     fullClause += "( ";
                 }
                 if (applyCondition == ConditionApplicationEnum.NONE) {
-                    fullClause += " NOT ";
+                    fullClause += " NOT "; //NON-NLS
                 }
                 fullClause += partialClause;
             } else {
                 if (applyCondition == ConditionApplicationEnum.ALL) {
-                    fullClause += " AND " + partialClause;
+                    fullClause += " AND " + partialClause; //NON-NLS
                 } else if (applyCondition == ConditionApplicationEnum.NONE) {
-                    fullClause += " AND NOT " + partialClause;
+                    fullClause += " AND NOT " + partialClause; //NON-NLS
                 } else {
-                    fullClause += " OR " + partialClause;
+                    fullClause += " OR " + partialClause; //NON-NLS
                 }
             }
         }
@@ -638,7 +638,7 @@ class EvalFileObj extends EvaluatableObject {
             return processNumericFields(result, dateObj.getCondition(), dateObj.getApplyCondition(), fieldName);
 
         } else {
-            throw new TskCoreException("Found non DATE_TIME field on " + fieldName);
+            throw new TskCoreException("Found non DATE_TIME field on " + fieldName); //NON-NLS
         }
     }
 
@@ -655,17 +655,17 @@ class EvalFileObj extends EvaluatableObject {
         try {
             String result = "";
             if (timestampStr.length() > 0) {
-                String[] parts = timestampStr.split("##comma##");
+                String[] parts = timestampStr.split("##comma##"); //NON-NLS
 
                 for (int i = 0; i < parts.length - 1; i++) {
                     long unixTime = convertTimestamp(parts[i]);
-                    result += unixTime + "##comma##";
+                    result += unixTime + "##comma##"; //NON-NLS
                 }
                 result += convertTimestamp(parts[parts.length - 1]);
             }
             return result;
         } catch (java.text.ParseException ex) {
-            throw new TskCoreException("Error parsing timestamp string " + timestampStr);
+            throw new TskCoreException("Error parsing timestamp string " + timestampStr); //NON-NLS
         }
 
     }
@@ -683,7 +683,7 @@ class EvalFileObj extends EvaluatableObject {
             return a_newClause;
         }
 
-        return (a_clause + " AND " + a_newClause);
+        return (a_clause + " AND " + a_newClause); //NON-NLS
     }
 
 }

@@ -203,9 +203,9 @@ class ExtractRegistry extends Extract {
             // create a report for the full output
             if (regOutputFiles.fullPlugins.isEmpty() == false) {
                 try {
-                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath());
+                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath()); //NON-NLS
                 } catch (TskCoreException e) {
-                    this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage());
+                    this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }
             }
 
@@ -366,7 +366,7 @@ class ExtractRegistry extends Extract {
                 String winver = "";
 
                 // If all artifact nodes should really go under one Blackboard artifact, need to process it differently
-                if (dataType.equals("WinVersion")) {
+                if (dataType.equals("WinVersion")) { //NON-NLS
 
                     String version = "";
                     String systemRoot = "";
@@ -382,22 +382,22 @@ class ExtractRegistry extends Extract {
                             Element artnode = (Element) artchild;
 
                             String value = artnode.getTextContent().trim();
-                            String name = artnode.getAttribute("name");
+                            String name = artnode.getAttribute("name"); //NON-NLS
 
                             if (name.equals("ProductName")) { // NON_NLS
                                 version = value;
                             } else if (name.equals("CSDVersion")) { // NON_NLS
                                 // This is dependant on the fact that ProductName shows up first in the module output
                                 version = version + " " + value;
-                            } else if (name.equals("SystemRoot")) {
+                            } else if (name.equals("SystemRoot")) { //NON-NLS
                                 systemRoot = value;
-                            } else if (name.equals("ProductId")) {
+                            } else if (name.equals("ProductId")) { //NON-NLS
                                 productId = value;
-                            } else if (name.equals("RegisteredOwner")) {
+                            } else if (name.equals("RegisteredOwner")) { //NON-NLS
                                 regOwner = value;
-                            } else if (name.equals("RegisteredOrganization")) {
+                            } else if (name.equals("RegisteredOrganization")) { //NON-NLS
                                 regOrg = value;
-                            } else if (name.equals("InstallDate")) {
+                            } else if (name.equals("InstallDate")) { //NON-NLS
                                 try {
                                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                     installtime = epochtime;
@@ -447,7 +447,7 @@ class ExtractRegistry extends Extract {
                             Element artnode = (Element) artchild;
 
                             String value = artnode.getTextContent().trim();
-                            String name = artnode.getAttribute("name");
+                            String name = artnode.getAttribute("name"); //NON-NLS
 
                             if (name.equals("OS")) { // NON-NLS
                                 os = value;
@@ -455,7 +455,7 @@ class ExtractRegistry extends Extract {
                                 procArch = value;
                             } else if (name.equals("PROCESSOR_IDENTIFIER")) {  //NON-NLS
                                 procId = value;
-                            } else if (name.equals("TEMP")) {
+                            } else if (name.equals("TEMP")) { //NON-NLS
                                 tempDir = value;
                             }
                         }
@@ -490,7 +490,7 @@ class ExtractRegistry extends Extract {
                             Element artnode = (Element) artchild;
 
                             String value = artnode.getTextContent().trim();
-                            String name = artnode.getAttribute("name");
+                            String name = artnode.getAttribute("name"); //NON-NLS
 
                             if (name.equals("ComputerName")) { // NON-NLS
                                 compName = value;
@@ -635,7 +635,7 @@ class ExtractRegistry extends Extract {
 
                                 case "NtuserNetwork": // NON-NLS
                                     try {
-                                        String localPath = artnode.getAttribute("localPath");
+                                        String localPath = artnode.getAttribute("localPath"); //NON-NLS
                                         String remoteName = value;
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_REMOTE_DRIVE);
                                         bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID(),
@@ -649,7 +649,7 @@ class ExtractRegistry extends Extract {
                                     break;
 
                                 default:
-                                    logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType);
+                                    logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType); //NON-NLS
                                     break;
                             }
                         }

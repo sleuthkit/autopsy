@@ -142,7 +142,7 @@ public class Installer extends ModuleInstall {
                 mi.restored();
                 logger.log(Level.INFO, "{0} restore succeeded", mi.getClass().getName()); //NON-NLS
             } catch (Exception e) {
-                String msg = mi.getClass().getName() + " restore failed"; 
+                String msg = mi.getClass().getName() + " restore failed"; //NON-NLS
                 logger.log(Level.WARNING, msg, e);
             }
         }

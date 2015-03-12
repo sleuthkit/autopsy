@@ -164,15 +164,16 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
             if (file instanceof FsContent) {
                 FsContent fsFile = (FsContent) file;
 
-                sb.append("<hr /><pre>\n");
-                sb.append("From The Sleuth Kit istat Tool: <br /><br />");
+                sb.append("<hr /><pre>\n"); //NON-NLS
+                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"));
+                sb.append(" <br /><br />"); // NON-NLS
                 for (String str : fsFile.getMetaDataText()) {
-                    sb.append(str).append("<br />");
+                    sb.append(str).append("<br />"); //NON-NLS
                 }
-                sb.append("</pre>\n");
+                sb.append("</pre>\n"); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            sb.append("Error getting file metadata: ").append(ex.getLocalizedMessage());
+            sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
         }
         
         setText(sb.toString());

@@ -64,15 +64,15 @@ class EvalRegistryObj extends EvaluatableObject {
 
         // Key name is required
         if (obj.getKey() == null) {
-            return new ObservableResult(id, "RegistryObject: No key found",
+            return new ObservableResult(id, "RegistryObject: No key found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
         // For now, only support a full string match
         if (!((obj.getKey().getCondition() == null)
                 || (obj.getKey().getCondition() == ConditionTypeEnum.EQUALS))) {
-            return new ObservableResult(id, "RegistryObject: Can not support condition " + obj.getKey().getCondition()
-                    + " on Key field",
+            return new ObservableResult(id, "RegistryObject: Can not support condition " + obj.getKey().getCondition() //NON-NLS
+                    + " on Key field", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -83,7 +83,7 @@ class EvalRegistryObj extends EvaluatableObject {
         if (obj.getHive() == null) {
             // If the hive field is missing, add everything
             hiveList.addAll(regFiles);
-        } else if (obj.getHive().getValue().toString().startsWith("HKEY")) {
+        } else if (obj.getHive().getValue().toString().startsWith("HKEY")) { //NON-NLS
             // If the hive name is HKEY_LOCAL_MACHINE, add the ones from the config directory.
             // Otherwise, add the others
             for (RegistryFileInfo regFile : regFiles) {
@@ -92,12 +92,12 @@ class EvalRegistryObj extends EvaluatableObject {
                     Matcher matcher = pattern.matcher(regFile.abstractFile.getParentPath());
                     if (matcher.find()) {
                         // Looking for system files and found one, so add it to the list
-                        if (obj.getHive().getValue().toString().equalsIgnoreCase("HKEY_LOCAL_MACHINE")) {
+                        if (obj.getHive().getValue().toString().equalsIgnoreCase("HKEY_LOCAL_MACHINE")) { //NON-NLS
                             hiveList.add(regFile);
                         }
                     } else {
                         // Looking for non-system files and found one, so add it to the list
-                        if (!obj.getHive().getValue().toString().equalsIgnoreCase("HKEY_LOCAL_MACHINE")) {
+                        if (!obj.getHive().getValue().toString().equalsIgnoreCase("HKEY_LOCAL_MACHINE")) { //NON-NLS
                             hiveList.add(regFile);
                         }
                     }
@@ -125,7 +125,7 @@ class EvalRegistryObj extends EvaluatableObject {
 
         // This is unlikely to happen unless we have no registry files to test against
         if (hiveList.isEmpty()) {
-            return new ObservableResult(id, "RegistryObject: No matching registry hives found",
+            return new ObservableResult(id, "RegistryObject: No matching registry hives found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
@@ -139,16 +139,16 @@ class EvalRegistryObj extends EvaluatableObject {
                 // The registry parser seems to throw lots of different types of exceptions,
                 // so make sure to catch them all by this point. Malformed registry files
                 // in particular cause problems.
-                addWarning("Error processing registry file " + hive);
+                addWarning("Error processing registry file " + hive); //NON-NLS
             }
         }
 
         if (obj.getHive() == null) {
-            return new ObservableResult(id, "RegistryObject: Could not find key " + obj.getKey().getValue(),
+            return new ObservableResult(id, "RegistryObject: Could not find key " + obj.getKey().getValue(), //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
         }
-        return new ObservableResult(id, "RegistryObject: Could not find key " + obj.getKey().getValue()
-                + " in hive " + obj.getHive().getValue(),
+        return new ObservableResult(id, "RegistryObject: Could not find key " + obj.getKey().getValue() //NON-NLS
+                + " in hive " + obj.getHive().getValue(), //NON-NLS
                 spacing, ObservableResult.ObservableState.FALSE, null);
 
     }
@@ -170,7 +170,7 @@ class EvalRegistryObj extends EvaluatableObject {
                 // hive file name is here). This should only happen if the hive name started
                 // with "HKEY"
                 if((obj.getHive() != null) 
-                    && obj.getHive().getValue().toString().startsWith("HKEY")){
+                    && obj.getHive().getValue().toString().startsWith("HKEY")){ //NON-NLS
                     String[] parts = obj.getKey().getValue().toString().split("\\\\");
                     String newKey = "";
                     for (int i = 1; i < parts.length; i++) {
@@ -183,7 +183,7 @@ class EvalRegistryObj extends EvaluatableObject {
                 }
 
                 if (result == null) {
-                    return new ObservableResult(id, "RegistryObject: Could not find key " + obj.getKey().getValue(),
+                    return new ObservableResult(id, "RegistryObject: Could not find key " + obj.getKey().getValue(), //NON-NLS
                             spacing, ObservableResult.ObservableState.FALSE, null);
                 }
             }
@@ -191,8 +191,8 @@ class EvalRegistryObj extends EvaluatableObject {
             if ((obj.getValues() == null) || (obj.getValues().getValues().isEmpty())) {
                 // No values to test
                 List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
-                artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry"));
-                return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue(),
+                artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry")); //NON-NLS
+                return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue(), //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
 
@@ -261,25 +261,25 @@ class EvalRegistryObj extends EvaluatableObject {
                         if (nameSuccess && valueSuccess) {
                             // Found a match for all values
                             List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
-                            artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry"));
-                            return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue()
-                                    + " and value " + stixRegValue.getName().getValue().toString()
+                            artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry")); //NON-NLS
+                            return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue() //NON-NLS
+                                    + " and value " + stixRegValue.getName().getValue().toString() //NON-NLS
                                     + " = " + stixRegValue.getData().getValue().toString(),
                                     spacing, ObservableResult.ObservableState.TRUE, artData);
                         }
                     }
                 } catch (Exception ex) {
                     // Broad catch here becase the registry parser can create all kinds of exceptions beyond what it reports.
-                    return new ObservableResult(id, "RegistryObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+                    return new ObservableResult(id, "RegistryObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                             spacing, ObservableResult.ObservableState.INDETERMINATE, null);
                 }
             }
         } catch (TskCoreException ex) {
-            return new ObservableResult(id, "RegistryObject: Exception during evaluation: " + ex.getLocalizedMessage(),
+            return new ObservableResult(id, "RegistryObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
-        return new ObservableResult(id, "RegistryObject: Not done",
+        return new ObservableResult(id, "RegistryObject: Not done", //NON-NLS
                 spacing, ObservableResult.ObservableState.INDETERMINATE, null);
     }
 
@@ -290,9 +290,9 @@ class EvalRegistryObj extends EvaluatableObject {
             RegistryKey root = regFile.getRoot();
             return root;
         } catch (IOException ex) {
-            throw new TskCoreException("Error opening registry file - " + ex.getLocalizedMessage());
+            throw new TskCoreException("Error opening registry file - " + ex.getLocalizedMessage()); //NON-NLS
         } catch (RegistryParseException ex) {
-            throw new TskCoreException("Error opening root node of registry - " + ex.getLocalizedMessage());
+            throw new TskCoreException("Error opening root node of registry - " + ex.getLocalizedMessage()); //NON-NLS
         }
     }
 
@@ -356,7 +356,7 @@ class EvalRegistryObj extends EvaluatableObject {
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 // Don't save any unallocated versions
-                if (regFile.getMetaFlagsAsString().contains("Allocated")) {
+                if (regFile.getMetaFlagsAsString().contains("Allocated")) { //NON-NLS
                     ContentUtils.writeToFile(regFile, regFileNameLocalFile);
                     regFilesLocal.add(new EvalRegistryObj().new RegistryFileInfo(regFile, regFileNameLocal));
                 }
@@ -388,7 +388,7 @@ class EvalRegistryObj extends EvaluatableObject {
                 List<AbstractFile> allRegistryFiles = fileManager.findFiles(ds, regFileName, "/system32/config"); //NON-NLS
                 for (AbstractFile regFile : allRegistryFiles) {
                     // Don't want anything from regback
-                    if (!regFile.getParentPath().contains("RegBack")) {
+                    if (!regFile.getParentPath().contains("RegBack")) { //NON-NLS
                         registryFiles.add(regFile);
                     }
                 }
@@ -402,25 +402,25 @@ class EvalRegistryObj extends EvaluatableObject {
         List<String> fieldNames = new ArrayList<String>();
 
         if (obj.getNumberValues() != null) {
-            fieldNames.add("Number_Values");
+            fieldNames.add("Number_Values"); //NON-NLS
         }
         if (obj.getModifiedTime() != null) {
-            fieldNames.add("Modified_Time");
+            fieldNames.add("Modified_Time"); //NON-NLS
         }
         if (obj.getCreatorUsername() != null) {
-            fieldNames.add("Creator_Username");
+            fieldNames.add("Creator_Username"); //NON-NLS
         }
         if (obj.getHandleList() != null) {
-            fieldNames.add("Handle_List");
+            fieldNames.add("Handle_List"); //NON-NLS
         }
         if (obj.getNumberSubkeys() != null) {
-            fieldNames.add("Number_Subkeys");
+            fieldNames.add("Number_Subkeys"); //NON-NLS
         }
         if (obj.getSubkeys() != null) {
-            fieldNames.add("Subkeys");
+            fieldNames.add("Subkeys"); //NON-NLS
         }
         if (obj.getByteRuns() != null) {
-            fieldNames.add("Byte_Runs");
+            fieldNames.add("Byte_Runs"); //NON-NLS
         }
 
         String warningStr = "";
@@ -431,7 +431,7 @@ class EvalRegistryObj extends EvaluatableObject {
             warningStr += name;
         }
 
-        addWarning("Unsupported field(s): " + warningStr);
+        addWarning("Unsupported field(s): " + warningStr); //NON-NLS
     }
 
     /**
