@@ -41,7 +41,9 @@ import org.sleuthkit.autopsy.imageanalyzer.ImageAnalyzerController;
 import org.sleuthkit.autopsy.imageanalyzer.datamodel.Category;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Displays summary statistics (counts) for each group */
+/**
+ * Displays summary statistics (counts) for each group
+ */
 public class SummaryTablePane extends AnchorPane implements Category.CategoryListener {
 
     private static SummaryTablePane instance;
@@ -97,7 +99,9 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         return instance;
     }
 
-    /** listen to Category updates and rebuild the table */
+    /**
+     * listen to Category updates and rebuild the table
+     */
     @Override
     public void handleCategoryChanged(Collection<Long> ids) {
         if (Case.isCaseOpen()) {
@@ -105,7 +109,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
 
             for (Category cat : Category.values()) {
                 try {
-                     data.add(new Pair<>(cat, ImageAnalyzerController.getDefault().getGroupManager().countFilesWithCategory(cat)));
+                    data.add(new Pair<>(cat, ImageAnalyzerController.getDefault().getGroupManager().countFilesWithCategory(cat)));
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }
