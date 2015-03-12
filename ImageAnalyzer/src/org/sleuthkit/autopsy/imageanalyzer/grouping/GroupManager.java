@@ -503,8 +503,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     }
                 }
 
-                //System.out.println("countAllFiles: " + db.countAllFiles());
-                //System.out.println("countFiles: " + db.countFiles());
                 return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")");
             } else {
 
@@ -515,7 +513,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         files.add(ct.getContent().getId());
                     }
                 }
-                //System.out.println(" Found " + files.size() + " files in category " + category.getDisplayName());
 
                 return files;
             }
@@ -525,11 +522,21 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
     
+    /**
+     * Count the number of files with the given category.
+     * This is faster than getFileIDsWithCategory and should be used if only the
+     * counts are needed and not the file IDs.
+     * @param category Category to match against
+     * @return Number of files with the given category
+     * @throws TskCoreException 
+     */
     public int countFilesWithCategory(Category category) throws TskCoreException {
         try {
             if (category == Category.ZERO) {
 
-                //List<Long> files = new ArrayList<>();
+                // It is unlikely that Category Zero (Uncategorized) files will be tagged as such - 
+                // this is really just the default setting. So we count the number of files
+                // tagged with the other categories and subtract from the total.
                 int allOtherCatCount = 0;
                 TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
                 for (TagName tn : tns) {

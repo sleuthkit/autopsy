@@ -105,8 +105,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
 
             for (Category cat : Category.values()) {
                 try {
-                    //data.add(new Pair<>(cat, ImageAnalyzerController.getDefault().getGroupManager().getFileIDsWithCategory(cat).size()));
-                    data.add(new Pair<>(cat, ImageAnalyzerController.getDefault().getGroupManager().countFilesWithCategory(cat)));
+                     data.add(new Pair<>(cat, ImageAnalyzerController.getDefault().getGroupManager().countFilesWithCategory(cat)));
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }
