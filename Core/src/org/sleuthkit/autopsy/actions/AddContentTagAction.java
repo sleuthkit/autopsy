@@ -26,6 +26,7 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -113,7 +114,8 @@ public class AddContentTagAction extends AddTagAction {
                     }                    
                 }
                 // check if the same tag is being added for the same abstract file.
-                List<ContentTag> contentTagList = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
+                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                List<ContentTag> contentTagList = tagsManager.getContentTagsByContent(file);
                 for (ContentTag contentTag : contentTagList) {
                     if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName())) {
                         MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
@@ -122,7 +124,7 @@ public class AddContentTagAction extends AddTagAction {
                         return;
                     }
                 }
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);            
+                tagsManager.addContentTag(file, tagName, comment);
             }
             catch (TskCoreException ex) {                        
                 Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
