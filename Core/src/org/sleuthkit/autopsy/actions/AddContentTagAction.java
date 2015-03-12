@@ -113,12 +113,12 @@ public class AddContentTagAction extends AddTagAction {
                     }                    
                 }
                 // check if the same tag is being added for the same abstract file.
-                List<ContentTag> contentTagList = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
+                List<ContentTag> contentTagList = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
                 for (ContentTag contentTag : contentTagList) {
-                    if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName()) && contentTag.getContent().getId() == file.getId()) {
+                    if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName())) {
                         MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                                                                "AddContentTagAction.tagExists",
-                                                                file.getName(), tagName.getDisplayName()));
+                                "AddContentTagAction.tagExists",
+                                file.getName(), tagName.getDisplayName()));
                         return;
                     }
                 }
