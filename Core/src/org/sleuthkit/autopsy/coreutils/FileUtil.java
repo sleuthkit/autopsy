@@ -38,7 +38,10 @@ import org.openide.filesystems.FileObject;
      * @return true if the dir deleted, false otherwise
      */
     public static boolean deleteDir(File dirPath) {
-        if (dirPath.exists()) {
+        if(dirPath.isFile())
+            return false;
+        
+        if (dirPath.isDirectory() && dirPath.exists()) {
             File[] files = dirPath.listFiles();
             for (int i = 0; i < files.length; i++) {
                 if (files[i].isDirectory()) {
