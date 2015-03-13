@@ -46,15 +46,15 @@ import org.openide.filesystems.FileObject;
         File[] files = dirPath.listFiles();
         boolean hadErrors = false;
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].isDirectory()) {
-                    if (deleteDir(files[i]) == false) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    if (deleteDir(file) == false) {
                         // message was already logged
                         hadErrors = true;
                     }
                 } else {
-                    if (files[i].delete() == false) {
-                        logger.log(Level.WARNING, "Failed to delete file {0}", files[i].getPath()); //NON-NLS
+                    if (file.delete() == false) {
+                        logger.log(Level.WARNING, "Failed to delete file {0}", file.getPath()); //NON-NLS
                         hadErrors = true;
                     }
                 }
