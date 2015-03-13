@@ -94,9 +94,9 @@ class ContactAnalyzer {
             // check if contacts.name_raw_contact_id exists. Modify the query accordingly.
             Boolean column_found = false;
             DatabaseMetaData metadata = connection.getMetaData();
-            ResultSet columnListResultSet = metadata.getColumns(null, null, "contacts", null);
+            ResultSet columnListResultSet = metadata.getColumns(null, null, "contacts", null); //NON-NLS
             while (columnListResultSet.next()) {
-                if (columnListResultSet.getString("COLUMN_NAME").equals("name_raw_contact_id")) {
+                if (columnListResultSet.getString("COLUMN_NAME").equals("name_raw_contact_id")) { //NON-NLS
                     column_found = true;
                     break;
                 }
