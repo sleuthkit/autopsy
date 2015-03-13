@@ -297,16 +297,14 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }//GEN-LAST:event_importButtonActionPerformed
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
-            if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                int[] selected = listsTable.getSelectedRows();
-                if (selected.length == 0) {
-                    return;
-                }
-                XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
-            // Keywordlists contain 'Phone Numbers', 'IP Addresses', 'Email Addresses', 
-                // and URLs by default. Hence the offset by 4.
-                String listName = deleter.getListNames().get(selected[0] + 4);
+            int[] selected = listsTable.getSelectedRows();
+            if (selected.length == 0) {
+                return;
+            } else if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                String listName = (String) listsTable.getModel().getValueAt(selected[0], 0);
                 XmlKeywordSearchList.getCurrent().deleteList(listName);
+            } else {
+                return;
             }
         }
         tableModel.resync();
