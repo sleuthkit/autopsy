@@ -37,6 +37,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Locates database for the Tango app and adds info to blackboard.
+ */
 class TangoMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
@@ -103,7 +106,6 @@ class TangoMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
                                                          NbBundle.getMessage(TangoMessageAnalyzer.class,
                                                                              "TangoMessageAnalyzer.bbAttribute.tangoMessage")));
-
             }
 
         } catch (Exception e) {
