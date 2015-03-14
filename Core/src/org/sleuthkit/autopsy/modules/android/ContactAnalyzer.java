@@ -37,6 +37,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Locates a variety of different contacts databases, parses them, and populates the blackboard. 
+ */
 class ContactAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
@@ -158,7 +161,5 @@ class ContactAnalyzer {
                 logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
-
     }
-
 }

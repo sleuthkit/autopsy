@@ -37,6 +37,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Finds and parses the Google Maps database.
+ */
 class GoogleMapLocationAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
