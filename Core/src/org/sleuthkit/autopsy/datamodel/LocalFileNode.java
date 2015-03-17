@@ -31,15 +31,13 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A Node for a LocalFile or DerivedFile content object.
- *
- * TODO should be able to extend FileNode after FileNode extends
- * AbstractFsContentNode<AbstractFile>
  */
-public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
+public class LocalFileNode extends FileNode {
 
     public LocalFileNode(AbstractFile af) {
         super(af);
@@ -84,6 +82,10 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
+        if (this.getDirectoryBrowseMode()) {
+            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "FileNode.viewFileInDir.text"), this));
+            actionsList.add(null); // creates a menu separator
+        }
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
