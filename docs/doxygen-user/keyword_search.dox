@@ -1,4 +1,4 @@
-/*! \page keyword_search Keyword Search
+/*! \page kwsrch_page Keyword Search Module
 
 Autopsy ships a keyword search module, which provides the \ref ingest "ingest capability" and also supports a manual text search mode.
 

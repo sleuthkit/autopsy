@@ -22,13 +22,12 @@ Rules specify what to look for in a data source.  Each rule specifies:
 - Type: If the rule should be applied to only files, only directories, or both files and directories. 
 - Name Pattern: String to match the file name against.
 - Name Pattern Type: Should the pattern be matched against the full file type or just the extension. 
-- Path Pattern: A substring of the parent path that must be matched. This allows you to restrict generic names to a specific structure (such as an appliation name).   A substring match is performed. 
+- Path Pattern: A substring of the parent path that must be matched. This allows you to restrict generic names to a specific structure (such as an application name).   A substring match is performed. 
 - Rule Name: Additional details that are displayed in the UI when that rule is matched.  Allows you to determine which rule in the set matched.
 
 
 Example
 =======
-From slides:
 
 VMWare
 --------

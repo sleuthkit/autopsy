@@ -1,0 +1,136 @@
+/*! \page uilayout_page UI Layout
+
+
+\section ui_overview Overview
+
+Three parts of the UI….
+
+
+\section ui_tree Left-side Tree
+
+The tree on the left-hand side is where you will start many of your analysis approaches and find saved results from automated procedures (ingest). The tree has three main areas:
+\li <b>Images:</b> Where you can find the directory tree hierarchy of the file systems in the images. Go here to navigate to a specific file or directory.
+\li <b>Views:</b>  Where you can view all of the files in the images, but organized by file type or dates instead of directories. Go here if you are looking for files of a given type or that were recently used.
+\li <b>Results:</b> Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
+\li <b>Tags:</b>  Where you can view all file and results that have been bookmarked for easy access.
+\li <b>Reports:</b>  Where you can find references to reports that you have generated or that some of the ingest modules created. 
+
+
+Below is an example of the tree
+\image html explorer-tree.PNG
+
+
+\subsection ui_tree_ds Data Source Section
+
+Right clicking on the various nodes in the tree will allow you to get more options for each data source and its contents. 
+
+One item to mention in this area is extracting unallocated space. Unallocated space are chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
+\li Individual Blocks Underneath a volume, there is a folder named Unalloc. This folder contains all the individual unallocated blocks as the image is storing them. You can right click and extract them the same way you can extract any other type of file in the Directory Tree.
+\li Single Files There are two ways to extract unallocated space as a single file. Right clicking on a volume and selecting "Extract Unallocated Space as Single File" will concatenate all the unallocated files into a single, continuous file for the volume. The second way is to right click on an image, and select "Extract Unallocated Space to Single Files". This option will extract one single file for each volume in the image. Progress on extraction is sent to the progress bar in the bottom right. Progress is based on number of files concatenated. These files are stored in the Export folder under the case directory. Files are named according to ImageName-Unalloc-ImageObjectID-VolumeID.dat This naming scheme ensures that no duplicate file names will occur even if an there are two images with the same name in a case.
+
+Below is where to find the single file extraction option
+
+\image html extracting-unallocated-space.PNG
+
+\subsection ui_tree_views Views Section
+
+TODO
+
+\subsection ui_tree_results Results Section
+
+TODO
+
+\subsection ui_tree_tags Tags Section
+
+TODO
+
+\subsection ui_tree_reports Reports Section
+
+TODO
+
+
+\section ui_results Upper-right Results Viewer Area
+
+The Result Viewer windows are in the upper right area of the interface and display the results from selecting something in the tree. You will have the option to display the results in a variety of formats.
+
+\subsection right_click_functions Right Click Functions
+Viewers in Result Viewers have certain right-click functions built-in into them that can be accessed when a node a certain type is selected (a file, directory or a result).
+Here are some examples that you may see:
+\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
+\li View in New Window: Opens the content in a new internal Content Viewer (instead of in the default location in the lower right).
+\li Extract: Make a local copy of the file or directory for further analysis.
+\li Search for files with the same MD5 Hash: Searches the entire file-system for any files with the same MD5 Hash as the one selected.
+
+
+\subsection table_result_viewer Table Result Viewers
+    
+Thumbnail Results Viewer
+Thumbnail Results Viewer displays the data catalog as a table of thumbnail images in adjustable sizes. This viewer only supports picture file(s) (Currently, only supports JPG, GIF, and PNG formats). Click the Thumbnail tab to select this view. Note that for a large number of images in a directory selected in the Data Explorer, or for a View selected that contains a large number of images, it might take a while to populate this view for the first time before the images are cached.
+
+<b>Example</b>\n
+Below is an example of "Table Results Viewer" window:
+\image html table-result-viewer-tab.PNG 
+
+
+\subsection thumbnail_result_viewer Thumbnail Result Viewers
+Table Results Viewer (Directory Listing) displays the data catalog as a table with some details (properties) of each file. The properties that it shows are: name, time (modified, changed, accessed, and created), size, flags (directory and meta), mode, user ID, group ID, metadata address, attribute address, and type (directory and meta). Click the Table Viewer tab to select this view.
+
+The Results Viewer can be also activated for saved results and it can show a high level results grouped, or a results at a file level, depending on which node on the Directory Tree is selected to populate the Table Results Viewer.
+
+<b>Example</b>\n
+Below is an example of a "Table Results Viewer" window:
+\image html thumbnail-result-viewer-tab.PNG
+
+
+
+\section ui_content Lower-right Content Viewer Area
+
+The Content Viewer area is in the lower right area of the interface. This area is used to view a specific file in a variety of formats. There are different tabs for different viewers. Not all tabs support all file types, so only some of them will be enabled. To display data in this area, a file must be selected from the Result Viewer window.
+
+The Content Viewer area is part of a plug-in framework. You can install modules that will add more viewer types. This section describes the viewers that come by default with Autopsy.
+
+\subsection result_content_viewers Result Content Viewer
+Result Content Viewer shows the artifacts (saved results) associated with the item selected in the Result Viewer.
+<b>Example</b>
+Below is an example of "Result Content Viewer" window:
+\image html result-viewer-example.PNG
+
+\subsection hex_content_viewer Hex Content Viewer
+Hex Content Viewer shows you the raw and exact contents of a file. In this Hex Content Viewer, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
+
+<b>Example</b> \n
+Below is an example of "Hex Content Viewer" window:
+\image html hex-content-viewer-tab.PNG
+
+\subsection media_content_viewer Media Content Viewer
+
+The Media Content Viewer will show a picture or video file. Video files can be played and paused. The size of the picture or video will be reduced to fit into the screen. If you want more complex analysis of the media, then you must export the file.
+
+If you select an non-picture file or an unsupported picture format on the "Result Viewers", this tab will be disabled.
+
+<b>Example</b> \n
+Here's one of the example of the "Media Content Viewer":
+\image html picture-content-viewer-tab.PNG
+
+\subsection string_content_viewer String Content Viewer
+    
+Strings Content Viewer scans (potentially binary) data of the file / folder and searches it for data that could be text. When appropriate data is found, the String Content Viewer shows data strings extracted from binary, decoded, and interpreted as UTF8/16 for the selected script/language.
+
+Note that this is different from the Text Content Viewer, which displays the text for a file that is stored in the keyword search index. The results may be the same or they could be different, depending how the data were interpreted by the indexer.
+
+<b>Example</b> \n
+Below is an example of "String Content Viewer" window:
+\image html string-content-viewer-tab.PNG
+
+\subsection text_content_viewer Text Content Viewer
+
+Text Content Viewer uses the keyword search index that may have been populated during Image Ingest. If a file has text stored in the index, then this tab will be enabled and it will be displayed to the user if a file or a result associated with a file is selected.
+
+This tab may have more text on it than the "String View", which relies on searching the file for text-looking data. Some files, like PDF, will not have text-looking data at the byte-level, but the keyword indexing process knows how to interpret a PDF file and produce text. For the files the indexer knows about, there may be the METADATA section at the end of the displayed extracted text. If an indexed document contains any metadata (such as creation date, author, etc), it will be displayed there. Note that, unlike the "String View", the Text View does not have its built-in settings for the script/language to use for extracted strings. This is because the script/language is used at indexing time, and that setting is associated with the Keyword Search indexer, not the viewer.
+
+If this tab is not enabled, then either the file has no text or you did not enable Keyword Search as an ingest module. Note that this viewer is also used to display highlighted keyword hits when operated in the "Search Matches" mode, selected on the right-hand side of the viewer's toolbar.
+ 
+\image html text-view.PNG
+
+
+*/
