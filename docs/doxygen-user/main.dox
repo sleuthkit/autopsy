@@ -22,6 +22,8 @@ The following topics are available here:
  - \subpage ingest_page "Ingest Modules"
  - \subpage hash_db_page 
  - \subpage keyword_search 
+ - \subpage android_page
+ - \subpage interesting_page
 - Manual Analysis
  - \subpage directory_tree "Directory Tree"
  - \subpage file_search "File Search"
