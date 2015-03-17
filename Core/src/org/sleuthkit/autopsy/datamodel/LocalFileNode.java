@@ -99,19 +99,4 @@ public class LocalFileNode extends FileNode {
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[0]);
     }
-
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    public boolean isLeafTypeNode() {
-        return true; //!this.hasContentChildren();
-    }
 }
