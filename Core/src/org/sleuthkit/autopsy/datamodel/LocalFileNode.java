@@ -83,7 +83,7 @@ public class LocalFileNode extends FileNode {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         if (this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "FileNode.viewFileInDir.text"), this));
+            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this));
             actionsList.add(null); // creates a menu separator
         }
         actionsList.add(new NewWindowViewAction(
