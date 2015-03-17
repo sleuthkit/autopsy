@@ -1,0 +1,12 @@
+/*! \page mod_debugTsk_page Debugging The Sleuth Kit
+
+If you find that you need to debug some of the C/C++ code from The Sleuth Kit (TSK), then here are the steps to follow:
+
+-# Ensure that you have the Debug version of the TSK JNI dll built (both 32-bit and 64-bit to be safe).  This assumes you built TSK from source and are not simply using the developer platform. You may have to build the libtsk_jni twice because sommetimes it complains about not being able to find a .map file. 
+-# Run the 'dist-debug' target for the TSK DataModel project.  This copies the debug versions of the dll into the JAR file.  If you run the 'dist' target, then you will get Release versions of the dll and you won't have the needed symbols for debugging. 
+-# Build the Autopsy suite so that it copies the new JAR file with the debug dlls.
+-# Set your breakpoints in the TSK source.
+-# Run Autopsy in the debugger.
+-# In VC++, do Debug->Attach to process... If you don't see this menu item, set Tools->Settings->Expert Settings. There is also a Tools->Attach to process..(Ctrl+Alt+P). Attach to nbexex64,exe (netbeasn64.exe is the IDE).
+
+*/
