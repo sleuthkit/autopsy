@@ -160,10 +160,14 @@ final class FilesSet {
                 throw new IllegalArgumentException("Interesting files set rule meta-type filter cannot be null");
             }
             this.ruleName = ruleName;
-            this.fileNameFilter = fileNameFilter;
-            this.filters.add(fileNameFilter);
+            
+            /* The rules are evaluated in the order added.  MetaType check is fastest, so do it first */
             this.metaTypeFilter = metaTypeFilter;
             this.filters.add(this.metaTypeFilter);
+            
+            this.fileNameFilter = fileNameFilter;
+            this.filters.add(fileNameFilter);
+            
             this.pathFilter = pathFilter;
             if (this.pathFilter != null) {
                 this.filters.add(this.pathFilter);
