@@ -25,8 +25,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class ReportProgressPanel extends javax.swing.JPanel {
+    private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
     private ReportStatus STATUS;
     
     // Enum to represent if a report is waiting,
@@ -268,7 +271,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         }
                         // add finer grained result codes here.
                         default: {
-                            //log invalid report status code.
+                            logger.log(Level.SEVERE, "Invalid ReportStatus code {0}", reportStatus); //NON-NLS
                             break;
                         }
                     }
