@@ -29,11 +29,13 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,11 +47,11 @@ class TextMessageAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
 
-    public static void findTexts() {
+    public static void findTexts(Content dataSource) {
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<AbstractFile> absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //NON-NLS //get exact file name
-
+            
+            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+            List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "mmssms.db"); //NON-NLS
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());

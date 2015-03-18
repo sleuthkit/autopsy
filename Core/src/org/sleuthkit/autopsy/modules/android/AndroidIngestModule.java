@@ -55,7 +55,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         progressBar.switchToDeterminate(9);
 
         try {
-            ContactAnalyzer.findContacts();
+            ContactAnalyzer.findContacts(dataSource);
             progressBar.progress(1);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -65,7 +65,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            CallLogAnalyzer.findCallLogs();
+            CallLogAnalyzer.findCallLogs(dataSource);
             progressBar.progress(2);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -75,7 +75,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            TextMessageAnalyzer.findTexts();
+            TextMessageAnalyzer.findTexts(dataSource);
             progressBar.progress(3);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -85,7 +85,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            TangoMessageAnalyzer.findTangoMessages();
+            TangoMessageAnalyzer.findTangoMessages(dataSource);
             progressBar.progress(4);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -95,7 +95,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            WWFMessageAnalyzer.findWWFMessages();
+            WWFMessageAnalyzer.findWWFMessages(dataSource);
             progressBar.progress(5);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -105,7 +105,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            GoogleMapLocationAnalyzer.findGeoLocations();
+            GoogleMapLocationAnalyzer.findGeoLocations(dataSource);
             progressBar.progress(6);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -115,7 +115,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            BrowserLocationAnalyzer.findGeoLocations();
+            BrowserLocationAnalyzer.findGeoLocations(dataSource);
             progressBar.progress(7);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -125,7 +125,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            CacheLocationAnalyzer.findGeoLocations();
+            CacheLocationAnalyzer.findGeoLocations(dataSource);
             progressBar.progress(8);
         } catch (Exception e) {
             errors.add("Error getting Cache Locations"); //NON-NLS

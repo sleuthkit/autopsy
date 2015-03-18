@@ -28,11 +28,13 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -47,11 +49,12 @@ class CacheLocationAnalyzer {
     /**
      * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS and MAC info from Wifi points. 
      */
-    public static void findGeoLocations() {
+    public static void findGeoLocations(Content dataSource) {
 
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name ='cache.cell' OR name='cache.wifi'");  //NON-NLS  //get exact file names
+            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+            List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
+            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi"));
 
             for (AbstractFile abstractFile : abstractFiles) {
                 try {
