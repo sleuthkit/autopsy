@@ -712,9 +712,7 @@ class TestConfiguration(object):
             else:
                 self.jenkins = False
             if parsed_config.getElementsByTagName("timing"):
-                self.timing = True
-            else:
-                self.timing = False
+                self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
