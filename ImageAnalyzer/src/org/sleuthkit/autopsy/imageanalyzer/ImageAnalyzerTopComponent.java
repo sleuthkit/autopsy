@@ -34,6 +34,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imageanalyzer.gui.GroupPane;
 import org.sleuthkit.autopsy.imageanalyzer.gui.MetaDataPane;
@@ -67,6 +68,7 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
 
     public final static String PREFERRED_ID = "ImageAnalyzerTopComponent";
     private static final Logger LOGGER = Logger.getLogger(ImageAnalyzerTopComponent.class.getName());
+    private static boolean topComponentInitialized = false;
 
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
@@ -79,6 +81,7 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
         //        timeLineController.openTimeLine();
         final ImageAnalyzerTopComponent tc = (ImageAnalyzerTopComponent) WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
         if (tc != null) {
+            topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
             Mode mode = WindowManager.getDefault().findMode("timeline");
             if (mode != null) {
@@ -90,12 +93,14 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
     }
 
     public static void closeTopComponent() {
-        final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
-        if (etc != null) {
-            try {
-                etc.close();
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "failed to close ImageAnalyzerTopComponent", e);
+        if(topComponentInitialized){
+            final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageAnalyzerTopComponent");
+            if (etc != null) {
+                try {
+                    etc.close();
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "failed to close ImageAnalyzerTopComponent", e);
+                }
             }
         }
     }
@@ -128,7 +133,7 @@ public final class ImageAnalyzerTopComponent extends TopComponent implements Exp
 
         setName(Bundle.CTL_ImageAnalyzerTopComponent());
         setToolTipText(Bundle.HINT_ImageAnalyzerTopComponent());
-
+        
         initComponents();
 
         Platform.runLater(() -> {//initialize jfx ui

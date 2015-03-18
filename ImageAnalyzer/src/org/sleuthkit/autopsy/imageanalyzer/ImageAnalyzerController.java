@@ -190,7 +190,9 @@ public final class ImageAnalyzerController {
         });
 
         groupManager.getAnalyzedGroups().addListener((Observable o) -> {
-            checkForGroups();
+            if(Case.isCaseOpen()){
+                checkForGroups();
+            }
         });
 
         groupManager.getUnSeenGroups().addListener((Observable observable) -> {

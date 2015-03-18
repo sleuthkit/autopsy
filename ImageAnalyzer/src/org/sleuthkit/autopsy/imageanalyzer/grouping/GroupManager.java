@@ -618,6 +618,11 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @param force     true to force a full db query regroup
      */
     public <A extends Comparable<A>> void regroup(final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
+
+        if(! Case.isCaseOpen()){
+            return;
+        }
+        
         //only re-query the db if the group by attribute changed or it is forced
         if (groupBy != getGroupBy() || force == true) {
             setGroupBy(groupBy);

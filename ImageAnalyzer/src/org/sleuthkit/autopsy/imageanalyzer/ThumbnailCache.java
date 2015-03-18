@@ -162,7 +162,11 @@ public enum ThumbnailCache {
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile()))) {
             final Image thumbnail = new Image(inputStream, MAX_ICON_SIZE, MAX_ICON_SIZE, true, true);
             if (thumbnail.isError()) {  //if there was an error loading the image via JFX, fall back on Swing
-                LOGGER.log(Level.WARNING, "problem loading image: " + file.getName() + " .", thumbnail.getException());
+                LOGGER.log(Level.WARNING, "problem loading thumbnail for image: " + file.getName() + " .");
+                // Doing it this way puts the whole stack trace in the console output, which is probably not
+                // needed. There are a significant number of cases where this is expected to fail (bitmaps,
+                // empty files, etc.)
+                //LOGGER.log(Level.WARNING, "problem loading image: " + file.getName() + " .", thumbnail.getException());
                 return fallbackToSwingImage(file);
             } else { //if the load went successfully, save the thumbnail to disk on a background thread
                 imageSaver.execute(() -> {
