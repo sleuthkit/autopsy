@@ -47,9 +47,8 @@ class BrowserLocationAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(BrowserLocationAnalyzer.class.getName());
 
-    public static void findGeoLocations(Content dataSource) {
+    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "CachedGeoposition%.db"); //NON-NLS
 
             for (AbstractFile abstractFile : abstractFiles) {

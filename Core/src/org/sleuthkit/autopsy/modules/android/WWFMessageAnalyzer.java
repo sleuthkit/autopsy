@@ -47,10 +47,9 @@ class WWFMessageAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(WWFMessageAnalyzer.class.getName());
 
-    public static void findWWFMessages(Content dataSource) {
+    public static void findWWFMessages(Content dataSource, FileManager fileManager) {
         List<AbstractFile> absFiles;
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             absFiles = fileManager.findFiles(dataSource, "WordsFramework"); //NON-NLS
 
             for (AbstractFile abstractFile : absFiles) {

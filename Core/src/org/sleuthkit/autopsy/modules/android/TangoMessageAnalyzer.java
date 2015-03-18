@@ -47,10 +47,9 @@ class TangoMessageAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TangoMessageAnalyzer.class.getName());
 
-    public static void findTangoMessages(Content dataSource) {
+    public static void findTangoMessages(Content dataSource, FileManager fileManager) {
         List<AbstractFile> absFiles;
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             absFiles = fileManager.findFiles(dataSource, "tc.db"); //NON-NLS
             for (AbstractFile abstractFile : absFiles) {
                 try {

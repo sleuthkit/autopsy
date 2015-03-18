@@ -49,10 +49,9 @@ class CacheLocationAnalyzer {
     /**
      * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS and MAC info from Wifi points. 
      */
-    public static void findGeoLocations(Content dataSource) {
+    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
 
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
             abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi"));
 

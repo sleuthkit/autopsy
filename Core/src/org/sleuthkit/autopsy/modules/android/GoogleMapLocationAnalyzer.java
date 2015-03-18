@@ -47,10 +47,9 @@ class GoogleMapLocationAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(GoogleMapLocationAnalyzer.class.getName());
 
-    public static void findGeoLocations(Content dataSource) {
+    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
         List<AbstractFile> absFiles;
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             absFiles = fileManager.findFiles(dataSource, "da_destination_history"); //NON-NLS
             if (absFiles.isEmpty()) {
                 return;

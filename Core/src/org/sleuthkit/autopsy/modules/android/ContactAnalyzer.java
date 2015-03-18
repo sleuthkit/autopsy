@@ -47,11 +47,10 @@ class ContactAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
 
-    public static void findContacts(Content dataSource) {
+    public static void findContacts(Content dataSource, FileManager fileManager) {
 
         List<AbstractFile> absFiles;
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             absFiles = fileManager.findFiles(dataSource, "contacts.db"); //NON-NLS
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db")); //NON-NLS
             if (absFiles.isEmpty()) {

@@ -47,10 +47,9 @@ class TextMessageAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
 
-    public static void findTexts(Content dataSource) {
+    public static void findTexts(Content dataSource, FileManager fileManager) {
         try {
             
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "mmssms.db"); //NON-NLS
             for (AbstractFile abstractFile : absFiles) {
                 try {

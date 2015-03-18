@@ -54,9 +54,8 @@ class CallLogAnalyzer {
     /** the names of tables that potentially hold call logs in the dbs */
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
-    public static void findCallLogs(Content dataSource) {
+    public static void findCallLogs(Content dataSource, FileManager fileManager) {
         try {
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "logs.db"); //NON-NLS
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db")); //NON-NLS
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db")); //NON-NLS
