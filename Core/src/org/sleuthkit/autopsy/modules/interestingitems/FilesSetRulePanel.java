@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import org.apache.commons.lang.StringUtils;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -135,12 +136,18 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     boolean isValidRuleDefinition() {
         // The rule must have a name.
-        if (this.ruleNameTextField.getText().isEmpty()) {
-            NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                    NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.filesSetRulesMustBeNamed"),
-                    NotifyDescriptor.WARNING_MESSAGE);
-            DialogDisplayer.getDefault().notify(notifyDesc);
-            return false;
+        // If rule name is absent, set it as the Name Pattern since nameTextField cannot be left empty.
+        if (StringUtils.isBlank(this.ruleNameTextField.getText())) {
+            String ruleName = this.nameTextField.getText();
+            if (StringUtils.isNotBlank(ruleName)) {
+                this.ruleNameTextField.setText(ruleName);
+            } else {
+                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                            NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.emptyNameFilter"),
+                            NotifyDescriptor.WARNING_MESSAGE);
+                    DialogDisplayer.getDefault().notify(notifyDesc);
+                    return false;
+            }
         }
 
         // The rule must have name filter text.
