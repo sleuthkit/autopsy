@@ -92,17 +92,21 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N NON-NLS
+        if(RecentCases.getInstance().getTotalRecentCases() == 0) {
+                openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent_disabled.png"))); // NOI18N
+        } else {
+                openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N
+                openRecentButton.addActionListener(new java.awt.event.ActionListener() {
+                        public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        openRecentButtonActionPerformed(evt);
+                        }
+                });
+        }
         openRecentButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentButton.text")); // NOI18N
         openRecentButton.setBorder(null);
         openRecentButton.setBorderPainted(false);
         openRecentButton.setContentAreaFilled(false);
         openRecentButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        openRecentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openRecentButtonActionPerformed(evt);
-            }
-        });
 
         createNewLabel.setFont(createNewLabel.getFont().deriveFont(Font.PLAIN, 13));
         createNewLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewLabel.text")); // NOI18N
