@@ -31,6 +31,7 @@ import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.*;
@@ -69,6 +70,7 @@ import org.xml.sax.SAXException;
     final static String EXPORT_FOLDER_RELPATH = "Export"; //NON-NLS
     final static String CACHE_FOLDER_NAME = "CacheFolder"; //NON-NLS
     final static String CACHE_FOLDER_RELPATH = "Cache"; //NON-NLS
+    final static String CASE_TYPE = "CaseType"; //NON-NLS
     // folders attribute
     final static String RELATIVE_NAME = "Relative";    // relevant path info NON-NLS
     // folder attr values
@@ -84,6 +86,7 @@ import org.xml.sax.SAXException;
     private String examiner;        // examiner name
     private String schemaVersion = "1.0";
     private String autopsySavedVersion;
+    private CaseType caseType;      // The type of case: local or shared
     // for error handling
     private JPanel caller;
     private String className = this.getClass().toString();
@@ -187,6 +190,15 @@ import org.xml.sax.SAXException;
         caseNumber = givenCaseNumber; // change this to change the xml file if needed
     }
 
+    /**
+     * Sets the case type internally (on local variable in this class)
+     *
+     * @param givenCaseType the new case type
+     */
+    private void setCaseType(CaseType givenCaseType) {
+        caseType = givenCaseType; // change this to change the xml file if needed
+    }
+    
     /**
      * Sets the examiner name internally (on local variable in this class)
      *
@@ -443,7 +455,7 @@ import org.xml.sax.SAXException;
      * @param examiner examiner for the case (optional, can be empty string
      * @param caseNumber case number (optional), can be empty
      */
-    protected void create(String dirPath, String caseName, String examiner, String caseNumber) throws CaseActionException {
+    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType) throws CaseActionException {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
@@ -451,6 +463,7 @@ import org.xml.sax.SAXException;
         setName(caseName);
         setExaminer(examiner);
         setNumber(caseNumber);
+        setCaseType(caseType);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -522,6 +535,10 @@ import org.xml.sax.SAXException;
         cacheElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(cacheElement);
 
+        Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
+        typeElement.appendChild(doc.createTextNode(caseType.toString()));
+        caseElement.appendChild(typeElement);
+        
         // write more code if needed ...
     }
 
@@ -688,5 +705,6 @@ import org.xml.sax.SAXException;
         caseName = "";
         caseNumber = "";
         examiner = "";
+        caseType = CaseType.LOCAL;
     }
 }

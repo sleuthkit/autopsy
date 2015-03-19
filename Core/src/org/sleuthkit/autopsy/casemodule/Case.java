@@ -130,6 +130,31 @@ public class Case implements SleuthkitCase.ErrorObserver {
         REPORT_ADDED;
     };
 
+    /**
+     * This enum describes the type of case, either Local (standalone) or Shared
+     * (using PostgreSql)
+     */
+    public enum CaseType {
+
+        LOCAL("Local Case"),
+        SHARED("Shared Case");
+
+        private final String caseName;
+
+        private CaseType(String s) {
+            caseName = s;
+        }
+
+        public boolean equalsName(String otherName) {
+            return (otherName == null) ? false : caseName.equals(otherName);
+        }
+
+        @Override
+        public String toString() {
+            return caseName;
+        }
+    };
+
     private String name;
     private String number;
     private String examiner;
@@ -142,6 +167,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
+    private CaseType caseType;
     
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
@@ -270,8 +296,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param caseName   the name of case
      * @param caseNumber the case number
      * @param examiner   the examiner for this case
+     * @param caseType   the type of case, local or shared
      */
-    public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
+    public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
 
         // create case directory if it doesn't already exist.
@@ -282,7 +309,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
-        xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
+        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType); // create a new XML config file
         xmlcm.writeFile();
 
         String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS

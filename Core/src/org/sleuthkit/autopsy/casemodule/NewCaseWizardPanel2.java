@@ -30,6 +30,7 @@ import org.openide.WizardValidationException;
 import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 
 /**
  * The "New Case" wizard panel with a component on it. This class represents 
@@ -49,7 +50,8 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     private String caseName;
     private String caseDir;
     private String createdDirectory;
-
+    private CaseType caseType;
+    
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
@@ -154,6 +156,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         caseName = (String) settings.getProperty("caseName"); //NON-NLS
         caseDir = (String) settings.getProperty("caseParentDir"); //NON-NLS
         createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
+        caseType = CaseType.values()[(int)settings.getProperty("caseType")]; //NON-NLS
     }
 
     /**
@@ -181,7 +184,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
                 @Override
                 public void run() {
                     try {
-                        Case.create(createdDirectory, caseName, caseNumber, examiner);
+                        Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
                     } catch (Exception ex) {
                         Exceptions.printStackTrace(ex);
                     }
