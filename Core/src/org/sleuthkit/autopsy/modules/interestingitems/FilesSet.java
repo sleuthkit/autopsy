@@ -150,6 +150,9 @@ final class FilesSet {
          * @param pathFilter A file path filter, may be null.
          */
         Rule(String ruleName, FileNameFilter fileNameFilter, MetaTypeFilter metaTypeFilter, ParentPathFilter pathFilter) {
+            if (ruleName == null) {
+                throw new NullPointerException("Interesting files set rule name cannot be null");
+            }
             if (fileNameFilter == null) {
                 throw new IllegalArgumentException("Interesting files set rule file name filter cannot be null");
             }
