@@ -285,22 +285,28 @@ public class IngestJobSettings {
      */
     private IngestModuleIngestJobSettings loadModuleSettings(IngestModuleFactory factory) {
         IngestModuleIngestJobSettings settings = null;
-        File settingsFile = new File(getModuleSettingsFilePath(factory));
-        if (settingsFile.exists()) {
+        String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
+        Boolean isPythonModule = false;
+        String pythonModuleSettingsPrefix = "org.python.proxies.";
+        CharSequence pythonModuleSettingsPrefixCS = pythonModuleSettingsPrefix.subSequence(0, pythonModuleSettingsPrefix.length()-1);
+        if(moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS)) {
+            isPythonModule = true;
+        }
+        File settingsFile = new File(moduleSettingsFilePath);
+        if (settingsFile.exists() && !isPythonModule) {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
-            } catch(NullPointerException ex){
-                try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                    // Reading serialized Jython module settings using NbObjectInputStream.readObject throws a NullPointerException                 
-                    settings = (IngestModuleIngestJobSettings) in.readObject();
-                } catch( IOException | ClassNotFoundException exception) {
-                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
-                    logger.log(Level.WARNING, warning, exception);
-                    this.warnings.add(warning);
-                }
-            }catch (IOException | ClassNotFoundException ex) {
+            } catch (IOException | ClassNotFoundException ex) {
                 String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
                 logger.log(Level.WARNING, warning, ex);
+                this.warnings.add(warning);
+            }
+        } else {
+            try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                settings = (IngestModuleIngestJobSettings) in.readObject();
+            } catch (IOException | ClassNotFoundException exception) {
+                String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
+                logger.log(Level.WARNING, warning, exception);
                 this.warnings.add(warning);
             }
         }
@@ -319,10 +325,6 @@ public class IngestJobSettings {
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
         String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
-        // Check if it's a python module class.
-        // In case of python module class, remove the <instance number> from the fileName.
-        if(fileName.startsWith("org.python.proxies."))
-            fileName = fileName.replaceAll("[$][\\d]+.settings$", "\\$.settings");
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }
@@ -364,6 +366,15 @@ public class IngestJobSettings {
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
         try {
+            String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
+            // compiled python modules have substring org.python.proxies. It can be used to identify them.
+            String pythonModuleSettingsPrefix = "org.python.proxies.";
+            CharSequence pythonModuleSettingsPrefixCS = pythonModuleSettingsPrefix.subSequence(0, pythonModuleSettingsPrefix.length() - 1);
+            if (moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS)) {
+                // compiled python modules have variable instance number as a part of their file name.
+                // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
+                moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
+            }
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getModuleSettingsFilePath(factory)))) {
                 out.writeObject(settings);
             }
