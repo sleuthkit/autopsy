@@ -135,20 +135,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * @return True if the definition is valid, false otherwise.
      */
     boolean isValidRuleDefinition() {
-        // The rule must have a name.
-        // If rule name is absent, set it as the Name Pattern since nameTextField cannot be left empty.
-        if (StringUtils.isBlank(this.ruleNameTextField.getText())) {
-            String ruleName = this.nameTextField.getText();
-            if (StringUtils.isNotBlank(ruleName)) {
-                this.ruleNameTextField.setText(ruleName);
-            } else {
-                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                            NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.emptyNameFilter"),
-                            NotifyDescriptor.WARNING_MESSAGE);
-                    DialogDisplayer.getDefault().notify(notifyDesc);
-                    return false;
-            }
-        }
 
         // The rule must have name filter text.
         if (this.nameTextField.getText().isEmpty()) {

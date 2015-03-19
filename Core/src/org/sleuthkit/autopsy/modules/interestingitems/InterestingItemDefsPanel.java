@@ -306,7 +306,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 rules.remove(selectedRule.getName());
             }
             FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameFilter(), panel.getMetaTypeFilter(), panel.getPathFilter());
-            rules.put(newRule.getName(), newRule);
+            rules.put(newRule.toString(), newRule);
 
             // Add the new/edited files set definition, replacing any previous 
             // definition with the same name and refreshing the display.
