@@ -29,7 +29,6 @@
 
 from java.lang import System
 from org.sleuthkit.autopsy.casemodule import Case
-from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.autopsy.report import GeneralReportModuleAdapter
 
 # Sample module that writes a file with the number of files
@@ -63,9 +62,8 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
             progressBar.increment()
             
             # Write the result to the report file.
-            report = open(reportPath + '\\' + self.getFilePath(), 'w')
+            report = open(reportPath + '\\' + self.getRelativeFilePath(), 'w')
             report.write("file count = %d" % fileCount)
             report.close()
             progressBar.increment()
             progressBar.complete()
-

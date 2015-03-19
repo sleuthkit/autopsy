@@ -46,20 +46,20 @@ from org.sleuthkit.autopsy.casemodule.services import FileManager
 
 # Sample factory that defines basic functionality and features of the module
 class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
-    
+
     def getModuleDisplayName(self):
-        return "Sample Jython Ingest Module"
-    
+        return "Sample Jython Ingest Module without GUI example code"
+
     def getModuleDescription(self):
         return "A sample Jython ingest module"
-    
+
     def getModuleVersionNumber(self):
         return "1.0"
-    
+
     # Return true if module wants to get passed in a data source
     def isDataSourceIngestModuleFactory(self):
         return True
-    
+
     # can return null if isDataSourceIngestModuleFactory returns false
     def createDataSourceIngestModule(self, ingestOptions):
         return SampleJythonDataSourceIngestModule()
@@ -67,7 +67,7 @@ class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
     # Return true if module wants to get called for each file
     def isFileIngestModuleFactory(self):
         return True
-    
+
     # can return null if isFileIngestModuleFactory returns false
     def createFileIngestModule(self, ingestOptions):
         return SampleJythonFileIngestModule()
@@ -118,7 +118,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             return IngestModule.ProcessResult.OK;
 
         #Post a message to the ingest messages in box.
-        message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, 
+        message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
             "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
         IngestServices.getInstance().postMessage(message)
 
@@ -149,7 +149,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
                     totLen = totLen + len
                     len = inputStream.read(buffer)
 
-            # Send the size of the file to the ingest messages in box. 
+            # Send the size of the file to the ingest messages in box.
             msgText = "Size of %s is %d bytes" % ((file.getName(), totLen))
             message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, "Sample Jython File IngestModule", msgText)
             ingestServices = IngestServices.getInstance().postMessage(message)
@@ -158,5 +158,3 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
     def shutDown(self):
         pass
-
-
