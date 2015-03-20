@@ -87,7 +87,7 @@ public final class Logger extends java.util.logging.Logger {
                                     + record.getLevel() + ": "
                                     + record.getSourceClassName() + " "
                                     + record.getSourceMethodName() + ": "
-                                    + record.getMessage() + "\n";
+                                    + this.formatMessage(record) + "\n";
                         }
                     });
                     break;
@@ -107,7 +107,7 @@ public final class Logger extends java.util.logging.Logger {
                                         + record.getLevel() + ": "
                                         + record.getSourceClassName() + " "
                                         + record.getSourceMethodName() + ": "
-                                        + record.getMessage() + " "
+                                        + this.formatMessage(record) + " "
                                         + record.getThrown().toString() + ": "
                                         + StackTrace
                                         + "\n";
@@ -116,7 +116,7 @@ public final class Logger extends java.util.logging.Logger {
                                         + record.getLevel() + ": "
                                         + record.getSourceClassName() + " "
                                         + record.getSourceMethodName() + ": "
-                                        + record.getMessage() + " "
+                                        + this.formatMessage(record) + " "
                                         + "\n";
                             }
                         }
