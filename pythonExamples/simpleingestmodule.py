@@ -48,10 +48,10 @@ from org.sleuthkit.autopsy.casemodule.services import FileManager
 class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
 
     def getModuleDisplayName(self):
-        return "Sample Jython Ingest Module without GUI example code"
+        return "Sample Jython ingest module"
 
     def getModuleDescription(self):
-        return "A sample Jython ingest module"
+        return "Sample Jython Ingest Module without GUI example code"
 
     def getModuleVersionNumber(self):
         return "1.0"

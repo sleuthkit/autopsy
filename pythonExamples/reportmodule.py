@@ -36,7 +36,7 @@ from org.sleuthkit.autopsy.report import GeneralReportModuleAdapter
 class SampleGeneralReportModule(GeneralReportModuleAdapter):
 
     def getName(self):
-        return "Sample Report Module"
+        return "Sample Jython Report Module"
 
     def getDescription(self):
         return "A sample Jython report module"

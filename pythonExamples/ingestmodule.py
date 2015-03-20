@@ -49,17 +49,17 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from java.lang import IllegalArgumentException
 
 # Sample factory that defines basic functionality and features of the module
-# It implements IngestModuleFactoryAdapter whoch is a no-op implementation of
+# It implements IngestModuleFactoryAdapter which is a no-op implementation of
 # IngestModuleFactory.
 class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
     def __init__(self):
         self.settings = None
 
     def getModuleDisplayName(self):
-        return "Sample Jython Ingest Module with GUI example code"
+        return "Sample Jython(GUI) ingest module"
 
     def getModuleDescription(self):
-        return "A sample ingest module with user-configurable settings"
+        return "Sample Jython Ingest Module with GUI example code"
 
     def getModuleVersionNumber(self):
         return "1.0"
