@@ -83,11 +83,11 @@ public final class Logger extends java.util.logging.Logger {
                     f.setFormatter(new Formatter() {
                         @Override
                         public String format(LogRecord record) {
-                            return (new Date(record.getMillis())).toString() + " : "
-                                    + record.getLevel() + ": "
+                            return (new Date(record.getMillis())).toString() + " "
                                     + record.getSourceClassName() + " "
-                                    + record.getSourceMethodName() + ": "
-                                    + record.getMessage() + "\n";
+                                    + record.getSourceMethodName() + "\n"
+                                    + record.getLevel() + ": "
+                                    + this.formatMessage(record) + "\n";
                         }
                     });
                     break;
@@ -103,21 +103,20 @@ public final class Logger extends java.util.logging.Logger {
                                     StackTrace += "\t" + ele1.toString() + "\n";
                                 }
 
-                                return (new Timestamp(record.getMillis())).toString() + " : "
-                                        + record.getLevel() + ": "
+                                return (new Timestamp(record.getMillis())).toString() + " "
                                         + record.getSourceClassName() + " "
-                                        + record.getSourceMethodName() + ": "
-                                        + record.getMessage() + " "
+                                        + record.getSourceMethodName() + "\n"
+                                        + record.getLevel() + ": "
+                                        + this.formatMessage(record) + "\n"
                                         + record.getThrown().toString() + ": "
                                         + StackTrace
                                         + "\n";
                             } else {
-                                return (new Timestamp(record.getMillis())).toString() + " : "
-                                        + record.getLevel() + ": "
+                                return (new Timestamp(record.getMillis())).toString() + " "
                                         + record.getSourceClassName() + " "
-                                        + record.getSourceMethodName() + ": "
-                                        + record.getMessage() + " "
-                                        + "\n";
+                                        + record.getSourceMethodName() + "\n"
+                                        + record.getLevel() + ": "
+                                        + this.formatMessage(record) + "\n";
                             }
                         }
                     });
