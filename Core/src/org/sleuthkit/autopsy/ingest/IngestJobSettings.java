@@ -379,7 +379,7 @@ public class IngestJobSettings {
                 // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
                 moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
             }
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getModuleSettingsFilePath(factory)))) {
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
                 out.writeObject(settings);
             }
         } catch (IOException ex) {
