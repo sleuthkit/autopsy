@@ -54,6 +54,7 @@ public class IngestJobSettings {
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final String context;
     private String moduleSettingsFolderPath;
+    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length()-1);
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
@@ -277,6 +278,17 @@ public class IngestJobSettings {
     }
 
     /**
+     * Determines if the moduleSettingsFilePath is that of a serialized jython instance.
+     * Serialized Jython instances (settings saved on the disk) contain "org.python.proxies."
+     * in their fileName based on the current implementation.
+     * @param moduleSettingsFilePath path to the module settings file.
+     * @return True or false
+     */
+    private boolean isPythonModuleSettingsFile(String moduleSettingsFilePath) {
+        return moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS);
+    }
+
+    /**
      * Gets the saved or default ingest job settings for a given ingest module
      * for these ingest job settings.
      *
@@ -286,14 +298,8 @@ public class IngestJobSettings {
     private IngestModuleIngestJobSettings loadModuleSettings(IngestModuleFactory factory) {
         IngestModuleIngestJobSettings settings = null;
         String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
-        Boolean isPythonModule = false;
-        String pythonModuleSettingsPrefix = "org.python.proxies.";
-        CharSequence pythonModuleSettingsPrefixCS = pythonModuleSettingsPrefix.subSequence(0, pythonModuleSettingsPrefix.length()-1);
-        if(moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS)) {
-            isPythonModule = true;
-        }
         File settingsFile = new File(moduleSettingsFilePath);
-        if (settingsFile.exists() && !isPythonModule) {
+        if (settingsFile.exists() && !isPythonModuleSettingsFile(moduleSettingsFilePath)) {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
                 settings = (IngestModuleIngestJobSettings) in.readObject();
             } catch (IOException | ClassNotFoundException ex) {
@@ -368,9 +374,7 @@ public class IngestJobSettings {
         try {
             String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
             // compiled python modules have substring org.python.proxies. It can be used to identify them.
-            String pythonModuleSettingsPrefix = "org.python.proxies.";
-            CharSequence pythonModuleSettingsPrefixCS = pythonModuleSettingsPrefix.subSequence(0, pythonModuleSettingsPrefix.length() - 1);
-            if (moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS)) {
+            if (isPythonModuleSettingsFile(moduleSettingsFilePath)) {
                 // compiled python modules have variable instance number as a part of their file name.
                 // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
                 moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
