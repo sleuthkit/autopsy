@@ -242,11 +242,10 @@ class TestRunner(object):
         print("DB diff passed: ", test_data.db_diff_passed)
         
         # run time test only for the specific jenkins test
-        if test_data.main_config.timing: 
-            if test_data.main_config.timing:
-                old_time_path = test_data.get_run_time_path()
-                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
-                test_data.run_time_passed = passed
+        if test_data.main_config.timing:
+            old_time_path = test_data.get_run_time_path()
+            passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+            test_data.run_time_passed = passed
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed and
@@ -667,7 +666,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         self.jenkins = False
-        self.timing = False
+        self.timing = True
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time

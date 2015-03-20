@@ -295,7 +295,7 @@ public class RegressionTest extends TestCase {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datenotime = dateFormat.format(date);
-        listOperator.clickOnItem(1, 1);
+        listOperator.clickOnItem(0, 1);
         new Timeout("pausing", 1000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 1000).sleep();
