@@ -1,4 +1,4 @@
-/*! \page timeline Timeline
+/*! \page timeline_page Timeline
 Overview
 ========
 This document outlines the use of the new Timeline feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
@@ -7,7 +7,7 @@ This document assumes basic familiarity with Autopsy.
 Quick Start 
 ===========
 -# Create a case as normal and add a disk image (or folder of files) as a data source.  To get the most out of the timeline, ensure that you have the hash lookup module enabled with NSRL (to ignore known files) and have the EXIF and recent activity modules enabled to collect additional temporal data. 
--# After the image has been added, click Tools-> Timeline in the menu.  This will open the  Timeline tool in a new window. You can do this while ingest is running, but you will not have access to the temporal data that will be found after you create the timeline, unless you re-open the timeline tool. 
+-# After the image has been added, click "Tools", "Timeline" in the menu.  This will open the  Timeline tool in a new window. You can do this while ingest is running, but you will not have access to the temporal data that will be found after you create the timeline, unless you re-open the timeline tool. 
                    
 
 

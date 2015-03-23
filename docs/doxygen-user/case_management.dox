@@ -2,13 +2,15 @@
 
 You need to create a case before you can analyze data in Autopsy.  A case can contain one or more data sources (disk images, disk devices, logical files). The data sources can be from multiple drives in a single computer or from multiple computers.  It's up to you. 
 
-Each case has its own directory that is named based on the case name. The directory will contain configuration files, a database, reports, and other files that modules generates. The main Autopsy case configuration file has a .aut extension. 
+Each case has its own directory that is named based on the case name. The directory will contain configuration files, a database, reports, and other files that modules generates. The main Autopsy case configuration file has an ".aut" extension. 
 
 \section case_create Creating a Case
 
+\image html splashscreen.PNG
+
 There are several ways to create a new case:
-- The opening window has a button to create a new case.
-- The "File" -> "New Case..." menu item
+- The opening splash screen has a button to create a new case.
+- The "File", "New Case..." menu item
 
 The "New Case" wizard dialog will open and you will need to enter the case name and base directory. A directory for the case will be created inside of the "base directory". If the directory already exists, you will need to either delete the existing directory or choose a different combination of names.
 
@@ -21,8 +23,8 @@ After you create the case, you will be prompted to add a data source, as describ
 \section case_open Opening a Case
 
 To open a case, either:
-- Choose "Open Case" or "Open Recent Case" from the opening window.
-- The "File" -> "Open Case" menu item or "File" -> "Open Recent Case"
+- Choose "Open Case" or "Open Recent Case" from the opening splash screen.
+- The "File", "Open Case" menu item or "File", "Open Recent Case"
 
 Navigate to the case directory and select the ".aut" file.
 

@@ -1,55 +1,72 @@
 /*! \page uilayout_page UI Layout
 
 
+<br>
 \section ui_overview Overview
 
-Three parts of the UI….
+The major areas in the Autopsy User Interface (UI) are:
+- \ref ui_tree, shown outlined in green below
+- \ref ui_results, shown outlined in blue below
+- \ref ui_content, shown outlined in red below
+- \ref ui_keyword, shown outlined in yellow below
+- \ref ui_status, shown in solid purple below
+
+\image html ui-layout-1.PNG
+
+<br>
+<br>
+<br>
+\section ui_tree Tree Viewer
+\subpage tree_viewer_page "More..."
+<br>
 
 
-\section ui_tree Left-side Tree
-
-The tree on the left-hand side is where you will start many of your analysis approaches and find saved results from automated procedures (ingest). The tree has three main areas:
-\li <b>Images:</b> Where you can find the directory tree hierarchy of the file systems in the images. Go here to navigate to a specific file or directory.
-\li <b>Views:</b>  Where you can view all of the files in the images, but organized by file type or dates instead of directories. Go here if you are looking for files of a given type or that were recently used.
-\li <b>Results:</b> Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
-\li <b>Tags:</b>  Where you can view all file and results that have been bookmarked for easy access.
-\li <b>Reports:</b>  Where you can find references to reports that you have generated or that some of the ingest modules created. 
+The tree on the left-hand side is find saved results from automated procedures (ingest). The tree has four main areas:
+- <b>Data Sources:</b> This shows the directory tree hierarchy of the file systems in the images. You can navigate to a specific file or directory here. Each data source added is represented as a drive. If you add a data source multiple times, it shows up multiple times.
+- <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source. Look here for files of a specific type or property.
+- <b>Results:</b> Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
+- <b>Reports:</b> References to reports that you have generated or ingest modules created show up here
 
 
-Below is an example of the tree
-\image html explorer-tree.PNG
+\subsection ui_tree_ds Data Sources
 
+The Data Sources section shows each data source that has been added to the case, in order added (top one is first).
+Right clicking on the various nodes in the Data Sources section of the tree will allow you to get more options for each data source and its contents. 
 
-\subsection ui_tree_ds Data Source Section
+Unallocated space are chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
+\li <b>Individual blocks in a volume</b>  There is a folder named "Unalloc". This folder contains all the individual unallocated blocks as the image is storing them. You can right click and extract them the same way you can extract any other type of file in the Directory Tree.
+\li <b>Single files</b>  Right click on a volume and select "Extract Unallocated Space as Single File" to concatenate all the unallocated files in the volume into a single, continuous file. (If desired, you can right click on an image, and select "Extract Unallocated Space to Single Files" which will do the same thing, but once for each volume in the image).
 
-Right clicking on the various nodes in the tree will allow you to get more options for each data source and its contents. 
-
-One item to mention in this area is extracting unallocated space. Unallocated space are chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
-\li Individual Blocks Underneath a volume, there is a folder named Unalloc. This folder contains all the individual unallocated blocks as the image is storing them. You can right click and extract them the same way you can extract any other type of file in the Directory Tree.
-\li Single Files There are two ways to extract unallocated space as a single file. Right clicking on a volume and selecting "Extract Unallocated Space as Single File" will concatenate all the unallocated files into a single, continuous file for the volume. The second way is to right click on an image, and select "Extract Unallocated Space to Single Files". This option will extract one single file for each volume in the image. Progress on extraction is sent to the progress bar in the bottom right. Progress is based on number of files concatenated. These files are stored in the Export folder under the case directory. Files are named according to ImageName-Unalloc-ImageObjectID-VolumeID.dat This naming scheme ensures that no duplicate file names will occur even if an there are two images with the same name in a case.
-
-Below is where to find the single file extraction option
-
+An example of the single file extraction option is shown below.
 \image html extracting-unallocated-space.PNG
 
-\subsection ui_tree_views Views Section
+\subsection ui_tree_views Views
 
-TODO
-
-\subsection ui_tree_results Results Section
-
-TODO
-
-\subsection ui_tree_tags Tags Section
-
-TODO
-
-\subsection ui_tree_reports Reports Section
-
-TODO
+Views filter all the files in the case by some external property of the file, not by any internal analysis of the file. 
+- <b>File Type</b>  Sorts files by file extension, and shows them in the appropriate group. For example, .mp3 and .wav both end up in the "Audio" group. 
+- <b>Recent Files</b>  Displays files that are accessed within the last seven days the user had the device.
+- <b>Deleted Files</b>  Displays files that have been deleted but the names have been recovered.
+- <b>File Size</b>  Sorts files based upon size. This can give you an idea where to look for files you are interested in.
 
 
-\section ui_results Upper-right Results Viewer Area
+\subsection ui_tree_results Results
+- <b>Extracted Content:</b> Many ingest modules will place results here; EXIF data, GPS locations, or Web History for example
+- <b>Keyword Hits:</b> Keyword search hits show up here
+- <b>Hashset Hits:</b> Hashset hits show up here 
+- <b>E-Mail Messages:</b> Email messages show up here
+- <b>Interesting Items:</b> Things deemed interesting show up here
+- <b>Tags:</b> Any item you tag shows up here so you can find it again easily
+
+\subsection ui_tree_reports Reports
+
+Reports can be added by \subpage ingest_page or created using the \subpage reporting_page tool.
+
+<br>
+<br>
+<br>
+\section ui_results Result Viewer
+\subpage result_viewer_page "More..."
+<br>
 
 The Result Viewer windows are in the upper right area of the interface and display the results from selecting something in the tree. You will have the option to display the results in a variety of formats.
 
@@ -81,19 +98,22 @@ The Results Viewer can be also activated for saved results and it can show a hig
 Below is an example of a "Table Results Viewer" window:
 \image html thumbnail-result-viewer-tab.PNG
 
-
-
-\section ui_content Lower-right Content Viewer Area
+<br>
+<br>
+<br>
+\section ui_content Content Viewer
+\subpage content_viewer_page "More..."
+<br>
 
 The Content Viewer area is in the lower right area of the interface. This area is used to view a specific file in a variety of formats. There are different tabs for different viewers. Not all tabs support all file types, so only some of them will be enabled. To display data in this area, a file must be selected from the Result Viewer window.
 
 The Content Viewer area is part of a plug-in framework. You can install modules that will add more viewer types. This section describes the viewers that come by default with Autopsy.
 
 \subsection result_content_viewers Result Content Viewer
-Result Content Viewer shows the artifacts (saved results) associated with the item selected in the Result Viewer.
+Content Viewer shows the artifacts (saved results) associated with the item selected in the Result Viewer.
 <b>Example</b>
 Below is an example of "Result Content Viewer" window:
-\image html result-viewer-example.PNG
+\image html result-viewer-example-1.PNG
 
 \subsection hex_content_viewer Hex Content Viewer
 Hex Content Viewer shows you the raw and exact contents of a file. In this Hex Content Viewer, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
@@ -132,5 +152,17 @@ If this tab is not enabled, then either the file has no text or you did not enab
  
 \image html text-view.PNG
 
+
+<br>
+<br>
+<br>
+\section ui_keyword Keyword Search
+Keyword Search allows the user to search for keywords in the data source. It is covered in more detail here: \subpage keyword_search_page
+<br>
+<br>
+<br>
+\section ui_status Status Area
+The Status area will show progress bars while ingest is occuring. This visually indicates to the user what portion of the processing is already complete. The user can click on the progress bars to see further detail or to cancel ingest jobs.
+<br>
 
 */
