@@ -39,10 +39,12 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Locates a variety of different call log databases, parses them, and populates the blackboard. 
+ */
 class CallLogAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
-
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
 
     /** the where clause(without 'where' of sql select statement to choose call

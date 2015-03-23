@@ -23,9 +23,11 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
 import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.SimpleFormatter;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.logging.LogRecord;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -76,7 +78,51 @@ public final class Logger extends java.util.logging.Logger {
         try {
             FileHandler f = new FileHandler(logDirectory + File.separator + fileName, LOG_SIZE, LOG_FILE_COUNT);
             f.setEncoding(LOG_ENCODING);
-            f.setFormatter(new SimpleFormatter());
+            switch (fileName) {
+                case LOG_WITHOUT_STACK_TRACES:
+                    f.setFormatter(new Formatter() {
+                        @Override
+                        public String format(LogRecord record) {
+                            return (new Date(record.getMillis())).toString() + " : "
+                                    + record.getLevel() + ": "
+                                    + record.getSourceClassName() + " "
+                                    + record.getSourceMethodName() + ": "
+                                    + record.getMessage() + "\n";
+                        }
+                    });
+                    break;
+                case LOG_WITH_STACK_TRACES:
+                    f.setFormatter(new Formatter() {
+                        @Override
+                        public String format(LogRecord record) {
+                            if (record.getThrown() != null) {
+
+                                StackTraceElement ele[] = record.getThrown().getStackTrace();
+                                String StackTrace = "";
+                                for (StackTraceElement ele1 : ele) {
+                                    StackTrace += "\t" + ele1.toString() + "\n";
+                                }
+
+                                return (new Timestamp(record.getMillis())).toString() + " : "
+                                        + record.getLevel() + ": "
+                                        + record.getSourceClassName() + " "
+                                        + record.getSourceMethodName() + ": "
+                                        + record.getMessage() + " "
+                                        + record.getThrown().toString() + ": "
+                                        + StackTrace
+                                        + "\n";
+                            } else {
+                                return (new Timestamp(record.getMillis())).toString() + " : "
+                                        + record.getLevel() + ": "
+                                        + record.getSourceClassName() + " "
+                                        + record.getSourceMethodName() + ": "
+                                        + record.getMessage() + " "
+                                        + "\n";
+                            }
+                        }
+                    });
+                    break;
+            }
             return f;
         } catch (IOException e) {
             throw new RuntimeException("Error initializing " + fileName + " file handler", e); //NON-NLS
@@ -93,7 +139,7 @@ public final class Logger extends java.util.logging.Logger {
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name) {
-        return new Logger(java.util.logging.Logger.getLogger(name));
+        return new Logger(name, null);
     }
 
     /**
@@ -109,46 +155,16 @@ public final class Logger extends java.util.logging.Logger {
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name, String resourceBundleName) {
-        return new Logger(java.util.logging.Logger.getLogger(name, resourceBundleName));
+        return new Logger(name, resourceBundleName);
     }
 
-    private Logger(java.util.logging.Logger log) {
-        super(log.getName(), log.getResourceBundleName());
+    private Logger(String name, String resourceBundleName) {
+        super(name, resourceBundleName);
         if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
-            addHandler(console);
+            super.addHandler(console);
         }
-        setUseParentHandlers(false);
-        addHandler(userFriendlyLogFile);
-        addHandler(developersLogFile);
-    }
-
-    @Override
-    public void log(Level level, String message, Throwable thrown) {
-        logUserFriendlyOnly(level, message, thrown);
-        removeHandler(userFriendlyLogFile);
-        super.log(level, message, thrown);
-        addHandler(userFriendlyLogFile);
-    }
-
-    @Override
-    public void logp(Level level, String sourceClass, String sourceMethod, String message, Throwable thrown) {
-        logUserFriendlyOnly(level, message, thrown);
-        removeHandler(userFriendlyLogFile);
-        super.logp(level, sourceClass, sourceMethod, message, thrown);
-        addHandler(userFriendlyLogFile);
-    }
-
-
-    private void logUserFriendlyOnly(Level level, String message, Throwable thrown) {
-        removeHandler(developersLogFile);
-        super.log(level, "{0}\nException:  {1}", new Object[]{message, thrown.toString()}); //NON-NLS
-        addHandler(developersLogFile);
-    }
-
-    @Override
-    public void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
-        removeHandler(userFriendlyLogFile);
-        super.throwing(sourceClass, sourceMethod, thrown);
-        addHandler(userFriendlyLogFile);
+        super.setUseParentHandlers(false);
+        super.addHandler(userFriendlyLogFile);
+        super.addHandler(developersLogFile);
     }
 }

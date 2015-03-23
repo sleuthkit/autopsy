@@ -58,10 +58,23 @@ final class ImageAnalyzerOptionsPanel extends javax.swing.JPanel {
 
         enabledByDefaultBox = new javax.swing.JCheckBox();
         enabledForCaseBox = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(enabledByDefaultBox, org.openide.util.NbBundle.getMessage(ImageAnalyzerOptionsPanel.class, "ImageAnalyzerOptionsPanel.enabledByDefaultBox.text")); // NOI18N
+        enabledByDefaultBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enabledByDefaultBoxActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(enabledForCaseBox, org.openide.util.NbBundle.getMessage(ImageAnalyzerOptionsPanel.class, "ImageAnalyzerOptionsPanel.enabledForCaseBox.text")); // NOI18N
+        enabledForCaseBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enabledForCaseBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ImageAnalyzerOptionsPanel.class, "ImageAnalyzerOptionsPanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -70,20 +83,35 @@ final class ImageAnalyzerOptionsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(enabledForCaseBox)
-                    .addComponent(enabledByDefaultBox))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 5, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(enabledForCaseBox)
+                            .addComponent(enabledByDefaultBox))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(enabledByDefaultBox)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(enabledForCaseBox)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void enabledByDefaultBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledByDefaultBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_enabledByDefaultBoxActionPerformed
+
+    private void enabledForCaseBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledForCaseBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_enabledForCaseBoxActionPerformed
 
     /** {@inheritDoc} */
     void load() {
@@ -117,5 +145,6 @@ final class ImageAnalyzerOptionsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox enabledByDefaultBox;
     private javax.swing.JCheckBox enabledForCaseBox;
+    private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 }

@@ -250,7 +250,7 @@ public class DrawableDB {
      *
      * @param stmtString the string representation of the sqlite statement to
      *                   prepare
-     * @param attr       the {@link DrawableAttribute} this query groups by
+     * @param attr the {@link DrawableAttribute} this query groups by
      *
      * @return the prepared statement
      *
@@ -328,7 +328,7 @@ public class DrawableDB {
      * create the table and indices if they don't already exist
      *
      * @return the number of rows in the table , count > 0 indicating an
-     *         existing table
+     * existing table
      */
     private boolean initializeDB() {
         try {
@@ -391,6 +391,7 @@ public class DrawableDB {
             return false;
         }
 
+        // @@@ BC: I don't think this is needed because it is the primary key. 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE UNIQUE INDEX if not exists obj_id_idx ON drawable_files(obj_id)";
             stmt.execute(sql);
@@ -688,15 +689,33 @@ public class DrawableDB {
         try {
             List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
 
-            try (Statement stmt = con.createStatement();
-                    //Can't make this a preprared statement because of the IN ( ... )
-                    ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
-                while (analyzedQuery.next()) {
-                    return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
+            try {
+                // In testing, this method appears to be a lot faster than doing one large select statement
+                for (Long fileID : fileIDsInGroup) {
+                    Statement stmt = con.createStatement();
+                    ResultSet analyzedQuery = stmt.executeQuery("select analyzed from drawable_files where obj_id = " + fileID);
+                    while (analyzedQuery.next()) {
+                        if (analyzedQuery.getInt(ANALYZED) == 0) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
+
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
             }
+            /*
+             // Old method
+             try (Statement stmt = con.createStatement();
+             //Can't make this a preprared statement because of the IN ( ... )
+             ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
+             while (analyzedQuery.next()) {
+             return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
+             }
+             } catch (SQLException ex) {
+             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
+             }*/
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException);
         } finally {
@@ -711,7 +730,7 @@ public class DrawableDB {
      * clause
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     *                       files (do not begin the WHERE clause with the word WHERE!)
+     * files (do not begin the WHERE clause with the word WHERE!)
      *
      * @return a list of file ids each of which satisfy the given WHERE clause
      *
@@ -748,6 +767,78 @@ public class DrawableDB {
             dbReadUnlock();
         }
         return ret;
+    }
+
+    /**
+     * Return the number of files matching the given clause.
+     *
+     * @param sqlWhereClause a SQL where clause appropriate for the desired
+     * files (do not begin the WHERE clause with the word WHERE!)
+     * @return Number of files matching the given where clause
+     * @throws TskCoreException
+     */
+    public long countFilesWhere(String sqlWhereClause) throws TskCoreException {
+        Statement statement = null;
+        ResultSet rs = null;
+        dbReadLock();
+        try {
+            statement = con.createStatement();
+            rs = statement.executeQuery("SELECT COUNT (*) FROM drawable_files WHERE " + sqlWhereClause); //NON-NLS
+            return rs.getLong(1);
+        } catch (SQLException e) {
+            throw new TskCoreException("SQLException thrown when calling 'DrawableDB.countFilesWhere(): " + sqlWhereClause, e);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error closing result set after executing countFilesWhere", ex);
+                }
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error closing statement after executing countFilesWhere", ex);
+                }
+            }
+            dbReadUnlock();
+        }
+    }
+
+    /**
+     * Count the total number of files in the database..
+     *
+     * @return Total number of files in the database
+     * @throws TskCoreException
+     */
+    public long countFiles() throws TskCoreException {
+        Statement statement = null;
+        ResultSet rs = null;
+        dbReadLock();
+        try {
+            statement = con.createStatement();
+            rs = statement.executeQuery("SELECT COUNT (*) FROM drawable_files"); //NON-NLS
+            return rs.getLong(1);
+        } catch (SQLException e) {
+            throw new TskCoreException("SQLException thrown when calling 'DrawableDB.countFiles(): ", e);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error closing result set after executing countFiles", ex);
+                }
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error closing statement after executing countFiles", ex);
+                }
+            }
+            dbReadUnlock();
+        }
     }
 
     /**
@@ -839,13 +930,13 @@ public class DrawableDB {
     }
 
     /**
-     * @param id       the obj_id of the file to return
+     * @param id the obj_id of the file to return
      * @param analyzed the analyzed state of the file
      *
      * @return a DrawableFile for the given obj_id and analyzed state
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     *                          {@link SleuthkitCase}
+     * {@link SleuthkitCase}
      */
     private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
@@ -862,7 +953,7 @@ public class DrawableDB {
      * @return a DrawableFile for the given obj_id
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     *                          {@link SleuthkitCase}
+     * {@link SleuthkitCase}
      */
     public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
