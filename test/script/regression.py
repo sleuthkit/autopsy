@@ -911,12 +911,13 @@ class TestResultsDiffer(object):
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
 
-        # should be the old time from gold standard.
-        # 1. rebuild gold must generate this _time.txt file
-        # NOTE: Refer to how old files end up in that zip. Also note how their location is determined. Check rebuild()
-        # 2. _run_time_diff() must use time from gold standard.
-        # NOTE: Refer to how HTML diff gets thing from the zipped gold standard.
         newtime = test_data.total_ingest_time
+        
+        # write newtime to the file inside the report dir.
+        file = open(test_data.get_run_time_path(DBType.OUTPUT), "w")
+        file.writelines(newtime)
+        file.close()
+        
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
         # run the test, 5% tolerance
