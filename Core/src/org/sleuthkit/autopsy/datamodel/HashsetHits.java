@@ -46,6 +46,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -99,35 +101,28 @@ public class HashsetHits implements AutopsyVisitableItem {
                 return;   
             }
             
-            ResultSet rs = null;
-            try {
-                int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-                int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                        + "attribute_type_id=" + setNameId //NON-NLS
-                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-                rs = skCase.runQuery(query);
-                while (rs.next()) {
-                    String setName = rs.getString("value_text"); //NON-NLS
-                    long artifactId = rs.getLong("artifact_id"); //NON-NLS
+            int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                while (resultSet.next()) {
+                    String setName = resultSet.getString("value_text"); //NON-NLS
+                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                     if (!hashSetHitsMap.containsKey(setName)) {
                         hashSetHitsMap.put(setName, new HashSet<Long>());
                     }
                     hashSetHitsMap.get(setName).add(artifactId);
                 }
-            } catch (SQLException ex) {
+            } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-            } finally {
-                if (rs != null) {
-                    try {
-                        skCase.closeRunQuery(rs);
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex); //NON-NLS
-                    }
-                }
-            }
+            } 
+            
             setChanged();
             notifyObservers();
         }
