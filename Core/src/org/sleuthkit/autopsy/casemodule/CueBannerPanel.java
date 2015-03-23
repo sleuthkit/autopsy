@@ -179,7 +179,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public static void customizeComponents() {
+    public static void refresh() {
         if (RecentCases.getInstance().getTotalRecentCases() == 0) {
             openRecentButton.setEnabled(false);
             openRecentLabel.setEnabled(false);
