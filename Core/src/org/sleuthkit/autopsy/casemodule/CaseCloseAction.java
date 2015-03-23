@@ -83,6 +83,7 @@ import org.openide.util.actions.Presenter;
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+        CueBannerPanel.refresh();
         if (Case.existsCurrentCase() == false)
             return;
         
