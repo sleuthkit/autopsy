@@ -20,32 +20,39 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Locates a variety of different contacts databases, parses them, and populates the blackboard. 
+ */
 class ContactAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
 
-    public static void findContacts() {
+    public static void findContacts(Content dataSource, FileManager fileManager) {
 
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //NON-NLS //get exact file names
+            absFiles = fileManager.findFiles(dataSource, "contacts.db"); //NON-NLS
+            absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db")); //NON-NLS
             if (absFiles.isEmpty()) {
                 return;
             }
@@ -89,14 +96,34 @@ class ContactAnalyzer {
         try {
             // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             //sorted by name, so phonenumber/email would be consecutive for a person if they exist.
-            resultSet = statement.executeQuery(
-                    "SELECT mimetype,data1, name_raw_contact.display_name AS display_name \n" //NON-NLS
-                    + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
-                    + "JOIN raw_contacts AS name_raw_contact ON(name_raw_contact_id=name_raw_contact._id) " //NON-NLS
-                    + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
-                    + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
-                    + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
-                    + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
+            // check if contacts.name_raw_contact_id exists. Modify the query accordingly.
+            Boolean column_found = false;
+            DatabaseMetaData metadata = connection.getMetaData();
+            ResultSet columnListResultSet = metadata.getColumns(null, null, "contacts", null); //NON-NLS
+            while (columnListResultSet.next()) {
+                if (columnListResultSet.getString("COLUMN_NAME").equals("name_raw_contact_id")) { //NON-NLS
+                    column_found = true;
+                    break;
+                }
+            }
+            if (column_found) {
+                resultSet = statement.executeQuery(
+                        "SELECT mimetype,data1, name_raw_contact.display_name AS display_name \n" //NON-NLS
+                        + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
+                        + "JOIN raw_contacts AS name_raw_contact ON(name_raw_contact_id=name_raw_contact._id) " //NON-NLS
+                        + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
+                        + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
+                        + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
+                        + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
+            } else {
+                resultSet = statement.executeQuery(
+                        "SELECT mimetype,data1, raw_contacts.display_name AS display_name \n" //NON-NLS
+                        + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
+                        + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
+                        + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
+                        + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
+                        + "ORDER BY raw_contacts.display_name ASC;"); //NON-NLS
+            }
 
             BlackboardArtifact bba;
             bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
@@ -136,7 +163,5 @@ class ContactAnalyzer {
                 logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
-
     }
-
 }

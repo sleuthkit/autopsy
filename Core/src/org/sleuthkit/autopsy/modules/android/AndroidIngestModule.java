@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
@@ -53,9 +55,10 @@ class AndroidIngestModule implements DataSourceIngestModule {
 
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
         try {
-            ContactAnalyzer.findContacts();
+            ContactAnalyzer.findContacts(dataSource, fileManager);
             progressBar.progress(1);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -65,7 +68,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            CallLogAnalyzer.findCallLogs();
+            CallLogAnalyzer.findCallLogs(dataSource, fileManager);
             progressBar.progress(2);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -75,7 +78,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            TextMessageAnalyzer.findTexts();
+            TextMessageAnalyzer.findTexts(dataSource, fileManager);
             progressBar.progress(3);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -85,7 +88,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            TangoMessageAnalyzer.findTangoMessages();
+            TangoMessageAnalyzer.findTangoMessages(dataSource, fileManager);
             progressBar.progress(4);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -95,7 +98,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            WWFMessageAnalyzer.findWWFMessages();
+            WWFMessageAnalyzer.findWWFMessages(dataSource, fileManager);
             progressBar.progress(5);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -105,7 +108,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            GoogleMapLocationAnalyzer.findGeoLocations();
+            GoogleMapLocationAnalyzer.findGeoLocations(dataSource, fileManager);
             progressBar.progress(6);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -115,7 +118,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            BrowserLocationAnalyzer.findGeoLocations();
+            BrowserLocationAnalyzer.findGeoLocations(dataSource, fileManager);
             progressBar.progress(7);
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
@@ -125,7 +128,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            CacheLocationAnalyzer.findGeoLocations();
+            CacheLocationAnalyzer.findGeoLocations(dataSource, fileManager);
             progressBar.progress(8);
         } catch (Exception e) {
             errors.add("Error getting Cache Locations"); //NON-NLS

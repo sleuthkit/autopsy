@@ -402,11 +402,6 @@ final class InterestingItemDefsManager extends Observable {
         private static String readRuleName(Element elem) {
             // The rule must have a name. 
             String ruleName = elem.getAttribute(FilesSetXML.NAME_ATTR);
-            if (ruleName.isEmpty()) {
-                // Assume a TSK Framework definitions file is being read and 
-                // synthesize a rule name.
-                ruleName = UNNAMED_LEGACY_RULE_PREFIX + Integer.toString(FilesSetXML.unnamedLegacyRuleCounter++);
-            }
             return ruleName;
         }
 

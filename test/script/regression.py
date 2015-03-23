@@ -242,11 +242,10 @@ class TestRunner(object):
         print("DB diff passed: ", test_data.db_diff_passed)
         
         # run time test only for the specific jenkins test
-        if test_data.main_config.timing: 
-            if test_data.main_config.timing:
-                old_time_path = test_data.get_run_time_path()
-                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
-                test_data.run_time_passed = passed
+        if test_data.main_config.timing:
+            old_time_path = test_data.get_run_time_path()
+            passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+            test_data.run_time_passed = passed
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed and
@@ -712,9 +711,7 @@ class TestConfiguration(object):
             else:
                 self.jenkins = False
             if parsed_config.getElementsByTagName("timing"):
-                self.timing = True
-            else:
-                self.timing = False
+                self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -859,8 +856,7 @@ class TestResultsDiffer(object):
         defined in the official documentation).
 
         Args:
-            gold_report_path: a pathto_Dir, the gold HTML report directory
-            output_report_path: a pathto_Dir, the output HTML report directory
+            test_data TestData object which contains initialized report_paths.
 
         Returns:
             true, if the reports match, false otherwise.

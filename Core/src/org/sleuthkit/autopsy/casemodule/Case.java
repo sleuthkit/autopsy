@@ -226,6 +226,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         if (newCase != null) {
             currentCase = newCase;
 
+            Logger.setLogDirectory(currentCase.getLogDirectoryPath());
             
             try {
                 pcs.firePropertyChange(Events.CURRENT_CASE.toString(), null, currentCase);
@@ -253,6 +254,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
             doCaseNameChange(currentCase.name);
 
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+        } else {
+            Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ public final class IngestJob {
     private final long id;
     private final Map<Long, DataSourceIngestJob> dataSourceJobs;
     private final AtomicInteger incompleteJobsCount;
+    private boolean started;  // Guarded by this
     private volatile boolean cancelled;
 
     /**
@@ -92,8 +93,14 @@ public final class IngestJob {
      *
      * @return A collection of ingest module start up errors, empty on success.
      */
-    List<IngestModuleError> start() {
-        List<IngestModuleError> errors = new ArrayList<>();
+    synchronized List<IngestModuleError> start() {
+        List<IngestModuleError> errors = new ArrayList<>();        
+        if (started) {
+            errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
+            return errors;
+        }
+        started = true;
+                
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
             if (!errors.isEmpty()) {
@@ -117,16 +124,25 @@ public final class IngestJob {
 
         return errors;
     }
-
+    
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
      * @return The snapshot.
      */
     public ProgressSnapshot getSnapshot() {
-        return new ProgressSnapshot();
+        return new ProgressSnapshot(true);
     }
 
+    /**
+     * Gets a snapshot of the progress of this ingest job.
+     *
+     * @return The snapshot.
+     */
+    public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
+        return new ProgressSnapshot(getIngestTasksSnapshot);
+    }
+    
     /**
      * Gets snapshots of the progress of each of this ingest job's child data
      * source ingest jobs.
@@ -136,7 +152,7 @@ public final class IngestJob {
     List<DataSourceIngestJob.Snapshot> getDataSourceIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapshots = new ArrayList<>();
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
-            snapshots.add(dataSourceJob.getSnapshot());
+            snapshots.add(dataSourceJob.getSnapshot(true));
         }
         return snapshots;
     }
@@ -235,13 +251,13 @@ public final class IngestJob {
         /**
          * Constructs a snapshot of ingest job progress.
          */
-        private ProgressSnapshot() {
+        private ProgressSnapshot(boolean getIngestTasksSnapshot) {
             dataSourceModule = null;
             fileIngestRunning = false;
             fileIngestStartTime = null;
             dataSourceProcessingSnapshots = new ArrayList<>();
             for (DataSourceIngestJob dataSourceJob : dataSourceJobs.values()) {
-                DataSourceIngestJob.Snapshot snapshot = dataSourceJob.getSnapshot();
+                DataSourceIngestJob.Snapshot snapshot = dataSourceJob.getSnapshot(getIngestTasksSnapshot);
                 dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
                 if (null == dataSourceModule) {
                     DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();

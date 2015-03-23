@@ -19,18 +19,26 @@ The following topics are available here:
  - \subpage cases_page
  - \subpage ds_page
 - Automated Analysis
+<!-- Try to put in order they are shown in Ingest panel -->
  - \subpage ingest_page "Ingest Modules"
  - \subpage hash_db_page 
- - \subpage keyword_search 
+ - \subpage filetype_page
+ - Extension Mismatch Module
+ - Exif Module
+ - \subpage kwsrch_page
+ - E-mail Module
+ - Archive Module
+ - Recent Activity Module
+ - \subpage android_page
+ - \subpage interesting_page
 - Manual Analysis
- - \subpage directory_tree "Directory Tree"
+ - \subpage uilayout_page 
  - \subpage file_search "File Search"
- - \subpage result_viewers "Result Viewers"
- - \subpage content_viewers "Content Viewers"
  - \subpage image_viewer
  - \subpage timeline
  - \subpage stix_page
 - Reporting
+ - Tagging
 - \subpage module_install_page
 
 If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
