@@ -157,6 +157,9 @@ class TestRunner(object):
             # Analyze the given image
             TestRunner._run_autopsy_ingest(test_data)
 
+            # Generate HTML report
+            Reports.write_html_foot(test_config.html_log)
+
             # Either copy the data or compare the data
             if test_config.args.rebuild:
                 TestRunner.rebuild(test_data)
@@ -167,8 +170,7 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-        
-        Reports.write_html_foot(test_config.html_log)
+
        
         # This code was causing errors with paths, so its disabled 
         #if test_config.jenkins:
@@ -364,6 +366,20 @@ class TestRunner(object):
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
             print(traceback.format_exc())
+        # Rebuild the Run time report
+        if(test_data.main_config.timing):
+            current_run_time_path = os.path.join(test_data.get_run_time_path(), test_data.image_name + "_time.txt")
+            file = open(current_run_time_path, "w")
+            file.writelines(test_data.total_ingest_time)
+            file.close()
+            if(os.path.exists(current_run_time_path)):
+                gold_run_time_path = make_path(tmpdir, test_data.image_name + "_time.txt")
+                try:
+                    shutil.copy(current_run_time_path, gold_run_time_path)
+                except IOError as e:
+                    Errors.print_error(str(e))
+                    print(str(e))
+                    print(traceback.format_exc())
         oldcwd = os.getcwd()
         zpdir = gold_dir
         os.chdir(zpdir)
@@ -594,6 +610,7 @@ class TestData(object):
     def get_run_time_path(self):
         """Get the path to the run time storage file."
         """
+        return _get_path_to_file()
         return os.path.join("..", "input")
 
     def _get_path_to_file(self, file_type, file_name):
@@ -801,7 +818,8 @@ class TestResultsDiffer(object):
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
             passed = TestResultsDiffer._html_report_diff(test_data)
             test_data.html_report_passed = passed
-            
+
+            # Compare time outputs
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -901,7 +919,12 @@ class TestResultsDiffer(object):
         line = file.readline()
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
-        
+
+        # should be the old time from gold standard.
+        # 1. rebuild gold must generate this _time.txt file
+        # NOTE: Refer to how old files end up in that zip. Also note how their location is determined. Check rebuild()
+        # 2. _run_time_diff() must use time from gold standard.
+        # NOTE: Refer to how HTML diff gets thing from the zipped gold standard.
         newtime = test_data.total_ingest_time
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
@@ -1192,6 +1215,7 @@ class Reports(object):
 
     def _write_time(test_data):
         """Write out the time ingest took. For jenkins purposes.
+        Copies the _time.txt file the the input dir.
 
         Args:
             test_data: the TestData
