@@ -232,8 +232,9 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * Declare the report completed.
      * This will fill the JProgressBar, update the cancelButton to completed,
      * and disallow any cancellation of this report.
-     * @deprecated
+     * @deprecated Use {@link #complete(ReportStatus)}
      */
+    @Deprecated
     public void complete() {
         complete(ReportStatus.COMPLETE);
     }
