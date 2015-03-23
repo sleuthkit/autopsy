@@ -37,9 +37,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- * Finds database for words with friends, parses it, and adds info to blackboard. 
- */
 class WWFMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();

@@ -24,7 +24,6 @@ These pages are more detailed if you want to modify Autopsy code instead of writ
 - \subpage workflow_page
 - \subpage regression_test_page 
 - \subpage native_page
-- \subpage mod_debugTsk_page
 
 <!-- Note that Case still has lots of content in package.dox -->
 */

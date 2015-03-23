@@ -383,10 +383,8 @@ public final class ImageAnalyzerController {
         return groupManager.regroupProgress();
     }
 
-    /**
-     * invoked by {@link OnStart} to make sure that the ImageAnalyzer listeners
-     * get setup as early as possible, and do other setup stuff.
-     */
+    /** invoked by {@link OnStart} to make sure that the ImageAnalyzer listeners
+     * get setup as early as possible, and do other setup stuff. */
     void onStart() {
         Platform.setImplicitExit(false);
         LOGGER.info("setting up ImageAnalyzer listeners");
@@ -406,10 +404,8 @@ public final class ImageAnalyzerController {
                      * be captured by file done event, anyways -jm */
                     break;
                 case FILE_DONE:
-                    /**
-                     * getOldValue has fileID getNewValue has
-                     * {@link Abstractfile}
-                     */
+                    /** getOldValue has fileID
+                     * getNewValue has {@link Abstractfile} */
                     AbstractFile file = (AbstractFile) evt.getNewValue();
                     if (isListeningEnabled()) {
                         if (ImageAnalyzerModule.isSupportedAndNotKnown(file)) {
@@ -490,7 +486,6 @@ public final class ImageAnalyzerController {
 
         @Override
         public void run() {
-
             // nearly infinite loop waiting for tasks
             while (true) {
                 if (cancelled) {
@@ -499,11 +494,9 @@ public final class ImageAnalyzerController {
                 try {
                     // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
-
                     if (it.cancelled == false) {
                         it.run();
                     }
-
                     Platform.runLater(() -> {
                         queueSizeProperty.set(workQueue.size());
                     });

@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
-import static java.util.Collections.swap;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,7 +37,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
-import org.sleuthkit.autopsy.report.ReportHTML;
 
  final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
@@ -99,15 +97,6 @@ import org.sleuthkit.autopsy.report.ReportHTML;
             }
         });
         
-        // Results-HTML should always be first in the list of Report Modules.
-        int indexOfHTMLReportModule = 0;
-        for(ReportModule module : modules) {
-            if(module instanceof ReportHTML)
-                break;
-            indexOfHTMLReportModule++;
-        }
-        swap(modules, indexOfHTMLReportModule, 0);
-
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));

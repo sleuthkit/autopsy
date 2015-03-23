@@ -31,13 +31,6 @@ class ImageAnalyzerPreferences {
     /** key for the listening enabled for new cases setting */
     private static final String ENABLED_BY_DEFAULT = "enabled_by_default";
 
-    /**
-     * Return setting of whether Image Analyzer should be automatically enabled 
-     * when a new case is created.  Note that the current case may have a different
-     * setting. 
-     * 
-     * @return true if new cases should have image analyzer enabled. 
-     */
     static boolean isEnabledByDefault() {
         final boolean aBoolean = preferences.getBoolean(ENABLED_BY_DEFAULT, true);
         return aBoolean;

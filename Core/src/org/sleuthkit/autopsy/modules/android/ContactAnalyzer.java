@@ -20,12 +20,10 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -37,9 +35,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- * Locates a variety of different contacts databases, parses them, and populates the blackboard. 
- */
 class ContactAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
@@ -70,21 +65,21 @@ class ContactAnalyzer {
 
     /**
      *
-     * @param databasePath
+     * @param DatabasePath
      * @param fId Will create artifact from a database given by the path The
      * fileId will be the Abstract file associated with the artifacts
      */
-    private static void findContactsInDB(String databasePath, AbstractFile f) {
+    private static void findContactsInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
         Statement statement = null;
 
-        if (databasePath == null || databasePath.isEmpty()) {
+        if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath); //NON-NLS
+            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
@@ -94,34 +89,14 @@ class ContactAnalyzer {
         try {
             // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             //sorted by name, so phonenumber/email would be consecutive for a person if they exist.
-            // check if contacts.name_raw_contact_id exists. Modify the query accordingly.
-            Boolean column_found = false;
-            DatabaseMetaData metadata = connection.getMetaData();
-            ResultSet columnListResultSet = metadata.getColumns(null, null, "contacts", null); //NON-NLS
-            while (columnListResultSet.next()) {
-                if (columnListResultSet.getString("COLUMN_NAME").equals("name_raw_contact_id")) { //NON-NLS
-                    column_found = true;
-                    break;
-                }
-            }
-            if (column_found) {
-                resultSet = statement.executeQuery(
-                        "SELECT mimetype,data1, name_raw_contact.display_name AS display_name \n" //NON-NLS
-                        + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
-                        + "JOIN raw_contacts AS name_raw_contact ON(name_raw_contact_id=name_raw_contact._id) " //NON-NLS
-                        + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
-                        + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
-                        + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
-                        + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
-            } else {
-                resultSet = statement.executeQuery(
-                        "SELECT mimetype,data1, raw_contacts.display_name AS display_name \n" //NON-NLS
-                        + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
-                        + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
-                        + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
-                        + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
-                        + "ORDER BY raw_contacts.display_name ASC;"); //NON-NLS
-            }
+            resultSet = statement.executeQuery(
+                    "SELECT mimetype,data1, name_raw_contact.display_name AS display_name \n" //NON-NLS
+                    + "FROM raw_contacts JOIN contacts ON (raw_contacts.contact_id=contacts._id) \n" //NON-NLS
+                    + "JOIN raw_contacts AS name_raw_contact ON(name_raw_contact_id=name_raw_contact._id) " //NON-NLS
+                    + "LEFT OUTER JOIN data ON (data.raw_contact_id=raw_contacts._id) \n" //NON-NLS
+                    + "LEFT OUTER JOIN mimetypes ON (data.mimetype_id=mimetypes._id) \n" //NON-NLS
+                    + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n" //NON-NLS
+                    + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
 
             BlackboardArtifact bba;
             bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
@@ -146,10 +121,8 @@ class ContactAnalyzer {
                 oldName = name;
             }
 
-        } catch (SQLException e) {
-            logger.log(Level.WARNING, "Unable to execute contacts SQL query against {0} : {1}", new Object[]{databasePath, e}); //NON-NLS
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error posting to blackboard", e); //NON-NLS
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error parsing Contacts to Blackboard", e); //NON-NLS
         } finally {
             try {
                 if (resultSet != null) {
@@ -161,5 +134,7 @@ class ContactAnalyzer {
                 logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
+
     }
+
 }

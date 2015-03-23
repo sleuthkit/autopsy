@@ -373,14 +373,10 @@ import org.sleuthkit.datamodel.TskData;
             List<AbstractFile> absFiles;
             try {
                 SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-                absFiles = skCase.findAllFilesWhere("NOT meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
+                absFiles = skCase.findAllFilesWhere("NOT meta_type = 2"); //NON-NLS
                 return absFiles;
             } catch (TskCoreException ex) {
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
-                        MessageNotifyUtil.MessageType.ERROR);
-                logger.log(Level.SEVERE, "failed to generate reports. Unable to get all files in the image.", ex); //NON-NLS
+                // TODO
                 return Collections.<AbstractFile>emptyList();
             }
         }

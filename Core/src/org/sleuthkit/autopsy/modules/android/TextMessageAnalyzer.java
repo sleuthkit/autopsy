@@ -37,9 +37,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- * Finds database with SMS/MMS messages and adds them to blackboard.
- */
 class TextMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();

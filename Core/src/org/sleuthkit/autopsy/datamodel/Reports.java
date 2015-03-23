@@ -163,10 +163,6 @@ public final class Reports implements AutopsyVisitableItem {
                     NbBundle.getMessage(this.getClass(), "ReportNode.sourceModuleNameProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.sourceModuleNameProperty.desc"),
                     this.report.getSourceModuleName()));
-            propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.name"),
-                    NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.displayName"),
-                    NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.desc"),
-                    this.report.getReportName()));
             propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.name"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.createdTimeProperty.desc"),
@@ -175,6 +171,10 @@ public final class Reports implements AutopsyVisitableItem {
                     NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.displayName"),
                     NbBundle.getMessage(this.getClass(), "ReportNode.pathProperty.desc"),
                     this.report.getPath()));
+            propertiesSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.name"),
+                    NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.displayName"),
+                    NbBundle.getMessage(this.getClass(), "ReportNode.reportNameProperty.desc"),
+                    this.report.getReportName()));
             return sheet;
         }
 

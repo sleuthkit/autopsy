@@ -36,17 +36,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- * Parses cache files that Android maintains for Wifi and cell towers.  Adds GPS points to blackboard.
- */
 class CacheLocationAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
 
-    /**
-     * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS and MAC info from Wifi points. 
-     */
     public static void findGeoLocations() {
 
         try {

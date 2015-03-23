@@ -1,20 +1,38 @@
-/*! \page result_viewer_page Result Viewer
+/*! \page result_viewers Result Viewers
+\section about_result_viewers About Result Viewers
+The Result Viewer windows are in the upper right area of the interface and display the results from selecting something in the Data Explorer Tree area. You will have the option to display the results in a variety of formats.
+Currently, there are 2 main tabs in the Result Viewer window:
+\li \ref table_result_viewer
+\li \ref thumbnail_result_viewer
 
-The Result Viewer is located on the top right of the Autopsy screen. It shows lists of files and their corresponding attributes such as time, path, size, checksum, etc.
+\section right_click_functions Right Click Functions
+Viewers in Result Viewers have certain right-click functions built-in into them that can be accessed when a node a certain type is selected (a file, directory or a result).
+Here are some examples that you may see:
+\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
+\li View in New Window: Opens the content in a new internal Content Viewer (instead of in the default location in the lower right).
+\li Extract: Make a local copy of the file or directory for further analysis.
+\li Search for files with the same MD5 Hash: Searches the entire file-system for any files with the same MD5 Hash as the one selected.
 
-<br>
-\image html result-viewer-example-1.PNG
-<br>
+<b>Example</b>\n
+Below is an example of a "Result Viewer" window:
+\image html result-viewer-window-example.PNG
 
-You can also switch it to Thumbnail view to see thumbnails of the content in the selected folder.
+\section table_result_viewer Table Result Viewers
+    
+Thumbnail Results Viewer
+Thumbnail Results Viewer displays the data catalog as a table of thumbnail images in adjustable sizes. This viewer only supports picture file(s) (Currently, only supports JPG, GIF, and PNG formats). Click the Thumbnail tab to select this view. Note that for a large number of images in a directory selected in the Data Explorer, or for a View selected that contains a large number of images, it might take a while to populate this view for the first time before the images are cached.
 
-<br>
-\image html result-viewer-example-2.PNG
-<br>
+<b>Example</b>\n
+Below is an example of "Thumbnail Results Viewer" window:
+\image html table-result-viewer-tab.PNG 
 
-The Result Viewer is context-aware, meaning it will show applicable columns for the data type in selected.
-<br>
-\image html result-viewer-example-3.PNG
-<br>
+\section thumbnail_result_viewer Thumbnail Result Viewers
+Table Results Viewer (Directory Listing) displays the data catalog as a table with some details (properties) of each file. The properties that it shows are: name, time (modified, changed, accessed, and created), size, flags (directory and meta), mode, user ID, group ID, metadata address, attribute address, and type (directory and meta). Click the Table Viewer tab to select this view.
+
+The Results Viewer can be also activated for saved results and it can show a high level results grouped, or a results at a file level, depending on which node on the Directory Tree is selected to populate the Table Results Viewer.
+
+<b>Example</b>\n
+Below is an example of a "Table Results Viewer" window:
+\image html thumbnail-result-viewer-tab.PNG
 
 */

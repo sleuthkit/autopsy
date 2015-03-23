@@ -171,7 +171,7 @@ class EvalFileObj extends EvaluatableObject {
             for (HashType h : obj.getHashes().getHashes()) {
                 if (h.getSimpleHashValue() != null) {
                     if (h.getType().getValue().equals("MD5")) { //NON-NLS
-                        String newClause = "md5=\'" + h.getSimpleHashValue().getValue().toString().toLowerCase() + "\'"; //NON-NLS
+                        String newClause = "md5=\'" + h.getSimpleHashValue().getValue() + "\'"; //NON-NLS
                         whereClause = addClause(whereClause, newClause);
                     } else {
                         addWarning("Could not process hash type " + h.getType().getValue().toString()); //NON-NLS
