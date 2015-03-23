@@ -29,6 +29,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -82,21 +84,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
     @SuppressWarnings("deprecation")
     private long runTimeQuery(String query) {
         long result = 0;
-        ResultSet rs = null;
-        try {
-            rs = skCase.runQuery(query);
-            result = rs.getLong(1);
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Couldn't get recent files results", ex); //NON-NLS
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after getting recent files results", ex); //NON-NLS
-                }
-            }
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            result = resultSet.getLong(1);
+        } catch (TskCoreException | SQLException ex) {
+            logger.log(Level.WARNING, "Couldn't get recent files results: ", ex); //NON-NLS
         }
+        
         return result;
     }
 }
