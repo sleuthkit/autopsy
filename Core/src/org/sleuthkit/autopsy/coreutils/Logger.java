@@ -102,16 +102,19 @@ public final class Logger extends java.util.logging.Logger {
 
     /**
      * Sets the log directory where the log files will be written.
-     * 
-     * @param directoryPath The path to the desired log directory as a string. 
+     *
+     * @param directoryPath The path to the desired log directory as a string.
      */
     public static void setLogDirectory(String directoryPath) {
         if (null != directoryPath && !directoryPath.isEmpty()) {
-            synchronized (fileHandlerLock) {
-                userFriendlyLogFile.close();
-                userFriendlyLogFile = createFileHandler(directoryPath, LOG_WITHOUT_STACK_TRACES);
-                developersLogFile.close();
-                developersLogFile = createFileHandler(directoryPath, LOG_WITH_STACK_TRACES);
+            File directory = new File(directoryPath);
+            if (directory.exists() && directory.canWrite()) {
+                synchronized (fileHandlerLock) {
+                    userFriendlyLogFile.close();
+                    userFriendlyLogFile = createFileHandler(directoryPath, LOG_WITHOUT_STACK_TRACES);
+                    developersLogFile.close();
+                    developersLogFile = createFileHandler(directoryPath, LOG_WITH_STACK_TRACES);
+                }
             }
         }
     }
