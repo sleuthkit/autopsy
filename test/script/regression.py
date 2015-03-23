@@ -245,9 +245,6 @@ class TestRunner(object):
         
         # run time test only for the specific jenkins test
         if test_data.main_config.timing:
-            old_time_path = test_data.get_run_time_path()
-            passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
-            test_data.run_time_passed = passed
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed and
@@ -368,18 +365,9 @@ class TestRunner(object):
             print(traceback.format_exc())
         # Rebuild the Run time report
         if(test_data.main_config.timing):
-            current_run_time_path = os.path.join(test_data.get_run_time_path(), test_data.image_name + "_time.txt")
-            file = open(current_run_time_path, "w")
+            file = open(test_data.get_run_time_path(DBType.GOLD), "w")
             file.writelines(test_data.total_ingest_time)
             file.close()
-            if(os.path.exists(current_run_time_path)):
-                gold_run_time_path = make_path(tmpdir, test_data.image_name + "_time.txt")
-                try:
-                    shutil.copy(current_run_time_path, gold_run_time_path)
-                except IOError as e:
-                    Errors.print_error(str(e))
-                    print(str(e))
-                    print(traceback.format_exc())
         oldcwd = os.getcwd()
         zpdir = gold_dir
         os.chdir(zpdir)
@@ -607,11 +595,10 @@ class TestData(object):
         """
         return self._get_path_to_file(file_type, "DBDump.txt")
 
-    def get_run_time_path(self):
+    def get_run_time_path(self, file_type):
         """Get the path to the run time storage file."
         """
-        return _get_path_to_file()
-        return os.path.join("..", "input")
+        return self._get_path_to_file(file_type, "_time.txt")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
@@ -820,6 +807,10 @@ class TestResultsDiffer(object):
             test_data.html_report_passed = passed
 
             # Compare time outputs
+            if test_data.main_config.timing:
+                old_time_path = test_data.get_run_time_path(DBType.GOLD)
+                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+                test_data.run_time_passed = passed
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -915,7 +906,7 @@ class TestResultsDiffer(object):
             old_time_path: path to the log containing the run time from a previous test
         """
         # read in time
-        file = open(old_time_path + '/' + test_data.image + "_time.txt", "r")
+        file = open(old_time_path, "r")
         line = file.readline()
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
