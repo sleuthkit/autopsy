@@ -1,9 +1,9 @@
 /*! \page image_viewer Image and Video Viewer
 Overview
 ========
-This document outlines the use of the new Image Analyzer feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
+This document outlines the use of the new Image Gallery feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
 
-The new image analyzer feature has been designed specifically with child-exploitation cases in mind, but can be used for a variety of other investigation types that involve images and videos. It offers the following features beyond the traditional long list of thumbnails that Autopsy and other tools currently provide. 
+The new image gallery feature has been designed specifically with child-exploitation cases in mind, but can be used for a variety of other investigation types that involve images and videos. It offers the following features beyond the traditional long list of thumbnails that Autopsy and other tools currently provide. 
 - Groups images by folder (and other attributes) to help examiner break the large set of images into smaller groups and to help focus on areas with images of interest.
 - Allows examiner to start viewing images immediately upon adding them to the case.  As images are hashed, they are updated in the interface.  You do not need to wait until the entire image is ingested.
 
@@ -11,9 +11,9 @@ This document assumes basic familiarity with Autopsy.
 
 Quick Start 
 ===========
-1. The Image Analysis tool can be configured to collect data about images/videos as ingest runs or all at once after ingest.  To change this setting go to Tools->Options->Image /Video Analyzer.  This setting is saved per case, but can not be changed during ingest.
+1. The Image Gallery tool can be configured to collect data about images/videos as ingest runs or all at once after ingest.  To change this setting go to Tools->Options->Image /Video Gallery.  This setting is saved per case, but can not be changed during ingest.
 2. Create a case as normal and add a disk image (or folder of files) as a data source.  Ensure that you have the hash lookup module enabled with NSRL and known bad hashsets, the EXIF module enabled, and the File Type module enabled. 
-3. Click Tools->Analyze Images/Videos in the menu.  This will open the  Autopsy Image/Video Analysis tool in a new window.
+3. Click Tools->View Images/Videos in the menu.  This will open the  Autopsy Image/Video Gallery tool in a new window.
 4. Groups of images will be presented as they are analyzed by the background ingest modules.  You can later resort and regroup, but it is required to keep it grouped by folder while ingest is still ongoing. 
 5. As each group is reviewed, the next highest priority group is presented, according to a sorting criteria (the default is the density of hash set hits).
 6. Images that were hits from hashsets, will have a dashed border around them.
@@ -37,12 +37,12 @@ The tool has been designed specifically with child-exploitation cases in mind an
 
 Name|Description|Color
 ----|-----------------|------
-CAT-0|Uncategorized|![gray](ImageAnalyzer/gray.png)
-CAT-1|Child Abuse Material  |![red](ImageAnalyzer/red.png)
-CAT-2|Child Exploitative / Age Difficult|![orange](ImageAnalyzer/orange.png)
-CAT-3|CGI / Animation|![yellow](ImageAnalyzer/yellow.png)
-CAT-4|Comparison Images |![bisque](ImageAnalyzer/bisque.png)
-CAT-5|Non-pertinent|![green](ImageAnalyzer/green.png)
+CAT-0|Uncategorized|![gray](ImageGallery/gray.png)
+CAT-1|Child Abuse Material  |![red](ImageGallery/red.png)
+CAT-2|Child Exploitative / Age Difficult|![orange](ImageGallery/orange.png)
+CAT-3|CGI / Animation|![yellow](ImageGallery/yellow.png)
+CAT-4|Comparison Images |![bisque](ImageGallery/bisque.png)
+CAT-5|Non-pertinent|![green](ImageGallery/green.png)
 
 GUI controls
 =================
@@ -83,10 +83,10 @@ Each file is represented in the main display area via a small tile.  The tile sh
 | image | description | meaning|
 |----|----|-----|
 | | solid colored border | file’s assigned category.|
-| ![](ImageAnalyzer/purpledash.png) "" | purple dashed border |   file  has a known bad hashset hit, but has not yet been categorized. |
-| ![](ImageAnalyzer/hashset_hits.png) ""|pushpin |  file  has a known bad hashset hit|
-| ![](ImageAnalyzer/video-file.png) ""| clapboard on document | video file|
-| ![](ImageAnalyzer/flag_red.png) ""| a red flag | file has been 'flagged' as with the follow up tag|
+| ![](ImageGallery/purpledash.png) "" | purple dashed border |   file  has a known bad hashset hit, but has not yet been categorized. |
+| ![](ImageGallery/hashset_hits.png) ""|pushpin |  file  has a known bad hashset hit|
+| ![](ImageGallery/video-file.png) ""| clapboard on document | video file|
+| ![](ImageGallery/flag_red.png) ""| a red flag | file has been 'flagged' as with the follow up tag|
 
 
 Slide Show Mode
