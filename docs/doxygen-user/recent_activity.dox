@@ -1,0 +1,29 @@
+/*! \page recent_activity_page Recent Activity Module
+
+What Does It Do
+========
+
+The Recent Activity module extracts user activity as saved by web browsers (including web searches), installed programs, and the operating system. It also runs Regripper on the Registry hive.
+
+This allows you to see what activity has occured in the last seven days of usage, what web sites were vistied, what the machine did, and what it connected to.
+
+Configuration
+=======
+
+There is nothing to configure for this module.
+
+
+Using the Module
+======
+
+Ingest Settings
+------
+There are no run-time settings for this module.
+
+Seeing Results
+------
+Results show up in the tree under "Extracted Content".
+
+\image html extracted_content.png
+
+*/

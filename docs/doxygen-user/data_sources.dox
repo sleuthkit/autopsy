@@ -1,7 +1,7 @@
 /*! \page ds_page Data Sources
 
 
-Data source is the term that we use in Autopsy to refer to disk images, logical files, etc.  This is the data that you want to add in to analyze.  You must have a case open before you can add a data source. 
+A data source the thing you want to analyze. It can be a disk image, some logical files, a local drive, etc. You must open a case prior to adding a data source to Autopsy. 
 
 Autopsy supports three types of data sources:
 - Disk Image: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card.  (see \ref ds_img)
@@ -15,13 +15,9 @@ Autopsy supports three types of data sources:
 You can add a data source in several ways:
 - After you create a case, it automatically prompts you to add a data source.
 - There is a toolbar item to add a Data Source when a case is open.
-- The "File" -> "Add Data Source" menu item when a case is open.
+- The "File", "Add Data Source" menu item when a case is open.
 
 The data source must remain accessible for the duration of the analysis because the case contains only a reference to the data source.  It does not copy the data source into the case folder. 
-
-
-
-\section ds_process Data Source Adding Process
 
 Regardless of the type of data source, there are some common steps in the process:
 
@@ -41,7 +37,7 @@ Regardless of the type of data source, there are some common steps in the proces
 
 5) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
 
-
+You cannot remove a data source from a case.
 
 \section ds_img Adding a Disk Image
 
@@ -88,9 +84,5 @@ To add logical files:
 -# Continue to press "Add" until all files and folders have been selected.
 
 All of the files that you added in the panel will be grouped together into a single data source, called "LogicalFileSet" in the main UI. 
-
-\section ds_rem Removing a Data Source
-
-You cannot currently remove an data source from a case.
 
 */
