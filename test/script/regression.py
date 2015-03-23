@@ -666,7 +666,7 @@ class TestConfiguration(object):
         timer = 0
         self.images = []
         self.jenkins = False
-        self.timing = True
+        self.timing = False
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
         # However it only seems to take about half this time
@@ -856,8 +856,7 @@ class TestResultsDiffer(object):
         defined in the official documentation).
 
         Args:
-            gold_report_path: a pathto_Dir, the gold HTML report directory
-            output_report_path: a pathto_Dir, the output HTML report directory
+            test_data TestData object which contains initialized report_paths.
 
         Returns:
             true, if the reports match, false otherwise.
