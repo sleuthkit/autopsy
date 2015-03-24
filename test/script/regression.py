@@ -157,6 +157,9 @@ class TestRunner(object):
             # Analyze the given image
             TestRunner._run_autopsy_ingest(test_data)
 
+            # Generate HTML report
+            Reports.write_html_foot(test_config.html_log)
+
             # Either copy the data or compare the data
             if test_config.args.rebuild:
                 TestRunner.rebuild(test_data)
@@ -167,8 +170,7 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-        
-        Reports.write_html_foot(test_config.html_log)
+
        
         # This code was causing errors with paths, so its disabled 
         #if test_config.jenkins:
@@ -243,9 +245,6 @@ class TestRunner(object):
         
         # run time test only for the specific jenkins test
         if test_data.main_config.timing:
-            old_time_path = test_data.get_run_time_path()
-            passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
-            test_data.run_time_passed = passed
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed and
@@ -364,6 +363,11 @@ class TestRunner(object):
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
             print(traceback.format_exc())
+        # Rebuild the Run time report
+        if(test_data.main_config.timing):
+            file = open(test_data.get_run_time_path(DBType.GOLD), "w")
+            file.writelines(test_data.total_ingest_time)
+            file.close()
         oldcwd = os.getcwd()
         zpdir = gold_dir
         os.chdir(zpdir)
@@ -591,10 +595,10 @@ class TestData(object):
         """
         return self._get_path_to_file(file_type, "DBDump.txt")
 
-    def get_run_time_path(self):
+    def get_run_time_path(self, file_type):
         """Get the path to the run time storage file."
         """
-        return os.path.join("..", "input")
+        return self._get_path_to_file(file_type, "_time.txt")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
@@ -801,7 +805,12 @@ class TestResultsDiffer(object):
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
             passed = TestResultsDiffer._html_report_diff(test_data)
             test_data.html_report_passed = passed
-            
+
+            # Compare time outputs
+            if test_data.main_config.timing:
+                old_time_path = test_data.get_run_time_path(DBType.GOLD)
+                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+                test_data.run_time_passed = passed
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -897,12 +906,18 @@ class TestResultsDiffer(object):
             old_time_path: path to the log containing the run time from a previous test
         """
         # read in time
-        file = open(old_time_path + '/' + test_data.image + "_time.txt", "r")
+        file = open(old_time_path, "r")
         line = file.readline()
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
-        
+
         newtime = test_data.total_ingest_time
+        
+        # write newtime to the file inside the report dir.
+        file = open(test_data.get_run_time_path(DBType.OUTPUT), "w")
+        file.writelines(newtime)
+        file.close()
+        
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
         # run the test, 5% tolerance
@@ -1192,6 +1207,7 @@ class Reports(object):
 
     def _write_time(test_data):
         """Write out the time ingest took. For jenkins purposes.
+        Copies the _time.txt file the the input dir.
 
         Args:
             test_data: the TestData
