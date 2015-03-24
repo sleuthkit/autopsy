@@ -253,7 +253,8 @@ public enum ThumbnailCache {
                 ImageIO.write(SwingFXUtils.fromFXImage(bi, null), FORMAT, f);
             }
         } catch (IllegalArgumentException | IOException ex) {
-            LOGGER.log(Level.WARNING, "failed to save generated icon ", ex);
+            //LOGGER.log(Level.WARNING, "failed to save generated icon ", ex);
+            LOGGER.log(Level.WARNING, "failed to save generated icon");
         }
     }
 }
