@@ -34,7 +34,13 @@ public final class UserPreferences {
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
-        
+    public static final String EXTERNAL_DATABASE_HOSTNAME_OR_IP = "ExternalDatabaseHostnameOrIp"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_PORTNUMBER = "ExternalDatabasePortNumber"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_NAME = "ExternalDatabaseName"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
+    public static final String NEW_CASE_TYPE = "NewCaseType"; //NON-NLS
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -70,21 +76,68 @@ public final class UserPreferences {
     public static void setHideKnownFilesInViewsTree(boolean value) {
         preferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
     }
-    
+
     public static boolean displayTimesInLocalTime() {
         return preferences.getBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, true);
     }
 
     public static void setDisplayTimesInLocalTime(boolean value) {
         preferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
-    }    
-    
+    }
+
     public static int numberOfFileIngestThreads() {
         return preferences.getInt(NUMBER_OF_FILE_INGEST_THREADS, 2);
     }
 
     public static void setNumberOfFileIngestThreads(int value) {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
-    }      
+    }
+
+    public static String hostNameOrIp() {
+        return preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, "");
+    }
+
+    public static void setHostNameOrIp(String value) {
+        preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, value);
+    }
+
+    public static String portNumber() {
+        return preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "");
+    }
+
+    public static void setPortNumber(String value) {
+        preferences.put(EXTERNAL_DATABASE_PORTNUMBER, value);
+    }
+
+    public static String databaseName() {
+        return preferences.get(EXTERNAL_DATABASE_NAME, "");
+    }
+
+    public static void setDatabaseName(String value) {
+        preferences.put(EXTERNAL_DATABASE_NAME, value);
+    }
+
+    public static String userName() {
+        return preferences.get(EXTERNAL_DATABASE_USER, "");
+    }
+
+    public static void setUserName(String value) {
+        preferences.put(EXTERNAL_DATABASE_USER, value);
+    }
+
+    public static String password() {
+        return preferences.get(EXTERNAL_DATABASE_PASSWORD, "");
+    }
+
+    public static void setPassword(String value) {
+        preferences.put(EXTERNAL_DATABASE_PASSWORD, value);
+    }
     
+    public static int newCaseType() {
+        return preferences.getInt(NEW_CASE_TYPE, 0);
+    }
+
+    public static void setNewCaseType(int value) {
+        preferences.putInt(NEW_CASE_TYPE, value);
+    }
 }
