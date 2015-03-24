@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * A Node for a LocalFile or DerivedFile content object.
  */
-public class LocalFileNode extends FileNode {
+public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
     public LocalFileNode(AbstractFile af) {
         super(af);
@@ -82,10 +82,8 @@ public class LocalFileNode extends FileNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        if (this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this));
+        actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
             actionsList.add(null); // creates a menu separator
-        }
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
@@ -98,5 +96,20 @@ public class LocalFileNode extends FileNode {
         actionsList.add(AddContentTagAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[0]);
+    }
+
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> v) {
+        return v.visit(this);
+    }
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+        return v.visit(this);
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true; //!this.hasContentChildren();
     }
 }
