@@ -354,8 +354,11 @@ final class FilesSet {
              *
              * @param text The text to be matched.
              */
-            AbstractTextFilter(String text) {
-                this.textMatcher = new FilesSet.Rule.CaseInsensitiveStringComparisionMatcher(text);
+            AbstractTextFilter(String text, Boolean partialMatch) {
+                if(partialMatch)
+                    this.textMatcher = new FilesSet.Rule.CaseInsensitivePartialStringComparisionMatcher(text);
+                else
+                    this.textMatcher = new FilesSet.Rule.CaseInsensitiveStringComparisionMatcher(text);
             }
 
             /**
@@ -421,7 +424,7 @@ final class FilesSet {
              * @param path The path to be matched.
              */
             ParentPathFilter(String path) {
-                super(path);
+                super(path, true);
             }
 
             /**
@@ -463,7 +466,7 @@ final class FilesSet {
              * @param name The file name to be matched.
              */
             FullNameFilter(String name) {
-                super(name);
+                super(name, false);
             }
 
             /**
@@ -501,7 +504,7 @@ final class FilesSet {
                 // If there is a leading ".", strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
-                super(extension.startsWith(".") ? extension.substring(1) : extension);
+                super(extension.startsWith(".") ? extension.substring(1) : extension, false);
             }
 
             /**
@@ -511,7 +514,7 @@ final class FilesSet {
              * matched.
              */
             ExtensionFilter(Pattern extension) {
-                super(extension.pattern());
+                super(extension.pattern(), false);
             }
 
             /**
@@ -594,9 +597,51 @@ final class FilesSet {
              */
             @Override
             public boolean textMatches(String subject) {
-                return Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE).matcher(subject).find();
+                return subject.equalsIgnoreCase(textToMatch);
             }
 
+        }
+
+        /**
+         * A text matcher that does a case-insensitive string comparison.
+         */
+        private static class CaseInsensitivePartialStringComparisionMatcher implements TextMatcher {
+
+            private final String textToMatch;
+
+            /**
+             * Construct a text matcher that does a case-insensitive string
+             * comparison.
+             *
+             * @param textToMatch The text to match.
+             */
+            CaseInsensitivePartialStringComparisionMatcher(String textToMatch) {
+                this.textToMatch = textToMatch;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public String getTextToMatch() {
+                return this.textToMatch;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean isRegex() {
+                return false;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean textMatches(String subject) {
+                return Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE).matcher(subject).find();
+            }
         }
 
         /**
