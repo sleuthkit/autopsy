@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
@@ -116,7 +117,7 @@ final class FilesSet {
         }
         for (Rule rule : rules.values()) {
             if (rule.isSatisfied(file)) {
-                return rule.getName();
+                return rule.getRuleUUID();
             }
         }
         return null;
@@ -135,6 +136,7 @@ final class FilesSet {
      */
     static class Rule {
 
+        private final String ruleUUID;
         private final String ruleName;
         private final FileNameFilter fileNameFilter;
         private final MetaTypeFilter metaTypeFilter;
@@ -150,6 +152,10 @@ final class FilesSet {
          * @param pathFilter A file path filter, may be null.
          */
         Rule(String ruleName, FileNameFilter fileNameFilter, MetaTypeFilter metaTypeFilter, ParentPathFilter pathFilter) {
+
+            // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
+            this.ruleUUID = UUID.randomUUID().toString();
+
             if (ruleName == null) {
                 throw new NullPointerException("Interesting files set rule name cannot be null");
             }
@@ -229,6 +235,13 @@ final class FilesSet {
             // This override is designed to provide a display name for use with 
             // javax.swing.DefaultListModel<E>.
             return this.ruleName + " (" + fileNameFilter.getTextToMatch() + ")";
+        }
+
+        /**
+         * @return the ruleUUID
+         */
+        public String getRuleUUID() {
+            return this.ruleUUID;
         }
 
         /**
@@ -581,7 +594,7 @@ final class FilesSet {
              */
             @Override
             public boolean textMatches(String subject) {
-                return subject.equalsIgnoreCase(textToMatch);
+                return Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE).matcher(subject).find();
             }
 
         }

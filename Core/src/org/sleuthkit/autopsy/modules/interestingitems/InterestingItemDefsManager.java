@@ -32,6 +32,7 @@ import java.util.regex.PatternSyntaxException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -121,6 +122,7 @@ final class InterestingItemDefsManager extends Observable {
         private static final String NAME_RULE_TAG = "NAME"; //NON-NLS
         private static final String EXTENSION_RULE_TAG = "EXTENSION"; //NON-NLS
         private static final String NAME_ATTR = "name"; //NON-NLS
+        private static final String RULE_UUID_ATTR = "ruleUUID"; //NON-NLS
         private static final String DESC_ATTR = "description"; //NON-NLS 
         private static final String IGNORE_KNOWN_FILES_ATTR = "ignoreKnown"; //NON-NLS
         private static final String TYPE_FILTER_ATTR = "typeFilter"; //NON-NLS
@@ -234,10 +236,10 @@ final class InterestingItemDefsManager extends Observable {
                 Element elem = (Element) nameRuleElems.item(j);
                 FilesSet.Rule rule = FilesSetXML.readFileNameRule(elem);
                 if (rule != null) {
-                    if (!rules.containsKey(rule.getName())) {
-                        rules.put(rule.getName(), rule);
+                    if (!rules.containsKey(rule.getRuleUUID())) {
+                        rules.put(rule.getRuleUUID(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getName(), setName, filePath}); // NON-NLS
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getRuleUUID(), setName, filePath}); // NON-NLS
                         return;
                     }
                 } else {
@@ -252,10 +254,10 @@ final class InterestingItemDefsManager extends Observable {
                 Element elem = (Element) extRuleElems.item(j);
                 FilesSet.Rule rule = FilesSetXML.readFileExtensionRule(elem);
                 if (rule != null) {
-                    if (!rules.containsKey(rule.getName())) {
-                        rules.put(rule.getName(), rule);
+                    if (!rules.containsKey(rule.getRuleUUID())) {
+                        rules.put(rule.getRuleUUID(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getName(), setName, filePath}); //NOI18N
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getRuleUUID(), setName, filePath}); //NOI18N
                         return;
                     }
                 } else {
@@ -405,6 +407,17 @@ final class InterestingItemDefsManager extends Observable {
             return ruleName;
         }
 
+         /**
+         * Read a rule uuid attribute from a rule element.
+         *
+         * @param elem A rule element.
+         * @return A rule name.
+         */
+        private static String readRuleUUID(Element elem) {
+            // The rule must have a name. 
+            String ruleUUID = elem.getAttribute(FilesSetXML.RULE_UUID_ATTR);
+            return ruleUUID;
+        }
         /**
          * Attempts to compile a regular expression.
          *
@@ -517,6 +530,11 @@ final class InterestingItemDefsManager extends Observable {
                             ruleElement = doc.createElement(FilesSetXML.EXTENSION_RULE_TAG);
                         }
 
+                        // Add the rule ID attribute.
+                        if(!isBlank(rule.getRuleUUID())) {
+                            ruleElement.setAttribute(FilesSetXML.RULE_UUID_ATTR, rule.getRuleUUID());
+                        }
+                        
                         // Add the rule name attribute.
                         ruleElement.setAttribute(FilesSetXML.NAME_ATTR, rule.getName());
                         
