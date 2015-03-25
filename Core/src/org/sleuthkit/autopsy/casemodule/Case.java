@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -309,13 +310,23 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
-        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType); // create a new XML config file
+
+        String dbName=null;
+        // figure out the database name
+        if (caseType == CaseType.LOCAL) {
+            dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
+        } else if (caseType == CaseType.SHARED) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            dbName = caseName + "_" + dateFormat.format(new Date());
+        }
+        
+        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName); // create a new XML config file
         xmlcm.writeFile();
 
-        String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
+        
         SleuthkitCase db = null;
         try {
-            db = SleuthkitCase.newCase(dbPath);
+            db = SleuthkitCase.newCase(dbName); /// KDM
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
@@ -353,7 +364,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             String caseDir = xmlcm.getCaseDirectory();
             String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
-            SleuthkitCase db = SleuthkitCase.openCase(dbPath);
+            SleuthkitCase db = SleuthkitCase.openCase(dbPath); // KDM
             if (null != db.getBackupDatabasePath()) {
                 JOptionPane.showMessageDialog(null,
                                               NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",

@@ -71,6 +71,7 @@ import org.xml.sax.SAXException;
     final static String CACHE_FOLDER_NAME = "CacheFolder"; //NON-NLS
     final static String CACHE_FOLDER_RELPATH = "Cache"; //NON-NLS
     final static String CASE_TYPE = "CaseType"; //NON-NLS
+    final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
     // folders attribute
     final static String RELATIVE_NAME = "Relative";    // relevant path info NON-NLS
     // folder attr values
@@ -82,11 +83,13 @@ import org.xml.sax.SAXException;
     private DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private String caseDirPath;     // case directory path
     private String caseName;        // case name
-    private String caseNumber;         // case number
+    private String caseNumber;      // case number
     private String examiner;        // examiner name
     private String schemaVersion = "1.0";
     private String autopsySavedVersion;
     private CaseType caseType;      // The type of case: local or shared
+    private String dbName;          // The name of the database    
+    
     // for error handling
     private JPanel caller;
     private String className = this.getClass().toString();
@@ -197,6 +200,15 @@ import org.xml.sax.SAXException;
      */
     private void setCaseType(CaseType givenCaseType) {
         caseType = givenCaseType; // change this to change the xml file if needed
+    }
+
+    /**
+     * Sets the database name internally (on local variable in this class)
+     *
+     * @param givenDbName the new db name
+     */
+    private void setDbName(String givenDbName) {
+        dbName= givenDbName; // change this to change the xml file if needed
     }
     
     /**
@@ -454,8 +466,10 @@ import org.xml.sax.SAXException;
      * directory
      * @param examiner examiner for the case (optional, can be empty string
      * @param caseNumber case number (optional), can be empty
+     * @param dbName the name of the database. Could be a local path, could be
+     * a Postgre db name.
      */
-    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType) throws CaseActionException {
+    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName) throws CaseActionException {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
@@ -464,6 +478,7 @@ import org.xml.sax.SAXException;
         setExaminer(examiner);
         setNumber(caseNumber);
         setCaseType(caseType);
+        setDbName(dbName);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -538,6 +553,10 @@ import org.xml.sax.SAXException;
         Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
         typeElement.appendChild(doc.createTextNode(caseType.toString()));
         caseElement.appendChild(typeElement);
+        
+        Element dbNameElement = doc.createElement(DATABASE_NAME); // <DatabaseName> ... </DatabaseName>
+        dbNameElement.appendChild(doc.createTextNode(dbName));
+        caseElement.appendChild(dbNameElement);
         
         // write more code if needed ...
     }
@@ -706,5 +725,6 @@ import org.xml.sax.SAXException;
         caseNumber = "";
         examiner = "";
         caseType = CaseType.LOCAL;
+        dbName = "";
     }
 }
