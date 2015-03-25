@@ -32,7 +32,6 @@ import java.util.regex.PatternSyntaxException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -407,17 +406,6 @@ final class InterestingItemDefsManager extends Observable {
             return ruleName;
         }
 
-         /**
-         * Read a rule uuid attribute from a rule element.
-         *
-         * @param elem A rule element.
-         * @return A rule name.
-         */
-        private static String readRuleUUID(Element elem) {
-            // The rule must have a name. 
-            String ruleUUID = elem.getAttribute(FilesSetXML.RULE_UUID_ATTR);
-            return ruleUUID;
-        }
         /**
          * Attempts to compile a regular expression.
          *
@@ -530,10 +518,6 @@ final class InterestingItemDefsManager extends Observable {
                             ruleElement = doc.createElement(FilesSetXML.EXTENSION_RULE_TAG);
                         }
 
-                        // Add the rule ID attribute.
-                        if(!isBlank(rule.getRuleUUID())) {
-                            ruleElement.setAttribute(FilesSetXML.RULE_UUID_ATTR, rule.getRuleUUID());
-                        }
                         
                         // Add the rule name attribute.
                         ruleElement.setAttribute(FilesSetXML.NAME_ATTR, rule.getName());
