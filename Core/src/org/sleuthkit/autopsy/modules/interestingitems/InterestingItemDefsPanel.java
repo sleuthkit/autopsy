@@ -303,7 +303,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Remove the "old" rule definition and add the new/edited 
             // definition.
             if (selectedRule != null) {
-                rules.remove(selectedRule.getName());
+                rules.remove(selectedRule.getUuid());
             }
             FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameFilter(), panel.getMetaTypeFilter(), panel.getPathFilter());
             rules.put(Integer.toString(newRule.hashCode()), newRule);
@@ -725,7 +725,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSet oldSet = this.setsList.getSelectedValue();
         Map<String, FilesSet.Rule> rules = new HashMap<>(oldSet.getRules());
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
-        rules.remove(selectedRule.getName());
+        rules.remove(selectedRule.getUuid());
         this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 

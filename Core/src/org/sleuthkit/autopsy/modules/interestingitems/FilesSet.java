@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
@@ -135,6 +136,7 @@ final class FilesSet {
      */
     static class Rule {
 
+        private final String uuid;
         private final String ruleName;
         private final FileNameFilter fileNameFilter;
         private final MetaTypeFilter metaTypeFilter;
@@ -150,8 +152,12 @@ final class FilesSet {
          * @param pathFilter A file path filter, may be null.
          */
         Rule(String ruleName, FileNameFilter fileNameFilter, MetaTypeFilter metaTypeFilter, ParentPathFilter pathFilter) {
+
+            // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
+            this.uuid = UUID.randomUUID().toString();
+
             if (ruleName == null) {
-                throw new NullPointerException("Interesting files set rule name cannot be null");
+                throw new IllegalArgumentException("Interesting files set rule name cannot be null");
             }
             if (fileNameFilter == null) {
                 throw new IllegalArgumentException("Interesting files set rule file name filter cannot be null");
@@ -229,6 +235,13 @@ final class FilesSet {
             // This override is designed to provide a display name for use with 
             // javax.swing.DefaultListModel<E>.
             return this.ruleName + " (" + fileNameFilter.getTextToMatch() + ")";
+        }
+
+        /**
+         * @return the ruleUUID
+         */
+        public String getUuid() {
+            return this.uuid;
         }
 
         /**
@@ -341,8 +354,11 @@ final class FilesSet {
              *
              * @param text The text to be matched.
              */
-            AbstractTextFilter(String text) {
-                this.textMatcher = new FilesSet.Rule.CaseInsensitiveStringComparisionMatcher(text);
+            AbstractTextFilter(String text, Boolean partialMatch) {
+                if(partialMatch)
+                    this.textMatcher = new FilesSet.Rule.CaseInsensitivePartialStringComparisionMatcher(text);
+                else
+                    this.textMatcher = new FilesSet.Rule.CaseInsensitiveStringComparisionMatcher(text);
             }
 
             /**
@@ -408,7 +424,7 @@ final class FilesSet {
              * @param path The path to be matched.
              */
             ParentPathFilter(String path) {
-                super(path);
+                super(path, true);
             }
 
             /**
@@ -450,7 +466,7 @@ final class FilesSet {
              * @param name The file name to be matched.
              */
             FullNameFilter(String name) {
-                super(name);
+                super(name, false);
             }
 
             /**
@@ -488,7 +504,7 @@ final class FilesSet {
                 // If there is a leading ".", strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
-                super(extension.startsWith(".") ? extension.substring(1) : extension);
+                super(extension.startsWith(".") ? extension.substring(1) : extension, false);
             }
 
             /**
@@ -498,7 +514,7 @@ final class FilesSet {
              * matched.
              */
             ExtensionFilter(Pattern extension) {
-                super(extension.pattern());
+                super(extension.pattern(), false);
             }
 
             /**
@@ -584,6 +600,48 @@ final class FilesSet {
                 return subject.equalsIgnoreCase(textToMatch);
             }
 
+        }
+
+        /**
+         * A text matcher that does a case-insensitive string comparison.
+         */
+        private static class CaseInsensitivePartialStringComparisionMatcher implements TextMatcher {
+
+            private final String textToMatch;
+
+            /**
+             * Construct a text matcher that does a case-insensitive string
+             * comparison.
+             *
+             * @param textToMatch The text to match.
+             */
+            CaseInsensitivePartialStringComparisionMatcher(String textToMatch) {
+                this.textToMatch = textToMatch;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public String getTextToMatch() {
+                return this.textToMatch;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean isRegex() {
+                return false;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean textMatches(String subject) {
+                return Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE).matcher(subject).find();
+            }
         }
 
         /**
