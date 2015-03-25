@@ -29,6 +29,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
@@ -254,6 +255,14 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         do {
             option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
+
+        // If rule set with same name already exists, do not add to the filesSets hashMap.
+        if(this.filesSets.containsKey(panel.getFilesSetName())) {
+            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                                                                "InterestingItemDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
+                                                                panel.getFilesSetName()));
+            return;
+        }
 
         if (option == JOptionPane.OK_OPTION) {
             Map<String, FilesSet.Rule> rules = new HashMap<>();
