@@ -235,10 +235,10 @@ final class InterestingItemDefsManager extends Observable {
                 Element elem = (Element) nameRuleElems.item(j);
                 FilesSet.Rule rule = FilesSetXML.readFileNameRule(elem);
                 if (rule != null) {
-                    if (!rules.containsKey(rule.getRuleUUID())) {
-                        rules.put(rule.getRuleUUID(), rule);
+                    if (!rules.containsKey(rule.getUuid())) {
+                        rules.put(rule.getUuid(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getRuleUUID(), setName, filePath}); // NON-NLS
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); // NON-NLS
                         return;
                     }
                 } else {
@@ -253,10 +253,10 @@ final class InterestingItemDefsManager extends Observable {
                 Element elem = (Element) extRuleElems.item(j);
                 FilesSet.Rule rule = FilesSetXML.readFileExtensionRule(elem);
                 if (rule != null) {
-                    if (!rules.containsKey(rule.getRuleUUID())) {
-                        rules.put(rule.getRuleUUID(), rule);
+                    if (!rules.containsKey(rule.getUuid())) {
+                        rules.put(rule.getUuid(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getRuleUUID(), setName, filePath}); //NOI18N
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); //NOI18N
                         return;
                     }
                 } else {

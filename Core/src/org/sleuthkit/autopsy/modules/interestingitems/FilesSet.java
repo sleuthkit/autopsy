@@ -117,7 +117,7 @@ final class FilesSet {
         }
         for (Rule rule : rules.values()) {
             if (rule.isSatisfied(file)) {
-                return rule.getRuleUUID();
+                return rule.getName();
             }
         }
         return null;
@@ -136,7 +136,7 @@ final class FilesSet {
      */
     static class Rule {
 
-        private final String ruleUUID;
+        private final String uuid;
         private final String ruleName;
         private final FileNameFilter fileNameFilter;
         private final MetaTypeFilter metaTypeFilter;
@@ -154,10 +154,10 @@ final class FilesSet {
         Rule(String ruleName, FileNameFilter fileNameFilter, MetaTypeFilter metaTypeFilter, ParentPathFilter pathFilter) {
 
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
-            this.ruleUUID = UUID.randomUUID().toString();
+            this.uuid = UUID.randomUUID().toString();
 
             if (ruleName == null) {
-                throw new NullPointerException("Interesting files set rule name cannot be null");
+                throw new IllegalArgumentException("Interesting files set rule name cannot be null");
             }
             if (fileNameFilter == null) {
                 throw new IllegalArgumentException("Interesting files set rule file name filter cannot be null");
@@ -240,8 +240,8 @@ final class FilesSet {
         /**
          * @return the ruleUUID
          */
-        public String getRuleUUID() {
-            return this.ruleUUID;
+        public String getUuid() {
+            return this.uuid;
         }
 
         /**
