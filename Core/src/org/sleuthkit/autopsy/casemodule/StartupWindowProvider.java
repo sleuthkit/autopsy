@@ -91,6 +91,8 @@ public class StartupWindowProvider implements StartupWindowInterface {
     public void open() {
         if (startupWindowToUse != null) {
             startupWindowToUse.open();
+            StartupWindow startupWindowToUseForCueBannerPanel = (StartupWindow)startupWindowToUse;
+            startupWindowToUseForCueBannerPanel.open();
         }
     }
 
