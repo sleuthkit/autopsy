@@ -441,7 +441,7 @@ final class FilesSet {
              */
             @Override
             public boolean passes(AbstractFile file) {
-                return this.textMatches(file.getParentPath());
+                return this.textMatches(file.getParentPath() + "/");
             }
 
         }
