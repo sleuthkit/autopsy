@@ -59,7 +59,6 @@ import org.mitre.cybox.objects.DomainName;
 import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
 /**
  *
@@ -121,7 +120,7 @@ public class STIXReportModule implements GeneralReportModule {
                                                               "STIXReportModule.notifyMsg.unableToOpenReportFile",
                                                               reportPath),
                     MessageNotifyUtil.MessageType.ERROR);
-            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.complete();
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
             return;
@@ -136,7 +135,7 @@ public class STIXReportModule implements GeneralReportModule {
             logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
             MessageNotifyUtil.Message.error(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
-            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.complete();
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             return;
@@ -145,7 +144,7 @@ public class STIXReportModule implements GeneralReportModule {
             logger.log(Level.SEVERE, "No STIX file/directory provided "); //NON-NLS
             MessageNotifyUtil.Message.error(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
-            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.complete();
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             return;
@@ -157,7 +156,7 @@ public class STIXReportModule implements GeneralReportModule {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                                                                 "STIXReportModule.notifyMsg.unableToOpenFileDir",
                                                                 stixFileName));
-            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.complete();
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
             return;
@@ -202,12 +201,10 @@ public class STIXReportModule implements GeneralReportModule {
 
         // Set the progress bar to done. If any errors occurred along the way, modify
         // the "complete" message to indicate this.
+        progressPanel.complete();
         if (hadErrors) {
-            progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
-        } else {
-            progressPanel.complete(ReportStatus.COMPLETE);
         }
     }
 

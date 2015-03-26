@@ -63,7 +63,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
         CueBannerPanel welcomeWindow = new CueBannerPanel();
-        CueBannerPanel.refresh();
+        welcomeWindow.refresh();
 
         // add the command to close the window to the button on the Volume Detail Panel
         welcomeWindow.setCloseButtonActionListener(new ActionListener() {
