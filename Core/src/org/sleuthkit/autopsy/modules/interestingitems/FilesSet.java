@@ -441,7 +441,7 @@ final class FilesSet {
              */
             @Override
             public boolean passes(AbstractFile file) {
-                return this.textMatches(file.getParentPath());
+                return this.textMatches(file.getParentPath() + "/");
             }
 
         }
@@ -608,6 +608,7 @@ final class FilesSet {
         private static class CaseInsensitivePartialStringComparisionMatcher implements TextMatcher {
 
             private final String textToMatch;
+            private final Pattern pattern;
 
             /**
              * Construct a text matcher that does a case-insensitive string
@@ -617,6 +618,7 @@ final class FilesSet {
              */
             CaseInsensitivePartialStringComparisionMatcher(String textToMatch) {
                 this.textToMatch = textToMatch;
+                this.pattern = Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE);
             }
 
             /**
@@ -640,7 +642,7 @@ final class FilesSet {
              */
             @Override
             public boolean textMatches(String subject) {
-                return Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE).matcher(subject).find();
+                return pattern.matcher(subject).find();
             }
         }
 
