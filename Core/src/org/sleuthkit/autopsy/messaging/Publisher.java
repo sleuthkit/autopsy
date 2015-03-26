@@ -26,19 +26,23 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.broker.BrokerService;
+import org.openide.modules.OnStart;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-/**
- *
- */
-class Publisher implements Runnable {
+@OnStart
+public class Publisher implements Runnable {
 
     private static final Logger logger = Logger.getLogger(Publisher.class.getName());
         
     @Override
     public void run() {
         try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost");
+            BrokerService broker = new BrokerService();
+            broker.addConnector("tcp://localhost:61616");
+            broker.setPersistent(false);
+            broker.start();                        
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
             Connection connection = connectionFactory.createConnection();
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -50,6 +54,7 @@ class Publisher implements Runnable {
             producer.send(message);
             session.close();
             connection.close();
+            new Thread(new Subscriber()).run();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
         }

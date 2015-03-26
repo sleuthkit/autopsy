@@ -28,11 +28,10 @@ import javax.jms.Message;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.openide.modules.OnStart;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-/**
- *
- */
+@OnStart
 public class Subscriber implements Runnable, ExceptionListener {
 
     private static final Logger logger = Logger.getLogger(Publisher.class.getName());
@@ -40,7 +39,7 @@ public class Subscriber implements Runnable, ExceptionListener {
     @Override
     public void run() {
         try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost");
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
             Connection connection = connectionFactory.createConnection();
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
