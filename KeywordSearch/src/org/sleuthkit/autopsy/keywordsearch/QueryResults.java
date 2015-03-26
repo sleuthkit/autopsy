@@ -169,7 +169,7 @@ class QueryResults {
         return newArtifacts;
     }
 
-    private List<KeywordHit> getOneHitPerObject(Keyword keyword) {
+    private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
 
         HashMap<Long, KeywordHit> hits = new HashMap();
 
@@ -183,7 +183,7 @@ class QueryResults {
                 }
             }
         }
-        return (List<KeywordHit>) hits.values();
+        return hits.values();
     }
 
     /**
