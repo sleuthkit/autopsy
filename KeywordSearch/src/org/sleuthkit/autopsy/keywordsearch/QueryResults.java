@@ -170,17 +170,20 @@ class QueryResults {
     }
 
     private List<KeywordHit> getOneHitPerObject(Keyword keyword) {
-        List<KeywordHit> hits = new ArrayList<>();
-        Set<Long> uniqueObjectIds = new HashSet<>();
-        for (KeywordHit hit : getResults(keyword)) {
-            long objectId = hit.getSolrObjectId();
-            if (!uniqueObjectIds.contains(objectId)) {
-                uniqueObjectIds.add(objectId);
-                hits.add(hit);
+
+        HashMap<Long, KeywordHit> hits = new HashMap();
+
+        // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
+        for(KeywordHit hit: getResults(keyword)) {
+            if(!hits.containsKey(hit.getSolrObjectId())) {
+                hits.put(hit.getSolrObjectId(), hit);
+            } else {
+                if(hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                    hits.put(hit.getSolrObjectId(), hit);
+                }
             }
         }
-        Collections.sort(hits);
-        return hits;
+        return (List<KeywordHit>) hits.values();
     }
 
     /**
