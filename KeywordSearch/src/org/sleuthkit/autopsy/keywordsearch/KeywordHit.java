@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.python.google.common.primitives.Longs;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -30,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * keyword was found and the file available to clients. Artifact keyword hits
  * also make the artifact available to clients.
  */
-class KeywordHit {
+class KeywordHit implements Comparable<KeywordHit>{
 
     private final String solrDocumentId;
     private final long solrObjectId;
@@ -140,4 +141,12 @@ class KeywordHit {
         return hash;
     }
 
+    @Override
+    public int compareTo(KeywordHit o) {
+        if (this.getSolrObjectId() != o.getSolrObjectId()) {
+            return Long.compare(this.getSolrObjectId(), o.getSolrObjectId());
+        } else {
+            return Longs.compare(this.getChunkId(), this.getChunkId());
+        }
+    }
 }
