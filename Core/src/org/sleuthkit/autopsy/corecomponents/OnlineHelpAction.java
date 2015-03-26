@@ -51,7 +51,7 @@ import java.util.logging.Logger;
     @ActionReference(path = "Menu/Help", position = 0),
     @ActionReference(path = "Shortcuts", name = "F1")
 })
-@Messages("CTL_OnlineHelpAction=Online Documentation")
+@Messages("CTL_OnlineHelpAction=Online Autopsy Documentation")
 public final class OnlineHelpAction implements ActionListener {
 
     private URI uri;
