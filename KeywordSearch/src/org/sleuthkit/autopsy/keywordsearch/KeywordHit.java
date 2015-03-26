@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import org.python.google.common.primitives.Longs;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -142,11 +141,14 @@ class KeywordHit implements Comparable<KeywordHit>{
     }
 
     @Override
+    /**
+     * Sorts KeywordHit in an ascending order.
+     */
     public int compareTo(KeywordHit o) {
         if (this.getSolrObjectId() != o.getSolrObjectId()) {
             return Long.compare(this.getSolrObjectId(), o.getSolrObjectId());
         } else {
-            return Longs.compare(this.getChunkId(), this.getChunkId());
+            return Long.compare(this.getChunkId(), this.getChunkId());
         }
     }
 }
