@@ -26,16 +26,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -47,19 +50,16 @@ class CallLogAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
 
-    /** the where clause(without 'where' of sql select statement to choose call
-     * log dbs, update the list of file names to include more files */
-    private static final String fileNameQuery = Stream.of("'logs.db'", "'contacts2.db'", "'contacts.db'") //NON-NLS
-            .collect(Collectors.joining(" OR name = ", "name = ", "")); //NON-NLS
 
     /** the names of tables that potentially hold call logs in the dbs */
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
-    public static void findCallLogs() {
+    public static void findCallLogs(Content dataSource, FileManager fileManager) {
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-
-            for (AbstractFile abstractFile : skCase.findAllFilesWhere(fileNameQuery)) {
+            List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "logs.db"); //NON-NLS
+            absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db")); //NON-NLS
+            absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db")); //NON-NLS
+            for (AbstractFile abstractFile : absFiles) {
                 try {
                     File file = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
                     ContentUtils.writeToFile(abstractFile, file);

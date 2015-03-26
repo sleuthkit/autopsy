@@ -25,8 +25,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class ReportProgressPanel extends javax.swing.JPanel {
+    private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
     private ReportStatus STATUS;
     
     // Enum to represent if a report is waiting,
@@ -35,7 +38,8 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         QUEUING,
         RUNNING,
         COMPLETE,
-        CANCELED
+        CANCELED,
+        ERROR
     }
 
     /**
@@ -228,25 +232,55 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * Declare the report completed.
      * This will fill the JProgressBar, update the cancelButton to completed,
      * and disallow any cancellation of this report.
+     * @deprecated Use {@link #complete(ReportStatus)}
      */
+    @Deprecated
     public void complete() {
+        complete(ReportStatus.COMPLETE);
+    }
+    /**
+     * Declare the report completed ands sets if completed successfully or with errors.
+     * This will fill the JProgressBar, update the cancelButton to completed,
+     * and disallow any cancellation of this report.
+     * @param reportStatus set to appropriate ResultStatus enum.
+     */
+    public void complete(ReportStatus reportStatus) {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 if (STATUS != ReportStatus.CANCELED) {
-                    STATUS = ReportStatus.COMPLETE;
-                    processingLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
-                    reportProgressBar.setValue(reportProgressBar.getMaximum());
-                    cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
-                    cancelButton.setToolTipText(
-                            NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                    switch (reportStatus) {
+                        case COMPLETE: {
+                            STATUS = ReportStatus.COMPLETE;
+                            processingLabel.setText(
+                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
+                            reportProgressBar.setValue(reportProgressBar.getMaximum());
+                            cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
+                            cancelButton.setToolTipText(
+                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                            break;
+                        }
+                        case ERROR: {
+                            STATUS = ReportStatus.ERROR;
+                            processingLabel.setText(
+                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
+                            reportProgressBar.setValue(reportProgressBar.getMaximum());
+                            cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete_with_errors.png"))); //NON-NLS
+                            cancelButton.setToolTipText(
+                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                            break;
+                        }
+                        // add finer grained result codes here.
+                        default: {
+                            logger.log(Level.SEVERE, "Invalid ReportStatus code {0}", reportStatus); //NON-NLS
+                            break;
+                        }
+                    }
                 }
             }
         });
         // Do something with the button to change the icon and make not clickable
     }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

@@ -36,6 +36,7 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.python.util.PythonObjectInputStream;
 
 /**
  * Encapsulates the ingest job settings for a particular context such as the Add
@@ -53,6 +54,7 @@ public class IngestJobSettings {
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final String context;
     private String moduleSettingsFolderPath;
+    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length()-1);
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
@@ -276,6 +278,17 @@ public class IngestJobSettings {
     }
 
     /**
+     * Determines if the moduleSettingsFilePath is that of a serialized jython instance.
+     * Serialized Jython instances (settings saved on the disk) contain "org.python.proxies."
+     * in their fileName based on the current implementation.
+     * @param moduleSettingsFilePath path to the module settings file.
+     * @return True or false
+     */
+    private boolean isPythonModuleSettingsFile(String moduleSettingsFilePath) {
+        return moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS);
+    }
+
+    /**
      * Gets the saved or default ingest job settings for a given ingest module
      * for these ingest job settings.
      *
@@ -284,14 +297,25 @@ public class IngestJobSettings {
      */
     private IngestModuleIngestJobSettings loadModuleSettings(IngestModuleFactory factory) {
         IngestModuleIngestJobSettings settings = null;
-        File settingsFile = new File(getModuleSettingsFilePath(factory));
+        String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
+        File settingsFile = new File(moduleSettingsFilePath);
         if (settingsFile.exists()) {
-            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                settings = (IngestModuleIngestJobSettings) in.readObject();
-            } catch (IOException | ClassNotFoundException ex) {
-                String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
-                logger.log(Level.WARNING, warning, ex);
-                this.warnings.add(warning);
+            if (!isPythonModuleSettingsFile(moduleSettingsFilePath)) {
+                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                    settings = (IngestModuleIngestJobSettings) in.readObject();
+                } catch (IOException | ClassNotFoundException ex) {
+                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
+                    logger.log(Level.WARNING, warning, ex);
+                    this.warnings.add(warning);
+                }
+            } else {
+                try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                    settings = (IngestModuleIngestJobSettings) in.readObject();
+                } catch (IOException | ClassNotFoundException exception) {
+                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.context); //NON-NLS
+                    logger.log(Level.WARNING, warning, exception);
+                    this.warnings.add(warning);
+                }
             }
         }
         if (settings == null) {
@@ -350,7 +374,14 @@ public class IngestJobSettings {
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
         try {
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getModuleSettingsFilePath(factory)))) {
+            String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
+            // compiled python modules have substring org.python.proxies. It can be used to identify them.
+            if (isPythonModuleSettingsFile(moduleSettingsFilePath)) {
+                // compiled python modules have variable instance number as a part of their file name.
+                // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
+                moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
+            }
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
                 out.writeObject(settings);
             }
         } catch (IOException ex) {
