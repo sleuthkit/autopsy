@@ -166,10 +166,6 @@
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-1.5-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-parsers-1.5-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/bcmail-jdk15-1.45.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bcmail-jdk15-1.45.jar</binary-origin>
             </class-path-extension>
@@ -188,6 +184,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/org.osgi.compendium-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/org.osgi.compendium-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.7.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
@@ -230,6 +230,10 @@
                 <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/noggit-0.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.7.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.7.2.jar</binary-origin>
             </class-path-extension>
@@ -240,6 +244,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/qdox-1.12.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/qdox-1.12.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
@@ -272,6 +280,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/org.osgi.core-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/org.osgi.core-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/isoparser-1.0-RC-1.jar</runtime-relative-path>
