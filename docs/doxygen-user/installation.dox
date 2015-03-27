@@ -10,7 +10,7 @@ http://sleuthkit.org/autopsy/download.php
 The current version of Autopsy 3 runs only on Microsoft Windows.
 We have gotten it to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
 
-The Windows installer is self contained and will place everything in the needed places. Simply follow the standard prompts for target installation directory.
+The Windows installer is self-contained and will place everything in the needed places. Simply follow the standard prompts for installation.
 
 
 Optimizing Performance
@@ -18,7 +18,7 @@ Optimizing Performance
 
 After installing Autopsy, there are several hardware-based things that we suggest you do to optimize performance:
 
-1) Change the number of parallel pipelines that can be run at a time. The default is 2 pipelines, but this can be increased if you are running on a system with several cores. To do this:
+1) Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
 - Run Autopsy from the Start Menu or desktop
 - When presented with the case creation splash screen, cancel/close the window
 - Select "Tools", "Options"

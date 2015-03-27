@@ -16,9 +16,9 @@ The module should be able to extract the following:
 - GPS from the browser and Google Maps
 - GPS from cache.wifi and cache.cell files
 
-NOTE: These database formats vary by version of OS and different vendors can place the databaes in different places. Autopsy may not support all versions and vendors. 
+NOTE: These database formats vary by version of OS and different vendors can place the databases in different places. Autopsy may not support all versions and vendors. 
 
-NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the Developer docs (http://sleuthkit.org/autopsy/docs/api-docs/3.1/mod_mobile_page.html) for information on writing modules. 
+NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the <a href="http://sleuthkit.org/autopsy/docs/api-docs/3.1/mod_mobile_page.html">Developer docs</a>  for information on writing modules. 
 
 
 Configuration

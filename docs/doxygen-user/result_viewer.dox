@@ -12,7 +12,7 @@ You can also switch it to Thumbnail view to see thumbnails of the content in the
 \image html result-viewer-example-2.PNG
 <br>
 
-The Result Viewer is context-aware, meaning it will show applicable columns for the data type in selected.
+The Result Viewer is context-aware, meaning it will show applicable columns for the data type selected.
 <br>
 \image html result-viewer-example-3.PNG
 <br>

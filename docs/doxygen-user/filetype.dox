@@ -32,7 +32,7 @@ a data source.  All user-defined and Tika rules are always applied.
 Seeing Results
 ------
 
-This module does not have obvious impacts in the user interface, though it is used by many othe modules. 
+This module does not have obvious impacts in the user interface, though it is used by many other modules. 
 
 To see the file type of an individual file, view the "Results" tab in the lower right when you navigate to the file. You should see a page in there that mentions the file type.
 
