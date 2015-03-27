@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -167,17 +166,26 @@ class QueryResults {
         return newArtifacts;
     }
 
-    private List<KeywordHit> getOneHitPerObject(Keyword keyword) {
-        List<KeywordHit> hits = new ArrayList<>();
-        Set<Long> uniqueObjectIds = new HashSet<>();
-        for (KeywordHit hit : getResults(keyword)) {
-            long objectId = hit.getSolrObjectId();
-            if (!uniqueObjectIds.contains(objectId)) {
-                uniqueObjectIds.add(objectId);
-                hits.add(hit);
+    /**
+     * Gets the first hit of the keyword.
+     * @param keyword
+     * @return Collection<KeywordHit> containing KeywordHits with lowest SolrObjectID-ChunkID pairs.
+     */
+    private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
+
+        HashMap<Long, KeywordHit> hits = new HashMap();
+
+        // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
+        for(KeywordHit hit: getResults(keyword)) {
+            if(!hits.containsKey(hit.getSolrObjectId())) {
+                hits.put(hit.getSolrObjectId(), hit);
+            } else {
+                if(hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                    hits.put(hit.getSolrObjectId(), hit);
+                }
             }
         }
-        return hits;
+        return hits.values();
     }
 
     /**
