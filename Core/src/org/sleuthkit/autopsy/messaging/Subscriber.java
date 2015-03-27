@@ -34,18 +34,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @OnStart
 public class Subscriber implements Runnable, ExceptionListener {
 
-    private static final Logger logger = Logger.getLogger(Publisher.class.getName());
+    private static final Logger logger = Logger.getLogger(Subscriber.class.getName());
 
     @Override
     public void run() {
         try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://10.1.8.234:61616");
             Connection connection = connectionFactory.createConnection();
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic("test");
             MessageConsumer consumer = session.createConsumer(topic);
-            new Thread(new Publisher()).run();
             Message message = consumer.receive();
             if (message instanceof TextMessage) {
                 TextMessage textMessage = (TextMessage) message;

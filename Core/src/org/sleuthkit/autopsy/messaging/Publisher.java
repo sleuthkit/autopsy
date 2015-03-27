@@ -25,8 +25,10 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.openide.modules.OnStart;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+@OnStart
 public class Publisher implements Runnable {
 
     private static final Logger logger = Logger.getLogger(Publisher.class.getName());
@@ -34,7 +36,7 @@ public class Publisher implements Runnable {
     @Override
     public void run() {
         try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://10.1.8.234:61616");
             Connection connection = connectionFactory.createConnection();
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
