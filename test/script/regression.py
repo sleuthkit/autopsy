@@ -83,7 +83,7 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
 # TODO: Double check this purpose statement
 # The filename of the log to store error messages
-COMMON_LOG = "AutopsyErrors.txt"
+COMMON_LOG = "AutopsyExceptions.txt"
 
 Day = 0
 
@@ -576,7 +576,7 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "SortedData.txt")
+        return self._get_path_to_file(file_type, "BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
         """Get the path to the SortedErrors file that correspodns to the given
@@ -585,7 +585,7 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "SortedErrors.txt")
+        return self._get_path_to_file(file_type, "BlackboardDumpErrors.txt")
 
     def get_db_dump_path(self, file_type):
         """Get the path to the DBDump file that corresponds to the given DBType.
@@ -598,7 +598,7 @@ class TestData(object):
     def get_run_time_path(self, file_type):
         """Get the path to the run time storage file."
         """
-        return self._get_path_to_file(file_type, "_time.txt")
+        return self._get_path_to_file(file_type, "Time.txt")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
