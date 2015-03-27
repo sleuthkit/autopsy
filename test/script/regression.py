@@ -1310,10 +1310,10 @@ class Logs(object):
             Errors.print_error("Error: Unable to open autopsy.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
-        # Start date must look like: "Jul 16, 2012 12:57:53 PM"
+        # Start date must look like: "Fri Mar 27 13:27:34 EDT 2015"
         # End date must look like: "Mon Jul 16 13:02:42 2012"
         # *** If logging time format ever changes this will break ***
-        start = datetime.datetime.strptime(test_data.start_date, "%b %d, %Y %I:%M:%S %p")
+        start = datetime.datetime.strptime(test_data.start_date, "%a %b %d %H:%M:%S %Z %Y")
         end = datetime.datetime.strptime(test_data.end_date, "%a %b %d %H:%M:%S %Y")
         test_data.total_test_time = str(end - start)
 
