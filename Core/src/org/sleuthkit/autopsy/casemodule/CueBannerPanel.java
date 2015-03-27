@@ -47,6 +47,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     public CueBannerPanel() {
         initComponents();
+        refresh();
     }
 
     public CueBannerPanel(String welcomeLogo) {
@@ -179,7 +180,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public static void refresh() {
+    public void refresh() {
         if (RecentCases.getInstance().getTotalRecentCases() == 0) {
             openRecentButton.setEnabled(false);
             openRecentLabel.setEnabled(false);
@@ -236,8 +237,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private javax.swing.JButton newCaseButton;
     private javax.swing.JButton openCaseButton;
     private javax.swing.JLabel openLabel;
-    private static javax.swing.JButton openRecentButton;
-    private static javax.swing.JLabel openRecentLabel;
+    private javax.swing.JButton openRecentButton;
+    private javax.swing.JLabel openRecentLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
