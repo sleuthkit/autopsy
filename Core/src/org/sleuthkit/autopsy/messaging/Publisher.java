@@ -20,17 +20,13 @@ package org.sleuthkit.autopsy.messaging;
 
 import java.util.logging.Level;
 import javax.jms.Connection;
-import javax.jms.DeliveryMode;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.broker.BrokerService;
-import org.openide.modules.OnStart;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-@OnStart
 public class Publisher implements Runnable {
 
     private static final Logger logger = Logger.getLogger(Publisher.class.getName());
@@ -38,23 +34,17 @@ public class Publisher implements Runnable {
     @Override
     public void run() {
         try {
-            BrokerService broker = new BrokerService();
-            broker.addConnector("tcp://localhost:61616");
-            broker.setPersistent(false);
-            broker.start();                        
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
             Connection connection = connectionFactory.createConnection();
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic("test");
             MessageProducer producer = session.createProducer(topic);
-            producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
             String text = "Hello world! From: " + Thread.currentThread().getName() + " : " + this.hashCode();
             TextMessage message = session.createTextMessage(text);
             producer.send(message);
             session.close();
             connection.close();
-            new Thread(new Subscriber()).run();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
         }

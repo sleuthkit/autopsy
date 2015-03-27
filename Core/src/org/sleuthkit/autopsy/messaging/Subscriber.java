@@ -45,7 +45,8 @@ public class Subscriber implements Runnable, ExceptionListener {
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic("test");
             MessageConsumer consumer = session.createConsumer(topic);
-            Message message = consumer.receive(1000);
+            new Thread(new Publisher()).run();
+            Message message = consumer.receive();
             if (message instanceof TextMessage) {
                 TextMessage textMessage = (TextMessage) message;
                 String text = textMessage.getText();
