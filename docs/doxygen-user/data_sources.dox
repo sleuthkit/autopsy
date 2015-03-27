@@ -17,7 +17,7 @@ You can add a data source in several ways:
 - There is a toolbar item to add a Data Source when a case is open.
 - The "File", "Add Data Source" menu item when a case is open.
 
-The data source must remain accessible for the duration of the analysis because the case contains only a reference to the data source.  It does not copy the data source into the case folder. 
+The data source must remain accessible for the duration of the analysis because the case contains a reference to the data source.  It does <b>not</b> copy the data source into the case folder. 
 
 Regardless of the type of data source, there are some common steps in the process:
 
@@ -41,8 +41,6 @@ You cannot remove a data source from a case.
 
 \section ds_img Adding a Disk Image
 
-Supported Image Formats
-
 Autopsy supports disk images in the following formats: 
 - Raw Single (For example: *.img, *.dd, *.raw, etc)
 - Raw Split (For example: *.001, *.002, *.aa, *.ab, etc)
@@ -51,7 +49,7 @@ Autopsy supports disk images in the following formats:
 To add a disk image:
 
 -# Choose "Image File" from the pull down.
--# Browse to the first file in the disk image. You need to specify only the first file and it will find the rest.  
+-# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
 -# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
 -# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
 
@@ -76,7 +74,7 @@ You can add files or folders that are on your local computer (or on a shared dri
 
 Some things to note when doing this:
 - Autopsy ignores the time stamps on files that it adds this way because they could be the timestamps when they were copied onto your examination device.
-- If you have a USB-attached device that you are analyzing and you choose to add the device's contents using this method, then note that it will not look at unallocated space or deleted files.  Autopsy will only be able to see the allocated files.  You should add the device as a "Logical Drive" to get the unallocated space.
+- If you have a USB-attached device that you are analyzing and you choose to add the device's contents using this method, then note that it will not look at unallocated space or deleted files.  Autopsy will only be able to see the allocated files.  You should add the device as a "Logical Drive" to analyze the unallocated space.
 
 To add logical files:
 -# Choose "Logical Files" from the pull down.

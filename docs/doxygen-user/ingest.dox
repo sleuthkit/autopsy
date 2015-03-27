@@ -2,7 +2,7 @@
 
 Ingest modules analyze the data in a data source.  They perform all of the analysis of the files and parse their contents.  Examples include \ref hash_db_page "hash calculation and lookup", \ref keyword_search_page "keyword searching", and \ref recent_activity_page "web artifact extraction". 
 
-Immediately after you add a data source to a case (see \ref ds_page), you will be presented with a dialog to configure the ingest modules to run on it.  Once configured, they will run in the background and provide you real-time results when the find relevant information.  
+Immediately after you add a data source to a case (see \ref ds_page), you will be presented with a dialog to configure the ingest modules to run on it.  Once configured, they will run in the background and provide you real-time results when they find relevant information.  
 
 This page covers the use of ingest modules.  Specific pages will cover the configuration of specific modules.   See \ref module_install_page for details on installing 3rd-party ingest modules. 
 
@@ -37,7 +37,7 @@ There are two places to configure ingest modules. When you select the module nam
 
 There may also be an "Advanced" button that is enabled in the lower corner.  Pressing this button allows you to change global settings that are not specific to a single image.  This advanced configuration panel can often be found in the "Tools", "Options" menu too. 
 
-As an example, the hash lookup module will allow you to enable or disable hash databases in the "run time" options panel, but requires you to go to the "Advanced" era to add or remove hash databases from the Autopsy configuration. 
+As an example, the hash lookup module will allow you to enable or disable hash databases in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash databases from the Autopsy configuration. 
 
 
 \section ingest_results Viewing Ingest Module Results

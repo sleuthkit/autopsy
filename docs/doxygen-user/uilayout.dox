@@ -25,7 +25,7 @@ The tree on the left-hand side is find saved results from automated procedures (
 - <b>Data Sources:</b> This shows the directory tree hierarchy of the file systems in the images. You can navigate to a specific file or directory here. Each data source added is represented as a drive. If you add a data source multiple times, it shows up multiple times.
 - <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source. Look here for files of a specific type or property.
 - <b>Results:</b> Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
-- <b>Reports:</b> References to reports that you have generated or ingest modules created show up here
+- <b>Reports:</b> References to reports that you have generated or that ingest modules have created show up here
 
 
 \subsection ui_tree_ds Data Sources
@@ -33,7 +33,7 @@ The tree on the left-hand side is find saved results from automated procedures (
 The Data Sources section shows each data source that has been added to the case, in order added (top one is first).
 Right clicking on the various nodes in the Data Sources section of the tree will allow you to get more options for each data source and its contents. 
 
-Unallocated space are chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
+Unallocated space is chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
 \li <b>Individual blocks in a volume</b>  There is a folder named "Unalloc". This folder contains all the individual unallocated blocks as the image is storing them. You can right click and extract them the same way you can extract any other type of file in the Directory Tree.
 \li <b>Single files</b>  Right click on a volume and select "Extract Unallocated Space as Single File" to concatenate all the unallocated files in the volume into a single, continuous file. (If desired, you can right click on an image, and select "Extract Unallocated Space to Single Files" which will do the same thing, but once for each volume in the image).
 
@@ -78,25 +78,21 @@ Here are some examples that you may see:
 \li Extract: Make a local copy of the file or directory for further analysis.
 \li Search for files with the same MD5 Hash: Searches the entire file-system for any files with the same MD5 Hash as the one selected.
 
-
-\subsection table_result_viewer Table Result Viewers
-    
-Thumbnail Results Viewer
-Thumbnail Results Viewer displays the data catalog as a table of thumbnail images in adjustable sizes. This viewer only supports picture file(s) (Currently, only supports JPG, GIF, and PNG formats). Click the Thumbnail tab to select this view. Note that for a large number of images in a directory selected in the Data Explorer, or for a View selected that contains a large number of images, it might take a while to populate this view for the first time before the images are cached.
+\subsection thumbnail_result_viewer Thumbnail Result Viewers
+Thumbnail Results Viewer displays the data catalog as a table of thumbnail images in adjustable sizes. This viewer only supports picture files (Currently, only supports JPG, GIF, and PNG formats). Click the Thumbnail tab to select this view. Note that for a large number of images in a directory selected in the Data Explorer, or for a View selected that contains a large number of images, it might take a while to populate this view for the first time before the images are cached.
 
 <b>Example</b>\n
-Below is an example of "Table Results Viewer" window:
-\image html table-result-viewer-tab.PNG 
+Below is an example of "Thumbnail Results Viewer" window:
+\image html thumbnail-result-viewer-tab.PNG
 
-
-\subsection thumbnail_result_viewer Thumbnail Result Viewers
+\subsection table_result_viewer Table Result Viewers
 Table Results Viewer (Directory Listing) displays the data catalog as a table with some details (properties) of each file. The properties that it shows are: name, time (modified, changed, accessed, and created), size, flags (directory and meta), mode, user ID, group ID, metadata address, attribute address, and type (directory and meta). Click the Table Viewer tab to select this view.
 
 The Results Viewer can be also activated for saved results and it can show a high level results grouped, or a results at a file level, depending on which node on the Directory Tree is selected to populate the Table Results Viewer.
 
 <b>Example</b>\n
 Below is an example of a "Table Results Viewer" window:
-\image html thumbnail-result-viewer-tab.PNG
+\image html table-result-viewer-tab.PNG 
 
 <br>
 <br>
@@ -111,6 +107,7 @@ The Content Viewer area is part of a plug-in framework. You can install modules 
 
 \subsection result_content_viewers Result Content Viewer
 Content Viewer shows the artifacts (saved results) associated with the item selected in the Result Viewer.
+
 <b>Example</b>
 Below is an example of "Result Content Viewer" window:
 \image html result-viewer-example-1.PNG
@@ -134,9 +131,9 @@ Here's one of the example of the "Media Content Viewer":
 
 \subsection string_content_viewer String Content Viewer
     
-Strings Content Viewer scans (potentially binary) data of the file / folder and searches it for data that could be text. When appropriate data is found, the String Content Viewer shows data strings extracted from binary, decoded, and interpreted as UTF8/16 for the selected script/language.
+The String Content Viewer scans (potentially binary) data of the file / folder and searches it for data that could be text. When appropriate data is found, the String Content Viewer shows data strings extracted from binary, decoded, and interpreted as UTF8/16 for the selected script/language.
 
-Note that this is different from the Text Content Viewer, which displays the text for a file that is stored in the keyword search index. The results may be the same or they could be different, depending how the data were interpreted by the indexer.
+Note that this is different from the Text Content Viewer, which displays the text for a file that is stored in the keyword search index. The results may be the same or they could be different, depending how the data is interpreted by the indexer.
 
 <b>Example</b> \n
 Below is an example of "String Content Viewer" window:

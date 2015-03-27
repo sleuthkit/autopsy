@@ -9,11 +9,11 @@ The Hash Database Lookup Module calculates MD5 hash values for files and looks u
 Configuration
 =======
 The Hash Database Management window is where you can set and update your hash database information. Hash databases are used to identify files that are 'known'.
-\li Known good files are those that can be safely ignored. This set of files frequently includes standard OS and application files. Ignoring such uninteresting to the investigator files, can greatly reduce image analysis time.
+\li Known good files are those that can be safely ignored. This set of files frequently includes standard OS and application files. Ignoring such uninteresting-to-the-investigator files, can greatly reduce image analysis time.
 \li Known bad (also called notable) files are those that should raise awareness. This set will vary depending on the type of investigation, but common examples include contraband images and malware.
 
 \section notable_known_bad_hashsets Notable / Known Bad Hashsets
-Autopsy allows for multiple known bad hash databases to be set. Autopsy supports three formats:
+Autopsy allows for multiple known bad hash databases to be set. Autopsy supports the following formats:
 \li EnCase: An EnCase hashset file.
 \li MD5sum: Output from running the md5, md5sum, or md5deep program on a set of files.
 \li NSRL: The format of the NSRL database.

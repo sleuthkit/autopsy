@@ -5,7 +5,6 @@ What Does It Do
 
 The Archive Extractor module opens ZIP, RAR, and other archive formats and sends the files from those archive files back through the ingest pipeline for analysis.
 
-Why would you use it?
 This module expands archive files to enable Autopsy to analyze all files on the system. It enables keyword search and hash lookup to analyze files inside of archives
 
 Configuration

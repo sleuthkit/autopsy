@@ -3,7 +3,7 @@
 What Does It Do
 ========
 
-Extension Mismatch Detector module uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. Ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in Tools, Options, File Extension Mismatch.
+Extension Mismatch Detector module uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. It ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in "Tools", "Options", "File Extension Mismatch".
 
 This detects files that someone may be trying to hide.
 
@@ -28,7 +28,7 @@ In the ingest settings, the user can choose if the module should skip files with
 
 Seeing Results
 ------
-Results are shown ini the Results tree under "Extension Mismatch Detected".
+Results are shown in the Results tree under "Extension Mismatch Detected".
 
 \image html extension-mismatch-detected.PNG
 
