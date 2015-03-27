@@ -40,6 +40,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static StartupWindow instance;
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
+    CueBannerPanel welcomeWindow;
 
     public StartupWindow() {
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
@@ -62,8 +63,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
-        CueBannerPanel welcomeWindow = new CueBannerPanel();
-        CueBannerPanel.refresh();
+        welcomeWindow = new CueBannerPanel();
 
         // add the command to close the window to the button on the Volume Detail Panel
         welcomeWindow.setCloseButtonActionListener(new ActionListener() {
@@ -82,6 +82,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     
     @Override
     public void open() {
+        welcomeWindow.refresh();
         setVisible(true);
     }
 
