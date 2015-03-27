@@ -83,7 +83,7 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
 # TODO: Double check this purpose statement
 # The filename of the log to store error messages
-COMMON_LOG = "AutopsyExceptions.txt"
+COMMON_LOG = "Exceptions.txt"
 
 Day = 0
 
