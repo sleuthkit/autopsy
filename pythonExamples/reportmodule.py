@@ -64,6 +64,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
             # Write the result to the report file.
             report = open(reportPath + '\\' + self.getRelativeFilePath(), 'w')
             report.write("file count = %d" % fileCount)
+            Case.getCurrentCase().addReport(report.name, "SampleGeneralReportModule", "Sample Python Report");
             report.close()
             progressBar.increment()
             progressBar.complete()
