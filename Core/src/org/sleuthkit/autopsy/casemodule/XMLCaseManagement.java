@@ -29,7 +29,6 @@ import javax.xml.parsers.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -203,13 +202,45 @@ import org.xml.sax.SAXException;
     }
 
     /**
+     * Gets the case Type from the document handler.
+     * Defaults to local if it can't figure it out.
+     * @return caseType from the document handler
+     */
+     public CaseType getCaseType() {
+         try {
+             if (doc == null) {
+                 return CaseType.LOCAL;
+             } else {
+                 Element nameElement = (Element) getCaseElement().getElementsByTagName(CASE_TYPE).item(0);
+                 return CaseType.fromString(nameElement.getTextContent());
+             }
+         } catch (Exception ex) {
+             return CaseType.LOCAL;
+         }
+    }
+    
+    /**
      * Sets the database name internally (on local variable in this class)
      *
      * @param givenDbName the new db name
      */
-    private void setDbName(String givenDbName) {
+    private void setDatabaseName(String givenDbName) {
         dbName= givenDbName; // change this to change the xml file if needed
     }
+
+    /**
+     * Gets the database name from the document handler
+     *
+     * @return the database name
+     */
+    public String getDatabaseName() {
+        if (doc == null) {
+            return "";
+        } else {
+            Element nameElement = (Element) getCaseElement().getElementsByTagName(DATABASE_NAME).item(0);
+            return nameElement.getTextContent();
+        }
+    }    
     
     /**
      * Sets the examiner name internally (on local variable in this class)
@@ -478,7 +509,7 @@ import org.xml.sax.SAXException;
         setExaminer(examiner);
         setNumber(caseNumber);
         setCaseType(caseType);
-        setDbName(dbName);
+        setDatabaseName(dbName);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 

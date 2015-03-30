@@ -29,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
  * The wizard panel for the new case creation.
@@ -45,19 +46,34 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         this.wizPanel = wizPanel;
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
-        boolean databaseConnectionSettingsOkay = true; /// KDM this becomes a static call in the TSK code.
-        // if we cannot connect to the shared database, don't present the option
-        // but do not change the setting stored in the preferences file
-        if (true == databaseConnectionSettingsOkay) {
-            if (UserPreferences.newCaseType() == CaseType.LOCAL.ordinal()) {
-                rbLocalCase.setSelected(true);
-            } else {
-                rbSharedCase.setSelected(true);
-            }
-        } else {
+        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+        /// KDM TODO: When we have a way to validate that we can actually talk to the remote DB (settings are correct), use it.
+        /// The following will be set true or false depending upon if we can talk to it.
+        boolean remoteDatabaseConnectionSettingsOkay = true; 
+        if (info.getDbType() == CaseDbConnectionInfo.DbType.UNKNOWN) {
             rbLocalCase.setSelected(true);
             rbLocalCase.setEnabled(false);
+            rbLocalCase.setVisible(false);
             rbSharedCase.setEnabled(false);
+            rbSharedCase.setVisible(false);
+        } else {
+            // if we cannot connect to the shared database, don't present the option
+            // but do not change the setting stored in the preferences file
+            rbLocalCase.setEnabled(true);
+            rbSharedCase.setEnabled(true);
+            rbLocalCase.setVisible(true);
+            rbSharedCase.setVisible(true);
+            if (true == remoteDatabaseConnectionSettingsOkay) {
+                if (UserPreferences.newCaseType() == CaseType.LOCAL.ordinal()) {
+                    rbLocalCase.setSelected(true);
+                } else {
+                    rbSharedCase.setSelected(true);
+                }
+            } else {
+                rbLocalCase.setSelected(true);
+                rbLocalCase.setEnabled(false);
+                rbSharedCase.setEnabled(false);
+            }
         }
     }
 

@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.core;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo.DbType;
 
 /**
  * Provides convenient access to a Preferences node for user preferences with
@@ -39,6 +41,7 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_NAME = "ExternalDatabaseName"; //NON-NLS
     public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
     public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS    
     public static final String NEW_CASE_TYPE = "NewCaseType"; //NON-NLS
 
     // Prevent instantiation.
@@ -93,46 +96,29 @@ public final class UserPreferences {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
     }
 
-    public static String hostNameOrIp() {
-        return preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, "");
+    public static CaseDbConnectionInfo getDatabaseConnectionInfo() {
+        DbType dbType;
+        try {
+            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "UNKOWN"));
+        } catch (Exception ex) {
+            dbType = DbType.UNKNOWN;
+        }
+        return new CaseDbConnectionInfo(
+                preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
+                preferences.get(EXTERNAL_DATABASE_PORTNUMBER, ""),
+                preferences.get(EXTERNAL_DATABASE_USER, ""),
+                preferences.get(EXTERNAL_DATABASE_PASSWORD, ""),
+                dbType);
     }
 
-    public static void setHostNameOrIp(String value) {
-        preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, value);
+    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) {
+        preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
+        preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
+        preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
+        preferences.put(EXTERNAL_DATABASE_PASSWORD, connectionInfo.getPassword());
+        preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
 
-    public static String portNumber() {
-        return preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "");
-    }
-
-    public static void setPortNumber(String value) {
-        preferences.put(EXTERNAL_DATABASE_PORTNUMBER, value);
-    }
-
-    public static String databaseName() {
-        return preferences.get(EXTERNAL_DATABASE_NAME, "");
-    }
-
-    public static void setDatabaseName(String value) {
-        preferences.put(EXTERNAL_DATABASE_NAME, value);
-    }
-
-    public static String userName() {
-        return preferences.get(EXTERNAL_DATABASE_USER, "");
-    }
-
-    public static void setUserName(String value) {
-        preferences.put(EXTERNAL_DATABASE_USER, value);
-    }
-
-    public static String password() {
-        return preferences.get(EXTERNAL_DATABASE_PASSWORD, "");
-    }
-
-    public static void setPassword(String value) {
-        preferences.put(EXTERNAL_DATABASE_PASSWORD, value);
-    }
-    
     public static int newCaseType() {
         return preferences.getInt(NEW_CASE_TYPE, 0);
     }

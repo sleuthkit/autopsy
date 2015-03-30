@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Color;
 import javax.swing.DefaultComboBoxModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -68,28 +67,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             recommendedFileIngestThreadCount = 1;
         }
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(fileIngestThreadCountChoices));
-        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", recommendedFileIngestThreadCount));
-
-        TextPrompt tpHostnameOrIp = new TextPrompt("Hostname or IP Address", tbHostnameOrIp);
-        TextPrompt tpPortNumber = new TextPrompt("Port Number", tbPortNumber);
-        TextPrompt tpDatabaseName = new TextPrompt("Database Name", tbDatabaseName);
-        TextPrompt tpUsername = new TextPrompt("User Name", tbUsername);
-        TextPrompt tpPassword = new TextPrompt("Password", tbPassword);
-
-        tpHostnameOrIp.setForeground(Color.LIGHT_GRAY);
-        tpPortNumber.setForeground(Color.LIGHT_GRAY);
-        tpDatabaseName.setForeground(Color.LIGHT_GRAY);
-        tpUsername.setForeground(Color.LIGHT_GRAY);
-        tpPassword.setForeground(Color.LIGHT_GRAY);
-
-        float alpha=0.9f; // Mostly opaque
-        tpHostnameOrIp.changeAlpha(alpha);
-        tpPortNumber.changeAlpha(alpha);
-        tpDatabaseName.changeAlpha(alpha);
-        tpUsername.changeAlpha(alpha);
-        tpPassword.changeAlpha(alpha);
-        
-// TODO listen to changes in form fields and call controller.changed()
+        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", recommendedFileIngestThreadCount));                
+        // TODO listen to changes in form fields and call controller.changed()
     }
 
     void load() {
@@ -101,12 +80,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
-        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
-        tbHostnameOrIp.setText(UserPreferences.hostNameOrIp());
-        tbPortNumber.setText(UserPreferences.portNumber());
-        tbDatabaseName.setText(UserPreferences.databaseName());
-        tbUsername.setText(UserPreferences.userName());
-        tbPassword.setText(UserPreferences.password());
+        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());        
     }
 
     void store() {
@@ -115,11 +89,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
         UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
-        UserPreferences.setHostNameOrIp(tbHostnameOrIp.getText());
-        UserPreferences.setPortNumber(tbPortNumber.getText());
-        UserPreferences.setDatabaseName(tbDatabaseName.getText());
-        UserPreferences.setUserName(tbUsername.getText());
-        UserPreferences.setPassword(new String(tbPassword.getPassword()));
     }
 
     boolean valid() {
@@ -149,13 +118,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         jLabelNumThreads = new javax.swing.JLabel();
         numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<Integer>();
         restartRequiredLabel = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        tbHostnameOrIp = new javax.swing.JTextField();
-        tbPortNumber = new javax.swing.JTextField();
-        tbDatabaseName = new javax.swing.JTextField();
-        tbUsername = new javax.swing.JTextField();
-        tbPassword = new javax.swing.JPasswordField();
-        jLabel1 = new javax.swing.JLabel();
 
         buttonGroup1.add(useBestViewerRB);
         useBestViewerRB.setSelected(true);
@@ -188,54 +150,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         restartRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(restartRequiredLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text")); // NOI18N
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        tbHostnameOrIp.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbHostnameOrIp.text")); // NOI18N
-        tbHostnameOrIp.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbHostnameOrIp.toolTipText")); // NOI18N
-
-        tbPortNumber.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbPortNumber.text")); // NOI18N
-        tbPortNumber.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbPortNumber.toolTipText")); // NOI18N
-
-        tbDatabaseName.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbDatabaseName.text")); // NOI18N
-        tbDatabaseName.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbDatabaseName.toolTipText")); // NOI18N
-
-        tbUsername.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbUsername.text")); // NOI18N
-        tbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbUsername.toolTipText")); // NOI18N
-
-        tbPassword.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tbPassword.text")); // NOI18N
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tbHostnameOrIp)
-                    .addComponent(tbPortNumber)
-                    .addComponent(tbDatabaseName)
-                    .addComponent(tbUsername)
-                    .addComponent(tbPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(tbHostnameOrIp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbPortNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbDatabaseName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabel1.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -243,6 +157,18 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(keepCurrentViewerRB)
+                            .addComponent(useBestViewerRB)
+                            .addComponent(dataSourcesHideKnownCB)
+                            .addComponent(viewsHideKnownCB)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(restartRequiredLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabelHideKnownFiles)
@@ -253,25 +179,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                                     .addComponent(useLocalTimeRB)
                                     .addComponent(useGMTTimeRB)))
                             .addComponent(jLabelSelectFile)
-                            .addComponent(jLabelNumThreads)
-                            .addComponent(jLabel1))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(restartRequiredLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 529, Short.MAX_VALUE)
-                                .addContainerGap())
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(keepCurrentViewerRB)
-                                    .addComponent(useBestViewerRB)
-                                    .addComponent(dataSourcesHideKnownCB)
-                                    .addComponent(viewsHideKnownCB)
-                                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE))))))
+                            .addComponent(jLabelNumThreads))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -299,11 +208,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(restartRequiredLabel))
-                .addGap(18, 18, 18)
-                .addComponent(jLabel1)
-                .addGap(4, 4, 4)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addContainerGap(155, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -312,20 +217,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.ButtonGroup buttonGroupProcTimeOut;
     private javax.swing.JCheckBox dataSourcesHideKnownCB;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabelHideKnownFiles;
     private javax.swing.JLabel jLabelNumThreads;
     private javax.swing.JLabel jLabelSelectFile;
     private javax.swing.JLabel jLabelTimeDisplay;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JRadioButton keepCurrentViewerRB;
     private javax.swing.JComboBox<Integer> numberOfFileIngestThreadsComboBox;
     private javax.swing.JLabel restartRequiredLabel;
-    private javax.swing.JTextField tbDatabaseName;
-    private javax.swing.JTextField tbHostnameOrIp;
-    private javax.swing.JPasswordField tbPassword;
-    private javax.swing.JTextField tbPortNumber;
-    private javax.swing.JTextField tbUsername;
     private javax.swing.JRadioButton useBestViewerRB;
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;
