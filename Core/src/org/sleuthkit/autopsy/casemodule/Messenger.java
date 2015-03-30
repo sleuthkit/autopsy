@@ -54,7 +54,7 @@ class Messenger implements PropertyChangeListener, MessageListener {
             Topic topic = session.createTopic(caseName);
             producer = session.createProducer(topic);
 
-            MessageConsumer consumer = session.createConsumer(topic);
+            MessageConsumer consumer = session.createConsumer(topic, "event = '" + Case.Events.DATA_SOURCE_ADDED.toString() + "'", false);
             consumer.setMessageListener(this);
 
             Case.addPropertyChangeListener(this);
@@ -63,7 +63,7 @@ class Messenger implements PropertyChangeListener, MessageListener {
         }
     }
 
-    void shutDown() {
+    void stop() {
         Case.removePropertyChangeListener(this);
         try {
             session.close();
@@ -77,14 +77,15 @@ class Messenger implements PropertyChangeListener, MessageListener {
     public void propertyChange(PropertyChangeEvent event) {
         switch (Case.Events.valueOf(event.getPropertyName())) {
             case DATA_SOURCE_ADDED:
-                send(Case.Events.DATA_SOURCE_ADDED.toString());
+                send();
                 break;
         }
     }
 
-    private void send(String text) {
+    private void send() {
         try {
-            TextMessage message = session.createTextMessage(text);
+            TextMessage message = session.createTextMessage();
+            message.setStringProperty("event", Case.Events.DATA_SOURCE_ADDED.toString());
             producer.send(message);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
@@ -92,8 +93,13 @@ class Messenger implements PropertyChangeListener, MessageListener {
     }
 
     @Override
-    public void onMessage(Message msg) {
-        Case.getCurrentCase().notifyNewDataSource(null);
+    public void onMessage(Message message) {
+        try {
+            Case.getCurrentCase().notifyNewDataSource(null);
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Publishing error", ex);
+        }
+
     }
 
 }

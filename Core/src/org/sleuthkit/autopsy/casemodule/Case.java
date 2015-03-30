@@ -497,7 +497,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
 
         try {
-            messenger.shutDown();
+            messenger.stop();
             services.close();
             this.xmlcm.close(); // close the xmlcm
             this.db.close();
