@@ -54,7 +54,7 @@ class Messenger implements PropertyChangeListener, MessageListener {
             Topic topic = session.createTopic(caseName);
             producer = session.createProducer(topic);
 
-            MessageConsumer consumer = session.createConsumer(topic, "event = '" + Case.Events.DATA_SOURCE_ADDED.toString() + "'", false);
+            MessageConsumer consumer = session.createConsumer(topic, "event = '" + Case.Events.DATA_SOURCE_ADDED.toString() + "'", true);
             consumer.setMessageListener(this);
 
             Case.addPropertyChangeListener(this);
