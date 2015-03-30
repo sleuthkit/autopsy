@@ -28,10 +28,8 @@ import javax.jms.Message;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.openide.modules.OnStart;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-@OnStart
 public class Subscriber implements Runnable, ExceptionListener {
 
     private static final Logger logger = Logger.getLogger(Subscriber.class.getName());
