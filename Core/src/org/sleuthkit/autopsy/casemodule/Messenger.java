@@ -86,8 +86,6 @@ class Messenger implements PropertyChangeListener, MessageListener {
         try {
             TextMessage message = session.createTextMessage(text);
             producer.send(message);
-            session.close();
-            connection.close();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
         }
