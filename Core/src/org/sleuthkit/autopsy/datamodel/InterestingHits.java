@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 
@@ -94,35 +95,26 @@ public class InterestingHits implements AutopsyVisitableItem {
                 return;   
             }
             
-            ResultSet rs = null;
-            try {
-                int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-                int artId = artType.getTypeID();
-                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                        + "attribute_type_id=" + setNameId //NON-NLS
-                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-                rs = skCase.runQuery(query);
-                while (rs.next()) {
-                    String value = rs.getString("value_text"); //NON-NLS
-                    long artifactId = rs.getLong("artifact_id"); //NON-NLS
+            int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int artId = artType.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                while (resultSet.next()) {
+                    String value = resultSet.getString("value_text"); //NON-NLS
+                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                     if (!interestingItemsMap.containsKey(value)) {
                         interestingItemsMap.put(value, new HashSet<>());
                     }
                     interestingItemsMap.get(value).add(artifactId);
                 }
-            } catch (SQLException ex) {
+            } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-            }
-            finally {
-                if (rs != null) {
-                    try {
-                        skCase.closeRunQuery(rs);
-                    } catch (SQLException ex) {
-                       logger.log(Level.WARNING, "Error closing result set after getting artifacts", ex); //NON-NLS
-                    }
-                }
             }
         }
     }

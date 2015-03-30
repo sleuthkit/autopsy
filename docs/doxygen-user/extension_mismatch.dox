@@ -1,0 +1,35 @@
+/*! \page extension_mismatch_detector_page Extension Mismatch Detector Module
+
+What Does It Do
+========
+
+Extension Mismatch Detector module uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. It ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in "Tools", "Options", "File Extension Mismatch".
+
+This detects files that someone may be trying to hide.
+
+Configuration
+=======
+One can add and remove MIME types in the "Tools", "Options", "File Extension Mismatch" dialog box, as well as add and remove extensions to particular MIME types.
+<br>
+\image html extension-mismatch-detected-configuration.PNG
+<br>
+
+Using the Module
+======
+Note that you can get a lot of false positives with this module. You can add your own rules to Autopsy to reduce unwanted hits.
+
+Ingest Settings
+------
+
+In the ingest settings, the user can choose if the module should skip files without extensions and skip text files. Both of these options are enabled by default.
+
+\image html extension-mismatch-detected-ingest-settings.PNG
+
+
+Seeing Results
+------
+Results are shown in the Results tree under "Extension Mismatch Detected".
+
+\image html extension-mismatch-detected.PNG
+
+*/
