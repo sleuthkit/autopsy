@@ -85,18 +85,18 @@ class TskDbDiff(object):
         """Set up the necessary files based on the arguments given at construction"""
         if self.output_dir is None:
             # No stored files
-            self._bb_dump = TskDbDiff._get_tmp_file("SortedData", ".txt")
-            self._bb_dump_diff = TskDbDiff._get_tmp_file("SortedData-Diff", ".txt")
+            self._bb_dump = TskDbDiff._get_tmp_file("BlackboardDump.txt", ".txt")
+            self._bb_dump_diff = TskDbDiff._get_tmp_file("BlackboardDump-Diff", ".txt")
             self._dump = TskDbDiff._get_tmp_file("DBDump", ".txt")
             self._dump_diff = TskDbDiff._get_tmp_file("DBDump-Diff", ".txt")
         else:
-            self._bb_dump = os.path.join(self.output_dir, "SortedData.txt")
-            self._bb_dump_diff = os.path.join(self.output_dir, "SortedData-Diff.txt")
+            self._bb_dump = os.path.join(self.output_dir, "BlackboardDump.txt")
+            self._bb_dump_diff = os.path.join(self.output_dir, "BlackboardDumpDiff.txt")
             self._dump = os.path.join(self.output_dir, "DBDump.txt")
             self._dump_diff = os.path.join(self.output_dir, "DBDump-Diff.txt")
 
         if self.gold_bb_dump is None:
-            self.gold_bb_dump = TskDbDiff._get_tmp_file("GoldSortedData", ".txt")
+            self.gold_bb_dump = TskDbDiff._get_tmp_file("GoldBlackboardDump", ".txt")
             self.gold_dump = TskDbDiff._get_tmp_file("GoldDBDump", ".txt")
 
 
