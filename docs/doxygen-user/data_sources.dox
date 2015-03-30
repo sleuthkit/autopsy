@@ -1,7 +1,7 @@
 /*! \page ds_page Data Sources
 
 
-Data source is the term that we use in Autopsy to refer to disk images, logical files, etc.  This is the data that you want to add in to analyze.  You must have a case open before you can add a data source. 
+A data source the thing you want to analyze. It can be a disk image, some logical files, a local drive, etc. You must open a case prior to adding a data source to Autopsy. 
 
 Autopsy supports three types of data sources:
 - Disk Image: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card.  (see \ref ds_img)
@@ -15,13 +15,9 @@ Autopsy supports three types of data sources:
 You can add a data source in several ways:
 - After you create a case, it automatically prompts you to add a data source.
 - There is a toolbar item to add a Data Source when a case is open.
-- The "File" -> "Add Data Source" menu item when a case is open.
+- The "File", "Add Data Source" menu item when a case is open.
 
-The data source must remain accessible for the duration of the analysis because the case contains only a reference to the data source.  It does not copy the data source into the case folder. 
-
-
-
-\section ds_process Data Source Adding Process
+The data source must remain accessible for the duration of the analysis because the case contains a reference to the data source.  It does <b>not</b> copy the data source into the case folder. 
 
 Regardless of the type of data source, there are some common steps in the process:
 
@@ -41,11 +37,9 @@ Regardless of the type of data source, there are some common steps in the proces
 
 5) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
 
-
+You cannot remove a data source from a case.
 
 \section ds_img Adding a Disk Image
-
-Supported Image Formats
 
 Autopsy supports disk images in the following formats: 
 - Raw Single (For example: *.img, *.dd, *.raw, etc)
@@ -55,7 +49,7 @@ Autopsy supports disk images in the following formats:
 To add a disk image:
 
 -# Choose "Image File" from the pull down.
--# Browse to the first file in the disk image. You need to specify only the first file and it will find the rest.  
+-# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
 -# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
 -# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
 
@@ -80,7 +74,7 @@ You can add files or folders that are on your local computer (or on a shared dri
 
 Some things to note when doing this:
 - Autopsy ignores the time stamps on files that it adds this way because they could be the timestamps when they were copied onto your examination device.
-- If you have a USB-attached device that you are analyzing and you choose to add the device's contents using this method, then note that it will not look at unallocated space or deleted files.  Autopsy will only be able to see the allocated files.  You should add the device as a "Logical Drive" to get the unallocated space.
+- If you have a USB-attached device that you are analyzing and you choose to add the device's contents using this method, then note that it will not look at unallocated space or deleted files.  Autopsy will only be able to see the allocated files.  You should add the device as a "Logical Drive" to analyze the unallocated space.
 
 To add logical files:
 -# Choose "Logical Files" from the pull down.
@@ -88,9 +82,5 @@ To add logical files:
 -# Continue to press "Add" until all files and folders have been selected.
 
 All of the files that you added in the panel will be grouped together into a single data source, called "LogicalFileSet" in the main UI. 
-
-\section ds_rem Removing a Data Source
-
-You cannot currently remove an data source from a case.
 
 */

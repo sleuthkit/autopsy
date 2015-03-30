@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -163,24 +164,24 @@ public class KeywordHits implements AutopsyVisitableItem {
                 return;   
             }
             
-            ResultSet rs = null;
-            try {
-                int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-                int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
-                int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
-                int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
-                String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.artifact_id," //NON-NLS
-                        + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                        + "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND " //NON-NLS
-                        + "blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
-                        + ") AND (attribute_type_id=" + setId + " OR " //NON-NLS
-                        + "attribute_type_id=" + wordId + " OR " //NON-NLS
-                        + "attribute_type_id=" + regexId + ")"; //NON-NLS
-                rs = skCase.runQuery(query);
-                while (rs.next()) {
-                    String value = rs.getString("value_text"); //NON-NLS
-                    long artifactId = rs.getLong("artifact_id"); //NON-NLS
-                    long typeId = rs.getLong("attribute_type_id"); //NON-NLS
+            int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
+            int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
+            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.artifact_id," //NON-NLS
+                    + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND " //NON-NLS
+                    + "blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
+                    + ") AND (attribute_type_id=" + setId + " OR " //NON-NLS
+                    + "attribute_type_id=" + wordId + " OR " //NON-NLS
+                    + "attribute_type_id=" + regexId + ")"; //NON-NLS
+
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                while (resultSet.next()) {
+                    String value = resultSet.getString("value_text"); //NON-NLS
+                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                    long typeId = resultSet.getLong("attribute_type_id"); //NON-NLS
                     if (!artifactIds.containsKey(artifactId)) {
                         artifactIds.put(artifactId, new LinkedHashMap<Long, String>());
                     }
@@ -188,17 +189,10 @@ public class KeywordHits implements AutopsyVisitableItem {
                         artifactIds.get(artifactId).put(typeId, value);
                     }
                 }
-            } catch (SQLException ex) {
+            } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-            } finally {
-                if (rs != null) {
-                    try {
-                        skCase.closeRunQuery(rs);
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Error closing result set after getting keyword hits", ex); //NON-NLS
-                    }
-                }
             }
+            
             populateMaps(artifactIds);
         }
     }

@@ -74,7 +74,6 @@ class CacheLocationAnalyzer {
     }
 
     private static void findGeoLocationsInFile(File file, AbstractFile f) {
-
         byte[] bytes; // will temporarily hold bytes to be converted into the correct data types
 
         try {
@@ -95,7 +94,9 @@ class CacheLocationAnalyzer {
                 bytes = new byte[1];
                 inputStream.read(bytes);
                 while (new BigInteger(bytes).intValue() != 0) { //pass through non important values until the start of accuracy(around 7-10 bytes)
-                    inputStream.read(bytes);
+                    if (0 > inputStream.read(bytes)) {
+                        break; /// we've passed the end of the file, so stop
+                    }
                 }
                 bytes = new byte[3];
                 inputStream.read(bytes);
