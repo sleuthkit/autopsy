@@ -230,6 +230,10 @@
                 <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/metadata-extractor-2.6.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/metadata-extractor-2.6.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/noggit-0.5.jar</binary-origin>
             </class-path-extension>
@@ -252,6 +256,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tagsoup-1.2.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-compress-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-compress-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4-javadoc.jar</runtime-relative-path>
