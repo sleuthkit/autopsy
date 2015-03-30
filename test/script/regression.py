@@ -345,7 +345,7 @@ class TestRunner(object):
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             shutil.copy(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
+            error_pth = make_path(tmpdir, test_data.image_name+"BlackboardDumpErrors.txt")
             shutil.copy(test_data.sorted_log, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
@@ -451,7 +451,7 @@ class TestData(object):
         antlog_dir: a pathto_File, the antlog.txt file
         test_dbdump: a pathto_File, the database dump, IMAGENAMEDump.txt
         common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
-        sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
+        sorted_log: a pathto_File, the IMAGENAMEBlackboardDumpErrors.txt file
         reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
         gold_data_dir: a pathto_Dir, the gold standard directory
         gold_archive: a pathto_File, the gold standard archive
@@ -500,7 +500,7 @@ class TestData(object):
         self.test_dbdump = make_path(self.output_path, self.image_name +
         "DBDump.txt")
         self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
-        self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
+        self.sorted_log = make_local_path(self.output_path, self.image_name + "BlackboardDumpErrors.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
         self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
@@ -579,7 +579,7 @@ class TestData(object):
         return self._get_path_to_file(file_type, "BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
-        """Get the path to the SortedErrors file that correspodns to the given
+        """Get the path to the BlackboardDumpErrors file that correspodns to the given
         DBType.
 
         Args:
