@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -892,19 +893,22 @@ import org.sleuthkit.datamodel.TskData;
      */
     @SuppressWarnings("deprecation")
     private void writeKeywordHits(List<TableReportModule> tableModules, String comment, HashSet<String> tagNamesFilter) {
-        ResultSet listsRs = null;
-        try {
-            // Query for keyword lists-only so that we can tell modules what lists
-            // will exist for their index.
-            // @@@ There is a bug in here.  We should use the tags in the below code
-            // so that we only report the lists that we will later provide with real
-            // hits.  If no keyord hits are tagged, then we make the page for nothing.
-            listsRs = skCase.runQuery("SELECT att.value_text AS list " + //NON-NLS
-                                                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
-                                                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
-                                                    "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
-                                                    "AND att.artifact_id = art.artifact_id " +  //NON-NLS
-                                                "GROUP BY list"); //NON-NLS
+        
+        // Query for keyword lists-only so that we can tell modules what lists
+        // will exist for their index.
+        // @@@ There is a bug in here.  We should use the tags in the below code
+        // so that we only report the lists that we will later provide with real
+        // hits.  If no keyord hits are tagged, then we make the page for nothing.
+        String keywordListQuery = 
+                "SELECT att.value_text AS list " + //NON-NLS
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
+                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
+                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
+                "AND att.artifact_id = art.artifact_id " +  //NON-NLS
+                "GROUP BY list"; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(keywordListQuery)) {
+            ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
                 String list = listsRs.getString("list"); //NON-NLS
@@ -923,36 +927,32 @@ import org.sleuthkit.datamodel.TskData;
                                             ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
             }
         }
-        catch (SQLException ex) {
+        catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
-            logger.log(Level.SEVERE, "Failed to query keyword lists.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to query keyword lists: ", ex); //NON-NLS
             return;
-        } finally {
-            if (listsRs != null) {
-                try {
-                    skCase.closeRunQuery(listsRs);
-                } catch (SQLException ex) {
-                }
-            }
         }
         
-        ResultSet rs = null;
-        try {
-            // Query for keywords, grouped by list
-            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
-                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
-                                           "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
-                                                 "AND (att2.artifact_id = art.artifact_id) " +  //NON-NLS
-                                                 "AND (att3.artifact_id = art.artifact_id) " +  //NON-NLS
-                                                 "AND (f.obj_id = art.obj_id) " + //NON-NLS
-                                                 "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " + //NON-NLS
-                                                 "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
-                                                 "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
-                                                 "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
-                                           "ORDER BY list, keyword, parent_path, name"); //NON-NLS
+        // Query for keywords, grouped by list
+        String keywordsQuery = 
+                "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
+                "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
+                "AND (att2.artifact_id = art.artifact_id) " +  //NON-NLS
+                "AND (att3.artifact_id = art.artifact_id) " +  //NON-NLS
+                "AND (f.obj_id = art.obj_id) " + //NON-NLS
+                "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " + //NON-NLS
+                "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
+                "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
+                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
+                "ORDER BY list, keyword, parent_path, name"; //NON-NLS
+        
+        try (CaseDbQuery dbQuery = skCase.executeQuery(keywordsQuery)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            
             String currentKeyword = "";
             String currentList = "";
-            while (rs.next()) {
+            while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
                 if (tableModules.isEmpty()) {
                     break;
@@ -966,16 +966,16 @@ import org.sleuthkit.datamodel.TskData;
                 }
  
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id")); //NON-NLS
+                HashSet<String> uniqueTagNames = getUniqueTagNames(resultSet.getLong("artifact_id")); //NON-NLS
                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                         
-                Long objId = rs.getLong("obj_id"); //NON-NLS
-                String keyword = rs.getString("keyword"); //NON-NLS
-                String preview = rs.getString("preview"); //NON-NLS
-                String list = rs.getString("list"); //NON-NLS
+                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                String keyword = resultSet.getString("keyword"); //NON-NLS
+                String preview = resultSet.getString("preview"); //NON-NLS
+                String list = resultSet.getString("list"); //NON-NLS
                 String uniquePath = "";
 
                  try {
@@ -1029,16 +1029,9 @@ import org.sleuthkit.datamodel.TskData;
                 tableProgress.get(module).increment();
                 module.endDataType();
             }
-        } catch (SQLException ex) {
+        } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
-            logger.log(Level.SEVERE, "Failed to query keywords.", ex); //NON-NLS
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                }
-            }
+            logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
         }
     }
     
@@ -1048,15 +1041,17 @@ import org.sleuthkit.datamodel.TskData;
      */
     @SuppressWarnings("deprecation")
     private void writeHashsetHits(List<TableReportModule> tableModules,  String comment, HashSet<String> tagNamesFilter) {
-        ResultSet listsRs = null;
-        try {
+        String hashsetsQuery =
+                "SELECT att.value_text AS list " + //NON-NLS
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
+                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
+                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " + //NON-NLS
+                "AND att.artifact_id = art.artifact_id " +  //NON-NLS
+                "GROUP BY list"; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetsQuery)) {
             // Query for hashsets
-            listsRs = skCase.runQuery("SELECT att.value_text AS list " + //NON-NLS
-                                                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
-                                                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
-                                                    "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " + //NON-NLS
-                                                    "AND att.artifact_id = art.artifact_id " +  //NON-NLS
-                                                "GROUP BY list"); //NON-NLS
+            ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
                 lists.add(listsRs.getString("list")); //NON-NLS
@@ -1069,31 +1064,26 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
                                             ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
             }
-        } catch (SQLException ex) {     
+        } catch (TskCoreException | SQLException ex) {     
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetLists"));
-            logger.log(Level.SEVERE, "Failed to query hashset lists.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to query hashset lists: ", ex); //NON-NLS
             return;
-        } finally {
-            if (listsRs != null) {
-                try {
-                    skCase.closeRunQuery(listsRs);
-                } catch (SQLException ex) {
-                }
-            }
         }
         
-        ResultSet rs = null;
-        try {
+        String hashsetHitsQuery =
+                "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
+                "WHERE (att.artifact_id = art.artifact_id) " + //NON-NLS
+                "AND (f.obj_id = art.obj_id) " + //NON-NLS
+                "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
+                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") " + //NON-NLS
+                "ORDER BY setname, parent_path, name, size"; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetHitsQuery)) {
             // Query for hashset hits
-            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
-                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
-                                           "WHERE (att.artifact_id = art.artifact_id) " + //NON-NLS
-                                                 "AND (f.obj_id = art.obj_id) " + //NON-NLS
-                                                 "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
-                                                 "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") " + //NON-NLS
-                                           "ORDER BY setname, parent_path, name, size"); //NON-NLS
+            ResultSet resultSet = dbQuery.getResultSet();
             String currentSet = "";
-            while (rs.next()) {
+            while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
                 if (tableModules.isEmpty()) {
                     break;
@@ -1107,15 +1097,15 @@ import org.sleuthkit.datamodel.TskData;
                 }
                 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = getUniqueTagNames(rs.getLong("artifact_id")); //NON-NLS
+                HashSet<String> uniqueTagNames = getUniqueTagNames(resultSet.getLong("artifact_id")); //NON-NLS
                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                                         
-                Long objId = rs.getLong("obj_id"); //NON-NLS
-                String set = rs.getString("setname"); //NON-NLS
-                String size = rs.getString("size"); //NON-NLS
+                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                String set = resultSet.getString("setname"); //NON-NLS
+                String size = resultSet.getString("size"); //NON-NLS
                 String uniquePath = "";
                 
                 try {
@@ -1156,16 +1146,9 @@ import org.sleuthkit.datamodel.TskData;
                 tableProgress.get(module).increment();
                 module.endDataType();
             }
-        } catch (SQLException ex) {
+        } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetHits"));
-            logger.log(Level.SEVERE, "Failed to query hashsets hits.", ex); //NON-NLS
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                }
-            }
+            logger.log(Level.SEVERE, "Failed to query hashsets hits: ", ex); //NON-NLS
         }
     }
         
@@ -1878,14 +1861,22 @@ import org.sleuthkit.datamodel.TskData;
      * @throws SQLException 
      */
      @SuppressWarnings("deprecation")
-    private HashSet<String> getUniqueTagNames(long artifactId) throws SQLException {
+    private HashSet<String> getUniqueTagNames(long artifactId) throws TskCoreException {
         HashSet<String> uniqueTagNames = new HashSet<>();
-        ResultSet tagNameRows = skCase.runQuery("SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
-            "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId); //NON-NLS
-        while (tagNameRows.next()) {
-            uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
+        
+        String query = "SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
+            "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId; //NON-NLS
+        
+        try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            ResultSet tagNameRows = dbQuery.getResultSet();
+            while (tagNameRows.next()) {
+                uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
+            }            
         }
-        skCase.closeRunQuery(tagNameRows);
+        catch (TskCoreException | SQLException ex) {
+            throw new TskCoreException("Error getting tag names for artifact: ", ex);
+        }
+
         return uniqueTagNames;
     }    
     

@@ -44,6 +44,8 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -95,18 +97,19 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 return;   
             }
             
-            try {
-                int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
-                int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                        + "attribute_type_id=" + pathAttrId //NON-NLS
-                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-                ResultSet rs = skCase.runQuery(query);
-                while (rs.next()) {
-                    final String path = rs.getString("value_text"); //NON-NLS
-                    final long artifactId = rs.getLong("artifact_id"); //NON-NLS
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
+            int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + pathAttrId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                while (resultSet.next()) {
+                    final String path = resultSet.getString("value_text"); //NON-NLS
+                    final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                     final Map<String, String> parsedPath = parsePath(path);
                     final String account = parsedPath.get(MAIL_ACCOUNT);
                     final String folder = parsedPath.get(MAIL_FOLDER);
@@ -123,10 +126,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     }
                     messages.add(artifactId);
                 }
-                skCase.closeRunQuery(rs);
-
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Cannot initialize email extraction", ex); //NON-NLS
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
         }
     
