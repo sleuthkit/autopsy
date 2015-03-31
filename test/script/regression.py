@@ -333,7 +333,7 @@ class TestRunner(object):
         tmpdir = make_path(gold_dir, test_data.image_name)
         dbinpth = test_data.get_db_path(DBType.OUTPUT)
         dboutpth = make_path(tmpdir, DB_FILENAME)
-        dataoutpth = make_path(tmpdir, test_data.image_name + "SortedData.txt")
+        dataoutpth = make_path(tmpdir, test_data.image_name + "BlackboardDump.txt")
         dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
         dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
         if not os.path.exists(test_config.img_gold):
@@ -571,7 +571,7 @@ class TestData(object):
             return make_path(html_path, os.listdir(html_path)[0])
 
     def get_sorted_data_path(self, file_type):
-        """Get the path to the SortedData file that corresponds to the given DBType.
+        """Get the path to the BlackboardDump file that corresponds to the given DBType.
 
         Args:
             file_type: the DBType of the path to be generated
@@ -579,13 +579,13 @@ class TestData(object):
         return self._get_path_to_file(file_type, "BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
-        """Get the path to the SortedErrors file that correspodns to the given
+        """Get the path to the SortedErrors file that corresponds to the given
         DBType.
 
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "BlackboardDumpErrors.txt")
+        return self._get_path_to_file(file_type, "SortedErrors.txt")
 
     def get_db_dump_path(self, file_type):
         """Get the path to the DBDump file that corresponds to the given DBType.
