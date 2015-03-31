@@ -345,8 +345,8 @@ class TestRunner(object):
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             shutil.copy(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
-            shutil.copy(test_data.sorted_log, error_pth)
+            error_pth = make_path(tmpdir, test_data.image_name+"Exceptions.txt")
+            shutil.copy(test_data.common_log_path, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
             print(str(e))
@@ -451,7 +451,6 @@ class TestData(object):
         antlog_dir: a pathto_File, the antlog.txt file
         test_dbdump: a pathto_File, the database dump, IMAGENAMEDump.txt
         common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
-        sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
         reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
         gold_data_dir: a pathto_Dir, the gold standard directory
         gold_archive: a pathto_File, the gold standard archive
@@ -500,7 +499,6 @@ class TestData(object):
         self.test_dbdump = make_path(self.output_path, self.image_name +
         "DBDump.txt")
         self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
-        self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
         self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
@@ -579,13 +577,13 @@ class TestData(object):
         return self._get_path_to_file(file_type, "BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
-        """Get the path to the SortedErrors file that corresponds to the given
+        """Get the path to the Exceptions (SortedErrors) file that corresponds to the given
         DBType.
 
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "SortedErrors.txt")
+        return self._get_path_to_file(file_type, "Exceptions.txt")
 
     def get_db_dump_path(self, file_type):
         """Get the path to the DBDump file that corresponds to the given DBType.
@@ -1261,9 +1259,6 @@ class Logs(object):
             logs_path = test_data.logs_dir
             common_log = codecs.open(test_data.common_log_path, "w", "utf_8")
             warning_log = codecs.open(test_data.warning_log, "w", "utf_8")
-            common_log.write("--------------------------------------------------\n")
-            common_log.write(test_data.image_name + "\n")
-            common_log.write("--------------------------------------------------\n")
             rep_path = make_local_path(test_data.main_config.output_dir)
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
@@ -1281,8 +1276,8 @@ class Logs(object):
                 log.close()
             common_log.write("\n")
             common_log.close()
-            print(test_data.sorted_log)
-            srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.sorted_log]
+            print(test_data.common_log_path)
+            srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.common_log_path]
             subprocess.call(srtcmdlst)
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to generate the common log.")
