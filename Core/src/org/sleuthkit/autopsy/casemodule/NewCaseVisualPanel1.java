@@ -47,9 +47,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        /// KDM TODO: When we have a way to validate that we can actually talk to the remote DB (settings are correct), use it.
-        /// The following will be set true or false depending upon if we can talk to it.
-        boolean remoteDatabaseConnectionSettingsOkay = true; 
         if (info.getDbType() == CaseDbConnectionInfo.DbType.UNKNOWN) {
             rbLocalCase.setSelected(true);
             rbLocalCase.setEnabled(false);
@@ -63,7 +60,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             rbSharedCase.setEnabled(true);
             rbLocalCase.setVisible(true);
             rbSharedCase.setVisible(true);
-            if (true == remoteDatabaseConnectionSettingsOkay) {
+            if (true == Case.externalDatabaseSettingsValid()) {
                 if (UserPreferences.newCaseType() == CaseType.LOCAL.ordinal()) {
                     rbLocalCase.setSelected(true);
                 } else {
@@ -123,7 +120,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      */
     public CaseType getCaseType() {
         CaseType value = CaseType.LOCAL;
-        /// Save the selected item out to the preferences file
         if (rbLocalCase.isSelected()) {
             value = CaseType.LOCAL;
         } else if (rbSharedCase.isSelected()) {
