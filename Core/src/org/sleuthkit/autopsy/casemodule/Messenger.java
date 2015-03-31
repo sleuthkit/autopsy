@@ -90,7 +90,7 @@ class Messenger implements PropertyChangeListener, MessageListener {
         try {
             ObjectMessage message = session.createObjectMessage();
             message.setStringProperty("event", Case.Events.DATA_SOURCE_ADDED.toString());
-            message.setObject(event);
+            message.setObject(Case.Events.DATA_SOURCE_ADDED.toString());
             producer.send(message);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
@@ -101,9 +101,9 @@ class Messenger implements PropertyChangeListener, MessageListener {
     public void onMessage(Message message) {
         try {
             if (message instanceof ObjectMessage) {
-                ObjectMessage objMessage = (ObjectMessage)message;
-                PropertyChangeEvent event = (PropertyChangeEvent)objMessage.getObject();
-                Object value = event.getNewValue();
+                ObjectMessage objMessage = (ObjectMessage) message;
+                String event = (String) objMessage.getObject();
+                logger.log(Level.INFO, "Received {0}", event);
             }
             Case.getCurrentCase().notifyNewDataSource(null);
         } catch (Exception ex) {
