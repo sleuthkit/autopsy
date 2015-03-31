@@ -90,7 +90,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "unallocatedSpaceProcessingSettingsError.message"));
         }
 
-        this.context = context;
         this.rootOutputDirPath = PhotoRecCarverFileIngestModule.createModuleOutputDirectoryForCase();
 
         Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);

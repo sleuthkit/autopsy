@@ -28,24 +28,32 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Parses cache files that Android maintains for Wifi and cell towers.  Adds GPS points to blackboard.
+ */
 class CacheLocationAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
 
-    public static void findGeoLocations() {
+    /**
+     * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS and MAC info from Wifi points. 
+     */
+    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
 
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<AbstractFile> abstractFiles = skCase.findAllFilesWhere("name ='cache.cell' OR name='cache.wifi'");  //NON-NLS  //get exact file names
+            List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
+            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi"));
 
             for (AbstractFile abstractFile : abstractFiles) {
                 try {
@@ -66,7 +74,6 @@ class CacheLocationAnalyzer {
     }
 
     private static void findGeoLocationsInFile(File file, AbstractFile f) {
-
         byte[] bytes; // will temporarily hold bytes to be converted into the correct data types
 
         try {
@@ -87,7 +94,9 @@ class CacheLocationAnalyzer {
                 bytes = new byte[1];
                 inputStream.read(bytes);
                 while (new BigInteger(bytes).intValue() != 0) { //pass through non important values until the start of accuracy(around 7-10 bytes)
-                    inputStream.read(bytes);
+                    if (0 > inputStream.read(bytes)) {
+                        break; /// we've passed the end of the file, so stop
+                    }
                 }
                 bytes = new byte[3];
                 inputStream.read(bytes);

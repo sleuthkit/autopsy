@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -34,6 +36,7 @@ import org.sleuthkit.datamodel.Content;
 final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
+    private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());    
     private final DataSourceIngestJob job;
     private final List<PipelineModule> modules = new ArrayList<>();
     private volatile PipelineModule currentModule;
@@ -102,7 +105,9 @@ final class DataSourceIngestPipeline {
                 this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
                 this.job.switchDataSourceIngestProgressBarToIndeterminate();
                 DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
+                logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
                 module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
+                logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }

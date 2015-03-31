@@ -29,24 +29,28 @@ import java.util.logging.Level;
 import org.apache.commons.codec.binary.Base64;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Locates database for the Tango app and adds info to blackboard.
+ */
 class TangoMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TangoMessageAnalyzer.class.getName());
 
-    public static void findTangoMessages() {
+    public static void findTangoMessages(Content dataSource, FileManager fileManager) {
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='tc.db' "); //NON-NLS //get exact file names
+            absFiles = fileManager.findFiles(dataSource, "tc.db"); //NON-NLS
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
@@ -103,7 +107,6 @@ class TangoMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
                                                          NbBundle.getMessage(TangoMessageAnalyzer.class,
                                                                              "TangoMessageAnalyzer.bbAttribute.tangoMessage")));
-
             }
 
         } catch (Exception e) {

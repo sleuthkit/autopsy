@@ -4,9 +4,9 @@
 Overview
 -----
 
-This is the User's Guide for the open source Autopsy platform (http://www.sleuthkit.org/autopsy/).  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it.  This is the user guide to help you use the tool. If you are looking for the developer's guide to help you develop modules, it can be found at http://www.sleuthkit.org/autopsy/docs/api-docs/3.1/.
+This is the User's Guide for the <a href="http://www.sleuthkit.org/autopsy/">open source Autopsy platform</a>.  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it. This guide should help you with using Autopsy. The <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/3.1/"> developer's guide</a> will help you develop your own Autopsy modules.
 
-Note that Autopsy 3 is a complete rewrite from Autopsy 2 and none of this document is relevant to Autopsy 2.
+Autopsy 3 is a complete rewrite from Autopsy 2, and none of this document is relevant to Autopsy 2.
 
 Help Topics
 -------
@@ -18,21 +18,34 @@ The following topics are available here:
 - Cases and Adding Data Sources
  - \subpage cases_page
  - \subpage ds_page
-- Automated Analysis
+ - \subpage uilayout_page
+- Automated Analysis (Modules)
  - \subpage ingest_page "Ingest Modules"
+ - \subpage recent_activity_page
  - \subpage hash_db_page 
- - \subpage keyword_search 
+ - \subpage file_type_identification_page
+ - \subpage archive_extractor_page
+ - \subpage EXIF_parser_page
+ - \subpage keyword_search_page
+ - \subpage email_parser_page
+ - \subpage extension_mismatch_detector_page
+ - \subpage e01_verifier_page
+ - \subpage android_analyzer_page
+ - \subpage interesting_files_identifier_page
+ - \subpage photorec_carver_page
 - Manual Analysis
- - \subpage directory_tree "Directory Tree"
- - \subpage file_search "File Search"
- - \subpage result_viewers "Result Viewers"
- - \subpage content_viewers "Content Viewers"
- - \subpage image_viewer
- - \subpage timeline
+ - \subpage tree_viewer_page
+ - \subpage result_viewer_page
+ - \subpage content_viewer_page
+<!-- - \subpage image_gallery_page      Not released yet, coming soon-->
+ - \subpage file_search_page
+ - \subpage timeline_page
  - \subpage stix_page
 - Reporting
+    - \subpage tagging_page
+    - \subpage reporting_page
 - \subpage module_install_page
 
-If the topic you need is not listed, refer to the Help system in the tool or the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide). 
+If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.
 
 */
