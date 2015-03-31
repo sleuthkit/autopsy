@@ -85,7 +85,7 @@ class TskDbDiff(object):
         """Set up the necessary files based on the arguments given at construction"""
         if self.output_dir is None:
             # No stored files
-            self._bb_dump = TskDbDiff._get_tmp_file("BlackboardDump.txt", ".txt")
+            self._bb_dump = TskDbDiff._get_tmp_file("BlackboardDump", ".txt")
             self._bb_dump_diff = TskDbDiff._get_tmp_file("BlackboardDump-Diff", ".txt")
             self._dump = TskDbDiff._get_tmp_file("DBDump", ".txt")
             self._dump_diff = TskDbDiff._get_tmp_file("DBDump-Diff", ".txt")
