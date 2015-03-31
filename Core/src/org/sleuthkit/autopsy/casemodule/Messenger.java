@@ -77,7 +77,9 @@ class Messenger implements PropertyChangeListener, MessageListener {
     public void propertyChange(PropertyChangeEvent event) {
         switch (Case.Events.valueOf(event.getPropertyName())) {
             case DATA_SOURCE_ADDED:
-                send();
+                if (null != event.getNewValue()) {
+                    send();
+                }
                 break;
         }
     }
