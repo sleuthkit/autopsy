@@ -20,12 +20,14 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.util.logging.Level;
 import javax.jms.Connection;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
@@ -78,16 +80,17 @@ class Messenger implements PropertyChangeListener, MessageListener {
         switch (Case.Events.valueOf(event.getPropertyName())) {
             case DATA_SOURCE_ADDED:
                 if (null != event.getNewValue()) {
-                    send();
+                    send(event);
                 }
                 break;
         }
     }
 
-    private void send() {
+    private void send(PropertyChangeEvent event) {
         try {
-            TextMessage message = session.createTextMessage();
+            ObjectMessage message = session.createObjectMessage();
             message.setStringProperty("event", Case.Events.DATA_SOURCE_ADDED.toString());
+            message.setObject(event);
             producer.send(message);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
@@ -97,6 +100,11 @@ class Messenger implements PropertyChangeListener, MessageListener {
     @Override
     public void onMessage(Message message) {
         try {
+            if (message instanceof ObjectMessage) {
+                ObjectMessage objMessage = (ObjectMessage)message;
+                PropertyChangeEvent event = (PropertyChangeEvent)objMessage.getObject();
+                Object value = event.getNewValue();
+            }
             Case.getCurrentCase().notifyNewDataSource(null);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
