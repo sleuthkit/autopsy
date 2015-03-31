@@ -102,10 +102,13 @@ public final class ExtractAction extends AbstractAction {
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(selectedFile.getName().replace(':', '_')));
         if (fileChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
+            Case.getCurrentCase().setExportDirectory(fileChooser.getCurrentDirectory().getPath());
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
             runExtractionTasks(e, fileExtractionTasks);            
-        }        
+        }
+        // if user hits cancel or close, the default directory is the directory last visited.
+        Case.getCurrentCase().setExportDirectory(fileChooser.getCurrentDirectory().getPath());
     }
         
     /**
@@ -118,6 +121,8 @@ public final class ExtractAction extends AbstractAction {
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         folderChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         if (folderChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
+            // set the default directory as the directory in which the files are extracted.
+            Case.getCurrentCase().setExportDirectory(folderChooser.getCurrentDirectory().getPath());
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {
                 try {
@@ -139,6 +144,8 @@ public final class ExtractAction extends AbstractAction {
             }            
             runExtractionTasks(e, fileExtractionTasks);            
         }
+        // if user hits cancel or close, the default directory is the directory last visited.
+        Case.getCurrentCase().setExportDirectory(folderChooser.getCurrentDirectory().getPath());
     }
         
     private void runExtractionTasks(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
