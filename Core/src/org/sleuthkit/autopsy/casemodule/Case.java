@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +38,6 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -45,6 +45,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -72,7 +73,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public static final String propStartup = "LBL_StartupDialog"; //NON-NLS
     // pcs is initialized in CaseListener constructor
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
-
+    
     /**
      * Events that the case module will fire. Event listeners can get the event
      * name by using String returned by toString() method on a specific event.
@@ -130,6 +131,42 @@ public class Case implements SleuthkitCase.ErrorObserver {
         REPORT_ADDED;
     };
 
+    /**
+     * This enum describes the type of case, either Local (standalone) or Shared
+     * (using PostgreSql)
+     */
+    public enum CaseType {
+
+        LOCAL("Local Case"),
+        SHARED("Shared Case");
+
+        private final String caseName;
+
+        private CaseType(String s) {
+            caseName = s;
+        }
+
+        public boolean equalsName(String otherName) {
+            return (otherName == null) ? false : caseName.equals(otherName);
+        }
+
+        public static CaseType fromString(String text) {
+            if (text != null) {
+                for (CaseType c : CaseType.values()) {
+                    if (text.equalsIgnoreCase(c.caseName)) {
+                        return c;
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return caseName;
+        }
+    };
+
     private String name;
     private String number;
     private String examiner;
@@ -142,6 +179,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
+    private CaseType caseType;
+    private boolean isRemote=false;
     
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
@@ -149,7 +188,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Constructor for the Case class
      */
-    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
+    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db, boolean isRemote) {
         this.name = name;
         this.number = number;
         this.examiner = examiner;
@@ -157,6 +196,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.xmlcm = xmlcm;
         this.db = db;
         this.services = new Services(db);
+        this.isRemote = isRemote;
         db.addErrorObserver(this);
     }
 
@@ -273,10 +313,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param caseName   the name of case
      * @param caseNumber the case number
      * @param examiner   the examiner for this case
+     * @param caseType   the type of case, local or shared
      */
-    public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
+    public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
 
+        boolean isRemote=false;
         // create case directory if it doesn't already exist.
         if (new File(caseDir).exists() == false) {
             Case.createCaseDirectory(caseDir);
@@ -285,21 +327,32 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
-        xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
+
+        String dbName=null;
+        // figure out the database name
+        if (caseType == CaseType.LOCAL) {
+            dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
+            isRemote=false;
+        } else if (caseType == CaseType.SHARED) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            dbName = caseName + "_" + dateFormat.format(new Date());
+            isRemote=true;
+        }
+        
+        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName); // create a new XML config file
         xmlcm.writeFile();
 
-        String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
+        
         SleuthkitCase db = null;
         try {
-            db = SleuthkitCase.newCase(dbPath);
+            db = SleuthkitCase.newCase(dbName); /// KDM this is where newcasewizardpanel2 calls.
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
-        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-
+        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, isRemote);
         changeCase(newCase);
     }
 
@@ -312,7 +365,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static void open(String configFilePath) throws CaseActionException {
         logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath); //NON-NLS
-
+        boolean isRemote=false;
         try {
             XMLCaseManagement xmlcm = new XMLCaseManagement();
 
@@ -322,25 +375,43 @@ public class Case implements SleuthkitCase.ErrorObserver {
             String caseName = xmlcm.getCaseName();
             String caseNumber = xmlcm.getCaseNumber();
             String examiner = xmlcm.getCaseExaminer();
-            // if the caseName is "", case / config file can't be opened
-            if (caseName.equals("")) {
-                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.blankCase.msg"));
-            }
-
+            CaseType caseType = xmlcm.getCaseType();
             String caseDir = xmlcm.getCaseDirectory();
-            String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
-            SleuthkitCase db = SleuthkitCase.openCase(dbPath);
-            if (null != db.getBackupDatabasePath()) {
-                JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                                                        db.getBackupDatabasePath()),
-                                              NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                                              JOptionPane.INFORMATION_MESSAGE);
+            SleuthkitCase db;
+            
+            if (caseType == CaseType.LOCAL) {
+                // if the caseName is "", case / config file can't be opened
+                isRemote=false;
+                if (caseName.equals("")) {
+                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.blankCase.msg"));
+                }
+
+                String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
+                db = SleuthkitCase.openCase(dbPath); // KDM
+                if (null != db.getBackupDatabasePath()) {
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                    db.getBackupDatabasePath()),
+                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+            else {
+                isRemote=true;
+                CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+                db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), info); // KDM
+                if (null != db.getBackupDatabasePath()) {
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                    db.getBackupDatabasePath()),
+                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
             }
             
             checkImagesExist(db);
 
-            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, isRemote);
 
             changeCase(openedCase);
 
@@ -1188,5 +1259,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
         }
         return hasData;
+    }
+
+    /**
+     * Returns true if the case is a remote case, false otherwise
+     * @return 
+     */
+    public boolean isRemote() {
+        return isRemote;
     }
 }

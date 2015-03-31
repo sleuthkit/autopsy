@@ -29,8 +29,8 @@ import javax.xml.parsers.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.*;
@@ -69,6 +69,8 @@ import org.xml.sax.SAXException;
     final static String EXPORT_FOLDER_RELPATH = "Export"; //NON-NLS
     final static String CACHE_FOLDER_NAME = "CacheFolder"; //NON-NLS
     final static String CACHE_FOLDER_RELPATH = "Cache"; //NON-NLS
+    final static String CASE_TYPE = "CaseType"; //NON-NLS
+    final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
     // folders attribute
     final static String RELATIVE_NAME = "Relative";    // relevant path info NON-NLS
     // folder attr values
@@ -80,10 +82,13 @@ import org.xml.sax.SAXException;
     private DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private String caseDirPath;     // case directory path
     private String caseName;        // case name
-    private String caseNumber;         // case number
+    private String caseNumber;      // case number
     private String examiner;        // examiner name
     private String schemaVersion = "1.0";
     private String autopsySavedVersion;
+    private CaseType caseType;      // The type of case: local or shared
+    private String dbName;          // The name of the database    
+    
     // for error handling
     private JPanel caller;
     private String className = this.getClass().toString();
@@ -187,6 +192,56 @@ import org.xml.sax.SAXException;
         caseNumber = givenCaseNumber; // change this to change the xml file if needed
     }
 
+    /**
+     * Sets the case type internally (on local variable in this class)
+     *
+     * @param givenCaseType the new case type
+     */
+    private void setCaseType(CaseType givenCaseType) {
+        caseType = givenCaseType; // change this to change the xml file if needed
+    }
+
+    /**
+     * Gets the case Type from the document handler.
+     * Defaults to local if it can't figure it out.
+     * @return caseType from the document handler
+     */
+     public CaseType getCaseType() {
+         try {
+             if (doc == null) {
+                 return CaseType.LOCAL;
+             } else {
+                 Element nameElement = (Element) getCaseElement().getElementsByTagName(CASE_TYPE).item(0);
+                 return CaseType.fromString(nameElement.getTextContent());
+             }
+         } catch (Exception ex) {
+             return CaseType.LOCAL;
+         }
+    }
+    
+    /**
+     * Sets the database name internally (on local variable in this class)
+     *
+     * @param givenDbName the new db name
+     */
+    private void setDatabaseName(String givenDbName) {
+        dbName= givenDbName; // change this to change the xml file if needed
+    }
+
+    /**
+     * Gets the database name from the document handler
+     *
+     * @return the database name
+     */
+    public String getDatabaseName() {
+        if (doc == null) {
+            return "";
+        } else {
+            Element nameElement = (Element) getCaseElement().getElementsByTagName(DATABASE_NAME).item(0);
+            return nameElement.getTextContent();
+        }
+    }    
+    
     /**
      * Sets the examiner name internally (on local variable in this class)
      *
@@ -442,8 +497,10 @@ import org.xml.sax.SAXException;
      * directory
      * @param examiner examiner for the case (optional, can be empty string
      * @param caseNumber case number (optional), can be empty
+     * @param dbName the name of the database. Could be a local path, could be
+     * a Postgre db name.
      */
-    protected void create(String dirPath, String caseName, String examiner, String caseNumber) throws CaseActionException {
+    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName) throws CaseActionException {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
@@ -451,6 +508,8 @@ import org.xml.sax.SAXException;
         setName(caseName);
         setExaminer(examiner);
         setNumber(caseNumber);
+        setCaseType(caseType);
+        setDatabaseName(dbName);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -522,6 +581,14 @@ import org.xml.sax.SAXException;
         cacheElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(cacheElement);
 
+        Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
+        typeElement.appendChild(doc.createTextNode(caseType.toString()));
+        caseElement.appendChild(typeElement);
+        
+        Element dbNameElement = doc.createElement(DATABASE_NAME); // <DatabaseName> ... </DatabaseName>
+        dbNameElement.appendChild(doc.createTextNode(dbName));
+        caseElement.appendChild(dbNameElement);
+        
         // write more code if needed ...
     }
 
@@ -688,5 +755,7 @@ import org.xml.sax.SAXException;
         caseName = "";
         caseNumber = "";
         examiner = "";
+        caseType = CaseType.LOCAL;
+        dbName = "";
     }
 }
