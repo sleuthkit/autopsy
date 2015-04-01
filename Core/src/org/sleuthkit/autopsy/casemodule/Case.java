@@ -137,8 +137,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public enum CaseType {
 
-        LOCAL("Local Case"),
-        SHARED("Shared Case");
+        LOCAL("Single-user case"),
+        SHARED("Multi-user case");
 
         private final String caseName;
 
