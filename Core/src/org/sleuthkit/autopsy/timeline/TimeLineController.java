@@ -78,6 +78,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Controller in the MVC design along with model = {@link FilteredEventsModel}
@@ -357,13 +358,15 @@ public class TimeLineController {
     @SuppressWarnings("deprecation")
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
-        try (ResultSet runQuery = sleuthkitCase.runQuery("select Max(artifact_id) as max_id from blackboard_artifacts")) { // NON-NLS
-            while (runQuery.next()) {
-                caseLastArtfId = runQuery.getLong("max_id"); // NON-NLS
+        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
+        
+        try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            while (resultSet.next()) {
+                caseLastArtfId = resultSet.getLong("max_id"); // NON-NLS
             }
-            sleuthkitCase.closeRunQuery(runQuery);
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+        } catch (TskCoreException | SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting last artifact id: ", ex); // NON-NLS
         }
         return caseLastArtfId;
     }

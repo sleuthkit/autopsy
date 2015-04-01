@@ -1,0 +1,42 @@
+/*! \page reporting_page Reporting
+
+Reporting 
+
+To create a report, go to "Tools", "Generate Report". You can choose several different types of reports. We will go through the HTML report here.
+\image html generate-report-1.PNG
+<br>
+
+When you have selected a report type, choose between
+- All Results
+- Tagged Results
+
+<br>
+\image html generate-report-2.PNG
+<br>
+
+If you select All Results, you can choose the Data Types (Artifact Types) you would like included.
+<br>
+\image html generate-report-3.PNG
+<br>
+
+If you select Tagged Results, you can choose the tags you would like included.
+<br>
+\image html generate-report-4.PNG
+<br>
+<br>
+In our case, an HTML report is generated.
+<br>
+<br>
+<b>All Results HTML Report:</b>
+<br>
+\image html generate-report-5.PNG
+<br>
+<br>
+<b>Tagged Results HTML Report:</b>
+<br>
+\image html generate-report-6.PNG
+<br>
+There are other types of reports to choose, but they operate on the same principle. Select either All Results or Tagged results to include.
+<br>
+
+*/

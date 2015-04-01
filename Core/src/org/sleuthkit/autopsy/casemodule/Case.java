@@ -232,7 +232,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * 
      */
     private static void changeCase(Case newCase) {
-
+        /// KDM ensure this handles both databases properly
         // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
@@ -345,14 +345,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
         
         SleuthkitCase db = null;
         try {
-            db = SleuthkitCase.newCase(dbName); /// KDM this is where newcasewizardpanel2 calls.
+            if(isRemote==true)
+            {
+                db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo());
+            }
+            else
+            {
+                db = SleuthkitCase.newCase(dbName);
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
-        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, isRemote);
+        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, isRemote); /// KDM TODO
         changeCase(newCase);
     }
 
@@ -387,7 +394,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 }
 
                 String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
-                db = SleuthkitCase.openCase(dbPath); // KDM
+                db = SleuthkitCase.openCase(dbPath);
                 if (null != db.getBackupDatabasePath()) {
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
@@ -398,8 +405,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             else {
                 isRemote=true;
-                CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-                db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), info); // KDM
+                db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), UserPreferences.getDatabaseConnectionInfo());
                 if (null != db.getBackupDatabasePath()) {
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
@@ -1268,4 +1274,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public boolean isRemote() {
         return isRemote;
     }
+
+
+     /**
+     * Returns true if the current database settings are sufficient to talk to
+     * the PostgreSql database
+     * @return
+     */
+    public static boolean externalDatabaseSettingsValid() {
+        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+        return SleuthkitCase.settingsValid(info);
+    }    
 }
