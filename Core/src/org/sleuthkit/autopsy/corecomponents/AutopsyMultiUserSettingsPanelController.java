@@ -29,17 +29,17 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Database_Settings",
-        iconBase = "org/sleuthkit/autopsy/modules/hashdatabase/options_icon.png",
+@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Multi_User_Settings",
+        iconBase = "org/sleuthkit/autopsy/images/User-Group-icon-green32.png",
         position = 2,
-        keywords = "#OptionsCategory_Keywords_Database_Options",
-        keywordsCategory = "Database")
-public final class AutopsyDatabasePanelController extends OptionsPanelController {
+        keywords = "#OptionsCategory_Keywords_Multi_User_Options",
+        keywordsCategory = "Multi-user")
+public final class AutopsyMultiUserSettingsPanelController extends OptionsPanelController {
 
-    private AutopsyDatabasePanel panel;
+    private AutopsyMultiUserSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private static final Logger logger = Logger.getLogger(AutopsyDatabasePanelController.class.getName());
+    private static final Logger logger = Logger.getLogger(AutopsyMultiUserSettingsPanelController.class.getName());
 
     @Override
     public void update() {
@@ -95,9 +95,9 @@ public final class AutopsyDatabasePanelController extends OptionsPanelController
          */
     }
 
-    private AutopsyDatabasePanel getPanel() {
+    private AutopsyMultiUserSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new AutopsyDatabasePanel(this);
+            panel = new AutopsyMultiUserSettingsPanel(this);
         }
         return panel;
     }
