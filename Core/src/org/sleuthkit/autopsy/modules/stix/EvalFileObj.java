@@ -171,7 +171,21 @@ class EvalFileObj extends EvaluatableObject {
             for (HashType h : obj.getHashes().getHashes()) {
                 if (h.getSimpleHashValue() != null) {
                     if (h.getType().getValue().equals("MD5")) { //NON-NLS
-                        String newClause = "md5=\'" + h.getSimpleHashValue().getValue().toString().toLowerCase() + "\'"; //NON-NLS
+                        String newClause = "";
+                        if(h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")){
+                            String[] parts = h.getSimpleHashValue().getValue().toString().toLowerCase().split("##comma##"); //NON-NLS
+                            String hashList = "";
+                            for(String s:parts){
+                                if(!hashList.isEmpty()){
+                                    hashList += ", ";
+                                }
+                                hashList += "\'" + s + "\'";
+                            }
+                            newClause = "md5 IN (" + hashList + ")";
+                        }
+                        else{
+                            newClause = "md5=\'" + h.getSimpleHashValue().getValue().toString().toLowerCase() + "\'"; //NON-NLS
+                        }
                         whereClause = addClause(whereClause, newClause);
                     } else {
                         addWarning("Could not process hash type " + h.getType().getValue().toString()); //NON-NLS
