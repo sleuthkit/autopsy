@@ -255,9 +255,10 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                             processingLabel.setText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
-                            cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
+                           cancelButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
                             cancelButton.setToolTipText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                            cancelButton.setEnabled(false);
                             break;
                         }
                         case ERROR: {
@@ -265,9 +266,10 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                             processingLabel.setText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
-                            cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete_with_errors.png"))); //NON-NLS
+                            cancelButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete_with_errors.png"))); //NON-NLS
                             cancelButton.setToolTipText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                            cancelButton.setEnabled(false);
                             break;
                         }
                         // add finer grained result codes here.
@@ -299,7 +301,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         setMinimumSize(new java.awt.Dimension(486, 68));
 
-        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); // NOI18N NON-NLS
+        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.cancelButton.text")); // NOI18N
         cancelButton.setToolTipText(org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.cancelButton.toolTipText")); // NOI18N
         cancelButton.setBorder(null);
@@ -320,12 +322,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
 
-        reportLabel.setFont(reportLabel.getFont().deriveFont(Font.BOLD, 11));
+        reportLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(processingLabel.getFont().deriveFont(Font.ITALIC, 10));
+        processingLabel.setFont(new java.awt.Font("Tahoma", 2, 10)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N

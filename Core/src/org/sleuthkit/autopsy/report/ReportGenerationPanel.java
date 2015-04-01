@@ -88,7 +88,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
     void close() {
         boolean closeable = true;
         for (ReportProgressPanel panel : progressPanels) {
-            if (panel.getStatus() != ReportStatus.CANCELED && panel.getStatus() != ReportStatus.COMPLETE) {
+            if (panel.getStatus() != ReportStatus.CANCELED && panel.getStatus() != ReportStatus.COMPLETE && panel.getStatus() != ReportStatus.ERROR) {
                 closeable = false;
             }
         }
