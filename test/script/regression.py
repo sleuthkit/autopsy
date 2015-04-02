@@ -247,8 +247,8 @@ class TestRunner(object):
         if test_data.main_config.timing:
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed and
-            test_data.run_time_passed)
+            test_data.errors_diff_passed and test_data.db_diff_passed)
+        #    test_data.run_time_passed not considered for test_data.overall_passed
         # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
