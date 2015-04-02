@@ -42,6 +42,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -205,6 +207,7 @@ public class NavPanel extends TabPane {
      *
      * @param grouping
      */
+    @ThreadConfined(type = ThreadType.JFX)
     public void setFocusedGroup(DrawableGroup grouping) {
 
         List<String> path = groupingToPath(grouping);
@@ -212,7 +215,12 @@ public class NavPanel extends TabPane {
         final GroupTreeItem treeItemForGroup = ((GroupTreeItem) activeTreeProperty.get().getRoot()).getTreeItemForPath(path);
 
         if (treeItemForGroup != null) {
-            Platform.runLater(() -> {
+            /* When we used to run the below code on the FX thread, it would 
+             * get into infinite loops when the next group button was pressed quickly
+             * because the udpates became out of order and History could not keep
+             * track of what was current.  Currently (4/2/15), this method is 
+             * already on the FX thread, so it is OK. */
+            //Platform.runLater(() -> {
                 TreeItem<TreeNode> ti = treeItemForGroup;
                 while (ti != null) {
                     ti.setExpanded(true);
@@ -223,7 +231,7 @@ public class NavPanel extends TabPane {
                     activeTreeProperty.get().getSelectionModel().select(treeItemForGroup);
                     activeTreeProperty.get().scrollTo(row);
                 }
-            });
+            //});
         }
     }
 

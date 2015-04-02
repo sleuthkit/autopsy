@@ -219,6 +219,10 @@
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.7.15-M1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/activemq-all-5.11.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
@@ -231,6 +235,10 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.6.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.6.2.jar</binary-origin>
             </class-path-extension>
@@ -241,10 +249,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jython.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jython.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
