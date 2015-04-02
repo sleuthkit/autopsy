@@ -72,8 +72,8 @@ public class STIXReportModule implements GeneralReportModule {
     private String reportPath;
     private boolean reportAllResults;
 
-    private final Map<String, ObjectType> idToObjectMap = new HashMap<String, ObjectType>();
-    private final Map<String, ObservableResult> idToResult = new HashMap<String, ObservableResult>();
+    private Map<String, ObjectType> idToObjectMap = new HashMap<String, ObjectType>();
+    private Map<String, ObservableResult> idToResult = new HashMap<String, ObservableResult>();
 
     private List<EvalRegistryObj.RegistryFileInfo> registryFileData = null;
 
@@ -189,6 +189,10 @@ public class STIXReportModule implements GeneralReportModule {
                         MessageNotifyUtil.MessageType.ERROR);
                 hadErrors = true;
             }
+            
+            // Clear out the ID maps before loading the next file
+            idToObjectMap = new HashMap<String, ObjectType>();
+            idToResult = new HashMap<String, ObservableResult>();
         }
 
         // Close the output file
