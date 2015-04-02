@@ -48,28 +48,28 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseParentDirTextField.getDocument().addDocumentListener(this);
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
         if (info.getDbType() == CaseDbConnectionInfo.DbType.UNKNOWN) {
-            rbLocalCase.setSelected(true);
-            rbLocalCase.setEnabled(false);
-            rbLocalCase.setVisible(false);
-            rbSharedCase.setEnabled(false);
-            rbSharedCase.setVisible(false);
+            rbSingleUserCase.setSelected(true);
+            rbSingleUserCase.setEnabled(false);
+            rbSingleUserCase.setVisible(false);
+            rbMultiUserCase.setEnabled(false);
+            rbMultiUserCase.setVisible(false);
         } else {
             // if we cannot connect to the shared database, don't present the option
             // but do not change the setting stored in the preferences file
-            rbLocalCase.setEnabled(true);
-            rbSharedCase.setEnabled(true);
-            rbLocalCase.setVisible(true);
-            rbSharedCase.setVisible(true);
-            if (true == Case.externalDatabaseSettingsValid()) {
-                if (UserPreferences.newCaseType() == CaseType.LOCAL.ordinal()) {
-                    rbLocalCase.setSelected(true);
+            rbSingleUserCase.setEnabled(true);
+            rbMultiUserCase.setEnabled(true);
+            rbSingleUserCase.setVisible(true);
+            rbMultiUserCase.setVisible(true);
+            if (true == info.settingsValid()) {
+                if (UserPreferences.newCaseType() == CaseType.SINGLE_USER_CASE.ordinal()) {
+                    rbSingleUserCase.setSelected(true);
                 } else {
-                    rbSharedCase.setSelected(true);
+                    rbMultiUserCase.setSelected(true);
                 }
             } else {
-                rbLocalCase.setSelected(true);
-                rbLocalCase.setEnabled(false);
-                rbSharedCase.setEnabled(false);
+                rbSingleUserCase.setSelected(true);
+                rbSingleUserCase.setEnabled(false);
+                rbMultiUserCase.setEnabled(false);
             }
         }
     }
@@ -119,11 +119,11 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      * @return CaseType as set via radio buttons
      */
     public CaseType getCaseType() {
-        CaseType value = CaseType.LOCAL;
-        if (rbLocalCase.isSelected()) {
-            value = CaseType.LOCAL;
-        } else if (rbSharedCase.isSelected()) {
-            value = CaseType.SHARED;
+        CaseType value = CaseType.SINGLE_USER_CASE;
+        if (rbSingleUserCase.isSelected()) {
+            value = CaseType.SINGLE_USER_CASE;
+        } else if (rbMultiUserCase.isSelected()) {
+            value = CaseType.MULTI_USER_CASE;
         }
         return value;
     }
@@ -145,8 +145,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirBrowseButton = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         caseDirTextField = new javax.swing.JTextField();
-        rbLocalCase = new javax.swing.JRadioButton();
-        rbSharedCase = new javax.swing.JRadioButton();
+        rbSingleUserCase = new javax.swing.JRadioButton();
+        rbMultiUserCase = new javax.swing.JRadioButton();
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
@@ -171,11 +171,11 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirTextField.setEditable(false);
         caseDirTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseDirTextField.text_1")); // NOI18N
 
-        caseTypeButtonGroup.add(rbLocalCase);
-        org.openide.awt.Mnemonics.setLocalizedText(rbLocalCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbLocalCase.text")); // NOI18N
+        caseTypeButtonGroup.add(rbSingleUserCase);
+        org.openide.awt.Mnemonics.setLocalizedText(rbSingleUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbSingleUserCase.text")); // NOI18N
 
-        caseTypeButtonGroup.add(rbSharedCase);
-        org.openide.awt.Mnemonics.setLocalizedText(rbSharedCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbSharedCase.text")); // NOI18N
+        caseTypeButtonGroup.add(rbMultiUserCase);
+        org.openide.awt.Mnemonics.setLocalizedText(rbMultiUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbMultiUserCase.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -200,9 +200,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(caseDirBrowseButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(rbLocalCase)
+                        .addComponent(rbSingleUserCase)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(rbSharedCase)))
+                        .addComponent(rbMultiUserCase)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -225,8 +225,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                 .addComponent(caseDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(rbLocalCase)
-                    .addComponent(rbSharedCase))
+                    .addComponent(rbSingleUserCase)
+                    .addComponent(rbMultiUserCase))
                 .addContainerGap(16, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -266,8 +266,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.ButtonGroup caseTypeButtonGroup;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JRadioButton rbLocalCase;
-    private javax.swing.JRadioButton rbSharedCase;
+    private javax.swing.JRadioButton rbMultiUserCase;
+    private javax.swing.JRadioButton rbSingleUserCase;
     // End of variables declaration//GEN-END:variables
 
     /**

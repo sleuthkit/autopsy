@@ -12,15 +12,15 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo.DbType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
-public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
+public class MultiUserSettingsPanel extends javax.swing.JPanel {
 
-    private AutopsyMultiUserSettingsPanelController controller;
+    private MultiUserSettingsPanelController controller;
     private TextBoxChangedListener textBoxChangedListener;
 
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
      */
-    public AutopsyMultiUserSettingsPanel(AutopsyMultiUserSettingsPanelController theController) {
+    public MultiUserSettingsPanel(MultiUserSettingsPanelController theController) {
         initComponents();
         controller = theController;
 
@@ -40,7 +40,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         tpUsername.changeAlpha(alpha);
         tpPassword.changeAlpha(alpha);
 
-        setNetworkDbEnabled(cbExternalDbEnabled.isSelected());
+        setNetworkDbEnabled(cbEnableMultiUser.isSelected());
 
         /// Register for notifications when the text boxes get updated
         textBoxChangedListener = new TextBoxChangedListener();
@@ -60,71 +60,71 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         pnOverallPanel = new javax.swing.JPanel();
-        pnExternalDatabase = new javax.swing.JPanel();
+        pnDatabaseSettings = new javax.swing.JPanel();
         tbHostnameOrIp = new javax.swing.JTextField();
         tbPortNumber = new javax.swing.JTextField();
         tbUsername = new javax.swing.JTextField();
         tbPassword = new javax.swing.JPasswordField();
         lbOops = new javax.swing.JLabel();
-        lbExternalDatabase = new javax.swing.JLabel();
+        lbDatabaseSettings = new javax.swing.JLabel();
         pnSolrSettings = new javax.swing.JPanel();
         lbSolrSettings = new javax.swing.JLabel();
         pnMessagingSettings = new javax.swing.JPanel();
         lbMessagingSettings = new javax.swing.JLabel();
-        cbExternalDbEnabled = new javax.swing.JCheckBox();
+        cbEnableMultiUser = new javax.swing.JCheckBox();
 
-        pnExternalDatabase.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         tbHostnameOrIp.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbHostnameOrIp.setText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbHostnameOrIp.text")); // NOI18N
-        tbHostnameOrIp.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbHostnameOrIp.toolTipText")); // NOI18N
+        tbHostnameOrIp.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbHostnameOrIp.text")); // NOI18N
+        tbHostnameOrIp.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbHostnameOrIp.toolTipText")); // NOI18N
 
         tbPortNumber.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbPortNumber.setText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbPortNumber.text")); // NOI18N
-        tbPortNumber.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbPortNumber.toolTipText")); // NOI18N
+        tbPortNumber.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPortNumber.text")); // NOI18N
+        tbPortNumber.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPortNumber.toolTipText")); // NOI18N
 
         tbUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbUsername.setText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbUsername.text")); // NOI18N
-        tbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbUsername.toolTipText")); // NOI18N
+        tbUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbUsername.text")); // NOI18N
+        tbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbUsername.toolTipText")); // NOI18N
 
         tbPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbPassword.setText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbPassword.text")); // NOI18N
-        tbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.tbPassword.toolTipText")); // NOI18N
+        tbPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPassword.text")); // NOI18N
+        tbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPassword.toolTipText")); // NOI18N
 
         lbOops.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         lbOops.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbOops, org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.lbOops.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbOops, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbOops.text")); // NOI18N
         lbOops.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        lbExternalDatabase.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbExternalDatabase, org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.lbExternalDatabase.text")); // NOI18N
-        lbExternalDatabase.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        lbDatabaseSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbDatabaseSettings.text")); // NOI18N
+        lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        javax.swing.GroupLayout pnExternalDatabaseLayout = new javax.swing.GroupLayout(pnExternalDatabase);
-        pnExternalDatabase.setLayout(pnExternalDatabaseLayout);
-        pnExternalDatabaseLayout.setHorizontalGroup(
-            pnExternalDatabaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnExternalDatabaseLayout.createSequentialGroup()
+        javax.swing.GroupLayout pnDatabaseSettingsLayout = new javax.swing.GroupLayout(pnDatabaseSettings);
+        pnDatabaseSettings.setLayout(pnDatabaseSettingsLayout);
+        pnDatabaseSettingsLayout.setHorizontalGroup(
+            pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnExternalDatabaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tbHostnameOrIp)
                     .addComponent(tbPortNumber)
                     .addComponent(tbUsername)
                     .addComponent(tbPassword)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnExternalDatabaseLayout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseSettingsLayout.createSequentialGroup()
                         .addGap(0, 1, Short.MAX_VALUE)
-                        .addComponent(lbExternalDatabase)
+                        .addComponent(lbDatabaseSettings)
                         .addGap(18, 18, 18)
                         .addComponent(lbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
-        pnExternalDatabaseLayout.setVerticalGroup(
-            pnExternalDatabaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnExternalDatabaseLayout.createSequentialGroup()
-                .addGroup(pnExternalDatabaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnExternalDatabaseLayout.createSequentialGroup()
+        pnDatabaseSettingsLayout.setVerticalGroup(
+            pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseSettingsLayout.createSequentialGroup()
+                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lbExternalDatabase))
+                        .addComponent(lbDatabaseSettings))
                     .addComponent(lbOops, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(tbHostnameOrIp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -140,7 +140,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         lbSolrSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
 
         javax.swing.GroupLayout pnSolrSettingsLayout = new javax.swing.GroupLayout(pnSolrSettings);
         pnSolrSettings.setLayout(pnSolrSettingsLayout);
@@ -162,7 +162,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         lbMessagingSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbMessagingSettings, org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.lbMessagingSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbMessagingSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMessagingSettings.text")); // NOI18N
 
         javax.swing.GroupLayout pnMessagingSettingsLayout = new javax.swing.GroupLayout(pnMessagingSettings);
         pnMessagingSettings.setLayout(pnMessagingSettingsLayout);
@@ -171,7 +171,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lbMessagingSettings)
-                .addContainerGap(392, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnMessagingSettingsLayout.setVerticalGroup(
             pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -181,10 +181,10 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(74, Short.MAX_VALUE))
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(cbExternalDbEnabled, org.openide.util.NbBundle.getMessage(AutopsyMultiUserSettingsPanel.class, "AutopsyMultiUserSettingsPanel.cbExternalDbEnabled.text")); // NOI18N
-        cbExternalDbEnabled.addItemListener(new java.awt.event.ItemListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.cbEnableMultiUser.text")); // NOI18N
+        cbEnableMultiUser.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbExternalDbEnabledItemStateChanged(evt);
+                cbEnableMultiUserItemStateChanged(evt);
             }
         });
 
@@ -194,21 +194,20 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnOverallPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cbExternalDbEnabled)
-                    .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(pnMessagingSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(pnExternalDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cbEnableMultiUser)
+                    .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnMessagingSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnOverallPanelLayout.setVerticalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cbExternalDbEnabled)
+                .addComponent(cbEnableMultiUser)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pnExternalDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -220,10 +219,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(1, 1, 1)
-                .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 481, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -243,10 +239,10 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         tbPassword.setEnabled(enabled);
     }
 
-    private void cbExternalDbEnabledItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbExternalDbEnabledItemStateChanged
-        setNetworkDbEnabled(cbExternalDbEnabled.isSelected());
+    private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
+        setNetworkDbEnabled(cbEnableMultiUser.isSelected());
         controller.changed();
-    }//GEN-LAST:event_cbExternalDbEnabledItemStateChanged
+    }//GEN-LAST:event_cbEnableMultiUserItemStateChanged
 
     void load() {
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
@@ -255,9 +251,9 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         tbUsername.setText(info.getUserName());
         tbPassword.setText(info.getPassword());
         if (info.getDbType() == DbType.UNKNOWN) {
-            cbExternalDbEnabled.setSelected(false);
+            cbEnableMultiUser.setSelected(false);
         } else {
-            cbExternalDbEnabled.setSelected(true);
+            cbEnableMultiUser.setSelected(true);
         }
 
     }
@@ -266,7 +262,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
 
         DbType dbType = DbType.UNKNOWN;
 
-        if (cbExternalDbEnabled.isSelected()) {
+        if (cbEnableMultiUser.isSelected()) {
             dbType = DbType.POSTGRESQL;
         }
 
@@ -288,7 +284,7 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
     boolean valid() {
         boolean result = false;
         String text = "";
-        if (cbExternalDbEnabled.isSelected()) {
+        if (cbEnableMultiUser.isSelected()) {
             try {
                 if (tbHostnameOrIp.getText().isEmpty()
                         || tbPortNumber.getText().isEmpty()
@@ -317,12 +313,12 @@ public class AutopsyMultiUserSettingsPanel extends javax.swing.JPanel {
         return result;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox cbExternalDbEnabled;
-    private javax.swing.JLabel lbExternalDatabase;
+    private javax.swing.JCheckBox cbEnableMultiUser;
+    private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessagingSettings;
     private javax.swing.JLabel lbOops;
     private javax.swing.JLabel lbSolrSettings;
-    private javax.swing.JPanel pnExternalDatabase;
+    private javax.swing.JPanel pnDatabaseSettings;
     private javax.swing.JPanel pnMessagingSettings;
     private javax.swing.JPanel pnOverallPanel;
     private javax.swing.JPanel pnSolrSettings;

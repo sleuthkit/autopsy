@@ -207,17 +207,17 @@ import org.xml.sax.SAXException;
      * @return caseType from the document handler
      */
      public CaseType getCaseType() {
-         try {
-             if (doc == null) {
-                 return CaseType.LOCAL;
-             } else {
+         if (doc == null) {
+             return CaseType.SINGLE_USER_CASE;
+         } else {
+             if (getCaseElement().getElementsByTagName(CASE_TYPE).getLength() > 0) {
                  Element nameElement = (Element) getCaseElement().getElementsByTagName(CASE_TYPE).item(0);
                  return CaseType.fromString(nameElement.getTextContent());
+             } else {
+                 return CaseType.SINGLE_USER_CASE;
              }
-         } catch (Exception ex) {
-             return CaseType.LOCAL;
          }
-    }
+     }
     
     /**
      * Sets the database name internally (on local variable in this class)
@@ -233,14 +233,18 @@ import org.xml.sax.SAXException;
      *
      * @return the database name
      */
-    public String getDatabaseName() {
-        if (doc == null) {
-            return "";
-        } else {
-            Element nameElement = (Element) getCaseElement().getElementsByTagName(DATABASE_NAME).item(0);
-            return nameElement.getTextContent();
-        }
-    }    
+     public String getDatabaseName() {
+         if (doc == null) {
+             return "";
+         } else {
+             if (getCaseElement().getElementsByTagName(DATABASE_NAME).getLength() > 0) {
+                 Element nameElement = (Element) getCaseElement().getElementsByTagName(DATABASE_NAME).item(0);
+                 return nameElement.getTextContent();
+             } else {
+                 return ""; /// couldn't find one, so return a blank name   
+             }
+         }
+     }
     
     /**
      * Sets the examiner name internally (on local variable in this class)
@@ -755,7 +759,7 @@ import org.xml.sax.SAXException;
         caseName = "";
         caseNumber = "";
         examiner = "";
-        caseType = CaseType.LOCAL;
+        caseType = CaseType.SINGLE_USER_CASE;
         dbName = "";
     }
 }

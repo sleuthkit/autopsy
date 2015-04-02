@@ -34,12 +34,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         position = 2,
         keywords = "#OptionsCategory_Keywords_Multi_User_Options",
         keywordsCategory = "Multi-user")
-public final class AutopsyMultiUserSettingsPanelController extends OptionsPanelController {
+public final class MultiUserSettingsPanelController extends OptionsPanelController {
 
-    private AutopsyMultiUserSettingsPanel panel;
+    private MultiUserSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private static final Logger logger = Logger.getLogger(AutopsyMultiUserSettingsPanelController.class.getName());
+    private static final Logger logger = Logger.getLogger(MultiUserSettingsPanelController.class.getName());
 
     @Override
     public void update() {
@@ -95,9 +95,9 @@ public final class AutopsyMultiUserSettingsPanelController extends OptionsPanelC
          */
     }
 
-    private AutopsyMultiUserSettingsPanel getPanel() {
+    private MultiUserSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new AutopsyMultiUserSettingsPanel(this);
+            panel = new MultiUserSettingsPanel(this);
         }
         return panel;
     }

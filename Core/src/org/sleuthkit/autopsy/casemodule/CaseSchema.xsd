@@ -12,9 +12,9 @@
 
 <xs:element name="Examiner" type="String" nillable="true"/>
 
-<xs:element name="CaseType" type="String" nillable="false"/>
+<xs:element name="CaseType" type="String" minOccurs="0" maxOccurs="1" nillable="false"/>
 
-<xs:element name="DatabaseName" type="String" nillable="false"/>
+<xs:element name="DatabaseName" type="String" minOccurs="0" maxOccurs="1" nillable="false"/>
 
 <xs:attribute name="Relative" type="xs:boolean"/>
 
