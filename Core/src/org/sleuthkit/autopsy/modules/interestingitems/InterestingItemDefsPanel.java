@@ -256,8 +256,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
-        // If rule set with same name already exists, do not add to the filesSets hashMap.
-        if(this.filesSets.containsKey(panel.getFilesSetName())) {
+        // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
+        // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
+        if(this.filesSets.containsKey(panel.getFilesSetName()) && selectedSet == null) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                                                                 "InterestingItemDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
                                                                 panel.getFilesSetName()));
@@ -315,7 +316,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 rules.remove(selectedRule.getUuid());
             }
             FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameFilter(), panel.getMetaTypeFilter(), panel.getPathFilter());
-            rules.put(Integer.toString(newRule.hashCode()), newRule);
+            rules.put(newRule.getUuid(), newRule);
 
             // Add the new/edited files set definition, replacing any previous 
             // definition with the same name and refreshing the display.
