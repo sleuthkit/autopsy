@@ -45,7 +45,13 @@
         <ivy:retrieve conf="start-solr" sync="true" pattern="release/solr/start.jar" />
         <ivy:retrieve conf="jetty-libs" sync="true" pattern="release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-libs" sync="true" pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="slf4j-libs" sync="true" pattern="release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="servlet" sync="true" pattern="release/solr/lib/servlet-api-3.0.jar" />
 
     </target>
 
+    <target name="clean-all" depends="clean" description="Clear Ivy cache.">
+        <ivy:cleancache/>
+    </target>
+    
 </project>
