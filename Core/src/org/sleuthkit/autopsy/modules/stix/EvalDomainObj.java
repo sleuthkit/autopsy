@@ -55,8 +55,8 @@ class EvalDomainObj extends EvaluatableObject {
         // Since we have single URL artifacts, ALL and NONE conditions probably don't make sense to test
         if (!((obj.getValue().getApplyCondition() == null)
                 || (obj.getValue().getApplyCondition() == ConditionApplicationEnum.ANY))) {
-            return new ObservableResult(id, "URIObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString() //NON-NLS
-                    + " on URI object", spacing, ObservableResult.ObservableState.INDETERMINATE, null); //NON-NLS
+            return new ObservableResult(id, "DomainObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString() //NON-NLS
+                    + " on Domain object", spacing, ObservableResult.ObservableState.INDETERMINATE, null); //NON-NLS
         }
 
         // If the condition is not "CONTAINS", add a warning that it's being ignored

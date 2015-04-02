@@ -207,10 +207,6 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
@@ -219,16 +215,18 @@
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.7.15-M1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+                <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/activemq-all-5.11.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sevenzipjbinding.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.6.2.jar</runtime-relative-path>
@@ -243,16 +241,16 @@
                 <binary-origin>release/modules/ext/jython.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

@@ -184,6 +184,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
+    private Messenger messenger;
+    
     /**
      * Constructor for the Case class
      */
@@ -196,6 +198,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.db = db;
         this.services = new Services(db);
         db.addErrorObserver(this);
+        messenger = new Messenger(this.name);
     }
 
     /**
@@ -361,6 +364,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+        newCase.messenger.start();
+
         changeCase(newCase);
     }
 
@@ -415,7 +420,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
             checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-
+            openedCase.messenger.start();
+        
             changeCase(openedCase);
 
         } catch (Exception ex) {
@@ -564,6 +570,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
 
         try {
+            messenger.stop();
             services.close();
             this.xmlcm.close(); // close the xmlcm
             this.db.close();

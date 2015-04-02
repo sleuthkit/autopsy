@@ -34,6 +34,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -363,34 +364,38 @@ public class Server {
             try {
                 final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; //NON-NLS
 
-                String loggingPropertiesOpt = "-Djava.util.logging.config.file="; //NON-NLS
-                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator; //NON-NLS
+//                String loggingPropertiesOpt = "-Djava.util.logging.config.file="; //NON-NLS
+//                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator; //NON-NLS
+//
+//                if (DEBUG) {
+//                    loggingPropertiesFilePath += "logging-development.properties"; //NON-NLS
+//                } else {
+//                    loggingPropertiesFilePath += "logging-release.properties"; //NON-NLS
+//                }
 
-                if (DEBUG) {
-                    loggingPropertiesFilePath += "logging-development.properties"; //NON-NLS
-                } else {
-                    loggingPropertiesFilePath += "logging-release.properties"; //NON-NLS
-                }
+//                final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
 
-                final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
-
-                final String [] SOLR_START_CMD = {
-                    javaPath,
-                    MAX_SOLR_MEM_MB_PAR,
-                    "-DSTOP.PORT=" + currentSolrStopPort, //NON-NLS
-                    "-Djetty.port=" + currentSolrServerPort, //NON-NLS
-                    "-DSTOP.KEY=" + KEY, //NON-NLS
-                    loggingProperties,
-                    "-jar", //NON-NLS
-                    "start.jar"}; //NON-NLS
+                List<String> commandLine = new ArrayList<>();
+                commandLine.add(javaPath);
+                commandLine.add(MAX_SOLR_MEM_MB_PAR);
+                commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
+                commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
+                commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
+                commandLine.add("-jar"); //NON-NLS
+                commandLine.add("start.jar"); //NON-NLS
                 
-                StringBuilder cmdSb = new StringBuilder();
-                for (int i = 0; i<SOLR_START_CMD.length; ++i ) {
-                    cmdSb.append(SOLR_START_CMD[i]).append(" ");
-                }
+                ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine); 
+                solrProcessBuilder.directory(solrFolder);
+
+                // Redirect stdout and stderr to files to prevent blocking.
+                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout");
+                solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
                 
-                logger.log(Level.INFO, "Starting Solr using: " + cmdSb.toString()); //NON-NLS
-                curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
+                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr");
+                solrProcessBuilder.redirectError(solrStderrPath.toFile());
+
+                logger.log(Level.INFO, "Starting Solr using: " + solrProcessBuilder.command()); //NON-NLS
+                curSolrProcess = solrProcessBuilder.start();
                 logger.log(Level.INFO, "Finished starting Solr"); //NON-NLS
 
                 try {
@@ -400,11 +405,6 @@ public class Server {
                 } catch (InterruptedException ex) {
                     logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
                 }
-                // Handle output to prevent process from blocking
-
-                errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr"); //NON-NLS
-                errorRedirectThread.start();
-
                 final List<Long> pids = this.getSolrPIDs();
                 logger.log(Level.INFO, "New Solr process PID: " + pids); //NON-NLS
             } catch (SecurityException ex) {
@@ -931,6 +931,7 @@ public class Server {
             createCore.setDataDir(dataDir.getAbsolutePath());
             createCore.setInstanceDir(instanceDir);
             createCore.setCoreName(coreName);
+            createCore.setConfigSet("AutopsyConfig");
 
             this.solrServer.request(createCore);
 
