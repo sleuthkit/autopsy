@@ -1263,16 +1263,13 @@ class Logs(object):
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
                 log = codecs.open(make_path(logs_path, file), "r", "utf_8")
-                for line in log:
-                    line = line.replace(rep_path, "test_data")
-                    if line.startswith("Exception"):
-                        common_log.write(file +": " +  line)
-                    elif line.startswith("Error"):
-                        common_log.write(file +": " +  line)
-                    elif line.startswith("SEVERE"):
-                        common_log.write(file +":" +  line)
-                    else:
-                        warning_log.write(file +": " +  line)
+                try:
+                    for line in log:
+                        line = line.replace(rep_path, "test_data")
+                        if line.startswith("SEVERE"):
+                            common_log.write(file +": " +  line)
+                except UnicodeDecodeError as e:
+                    pass
                 log.close()
             common_log.write("\n")
             common_log.close()
