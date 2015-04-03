@@ -19,7 +19,7 @@
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
         <file name="org-sleuthkit-autopsy-corecomponents-AutopsyOptionsPanelController.instance">
-            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox.png"/>
+            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox32.png"/>
             <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
             <attr name="keywordsCategory" stringvalue="General"/>
             <attr name="position" intvalue="1"/>

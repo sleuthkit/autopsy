@@ -33,8 +33,9 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
@@ -192,9 +193,13 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        CaseType caseType = getComponent().getCaseType();
         settings.putProperty("caseName", getComponent().getCaseName()); //NON-NLS
         settings.putProperty("caseParentDir", getComponent().getCaseParentDir()); //NON-NLS
         settings.putProperty("createdDirectory", createdDirectory); //NON-NLS
+        settings.putProperty("caseType", caseType.ordinal()); //NON-NLS
+        UserPreferences.setNewCaseType(caseType.ordinal());
+       
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
