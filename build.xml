@@ -69,9 +69,17 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-         
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
+        <!-- Copy the Autopsy documentation to the docs folder if user-docs exist -->
+        <if>
+            <available file="${basedir}/docs/doxygen-user/user-docs" type="dir"/>
+            <then>
+                <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
+                    <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
+                </copy>
+            </then>
+        </if>
         
         <antcall target="copyLibsToZip"/>
         
@@ -229,7 +237,7 @@
     
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
-    <target name="build-installer" depends="getProps, build-zip" description="Builds Autopsy installer.">
+    <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
         <antcall target="build-installer-${os.family}" />

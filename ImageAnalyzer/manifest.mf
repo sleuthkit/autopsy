@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.imageanalyzer
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/imageanalyzer/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-

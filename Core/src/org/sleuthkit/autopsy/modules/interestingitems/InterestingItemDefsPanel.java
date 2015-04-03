@@ -29,6 +29,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
@@ -255,6 +256,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
+        // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
+        // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
+        if(this.filesSets.containsKey(panel.getFilesSetName()) && selectedSet == null) {
+            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                                                                "InterestingItemDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
+                                                                panel.getFilesSetName()));
+            return;
+        }
+
         if (option == JOptionPane.OK_OPTION) {
             Map<String, FilesSet.Rule> rules = new HashMap<>();
             if (selectedSet != null) {
@@ -303,10 +313,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Remove the "old" rule definition and add the new/edited 
             // definition.
             if (selectedRule != null) {
-                rules.remove(selectedRule.getName());
+                rules.remove(selectedRule.getUuid());
             }
             FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameFilter(), panel.getMetaTypeFilter(), panel.getPathFilter());
-            rules.put(newRule.getName(), newRule);
+            rules.put(newRule.getUuid(), newRule);
 
             // Add the new/edited files set definition, replacing any previous 
             // definition with the same name and refreshing the display.
@@ -725,7 +735,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSet oldSet = this.setsList.getSelectedValue();
         Map<String, FilesSet.Rule> rules = new HashMap<>(oldSet.getRules());
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
-        rules.remove(selectedRule.getName());
+        rules.remove(selectedRule.getUuid());
         this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 

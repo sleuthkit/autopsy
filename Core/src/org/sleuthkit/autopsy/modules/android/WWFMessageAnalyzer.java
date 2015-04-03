@@ -29,11 +29,13 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,11 +47,10 @@ class WWFMessageAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(WWFMessageAnalyzer.class.getName());
 
-    public static void findWWFMessages() {
+    public static void findWWFMessages(Content dataSource, FileManager fileManager) {
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("name ='WordsFramework' "); //NON-NLS //get exact file names
+            absFiles = fileManager.findFiles(dataSource, "WordsFramework"); //NON-NLS
 
             for (AbstractFile abstractFile : absFiles) {
                 try {

@@ -28,6 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -228,40 +229,33 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
     @SuppressWarnings("deprecation")
     private static String getHashSetHitsForFile(AbstractFile content) {
-        ResultSet rs = null;
         String strList = "";
         SleuthkitCase skCase = content.getSleuthkitCase();
         long objId = content.getId();
         
-        try {
-            int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+        int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+        int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
             
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                    + "attribute_type_id=" + setNameId //NON-NLS
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
-                    + " AND blackboard_artifacts.obj_id=" + objId; //NON-NLS
-            rs = skCase.runQuery(query);
+        String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                + "attribute_type_id=" + setNameId //NON-NLS
+                + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                + " AND blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
+                + " AND blackboard_artifacts.obj_id=" + objId; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
             int i = 0;
-            while (rs.next()) {
+            while (resultSet.next()) {
                 if (i++ > 0) {
                     strList += ", ";
                 }
-                strList += rs.getString("value_text"); //NON-NLS
+                strList += resultSet.getString("value_text"); //NON-NLS
             }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                   logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex); //NON-NLS
-                }
-            }
+        } catch (TskCoreException | SQLException ex) {
+            logger.log(Level.WARNING, "Error getting hashset hits: ", ex); //NON-NLS
         }
+        
         return strList;
     }    
     

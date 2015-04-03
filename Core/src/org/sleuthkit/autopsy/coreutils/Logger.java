@@ -18,15 +18,14 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
 import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.SimpleFormatter;
-import org.sleuthkit.autopsy.casemodule.Case;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.logging.LogRecord;
 
 /**
  * Autopsy specialization of the Java Logger class with custom file handlers.
@@ -38,48 +37,85 @@ public final class Logger extends java.util.logging.Logger {
     private static final int LOG_FILE_COUNT = 10;
     private static final String LOG_WITHOUT_STACK_TRACES = "autopsy.log"; //NON-NLS
     private static final String LOG_WITH_STACK_TRACES = "autopsy_traces.log"; //NON-NLS
-    private static final CaseChangeListener caseChangeListener = new CaseChangeListener();
     private static final Handler console = new java.util.logging.ConsoleHandler();
+    private static final Object fileHandlerLock = new Object();
     private static FileHandler userFriendlyLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITHOUT_STACK_TRACES);
     private static FileHandler developersLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITH_STACK_TRACES);
-
-    static {
-        Case.addPropertyChangeListener(caseChangeListener);
-    }
-
-    private static class CaseChangeListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent event) {
-            if (event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                // Write to logs in the Logs directory of the current case, or 
-                // to logs in the user directory when there is no case.
-                if (event.getNewValue() != null) {
-                    String logDirectoryPath = ((Case) event.getNewValue()).getLogDirectoryPath();
-                    if (!logDirectoryPath.isEmpty()) {
-                        userFriendlyLogFile.close();
-                        userFriendlyLogFile = createFileHandler(logDirectoryPath, LOG_WITHOUT_STACK_TRACES);
-                        developersLogFile.close();
-                        developersLogFile = createFileHandler(logDirectoryPath, LOG_WITH_STACK_TRACES);
-                    }
-                } else {
-                    userFriendlyLogFile.close();
-                    userFriendlyLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITHOUT_STACK_TRACES);
-                    developersLogFile.close();
-                    developersLogFile = createFileHandler(PlatformUtil.getLogDirectory(), LOG_WITH_STACK_TRACES);
-                }
-            }
-        }
-    }
 
     private static FileHandler createFileHandler(String logDirectory, String fileName) {
         try {
             FileHandler f = new FileHandler(logDirectory + File.separator + fileName, LOG_SIZE, LOG_FILE_COUNT);
             f.setEncoding(LOG_ENCODING);
-            f.setFormatter(new SimpleFormatter());
+            switch (fileName) {
+                case LOG_WITHOUT_STACK_TRACES:
+                    f.setFormatter(new Formatter() {
+                        @Override
+                        public String format(LogRecord record) {
+                            synchronized (fileHandlerLock) {
+                                return (new Date(record.getMillis())).toString() + " "
+                                        + record.getSourceClassName() + " "
+                                        + record.getSourceMethodName() + "\n"
+                                        + record.getLevel() + ": "
+                                        + this.formatMessage(record) + "\n";
+                            }
+                        }
+                    });
+                    break;
+                case LOG_WITH_STACK_TRACES:
+                    f.setFormatter(new Formatter() {
+                        @Override
+                        public String format(LogRecord record) {
+                            synchronized (fileHandlerLock) {
+                                if (record.getThrown() != null) {
+
+                                    StackTraceElement ele[] = record.getThrown().getStackTrace();
+                                    String StackTrace = "";
+                                    for (StackTraceElement ele1 : ele) {
+                                        StackTrace += "\t" + ele1.toString() + "\n";
+                                    }
+
+                                    return (new Timestamp(record.getMillis())).toString() + " "
+                                            + record.getSourceClassName() + " "
+                                            + record.getSourceMethodName() + "\n"
+                                            + record.getLevel() + ": "
+                                            + this.formatMessage(record) + "\n"
+                                            + record.getThrown().toString() + ": "
+                                            + StackTrace
+                                            + "\n";
+                                } else {
+                                    return (new Timestamp(record.getMillis())).toString() + " "
+                                            + record.getSourceClassName() + " "
+                                            + record.getSourceMethodName() + "\n"
+                                            + record.getLevel() + ": "
+                                            + this.formatMessage(record) + "\n";
+                                }
+                            }
+                        }
+                    });
+                    break;
+            }
             return f;
         } catch (IOException e) {
             throw new RuntimeException("Error initializing " + fileName + " file handler", e); //NON-NLS
+        }
+    }
+
+    /**
+     * Sets the log directory where the log files will be written.
+     *
+     * @param directoryPath The path to the desired log directory as a string.
+     */
+    public static void setLogDirectory(String directoryPath) {
+        if (null != directoryPath && !directoryPath.isEmpty()) {
+            File directory = new File(directoryPath);
+            if (directory.exists() && directory.canWrite()) {
+                synchronized (fileHandlerLock) {
+                    userFriendlyLogFile.close();
+                    userFriendlyLogFile = createFileHandler(directoryPath, LOG_WITHOUT_STACK_TRACES);
+                    developersLogFile.close();
+                    developersLogFile = createFileHandler(directoryPath, LOG_WITH_STACK_TRACES);
+                }
+            }
         }
     }
 
@@ -93,7 +129,7 @@ public final class Logger extends java.util.logging.Logger {
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name) {
-        return new Logger(java.util.logging.Logger.getLogger(name));
+        return new Logger(name, null);
     }
 
     /**
@@ -109,46 +145,18 @@ public final class Logger extends java.util.logging.Logger {
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name, String resourceBundleName) {
-        return new Logger(java.util.logging.Logger.getLogger(name, resourceBundleName));
+        return new Logger(name, resourceBundleName);
     }
 
-    private Logger(java.util.logging.Logger log) {
-        super(log.getName(), log.getResourceBundleName());
+    private Logger(String name, String resourceBundleName) {
+        super(name, resourceBundleName);
         if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
-            addHandler(console);
+            super.addHandler(console);
         }
-        setUseParentHandlers(false);
-        addHandler(userFriendlyLogFile);
-        addHandler(developersLogFile);
-    }
-
-    @Override
-    public void log(Level level, String message, Throwable thrown) {
-        logUserFriendlyOnly(level, message, thrown);
-        removeHandler(userFriendlyLogFile);
-        super.log(level, message, thrown);
-        addHandler(userFriendlyLogFile);
-    }
-
-    @Override
-    public void logp(Level level, String sourceClass, String sourceMethod, String message, Throwable thrown) {
-        logUserFriendlyOnly(level, message, thrown);
-        removeHandler(userFriendlyLogFile);
-        super.logp(level, sourceClass, sourceMethod, message, thrown);
-        addHandler(userFriendlyLogFile);
-    }
-
-
-    private void logUserFriendlyOnly(Level level, String message, Throwable thrown) {
-        removeHandler(developersLogFile);
-        super.log(level, "{0}\nException:  {1}", new Object[]{message, thrown.toString()}); //NON-NLS
-        addHandler(developersLogFile);
-    }
-
-    @Override
-    public void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
-        removeHandler(userFriendlyLogFile);
-        super.throwing(sourceClass, sourceMethod, thrown);
-        addHandler(userFriendlyLogFile);
+        synchronized (fileHandlerLock) {
+            super.setUseParentHandlers(false);
+            super.addHandler(userFriendlyLogFile);
+            super.addHandler(developersLogFile);
+        }
     }
 }

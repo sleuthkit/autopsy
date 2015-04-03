@@ -83,7 +83,7 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
 # TODO: Double check this purpose statement
 # The filename of the log to store error messages
-COMMON_LOG = "AutopsyErrors.txt"
+COMMON_LOG = "Exceptions.txt"
 
 Day = 0
 
@@ -157,6 +157,9 @@ class TestRunner(object):
             # Analyze the given image
             TestRunner._run_autopsy_ingest(test_data)
 
+            # Generate HTML report
+            Reports.write_html_foot(test_config.html_log)
+
             # Either copy the data or compare the data
             if test_config.args.rebuild:
                 TestRunner.rebuild(test_data)
@@ -167,8 +170,7 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
-        
-        Reports.write_html_foot(test_config.html_log)
+
        
         # This code was causing errors with paths, so its disabled 
         #if test_config.jenkins:
@@ -242,15 +244,11 @@ class TestRunner(object):
         print("DB diff passed: ", test_data.db_diff_passed)
         
         # run time test only for the specific jenkins test
-        if test_data.main_config.timing: 
-            if test_data.main_config.timing:
-                old_time_path = test_data.get_run_time_path()
-                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
-                test_data.run_time_passed = passed
+        if test_data.main_config.timing:
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed and
-            test_data.run_time_passed)
+            test_data.errors_diff_passed and test_data.db_diff_passed)
+        #    test_data.run_time_passed not considered for test_data.overall_passed
         # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
@@ -335,7 +333,7 @@ class TestRunner(object):
         tmpdir = make_path(gold_dir, test_data.image_name)
         dbinpth = test_data.get_db_path(DBType.OUTPUT)
         dboutpth = make_path(tmpdir, DB_FILENAME)
-        dataoutpth = make_path(tmpdir, test_data.image_name + "SortedData.txt")
+        dataoutpth = make_path(tmpdir, test_data.image_name + "BlackboardDump.txt")
         dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
         dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
         if not os.path.exists(test_config.img_gold):
@@ -347,8 +345,8 @@ class TestRunner(object):
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             shutil.copy(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"SortedErrors.txt")
-            shutil.copy(test_data.sorted_log, error_pth)
+            error_pth = make_path(tmpdir, test_data.image_name+"Exceptions.txt")
+            shutil.copy(test_data.common_log_path, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
             print(str(e))
@@ -365,6 +363,11 @@ class TestRunner(object):
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
             print(traceback.format_exc())
+        # Rebuild the Run time report
+        if(test_data.main_config.timing):
+            file = open(test_data.get_run_time_path(DBType.GOLD), "w")
+            file.writelines(test_data.total_ingest_time)
+            file.close()
         oldcwd = os.getcwd()
         zpdir = gold_dir
         os.chdir(zpdir)
@@ -448,7 +451,6 @@ class TestData(object):
         antlog_dir: a pathto_File, the antlog.txt file
         test_dbdump: a pathto_File, the database dump, IMAGENAMEDump.txt
         common_log_path: a pathto_File, the IMAGE_NAMECOMMON_LOG file
-        sorted_log: a pathto_File, the IMAGENAMESortedErrors.txt file
         reports_dir: a pathto_Dir, the AutopsyTestCase/Reports folder
         gold_data_dir: a pathto_Dir, the gold standard directory
         gold_archive: a pathto_File, the gold standard archive
@@ -497,7 +499,6 @@ class TestData(object):
         self.test_dbdump = make_path(self.output_path, self.image_name +
         "DBDump.txt")
         self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
-        self.sorted_log = make_local_path(self.output_path, self.image_name + "SortedErrors.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
         self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
@@ -568,21 +569,21 @@ class TestData(object):
             return make_path(html_path, os.listdir(html_path)[0])
 
     def get_sorted_data_path(self, file_type):
-        """Get the path to the SortedData file that corresponds to the given DBType.
+        """Get the path to the BlackboardDump file that corresponds to the given DBType.
 
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "SortedData.txt")
+        return self._get_path_to_file(file_type, "BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
-        """Get the path to the SortedErrors file that correspodns to the given
+        """Get the path to the Exceptions (SortedErrors) file that corresponds to the given
         DBType.
 
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "SortedErrors.txt")
+        return self._get_path_to_file(file_type, "Exceptions.txt")
 
     def get_db_dump_path(self, file_type):
         """Get the path to the DBDump file that corresponds to the given DBType.
@@ -592,10 +593,10 @@ class TestData(object):
         """
         return self._get_path_to_file(file_type, "DBDump.txt")
 
-    def get_run_time_path(self):
+    def get_run_time_path(self, file_type):
         """Get the path to the run time storage file."
         """
-        return os.path.join("..", "input")
+        return self._get_path_to_file(file_type, "Time.txt")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
@@ -712,9 +713,7 @@ class TestConfiguration(object):
             else:
                 self.jenkins = False
             if parsed_config.getElementsByTagName("timing"):
-                self.timing = True
-            else:
-                self.timing = False
+                self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -804,7 +803,12 @@ class TestResultsDiffer(object):
             output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
             passed = TestResultsDiffer._html_report_diff(test_data)
             test_data.html_report_passed = passed
-            
+
+            # Compare time outputs
+            if test_data.main_config.timing:
+                old_time_path = test_data.get_run_time_path(DBType.GOLD)
+                passed = TestResultsDiffer._run_time_diff(test_data, old_time_path)
+                test_data.run_time_passed = passed
 
             # Clean up tmp folder
             del_dir(test_data.gold_data_dir)
@@ -859,8 +863,7 @@ class TestResultsDiffer(object):
         defined in the official documentation).
 
         Args:
-            gold_report_path: a pathto_Dir, the gold HTML report directory
-            output_report_path: a pathto_Dir, the output HTML report directory
+            test_data TestData object which contains initialized report_paths.
 
         Returns:
             true, if the reports match, false otherwise.
@@ -901,12 +904,18 @@ class TestResultsDiffer(object):
             old_time_path: path to the log containing the run time from a previous test
         """
         # read in time
-        file = open(old_time_path + '/' + test_data.image + "_time.txt", "r")
+        file = open(old_time_path, "r")
         line = file.readline()
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
-        
+
         newtime = test_data.total_ingest_time
+        
+        # write newtime to the file inside the report dir.
+        file = open(test_data.get_run_time_path(DBType.OUTPUT), "w")
+        file.writelines(newtime)
+        file.close()
+        
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
         # run the test, 5% tolerance
@@ -1196,6 +1205,7 @@ class Reports(object):
 
     def _write_time(test_data):
         """Write out the time ingest took. For jenkins purposes.
+        Copies the _time.txt file the the input dir.
 
         Args:
             test_data: the TestData
@@ -1249,9 +1259,6 @@ class Logs(object):
             logs_path = test_data.logs_dir
             common_log = codecs.open(test_data.common_log_path, "w", "utf_8")
             warning_log = codecs.open(test_data.warning_log, "w", "utf_8")
-            common_log.write("--------------------------------------------------\n")
-            common_log.write(test_data.image_name + "\n")
-            common_log.write("--------------------------------------------------\n")
             rep_path = make_local_path(test_data.main_config.output_dir)
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
@@ -1269,8 +1276,8 @@ class Logs(object):
                 log.close()
             common_log.write("\n")
             common_log.close()
-            print(test_data.sorted_log)
-            srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.sorted_log]
+            print(test_data.common_log_path)
+            srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.common_log_path]
             subprocess.call(srtcmdlst)
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to generate the common log.")
@@ -1298,10 +1305,10 @@ class Logs(object):
             Errors.print_error("Error: Unable to open autopsy.log.0.")
             Errors.print_error(str(e) + "\n")
             logging.warning(traceback.format_exc())
-        # Start date must look like: "Jul 16, 2012 12:57:53 PM"
+        # Start date must look like: "Fri Mar 27 13:27:34 EDT 2015"
         # End date must look like: "Mon Jul 16 13:02:42 2012"
         # *** If logging time format ever changes this will break ***
-        start = datetime.datetime.strptime(test_data.start_date, "%b %d, %Y %I:%M:%S %p")
+        start = datetime.datetime.strptime(test_data.start_date, "%a %b %d %H:%M:%S %Z %Y")
         end = datetime.datetime.strptime(test_data.end_date, "%a %b %d %H:%M:%S %Y")
         test_data.total_test_time = str(end - start)
 
