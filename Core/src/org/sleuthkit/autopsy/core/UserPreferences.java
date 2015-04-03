@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.core;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo.DbType;
 
 /**
  * Provides convenient access to a Preferences node for user preferences with
@@ -34,7 +36,14 @@ public final class UserPreferences {
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
-        
+    public static final String EXTERNAL_DATABASE_HOSTNAME_OR_IP = "ExternalDatabaseHostnameOrIp"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_PORTNUMBER = "ExternalDatabasePortNumber"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_NAME = "ExternalDatabaseName"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
+    public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS    
+    public static final String NEW_CASE_TYPE = "NewCaseType"; //NON-NLS
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -70,21 +79,51 @@ public final class UserPreferences {
     public static void setHideKnownFilesInViewsTree(boolean value) {
         preferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
     }
-    
+
     public static boolean displayTimesInLocalTime() {
         return preferences.getBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, true);
     }
 
     public static void setDisplayTimesInLocalTime(boolean value) {
         preferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
-    }    
-    
+    }
+
     public static int numberOfFileIngestThreads() {
         return preferences.getInt(NUMBER_OF_FILE_INGEST_THREADS, 2);
     }
 
     public static void setNumberOfFileIngestThreads(int value) {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
-    }      
-    
+    }
+
+    public static CaseDbConnectionInfo getDatabaseConnectionInfo() {
+        DbType dbType;
+        try {
+            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "UNKOWN"));
+        } catch (Exception ex) {
+            dbType = DbType.UNKNOWN;
+        }
+        return new CaseDbConnectionInfo(
+                preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
+                preferences.get(EXTERNAL_DATABASE_PORTNUMBER, ""),
+                preferences.get(EXTERNAL_DATABASE_USER, ""),
+                preferences.get(EXTERNAL_DATABASE_PASSWORD, ""),
+                dbType);
+    }
+
+    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) {
+        preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
+        preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
+        preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
+        preferences.put(EXTERNAL_DATABASE_PASSWORD, connectionInfo.getPassword());
+        preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
+    }
+
+    public static int newCaseType() {
+        return preferences.getInt(NEW_CASE_TYPE, 0);
+    }
+
+    public static void setNewCaseType(int value) {
+        preferences.putInt(NEW_CASE_TYPE, value);
+    }
 }

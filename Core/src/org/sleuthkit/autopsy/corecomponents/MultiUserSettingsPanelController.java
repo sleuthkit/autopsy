@@ -29,17 +29,17 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_General",
-        iconBase = "org/sleuthkit/autopsy/corecomponents/checkbox32.png",
-        position = 1,
-        keywords = "#OptionsCategory_Keywords_General",
-        keywordsCategory = "General")
-public final class AutopsyOptionsPanelController extends OptionsPanelController {
+@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Multi_User_Settings",
+        iconBase = "org/sleuthkit/autopsy/images/User-Group-icon-green32.png",
+        position = 2,
+        keywords = "#OptionsCategory_Keywords_Multi_User_Options",
+        keywordsCategory = "Multi-user")
+public final class MultiUserSettingsPanelController extends OptionsPanelController {
 
-    private AutopsyOptionsPanel panel;
+    private MultiUserSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private static final Logger logger = Logger.getLogger(AutopsyOptionsPanelController.class.getName());
+    private static final Logger logger = Logger.getLogger(MultiUserSettingsPanelController.class.getName());
 
     @Override
     public void update() {
@@ -79,17 +79,25 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
+        if (pcs.getPropertyChangeListeners().length == 0) {
+            pcs.addPropertyChangeListener(l);
+        }
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
+        /**
+         * Note the NetBeans Framework does not appear to call this at all We
+         * are using NetBeans 7.3.1 Build 201306052037. Perhaps in a future
+         * version of the Framework this will be resolved, but for now, simply
+         * don't unregister anything and add one time only in the
+         * addPropertyChangeListener() method above.
+         */
     }
 
-    private AutopsyOptionsPanel getPanel() {
+    private MultiUserSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new AutopsyOptionsPanel(this);
+            panel = new MultiUserSettingsPanel(this);
         }
         return panel;
     }
