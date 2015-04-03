@@ -66,6 +66,7 @@ import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -359,6 +360,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     items.add(new DataSources());
                     items.add(new Views(tskCase));
                     items.add(new Results(tskCase));
+                    items.add(new Tags());
                     items.add(new Reports());
                     contentChildren = new RootContentChildren(items);
                     Node root = new AbstractNode(contentChildren) {
