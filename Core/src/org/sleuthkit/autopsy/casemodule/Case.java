@@ -198,7 +198,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.db = db;
         this.services = new Services(db);
         db.addErrorObserver(this);
-        messenger = new Messenger(this.name);
+//        messenger = new Messenger(this.name);
     }
 
     /**
@@ -364,7 +364,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-        newCase.messenger.start();
+//        newCase.messenger.start();
 
         changeCase(newCase);
     }
@@ -420,7 +420,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-            openedCase.messenger.start();
+//            openedCase.messenger.start();
         
             changeCase(openedCase);
 
@@ -570,7 +570,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
 
         try {
-            messenger.stop();
+//            messenger.stop();
             services.close();
             this.xmlcm.close(); // close the xmlcm
             this.db.close();
