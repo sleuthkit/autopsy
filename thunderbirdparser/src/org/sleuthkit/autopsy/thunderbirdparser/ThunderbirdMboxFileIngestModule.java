@@ -78,7 +78,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        if (abstractFile.isVirtual()) {
+        if ((abstractFile.isFile() == false)) {
             return ProcessResult.OK;
         }
 

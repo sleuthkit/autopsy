@@ -80,6 +80,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
         }
+        
+        if (content.isFile() == false) {
+            return ProcessResult.OK;
+        }
 
         // skip known
         if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {

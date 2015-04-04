@@ -104,7 +104,8 @@ class SampleFileIngestModule implements FileIngestModule {
 
         // Skip anything other than actual file system files.
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (file.isFile() == false)) {
             return IngestModule.ProcessResult.OK;
         }
 
