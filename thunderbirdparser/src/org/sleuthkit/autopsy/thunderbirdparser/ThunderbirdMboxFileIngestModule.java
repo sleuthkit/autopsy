@@ -145,7 +145,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             // encrypted pst: Add encrypted file artifact
             try {
                 BlackboardArtifact generalInfo = abstractFile.getGenInfoArtifact();
-                generalInfo.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
+                generalInfo.addAttribute(new BlackboardAttribute(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
                         EmailParserModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
             } catch (TskCoreException ex) {
