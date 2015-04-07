@@ -921,12 +921,15 @@ class TestResultsDiffer(object):
         # run the test, 5% tolerance
         if oldtime * 1.05 >=  newtime: # new run was faster
             return True
-        else: # old run was faster
+        else:  # old run was faster
             print("The last run took: " + str(oldtime))
             print("This run took: " + str(newtime))
-            diff = ((newtime / oldtime) * 100) - 100
-            diff = str(diff)[:str(diff).find('.') + 3]
-            print("This run took " + diff + "% longer to run than the last run.") 
+            try:  # if gold standard takes 0ms, handle the ZeroDivisionError
+                diff = ((newtime / oldtime) * 100) - 100
+                diff = str(diff)[:str(diff).find('.') + 3]
+                print("This run took " + diff + "% longer to run than the gold standard.")
+            except ZeroDivisionError as e:
+                print("This run took " + newtime + "ms more than the gold standard.")
             return False
 
 
