@@ -909,6 +909,11 @@ class TestResultsDiffer(object):
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
 
+        # If we don't have a previous run time bail out here to
+        # avoid dividing by zero below.
+        if oldtime == 0:
+            return True
+            
         newtime = test_data.total_ingest_time
         
         # write newtime to the file inside the report dir.
