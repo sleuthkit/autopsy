@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,8 +50,8 @@ import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
 import org.netbeans.jemmy.Timeouts;
 import org.netbeans.jemmy.operators.JButtonOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
-import org.netbeans.jemmy.operators.JComboBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
 import org.netbeans.jemmy.operators.JLabelOperator;
@@ -81,7 +80,6 @@ public class RegressionTest extends TestCase {
 
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
     long start;
-    private static final File img_path = new File(System.getProperty("img_path"));
 
     /**
      * Constructor required by JUnit
@@ -98,34 +96,17 @@ public class RegressionTest extends TestCase {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(RegressionTest.class).
                 clusters(".*").
                 enableModules(".*");
-        if (img_path.isFile()) {
-            conf = conf.addTest("testNewCaseWizardOpen",
-                    "testNewCaseWizard",
-                    "testStartAddImageFileDataSource",
-                    "testConfigureIngest1",
-                    "testConfigureHash",
-                    "testConfigureIngest2",
-                    "testConfigureSearch",
-                    "testAddSourceWizard1",
-                    "testIngest",
-                    "testGenerateReportToolbar",
-                    "testGenerateReportButton");
-        }
-
-        if (img_path.isDirectory()) {
-            conf = conf.addTest("testNewCaseWizardOpen",
-                    "testNewCaseWizard",
-                    "testStartAddLogicalFilesDataSource",
-                    "testConfigureIngest1",
-                    "testConfigureHash",
-                    "testConfigureIngest2",
-                    "testConfigureSearch",
-                    "testAddSourceWizard1",
-                    "testIngest",
-                    "testGenerateReportToolbar",
-                    "testGenerateReportButton");
-        }
-
+        conf = conf.addTest("testNewCaseWizardOpen",
+                "testNewCaseWizard",
+                "testStartAddDataSource",
+                "testConfigureIngest1",
+                "testConfigureHash",
+                "testConfigureIngest2",
+                "testConfigureSearch",
+                "testAddSourceWizard1",
+                "testIngest",
+                "testGenerateReportToolbar",
+                "testGenerateReportButton");
         return NbModuleSuite.create(conf);
 
 
@@ -171,7 +152,7 @@ public class RegressionTest extends TestCase {
         wo.btFinish().clickMouse();
     }
 
-    public void testStartAddImageFileDataSource() {
+    public void testStartAddDataSource() {
         logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Data");
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
@@ -181,22 +162,6 @@ public class RegressionTest extends TestCase {
         }
         String imageDir = img_path;
         ((JTextField) jtfo0.getSource()).setText(imageDir);
-        wo.btNext().clickMouse();
-    }
-
-    public void testStartAddLogicalFilesDataSource() {
-        logger.info("Starting Add Logical Files process");
-        WizardOperator wo = new WizardOperator("Add Data");
-        JComboBoxOperator comboBoxOperator = new JComboBoxOperator(wo);
-        // select the item indexed 2 (Logical Files) from the drop-down list.
-        comboBoxOperator.selectItem(2);
-        JButtonOperator addButtonOperator = new JButtonOperator(wo, "Add");
-        addButtonOperator.pushNoBlock();
-        JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
-        fileChooserOperator.setCurrentDirectory(img_path);
-        // set the current directory one level above the directory containing logicalFileSet folder.
-        fileChooserOperator.goUpLevel();
-        fileChooserOperator.chooseFile(img_path.getName());
         wo.btNext().clickMouse();
     }
 
