@@ -91,7 +91,7 @@ class TskDbDiff(object):
             self._dump_diff = TskDbDiff._get_tmp_file("DBDump-Diff", ".txt")
         else:
             self._bb_dump = os.path.join(self.output_dir, "BlackboardDump.txt")
-            self._bb_dump_diff = os.path.join(self.output_dir, "BlackboardDumpDiff.txt")
+            self._bb_dump_diff = os.path.join(self.output_dir, "BlackboardDump-Diff.txt")
             self._dump = os.path.join(self.output_dir, "DBDump.txt")
             self._dump_diff = os.path.join(self.output_dir, "DBDump-Diff.txt")
 

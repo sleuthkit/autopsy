@@ -247,8 +247,8 @@ class TestRunner(object):
         if test_data.main_config.timing:
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed and
-            test_data.run_time_passed)
+            test_data.errors_diff_passed and test_data.db_diff_passed)
+        #    test_data.run_time_passed not considered for test_data.overall_passed
         # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
@@ -909,6 +909,11 @@ class TestResultsDiffer(object):
         oldtime = int(line[:line.find("ms")].replace(',', ''))
         file.close()
 
+        # If we don't have a previous run time bail out here to
+        # avoid dividing by zero below.
+        if oldtime == 0:
+            return True
+            
         newtime = test_data.total_ingest_time
         
         # write newtime to the file inside the report dir.
@@ -1263,16 +1268,13 @@ class Logs(object):
             rep_path = rep_path.replace("\\\\", "\\")
             for file in os.listdir(logs_path):
                 log = codecs.open(make_path(logs_path, file), "r", "utf_8")
-                for line in log:
-                    line = line.replace(rep_path, "test_data")
-                    if line.startswith("Exception"):
-                        common_log.write(file +": " +  line)
-                    elif line.startswith("Error"):
-                        common_log.write(file +": " +  line)
-                    elif line.startswith("SEVERE"):
-                        common_log.write(file +":" +  line)
-                    else:
-                        warning_log.write(file +": " +  line)
+                try:
+                    for line in log:
+                        line = line.replace(rep_path, "test_data")
+                        if line.startswith("SEVERE"):
+                            common_log.write(file +": " +  line)
+                except UnicodeDecodeError as e:
+                    pass
                 log.close()
             common_log.write("\n")
             common_log.close()
