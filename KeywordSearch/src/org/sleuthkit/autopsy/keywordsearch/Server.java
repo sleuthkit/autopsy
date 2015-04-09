@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 
@@ -148,7 +149,6 @@ public class Server {
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
-    // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT"; //NON-NLS
     public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java"; //NON-NLS
@@ -159,11 +159,14 @@ public class Server {
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
+    static final String PROPERTIES_SOLR_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     private static final String KEY = "jjk#09s"; //NON-NLS
+    static final String DEFAULT_SOLR_SERVER_HOST = "localhost"; //NON-NLS
     static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
+    private String solrServerHost;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public enum CORE_EVT_STATES {
@@ -185,7 +188,7 @@ public class Server {
     Server() {
         initSettings();
 
-        this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr"; //NON-NLS
+        this.solrUrl = "http://" + solrServerHost + ":" + currentSolrServerPort + "/solr"; //NON-NLS
         this.solrServer = new HttpSolrServer(solrUrl);
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
@@ -196,6 +199,11 @@ public class Server {
     }
 
     private void initSettings() {
+        solrServerHost = ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_SOLR_SERVER_HOST);
+        if (solrServerHost == null || solrServerHost.isEmpty()) {
+            solrServerHost = DEFAULT_SOLR_SERVER_HOST;
+        }
+        
         if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)) {
             try {
                 currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
@@ -328,7 +336,7 @@ public class Server {
         List<Long> pids = new ArrayList<Long>();
 
         //NOTE: these needs to be in sync with process start string in start()
-        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.7.eq=start.jar"; //NON-NLS
+        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.6.eq=start.jar"; //NON-NLS
 
         long[] pidsArr = PlatformUtil.getJavaPIDs(pidsQuery);
         if (pidsArr != null) {
@@ -358,7 +366,55 @@ public class Server {
      * successful.
      */
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
+        
+        if (isSolrLocal()) {
+            startLocalServer();
+        }
+        else {
+            try {
+                SolrPingResponse response = solrServer.ping();
+            }
+            catch (SolrServerException | IOException ex) {
+                throw new KeywordSearchModuleException("Failed to connect to Solr server at: " + solrUrl, ex);
+            }
+        }
+    }
+
+    private void startLocalServer() throws KeywordSearchModuleException, SolrServerNoPortException {
+        
+        if (isRunning()) {
+            // If a Solr server is running we stop it.
+            stop();
+        }
+        
+        if (!isPortAvailable(currentSolrServerPort)){
+            // There is something already listening on our port. Let's see if
+            // this is from an earlier run that didn't successfully shut down
+            // and if so kill it.
+            final List<Long> pids = this.getSolrPIDs();
+            
+            // If the culprit listening on the port is not a Solr process
+            // we refuse to start.
+            if (pids.isEmpty()) {
+                throw new SolrServerNoPortException(currentSolrServerPort);
+            }
+            
+            // Ok, we've tried to stop it above but there still appears to be
+            // a Solr process listening on our port so we forcefully kill it.
+            killSolr();
+            
+            // If either of the ports are still in use after our attempt to kill 
+            // previously running processes we give up and throw an exception.
+            if (!isPortAvailable(currentSolrServerPort)) {
+                throw new SolrServerNoPortException(currentSolrServerPort);                
+            }
+            if (!isPortAvailable(currentSolrStopPort)) {
+                throw new SolrServerNoPortException(currentSolrStopPort);                
+            }
+        }
+        
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr"); //NON-NLS
             try {
@@ -405,6 +461,7 @@ public class Server {
                 } catch (InterruptedException ex) {
                     logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
                 }
+                
                 final List<Long> pids = this.getSolrPIDs();
                 logger.log(Level.INFO, "New Solr process PID: " + pids); //NON-NLS
             } catch (SecurityException ex) {
@@ -416,12 +473,9 @@ public class Server {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
             }
-        } else {
-            logger.log(Level.SEVERE, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!"); //NON-NLS
-            throw new SolrServerNoPortException(currentSolrServerPort);
-        }
+        }       
     }
-
+    
     /**
      * Checks to see if a specific port is available.
      *
@@ -452,6 +506,14 @@ public class Server {
     }
 
     /**
+     * 
+     * @return true if Solr is running on the local machine, false otherwise. 
+     */
+    private boolean isSolrLocal() {
+        return solrServerHost.equalsIgnoreCase("localhost");
+    }
+    
+    /**
      * Changes the current solr server port. Only call this after available.
      *
      * @param port Port to change to
@@ -477,6 +539,11 @@ public class Server {
      * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
+        
+        // For a remote Solr server this is a no-op.
+        if (!isSolrLocal())
+            return;
+        
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
             //try graceful shutdown
@@ -525,10 +592,18 @@ public class Server {
      */
     synchronized boolean isRunning() throws KeywordSearchModuleException {
         try {
+            
+            if (isSolrLocal()) {
+                if (isPortAvailable(currentSolrServerPort)) {
+                    return false;
+                }
+                
+                if (curSolrProcess != null && !curSolrProcess.isAlive()) {
+                    return false;
+                }
+            }
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
-
-            //TODO check if port avail and return false if it is
 
             //TODO handle timeout in cases when some other type of server on that port
             CoreAdminRequest.getStatus(null, solrServer);
@@ -642,7 +717,8 @@ public class Server {
      */
     private synchronized Core openCore(Case theCase) throws KeywordSearchModuleException {
         String dataDir = getIndexDirPath(theCase);
-        return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
+        String coreName = theCase.getTextIndexName();
+        return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir));
     }
 
     /**
@@ -929,7 +1005,9 @@ public class Server {
 
             CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
             createCore.setDataDir(dataDir.getAbsolutePath());
-            createCore.setInstanceDir(instanceDir);
+            if (isSolrLocal()) {
+                createCore.setInstanceDir(instanceDir);
+            }
             createCore.setCoreName(coreName);
             createCore.setConfigSet("AutopsyConfig");
 
@@ -939,7 +1017,7 @@ public class Server {
 
             return newCore;
 
-        } catch (SolrServerException ex) {
+        } catch (SolrServerException | SolrException ex) {
             throw new KeywordSearchModuleException(
                     NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         } catch (IOException ex) {

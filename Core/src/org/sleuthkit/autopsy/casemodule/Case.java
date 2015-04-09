@@ -337,16 +337,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        Date date = new Date();
+        String indexName = caseName + "_" + dateFormat.format(date);
+
         String dbName = null;
-        // figure out the database name
+        
+        // figure out the database name and index name for text extraction
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-            dbName = caseName + "_" + dateFormat.format(new Date());
+            dbName = caseName + "_" + dateFormat.format(date);
         }
 
-        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName); // create a new XML config file
+        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName); // create a new XML config file
         xmlcm.writeFile();
 
         SleuthkitCase db = null;
@@ -835,6 +839,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return "";
         } else {
             return xmlcm.getCreatedDate();
+        }
+    }
+
+    /**
+     * Get the name of the index where extracted text is stored for the case.
+     *
+     * @return Index name.
+     */
+    public String getTextIndexName() {
+        if (xmlcm == null) {
+            return "";
+        } else {
+            return xmlcm.getTextIndexName();
         }
     }
 
