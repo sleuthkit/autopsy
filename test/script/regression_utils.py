@@ -38,14 +38,14 @@ def wgetcwd():
 def file_exists(file):
 	try:
 		if os.path.exists(file):
-			return os.path.isfile(file)
+			return os.path.exists(file) and os.path.isfile(file)
 	except:
 		return False
 
 # Verifies a directory's existance
 def dir_exists(dir):
 	try:
-		return os.path.exists(dir)
+		return os.path.exists(dir) and os.path.isdir(dir)
 	except:
 		return False
 
