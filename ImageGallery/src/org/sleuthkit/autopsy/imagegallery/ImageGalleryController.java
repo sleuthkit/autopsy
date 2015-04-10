@@ -501,7 +501,7 @@ public final class ImageGalleryController {
                 try {
                     // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
-
+                    
                     if (it.cancelled == false) {
                         it.run();
                     }
@@ -615,8 +615,16 @@ public final class ImageGalleryController {
          */
         @Override
         public void run() {
-            DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
-            db.updateFile(drawableFile);
+            try{
+                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
+                db.updateFile(drawableFile);
+            } catch (NullPointerException ex){
+                // This is one of the places where we get an error if the case is closed during processing.
+                // We don't want to print out a ton of exceptions if this is the case.
+                if(Case.isCaseOpen()){
+                    Logger.getLogger(UpdateFileTask.class.getName()).log(Level.SEVERE, "Error in UpdateFile task");
+                }
+            }    
         }
     }
 
@@ -634,7 +642,16 @@ public final class ImageGalleryController {
          */
         @Override
         public void run() {
-            db.removeFile(getFile().getId());
+            try{
+              db.removeFile(getFile().getId());
+            } catch (NullPointerException ex){
+                // This is one of the places where we get an error if the case is closed during processing.
+                // We don't want to print out a ton of exceptions if this is the case.
+                if(Case.isCaseOpen()){
+                    Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Case was closed out from underneath RemoveFile task");
+                }
+            }
+            
         }
     }
 
@@ -799,7 +816,9 @@ public final class ImageGalleryController {
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
+                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath prepopulating database");
+            } catch (NullPointerException ex) {
+                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath prepopulating database");
             }
 
             progressHandle.finish();

@@ -613,8 +613,17 @@ public class DrawableDB {
             tr.addUpdatedFile(f.getId());
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
-        } finally {
+            // This is one of the places where we get an error if the case is closed during processing,
+            // which doesn't need to be reported.
+            if(Case.isCaseOpen()){
+                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
+            }
+        } catch (NullPointerException ex) {
+            if(Case.isCaseOpen()){
+                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
+            }
+        } 
+        finally {
             dbWriteUnlock();
         }
     }
@@ -960,7 +969,7 @@ public class DrawableDB {
             return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id),
                     areFilesAnalyzed(Collections.singleton(id)));
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id, ex);
+            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id);
             return null;
         }
     }
@@ -1168,7 +1177,12 @@ public class DrawableDB {
                         fireRemovedFiles(removedFiles);
                     }
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error commiting drawable.db.", ex);
+                    if(Case.isCaseOpen()){
+                        LOGGER.log(Level.SEVERE, "Error commiting drawable.db.", ex);
+                    }
+                    else{
+                        LOGGER.log(Level.WARNING, "Error commiting drawable.db - case is closed.");
+                    }
                     rollback();
                 }
             }
