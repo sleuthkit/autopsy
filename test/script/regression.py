@@ -743,11 +743,11 @@ class TestConfiguration(object):
             self.build_path = build_path
 
     def _init_imgs(self, parsed_config):
-        """Initialize the list of images to run tests on."""
+        """Initialize the list of images to run tests on. Logical file set also included."""
         for element in parsed_config.getElementsByTagName("image"):
             value = element.getAttribute("value").encode().decode("utf_8")
             print ("Image in Config File: " + value)
-            if file_exists(value):
+            if file_exists(value) or dir_exists(value):
                 self.images.append(value)
             else:
                 msg = "File: " + value + " doesn't exist"
@@ -845,7 +845,7 @@ class TestResultsDiffer(object):
             diff_path = os.path.splitext(os.path.basename(output_file))[0]
             diff_path += "-Diff.txt"
             diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", output_file, gold_file]
+            dffcmdlst = ["diff --side-by-side", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             Errors.add_errors_out(diff_path)
             return False
@@ -871,7 +871,7 @@ class TestResultsDiffer(object):
         gold_report_path = test_data.get_html_report_path(DBType.GOLD)
         output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
         try:
-            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--side-by-side', '--ignore-matching-lines',
                                       'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
                                       '\|Examiner:', gold_report_path, output_report_path]))
             print_report("", "REPORT COMPARISON", "The test reports matched the gold reports")
