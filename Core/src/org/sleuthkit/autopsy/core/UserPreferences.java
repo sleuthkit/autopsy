@@ -22,7 +22,8 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo.DbType;
+import org.sleuthkit.datamodel.TskData.DbType;
+
 
 /**
  * Provides convenient access to a Preferences node for user preferences with

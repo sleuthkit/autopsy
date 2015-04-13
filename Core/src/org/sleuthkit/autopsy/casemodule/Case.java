@@ -355,7 +355,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 db = SleuthkitCase.newCase(dbName);
             }
             else if (caseType == CaseType.MULTI_USER_CASE) {
-                db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo());
+                db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
@@ -407,7 +407,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                             JOptionPane.INFORMATION_MESSAGE);
                 }
             } else {
-                db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), UserPreferences.getDatabaseConnectionInfo());
+                db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 if (null != db.getBackupDatabasePath()) {
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
@@ -433,7 +433,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION), ex);
             } else {
-                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg"), ex);
+                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg")+". "+ex.getMessage(), ex);
             }
         }
     }
