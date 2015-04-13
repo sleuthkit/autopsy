@@ -845,7 +845,7 @@ class TestResultsDiffer(object):
             diff_path = os.path.splitext(os.path.basename(output_file))[0]
             diff_path += "-Diff.txt"
             diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", "--side-by-side", output_file, gold_file]
+            dffcmdlst = ["diff --side-by-side", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             Errors.add_errors_out(diff_path)
             return False
