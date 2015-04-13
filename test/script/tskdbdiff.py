@@ -139,7 +139,7 @@ class TskDbDiff(object):
 
         # If they are different, invoke 'diff'
         diff_file = codecs.open(diff_path, "wb", "utf_8")
-        dffcmdlst = ["diff", "--side-by-side", gold_file, output_file]
+        dffcmdlst = ["diff", gold_file, output_file]
         subprocess.call(dffcmdlst, stdout = diff_file)
         return False
 
