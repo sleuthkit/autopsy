@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.net.URISyntaxException;
+import org.sleuthkit.autopsy.core.messenger.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
@@ -43,6 +45,10 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS    
     public static final String NEW_CASE_TYPE = "NewCaseType"; //NON-NLS
+    private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
+    private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
+    private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
+    private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -126,4 +132,33 @@ public final class UserPreferences {
     public static void setNewCaseType(int value) {
         preferences.putInt(NEW_CASE_TYPE, value);
     }
+
+    /**
+     * Persists message service connection info.
+     *
+     * @param info An object encapsulating the message service info.
+     */
+    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
+        preferences.put(MESSAGE_SERVICE_USER, info.getPassword());
+        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getUserName());
+        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
+        preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
+    }
+
+    /**
+     * Reads persisted message service connection info.
+     *
+     * @return An object encapsulating the message service info.
+     * @throws NumberFormatException if the persisted port is not a valid
+     * integer.
+     * @throws URISyntaxException if the persisted connection info is not for a
+     * valid TCP URI.
+     */
+    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws NumberFormatException, URISyntaxException {
+        return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
+                preferences.get(MESSAGE_SERVICE_PASSWORD, ""),
+                preferences.get(MESSAGE_SERVICE_HOST, ""),
+                Integer.parseInt(preferences.get(MESSAGE_SERVICE_PORT, "")));
+    }
+
 }
