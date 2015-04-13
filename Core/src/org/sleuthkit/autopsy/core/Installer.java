@@ -65,9 +65,9 @@ public class Installer extends ModuleInstall {
                 //We should update this if we officially switch to a new version of CRT/compiler
                 System.loadLibrary("msvcr100"); //NON-NLS
                 System.loadLibrary("msvcp100"); //NON-NLS
-                logger.log(Level.INFO, "MS CRT libraries loaded"); //NON-NLS
+                logger.log(Level.INFO, "MSVCR100 and MSVCP100 libraries loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading MSVCR100 and MSVCP100 libraries, ", e); //NON-NLS
             }
 
             try {
@@ -83,7 +83,35 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
             }
-         }
+
+            try {
+               System.loadLibrary("libeay32"); //NON-NLS
+               logger.log(Level.INFO, "LIBEAY32 library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading LIBEAY32 library, ", e); //NON-NLS
+            }
+
+            try {
+               System.loadLibrary("ssleay32"); //NON-NLS
+               logger.log(Level.INFO, "SSLEAY32 library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
+            }
+                                            
+            try {
+               System.loadLibrary("libintl-8"); //NON-NLS
+               logger.log(Level.INFO, "libintl-8 library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading libintl-8 library, ", e); //NON-NLS
+            }
+
+            try {
+               System.loadLibrary("libpq"); //NON-NLS
+               logger.log(Level.INFO, "LIBPQ library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+               logger.log(Level.SEVERE, "Error loading LIBPQ library, ", e); //NON-NLS
+            }
+        }
      }
     
     public Installer() {

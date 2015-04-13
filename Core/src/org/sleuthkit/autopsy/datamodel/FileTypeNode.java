@@ -151,7 +151,7 @@ public class FileTypeNode extends DisplayableItemNode {
             if (UserPreferences.hideKnownFilesInViewsTree()) {
                 query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
             }
-            query.append(" AND (0"); //NON-NLS
+            query.append(" AND (NULL"); //NON-NLS
             for (String s : filter.getFilter()) {
                 query.append(" OR name LIKE '%").append(s).append("'"); //NON-NLS
             }
