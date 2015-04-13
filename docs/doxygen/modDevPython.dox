@@ -51,7 +51,6 @@ from neededLib.mylib import neededClass
 
 Jython will look in the module's folder to resolve these libraries. 
 
-NOTE: Your code or third party modules may depend on core python modules that are not distributed with Jython.  You will need to copy those libraries into your folder as though they were external libraries. 
 
 \section mod_dev_py_distribute Distribution
 To distribute and share your Python module, ZIP up the folder and send it around.  Other users of the module should expand the ZIP file and drop the folder into their Autopsy Python folder. 
