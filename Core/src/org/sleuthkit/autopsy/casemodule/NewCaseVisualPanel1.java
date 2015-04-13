@@ -30,6 +30,7 @@ import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * The wizard panel for the new case creation.
@@ -48,7 +49,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        if (info.getDbType() == CaseDbConnectionInfo.DbType.UNKNOWN) {
+        if (info.getDbType() == DbType.UNKNOWN) {
             rbSingleUserCase.setSelected(true);
             rbSingleUserCase.setEnabled(false);
             rbSingleUserCase.setVisible(false);
