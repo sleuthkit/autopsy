@@ -84,6 +84,7 @@ import org.xml.sax.SAXException;
     private String examiner;        // examiner name
     private String schemaVersion = "1.0";
     private String autopsySavedVersion;
+    private String exportDir;
     // for error handling
     private JPanel caller;
     private String className = this.getClass().toString();
@@ -413,6 +414,25 @@ import org.xml.sax.SAXException;
         } else {
             return ""; // should throw error or exception
         }
+    }
+
+    protected void setExportDir(String path) throws CaseActionException {
+        // change this to change the xml file if needed
+        Element exportElement = (Element) getCaseElement().getElementsByTagName(EXPORT_FOLDER_NAME).item(0);
+        exportElement.setTextContent(path);
+        if(new File(path).isAbsolute()) {
+            exportElement.setAttribute(RELATIVE_NAME, RELATIVE_FALSE);
+        } else {
+            exportElement.setAttribute(RELATIVE_NAME, RELATIVE_TRUE);
+        }
+        doc.normalize();
+
+        // edit the modified data
+        String newDate = dateFormat.format(new Date());
+        Element rootEl = getRootElement();
+        rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
+
+        writeFile();
     }
 
     /**

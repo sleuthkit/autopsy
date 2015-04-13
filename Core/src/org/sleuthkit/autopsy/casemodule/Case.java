@@ -735,7 +735,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return xmlcm.getExportDir();
         }
     }
-    
+    /**
+     * Sets the full path to the export directory of this case
+     *
+     */
+    public void setExportDirectory(String path) {
+        try {
+            if (xmlcm != null) {
+                xmlcm.setExportDir(path);
+            }
+        } catch (CaseActionException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+
     /**
      * Gets the full path to the log directory for this case.
      * 
