@@ -43,6 +43,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
     NewCaseVisualPanel1(NewCaseWizardPanel1 wizPanel) {
         initComponents();
+        lbBadMultiUserSettings.setText("");
         this.wizPanel = wizPanel;
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
@@ -67,6 +68,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                     rbMultiUserCase.setSelected(true);
                 }
             } else {
+                lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
                 rbSingleUserCase.setSelected(true);
                 rbSingleUserCase.setEnabled(false);
                 rbMultiUserCase.setEnabled(false);
@@ -147,6 +149,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirTextField = new javax.swing.JTextField();
         rbSingleUserCase = new javax.swing.JRadioButton();
         rbMultiUserCase = new javax.swing.JRadioButton();
+        lbBadMultiUserSettings = new javax.swing.JLabel();
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
@@ -177,6 +180,10 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseTypeButtonGroup.add(rbMultiUserCase);
         org.openide.awt.Mnemonics.setLocalizedText(rbMultiUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbMultiUserCase.text")); // NOI18N
 
+        lbBadMultiUserSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(lbBadMultiUserSettings, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.lbBadMultiUserSettings.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -187,6 +194,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                     .addComponent(jLabel2)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(rbSingleUserCase)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(rbMultiUserCase)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(caseDirLabel)
@@ -198,11 +211,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                 .addComponent(caseNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(caseDirTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 380, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(caseDirBrowseButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(rbSingleUserCase)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(rbMultiUserCase)))
+                        .addComponent(caseDirBrowseButton)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -226,7 +235,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rbSingleUserCase)
-                    .addComponent(rbMultiUserCase))
+                    .addComponent(rbMultiUserCase)
+                    .addComponent(lbBadMultiUserSettings))
                 .addContainerGap(16, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -266,6 +276,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.ButtonGroup caseTypeButtonGroup;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel lbBadMultiUserSettings;
     private javax.swing.JRadioButton rbMultiUserCase;
     private javax.swing.JRadioButton rbSingleUserCase;
     // End of variables declaration//GEN-END:variables
