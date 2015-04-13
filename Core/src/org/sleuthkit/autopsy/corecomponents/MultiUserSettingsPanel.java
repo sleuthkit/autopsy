@@ -15,7 +15,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo.DbType;
+import org.sleuthkit.datamodel.TskData.DbType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.messenger.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
