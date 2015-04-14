@@ -140,8 +140,8 @@ public final class UserPreferences {
      * @param info An object encapsulating the message service info.
      */
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
-        preferences.put(MESSAGE_SERVICE_USER, info.getPassword());
-        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getUserName());
+        preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
+        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
         preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
         preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
     }
