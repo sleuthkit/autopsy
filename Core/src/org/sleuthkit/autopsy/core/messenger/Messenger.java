@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.core.messenger;
 
-import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import javax.jms.Connection;
 import javax.jms.Message;
@@ -36,12 +38,14 @@ public final class Messenger implements MessageListener {
     private static final String ALL_MESSAGE_SELECTOR = "All";
     private static final Logger logger = Logger.getLogger(Messenger.class.getName());
     private final String caseName;
+    private final HashMap<String, List<AutopsyEventMessageListener>> listeners;
     private Connection connection;
     private Session session;
     private MessageProducer producer;
 
     Messenger(String caseName) {
         this.caseName = caseName;
+        listeners = new HashMap<>();
     }
 
     void start(MessageServiceConnectionInfo info) {
@@ -68,7 +72,7 @@ public final class Messenger implements MessageListener {
         }
     }
 
-    public void send(PropertyChangeEvent event) {
+    public void send(AutopsyEvent event) {
         try {
             ObjectMessage message = session.createObjectMessage();
             message.setStringProperty("events", ALL_MESSAGE_SELECTOR);
@@ -79,13 +83,41 @@ public final class Messenger implements MessageListener {
         }
     }
 
+    public void addEventMessageListener(String eventName, AutopsyEventMessageListener listener) {
+        // RJCTODO: For Case, we will maintain a static listing of listeners, to be added and removed 
+        // as each new Case messenger comes on line. This will allow IngestManager to register once, statically.
+        // Case can also expose a send method(). Essnetially, this makes the Case class in control,
+        // without requiring this code to be stuffed into that package.
+        if (!listeners.containsKey(eventName)) {
+            listeners.put(eventName, new ArrayList<>());
+        }
+        List<AutopsyEventMessageListener> eventListeners = listeners.get(eventName);
+        eventListeners.add(listener);
+    }
+
+    public void removeEventMessageListener(String eventName, AutopsyEventMessageListener listener) {
+        // RJCTODO   
+    }
+
     @Override
     public void onMessage(Message message) {
         try {
             if (message instanceof ObjectMessage) {
-                ObjectMessage objMessage = (ObjectMessage) message;
-                String event = (String) objMessage.getObject();
-                logger.log(Level.INFO, "Received {0}", event);
+                ObjectMessage objectMessage = (ObjectMessage) message;
+                Object object = objectMessage.getObject();
+                if (object instanceof AutopsyEvent) {
+                    AutopsyEvent event = (AutopsyEvent) object;
+                    List<AutopsyEventMessageListener> eventListeners = listeners.getOrDefault(event.getPropertyName(), null);
+                    if (null != eventListeners) {
+                        for (AutopsyEventMessageListener listener : eventListeners) {
+                            try {
+                                listener.receive(event);
+                            } catch (Exception ex) {
+                                logger.log(Level.SEVERE, "Exception thrown by AutopsyEventMessageListener", ex);
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Publishing error", ex);
