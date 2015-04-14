@@ -848,6 +848,12 @@ class TestResultsDiffer(object):
             dffcmdlst = ["diff", output_file, gold_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             Errors.add_errors_out(diff_path)
+
+            # create file path for gold files inside report output folder. In case of diff, both gold and current run
+            # Exception.txt files are available in the report output folder. Prefix Gold- is added to the filename.
+            gold_file_in_output_dir = output_file[:output_file.rfind("\\")] + "Gold-" + output_file[output_file.rfind("\\")+1:]
+            shutil.copy(gold_file, gold_file_in_output_dir)
+
             return False
         else:
             return True
