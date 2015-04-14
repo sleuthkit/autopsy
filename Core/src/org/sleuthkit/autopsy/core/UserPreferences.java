@@ -142,8 +142,8 @@ public final class UserPreferences {
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
         preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
         preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
-        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
-        preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
+        preferences.put(MESSAGE_SERVICE_HOST, info.getURI().getHost());
+        preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getURI().getPort()));
     }
 
     /**

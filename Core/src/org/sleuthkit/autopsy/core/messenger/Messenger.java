@@ -29,11 +29,11 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 public final class Messenger implements MessageListener {
 
+    private static final String ALL_MESSAGE_SELECTOR = "All";
     private static final Logger logger = Logger.getLogger(Messenger.class.getName());
     private final String caseName;
     private Connection connection;
@@ -52,7 +52,7 @@ public final class Messenger implements MessageListener {
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic(caseName);
             producer = session.createProducer(topic);
-            MessageConsumer consumer = session.createConsumer(topic, "event = '" + Case.Events.DATA_SOURCE_ADDED.toString() + "'", true);
+            MessageConsumer consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
             consumer.setMessageListener(this);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Startup error", ex);
@@ -71,7 +71,7 @@ public final class Messenger implements MessageListener {
     public void send(PropertyChangeEvent event) {
         try {
             ObjectMessage message = session.createObjectMessage();
-            message.setStringProperty("event", Case.Events.DATA_SOURCE_ADDED.toString());
+            message.setStringProperty("events", ALL_MESSAGE_SELECTOR);
             message.setObject(event);
             producer.send(message);
         } catch (Exception ex) {

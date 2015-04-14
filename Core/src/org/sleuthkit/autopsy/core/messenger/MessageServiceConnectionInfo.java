@@ -36,7 +36,7 @@ public final class MessageServiceConnectionInfo {
      * Service (JMS) provider.
      *
      * @param userName The user name to use for a message service connection.
-     * @param password the password to use for a message service connection.
+     * @param password The password to use for a message service connection.
      * @param host The host to use for a message service connection. May be a
      * host name or an IP address.
      * @param port The port number to use for a message service connection.
@@ -65,32 +65,13 @@ public final class MessageServiceConnectionInfo {
     public String getPassword() {
         return password;
     }
-
-    /**
-     * Gets the host to use for a message service connection. May be a host name
-     * or an IP address.
-     *
-     * @return The host as a string.
-     */
-    public String getHost() {
-        return uri.getHost();
-    }
-
-    /**
-     * Gets the port number to use for a message service connection.
-     *
-     * @return The port as a string.
-     */
-    public int getPort() {
-        return uri.getPort();
-    }
     
     /**
      * Gets the TCP URI to use for a message service connection.
      *
      * @return The URI.
      */
-    URI getURI() {
+    public URI getURI() {
         return uri;
     }
 
