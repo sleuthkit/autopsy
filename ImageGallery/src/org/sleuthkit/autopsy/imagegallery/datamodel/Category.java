@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Iterator;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -37,6 +38,7 @@ import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imagegallery.gui.SingleDrawableViewBase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -82,6 +84,26 @@ public enum Category implements Comparable<Category> {
     public static void unregisterListener(CategoryListener aThis) {
         synchronized (listeners) {
             listeners.remove(aThis);
+        }
+    }
+    
+    /**
+     * Clears out all the existing file-type listeners.
+     * To be called when the case is closed to prevent
+     * old abstract files files from trying to access the closed
+     * database.
+     */
+    public static void unregisterAllFileListeners(){
+        synchronized(listeners){
+            Iterator<CategoryListener> it = listeners.iterator();
+            while(it.hasNext()){
+                
+                CategoryListener obj = it.next();
+                if(obj instanceof SingleDrawableViewBase){
+                    System.out.println("  Removing file");
+                    it.remove();
+                }
+            }
         }
     }
 

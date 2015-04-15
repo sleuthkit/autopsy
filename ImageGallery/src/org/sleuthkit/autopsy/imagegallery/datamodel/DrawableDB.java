@@ -129,9 +129,9 @@ public class DrawableDB {
 
     volatile private Connection con;
 
-    private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
 
-    private static final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
+    private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
 
     static {//make sure sqlite driver is loaded // possibly redundant
         try {
@@ -149,7 +149,7 @@ public class DrawableDB {
      * MUST always call dbWriteUnLock() as early as possible, in the same thread
      * where dbWriteLock() was called
      */
-    public static void dbWriteLock() {
+    public void dbWriteLock() {
         //Logger.getLogger("LOCK").log(Level.INFO, "Locking " + rwLock.toString());
         DBLock.lock();
     }
@@ -159,7 +159,7 @@ public class DrawableDB {
      * dbWriteLock(). Call in "finally" block to ensure the lock is always
      * released.
      */
-    public static void dbWriteUnlock() {
+    public void dbWriteUnlock() {
         //Logger.getLogger("LOCK").log(Level.INFO, "UNLocking " + rwLock.toString());
         DBLock.unlock();
     }

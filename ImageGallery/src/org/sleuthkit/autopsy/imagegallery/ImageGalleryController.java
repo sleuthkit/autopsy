@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
@@ -303,7 +304,8 @@ public final class ImageGalleryController {
 
     private void restartWorker() {
         if (dbWorkerThread != null) {
-            dbWorkerThread.cancelAllTasks();
+            return;
+            //dbWorkerThread.cancelAllTasks();
         }
         dbWorkerThread = new DBWorkerThread();
 
@@ -330,6 +332,7 @@ public final class ImageGalleryController {
 
         // if we add this line icons are made as files are analyzed rather than on demand.
         // db.addUpdatedFileListener(IconCache.getDefault());
+        // @@@ I think we should add a checkhere to see if the thread already exists
         restartWorker();
         historyManager.clear();
         groupManager.setDB(db);
@@ -342,6 +345,7 @@ public final class ImageGalleryController {
     public synchronized void reset() {
         LOGGER.info("resetting ImageGalleryControler to initial state.");
         selectionModel.clearSelection();
+        Category.unregisterAllFileListeners();
         Platform.runLater(() -> {
             historyManager.clear();
         });
