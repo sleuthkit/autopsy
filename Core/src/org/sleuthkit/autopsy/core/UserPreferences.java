@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.core;
 
-import java.net.URISyntaxException;
 import org.sleuthkit.autopsy.core.messenger.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;

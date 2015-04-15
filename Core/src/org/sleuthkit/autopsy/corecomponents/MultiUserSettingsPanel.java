@@ -6,10 +6,8 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Color;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Level;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
