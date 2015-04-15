@@ -141,20 +141,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
         SINGLE_USER_CASE("Single-user case"),
         MULTI_USER_CASE("Multi-user case");
 
-        private final String caseName;
+        private final String caseType;
 
         private CaseType(String s) {
-            caseName = s;
+            caseType = s;
         }
 
-        public boolean equalsName(String otherName) {
-            return (otherName == null) ? false : caseName.equals(otherName);
+        public boolean equalsName(String otherType) {
+            return (otherType == null) ? false : caseType.equals(otherType);
         }
 
-        public static CaseType fromString(String text) {
-            if (text != null) {
+        public static CaseType fromString(String typeName) {
+            if (typeName != null) {
                 for (CaseType c : CaseType.values()) {
-                    if (text.equalsIgnoreCase(c.caseName)) {
+                    if (typeName.equalsIgnoreCase(c.caseType)) {
                         return c;
                     }
                 }
@@ -164,7 +164,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         @Override
         public String toString() {
-            return caseName;
+            return caseType;
         }
     };
 
@@ -176,6 +176,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
+    private CaseType caseType;
     private Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
@@ -189,12 +190,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Constructor for the Case class
      */
-    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
+    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db, CaseType type) {
         this.name = name;
         this.number = number;
         this.examiner = examiner;
         this.configFilePath = configFilePath;
         this.xmlcm = xmlcm;
+        this.caseType = type;
         this.db = db;
         this.services = new Services(db);
         db.addErrorObserver(this);
@@ -367,7 +369,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
-        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
 //        newCase.messenger.start();
 
         changeCase(newCase);
@@ -396,7 +398,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             SleuthkitCase db;
 
             if (caseType == CaseType.SINGLE_USER_CASE) {
-                // if the caseName is "", case / config file can't be opened
+                // if the caseType is "", case / config file can't be opened
                 if (caseName.equals("")) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.blankCase.msg"));
                 }
@@ -423,7 +425,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             checkImagesExist(db);
 
-            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
 //            openedCase.messenger.start();
         
             changeCase(openedCase);
@@ -777,6 +779,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
     }
 
+    /**
+     * Get the case type.
+     * @return 
+     */
+    public CaseType getCaseType() {
+        return this.caseType;
+    }
+    
     /**
      * Gets the full path to the temp directory of this case
      *
