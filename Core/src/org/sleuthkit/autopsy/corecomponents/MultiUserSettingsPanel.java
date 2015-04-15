@@ -6,16 +6,32 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collection;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.messenger.MessageServiceConnectionInfo;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
-public class MultiUserSettingsPanel extends javax.swing.JPanel {
+public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
-    private MultiUserSettingsPanelController controller;
-    private TextBoxChangedListener textBoxChangedListener;
+    private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbHostnameOrIp.toolTipText");
+    private static final String PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPortNumber.toolTipText");
+    private static final String USER_NAME_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbUsername.toolTipText");
+    private static final String PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPassword.toolTipText");
+    private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
+    private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
+    private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
+    private static final String INVALID_MESSAGE_SERVICE_URI_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessgeServiceURI");
+    private final MultiUserSettingsPanelController controller;
+    private final Collection<JTextField> textBoxes = new ArrayList<>();
+    private final TextBoxChangedListener textBoxChangedListener;
+    private static final Logger logger = Logger.getLogger(MultiUserSettingsPanel.class.getName());
 
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
@@ -24,30 +40,59 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
         initComponents();
         controller = theController;
 
-        TextPrompt tpHostnameOrIp = new TextPrompt("Hostname or IP Address", tbHostnameOrIp);
-        TextPrompt tpPortNumber = new TextPrompt("Port Number", tbPortNumber);
-        TextPrompt tpUsername = new TextPrompt("User Name", tbUsername);
-        TextPrompt tpPassword = new TextPrompt("Password", tbPassword);
+        /**
+         * Add text prompts to all of the text fields.
+         */
+        Collection<TextPrompt> textPrompts = new ArrayList<>();
+        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbHostnameOrIp));
+        textPrompts.add(new TextPrompt(PORT_PROMPT, tbPortNumber));
+        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbUsername));
+        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbPassword));
+        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, msgHostTextField));
+        textPrompts.add(new TextPrompt(PORT_PROMPT, msgPortTextField));
+        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, msgUserNameTextField));
+        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, msgPasswordField));
+        configureTextPrompts(textPrompts);
 
-        tpHostnameOrIp.setForeground(Color.LIGHT_GRAY);
-        tpPortNumber.setForeground(Color.LIGHT_GRAY);
-        tpUsername.setForeground(Color.LIGHT_GRAY);
-        tpPassword.setForeground(Color.LIGHT_GRAY);
-
-        float alpha = 0.9f; // Mostly opaque
-        tpHostnameOrIp.changeAlpha(alpha);
-        tpPortNumber.changeAlpha(alpha);
-        tpUsername.changeAlpha(alpha);
-        tpPassword.changeAlpha(alpha);
-
-        setNetworkDbEnabled(cbEnableMultiUser.isSelected());
-
-        /// Register for notifications when the text boxes get updated
+        /// Register for notifications when the text boxes get updated.
         textBoxChangedListener = new TextBoxChangedListener();
-        tbHostnameOrIp.getDocument().addDocumentListener(textBoxChangedListener);
-        tbPortNumber.getDocument().addDocumentListener(textBoxChangedListener);
-        tbUsername.getDocument().addDocumentListener(textBoxChangedListener);
-        tbPassword.getDocument().addDocumentListener(textBoxChangedListener);
+        textBoxes.add(tbHostnameOrIp);
+        textBoxes.add(tbPortNumber);
+        textBoxes.add(tbUsername);
+        textBoxes.add(tbPassword);
+        textBoxes.add(msgHostTextField);
+        textBoxes.add(msgPortTextField);
+        textBoxes.add(msgUserNameTextField);
+        textBoxes.add(msgPasswordField);
+        addDocumentListeners(textBoxes, textBoxChangedListener);
+
+        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
+    }
+
+    /**
+     * Sets the foreground color and transparency of a collection of text
+     * prompts.
+     *
+     * @param textPrompts The text prompts to configure.
+     */
+    private static void configureTextPrompts(Collection<TextPrompt> textPrompts) {
+        float alpha = 0.9f; // Mostly opaque
+        for (TextPrompt textPrompt : textPrompts) {
+            textPrompt.setForeground(Color.LIGHT_GRAY);
+            textPrompt.changeAlpha(alpha);
+        }
+    }
+
+    /**
+     * Adds a change listener to a collection of text fields.
+     *
+     * @param textFields The text fields.
+     * @param listener The change listener.
+     */
+    private static void addDocumentListeners(Collection<JTextField> textFields, TextBoxChangedListener listener) {
+        for (JTextField textField : textFields) {
+            textField.getDocument().addDocumentListener(listener);
+        }
     }
 
     /**
@@ -65,12 +110,16 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbPortNumber = new javax.swing.JTextField();
         tbUsername = new javax.swing.JTextField();
         tbPassword = new javax.swing.JPasswordField();
-        lbOops = new javax.swing.JLabel();
         lbDatabaseSettings = new javax.swing.JLabel();
         pnSolrSettings = new javax.swing.JPanel();
         lbSolrSettings = new javax.swing.JLabel();
+        lbOops = new javax.swing.JLabel();
         pnMessagingSettings = new javax.swing.JPanel();
         lbMessagingSettings = new javax.swing.JLabel();
+        msgHostTextField = new javax.swing.JTextField();
+        msgUserNameTextField = new javax.swing.JTextField();
+        msgPortTextField = new javax.swing.JTextField();
+        msgPasswordField = new javax.swing.JPasswordField();
         cbEnableMultiUser = new javax.swing.JCheckBox();
 
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -91,11 +140,6 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPassword.text")); // NOI18N
         tbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPassword.toolTipText")); // NOI18N
 
-        lbOops.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        lbOops.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbOops, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbOops.text")); // NOI18N
-        lbOops.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
-
         lbDatabaseSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbDatabaseSettings.text")); // NOI18N
         lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -111,22 +155,17 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(tbPortNumber)
                     .addComponent(tbUsername)
                     .addComponent(tbPassword)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseSettingsLayout.createSequentialGroup()
-                        .addGap(0, 1, Short.MAX_VALUE)
+                    .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
                         .addComponent(lbDatabaseSettings)
-                        .addGap(18, 18, 18)
-                        .addComponent(lbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         pnDatabaseSettingsLayout.setVerticalGroup(
             pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseSettingsLayout.createSequentialGroup()
-                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lbDatabaseSettings))
-                    .addComponent(lbOops, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addContainerGap()
+                .addComponent(lbDatabaseSettings)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
                 .addComponent(tbHostnameOrIp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbPortNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -159,10 +198,31 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(75, Short.MAX_VALUE))
         );
 
+        lbOops.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        lbOops.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(lbOops, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbOops.text")); // NOI18N
+        lbOops.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         lbMessagingSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbMessagingSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMessagingSettings.text")); // NOI18N
+
+        msgHostTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        msgHostTextField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgHostTextField.text")); // NOI18N
+        msgHostTextField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgHostTextField.toolTipText")); // NOI18N
+
+        msgUserNameTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        msgUserNameTextField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgUserNameTextField.text")); // NOI18N
+        msgUserNameTextField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgUserNameTextField.toolTipText")); // NOI18N
+
+        msgPortTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        msgPortTextField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgPortTextField.text")); // NOI18N
+        msgPortTextField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgPortTextField.toolTipText")); // NOI18N
+
+        msgPasswordField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        msgPasswordField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgPasswordField.text")); // NOI18N
+        msgPasswordField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgPasswordField.toolTipText")); // NOI18N
 
         javax.swing.GroupLayout pnMessagingSettingsLayout = new javax.swing.GroupLayout(pnMessagingSettings);
         pnMessagingSettings.setLayout(pnMessagingSettingsLayout);
@@ -170,15 +230,30 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
             pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lbMessagingSettings)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
+                        .addComponent(lbMessagingSettings)
+                        .addGap(0, 334, Short.MAX_VALUE))
+                    .addComponent(msgHostTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(msgUserNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(msgPortTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(msgPasswordField))
+                .addContainerGap())
         );
         pnMessagingSettingsLayout.setVerticalGroup(
             pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lbMessagingSettings)
-                .addContainerGap(74, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(msgHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(msgPortTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(msgUserNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(msgPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.cbEnableMultiUser.text")); // NOI18N
@@ -192,34 +267,39 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
         pnOverallPanel.setLayout(pnOverallPanelLayout);
         pnOverallPanelLayout.setHorizontalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnOverallPanelLayout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cbEnableMultiUser)
+                    .addGroup(pnOverallPanelLayout.createSequentialGroup()
+                        .addComponent(cbEnableMultiUser)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnMessagingSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
         pnOverallPanelLayout.setVerticalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cbEnableMultiUser)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cbEnableMultiUser)
+                    .addComponent(lbOops))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 6, Short.MAX_VALUE)
                 .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 481, Short.MAX_VALUE)
+            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 511, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -228,34 +308,55 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Enables/disables the network database settings, based upon input provided
+     * Enables/disables the multi-user settings, based upon input provided
      *
      * @param enabled true means enable, false means disable
      */
-    private void setNetworkDbEnabled(boolean enabled) {
-        tbHostnameOrIp.setEnabled(enabled);
-        tbPortNumber.setEnabled(enabled);
-        tbUsername.setEnabled(enabled);
-        tbPassword.setEnabled(enabled);
+    private static void enableMultiUserComponents(Collection<JTextField> textFields, boolean enabled) {
+        for (JTextField textField : textFields) {
+            textField.setEnabled(enabled);
+        }
     }
 
     private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
-        setNetworkDbEnabled(cbEnableMultiUser.isSelected());
+        if (!cbEnableMultiUser.isSelected()) {
+            lbOops.setText("");
+        }
+        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
         controller.changed();
     }//GEN-LAST:event_cbEnableMultiUserItemStateChanged
 
     void load() {
-        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        tbHostnameOrIp.setText(info.getHost());
-        tbPortNumber.setText(info.getPort());
-        tbUsername.setText(info.getUserName());
-        tbPassword.setText(info.getPassword());
-        if (info.getDbType() == DbType.UNKNOWN) {
+        CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
+        tbHostnameOrIp.setText(dbInfo.getHost());
+        tbPortNumber.setText(dbInfo.getPort());
+        tbUsername.setText(dbInfo.getUserName());
+        tbPassword.setText(dbInfo.getPassword());
+
+        MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
+        msgHostTextField.setText(msgServiceInfo.getHost());
+        msgPortTextField.setText(msgServiceInfo.getPort());
+        msgUserNameTextField.setText(msgServiceInfo.getUserName());
+        msgPasswordField.setText(msgServiceInfo.getPassword());
+
+        if (dbInfo.getDbType() == DbType.UNKNOWN) {
             cbEnableMultiUser.setSelected(false);
         } else {
             cbEnableMultiUser.setSelected(true);
         }
+    }
 
+    /**
+     * Tests whether or not values have been entered in all of the message
+     * service settings text fields.
+     *
+     * @return True or false.
+     */
+    private boolean messageServiceFieldsArePopulated() {
+        return !msgHostTextField.getText().isEmpty()
+                && !msgPortTextField.getText().isEmpty()
+                && !msgUserNameTextField.getText().isEmpty()
+                && msgPasswordField.getPassword().length != 0;
     }
 
     void store() {
@@ -274,6 +375,13 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
                 dbType);
 
         UserPreferences.setDatabaseConnectionInfo(info);
+
+        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
+                msgUserNameTextField.getText(),
+                new String(msgPasswordField.getPassword()),
+                msgHostTextField.getText(),
+                msgPortTextField.getText());
+        UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
     }
 
     /**
@@ -282,42 +390,90 @@ public class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return true if it's okay, false otherwise.
      */
     boolean valid() {
-        boolean result = false;
-        String text = "";
+        lbOops.setText("");
         if (cbEnableMultiUser.isSelected()) {
-            try {
-                if (tbHostnameOrIp.getText().isEmpty()
-                        || tbPortNumber.getText().isEmpty()
-                        || tbUsername.getText().isEmpty()
-                        || tbPassword.getPassword().length == 0) {
-                    // We don't even have everything filled out
-                    result = false;
-                    text = "Fill in all values";
-                } else {
-                    int value = Integer.parseInt(tbPortNumber.getText());
-                    if (value < 0 || value > 65535) { // valid port numbers
-                        result = false; /// port number is invalid
-                        text = "Invalid port number";
-                    } else {
-                        result = true;
-                    }
-                }
-            } catch (Exception ex) {
-                result = false;
-                text = "Invalid port number";
-            }
+            return settingsAreComplete() && databaseSettingsAreValid() && messageServiceSettingsAreValid();
         } else {
-            result = true;
+            return true;
         }
-        lbOops.setText(text);
+    }
+
+    /**
+     * Tests whether or not all of the settings components are populated.
+     *
+     * @return True or false.
+     */
+    boolean settingsAreComplete() {
+        boolean result = true;
+        if (tbHostnameOrIp.getText().isEmpty()
+                || tbPortNumber.getText().isEmpty()
+                || tbUsername.getText().isEmpty()
+                || tbPassword.getPassword().length == 0
+                || !messageServiceFieldsArePopulated()) {
+            // We don't even have everything filled out
+            result = false;
+            lbOops.setText(INCOMPLETE_SETTINGS_MSG);
+        }
         return result;
     }
+
+    /**
+     * Tests whether or not the database settings are valid.
+     *
+     * @return True or false.
+     */
+    boolean databaseSettingsAreValid() {
+        if (portNumberIsValid(tbPortNumber.getText())) {
+            return true;
+        } else {
+            lbOops.setText(INVALID_DB_PORT_MSG);
+            return false;
+        }
+    }
+
+    /**
+     * Tests whether or not the message service settings are valid.
+     *
+     * @return True or false.
+     */
+    boolean messageServiceSettingsAreValid() {
+        if (!portNumberIsValid(msgPortTextField.getText())) {
+            lbOops.setText(INVALID_MESSAGE_SERVICE_PORT_MSG);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Determines whether or not a port number is within the range of valid port
+     * numbers.
+     *
+     * @param portNumber The port number as a string.
+     * @return True or false.
+     */
+    private static boolean portNumberIsValid(String portNumber) {
+        try {
+            int value = Integer.parseInt(portNumber);
+            if (value < 0 || value > 65535) { // invalid port numbers
+                return false;
+            }
+        } catch (NumberFormatException detailsNotImportant) {
+            return false;
+        }
+        return true;
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox cbEnableMultiUser;
     private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessagingSettings;
     private javax.swing.JLabel lbOops;
     private javax.swing.JLabel lbSolrSettings;
+    private javax.swing.JTextField msgHostTextField;
+    private javax.swing.JPasswordField msgPasswordField;
+    private javax.swing.JTextField msgPortTextField;
+    private javax.swing.JTextField msgUserNameTextField;
     private javax.swing.JPanel pnDatabaseSettings;
     private javax.swing.JPanel pnMessagingSettings;
     private javax.swing.JPanel pnOverallPanel;
