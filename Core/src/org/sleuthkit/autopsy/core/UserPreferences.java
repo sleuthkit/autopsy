@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import org.sleuthkit.autopsy.core.messenger.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo.DbType;
+import org.sleuthkit.datamodel.TskData.DbType;
+
 
 /**
  * Provides convenient access to a Preferences node for user preferences with
@@ -45,6 +47,10 @@ public final class UserPreferences {
     public static final String NEW_CASE_TYPE = "NewCaseType"; //NON-NLS
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
+    private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
+    private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
+    private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -144,4 +150,29 @@ public final class UserPreferences {
     public static void setIndexingServerPort(int port) {
         preferences.putInt(INDEXING_SERVER_PORT, port);
     }
+
+    /**
+     * Persists message service connection info.
+     *
+     * @param info An object encapsulating the message service info.
+     */
+    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
+        preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
+        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
+        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
+        preferences.put(MESSAGE_SERVICE_PORT, info.getPort());
+    }
+
+    /**
+     * Reads persisted message service connection info.
+     *
+     * @return An object encapsulating the message service info.
+     */
+    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() {
+        return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
+                preferences.get(MESSAGE_SERVICE_PASSWORD, ""),
+                preferences.get(MESSAGE_SERVICE_HOST, ""),
+                preferences.get(MESSAGE_SERVICE_PORT, ""));
+    }
+
 }

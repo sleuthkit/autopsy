@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -68,6 +69,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -444,7 +447,7 @@ public final class ImageGalleryController {
                     //copy all file data to drawable databse
                     Content newDataSource = (Content) evt.getNewValue();
                     if (isListeningEnabled()) {
-                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource.getId()));
+                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource));
                     } else {//TODO: keep track of what we missed for later
                         setStale(true);
                     }
@@ -741,22 +744,25 @@ public final class ImageGalleryController {
      * netbeans and ImageGallery progress/status
      */
     class PrePopulateDataSourceFiles extends InnerTask {
-
-        private final Long id;    // id of image or file
+        private Content dataSource;
+        
         /**
          * here we grab by extension but in file_done listener we look at file
          * type id attributes but fall back on jpeg signatures and extensions to
          * check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
-        private final String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
+        private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "') ";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
-        public PrePopulateDataSourceFiles(Long id) {
+        /**
+         
+         * @param dataSourceId Data source object ID
+         */
+        public PrePopulateDataSourceFiles(Content dataSource) {
             super();
-            this.id = id;
-
+            this.dataSource = dataSource;
         }
 
         /**
@@ -772,7 +778,24 @@ public final class ImageGalleryController {
              * add/remove files */
             final List<AbstractFile> files;
             try {
-                files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + "and fs_obj_id = " + this.id);
+                List<Long> fsObjIds = new ArrayList<>();
+                
+                String fsQuery;
+                if (dataSource instanceof Image) {
+                    Image image = (Image)dataSource;
+                    for (FileSystem fs : image.getFileSystems()) {
+                        fsObjIds.add(fs.getId());
+                    }
+                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
+                }
+                // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
+                // for them, we will not specify a fs_obj_id, which means we will grab files
+                // from another data source, but the drawable DB is smart enough to de-dupe them.
+                else {
+                    fsQuery = "(fs_obj_id IS NULL) ";
+                }
+                
+                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " and " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction

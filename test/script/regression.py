@@ -743,11 +743,11 @@ class TestConfiguration(object):
             self.build_path = build_path
 
     def _init_imgs(self, parsed_config):
-        """Initialize the list of images to run tests on."""
+        """Initialize the list of images to run tests on. Logical file set also included."""
         for element in parsed_config.getElementsByTagName("image"):
             value = element.getAttribute("value").encode().decode("utf_8")
             print ("Image in Config File: " + value)
-            if file_exists(value):
+            if file_exists(value) or dir_exists(value):
                 self.images.append(value)
             else:
                 msg = "File: " + value + " doesn't exist"

@@ -218,6 +218,13 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     Case.open(casePath); // open the case
                 }
             } catch (CaseActionException ex) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.cantOpenCase.msg", caseName,
+                                ex.getMessage()),
+                                NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                JOptionPane.ERROR_MESSAGE);
                 logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
             }
         }
