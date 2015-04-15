@@ -27,7 +27,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
-    private static final String INVALID_MESSAGE_SERVICE_URI_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessgeServiceURI");
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
     private final TextBoxChangedListener textBoxChangedListener;
