@@ -29,10 +29,10 @@
         
         <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
         <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release" />
-        <property name="win64.TskLib.path_postgres" value="${env.TSK_HOME}/win32/x64/Release_PostgreSql"/>
+        <property name="win64.TskLib.postgres_path" value="${env.POSTGRESQL_HOME_64}/bin"/>
         <available property="win64.TskLib.exists" type="dir" file="${win64.TskLib.path}" />
         <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
-        <available property="win64.TskLib_postgres.exists" type="dir" file="${win64.TskLib.path_postgres}" />
+        <available property="win64.TskLib_postgres.exists" type="dir" file="{win64.TskLib.postgres_path}" />
     </target>
 
     <!-- The following copy the libtsk_jni dependencies to the Autopsy
@@ -43,42 +43,25 @@
         <fileset dir="${win64.TskLib.path}" id="win64dlls">
             <include name="libewf.dll" />
             <include name="zlib.dll"/>
-            <include name="libpq.dll"/>
+        </fileset>
+        
+        <fileset dir="${win64.TskLib.postgres_path}" id="postgres64dlls">
+            <include name="libeay32.dll"/>
+            <include name="ssleay32.dll"/>
             <include name="libintl-8.dll"/>
+            <include name="libpq.dll"/>
         </fileset>
 
         <copy todir="${amd64}" overwrite="true">
             <fileset refid="win64dlls" />
+            <fileset refid="postgres64dlls" />
         </copy>
-        
+
         <copy todir="${x86_64}" overwrite="true">
             <fileset refid="win64dlls" />
+            <fileset refid="postgres64dlls" />
         </copy>		
-        
     </target>
-
-    <!-- The following copy the libtsk_jni dependencies to the Autopsy
-         folder structure.  libtsk_jni is inside of the JAR file and contains
-         libtsk and the JNI code. -->
-    <!-- copy 64-bit dlls into the installer folder for Postgres build-->
-    <target name="copyWinTskLibs64_postgres_ToBaseDir" if="win64.TskLib_postgres.exists">
-        <fileset dir="${win64.TskLib.path_postgres}" id="win64_postgres_dlls">
-            <include name="libewf.dll" />
-            <include name="zlib.dll"/>
-            <include name="libpq.dll"/>
-            <include name="libintl-8.dll"/>
-        </fileset>
-
-        <copy todir="${amd64}" overwrite="true">
-            <fileset refid="win64_postgres_dlls" />
-        </copy>
-        
-        <copy todir="${x86_64}" overwrite="true">
-            <fileset refid="win64_postgres_dlls" />
-        </copy>		
-        
-    </target>
-
 
     <!-- copy 32-bit dlls into the installer folder -->
     <target name="copyWinTskLibs32ToBaseDir" if="win32.TskLib.exists">
@@ -111,13 +94,6 @@
         <antcall target="copyWinTskLibs64ToBaseDir" inheritRefs="true" />
     </target>
 
-    <!-- This gets called from the main build.xml -->
-    <target name="copyLibsToBaseDir_postgres" depends="checkTskLibDirs" description="Copy windows dlls to the correct location." >
-        <antcall target="makeBaseLibDirs" inheritRefs="true" />
-        <antcall target="copyWinTskLibs64_postgres_ToBaseDir" inheritRefs="true" />
-    </target>
-
-            
     <!-- CRT LIBS TO ZIP  - gets called from build.xml -->
     <target name="copyLibsToZip" depends="copyCRT32ToZIP,copyCRT64ToZIP"/>
     
