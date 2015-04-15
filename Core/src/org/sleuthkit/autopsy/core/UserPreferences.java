@@ -142,24 +142,20 @@ public final class UserPreferences {
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
         preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
         preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
-        preferences.put(MESSAGE_SERVICE_HOST, info.getURI().getHost());
-        preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getURI().getPort()));
+        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
+        preferences.put(MESSAGE_SERVICE_PORT, info.getPort());
     }
 
     /**
      * Reads persisted message service connection info.
      *
      * @return An object encapsulating the message service info.
-     * @throws NumberFormatException if the persisted port is not a valid
-     * integer.
-     * @throws URISyntaxException if the persisted connection info is not for a
-     * valid TCP URI.
      */
-    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws NumberFormatException, URISyntaxException {
+    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() {
         return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
                 preferences.get(MESSAGE_SERVICE_PASSWORD, ""),
                 preferences.get(MESSAGE_SERVICE_HOST, ""),
-                Integer.parseInt(preferences.get(MESSAGE_SERVICE_PORT, "")));
+                preferences.get(MESSAGE_SERVICE_PORT, ""));
     }
 
 }

@@ -26,12 +26,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPortNumber.toolTipText");
     private static final String USER_NAME_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbUsername.toolTipText");
     private static final String PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPassword.toolTipText");
-    private static final String RETYPE_PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgRetypePasswordField.toolTipText");
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_MESSAGE_SERVICE_URI_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessgeServiceURI");
-    private static final String INVALID_MESSAGE_PASSWORD_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessgeServicePassword");
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
     private final TextBoxChangedListener textBoxChangedListener;
@@ -56,7 +54,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PORT_PROMPT, msgPortTextField));
         textPrompts.add(new TextPrompt(USER_NAME_PROMPT, msgUserNameTextField));
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, msgPasswordField));
-        textPrompts.add(new TextPrompt(RETYPE_PASSWORD_PROMPT, msgRetypePasswordField));
         configureTextPrompts(textPrompts);
 
         /// Register for notifications when the text boxes get updated.
@@ -69,7 +66,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textBoxes.add(msgPortTextField);
         textBoxes.add(msgUserNameTextField);
         textBoxes.add(msgPasswordField);
-        textBoxes.add(msgRetypePasswordField);
         addDocumentListeners(textBoxes, textBoxChangedListener);
 
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
@@ -126,7 +122,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         msgUserNameTextField = new javax.swing.JTextField();
         msgPortTextField = new javax.swing.JTextField();
         msgPasswordField = new javax.swing.JPasswordField();
-        msgRetypePasswordField = new javax.swing.JPasswordField();
         cbEnableMultiUser = new javax.swing.JCheckBox();
 
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -231,10 +226,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         msgPasswordField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgPasswordField.text")); // NOI18N
         msgPasswordField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgPasswordField.toolTipText")); // NOI18N
 
-        msgRetypePasswordField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        msgRetypePasswordField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgRetypePasswordField.text")); // NOI18N
-        msgRetypePasswordField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.msgRetypePasswordField.toolTipText")); // NOI18N
-
         javax.swing.GroupLayout pnMessagingSettingsLayout = new javax.swing.GroupLayout(pnMessagingSettings);
         pnMessagingSettings.setLayout(pnMessagingSettingsLayout);
         pnMessagingSettingsLayout.setHorizontalGroup(
@@ -248,8 +239,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(msgHostTextField, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(msgUserNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(msgPortTextField, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(msgPasswordField)
-                    .addComponent(msgRetypePasswordField))
+                    .addComponent(msgPasswordField))
                 .addContainerGap())
         );
         pnMessagingSettingsLayout.setVerticalGroup(
@@ -265,9 +255,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addComponent(msgUserNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(msgPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(msgRetypePasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.cbEnableMultiUser.text")); // NOI18N
@@ -334,7 +322,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
         if (!cbEnableMultiUser.isSelected()) {
-            lbOops.setText("");            
+            lbOops.setText("");
         }
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
         controller.changed();
@@ -347,36 +335,17 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbUsername.setText(dbInfo.getUserName());
         tbPassword.setText(dbInfo.getPassword());
 
-        MessageServiceConnectionInfo msgServiceInfo = null;
-        try {
-            msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
-            msgHostTextField.setText(msgServiceInfo.getURI().getHost());
-            msgPortTextField.setText(Integer.toString(msgServiceInfo.getURI().getPort()));
-            msgUserNameTextField.setText(msgServiceInfo.getUserName());
-            msgPasswordField.setText(msgServiceInfo.getPassword());
-            msgRetypePasswordField.setText(msgServiceInfo.getPassword());
-        } catch (NumberFormatException | URISyntaxException ex) {
-            resetMessageServiceTextFields();
-            logger.log(Level.SEVERE, "Invalid message service settings read from user preferences, clearing settings components", ex);
-        }
+        MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
+        msgHostTextField.setText(msgServiceInfo.getHost());
+        msgPortTextField.setText(msgServiceInfo.getPort());
+        msgUserNameTextField.setText(msgServiceInfo.getUserName());
+        msgPasswordField.setText(msgServiceInfo.getPassword());
 
         if (dbInfo.getDbType() == DbType.UNKNOWN) {
             cbEnableMultiUser.setSelected(false);
         } else {
             cbEnableMultiUser.setSelected(true);
         }
-    }
-
-    /**
-     * Sets the text of the message service settings text fields to the empty
-     * string.
-     */
-    private void resetMessageServiceTextFields() {
-        msgHostTextField.setText("");
-        msgPortTextField.setText("");
-        msgUserNameTextField.setText("");
-        msgPasswordField.setText("");
-        msgRetypePasswordField.setText("");
     }
 
     /**
@@ -389,8 +358,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         return !msgHostTextField.getText().isEmpty()
                 && !msgPortTextField.getText().isEmpty()
                 && !msgUserNameTextField.getText().isEmpty()
-                && msgPasswordField.getPassword().length != 0
-                && msgRetypePasswordField.getPassword().length != 0;
+                && msgPasswordField.getPassword().length != 0;
     }
 
     void store() {
@@ -410,22 +378,12 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         UserPreferences.setDatabaseConnectionInfo(info);
 
-        /**
-         * Add the message service settings to the persisted user preferences.
-         * It is expected that this code is only executed after validation; if
-         * the settings are not valid the exception is caught and the invalid
-         * settings are discarded.
-         */
-        try {
-            MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
-                    msgUserNameTextField.getText(),
-                    new String(msgPasswordField.getPassword()),
-                    msgHostTextField.getText(),
-                    Integer.parseInt(msgPortTextField.getText()));
-            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
-        } catch (NumberFormatException | URISyntaxException ex) {
-            logger.log(Level.SEVERE, "Attempt to store invalid message service settings", ex);
-        }
+        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
+                msgUserNameTextField.getText(),
+                new String(msgPasswordField.getPassword()),
+                msgHostTextField.getText(),
+                msgPortTextField.getText());
+        UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
     }
 
     /**
@@ -481,31 +439,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return True or false.
      */
     boolean messageServiceSettingsAreValid() {
-        if (!messageServiceFieldsArePopulated()) {
-            return false;
-        }
-
         if (!portNumberIsValid(msgPortTextField.getText())) {
             lbOops.setText(INVALID_MESSAGE_SERVICE_PORT_MSG);
-            return false;
-        }
-
-        String password = new String(msgPasswordField.getPassword());
-        String retypedPassword = new String(msgRetypePasswordField.getPassword());
-        if (!password.contentEquals(retypedPassword)) {
-            lbOops.setText(INVALID_MESSAGE_PASSWORD_MSG);
-            return false;
-        }
-
-        MessageServiceConnectionInfo msgServiceInfo;
-        try {
-            msgServiceInfo = new MessageServiceConnectionInfo(
-                    msgUserNameTextField.getText(),
-                    new String(msgPasswordField.getPassword()),
-                    msgHostTextField.getText(),
-                    Integer.parseInt(msgPortTextField.getText()));
-        } catch (URISyntaxException detailsNotImportant) {
-            lbOops.setText(INVALID_MESSAGE_SERVICE_URI_MSG);
             return false;
         }
 
@@ -540,7 +475,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField msgHostTextField;
     private javax.swing.JPasswordField msgPasswordField;
     private javax.swing.JTextField msgPortTextField;
-    private javax.swing.JPasswordField msgRetypePasswordField;
     private javax.swing.JTextField msgUserNameTextField;
     private javax.swing.JPanel pnDatabaseSettings;
     private javax.swing.JPanel pnMessagingSettings;
