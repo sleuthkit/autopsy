@@ -369,6 +369,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
+        /**
+         * Two-stage initialization to avoid leaking reference to "this" in
+         * constructor.
+         */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
         newCase.init();
 //        newCase.messenger.start();
@@ -426,6 +430,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             checkImagesExist(db);
 
+            /**
+             * Two-stage initialization to avoid leaking reference to "this" in
+             * constructor.
+             */
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
             openedCase.init();
 //            openedCase.messenger.start();
