@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +37,6 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
-
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -135,11 +133,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private String number;
     private String examiner;
     private String configFilePath;
-    private XMLCaseManagement xmlcm;
-    private SleuthkitCase db;
+    private final XMLCaseManagement xmlcm;
+    private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
-    private Services services;
+    private final Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
@@ -158,6 +156,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.xmlcm = xmlcm;
         this.db = db;
         this.services = new Services(db);
+    }
+
+    /**
+     * Does initialization that would leak a reference to this if done in the
+     * constructor.
+     */
+    private void init() {
         db.addErrorObserver(this);
     }
 
@@ -293,7 +298,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
+        /**
+         * Two-stage initialization to avoid leaking reference to "this" in
+         * constructor.
+         */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+        newCase.init();
 
         changeCase(newCase);
     }
@@ -335,7 +345,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             checkImagesExist(db);
 
+            /**
+             * Two-stage initialization to avoid leaking reference to "this" in
+             * constructor.
+             */
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+            openedCase.init();
 
             changeCase(openedCase);
 
@@ -348,7 +363,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION), ex);
             } else {
-                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg"), ex);
+                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
             }
         }
     }
@@ -866,10 +881,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             File tmp = new File(path);
             br = new BufferedInputStream(new FileInputStream(tmp));
             int b = br.read();
-            if (b != -1) {
-                return true;
-            }
-            return false;
+            return b != -1;
         } catch (Exception ex) {
             return false;
         } finally {
@@ -892,7 +904,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return
      */
     public static String convertTimeZone(String timezoneID) {
-        String result = "";
 
         TimeZone zone = TimeZone.getTimeZone(timezoneID);
         int offset = zone.getRawOffset() / 1000;
@@ -905,7 +916,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String first = dfm.format(new GregorianCalendar(2010, 1, 1).getTime()).substring(0, 3); // make it only 3 letters code
         String second = dfm.format(new GregorianCalendar(2011, 6, 6).getTime()).substring(0, 3); // make it only 3 letters code
         int mid = hour * -1;
-        result = first + Integer.toString(mid);
+        String result = first + Integer.toString(mid);
         if (min != 0) {
             result = result + ":" + Integer.toString(min);
         }
@@ -994,7 +1005,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return boolean whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
-        logger.log(Level.INFO, "Deleting case directory: " + casePath.getAbsolutePath()); //NON-NLS
+        logger.log(Level.INFO, "Deleting case directory: {0}", casePath.getAbsolutePath()); //NON-NLS
         return FileUtil.deleteDir(casePath);
     }
 
@@ -1037,11 +1048,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
         if (tempFolder.isDirectory()) {
             File[] files = tempFolder.listFiles();
             if (files.length > 0) {
-                for (int i = 0; i < files.length; i++) {
-                    if (files[i].isDirectory()) {
-                        deleteCaseDirectory(files[i]);
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteCaseDirectory(file);
                     } else {
-                        files[i].delete();
+                        file.delete();
                     }
                 }
             }
@@ -1061,7 +1072,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             try {
                 if (!modulesOutputDirF.mkdir()) {
-                    logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir); //NON-NLS
+                    logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: {0}", modulesOutputDir); //NON-NLS
                 }
             } catch (SecurityException e) {
                 logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir, e); //NON-NLS
@@ -1071,7 +1082,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     //case change helper
     private static void doCaseChange(Case toChangeTo) {
-        logger.log(Level.INFO, "Changing Case to: " + toChangeTo); //NON-NLS
+        logger.log(Level.INFO, "Changing Case to: {0}", toChangeTo); //NON-NLS
         if (toChangeTo != null) { // new case is open
 
             // clear the temp folder when the case is created / opened
