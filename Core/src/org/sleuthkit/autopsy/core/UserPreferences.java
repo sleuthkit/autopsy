@@ -143,8 +143,8 @@ public final class UserPreferences {
         preferences.put(INDEXING_SERVER_HOST, hostName);
     }
     
-    public static int getIndexingServerPort() {
-        return preferences.getInt(INDEXING_SERVER_PORT, 0);
+    public static String getIndexingServerPort() {
+        return preferences.get(INDEXING_SERVER_PORT, "");
     }
     
     public static void setIndexingServerPort(int port) {

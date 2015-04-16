@@ -16,7 +16,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="pnOverallPanel" pref="511" max="32767" attributes="0"/>
+          <Component id="pnOverallPanel" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -55,7 +55,7 @@
                       <Component id="cbEnableMultiUser" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="lbOops" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="6" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
                   <Component id="pnDatabaseSettings" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pnSolrSettings" min="-2" max="-2" attributes="0"/>
@@ -199,8 +199,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="lbSolrSettings" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="lbSolrMsg" min="-2" pref="320" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                           <Component id="tbIndexingServerHost" alignment="1" max="32767" attributes="0"/>
                           <Component id="tbIndexingServerPort" alignment="1" max="32767" attributes="0"/>
@@ -213,10 +212,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="lbSolrSettings" min="-2" max="-2" attributes="0"/>
-                          <Component id="lbSolrMsg" max="32767" attributes="0"/>
-                      </Group>
+                      <Component id="lbSolrSettings" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="tbIndexingServerHost" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
@@ -268,20 +264,6 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="tbIndexingServerPortActionPerformed"/>
               </Events>
-            </Component>
-            <Component class="javax.swing.JLabel" name="lbSolrMsg">
-              <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="12" style="1"/>
-                </Property>
-                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="0" green="0" red="ff" type="rgb"/>
-                </Property>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolrMsg.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-                <Property name="verticalAlignment" type="int" value="3"/>
-              </Properties>
             </Component>
           </SubComponents>
         </Container>
