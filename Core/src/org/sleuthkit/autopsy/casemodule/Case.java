@@ -141,20 +141,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
         SINGLE_USER_CASE("Single-user case"),
         MULTI_USER_CASE("Multi-user case");
 
-        private final String caseName;
+        private final String caseType;
 
         private CaseType(String s) {
-            caseName = s;
+            caseType = s;
         }
 
-        public boolean equalsName(String otherName) {
-            return (otherName == null) ? false : caseName.equals(otherName);
+        public boolean equalsName(String otherType) {
+            return (otherType == null) ? false : caseType.equals(otherType);
         }
 
-        public static CaseType fromString(String text) {
-            if (text != null) {
+        public static CaseType fromString(String typeName) {
+            if (typeName != null) {
                 for (CaseType c : CaseType.values()) {
-                    if (text.equalsIgnoreCase(c.caseName)) {
+                    if (typeName.equalsIgnoreCase(c.caseType)) {
                         return c;
                     }
                 }
@@ -164,7 +164,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         @Override
         public String toString() {
-            return caseName;
+            return caseType;
         }
     };
 
@@ -176,6 +176,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
+    private CaseType caseType;
     private final Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
@@ -189,12 +190,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Constructor for the Case class
      */
-    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
+    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db, CaseType type) {
         this.name = name;
         this.number = number;
         this.examiner = examiner;
         this.configFilePath = configFilePath;
         this.xmlcm = xmlcm;
+        this.caseType = type;
         this.db = db;
         this.services = new Services(db);
 //        messenger = new Messenger(this.name);
@@ -344,16 +346,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         XMLCaseManagement xmlcm = new XMLCaseManagement();
 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        Date date = new Date();
+        String indexName = caseName + "_" + dateFormat.format(date);
+
         String dbName = null;
-        // figure out the database name
+        
+        // figure out the database name and index name for text extraction
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-            dbName = caseName + "_" + dateFormat.format(new Date());
+            dbName = caseName + "_" + dateFormat.format(date);
         }
 
-        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName); // create a new XML config file
+        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName); // create a new XML config file
         xmlcm.writeFile();
 
         SleuthkitCase db = null;
@@ -373,7 +379,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * Two-stage initialization to avoid leaking reference to "this" in
          * constructor.
          */
-        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
         newCase.init();
 //        newCase.messenger.start();
 
@@ -403,7 +409,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             SleuthkitCase db;
 
             if (caseType == CaseType.SINGLE_USER_CASE) {
-                // if the caseName is "", case / config file can't be opened
+                // if the caseType is "", case / config file can't be opened
                 if (caseName.equals("")) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.blankCase.msg"));
                 }
@@ -434,7 +440,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
              * Two-stage initialization to avoid leaking reference to "this" in
              * constructor.
              */
-            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
             openedCase.init();
 //            openedCase.messenger.start();
 
@@ -790,6 +796,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
+     * Get the case type.
+     * @return 
+     */
+    public CaseType getCaseType() {
+        return this.caseType;
+    }
+    
+    /**
      * Gets the full path to the temp directory of this case
      *
      * @return tempDirectoryPath
@@ -851,6 +865,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return "";
         } else {
             return xmlcm.getCreatedDate();
+        }
+    }
+
+    /**
+     * Get the name of the index where extracted text is stored for the case.
+     *
+     * @return Index name.
+     */
+    public String getTextIndexName() {
+        if (xmlcm == null) {
+            return "";
+        } else {
+            return xmlcm.getTextIndexName();
         }
     }
 
