@@ -254,18 +254,20 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
                             reportProgressBar.setStringPainted(true);
-                            reportProgressBar.setForeground(Color.GREEN);
+                            // set reportProgressBar color as green.
+                            reportProgressBar.setForeground(new Color(50,205,50));
                             reportProgressBar.setString("Complete"); //NON-NLS
                             break;
                         }
                         case ERROR: {
                             STATUS = ReportStatus.ERROR;
-                            processingLabel.setForeground(Color.RED);
+                            processingLabel.setForeground(new Color(178,34,34));
                             processingLabel.setText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
                             reportProgressBar.setStringPainted(true);
-                            reportProgressBar.setForeground(Color.RED);
+                            // set reportProgressBar color as red.
+                            reportProgressBar.setForeground(new Color(178,34,34));
                             reportProgressBar.setString("Error"); //NON-NLS
                             break;
                         }
@@ -359,9 +361,10 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setIndeterminate(false);
                 reportProgressBar.setValue(0);
                 reportProgressBar.setStringPainted(true);
-                reportProgressBar.setForeground(Color.red);
+                // set reportProgressBar color as red.
+                reportProgressBar.setForeground(new Color(178,34,34));
                 reportProgressBar.setString("Cancelled"); //NON-NLS
-                processingLabel.setForeground(Color.RED);
+                processingLabel.setForeground(new Color(178,34,34));
                 processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;
         }
