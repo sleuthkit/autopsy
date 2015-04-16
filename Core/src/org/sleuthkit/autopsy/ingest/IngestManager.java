@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.Content;
  * Manages the creation and execution of ingest jobs, i.e., the processing of
  * data sources by ingest modules.
  */
-public class IngestManager implements AutopsyEventSubscriber {
+public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static IngestManager instance;
@@ -295,7 +295,13 @@ public class IngestManager implements AutopsyEventSubscriber {
                 IngestModuleEvent.DATA_ADDED.toString(),
                 IngestModuleEvent.CONTENT_CHANGED.toString(),
                 IngestModuleEvent.FILE_DONE.toString()));
-        Case.addRemoteEventSubscriber(remoteEventNames, this);
+        Case.addRemoteEventSubscriber(remoteEventNames, new AutopsyEventSubscriber() {
+
+            @Override
+            public void receiveEvent(AutopsyEvent event) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        });        
     }
     
     synchronized void handleCaseOpened() {
@@ -636,15 +642,6 @@ public class IngestManager implements AutopsyEventSubscriber {
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
-    }
-
-    /**
-     * @inheritDoc
-     * @param event
-     */
-    @Override
-    public void receiveEvent(AutopsyEvent event) {
-        throw new UnsupportedOperationException("Not supported yet.");        
     }
 
     /**

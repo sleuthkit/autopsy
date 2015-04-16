@@ -69,7 +69,7 @@ import org.sleuthkit.autopsy.events.AutopsyEventSubscriber;
  * case.
  */
 @SuppressWarnings("deprecation") // TODO: Remove this when ErrorObserver is replaced.
-public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver {
+public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static String appName = null;
@@ -207,7 +207,8 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
             Events.DATA_SOURCE_ADDED.toString(),
             Events.DATA_SOURCE_DELETED.toString(),
             Events.REPORT_ADDED.toString()));
-    private static final AutopsyEventPublisher messagePublisher = new AutopsyEventPublisher();
+    private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
+    private final EventSubscriber eventSubscriber;
     private final Messenger messenger;
 
     /**
@@ -222,7 +223,8 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
         this.caseType = type;
         this.db = db;
         this.services = new Services(db);
-        messenger = new Messenger(this.name, messagePublisher);
+        this.eventSubscriber = new EventSubscriber();
+        this.messenger = new Messenger(this.name, eventPublisher);
     }
 
     /**
@@ -233,7 +235,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
         db.addErrorObserver(this);
 
         if (CaseType.MULTI_USER_CASE == this.caseType) {
-            Case.addRemoteEventSubscriber(REMOTE_EVENT_NAMES, this);
+            addRemoteEventSubscriber(REMOTE_EVENT_NAMES, eventSubscriber);
             try {
                 messenger.start(UserPreferences.getMessageServiceConnectionInfo());
             } catch (URISyntaxException | JMSException ex) {
@@ -622,7 +624,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
     public void closeCase() throws CaseActionException {
         changeCase(null);
 
-        Case.messagePublisher.removeSubscriber(REMOTE_EVENT_NAMES, this);
+        Case.eventPublisher.removeSubscriber(REMOTE_EVENT_NAMES, eventSubscriber);
         try {
             if (CaseType.MULTI_USER_CASE == this.caseType) {
                 messenger.stop();
@@ -995,7 +997,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
      * @param subscriber The subscriber to add.
      */
     public static void addRemoteEventSubscriber(Collection<String> eventNames, AutopsyEventSubscriber subscriber) {
-        messagePublisher.addSubscriber(eventNames, subscriber);
+        eventPublisher.addSubscriber(eventNames, subscriber);
     }
 
     /**
@@ -1006,7 +1008,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
      * @param subscriber The subscriber to add.
      */
     public static void addRemoteEventSubscriber(String eventName, AutopsyEventSubscriber subscriber) {
-        messagePublisher.addSubscriber(eventName, subscriber);
+        eventPublisher.addSubscriber(eventName, subscriber);
     }
 
     /**
@@ -1017,7 +1019,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
      * @param subscriber The subscriber to add.
      */
     public static void removeRemoteEventSubscriber(String eventName, AutopsyEventSubscriber subscriber) {
-        messagePublisher.removeSubscriber(eventName, subscriber);
+        eventPublisher.removeSubscriber(eventName, subscriber);
     }
 
     /**
@@ -1028,16 +1030,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
      * @param subscriber The subscriber to add.
      */
     public static void removeRemoteEventSubscriber(Collection<String> eventNames, AutopsyEventSubscriber subscriber) {
-        messagePublisher.removeSubscriber(eventNames, subscriber);
-    }
-
-    /**
-     * @inheritDoc
-     * @param event
-     */
-    @Override
-    public void receiveEvent(AutopsyEvent event) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        eventPublisher.removeSubscriber(eventNames, subscriber);
     }
 
     /**
@@ -1393,4 +1386,16 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
         }
         return hasData;
     }
+
+    private final class EventSubscriber implements AutopsyEventSubscriber {
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public void receiveEvent(AutopsyEvent event) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
 }

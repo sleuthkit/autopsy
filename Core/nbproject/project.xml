@@ -192,13 +192,11 @@
                 <package>org.sleuthkit.autopsy.coreutils</package>
                 <package>org.sleuthkit.autopsy.datamodel</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
-                <package>org.sleuthkit.autopsy.events</package>
                 <package>org.sleuthkit.autopsy.externalresults</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
-                <package>org.sleuthkit.autopsy.messaging</package>
                 <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
                 <package>org.sleuthkit.autopsy.report</package>
