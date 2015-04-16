@@ -138,9 +138,6 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png"))); //NON-NLS
-                cancelButton.setToolTipText(
-                        NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.cancelButton.text"));
                 processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
                 STATUS = ReportStatus.RUNNING;
             }
@@ -252,22 +249,26 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                     switch (reportStatus) {
                         case COMPLETE: {
                             STATUS = ReportStatus.COMPLETE;
+                            processingLabel.setForeground(Color.BLACK);
                             processingLabel.setText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
-                            cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete.png"))); //NON-NLS
-                            cancelButton.setToolTipText(
-                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                            reportProgressBar.setStringPainted(true);
+                            // set reportProgressBar color as green.
+                            reportProgressBar.setForeground(new Color(50,205,50));
+                            reportProgressBar.setString("Complete"); //NON-NLS
                             break;
                         }
                         case ERROR: {
                             STATUS = ReportStatus.ERROR;
+                            processingLabel.setForeground(new Color(178,34,34));
                             processingLabel.setText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
-                            cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_complete_with_errors.png"))); //NON-NLS
-                            cancelButton.setToolTipText(
-                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.cancelButton.text"));
+                            reportProgressBar.setStringPainted(true);
+                            // set reportProgressBar color as red.
+                            reportProgressBar.setForeground(new Color(178,34,34));
+                            reportProgressBar.setString("Error"); //NON-NLS
                             break;
                         }
                         // add finer grained result codes here.
@@ -291,7 +292,6 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         reportProgressBar = new javax.swing.JProgressBar();
-        cancelButton = new javax.swing.JButton();
         reportLabel = new javax.swing.JLabel();
         pathLabel = new javax.swing.JLabel();
         processingLabel = new javax.swing.JLabel();
@@ -299,33 +299,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         setMinimumSize(new java.awt.Dimension(486, 68));
 
-        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); // NOI18N NON-NLS
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.cancelButton.text")); // NOI18N
-        cancelButton.setToolTipText(org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.cancelButton.toolTipText")); // NOI18N
-        cancelButton.setBorder(null);
-        cancelButton.setBorderPainted(false);
-        cancelButton.setContentAreaFilled(false);
-        cancelButton.setFocusPainted(false);
-        cancelButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                cancelButtonMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                cancelButtonMouseExited(evt);
-            }
-        });
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
-            }
-        });
-
-        reportLabel.setFont(reportLabel.getFont().deriveFont(Font.BOLD, 11));
+        reportLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(processingLabel.getFont().deriveFont(Font.ITALIC, 10));
+        processingLabel.setFont(new java.awt.Font("Tahoma", 2, 10)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
@@ -340,8 +319,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                     .addComponent(processingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(reportProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton))
+                        .addGap(58, 58, 58))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(reportLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -354,9 +332,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(reportProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(reportProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(reportLabel)
@@ -368,10 +344,6 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        cancel();
-    }//GEN-LAST:event_cancelButtonActionPerformed
-
     /**
      * Cancels the current report, based on it's status. If the report is
      * complete or has already been completed, nothing happens.
@@ -382,53 +354,23 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 break;
             case CANCELED:
                 break;
+            case ERROR:
+                break;
             default:
                 STATUS = ReportStatus.CANCELED;
-                cancelButton.setEnabled(false);
-                cancelButton.setToolTipText(
-                        NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.cancelButton.toolTipText"));
                 reportProgressBar.setIndeterminate(false);
                 reportProgressBar.setValue(0);
-                reportProgressBar.setForeground(Color.RED);
-                reportProgressBar.setBackground(Color.RED);
-                processingLabel.setForeground(Color.RED);
+                reportProgressBar.setStringPainted(true);
+                // set reportProgressBar color as red.
+                reportProgressBar.setForeground(new Color(178,34,34));
+                reportProgressBar.setString("Cancelled"); //NON-NLS
+                processingLabel.setForeground(new Color(178,34,34));
                 processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;
         }
     }
     
-    private void cancelButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cancelButtonMouseEntered
-        switch(STATUS) {
-            case COMPLETE:
-                break;
-            case CANCELED:
-                break;
-            default:
-                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel_hover.png"))); //NON-NLS
-                break;
-        }
-    }//GEN-LAST:event_cancelButtonMouseEntered
-
-    private void cancelButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cancelButtonMouseExited
-        switch(STATUS) {
-            case COMPLETE:
-                break;
-            case CANCELED:
-                break;
-            case QUEUING:
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_loading.png"))); //NON-NLS
-                break;
-            case RUNNING:
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/report_cancel.png"))); //NON-NLS
-                break;
-        }
-    }//GEN-LAST:event_cancelButtonMouseExited
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cancelButton;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JLabel processingLabel;
     private javax.swing.JLabel reportLabel;
