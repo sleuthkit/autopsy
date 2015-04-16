@@ -184,7 +184,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
     private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
-    private CaseType caseType;
+    private final CaseType caseType;
     private final Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
@@ -194,9 +194,9 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
     private boolean hasData = false;
 
     /**
-     * Multi-user cases send and receiveEvent event messages from other Autopsy nodes
- using a Messenger and publish remote events using a
- AutopsyEventPublisher. The AutopsyEventPublisher is static to allow
+     * Multi-user cases send and receiveEvent event messages from other Autopsy
+     * nodes using a Messenger and publish remote events using a
+     * AutopsyEventPublisher. The AutopsyEventPublisher is static to allow
      * subscribers to register once for all cases.
      */
     private static final Collection<String> REMOTE_EVENT_NAMES = new ArrayList<>(Arrays.asList(
@@ -1037,7 +1037,7 @@ public class Case implements AutopsyEventSubscriber, SleuthkitCase.ErrorObserver
      */
     @Override
     public void receiveEvent(AutopsyEvent event) {
-        throw new UnsupportedOperationException("Not supported yet.");        
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
