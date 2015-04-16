@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.core.events;
+package org.sleuthkit.autopsy.events;
 
 /**
  * An interface to be implemented by classes that want to register to receiveEvent

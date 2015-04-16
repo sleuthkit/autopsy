@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.core.messaging.Messenger;
+import org.sleuthkit.autopsy.messaging.Messenger;
 import java.awt.Frame;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -51,7 +51,7 @@ import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.core.events.AutopsyEvent;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -60,8 +60,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
-import org.sleuthkit.autopsy.core.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.core.events.AutopsyEventSubscriber;
+import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.events.AutopsyEventSubscriber;
 
 /**
  * Stores all information for a given case. Only a single case can currently be

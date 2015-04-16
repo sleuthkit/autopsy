@@ -16,10 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.core.messaging;
+package org.sleuthkit.autopsy.messaging;
 
-import org.sleuthkit.autopsy.core.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.core.events.AutopsyEvent;
+import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
 import javax.jms.Connection;
