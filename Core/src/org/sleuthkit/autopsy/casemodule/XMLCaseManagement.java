@@ -60,6 +60,7 @@ import org.xml.sax.SAXException;
     final static String SCHEMA_VERSION_NAME = "SchemaVersion"; //NON-NLS
     final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
     final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
+    final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
     // folders inside case directory
     final static String LOG_FOLDER_NAME = "LogFolder"; //NON-NLS
     final static String LOG_FOLDER_RELPATH = "Log"; //NON-NLS
@@ -88,6 +89,7 @@ import org.xml.sax.SAXException;
     private String autopsySavedVersion;
     private CaseType caseType;      // The type of case: local or shared
     private String dbName;          // The name of the database    
+    private String textIndexName;   // The name of the index where extracted text is stored.
     
     // for error handling
     private JPanel caller;
@@ -247,6 +249,34 @@ import org.xml.sax.SAXException;
      }
     
     /**
+     * Sets the text index name internally (on local variable in this class)
+     *
+     * @param textIndexName the new name for the index where extracted text
+     * is stored for the case.
+     */
+    private void setTextIndexName(String textIndexName) {
+        this.textIndexName= textIndexName; // change this to change the xml file if needed
+    }
+
+    /**
+     * Gets the name of the index where extracted text is stored.
+     *
+     * @return the index name
+     */
+     public String getTextIndexName() {
+         if (doc == null) {
+             return "";
+         } else {
+             if (getCaseElement().getElementsByTagName(CASE_TEXT_INDEX_NAME).getLength() > 0) {
+                 Element nameElement = (Element) getCaseElement().getElementsByTagName(CASE_TEXT_INDEX_NAME).item(0);
+                 return nameElement.getTextContent();
+             } else {
+                 return ""; /// couldn't find one, so return a blank index name   
+             }
+         }
+     }
+
+     /**
      * Sets the examiner name internally (on local variable in this class)
      *
      * @param givenExaminer the new examiner
@@ -503,8 +533,9 @@ import org.xml.sax.SAXException;
      * @param caseNumber case number (optional), can be empty
      * @param dbName the name of the database. Could be a local path, could be
      * a Postgre db name.
+     * @param textIndexName The name of the index where extracted text is stored.
      */
-    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName) throws CaseActionException {
+    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName, String textIndexName) throws CaseActionException {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
@@ -514,6 +545,7 @@ import org.xml.sax.SAXException;
         setNumber(caseNumber);
         setCaseType(caseType);
         setDatabaseName(dbName);
+        setTextIndexName(textIndexName);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -592,6 +624,10 @@ import org.xml.sax.SAXException;
         Element dbNameElement = doc.createElement(DATABASE_NAME); // <DatabaseName> ... </DatabaseName>
         dbNameElement.appendChild(doc.createTextNode(dbName));
         caseElement.appendChild(dbNameElement);
+        
+        Element indexNameElement = doc.createElement(CASE_TEXT_INDEX_NAME); // <TextIndexName> ... </TextIndexName>
+        indexNameElement.appendChild(doc.createTextNode(textIndexName));
+        caseElement.appendChild(indexNameElement);
         
         // write more code if needed ...
     }
@@ -761,5 +797,6 @@ import org.xml.sax.SAXException;
         examiner = "";
         caseType = CaseType.SINGLE_USER_CASE;
         dbName = "";
+        textIndexName = "";
     }
 }

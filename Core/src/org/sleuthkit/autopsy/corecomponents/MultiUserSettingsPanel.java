@@ -27,6 +27,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
+    private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
     private final TextBoxChangedListener textBoxChangedListener;
@@ -51,6 +52,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PORT_PROMPT, msgPortTextField));
         textPrompts.add(new TextPrompt(USER_NAME_PROMPT, msgUserNameTextField));
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, msgPasswordField));
+        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbIndexingServerHost));
+        textPrompts.add(new TextPrompt(PORT_PROMPT, tbIndexingServerPort));
         configureTextPrompts(textPrompts);
 
         /// Register for notifications when the text boxes get updated.
@@ -63,6 +66,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textBoxes.add(msgPortTextField);
         textBoxes.add(msgUserNameTextField);
         textBoxes.add(msgPasswordField);
+        textBoxes.add(tbIndexingServerHost);
+        textBoxes.add(tbIndexingServerPort);
         addDocumentListeners(textBoxes, textBoxChangedListener);
 
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
@@ -112,6 +117,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbDatabaseSettings = new javax.swing.JLabel();
         pnSolrSettings = new javax.swing.JPanel();
         lbSolrSettings = new javax.swing.JLabel();
+        tbIndexingServerHost = new javax.swing.JTextField();
+        tbIndexingServerPort = new javax.swing.JTextField();
         lbOops = new javax.swing.JLabel();
         pnMessagingSettings = new javax.swing.JPanel();
         lbMessagingSettings = new javax.swing.JLabel();
@@ -126,6 +133,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbHostnameOrIp.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         tbHostnameOrIp.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbHostnameOrIp.text")); // NOI18N
         tbHostnameOrIp.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbHostnameOrIp.toolTipText")); // NOI18N
+        tbHostnameOrIp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbHostnameOrIpActionPerformed(evt);
+            }
+        });
 
         tbPortNumber.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         tbPortNumber.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbPortNumber.text")); // NOI18N
@@ -180,21 +192,48 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbSolrSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
 
+        tbIndexingServerHost.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbIndexingServerHost.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerHost.text")); // NOI18N
+        tbIndexingServerHost.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerHost.toolTipText")); // NOI18N
+        tbIndexingServerHost.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbIndexingServerHostActionPerformed(evt);
+            }
+        });
+
+        tbIndexingServerPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbIndexingServerPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerPort.text")); // NOI18N
+        tbIndexingServerPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerPort.toolTipText")); // NOI18N
+        tbIndexingServerPort.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbIndexingServerPortActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnSolrSettingsLayout = new javax.swing.GroupLayout(pnSolrSettings);
         pnSolrSettings.setLayout(pnSolrSettingsLayout);
         pnSolrSettingsLayout.setHorizontalGroup(
             pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnSolrSettingsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lbSolrSettings)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnSolrSettingsLayout.createSequentialGroup()
+                        .addComponent(lbSolrSettings)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(tbIndexingServerHost, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(tbIndexingServerPort, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addContainerGap())
         );
         pnSolrSettingsLayout.setVerticalGroup(
             pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnSolrSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lbSolrSettings)
-                .addContainerGap(75, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tbIndexingServerHost, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(tbIndexingServerPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(45, 45, 45))
         );
 
         lbOops.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
@@ -285,7 +324,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cbEnableMultiUser)
                     .addComponent(lbOops))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 6, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -298,7 +337,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 511, Short.MAX_VALUE)
+            .addComponent(pnOverallPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -325,6 +364,18 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         controller.changed();
     }//GEN-LAST:event_cbEnableMultiUserItemStateChanged
 
+    private void tbHostnameOrIpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbHostnameOrIpActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tbHostnameOrIpActionPerformed
+
+    private void tbIndexingServerHostActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbIndexingServerHostActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tbIndexingServerHostActionPerformed
+
+    private void tbIndexingServerPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbIndexingServerPortActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tbIndexingServerPortActionPerformed
+
     void load() {
         CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
         tbHostnameOrIp.setText(dbInfo.getHost());
@@ -338,6 +389,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         msgUserNameTextField.setText(msgServiceInfo.getUserName());
         msgPasswordField.setText(msgServiceInfo.getPassword());
 
+        String indexingServerHost = UserPreferences.getIndexingServerHost();
+        if (!indexingServerHost.isEmpty()) {
+            tbIndexingServerHost.setText(indexingServerHost);
+        }
+        String indexingServerPort = UserPreferences.getIndexingServerPort();
+        if (portNumberIsValid(indexingServerPort)) {
+            tbIndexingServerPort.setText(indexingServerPort);
+        }
+        
         if (dbInfo.getDbType() == DbType.UNKNOWN) {
             cbEnableMultiUser.setSelected(false);
         } else {
@@ -381,6 +441,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 msgHostTextField.getText(),
                 msgPortTextField.getText());
         UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+
+        UserPreferences.setIndexingServerHost(tbIndexingServerHost.getText());
+        UserPreferences.setIndexingServerPort(Integer.parseInt(tbIndexingServerPort.getText()));
+        
     }
 
     /**
@@ -391,7 +455,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     boolean valid() {
         lbOops.setText("");
         if (cbEnableMultiUser.isSelected()) {
-            return settingsAreComplete() && databaseSettingsAreValid() && messageServiceSettingsAreValid();
+            return settingsAreComplete() && databaseSettingsAreValid() && indexingServerSettingsAreValid() && messageServiceSettingsAreValid();
         } else {
             return true;
         }
@@ -445,6 +509,20 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Tests whether or not the indexing server settings are valid.
+     *
+     * @return True or false.
+     */
+    boolean indexingServerSettingsAreValid() {
+        if (!portNumberIsValid(tbIndexingServerPort.getText())) {
+            lbOops.setText(INVALID_INDEXING_SERVER_PORT_MSG);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Determines whether or not a port number is within the range of valid port
      * numbers.
      *
@@ -478,6 +556,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel pnOverallPanel;
     private javax.swing.JPanel pnSolrSettings;
     private javax.swing.JTextField tbHostnameOrIp;
+    private javax.swing.JTextField tbIndexingServerHost;
+    private javax.swing.JTextField tbIndexingServerPort;
     private javax.swing.JPasswordField tbPassword;
     private javax.swing.JTextField tbPortNumber;
     private javax.swing.JTextField tbUsername;
@@ -503,6 +583,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         public void removeUpdate(DocumentEvent e) {
             controller.changed();
-        }
+        }        
     }
 }

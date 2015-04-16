@@ -17,17 +17,29 @@
 -->
 
 <!--
- All (relative) paths are relative to the installation path
-  
-  persistent: Save changes made via the API to this file
-  sharedLib: path to a lib directory that will be shared across all cores
--->
-<solr persistent="false">
+   This is an example of a simple "solr.xml" file for configuring one or 
+   more Solr Cores, as well as allowing Cores to be added, removed, and 
+   reloaded via HTTP requests.
 
-  <!--
-  adminPath: RequestHandler path to manage cores.  
-    If 'null' (or absent), cores will not be manageable via request handler
-  -->
-  <cores adminPath="/admin/cores" shareSchema="true">
-  </cores>
+   More information about options available in this configuration file, 
+   and Solr Core administration can be found online:
+   http://wiki.apache.org/solr/CoreAdmin
+-->
+
+<solr>
+
+  <solrcloud>
+    <str name="host">${host:}</str>
+    <int name="hostPort">${jetty.port:8983}</int>
+    <str name="hostContext">${hostContext:solr}</str>
+    <int name="zkClientTimeout">${zkClientTimeout:30000}</int>
+    <bool name="genericCoreNodeNames">${genericCoreNodeNames:true}</bool>
+  </solrcloud>
+
+  <shardHandlerFactory name="shardHandlerFactory"
+    class="HttpShardHandlerFactory">
+    <int name="socketTimeout">${socketTimeout:0}</int>
+    <int name="connTimeout">${connTimeout:0}</int>
+  </shardHandlerFactory>
+
 </solr>
