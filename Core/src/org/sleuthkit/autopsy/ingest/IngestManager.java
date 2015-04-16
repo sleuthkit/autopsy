@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,6 +44,8 @@ import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.events.AutopsyEvent;
+import org.sleuthkit.autopsy.core.events.AutopsyEventSubscriber;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -52,7 +55,7 @@ import org.sleuthkit.datamodel.Content;
  * Manages the creation and execution of ingest jobs, i.e., the processing of
  * data sources by ingest modules.
  */
-public class IngestManager {
+public class IngestManager implements AutopsyEventSubscriber {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static IngestManager instance;
@@ -268,6 +271,9 @@ public class IngestManager {
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
+    /**
+     * Subscribes this ingest manager to local and remote case-related events.
+     */
     private void subscribeToCaseEvents() {
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -281,8 +287,17 @@ public class IngestManager {
                 }
             }
         });
+        
+        Collection<String> remoteEventNames = new ArrayList<>(Arrays.asList(
+                IngestJobEvent.STARTED.toString(),
+                IngestJobEvent.COMPLETED.toString(),
+                IngestJobEvent.CANCELLED.toString(),
+                IngestModuleEvent.DATA_ADDED.toString(),
+                IngestModuleEvent.CONTENT_CHANGED.toString(),
+                IngestModuleEvent.FILE_DONE.toString()));
+        Case.addRemoteEventSubscriber(remoteEventNames, this);
     }
-
+    
     synchronized void handleCaseOpened() {
         this.jobCreationIsEnabled = true;
         clearIngestMessageBox();
@@ -621,6 +636,15 @@ public class IngestManager {
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
+    }
+
+    /**
+     * @inheritDoc
+     * @param event
+     */
+    @Override
+    public void receiveEvent(AutopsyEvent event) {
+        throw new UnsupportedOperationException("Not supported yet.");        
     }
 
     /**

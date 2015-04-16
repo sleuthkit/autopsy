@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.core;
 
-import org.sleuthkit.autopsy.core.messenger.MessageServiceConnectionInfo;
+import org.sleuthkit.autopsy.core.messaging.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;

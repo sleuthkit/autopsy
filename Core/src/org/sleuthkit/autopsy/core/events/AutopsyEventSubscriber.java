@@ -16,26 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.core.messenger;
-
-import java.beans.PropertyChangeEvent;
-import java.io.Serializable;
+package org.sleuthkit.autopsy.core.events;
 
 /**
- *
+ * An interface to be implemented by classes that want to register to receiveEvent
+ events.
  */
-public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
+public interface AutopsyEventSubscriber {
 
-    private static final long serialVersionUID = 1L;
-
-    public enum Source {
-
-        Local,
-        Remote
-    };
-
-    AutopsyEvent(Source source, String propertyName, Object oldValue, Object newValue) {
-        super(source, propertyName, oldValue, newValue);
-    }
-
+    /**
+     * Receives a subscribed event.
+     *
+     * @param event The event.
+     */
+    void receiveEvent(AutopsyEvent event);
 }
