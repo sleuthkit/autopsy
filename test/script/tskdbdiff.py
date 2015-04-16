@@ -141,6 +141,12 @@ class TskDbDiff(object):
         diff_file = codecs.open(diff_path, "wb", "utf_8")
         dffcmdlst = ["diff", gold_file, output_file]
         subprocess.call(dffcmdlst, stdout = diff_file)
+
+        # create file path for gold files inside output folder. In case of diff, both gold and current run files
+        # are available in the report output folder. Prefix Gold- is added to the filename.
+        gold_file_in_output_dir = output_file[:output_file.rfind("/")] + "/Gold-" + output_file[output_file.rfind("/")+1:]
+        shutil.copy(gold_file, gold_file_in_output_dir)
+
         return False
 
 
