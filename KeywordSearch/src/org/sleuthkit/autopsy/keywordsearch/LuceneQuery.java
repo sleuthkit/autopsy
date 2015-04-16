@@ -425,6 +425,7 @@ class LuceneQuery implements KeywordSearchQuery {
         //docs says makes sense for the original Highlighter only, but not really
         //analyze all content SLOW! consider lowering
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);  //NON-NLS
+        q.setParam("hl.preserveMulti", true); //NON-NLS
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
