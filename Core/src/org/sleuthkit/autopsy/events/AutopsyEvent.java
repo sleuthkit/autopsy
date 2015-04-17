@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.events;
 
 import java.beans.PropertyChangeEvent;
 import java.io.Serializable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * A base class for events that can be published locally as well as to other
@@ -27,6 +28,7 @@ import java.io.Serializable;
  * to integrate with the legacy use of JavaBeans PropertyChangeEvents and
  * PropertyChangeListeners as a local event system.
  */
+@Immutable
 public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -45,13 +47,13 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
      * Constructs an event that can be published locally and to other Autopsy
      * nodes when a multi-user case is open.
      *
-     * @param source The source of the event, local or remote.
+     * @param sourceType The source type of the event, local or remote.
      * @param eventName The event name.
      * @param oldValue The "old" value to associate with the event. May be null.
      * @param newValue The "new" value to associate with the event. May be null.
      */
-    AutopsyEvent(SourceType source, String eventName, Object oldValue, Object newValue) {
-        super(source, eventName, oldValue, newValue);
+    public AutopsyEvent(SourceType sourceType, String eventName, Object oldValue, Object newValue) {
+        super(sourceType, eventName, oldValue, newValue);
     }
 
 }

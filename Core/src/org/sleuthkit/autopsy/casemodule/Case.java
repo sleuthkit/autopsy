@@ -209,7 +209,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             Events.REPORT_ADDED.toString()));
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private final EventSubscriber eventSubscriber;
-    private final Messenger messenger;
+    private Messenger messenger;
 
     /**
      * Constructor for the Case class
@@ -224,7 +224,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.db = db;
         this.services = new Services(db);
         this.eventSubscriber = new EventSubscriber();
-        this.messenger = new Messenger(this.name, eventPublisher);
+        if (CaseType.MULTI_USER_CASE == this.caseType) {
+            try {
+                this.messenger = new Messenger(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+            } catch (URISyntaxException | JMSException ex) {
+                // RJCTODO: Add some sort of notification to user.
+                logger.log(Level.SEVERE, "Failed to start messenger", ex);
+            }
+        }
     }
 
     /**
@@ -232,17 +239,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * constructor.
      */
     private void init() {
+        /**
+         * With an API change, this could be better done using an inner class, 
+         * allowing the two-stage initialization to be replaced. Or we could go
+         * ahead with removing SleuthkitCase.ErrorObserver. 
+         */
         db.addErrorObserver(this);
-
-        if (CaseType.MULTI_USER_CASE == this.caseType) {
-            addRemoteEventSubscriber(REMOTE_EVENT_NAMES, eventSubscriber);
-            try {
-                messenger.start(UserPreferences.getMessageServiceConnectionInfo());
-            } catch (URISyntaxException | JMSException ex) {
-                // RJCTODO: Add some sort of notification to user.
-                logger.log(Level.SEVERE, "Failed to start messenger", ex);
-            }
-        }
     }
 
     /**
@@ -577,7 +579,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
-
         notifyNewDataSource(newDataSource);
     }
 
@@ -1031,6 +1032,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static void removeRemoteEventSubscriber(Collection<String> eventNames, AutopsyEventSubscriber subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
+    }
+
+    /**
+     * Sends an event to other Autopsy nodes when a multi-user case is open.
+     *
+     * @param event The event to send.
+     */
+    public void sendEventMessage(AutopsyEvent event) {
+        if (CaseType.MULTI_USER_CASE == this.caseType && null != messenger) {
+            try {
+                messenger.send(event);
+            } catch (JMSException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to send %s event message", event.getPropertyName()), ex);
+            }
+        }
     }
 
     /**
