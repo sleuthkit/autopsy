@@ -22,12 +22,13 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -174,30 +175,29 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
     @Override
     public void validate() throws WizardValidationException {
-        
+
         NewCaseVisualPanel2 currentComponent = getComponent();
         final String caseNumber = currentComponent.getCaseNumber();
         final String examiner = currentComponent.getExaminer();
         try {
-            SwingUtilities.invokeLater(new Runnable(){
+            SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
                 public void run() {
                     try {
                         Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
                     } catch (Exception ex) {
-                        Exceptions.printStackTrace(ex);
+                        JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                            "CaseCreateAction.msgDlg.cantCreateCase.msg")+" "+caseName, 
+                            NbBundle.getMessage(this.getClass(),
+                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                            JOptionPane.ERROR_MESSAGE);
                     }
                 }
-            
-        });
-        
-            //Case.create(createdDirectory, caseName, caseNumber, examiner);
-        } catch(Exception ex) {
+            });
+        } catch (Exception ex) {
             throw new WizardValidationException(this.getComponent(),
-                                                NbBundle.getMessage(this.getClass(),
-                                                                    "NewCaseWizardPanel2.validate.errCreateCase.msg"),
-                                                null);
+                    NbBundle.getMessage(this.getClass(), "NewCaseWizardPanel2.validate.errCreateCase.msg"), null);
         }
     }
 }
