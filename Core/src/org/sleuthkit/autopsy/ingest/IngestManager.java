@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,6 +44,8 @@ import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.autopsy.events.AutopsyEventSubscriber;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -268,6 +271,9 @@ public class IngestManager {
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
+    /**
+     * Subscribes this ingest manager to local and remote case-related events.
+     */
     private void subscribeToCaseEvents() {
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -281,8 +287,23 @@ public class IngestManager {
                 }
             }
         });
-    }
+        
+        Collection<String> remoteEventNames = new ArrayList<>(Arrays.asList(
+                IngestJobEvent.STARTED.toString(),
+                IngestJobEvent.COMPLETED.toString(),
+                IngestJobEvent.CANCELLED.toString(),
+                IngestModuleEvent.DATA_ADDED.toString(),
+                IngestModuleEvent.CONTENT_CHANGED.toString(),
+                IngestModuleEvent.FILE_DONE.toString()));
+        Case.addRemoteEventSubscriber(remoteEventNames, new AutopsyEventSubscriber() {
 
+            @Override
+            public void receiveEvent(AutopsyEvent event) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        });        
+    }
+    
     synchronized void handleCaseOpened() {
         this.jobCreationIsEnabled = true;
         clearIngestMessageBox();

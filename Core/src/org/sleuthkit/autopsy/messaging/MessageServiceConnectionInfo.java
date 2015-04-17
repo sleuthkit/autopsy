@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.core.messenger;
+package org.sleuthkit.autopsy.messaging;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,7 +33,7 @@ public final class MessageServiceConnectionInfo {
     private final String port;
 
     /**
-     * Constructs an object containing the connection info for a Java Message
+     * Constructs an object containing connection info for a Java Message
      * Service (JMS) provider.
      *
      * @param userName The user name to use for a message service connection.
