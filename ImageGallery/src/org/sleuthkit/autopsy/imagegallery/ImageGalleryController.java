@@ -744,7 +744,7 @@ public final class ImageGalleryController {
      * netbeans and ImageGallery progress/status
      */
     class PrePopulateDataSourceFiles extends InnerTask {
-        private Content dataSource;
+        private final Content dataSource;
         
         /**
          * here we grab by extension but in file_done listener we look at file

@@ -112,9 +112,9 @@ import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -371,8 +371,10 @@ public class GroupPane extends BorderPane implements GroupView {
                 resetHeaderString();
                 //and assign fileIDs to gridView
                 if (grouping.get() == null) {
-                    Platform.runLater(gridView.getItems()::clear);
-
+                    Platform.runLater(gridView.getItems()::clear);            
+                    // @@@ PROBLEM - This is not causing the DrawableCell listener to get called to free it.
+                    // what if we also manuallly flushed the entires in cellMap at this point and called them with setFile(null). 
+                    // would need to expose a reset() method on DrawableCell.
                 } else {
                     grouping.get().fileIds().addListener((Observable observable) -> {
                         updateFiles();
@@ -627,6 +629,7 @@ public class GroupPane extends BorderPane implements GroupView {
      */
     void setViewState(GroupViewState viewState) {
         if (viewState == null) {
+            this.grouping.set(null);
             Platform.runLater(() -> {
                 setCenter(null);
                 groupLabel.setText(null);
@@ -655,6 +658,7 @@ public class GroupPane extends BorderPane implements GroupView {
             itemProperty().addListener((ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
                 if (oldValue != null) {
                     cellMap.remove(oldValue, DrawableCell.this);
+                    tile.setFile(null);
                 }
                 if (newValue != null) {
                     cellMap.put(newValue, DrawableCell.this);
