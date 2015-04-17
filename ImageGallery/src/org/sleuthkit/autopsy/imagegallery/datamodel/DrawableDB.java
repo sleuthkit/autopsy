@@ -391,14 +391,6 @@ public class DrawableDB {
             return false;
         }
 
-        // @@@ BC: I don't think this is needed because it is the primary key. 
-        try (Statement stmt = con.createStatement()) {
-            String sql = "CREATE UNIQUE INDEX if not exists obj_id_idx ON drawable_files(obj_id)";
-            stmt.execute(sql);
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem creating obj_id_idx", ex);
-        }
-
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists path_idx ON drawable_files(path)";
             stmt.execute(sql);
