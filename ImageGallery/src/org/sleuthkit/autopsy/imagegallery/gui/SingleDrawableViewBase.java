@@ -359,6 +359,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         if (Objects.equals(fileID, this.fileID) == false) {
             this.fileID = fileID;
             disposeContent();
+            
             if (this.fileID == null || Case.isCaseOpen() == false) {
                 Category.unregisterListener(this);
                 TagUtils.unregisterListener(this);

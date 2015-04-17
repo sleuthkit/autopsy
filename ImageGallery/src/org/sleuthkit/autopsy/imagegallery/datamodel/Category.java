@@ -100,7 +100,6 @@ public enum Category implements Comparable<Category> {
                 
                 CategoryListener obj = it.next();
                 if(obj instanceof SingleDrawableViewBase){
-                    System.out.println("  Removing file");
                     it.remove();
                 }
             }
