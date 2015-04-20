@@ -94,6 +94,7 @@ import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -372,9 +373,12 @@ public class GroupPane extends BorderPane implements GroupView {
                 //and assign fileIDs to gridView
                 if (grouping.get() == null) {
                     Platform.runLater(gridView.getItems()::clear);            
-                    // @@@ PROBLEM - This is not causing the DrawableCell listener to get called to free it.
-                    // what if we also manuallly flushed the entires in cellMap at this point and called them with setFile(null). 
-                    // would need to expose a reset() method on DrawableCell.
+                    // Reset the DrawableCell listeners from the old case
+                    if(! Case.isCaseOpen()){
+                        for(GroupPane.DrawableCell cell:cellMap.values()){
+                            cell.resetItem();
+                        }
+                    }
                 } else {
                     grouping.get().fileIds().addListener((Observable observable) -> {
                         updateFiles();
@@ -661,7 +665,15 @@ public class GroupPane extends BorderPane implements GroupView {
                     tile.setFile(null);
                 }
                 if (newValue != null) {
+                    if(cellMap.containsKey(newValue)){
+                        if(tile != null){
+                            // Clear out the old value to prevent out-of-date listeners
+                            // from activating.
+                            cellMap.get(newValue).tile.setFile(null);
+                        }
+                    }
                     cellMap.put(newValue, DrawableCell.this);
+                    
                 }
             });
 
@@ -672,6 +684,10 @@ public class GroupPane extends BorderPane implements GroupView {
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
             tile.setFile(item);
+        }
+        
+        void resetItem(){
+            tile.setFile(null);
         }
     }
 

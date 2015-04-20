@@ -86,26 +86,7 @@ public enum Category implements Comparable<Category> {
             listeners.remove(aThis);
         }
     }
-    
-    /**
-     * Clears out all the existing file-type listeners.
-     * To be called when the case is closed to prevent
-     * old abstract files files from trying to access the closed
-     * database.
-     */
-    public static void unregisterAllFileListeners(){
-        synchronized(listeners){
-            Iterator<CategoryListener> it = listeners.iterator();
-            while(it.hasNext()){
-                
-                CategoryListener obj = it.next();
-                if(obj instanceof SingleDrawableViewBase){
-                    it.remove();
-                }
-            }
-        }
-    }
-
+  
     public KeyCode getHotKeycode() {
         return KeyCode.getKeyCode(Integer.toString(id));
     }

@@ -347,8 +347,6 @@ public final class ImageGalleryController {
      */
     public synchronized void reset() {
         LOGGER.info("resetting ImageGalleryControler to initial state.");
-        Category.unregisterAllFileListeners();
-        TagUtils.unregisterAllFileListeners();
         selectionModel.clearSelection();
         
         Platform.runLater(() -> {
@@ -357,6 +355,7 @@ public final class ImageGalleryController {
 
         Toolbar.getDefault().reset();
         groupManager.clear();
+        
         if (db != null) {
             db.closeDBCon();
         }

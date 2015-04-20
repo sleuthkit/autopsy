@@ -112,25 +112,6 @@ public class TagUtils {
             listeners.remove(aThis);
         }
     }
-    
-        /**
-     * Clears out all the existing file-type listeners.
-     * To be called when the case is closed to prevent
-     * old abstract files files from trying to access the closed
-     * database.
-     */
-    public static void unregisterAllFileListeners(){
-        synchronized(listeners){
-            Iterator<TagListener> it = listeners.iterator();
-            while(it.hasNext()){
-                
-                TagListener obj = it.next();
-                if(obj instanceof SingleDrawableViewBase){
-                    it.remove();
-                }
-            }
-        }
-    }
 
     /**
      * @param tn the value of tn
