@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.messaging;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.annotation.concurrent.Immutable;
 
 /**
- * Connection info for a Java Message Service (JMS) provider.
+ * Connection info for a Java Message Service (JMS) provider. Thread-safe.
  */
+@Immutable
 public final class MessageServiceConnectionInfo {
 
     private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s";

@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -60,8 +58,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
-import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.events.AutopsyEventSubscriber;
+import org.sleuthkit.autopsy.events.Publisher;
 
 /**
  * Stores all information for a given case. Only a single case can currently be
@@ -193,22 +190,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
-    /**
-     * Multi-user cases send and receiveEvent event messages from other Autopsy
-     * nodes using a Messenger and publish remote events using a
-     * AutopsyEventPublisher. The AutopsyEventPublisher is static to allow
-     * subscribers to register once for all cases.
-     */
-    private static final Collection<String> REMOTE_EVENT_NAMES = new ArrayList<>(Arrays.asList(
-            Events.NAME.toString(),
-            Events.NUMBER.toString(),
-            Events.EXAMINER.toString(),
-            Events.DATA_SOURCE_ADDED.toString(),
-            Events.DATA_SOURCE_ADDED.toString(),
-            Events.DATA_SOURCE_DELETED.toString(),
-            Events.REPORT_ADDED.toString()));
-    private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
-    private final EventSubscriber eventSubscriber;
+    private static final Publisher eventPublisher = new Publisher();
     private Messenger messenger;
 
     /**
@@ -223,7 +205,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.caseType = type;
         this.db = db;
         this.services = new Services(db);
-        this.eventSubscriber = new EventSubscriber();
         if (CaseType.MULTI_USER_CASE == this.caseType) {
             try {
                 this.messenger = new Messenger(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
@@ -240,9 +221,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     private void init() {
         /**
-         * With an API change, this could be better done using an inner class, 
+         * With an API change, this could be better done using an inner class,
          * allowing the two-stage initialization to be replaced. Or we could go
-         * ahead with removing SleuthkitCase.ErrorObserver. 
+         * ahead with removing SleuthkitCase.ErrorObserver.
          */
         db.addErrorObserver(this);
     }
@@ -624,8 +605,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public void closeCase() throws CaseActionException {
         changeCase(null);
-
-        Case.eventPublisher.removeSubscriber(REMOTE_EVENT_NAMES, eventSubscriber);
         try {
             if (CaseType.MULTI_USER_CASE == this.caseType) {
                 messenger.stop();
@@ -997,7 +976,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    public static void addRemoteEventSubscriber(Collection<String> eventNames, AutopsyEventSubscriber subscriber) {
+    public static void addEventSubscriber(Collection<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventNames, subscriber);
     }
 
@@ -1008,7 +987,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param eventNames The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    public static void addRemoteEventSubscriber(String eventName, AutopsyEventSubscriber subscriber) {
+    public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventName, subscriber);
     }
 
@@ -1019,7 +998,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param eventName The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
-    public static void removeRemoteEventSubscriber(String eventName, AutopsyEventSubscriber subscriber) {
+    public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventName, subscriber);
     }
 
@@ -1030,7 +1009,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
-    public static void removeRemoteEventSubscriber(Collection<String> eventNames, AutopsyEventSubscriber subscriber) {
+    public static void removeEventSubscriber(Collection<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
     }
 
@@ -1382,7 +1361,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.SEVERE, errorMessage, ex);
         }
     }
-
+    
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
     }
@@ -1401,17 +1380,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
         }
         return hasData;
-    }
-
-    private final class EventSubscriber implements AutopsyEventSubscriber {
-
-        /**
-         * @inheritDoc
-         */
-        @Override
-        public void receiveEvent(AutopsyEvent event) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
     }
 
 }

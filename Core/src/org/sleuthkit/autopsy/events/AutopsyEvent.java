@@ -32,6 +32,7 @@ import javax.annotation.concurrent.Immutable;
 public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private SourceType sourceType;
 
     /**
      * Events have a source field set to local or remote to allow event
@@ -54,6 +55,30 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
      */
     public AutopsyEvent(SourceType sourceType, String eventName, Object oldValue, Object newValue) {
         super(sourceType, eventName, oldValue, newValue);
+        this.sourceType = sourceType;
+    }
+
+    /**
+     * Overrides the getSource() method of the EventObject superclass to allow
+     * the superclass source filed to be used as a mutable source type (local or
+     * remote) field.
+     *
+     * @param sourceType The source type of the event, local or remote.
+     */
+    @Override
+    public Object getSource() {
+        return sourceType;
+    }
+
+    /**
+     * Sets the source type (local or remote). This field is mutable in this way
+     * to allow an event to be published both locally and remotely without
+     * requiring the construction of two separate objects.
+     *
+     * @param sourceType The source type of the event, local or remote.
+     */
+    public void setSourceType(SourceType sourceType) {
+        this.sourceType = sourceType;
     }
 
 }

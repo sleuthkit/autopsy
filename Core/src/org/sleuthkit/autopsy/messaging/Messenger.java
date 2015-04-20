@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.messaging;
 
-import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.events.Publisher;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
@@ -37,14 +37,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Uses a message service to send and receives event messages between Autopsy
- * nodes when a multi-user case is open. Thread-safe.
+ * nodes when a multi-user case is open.
  */
 @Immutable
 public final class Messenger {
 
     private static final Logger logger = Logger.getLogger(Messenger.class.getName());
     private static final String ALL_MESSAGE_SELECTOR = "All";
-    private final AutopsyEventPublisher eventPublisher;
+    private final Publisher eventPublisher;
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
@@ -54,7 +54,8 @@ public final class Messenger {
      * Creates and starts a messenger to send and receive event messages between
      * Autopsy nodes when a multi-user case is open.
      *
-     * @param caseName The name of the multi-user case.
+     * @param topicName The name of the topic for this messenger to use for
+     * communication.
      * @param eventPublisher An event publisher that will be used to publish
      * remote events locally.
      * @param info Connection info for the message service.
@@ -63,14 +64,14 @@ public final class Messenger {
      * @throws JMSException if the connection to the message service cannot be
      * made.
      */
-    public Messenger(String caseName, AutopsyEventPublisher eventPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
+    public Messenger(String topicName, Publisher eventPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
         try {
             this.eventPublisher = eventPublisher;
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(info.getUserName(), info.getPassword(), info.getURI());
             connection = connectionFactory.createConnection();
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Topic topic = session.createTopic(caseName);
+            Topic topic = session.createTopic(topicName);
             producer = session.createProducer(topic);
             MessageConsumer consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
             receiver = new MessageReceiver();
@@ -114,6 +115,7 @@ public final class Messenger {
         producer.send(message);
     }
 
+    
     /**
      * Receives event messages via the message service and publishes them
      * locally.
