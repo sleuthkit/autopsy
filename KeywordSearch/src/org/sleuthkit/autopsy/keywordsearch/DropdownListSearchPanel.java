@@ -39,6 +39,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 
@@ -119,10 +120,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                if (changed.equals(IngestJobEvent.STARTED.toString())
-                        || changed.equals(IngestJobEvent.COMPLETED.toString())
-                        || changed.equals(IngestJobEvent.CANCELLED.toString())) {
+                if (evt instanceof AutopsyEvent && ((AutopsyEvent) evt).getSource() == AutopsyEvent.SourceType.Local) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
