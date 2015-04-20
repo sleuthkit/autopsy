@@ -268,11 +268,7 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
 
-        if (snippets) {
-            q.setFields(Server.Schema.ID.toString());
-        } else {
-            q.setFields(Server.Schema.ID.toString());
-        }
+        q.setFields(Server.Schema.ID.toString());
 
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
@@ -438,6 +434,8 @@ class LuceneQuery implements KeywordSearchQuery {
             if (contentHighlights == null) {
                 return "";
             } else {
+                // Sort contentHighlights in order to get consistently same snippet.
+                contentHighlights.sort(null);
                 // extracted content is HTML-escaped, but snippet goes in a plain text field
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
