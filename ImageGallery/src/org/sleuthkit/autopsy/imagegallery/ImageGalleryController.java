@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
@@ -306,7 +307,8 @@ public final class ImageGalleryController {
 
     private void restartWorker() {
         if (dbWorkerThread != null) {
-            dbWorkerThread.cancelAllTasks();
+            // Keep using the same worker thread if one exists
+            return;
         }
         dbWorkerThread = new DBWorkerThread();
 
@@ -504,7 +506,7 @@ public final class ImageGalleryController {
                 try {
                     // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
-
+                    
                     if (it.cancelled == false) {
                         it.run();
                     }
@@ -618,8 +620,16 @@ public final class ImageGalleryController {
          */
         @Override
         public void run() {
-            DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
-            db.updateFile(drawableFile);
+            try{
+                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
+                db.updateFile(drawableFile);
+            } catch (NullPointerException ex){
+                // This is one of the places where we get many errors if the case is closed during processing.
+                // We don't want to print out a ton of exceptions if this is the case.
+                if(Case.isCaseOpen()){
+                    Logger.getLogger(UpdateFileTask.class.getName()).log(Level.SEVERE, "Error in UpdateFile task");
+                }
+            }    
         }
     }
 
@@ -637,7 +647,16 @@ public final class ImageGalleryController {
          */
         @Override
         public void run() {
-            db.removeFile(getFile().getId());
+            try{
+              db.removeFile(getFile().getId());
+            } catch (NullPointerException ex){
+                // This is one of the places where we get many errors if the case is closed during processing.
+                // We don't want to print out a ton of exceptions if this is the case.
+                if(Case.isCaseOpen()){
+                    Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Case was closed out from underneath RemoveFile task");
+                }
+            }
+            
         }
     }
 
@@ -744,7 +763,7 @@ public final class ImageGalleryController {
      * netbeans and ImageGallery progress/status
      */
     class PrePopulateDataSourceFiles extends InnerTask {
-        private Content dataSource;
+        private final Content dataSource;
         
         /**
          * here we grab by extension but in file_done listener we look at file
@@ -821,9 +840,9 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } catch (IllegalStateException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
-            }
+            } catch (IllegalStateException | NullPointerException ex) {
+                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "Case was closed out from underneath prepopulating database");
+            } 
 
             progressHandle.finish();
         }

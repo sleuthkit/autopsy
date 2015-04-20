@@ -84,7 +84,7 @@ public enum Category implements Comparable<Category> {
             listeners.remove(aThis);
         }
     }
-
+  
     public KeyCode getHotKeycode() {
         return KeyCode.getKeyCode(Integer.toString(id));
     }

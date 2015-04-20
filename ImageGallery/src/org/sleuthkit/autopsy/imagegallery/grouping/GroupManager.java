@@ -563,7 +563,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
             throw ex;
-        }        
+        } catch(IllegalStateException ex){
+            throw new TskCoreException("Case closed while getting files");
+        }
     
     }
 

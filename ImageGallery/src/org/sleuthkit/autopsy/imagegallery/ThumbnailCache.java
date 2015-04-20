@@ -233,7 +233,7 @@ public enum ThumbnailCache {
             }
             return bi;
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Could not read image: " + file.getName(), ex);
+            LOGGER.log(Level.WARNING, "Could not read image: " + file.getName());
             return null;
         }
     }
