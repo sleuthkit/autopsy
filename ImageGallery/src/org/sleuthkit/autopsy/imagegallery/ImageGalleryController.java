@@ -840,11 +840,9 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } catch (IllegalStateException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath prepopulating database");
-            } catch (NullPointerException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath prepopulating database");
-            }
+            } catch (IllegalStateException | NullPointerException ex) {
+                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "Case was closed out from underneath prepopulating database");
+            } 
 
             progressHandle.finish();
         }

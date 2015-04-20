@@ -564,7 +564,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
             throw ex;
         } catch(IllegalStateException ex){
-            // This is one of the places where we get an error if the case is closed during processing.
             throw new TskCoreException("Case closed while getting files");
         }
     

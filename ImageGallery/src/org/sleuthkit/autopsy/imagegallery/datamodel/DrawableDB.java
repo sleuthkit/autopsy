@@ -1183,7 +1183,12 @@ public class DrawableDB {
                 try {
                     con.setAutoCommit(true);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex);
+                    if(Case.isCaseOpen()){
+                        LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex);
+                    }
+                    else{
+                        LOGGER.log(Level.SEVERE, "Error setting auto-commit to true - case is closed");
+                    }
                 } finally {
                     closed = true;
                     dbWriteUnlock();
