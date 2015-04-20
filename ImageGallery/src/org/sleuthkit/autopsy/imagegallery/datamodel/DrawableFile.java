@@ -175,7 +175,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName(), ex);
             return Collections.emptySet();
         } catch (IllegalStateException ex) {
-            Logger.getAnonymousLogger().log(Level.SEVERE, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
+            Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
             return null;
         }
     }
@@ -215,7 +215,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 }
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up attributes for file ", ex);
             Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getName()});
         }
 

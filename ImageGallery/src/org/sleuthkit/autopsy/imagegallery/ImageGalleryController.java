@@ -307,8 +307,8 @@ public final class ImageGalleryController {
 
     private void restartWorker() {
         if (dbWorkerThread != null) {
+            // Keep using the same worker thread if one exists
             return;
-            //dbWorkerThread.cancelAllTasks();
         }
         dbWorkerThread = new DBWorkerThread();
 
@@ -335,7 +335,6 @@ public final class ImageGalleryController {
 
         // if we add this line icons are made as files are analyzed rather than on demand.
         // db.addUpdatedFileListener(IconCache.getDefault());
-        // @@@ I think we should add a checkhere to see if the thread already exists
         restartWorker();
         historyManager.clear();
         groupManager.setDB(db);
@@ -348,14 +347,12 @@ public final class ImageGalleryController {
     public synchronized void reset() {
         LOGGER.info("resetting ImageGalleryControler to initial state.");
         selectionModel.clearSelection();
-        
         Platform.runLater(() -> {
             historyManager.clear();
         });
 
         Toolbar.getDefault().reset();
         groupManager.clear();
-        
         if (db != null) {
             db.closeDBCon();
         }
@@ -627,7 +624,7 @@ public final class ImageGalleryController {
                 DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
                 db.updateFile(drawableFile);
             } catch (NullPointerException ex){
-                // This is one of the places where we get an error if the case is closed during processing.
+                // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
                 if(Case.isCaseOpen()){
                     Logger.getLogger(UpdateFileTask.class.getName()).log(Level.SEVERE, "Error in UpdateFile task");
@@ -653,7 +650,7 @@ public final class ImageGalleryController {
             try{
               db.removeFile(getFile().getId());
             } catch (NullPointerException ex){
-                // This is one of the places where we get an error if the case is closed during processing.
+                // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
                 if(Case.isCaseOpen()){
                     Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Case was closed out from underneath RemoveFile task");

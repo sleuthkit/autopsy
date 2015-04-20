@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
@@ -34,7 +33,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.gui.SingleDrawableViewBase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 

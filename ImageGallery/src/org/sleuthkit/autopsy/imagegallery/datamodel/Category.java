@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Iterator;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -38,7 +37,6 @@ import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imagegallery.gui.SingleDrawableViewBase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 

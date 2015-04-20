@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -36,8 +37,10 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -111,7 +114,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
                 try {
                     data.add(new Pair<>(cat, ImageGalleryController.getDefault().getGroupManager().countFilesWithCategory(cat)));
                 } catch (TskCoreException ex) {
-                    //Exceptions.printStackTrace(ex);
+                    Logger.getLogger(SummaryTablePane.class.getName()).log(Level.WARNING, "Error performing category file count");
                 }
             }
             Platform.runLater(() -> {

@@ -604,18 +604,13 @@ public class DrawableDB {
 
             tr.addUpdatedFile(f.getId());
 
-        } catch (SQLException ex) {
+        } catch (SQLException | NullPointerException ex) {
             // This is one of the places where we get an error if the case is closed during processing,
-            // which doesn't need to be reported.
+            // which doesn't need to be reported here.
             if(Case.isCaseOpen()){
                 LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
             }
-        } catch (NullPointerException ex) {
-            if(Case.isCaseOpen()){
-                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
-            }
-        } 
-        finally {
+        } finally {
             dbWriteUnlock();
         }
     }
@@ -924,7 +919,10 @@ public class DrawableDB {
             insertGroupStmt.setString(2, groupBy.attrName.toString());
             insertGroupStmt.execute();
         } catch (SQLException sQLException) {
-            LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException);
+            // Don't need to report it if the case was closed
+            if(Case.isCaseOpen()){
+                LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException);
+            }
         } finally {
             dbWriteUnlock();
         }
