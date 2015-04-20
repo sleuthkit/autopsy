@@ -322,6 +322,7 @@ class LuceneQuery implements KeywordSearchQuery {
             List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
             // list is null if there wasn't a snippet
             if (snippetList != null) {
+                snippetList.sort(null);
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }

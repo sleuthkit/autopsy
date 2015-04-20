@@ -173,7 +173,7 @@ class QueryResults {
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
 
-        HashMap<Long, KeywordHit> hits = new HashMap();
+        HashMap<Long, KeywordHit> hits = new HashMap<Long, KeywordHit>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
         for(KeywordHit hit: getResults(keyword)) {
