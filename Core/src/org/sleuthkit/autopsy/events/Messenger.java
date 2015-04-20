@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.messaging;
+package org.sleuthkit.autopsy.events;
 
+import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.events.Publisher;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import java.net.URISyntaxException;

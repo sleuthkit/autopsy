@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.events.Publisher;
 import org.sleuthkit.autopsy.ingest.events.BlackboardPostEvent;
 import org.sleuthkit.autopsy.ingest.events.ContentChangedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
-import org.sleuthkit.autopsy.messaging.Messenger;
+import org.sleuthkit.autopsy.events.Messenger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -619,7 +619,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.Local, IngestJobEvent.STARTED.toString(), ingestJobId, null);
+        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.STARTED.toString(), ingestJobId, null);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher, jobEventMessenger));
     }
 
@@ -629,7 +629,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.Local, IngestJobEvent.COMPLETED.toString(), ingestJobId, null);
+        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.COMPLETED.toString(), ingestJobId, null);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher, jobEventMessenger));
     }
 
@@ -639,7 +639,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.Local, IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
+        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher, jobEventMessenger));
     }
 
@@ -649,7 +649,7 @@ public class IngestManager {
      * @param file The file that is completed.
      */
     void fireFileIngestDone(AbstractFile file) {
-        AutopsyEvent event = new FileAnalyzedEvent(AutopsyEvent.SourceType.Local, file);
+        AutopsyEvent event = new FileAnalyzedEvent(AutopsyEvent.SourceType.LOCAL, file);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher, jobEventMessenger));
     }
 
@@ -659,7 +659,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        AutopsyEvent event = new BlackboardPostEvent(AutopsyEvent.SourceType.Local, moduleDataEvent);
+        AutopsyEvent event = new BlackboardPostEvent(AutopsyEvent.SourceType.LOCAL, moduleDataEvent);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher, jobEventMessenger));
     }
 
@@ -671,7 +671,7 @@ public class IngestManager {
      * content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        AutopsyEvent event = new ContentChangedEvent(AutopsyEvent.SourceType.Local, moduleContentEvent);
+        AutopsyEvent event = new ContentChangedEvent(AutopsyEvent.SourceType.LOCAL, moduleContentEvent);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher, jobEventMessenger));
     }
 
@@ -908,7 +908,7 @@ public class IngestManager {
          * Publishes the event to local subscribers.
          */
         private void publishLocally() {
-            event.setSourceType(AutopsyEvent.SourceType.Local);
+            event.setSourceType(AutopsyEvent.SourceType.LOCAL);
             publisher.publish(event);
         }
 
@@ -916,7 +916,7 @@ public class IngestManager {
          * Publishes the event to remote subscribers.
          */
         private void publishRemotely() {
-            event.setSourceType(AutopsyEvent.SourceType.Remote);
+            event.setSourceType(AutopsyEvent.SourceType.REMOTE);
             try {
                 messenger.send(event);
             } catch (JMSException ex) {

@@ -40,8 +40,8 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
      */
     public enum SourceType {
 
-        Local,
-        Remote
+        LOCAL,
+        REMOTE
     };
 
     /**
@@ -54,19 +54,16 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
      * @param newValue The "new" value to associate with the event. May be null.
      */
     public AutopsyEvent(SourceType sourceType, String eventName, Object oldValue, Object newValue) {
-        super(sourceType, eventName, oldValue, newValue);
+        super(sourceType.toString(), eventName, oldValue, newValue);
         this.sourceType = sourceType;
     }
 
     /**
-     * Overrides the getSource() method of the EventObject superclass to allow
-     * the superclass source filed to be used as a mutable source type (local or
-     * remote) field.
+     * Gets the source type (local or remote).
      *
      * @param sourceType The source type of the event, local or remote.
      */
-    @Override
-    public SourceType getSource() {
+    public SourceType getSourceType() {
         return sourceType;
     }
 

@@ -229,7 +229,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     private boolean isLocalIngestJobEvent(PropertyChangeEvent evt) {
-        return evt instanceof AutopsyEvent && ((AutopsyEvent)evt).getSource() == AutopsyEvent.SourceType.Local;
+        return evt instanceof AutopsyEvent && ((AutopsyEvent)evt).getSourceType() == AutopsyEvent.SourceType.LOCAL;
     }
 
     @Override
