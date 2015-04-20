@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
@@ -88,7 +89,11 @@ public class DrawableTile extends SingleDrawableViewBase implements Category.Cat
         imageView.fitWidthProperty().bind(Toolbar.getDefault().sizeSliderValue());
 
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
-            setEffect(Objects.equals(newValue, fileID) ? LAST_SELECTED_EFFECT : null);
+            try{
+                setEffect(Objects.equals(newValue, fileID) ? LAST_SELECTED_EFFECT : null);
+            } catch (java.lang.IllegalStateException ex){
+                Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile");
+            }
         });
     }
 
