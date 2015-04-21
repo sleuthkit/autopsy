@@ -513,9 +513,18 @@ public class Server {
      * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
+
+        try {
+            // Close any open core before stopping server
+            closeCore();                 
+        }
+        catch (KeywordSearchModuleException e) {
+            logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
+        }
         
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+
             //try graceful shutdown
             final String [] SOLR_STOP_CMD = {
               javaPath,
