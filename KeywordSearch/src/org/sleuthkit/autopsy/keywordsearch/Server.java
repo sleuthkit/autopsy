@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -980,11 +981,6 @@ public class Server {
                         NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
-            CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
-            createCore.setDataDir(dataDir.getAbsolutePath());
-            createCore.setCoreName(coreName);
-            createCore.setConfigSet("AutopsyConfig");
-
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
                 //createCore.setInstanceDir(instanceDir);
@@ -993,8 +989,17 @@ public class Server {
                 currentSolrServer = connectToRemoteSolrServer();
             }
             
-            currentSolrServer.request(createCore);
+            if (!isCoreLoaded(coreName)) {
+                CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
+                createCore.setDataDir(dataDir.getAbsolutePath());
+                createCore.setCoreName(coreName);
+                createCore.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCore.setIsLoadOnStartup(false);
+                createCore.setIsTransient(true);
 
+                currentSolrServer.request(createCore);
+            }
+            
             final Core newCore = new Core(coreName);
 
             return newCore;
@@ -1013,6 +1018,18 @@ public class Server {
         String port = UserPreferences.getIndexingServerPort();
         
         return new HttpSolrServer("http://" + host + ":" + port + "/solr");
+    }
+
+    /**
+     * Determines whether the Solr core with the given name already exists.
+     * @param coreName
+     * @return true if core exists, otherwise false.
+     * @throws SolrServerException
+     * @throws IOException 
+     */
+    private boolean isCoreLoaded(String coreName) throws SolrServerException, IOException {
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        return response.getCoreStatus(coreName).get("instanceDir") != null; //NON-NLS
     }
     
     class Core {
