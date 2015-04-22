@@ -663,6 +663,7 @@ public class Server {
         if (currentCore == null) {
             return;
         }
+        
         currentCore.close();
         currentCore = null;
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
@@ -1000,7 +1001,7 @@ public class Server {
                 currentSolrServer.request(createCore);
             }
             
-            final Core newCore = new Core(coreName);
+            final Core newCore = new Core(coreName, caseType);
 
             return newCore;
 
@@ -1035,14 +1036,18 @@ public class Server {
     class Core {
 
         // handle to the core in Solr
-        private String name;
+        private final String name;
+        
+        private final CaseType caseType;
+        
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
-        private HttpSolrServer solrCore;
+        private final HttpSolrServer solrCore;
 
-        private Core(String name) {
+        private Core(String name, CaseType caseType) {
             this.name = name;
-
+            this.caseType = caseType;
+            
             this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name);
 
             //TODO test these settings
@@ -1145,6 +1150,11 @@ public class Server {
         }
 
         synchronized void close() throws KeywordSearchModuleException {
+            // We only unload cores for "single-user" cases.
+            if (this.caseType == CaseType.MULTI_USER_CASE) {
+                return;
+            }
+            
             try {
                 CoreAdminRequest.unloadCore(this.name, currentSolrServer);
             } catch (SolrServerException ex) {
