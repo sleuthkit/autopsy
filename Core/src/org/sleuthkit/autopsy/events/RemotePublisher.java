@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.events;
 
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
-import org.sleuthkit.autopsy.events.Publisher;
+import org.sleuthkit.autopsy.events.LocalPublisher;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
@@ -41,11 +41,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * nodes when a multi-user case is open.
  */
 @Immutable
-public final class Messenger {
+public final class RemotePublisher {
 
-    private static final Logger logger = Logger.getLogger(Messenger.class.getName());
+    private static final Logger logger = Logger.getLogger(RemotePublisher.class.getName());
     private static final String ALL_MESSAGE_SELECTOR = "All";
-    private final Publisher eventPublisher;
+    private final LocalPublisher localPublisher;
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
@@ -57,7 +57,7 @@ public final class Messenger {
      *
      * @param topicName The name of the topic for this messenger to use for
      * communication.
-     * @param eventPublisher An event publisher that will be used to publish
+     * @param localPublisher An event publisher that will be used to publish
      * remote events locally.
      * @param info Connection info for the message service.
      * @throws URISyntaxException if the URI in the connection info is
@@ -65,9 +65,9 @@ public final class Messenger {
      * @throws JMSException if the connection to the message service cannot be
      * made.
      */
-    public Messenger(String topicName, Publisher eventPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
+    public RemotePublisher(String topicName, LocalPublisher localPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
         try {
-            this.eventPublisher = eventPublisher;
+            this.localPublisher = localPublisher;
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(info.getUserName(), info.getPassword(), info.getURI());
             connection = connectionFactory.createConnection();
             connection.start();
@@ -137,7 +137,7 @@ public final class Messenger {
                     Object object = objectMessage.getObject();
                     if (object instanceof AutopsyEvent) {
                         AutopsyEvent event = (AutopsyEvent) object;
-                        eventPublisher.publish(event);
+                        localPublisher.publish(event);
                     }
                 }
             } catch (Exception ex) {

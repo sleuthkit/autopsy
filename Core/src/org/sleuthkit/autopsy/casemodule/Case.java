@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.events.Messenger;
+import org.sleuthkit.autopsy.events.RemotePublisher;
 import java.awt.Frame;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
-import org.sleuthkit.autopsy.events.Publisher;
+import org.sleuthkit.autopsy.events.LocalPublisher;
 
 /**
  * Stores all information for a given case. Only a single case can currently be
@@ -190,8 +190,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
-    private static final Publisher eventPublisher = new Publisher();
-    private Messenger messenger;
+    private static final LocalPublisher eventPublisher = new LocalPublisher();
+    private RemotePublisher messenger;
 
     /**
      * Constructor for the Case class
@@ -207,7 +207,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.services = new Services(db);
         if (CaseType.MULTI_USER_CASE == this.caseType) {
             try {
-                this.messenger = new Messenger(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+                this.messenger = new RemotePublisher(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
             } catch (URISyntaxException | JMSException ex) {
                 // RJCTODO: Add some sort of notification to user.
                 logger.log(Level.SEVERE, "Failed to start messenger", ex);

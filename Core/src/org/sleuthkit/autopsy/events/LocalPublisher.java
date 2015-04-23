@@ -41,15 +41,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * be put in place as a replacement.
  */
 @Immutable
-public final class Publisher {
+public final class LocalPublisher {
 
-    private static final Logger logger = Logger.getLogger(Publisher.class.getName());
+    private static final Logger logger = Logger.getLogger(LocalPublisher.class.getName());
     private final Map<String, Set<PropertyChangeListener>> subscribersByEvent;
 
     /**
      * Constructs an object for publishing events to registered subscribers.
      */
-    public Publisher() {
+    public LocalPublisher() {
         subscribersByEvent = new HashMap<>();
     }
 

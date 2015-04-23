@@ -46,11 +46,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.Publisher;
+import org.sleuthkit.autopsy.events.LocalPublisher;
 import org.sleuthkit.autopsy.ingest.events.BlackboardPostEvent;
 import org.sleuthkit.autopsy.ingest.events.ContentChangedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
-import org.sleuthkit.autopsy.events.Messenger;
+import org.sleuthkit.autopsy.events.RemotePublisher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -101,13 +101,13 @@ public class IngestManager {
     /**
      * The ingest manager uses the property change feature from JavaBeans as an
      * application event publishing mechanism. There are two kinds of events,
-     * ingest job events and ingest module events. Events are published locally
-     * (via Publisher) and remotely (via Messenger) in a dedicated event
-     * publishing thread.
+ ingest job events and ingest module events. Events are published locally
+ (via LocalPublisher) and remotely (via RemotePublisher) in a dedicated event
+ publishing thread.
      */
     private static final Map<IngestJobEvent, String> jobEventToName = new HashMap<>();
     private static final Map<IngestModuleEvent, String> moduleEventToName = new HashMap<>();
-
+    // RJCTODO: Can this be done with lambdas?
     static {
         for (IngestJobEvent event : IngestJobEvent.values()) {
             jobEventToName.put(event, event.toString());
@@ -116,10 +116,10 @@ public class IngestManager {
             moduleEventToName.put(event, event.toString());
         }
     }
-    private final Publisher jobEventPublisher;
-    private Messenger jobEventMessenger;
-    private final Publisher moduleEventPublisher;
-    private Messenger moduleEventMessenger;
+    private final LocalPublisher jobEventPublisher;
+    private RemotePublisher jobEventMessenger;
+    private final LocalPublisher moduleEventPublisher;
+    private RemotePublisher moduleEventMessenger;
     private final ExecutorService eventPublishingExecutor;
 
     /**
@@ -246,9 +246,9 @@ public class IngestManager {
         this.ingestThreadActivitySnapshots = new ConcurrentHashMap<>();
         this.ingestErrorMessagePosts = new AtomicLong(0L);
         this.ingestMonitor = new IngestMonitor();
-        this.moduleEventPublisher = new Publisher();
+        this.moduleEventPublisher = new LocalPublisher();
         this.eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS
-        this.jobEventPublisher = new Publisher();
+        this.jobEventPublisher = new LocalPublisher();
         this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS
         this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS
         this.nextThreadId = new AtomicLong(0L);
@@ -313,12 +313,12 @@ public class IngestManager {
             Case openedCase = Case.getCurrentCase();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 try {
-                    jobEventMessenger = new Messenger(openedCase.getName(), jobEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+                    jobEventMessenger = new RemotePublisher(openedCase.getName(), jobEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
                 } catch (URISyntaxException | JMSException ex) {
                     logger.log(Level.SEVERE, "Failed to start messenger, cannot publish job events to remotes", ex);
                 }
                 try {
-                    moduleEventMessenger = new Messenger(openedCase.getName(), moduleEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+                    moduleEventMessenger = new RemotePublisher(openedCase.getName(), moduleEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
                 } catch (URISyntaxException | JMSException ex) {
                     logger.log(Level.SEVERE, "Failed to start messenger, cannot publish module events to remotes", ex);
                 }
@@ -876,8 +876,8 @@ public class IngestManager {
     private static final class PublishEventTask implements Runnable {
 
         private final AutopsyEvent event;
-        private final Publisher publisher;
-        private final Messenger messenger;
+        private final LocalPublisher publisher;
+        private final RemotePublisher messenger;
 
         /**
          * Constructs an object that publishes ingest events to both local and
@@ -889,7 +889,7 @@ public class IngestManager {
          * @param messenger The jobEventMessenger to use for remote event
          * publication.
          */
-        PublishEventTask(AutopsyEvent event, Publisher publisher, Messenger messenger) {
+        PublishEventTask(AutopsyEvent event, LocalPublisher publisher, RemotePublisher messenger) {
             this.event = event;
             this.publisher = publisher;
             this.messenger = messenger;
