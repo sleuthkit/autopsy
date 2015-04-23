@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -513,9 +514,18 @@ public class Server {
      * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
+
+        try {
+            // Close any open core before stopping server
+            closeCore();                 
+        }
+        catch (KeywordSearchModuleException e) {
+            logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
+        }
         
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+
             //try graceful shutdown
             final String [] SOLR_STOP_CMD = {
               javaPath,
@@ -653,6 +663,7 @@ public class Server {
         if (currentCore == null) {
             return;
         }
+        
         currentCore.close();
         currentCore = null;
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
@@ -971,11 +982,6 @@ public class Server {
                         NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
-            CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
-            createCore.setDataDir(dataDir.getAbsolutePath());
-            createCore.setCoreName(coreName);
-            createCore.setConfigSet("AutopsyConfig");
-
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
                 //createCore.setInstanceDir(instanceDir);
@@ -984,9 +990,18 @@ public class Server {
                 currentSolrServer = connectToRemoteSolrServer();
             }
             
-            currentSolrServer.request(createCore);
+            if (!isCoreLoaded(coreName)) {
+                CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
+                createCore.setDataDir(dataDir.getAbsolutePath());
+                createCore.setCoreName(coreName);
+                createCore.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCore.setIsLoadOnStartup(false);
+                createCore.setIsTransient(true);
 
-            final Core newCore = new Core(coreName);
+                currentSolrServer.request(createCore);
+            }
+            
+            final Core newCore = new Core(coreName, caseType);
 
             return newCore;
 
@@ -1005,18 +1020,34 @@ public class Server {
         
         return new HttpSolrServer("http://" + host + ":" + port + "/solr");
     }
+
+    /**
+     * Determines whether the Solr core with the given name already exists.
+     * @param coreName
+     * @return true if core exists, otherwise false.
+     * @throws SolrServerException
+     * @throws IOException 
+     */
+    private boolean isCoreLoaded(String coreName) throws SolrServerException, IOException {
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        return response.getCoreStatus(coreName).get("instanceDir") != null; //NON-NLS
+    }
     
     class Core {
 
         // handle to the core in Solr
-        private String name;
+        private final String name;
+        
+        private final CaseType caseType;
+        
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
-        private HttpSolrServer solrCore;
+        private final HttpSolrServer solrCore;
 
-        private Core(String name) {
+        private Core(String name, CaseType caseType) {
             this.name = name;
-
+            this.caseType = caseType;
+            
             this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name);
 
             //TODO test these settings
@@ -1119,6 +1150,11 @@ public class Server {
         }
 
         synchronized void close() throws KeywordSearchModuleException {
+            // We only unload cores for "single-user" cases.
+            if (this.caseType == CaseType.MULTI_USER_CASE) {
+                return;
+            }
+            
             try {
                 CoreAdminRequest.unloadCore(this.name, currentSolrServer);
             } catch (SolrServerException ex) {
