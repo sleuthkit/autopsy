@@ -59,7 +59,7 @@ public final class LocalPublisher {
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized public void addSubscriber(Collection<String> eventNames, PropertyChangeListener subscriber) {
+    synchronized public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         for (String eventName : eventNames) {
             addSubscriber(eventName, subscriber);
         }
@@ -83,7 +83,7 @@ public final class LocalPublisher {
      * @param eventNames The events the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized public void removeSubscriber(Collection<String> eventNames, PropertyChangeListener subscriber) {
+    synchronized public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         for (String eventName : eventNames) {
             removeSubscriber(eventName, subscriber);
         }

@@ -191,7 +191,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private boolean hasData = false;
 
     private static final LocalPublisher eventPublisher = new LocalPublisher();
-    private RemotePublisher messenger;
+    private RemotePublisher remoteEventPublisher;
 
     /**
      * Constructor for the Case class
@@ -207,7 +207,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.services = new Services(db);
         if (CaseType.MULTI_USER_CASE == this.caseType) {
             try {
-                this.messenger = new RemotePublisher(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+                this.remoteEventPublisher = new RemotePublisher(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
             } catch (URISyntaxException | JMSException ex) {
                 // RJCTODO: Add some sort of notification to user.
                 logger.log(Level.SEVERE, "Failed to start messenger", ex);
@@ -607,7 +607,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
         try {
             if (CaseType.MULTI_USER_CASE == this.caseType) {
-                messenger.stop();
+                remoteEventPublisher.stop();
             }
             services.close();
             this.xmlcm.close(); // close the xmlcm
@@ -976,7 +976,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    public static void addEventSubscriber(Collection<String> eventNames, PropertyChangeListener subscriber) {
+    public static void addEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventNames, subscriber);
     }
 
@@ -1009,7 +1009,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
-    public static void removeEventSubscriber(Collection<String> eventNames, PropertyChangeListener subscriber) {
+    public static void removeEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
     }
 
@@ -1019,9 +1019,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param event The event to send.
      */
     public void sendEventMessage(AutopsyEvent event) {
-        if (CaseType.MULTI_USER_CASE == this.caseType && null != messenger) {
+        if (CaseType.MULTI_USER_CASE == this.caseType && null != remoteEventPublisher) {
             try {
-                messenger.send(event);
+                remoteEventPublisher.send(event);
             } catch (JMSException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to send %s event message", event.getPropertyName()), ex);
             }

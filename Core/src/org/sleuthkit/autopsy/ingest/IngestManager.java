@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +37,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.jms.JMSException;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
@@ -98,28 +101,24 @@ public class IngestManager {
     private int numberOfFileIngestThreads;
     private final ExecutorService fileIngestThreadPool;
 
-    /**
+    /*
      * The ingest manager uses the property change feature from JavaBeans as an
      * application event publishing mechanism. There are two kinds of events,
- ingest job events and ingest module events. Events are published locally
- (via LocalPublisher) and remotely (via RemotePublisher) in a dedicated event
- publishing thread.
+     * ingest job events and ingest module events. Events are published locally
+     * (via LocalPublisher) and remotely (via RemotePublisher) in a dedicated
+     * event publishing thread.
      */
-    private static final Map<IngestJobEvent, String> jobEventToName = new HashMap<>();
-    private static final Map<IngestModuleEvent, String> moduleEventToName = new HashMap<>();
-    // RJCTODO: Can this be done with lambdas?
-    static {
-        for (IngestJobEvent event : IngestJobEvent.values()) {
-            jobEventToName.put(event, event.toString());
-        }
-        for (IngestModuleEvent event : IngestModuleEvent.values()) {
-            moduleEventToName.put(event, event.toString());
-        }
-    }
-    private final LocalPublisher jobEventPublisher;
-    private RemotePublisher jobEventMessenger;
-    private final LocalPublisher moduleEventPublisher;
-    private RemotePublisher moduleEventMessenger;
+    private static final Set<String> jobEventNames = Stream.of(IngestJobEvent.values())
+            .map(IngestJobEvent::toString)
+            .collect(Collectors.toSet());
+    private final LocalPublisher localJobEventPublisher;
+    private RemotePublisher remoteJobEventPublisher;
+
+    private static final Set<String> moduleEventNames = Stream.of(IngestModuleEvent.values())
+            .map(IngestModuleEvent::toString)
+            .collect(Collectors.toSet());
+    private final LocalPublisher localModuleEventPublisher;
+    private RemotePublisher remoteModuleEventPublisher;
     private final ExecutorService eventPublishingExecutor;
 
     /**
@@ -246,9 +245,9 @@ public class IngestManager {
         this.ingestThreadActivitySnapshots = new ConcurrentHashMap<>();
         this.ingestErrorMessagePosts = new AtomicLong(0L);
         this.ingestMonitor = new IngestMonitor();
-        this.moduleEventPublisher = new LocalPublisher();
+        this.localModuleEventPublisher = new LocalPublisher();
         this.eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS
-        this.jobEventPublisher = new LocalPublisher();
+        this.localJobEventPublisher = new LocalPublisher();
         this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS
         this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS
         this.nextThreadId = new AtomicLong(0L);
@@ -313,14 +312,14 @@ public class IngestManager {
             Case openedCase = Case.getCurrentCase();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 try {
-                    jobEventMessenger = new RemotePublisher(openedCase.getName(), jobEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+                    remoteJobEventPublisher = new RemotePublisher(openedCase.getName(), localJobEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
                 } catch (URISyntaxException | JMSException ex) {
-                    logger.log(Level.SEVERE, "Failed to start messenger, cannot publish job events to remotes", ex);
+                    logger.log(Level.SEVERE, "Failed to start remote job events publisher", ex); //NON-NLS
                 }
                 try {
-                    moduleEventMessenger = new RemotePublisher(openedCase.getName(), moduleEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
+                    remoteModuleEventPublisher = new RemotePublisher(openedCase.getName(), localModuleEventPublisher, UserPreferences.getMessageServiceConnectionInfo());
                 } catch (URISyntaxException | JMSException ex) {
-                    logger.log(Level.SEVERE, "Failed to start messenger, cannot publish module events to remotes", ex);
+                    logger.log(Level.SEVERE, "Failed to start remote module events publisher", ex); //NON-NLS
                 }
             }
         } catch (IllegalStateException ex) {
@@ -329,11 +328,11 @@ public class IngestManager {
     }
 
     synchronized void handleCaseClosed() {
-        if (null != jobEventMessenger) {
-            jobEventMessenger.stop();
+        if (null != remoteJobEventPublisher) {
+            remoteJobEventPublisher.stop();
         }
-        if (null != moduleEventMessenger) {
-            moduleEventMessenger.stop();
+        if (null != remoteModuleEventPublisher) {
+            remoteModuleEventPublisher.stop();
         }
         this.jobCreationIsEnabled = false;
         cancelAllIngestJobs();
@@ -557,7 +556,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to register.
      */
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
-        jobEventPublisher.addSubscriber(jobEventToName.values(), listener);
+        localJobEventPublisher.addSubscriber(jobEventNames, listener);
     }
 
     /**
@@ -566,7 +565,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to unregister.
      */
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
-        jobEventPublisher.removeSubscriber(jobEventToName.values(), listener);
+        localJobEventPublisher.removeSubscriber(jobEventNames, listener);
     }
 
     /**
@@ -575,7 +574,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to register.
      */
     public void addIngestModuleEventListener(final PropertyChangeListener listener) {
-        moduleEventPublisher.addSubscriber(moduleEventToName.values(), listener);
+        localModuleEventPublisher.addSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -584,7 +583,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to unregister.
      */
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
-        moduleEventPublisher.removeSubscriber(moduleEventToName.values(), listener);
+        localModuleEventPublisher.removeSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -596,8 +595,8 @@ public class IngestManager {
      */
     @Deprecated
     public static void addPropertyChangeListener(final PropertyChangeListener listener) {
-        instance.jobEventPublisher.addSubscriber(jobEventToName.values(), listener);
-        instance.moduleEventPublisher.addSubscriber(moduleEventToName.values(), listener);
+        instance.localJobEventPublisher.addSubscriber(jobEventNames, listener);
+        instance.localModuleEventPublisher.addSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -609,8 +608,8 @@ public class IngestManager {
      */
     @Deprecated
     public static void removePropertyChangeListener(final PropertyChangeListener listener) {
-        instance.jobEventPublisher.removeSubscriber(jobEventToName.values(), listener);
-        instance.moduleEventPublisher.removeSubscriber(moduleEventToName.values(), listener);
+        instance.localJobEventPublisher.removeSubscriber(jobEventNames, listener);
+        instance.localModuleEventPublisher.removeSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -620,7 +619,7 @@ public class IngestManager {
      */
     void fireIngestJobStarted(long ingestJobId) {
         AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.STARTED.toString(), ingestJobId, null);
-        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher, jobEventMessenger));
+        eventPublishingExecutor.submit(new PublishEventTask(event, localJobEventPublisher, remoteJobEventPublisher));
     }
 
     /**
@@ -630,7 +629,7 @@ public class IngestManager {
      */
     void fireIngestJobCompleted(long ingestJobId) {
         AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.COMPLETED.toString(), ingestJobId, null);
-        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher, jobEventMessenger));
+        eventPublishingExecutor.submit(new PublishEventTask(event, localJobEventPublisher, remoteJobEventPublisher));
     }
 
     /**
@@ -640,7 +639,7 @@ public class IngestManager {
      */
     void fireIngestJobCancelled(long ingestJobId) {
         AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
-        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher, jobEventMessenger));
+        eventPublishingExecutor.submit(new PublishEventTask(event, localJobEventPublisher, remoteJobEventPublisher));
     }
 
     /**
@@ -650,7 +649,7 @@ public class IngestManager {
      */
     void fireFileIngestDone(AbstractFile file) {
         AutopsyEvent event = new FileAnalyzedEvent(AutopsyEvent.SourceType.LOCAL, file);
-        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher, jobEventMessenger));
+        eventPublishingExecutor.submit(new PublishEventTask(event, localModuleEventPublisher, remoteJobEventPublisher));
     }
 
     /**
@@ -660,7 +659,7 @@ public class IngestManager {
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         AutopsyEvent event = new BlackboardPostEvent(AutopsyEvent.SourceType.LOCAL, moduleDataEvent);
-        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher, jobEventMessenger));
+        eventPublishingExecutor.submit(new PublishEventTask(event, localModuleEventPublisher, remoteJobEventPublisher));
     }
 
     /**
@@ -672,7 +671,7 @@ public class IngestManager {
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         AutopsyEvent event = new ContentChangedEvent(AutopsyEvent.SourceType.LOCAL, moduleContentEvent);
-        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher, jobEventMessenger));
+        eventPublishingExecutor.submit(new PublishEventTask(event, localModuleEventPublisher, remoteJobEventPublisher));
     }
 
     /**
@@ -876,23 +875,21 @@ public class IngestManager {
     private static final class PublishEventTask implements Runnable {
 
         private final AutopsyEvent event;
-        private final LocalPublisher publisher;
-        private final RemotePublisher messenger;
+        private final LocalPublisher localPublisher;
+        private final RemotePublisher remotePublisher;
 
         /**
          * Constructs an object that publishes ingest events to both local and
          * remote subscribers.
          *
-         * @param event The event to publish
-         * @param publisher The event publisher to use for local event
-         * publications.
-         * @param messenger The jobEventMessenger to use for remote event
-         * publication.
+         * @param event The event to publish.
+         * @param localPublisher The local event publisher.
+         * @param remotePublisher The remote event publisher.
          */
-        PublishEventTask(AutopsyEvent event, LocalPublisher publisher, RemotePublisher messenger) {
+        PublishEventTask(AutopsyEvent event, LocalPublisher localPublisher, RemotePublisher remotePublisher) {
             this.event = event;
-            this.publisher = publisher;
-            this.messenger = messenger;
+            this.localPublisher = localPublisher;
+            this.remotePublisher = remotePublisher;
         }
 
         /**
@@ -909,7 +906,7 @@ public class IngestManager {
          */
         private void publishLocally() {
             event.setSourceType(AutopsyEvent.SourceType.LOCAL);
-            publisher.publish(event);
+            localPublisher.publish(event);
         }
 
         /**
@@ -918,7 +915,7 @@ public class IngestManager {
         private void publishRemotely() {
             event.setSourceType(AutopsyEvent.SourceType.REMOTE);
             try {
-                messenger.send(event);
+                remotePublisher.send(event);
             } catch (JMSException ex) {
                 logger.log(Level.SEVERE, "Failed to publish event to remote subscribers", ex);
             }
