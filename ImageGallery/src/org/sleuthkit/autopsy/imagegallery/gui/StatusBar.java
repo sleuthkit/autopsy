@@ -66,8 +66,8 @@ public class StatusBar extends AnchorPane {
         assert fileTaskProgresBar != null : "fx:id=\"fileTaskProgresBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert fileUpdateTaskLabel != null : "fx:id=\"fileUpdateTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert statusLabel != null : "fx:id=\"statusLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert bgTaskLabel != null : "fx:id=\"uiTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert bgTaskProgressBar != null : "fx:id=\"uiTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
+        assert bgTaskLabel != null : "fx:id=\"bgTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
+        assert bgTaskProgressBar != null : "fx:id=\"bgTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
 
         fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(" File Update Tasks"));//;setText(newSize.toString() + " File Update Tasks");
         fileTaskProgresBar.progressProperty().bind(controller.getFileUpdateQueueSizeProperty().negate());
@@ -78,7 +78,20 @@ public class StatusBar extends AnchorPane {
 //            });
 //        });
 
-        bgTaskProgressBar.progressProperty().bind(controller.regroupProgress());
+        controller.regroupProgress().addListener((ov, oldSize, newSize) -> {
+            Platform.runLater(() -> {
+                if(controller.regroupProgress().lessThan(1.0).get()){
+                    // Regrouping in progress
+                    bgTaskProgressBar.progressProperty().setValue(-1.0);
+                    bgTaskLabel.setText("Regrouping");
+                } else{
+                    // Clear the progress bar
+                    bgTaskProgressBar.progressProperty().setValue(0.0);
+                    bgTaskLabel.setText("");
+                }
+            });
+        });
+        
 
         Platform.runLater(() -> {
             staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable listening to ingest in Tools | Options | Image /Video Gallery , after ingest is complete to update."));
