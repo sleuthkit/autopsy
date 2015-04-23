@@ -348,6 +348,7 @@ public final class ImageGalleryController {
         LOGGER.info("resetting ImageGalleryControler to initial state.");
         selectionModel.clearSelection();
         setListeningEnabled(false);
+        ThumbnailCache.getDefault().clearCache();
         Platform.runLater(() -> {
             historyManager.clear();
         });

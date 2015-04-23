@@ -83,6 +83,13 @@ public enum ThumbnailCache {
     /** thread that saves generated thumbnails to disk for use later */
     private final Executor imageSaver = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("icon saver-%d").build());
 
+    /**
+     * Clear out the cache between cases
+     */
+    public final void clearCache() {
+        cache.invalidateAll();
+    }
+    
     /** get the cached thumbnail for the given file or generate a new one if
      * needed
      *
