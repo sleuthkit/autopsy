@@ -347,6 +347,7 @@ public final class ImageGalleryController {
     public synchronized void reset() {
         LOGGER.info("resetting ImageGalleryControler to initial state.");
         selectionModel.clearSelection();
+        setListeningEnabled(false);
         Platform.runLater(() -> {
             historyManager.clear();
         });
