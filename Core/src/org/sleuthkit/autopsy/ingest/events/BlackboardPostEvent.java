@@ -93,7 +93,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
             SerializableEventData data = (SerializableEventData) super.getOldValue();
             Collection<BlackboardArtifact> artifacts = new ArrayList<>();
             for (Long id : data.artifactIds) {
-                Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(id);
+                artifacts.add(Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(id));
             }
             eventData = new ModuleDataEvent(data.moduleName, data.artifactType, artifacts);
             return eventData;
