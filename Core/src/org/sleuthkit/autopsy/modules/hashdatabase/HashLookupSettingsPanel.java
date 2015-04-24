@@ -76,7 +76,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         public void run() {
                             updateComponents();
                         }
-                    });                                
+                    });
                 }
             }
         });
@@ -229,7 +229,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     private boolean isLocalIngestJobEvent(PropertyChangeEvent evt) {
-        return evt instanceof AutopsyEvent && ((AutopsyEvent)evt).getSourceType() == AutopsyEvent.SourceType.LOCAL;
+        if (evt instanceof AutopsyEvent) {
+            AutopsyEvent event = (AutopsyEvent) evt;
+            if (event.getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                String eventType = event.getPropertyName();
+                return (eventType.equals(IngestManager.IngestJobEvent.STARTED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()));
+            }
+        }
+        return false;
     }
 
     @Override
@@ -276,7 +285,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
     }
-    
+
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
             hashSetManager.removeHashDatabaseInternal(hashDb);
@@ -305,7 +314,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
         int res = JOptionPane.showConfirmDialog(this, message,
                 NbBundle.getMessage(this.getClass(),
-                "HashDbConfigPanel.unindexedDbsMsg"),
+                        "HashDbConfigPanel.unindexedDbsMsg"),
                 JOptionPane.YES_NO_OPTION);
         if (res == JOptionPane.YES_OPTION) {
             ModalNoButtons indexingDialog = new ModalNoButtons(this, new Frame(), unindexed);
@@ -753,7 +762,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(),
-                "HashDbConfigPanel.deleteDbActionConfirmMsg"),
+                        "HashDbConfigPanel.deleteDbActionConfirmMsg"),
                 NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
