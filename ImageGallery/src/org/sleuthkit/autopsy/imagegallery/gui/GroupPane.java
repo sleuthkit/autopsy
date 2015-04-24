@@ -94,6 +94,7 @@ import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -112,9 +113,9 @@ import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -371,8 +372,13 @@ public class GroupPane extends BorderPane implements GroupView {
                 resetHeaderString();
                 //and assign fileIDs to gridView
                 if (grouping.get() == null) {
-                    Platform.runLater(gridView.getItems()::clear);
-
+                    Platform.runLater(gridView.getItems()::clear);            
+                    // Reset the DrawableCell listeners from the old case
+                    if(! Case.isCaseOpen()){
+                        for(GroupPane.DrawableCell cell:cellMap.values()){
+                            cell.resetItem();
+                        }
+                    }
                 } else {
                     grouping.get().fileIds().addListener((Observable observable) -> {
                         updateFiles();
@@ -627,6 +633,7 @@ public class GroupPane extends BorderPane implements GroupView {
      */
     void setViewState(GroupViewState viewState) {
         if (viewState == null) {
+            this.grouping.set(null);
             Platform.runLater(() -> {
                 setCenter(null);
                 groupLabel.setText(null);
@@ -655,9 +662,18 @@ public class GroupPane extends BorderPane implements GroupView {
             itemProperty().addListener((ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
                 if (oldValue != null) {
                     cellMap.remove(oldValue, DrawableCell.this);
+                    tile.setFile(null);
                 }
                 if (newValue != null) {
+                    if(cellMap.containsKey(newValue)){
+                        if(tile != null){
+                            // Clear out the old value to prevent out-of-date listeners
+                            // from activating.
+                            cellMap.get(newValue).tile.setFile(null);
+                        }
+                    }
                     cellMap.put(newValue, DrawableCell.this);
+                    
                 }
             });
 
@@ -668,6 +684,10 @@ public class GroupPane extends BorderPane implements GroupView {
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
             tile.setFile(item);
+        }
+        
+        void resetItem(){
+            tile.setFile(null);
         }
     }
 

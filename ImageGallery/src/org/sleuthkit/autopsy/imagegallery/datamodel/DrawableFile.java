@@ -174,6 +174,9 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         } catch (TskCoreException ex) {
             Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName(), ex);
             return Collections.emptySet();
+        } catch (IllegalStateException ex) {
+            Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
+            return Collections.emptySet();
         }
     }
 
@@ -282,7 +285,10 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
+        } catch (IllegalStateException ex){
+            // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
+        
     }
 
     public abstract Image getThumbnail();

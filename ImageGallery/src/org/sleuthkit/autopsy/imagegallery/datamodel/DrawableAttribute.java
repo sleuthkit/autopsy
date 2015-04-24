@@ -27,6 +27,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -61,11 +62,11 @@ public class DrawableAttribute<T extends Comparable<T>> {
     public final static DrawableAttribute<String> PATH
             = new DrawableAttribute<>(AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getDrawablePath()));
 
-    public final static DrawableAttribute<Long> CREATED_TIME
-            = new DrawableAttribute<>( AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(f.getCrtime()));
+    public final static DrawableAttribute<String> CREATED_TIME
+            = new DrawableAttribute<>( AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
 
-    public final static DrawableAttribute<Long> MODIFIED_TIME
-            = new DrawableAttribute<>( AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(f.getMtime()));
+    public final static DrawableAttribute<String> MODIFIED_TIME
+            = new DrawableAttribute<>( AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
 
     public final static DrawableAttribute<String> MAKE
             = new DrawableAttribute<>( AttributeName.MAKE, "Camera Make", true, "camera.png", f -> Collections.singleton(f.getMake()));

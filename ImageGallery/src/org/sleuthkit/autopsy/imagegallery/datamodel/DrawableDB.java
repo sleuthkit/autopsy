@@ -129,9 +129,9 @@ public class DrawableDB {
 
     volatile private Connection con;
 
-    private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
 
-    private static final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
+    private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
 
     static {//make sure sqlite driver is loaded // possibly redundant
         try {
@@ -149,7 +149,7 @@ public class DrawableDB {
      * MUST always call dbWriteUnLock() as early as possible, in the same thread
      * where dbWriteLock() was called
      */
-    public static void dbWriteLock() {
+    public void dbWriteLock() {
         //Logger.getLogger("LOCK").log(Level.INFO, "Locking " + rwLock.toString());
         DBLock.lock();
     }
@@ -159,7 +159,7 @@ public class DrawableDB {
      * dbWriteLock(). Call in "finally" block to ensure the lock is always
      * released.
      */
-    public static void dbWriteUnlock() {
+    public void dbWriteUnlock() {
         //Logger.getLogger("LOCK").log(Level.INFO, "UNLocking " + rwLock.toString());
         DBLock.unlock();
     }
@@ -604,8 +604,12 @@ public class DrawableDB {
 
             tr.addUpdatedFile(f.getId());
 
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
+        } catch (SQLException | NullPointerException ex) {
+            // This is one of the places where we get an error if the case is closed during processing,
+            // which doesn't need to be reported here.
+            if(Case.isCaseOpen()){
+                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
+            }
         } finally {
             dbWriteUnlock();
         }
@@ -915,7 +919,10 @@ public class DrawableDB {
             insertGroupStmt.setString(2, groupBy.attrName.toString());
             insertGroupStmt.execute();
         } catch (SQLException sQLException) {
-            LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException);
+            // Don't need to report it if the case was closed
+            if(Case.isCaseOpen()){
+                LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException);
+            }
         } finally {
             dbWriteUnlock();
         }
@@ -952,7 +959,7 @@ public class DrawableDB {
             return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id),
                     areFilesAnalyzed(Collections.singleton(id)));
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id, ex);
+            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id);
             return null;
         }
     }
@@ -1160,7 +1167,12 @@ public class DrawableDB {
                         fireRemovedFiles(removedFiles);
                     }
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error commiting drawable.db.", ex);
+                    if(Case.isCaseOpen()){
+                        LOGGER.log(Level.SEVERE, "Error commiting drawable.db.", ex);
+                    }
+                    else{
+                        LOGGER.log(Level.WARNING, "Error commiting drawable.db - case is closed.");
+                    }
                     rollback();
                 }
             }
@@ -1171,7 +1183,12 @@ public class DrawableDB {
                 try {
                     con.setAutoCommit(true);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex);
+                    if(Case.isCaseOpen()){
+                        LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex);
+                    }
+                    else{
+                        LOGGER.log(Level.SEVERE, "Error setting auto-commit to true - case is closed");
+                    }
                 } finally {
                     closed = true;
                     dbWriteUnlock();
