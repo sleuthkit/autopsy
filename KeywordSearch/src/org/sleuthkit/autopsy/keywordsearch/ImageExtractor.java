@@ -43,40 +43,38 @@ public class ImageExtractor {
     private String moduleDirRelative; //relative to the case, to store in db
     private String moduleDirAbsolute; //absolute, to extract to
     private static final Logger logger = Logger.getLogger(ImageExtractor.class.getName());
-    private static final int BUFFER_SIZE = 64 * 1024;
-    private final byte buffer[] = new byte[BUFFER_SIZE];
     private IngestJobContext context;
     protected enum SupportedFormats {
 
         doc {
             @Override
             public String toString() {
-            return "application/msword";}
+            return "application/msword";} //NON-NLS
         },
         docx {
             @Override
             public String toString() {
-            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";}
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";} //NON-NLS
         },
         ppt {
             @Override
             public String toString() {
-            return "application/vnd.ms-powerpoint";}
+            return "application/vnd.ms-powerpoint";} //NON-NLS
         },
         pptx {
             @Override
             public String toString() {
-            return "application/vnd.openxmlformats-officedocument.presentationml.presentation";}
+            return "application/vnd.openxmlformats-officedocument.presentationml.presentation";} //NON-NLS
         },
         xls {
             @Override
             public String toString() {
-            return "application/vnd.ms-excel";}
+            return "application/vnd.ms-excel";} //NON-NLS
         },
         xlsx {
             @Override
             public String toString() {
-            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";}
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";} //NON-NLS
         };
         // TODO Expand to support more formats
     }
@@ -95,7 +93,7 @@ public class ImageExtractor {
                 extractionDirectory.mkdirs();
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute));
+                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
                 throw new RuntimeException(ex);
             }
         }
@@ -146,13 +144,14 @@ public class ImageExtractor {
             return;
         }
         // the common task of adding abstractFile to derivedfiles is performed.
+        listOfExtractedImages = new ArrayList<>();
         for (ExtractedImage extractedImage : extractedImages) {
             try {
                 listOfExtractedImages.add(fileManager.addDerivedFile(extractedImage.getFileName(), extractedImage.getLocalPath(), extractedImage.getSize(),
                         extractedImage.getCtime(), extractedImage.getCrtime(), extractedImage.getAtime(), extractedImage.getAtime(),
                         true, abstractFile, null, KeywordSearchModuleFactory.getModuleName(), null, null));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error adding derived files to the DB", ex);
+                logger.log(Level.WARNING, "Error adding derived files to the DB", ex); //NON-NLS
             }
         }
         if (!extractedImages.isEmpty()) {
@@ -169,7 +168,7 @@ public class ImageExtractor {
         try {
             docA = new HWPFDocument(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "HWPFDocument container could not be instantiated while reading " + af.getName(), ex);
+            logger.log(Level.WARNING, "HWPFDocument container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
             return null;
         }
         PicturesTable pictureTable = docA.getPicturesTable();
@@ -181,7 +180,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName());
+            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
         for (org.apache.poi.hwpf.usermodel.Picture picture : listOfAllPictures) {
@@ -190,16 +189,14 @@ public class ImageExtractor {
             try {
                 fos = new FileOutputStream(outputFolderPath + File.separator + fileName);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex);
+                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex); //NON-NLS
                 continue;
             }
             try {
                 fos.write(picture.getContent());
                 fos.close();
-                // TODO Remove this INFO log message
-                logger.log(Level.INFO, "Image extracted: ", fileName);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write to the provided location", ex);
+                logger.log(Level.WARNING, "Could not write to the provided location", ex); //NON-NLS
                 continue;
             }
             // TODO Extract more info from the Picture viz ctime, crtime, atime, mtime
@@ -221,7 +218,7 @@ public class ImageExtractor {
         try {
             docxA = new XWPFDocument(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "XWPFDocument container could not be instantiated while reading " + af.getName(), ex);
+            logger.log(Level.WARNING, "XWPFDocument container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
             return null;
         }
         List<XWPFPictureData> listOfAllPictures = docxA.getAllPictures();
@@ -235,7 +232,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName());
+            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
         for (XWPFPictureData xwpfPicture : listOfAllPictures) {
@@ -244,16 +241,14 @@ public class ImageExtractor {
             try {
                 fos = new FileOutputStream(outputFolderPath + File.separator + fileName);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex);
+                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex); //NON-NLS
                 continue;
             }
             try {
                 fos.write(xwpfPicture.getData());
                 fos.close();
-                // TODO Remove this INFO log message
-                logger.log(Level.INFO, "Image extracted: ", fileName);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write to the provided location", ex);
+                logger.log(Level.WARNING, "Could not write to the provided location", ex); //NON-NLS
                 continue;
             }
             String fileRelativePath = File.separator + moduleDirRelative + File.separator + parentFileName + File.separator + fileName;
@@ -273,7 +268,7 @@ public class ImageExtractor {
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "SlideShow container could not be instantiated while reading " + af.getName(), ex);
+            logger.log(Level.WARNING, "SlideShow container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
             return null;
         }
 
@@ -289,7 +284,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName());
+            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
 
@@ -304,40 +299,38 @@ public class ImageExtractor {
             String ext;
             switch (type) {
                 case Picture.JPEG:
-                    ext = ".jpg";
+                    ext = ".jpg"; //NON-NLS
                     break;
                 case Picture.PNG:
-                    ext = ".png";
+                    ext = ".png"; //NON-NLS
                     break;
                 case Picture.WMF:
-                    ext = ".wmf";
+                    ext = ".wmf"; //NON-NLS
                     break;
                 case Picture.EMF:
-                    ext = ".emf";
+                    ext = ".emf"; //NON-NLS
                     break;
                 case Picture.PICT:
-                    ext = ".pict";
+                    ext = ".pict"; //NON-NLS
                     break;
                 default:
                     continue;
             }
-            String imageName = "image_" + i + ext;
+            String imageName = "image_" + i + ext; //NON-NLS
 
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(outputFolderPath + File.separator + imageName);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex);
+                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex); //NON-NLS
                 continue;
             }
             try {
                 fos.write(pictureData.getData());
                 fos.close();
                 i++;
-                // TODO Remove this INFO log message
-                logger.log(Level.INFO, "Image extracted: ", imageName);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write to the provided location", ex);
+                logger.log(Level.WARNING, "Could not write to the provided location", ex); //NON-NLS
                 continue;
             }
 
@@ -356,7 +349,7 @@ public class ImageExtractor {
         try {
             pptx = new XMLSlideShow(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "SlideShow container could not be instantiated while reading " + af.getName(), ex);
+            logger.log(Level.WARNING, "SlideShow container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
             return null;
         }
         List<XSLFPictureData> listOfAllPictures = pptx.getAllPictures();
@@ -370,7 +363,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName());
+            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
 
@@ -383,16 +376,14 @@ public class ImageExtractor {
             try {
                 fos = new FileOutputStream(outputFolderPath + File.separator + fileName);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex);
+                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex); //NON-NLS
                 continue;
             }
             try {
                 fos.write(xslsPicture.getData());
                 fos.close();
-                // TODO Remove this INFO log message
-                logger.log(Level.INFO, "Image extracted: ", fileName);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write to the provided location", ex);
+                logger.log(Level.WARNING, "Could not write to the provided location", ex); //NON-NLS
                 continue;
             }
 
@@ -415,7 +406,7 @@ public class ImageExtractor {
         try {
             workbook = new HSSFWorkbook(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "HSSFWorkbook container could not be instantiated while reading " + af.getName(), ex);
+            logger.log(Level.WARNING, "HSSFWorkbook container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
             return null;
         }
 
@@ -429,28 +420,26 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName());
+            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
 
         int i = 0;
         for (org.apache.poi.ss.usermodel.PictureData pictureData : listOfAllPictures) {
-            String imageName = "image_" + i + "." + pictureData.suggestFileExtension();
+            String imageName = "image_" + i + "." + pictureData.suggestFileExtension(); //NON-NLS
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(outputFolderPath + File.separator + imageName);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex);
+                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex); //NON-NLS
                 continue;
             }
             try {
                 fos.write(pictureData.getData());
                 fos.close();
                 i++;
-                // TODO Remove this INFO log message
-                logger.log(Level.INFO, "Image extracted: ", imageName);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write to the provided location", ex);
+                logger.log(Level.WARNING, "Could not write to the provided location", ex); //NON-NLS
                 continue;
             }
 
@@ -471,7 +460,7 @@ public class ImageExtractor {
         try {
             workbook = new XSSFWorkbook(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "HSSFWorkbook container could not be instantiated while reading " + af.getName(), ex);
+            logger.log(Level.WARNING, "HSSFWorkbook container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
             return null;
         }
 
@@ -485,7 +474,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName());
+            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
 
@@ -496,17 +485,15 @@ public class ImageExtractor {
             try {
                 fos = new FileOutputStream(outputFolderPath + File.separator + imageName);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex);
+                logger.log(Level.WARNING, "Invalid path provided for image extraction", ex); //NON-NLS
                 continue;
             }
             try {
                 fos.write(pictureData.getData());
                 fos.close();
                 i++;
-                // TODO Remove this INFO log message
-                logger.log(Level.INFO, "Image extracted: ", imageName);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write to the provided location", ex);
+                logger.log(Level.WARNING, "Could not write to the provided location", ex); //NON-NLS
                 continue;
             }
 
@@ -534,7 +521,7 @@ public class ImageExtractor {
             try {
                 outputFilePath.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.WARNING, "Unable to create the output path to write the extracted image", ex);
+                logger.log(Level.WARNING, "Unable to create the output path to write the extracted image", ex); //NON-NLS
                 return null;
             }
         }
