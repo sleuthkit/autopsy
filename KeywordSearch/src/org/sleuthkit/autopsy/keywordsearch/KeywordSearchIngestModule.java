@@ -74,6 +74,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private Indexer indexer;
+    private ImageExtractor imageExtractor;
     //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
@@ -196,6 +197,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors.add(new TikaTextExtractor(this));
         
         indexer = new Indexer();
+        imageExtractor = new ImageExtractor(this.context);
         initialized = true;
     }
 
@@ -212,15 +214,43 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //skip indexing of virtual dirs (no content, no real name) - will index children files
             return ProcessResult.OK;
         }
+        
+        String detectedFormat = null;
+        ImageExtractor.SupportedFormats requestedFormat = null;
 
         if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
-            indexer.indexFile(abstractFile, false);
+            detectedFormat = indexer.indexFile(abstractFile, false);
+            
+            // Check if the detected non-null format is supported. If supported,
+            // perform image extraction.
+            if (detectedFormat != null) {
+                for (ImageExtractor.SupportedFormats s : ImageExtractor.SupportedFormats.values()) {
+                    if (s.toString().equals(detectedFormat)) {
+                        requestedFormat = s;
+                    }
+                }
+                if (requestedFormat != null) {
+                    imageExtractor.extractImage(requestedFormat, abstractFile);
+                }
+            }
+            
+            
             return ProcessResult.OK;
         }
 
         //index the file and content (if the content is supported)
-        indexer.indexFile(abstractFile, true);
+        detectedFormat = indexer.indexFile(abstractFile, true);
+        if (detectedFormat != null) {
+                for (ImageExtractor.SupportedFormats s : ImageExtractor.SupportedFormats.values()) {
+                    if (s.toString().equals(detectedFormat)) {
+                        requestedFormat = s;
+                    }
+                }
+                if (requestedFormat != null) {
+                    imageExtractor.extractImage(requestedFormat, abstractFile);
+                }
+            }
 
         // Start searching if it hasn't started already
         if (!startedSearching) {
@@ -228,6 +258,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
             startedSearching = true;
         }
+        
         
         return ProcessResult.OK;
     }
@@ -445,8 +476,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @param aFile File to analyze
          * @param indexContent False if only metadata should be text_ingested.
          * True if content and metadata should be index.
+         * @return the file format of the indexed file.
          */
-        private void indexFile(AbstractFile aFile, boolean indexContent) {
+        private String indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
@@ -466,7 +498,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
                 }
-                return;
+                return null;
             }
 
             
@@ -487,11 +519,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     new FileTypeDetector().detectAndPostToBlackboard(aFile);
                 } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
                     logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
+                    return null;
                 }
                 if (detectedFormat == null) {
                     logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
+                    return null;
                 } 
             }
 
@@ -505,7 +537,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                     logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
                 }
-                return;
+                return detectedFormat;
             }
 
             boolean wasTextAdded = false;
@@ -536,6 +568,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (wasTextAdded == false) {
                 extractStringsAndIndex(aFile);
             }
+            return detectedFormat;
         }
     }
 }
