@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -212,19 +213,28 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         return true;
     }
 
-    List<KeywordHit> getOneHitPerObject(QueryResults queryResults) {
-        List<KeywordHit> hits = new ArrayList<>();
-        Set<Long> uniqueObjectIds = new HashSet<>();
+    /**
+     * This method returns a collection of KeywordHits with lowest SolrObjectID-
+     * Chunk-ID combination. The output generated is consistent across multiple 
+     * runs.
+     * @param queryResults QueryResult object
+     * @return A consistent collection of keyword hits
+     */
+    Collection<KeywordHit> getOneHitPerObject(QueryResults queryResults) {
+        HashMap<Long, KeywordHit> hits = new HashMap<Long, KeywordHit>();
         for (Keyword keyWord : queryResults.getKeywords()) {
             for (KeywordHit hit : queryResults.getResults(keyWord)) {
-                long objectId = hit.getSolrObjectId();
-                if (!uniqueObjectIds.contains(objectId)) {
-                    uniqueObjectIds.add(objectId);
-                    hits.add(hit);
+                // add hit with lowest SolrObjectID-Chunk-ID combination.
+                if (!hits.containsKey(hit.getSolrObjectId())) {
+                    hits.put(hit.getSolrObjectId(), hit);
+                } else {
+                    if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                        hits.put(hit.getSolrObjectId(), hit);
+                    }
                 }
             }
         }
-        return hits;
+        return hits.values();
     }
 
     /**
