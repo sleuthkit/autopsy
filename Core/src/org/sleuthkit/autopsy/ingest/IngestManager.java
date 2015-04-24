@@ -323,7 +323,8 @@ public class IngestManager {
                 }
             }
         } catch (IllegalStateException ex) {
-            // RJCTODO: Handle this thing  
+                // RJCTODO: Add some sort of notification to user?
+                logger.log(Level.SEVERE, "Could not get current case, failed to start remote event publisher", ex);
         }
     }
 

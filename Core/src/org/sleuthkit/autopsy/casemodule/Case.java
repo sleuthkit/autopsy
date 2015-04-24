@@ -209,7 +209,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 this.remoteEventPublisher = new RemotePublisher(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
             } catch (URISyntaxException | JMSException ex) {
                 // RJCTODO: Add some sort of notification to user.
-                logger.log(Level.SEVERE, "Failed to start messenger", ex);
+                logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
             }
         }
     }
