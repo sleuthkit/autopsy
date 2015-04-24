@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.Content;
  */
 public class ModuleContentEvent extends ChangeEvent {
 
-    private String moduleName;
+    private String moduleName = "";
 
     /**
      * Create a new event passing content that has changed
