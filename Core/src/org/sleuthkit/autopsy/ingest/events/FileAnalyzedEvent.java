@@ -73,7 +73,7 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
             return file;
         }
         try {
-            long id = (Long) super.getNewValue();
+            long id = (Long) super.getOldValue();
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
             return file;
         } catch (IllegalStateException | TskCoreException ex) {
