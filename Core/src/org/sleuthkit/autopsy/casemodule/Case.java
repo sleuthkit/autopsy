@@ -971,8 +971,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Adds an subscriber to events from other Autopsy nodes when a multi-user
-     * case is open.
+     * Adds a subscriber to events from this Autopsy node and other Autopsy nodes.
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
@@ -982,8 +981,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Adds an subscriber to events from other Autopsy nodes when a multi-user
-     * case is open.
+     * Adds a subscriber to events from this Autopsy node and other Autopsy nodes.
      *
      * @param eventNames The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
@@ -993,8 +991,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Removes a subscriber to events from other Autopsy nodes when a multi-user
-     * case is open.
+     * Adds a subscriber to events from this Autopsy node and other Autopsy nodes.
      *
      * @param eventName The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
@@ -1004,8 +1001,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Removes a subscriber to events from other Autopsy nodes when a multi-user
-     * case is open.
+     * Removes a subscriber to events from this Autopsy node and other Autopsy nodes.
      *
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
