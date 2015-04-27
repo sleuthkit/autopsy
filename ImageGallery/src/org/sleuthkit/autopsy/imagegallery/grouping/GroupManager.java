@@ -682,6 +682,18 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
                     for (GroupKey<?> gk : groupsForFile) {
                         removeFromGroup(gk, fileId);
+                        
+                        DrawableGroup g = getGroupForKey(gk);
+
+                        if (g == null){
+                            // It may be that this was the last unanalyzed file in the group, so test
+                            // whether the group is now fully analyzed.
+                            //TODO: use method in groupmanager ?
+                            List<Long> checkAnalyzed = checkAnalyzed(gk);
+                            if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
+                                populateAnalyzedGroup(gk, checkAnalyzed);
+                            }
+                        }                        
                     }
                 }
 
