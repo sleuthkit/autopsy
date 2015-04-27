@@ -42,17 +42,16 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
      * Constructs an event that can be used to indicate that the analysis
      * (ingest) of a file is completed.
      *
-     * @param sourceType Local or remote.
      * @param file The file for which analysis is completed.
      */
-    public FileAnalyzedEvent(AutopsyEvent.SourceType sourceType, AbstractFile file) {
+    public FileAnalyzedEvent(AbstractFile file) {
         /**
          * Putting null into newValue to allow for lazy loading of the
          * AbstractFile object. This bypasses the issues related to the
          * serialization and de-serialization of AbstractFile objects when the
          * event is published over a network.
          */
-        super(sourceType, IngestManager.IngestModuleEvent.FILE_DONE.toString(), file.getId(), null);
+        super(IngestManager.IngestModuleEvent.FILE_DONE.toString(), file.getId(), null);
     }
 
     /**

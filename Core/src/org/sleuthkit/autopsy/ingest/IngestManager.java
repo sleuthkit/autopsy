@@ -613,7 +613,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.STARTED.toString(), ingestJobId, null);
+        AutopsyEvent event = new AutopsyEvent(IngestJobEvent.STARTED.toString(), ingestJobId, null);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -623,7 +623,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.COMPLETED.toString(), ingestJobId, null);
+        AutopsyEvent event = new AutopsyEvent(IngestJobEvent.COMPLETED.toString(), ingestJobId, null);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -633,7 +633,7 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        AutopsyEvent event = new AutopsyEvent(AutopsyEvent.SourceType.LOCAL, IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
+        AutopsyEvent event = new AutopsyEvent(IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -643,7 +643,7 @@ public class IngestManager {
      * @param file The file that is completed.
      */
     void fireFileIngestDone(AbstractFile file) {
-        AutopsyEvent event = new FileAnalyzedEvent(AutopsyEvent.SourceType.LOCAL, file);
+        AutopsyEvent event = new FileAnalyzedEvent(file);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 
@@ -653,7 +653,7 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        AutopsyEvent event = new BlackboardPostEvent(AutopsyEvent.SourceType.LOCAL, moduleDataEvent);
+        AutopsyEvent event = new BlackboardPostEvent(moduleDataEvent);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 
@@ -665,7 +665,7 @@ public class IngestManager {
      * content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        AutopsyEvent event = new ContentChangedEvent(AutopsyEvent.SourceType.LOCAL, moduleContentEvent);
+        AutopsyEvent event = new ContentChangedEvent(moduleContentEvent);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 

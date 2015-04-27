@@ -47,11 +47,10 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
      * Constructs an event to be published when new content is added to a case
      * or there is a change a recorded attribute of existing content.
      *
-     * @param sourceType Local or remote.
      * @param contentEvent A ModuleDataEvent object containing the data
      * associated with the blackboard post.
      */
-    public BlackboardPostEvent(AutopsyEvent.SourceType sourceType, ModuleDataEvent eventData) {
+    public BlackboardPostEvent(ModuleDataEvent eventData) {
         /**
          * Putting a serializable data holding object into newValue to allow for
          * lazy loading of the ModuleDataEvent object for remote events. This
@@ -60,7 +59,6 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
          * network.
          */
         super(
-                sourceType,
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
                 new SerializableEventData(eventData.getModuleName(), eventData.getArtifactType(),
                         eventData.getArtifacts()

@@ -45,11 +45,10 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
      * Constructs a event to be published when new content is added to a case or
      * there is a change a recorded attribute of existing content.
      *
-     * @param sourceType Local or remote.
      * @param contentEvent A ModuleContentEvent object containing the data
      * associated with the content addition or change.
      */
-    public ContentChangedEvent(AutopsyEvent.SourceType sourceType, ModuleContentEvent eventData) {
+    public ContentChangedEvent(ModuleContentEvent eventData) {
         /**
          * Putting a serializable data holding object into newValue to allow for
          * lazy loading of the ModuleContent object. This bypasses the issues
@@ -57,7 +56,6 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
          * when the event is published over a network.
          */
         super(
-                sourceType,
                 IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString(),
                 new SerializableEventData(eventData.getModuleName(), ((Content) eventData.getSource()).getId()),
                 null
