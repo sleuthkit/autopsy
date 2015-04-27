@@ -42,15 +42,15 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
      * Constructs an event that can be used to indicate that the analysis
      * (ingest) of a file is completed.
      *
-     * @param sourceType Local or remote event source.
+     * @param sourceType Local or remote.
      * @param file The file for which analysis is completed.
      */
     public FileAnalyzedEvent(AutopsyEvent.SourceType sourceType, AbstractFile file) {
         /**
          * Putting null into newValue to allow for lazy loading of the
          * AbstractFile object. This bypasses the issues related to the
-         * serialization and de-serialization of AbstractFile objects for remote
-         * events.
+         * serialization and de-serialization of AbstractFile objects when the
+         * event is published over a network.
          */
         super(sourceType, IngestManager.IngestModuleEvent.FILE_DONE.toString(), file.getId(), null);
     }
@@ -64,10 +64,12 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
     public Object getNewValue() {
         /**
          * The file field is set in the constructor, but it is transient so it
-         * will become null for a remote event. Note that doing a lazy load of
-         * the AbstractFile object bypasses the issues related to the
-         * serialization and de-serialization of AbstractFile objects for remote
-         * events. It also may save database round trips from receiving hosts.
+         * will become null when the event is serialized for publication over a
+         * network. Doing a lazy load of the AbstractFile object bypasses the
+         * issues related to the serialization and de-serialization of
+         * AbstractFile objects and may also save database round trips from
+         * other nodes since subscribers to this event are often not interested
+         * in the event data.
          */
         if (null != file) {
             return file;

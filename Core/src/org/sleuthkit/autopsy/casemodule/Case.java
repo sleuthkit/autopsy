@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.events.RemotePublisher;
 import java.awt.Frame;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -38,6 +37,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.jms.JMSException;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -48,16 +49,17 @@ import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.events.AutopsyEventException;
+import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
-import org.sleuthkit.autopsy.events.LocalPublisher;
 
 /**
  * Stores all information for a given case. Only a single case can currently be
@@ -75,8 +77,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * startup
      */
     public static final String propStartup = "LBL_StartupDialog"; //NON-NLS
-    // pcs is initialized in CaseListener constructor
+
+    // RJCTODO: Replace PropertyChangeSupport with AutopsyEventPublisher. 
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
+    private static final Set<String> eventNames = Stream.of(Events.values())
+            .map(Events::toString)
+            .collect(Collectors.toSet());
+    private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
 
     /**
      * Events that the case module will fire. Event listeners can get the event
@@ -189,9 +196,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
-    private static final LocalPublisher eventPublisher = new LocalPublisher();
-    private RemotePublisher remoteEventPublisher;
-
     /**
      * Constructor for the Case class
      */
@@ -206,10 +210,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.services = new Services(db);
         if (CaseType.MULTI_USER_CASE == this.caseType) {
             try {
-                this.remoteEventPublisher = new RemotePublisher(this.name, eventPublisher, UserPreferences.getMessageServiceConnectionInfo());
-            } catch (URISyntaxException | JMSException ex) {
-                // RJCTODO: Add some sort of notification to user.
+                eventPublisher.openRemoteEventChannel(name);
+            } catch (AutopsyEventException ex) {
                 logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
+                    MessageNotifyUtil.Message.error(NbBundle.getMessage(Case.class,
+                                                                        "Case.OpenEventChannel.ErrMsg",
+                                                                        name));
             }
         }
     }
@@ -606,7 +612,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
         try {
             if (CaseType.MULTI_USER_CASE == this.caseType) {
-                remoteEventPublisher.stop();
+                eventPublisher.closeRemoteEventChannel();
             }
             services.close();
             this.xmlcm.close(); // close the xmlcm
@@ -960,12 +966,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return timezones;
     }
 
+    // RJCTODO: Deprecate in favor of addEventSubscriber() and remove use of PropertyChangeSupport
     public static synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
         pcs.addPropertyChangeListener(listener);
+//        eventPublisher.addSubscriber(eventNames, listener);
     }
 
+    // RJCTODO: Deprecate in favor of removeEventSubscriber() and remove use of PropertyChangeSupport
     public static synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(listener);
+//        eventPublisher.removeSubscriber(eventNames, listener);
     }
 
     /**
@@ -1010,21 +1020,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static void removeEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
-    }
-
-    /**
-     * Sends an event to other Autopsy nodes when a multi-user case is open.
-     *
-     * @param event The event to send.
-     */
-    public void sendEventMessage(AutopsyEvent event) {
-        if (CaseType.MULTI_USER_CASE == this.caseType && null != remoteEventPublisher) {
-            try {
-                remoteEventPublisher.send(event);
-            } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to send %s event message", event.getPropertyName()), ex);
-            }
-        }
     }
 
     /**
@@ -1360,7 +1355,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.SEVERE, errorMessage, ex);
         }
     }
-    
+
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
     }

@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.events;
 
-import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
-import org.sleuthkit.autopsy.events.LocalPublisher;
-import org.sleuthkit.autopsy.events.AutopsyEvent;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
@@ -37,94 +34,91 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Uses a message service to send and receives event messages between Autopsy
- * nodes when a multi-user case is open.
+ * Provides thread-safe support for publishing events to registered subscribers
+ * on other Autopsy nodes and for publishing events from other Autopsy nodes.
+ * Subscribers on this node are constrained to be PropertyChangeListeners to
+ * integrate with the legacy use of JavaBeans PropertyChangeEvents and
+ * PropertyChangeListeners as an application event system.
  */
 @Immutable
-public final class RemotePublisher {
+final class RemoteEventPublisher {
 
-    private static final Logger logger = Logger.getLogger(RemotePublisher.class.getName());
+    private static final Logger logger = Logger.getLogger(RemoteEventPublisher.class.getName());
     private static final String ALL_MESSAGE_SELECTOR = "All";
-    private final LocalPublisher localPublisher;
+    private final LocalEventPublisher localPublisher;
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
     private final MessageReceiver receiver;
 
     /**
-     * Creates and starts a messenger to send and receive event messages between
-     * Autopsy nodes when a multi-user case is open.
+     * Constructs an object for publishing events to registered subscribers on
+     * other Autopsy nodes and for publishing events from other Autopsy nodes.
      *
-     * @param topicName The name of the topic for this messenger to use for
-     * communication.
+     * @param eventChannelName The name of the event channel to be used for
+     * communication with other Autopsy nodes.
      * @param localPublisher An event publisher that will be used to publish
-     * remote events locally.
+     * events from other Autopsy nodes on this node.
      * @param info Connection info for the message service.
      * @throws URISyntaxException if the URI in the connection info is
      * malformed.
      * @throws JMSException if the connection to the message service cannot be
      * made.
      */
-    public RemotePublisher(String topicName, LocalPublisher localPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
+    RemoteEventPublisher(String eventChannelName, LocalEventPublisher localPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
         try {
             this.localPublisher = localPublisher;
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(info.getUserName(), info.getPassword(), info.getURI());
             connection = connectionFactory.createConnection();
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Topic topic = session.createTopic(topicName);
+            Topic topic = session.createTopic(eventChannelName);
             producer = session.createProducer(topic);
             MessageConsumer consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
             receiver = new MessageReceiver();
             consumer.setMessageListener(receiver);
         } catch (URISyntaxException | JMSException ex) {
-            logger.log(Level.SEVERE, "Failed to start", ex);
+            logger.log(Level.SEVERE, "Failed to connect to event channel", ex);
             stop();
             throw ex;
         }
     }
 
     /**
-     * Stops this messenger, causing it to disconnect from the message service.
+     * Stops this publisher, causing it to disconnect from the message service.
+     *
+     * @throws JMSException if there is a problem closing the session or the
+     * connection.
      */
-    synchronized public void stop() {
-        try {
-            if (null != session) {
-                session.close();
-            }
-        } catch (JMSException ex) {
-            logger.log(Level.SEVERE, "Failed to close message service session", ex);
+    synchronized void stop() throws JMSException {
+        if (null != session) {
+            session.close();
         }
-        try {
-            if (null != connection) {
-                connection.close();
-            }
-        } catch (JMSException ex) {
-            logger.log(Level.SEVERE, "Failed to close connection to message service", ex);
+        if (null != connection) {
+            connection.close();
         }
     }
 
     /**
-     * Sends an event message via the message service.
+     * Sends an event message to the message service.
      *
      * @param event The event to send.
      */
-    synchronized public void send(AutopsyEvent event) throws JMSException {
+    synchronized void send(AutopsyEvent event) throws JMSException {
         ObjectMessage message = session.createObjectMessage();
         message.setStringProperty("events", ALL_MESSAGE_SELECTOR);
         message.setObject(event);
         producer.send(message);
     }
 
-    
     /**
-     * Receives event messages via the message service and publishes them
+     * Receives event messages from the message service and publishes them
      * locally.
      */
     private final class MessageReceiver implements MessageListener {
 
         /**
-         * Receives an event message via the message service and publishes it
+         * Receives an event message from the message service and publishes it
          * locally. Called by a JMS thread.
          *
          * @param message The message.

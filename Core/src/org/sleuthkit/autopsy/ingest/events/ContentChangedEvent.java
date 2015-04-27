@@ -54,7 +54,7 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
          * Putting a serializable data holding object into newValue to allow for
          * lazy loading of the ModuleContent object. This bypasses the issues
          * related to the serialization and de-serialization of Content objects
-         * for remote events.
+         * when the event is published over a network.
          */
         super(
                 sourceType,
@@ -74,12 +74,13 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
     @Override
     public Object getOldValue() {
         /**
-         * The eventData field is set in the constructor, but it is transient so
-         * it will become null for a remote event. Note that doing a lazy load
-         * of the ModuleContentEvent object bypasses the issues related to the
-         * serialization and de-serialization of Content objects for
-         * remote events. It also may save database round trips from receiving
-         * hosts.
+         * The eventData field is set in the constructor, but it is transient so it
+         * will become null when the event is serialized for publication over a
+         * network. Doing a lazy load of the ModuleContentEvent object bypasses the
+         * issues related to the serialization and de-serialization of
+         * Content objects and may also save database round trips from
+         * other nodes since subscribers to this event are often not interested
+         * in the event data.
          */
         if (null != eventData) {
             return eventData;

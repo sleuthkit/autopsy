@@ -19,37 +19,30 @@
 package org.sleuthkit.autopsy.events;
 
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Provides thread-safe support for publishing events to registered subscribers,
- * even if individual subscribers throw exceptions. Subscribers register by
- * event, but are constrained to be PropertyChangeListeners to integrate with
- * the legacy use of JavaBeans PropertyChangeEvents and PropertyChangeListeners
- * as an application event system. For the same reason, event registration is
- * done using event name strings so that they can be mapped to
- * PropertyChangeEvent property names.
- *
- * TODO: This is a temporary expedient until something like guava EventBus can
- * be put in place as a replacement.
+ * Provides thread-safe support for publishing events to registered subscribers
+ * on this Autopsy node. Subscribers are constrained to be
+ * PropertyChangeListeners to integrate with the legacy use of JavaBeans
+ * PropertyChangeEvents and PropertyChangeListeners as an application event
+ * system.
  */
-@Immutable
-public final class LocalPublisher {
+final class LocalEventPublisher {
 
-    private static final Logger logger = Logger.getLogger(LocalPublisher.class.getName());
+    private static final Logger logger = Logger.getLogger(LocalEventPublisher.class.getName());
     private final Map<String, Set<PropertyChangeListener>> subscribersByEvent;
 
     /**
-     * Constructs an object for publishing events to registered subscribers.
+     * Constructs an object for publishing events to registered subscribers on
+     * this Autopsy node.
      */
-    public LocalPublisher() {
+    LocalEventPublisher() {
         subscribersByEvent = new HashMap<>();
     }
 
@@ -59,7 +52,7 @@ public final class LocalPublisher {
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    synchronized void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         for (String eventName : eventNames) {
             addSubscriber(eventName, subscriber);
         }
@@ -71,7 +64,7 @@ public final class LocalPublisher {
      * @param eventName The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
+    synchronized void addSubscriber(String eventName, PropertyChangeListener subscriber) {
         subscribersByEvent.putIfAbsent(eventName, new HashSet<>());
         Set<PropertyChangeListener> subscribers = subscribersByEvent.get(eventName);
         subscribers.add(subscriber);
@@ -83,7 +76,7 @@ public final class LocalPublisher {
      * @param eventNames The events the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    synchronized void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         for (String eventName : eventNames) {
             removeSubscriber(eventName, subscriber);
         }
@@ -95,7 +88,7 @@ public final class LocalPublisher {
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
+    synchronized void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
         Set<PropertyChangeListener> subscribers = subscribersByEvent.getOrDefault(eventName, null);
         if (null != subscribers) {
             subscribers.remove(subscriber);
@@ -108,7 +101,7 @@ public final class LocalPublisher {
      *
      * @param event The event to be published.
      */
-    synchronized public void publish(AutopsyEvent event) {
+    synchronized void publish(AutopsyEvent event) {
         Set<PropertyChangeListener> subscribers = subscribersByEvent.getOrDefault(event.getPropertyName(), null);
         if (null != subscribers) {
             for (PropertyChangeListener subscriber : subscribers) {
