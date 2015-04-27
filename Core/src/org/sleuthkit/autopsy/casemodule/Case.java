@@ -222,11 +222,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * constructor.
      */
     private void init() {
-        /**
-         * With an API change, this could be better done using an inner class,
-         * allowing the two-stage initialization to be replaced. Or we could go
-         * ahead with removing SleuthkitCase.ErrorObserver.
-         */
         db.addErrorObserver(this);
     }
 
