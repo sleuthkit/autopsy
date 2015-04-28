@@ -125,18 +125,28 @@ public final class AutopsyEventPublisher {
     }
 
     /**
-     * Publishes an event.
+     * Publishes an event to this Autopsy node and other Autopsy nodes.
      *
      * @param event The event to publish.
-     * @throws JMSException
      */
-    synchronized public void publish(AutopsyEvent event) throws JMSException {
-        event.setSourceType(AutopsyEvent.SourceType.LOCAL);
-        localPublisher.publish(event);
+    synchronized public void publish(AutopsyEvent event) {
+        publishLocally(event);
         if (null != remotePublisher) {
-            event.setSourceType(AutopsyEvent.SourceType.REMOTE);
-            remotePublisher.send(event);
+            try {
+                remotePublisher.publish(event);
+            } catch (JMSException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
+            }
         }
+    }
+    
+    /**
+     * Publishes an event to this Autopsy node only.
+     *
+     * @param event The event to publish.
+     */
+    synchronized public void publishLocally(AutopsyEvent event) {
+        localPublisher.publish(event);        
     }
 
 }

@@ -52,6 +52,7 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
          * event is published over a network.
          */
         super(IngestManager.IngestModuleEvent.FILE_DONE.toString(), file.getId(), null);
+        this.file = file;
     }
 
     /**

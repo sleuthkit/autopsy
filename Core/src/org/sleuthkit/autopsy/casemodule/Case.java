@@ -45,6 +45,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
@@ -53,6 +54,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.datamodel.*;
@@ -75,11 +77,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static final String propStartup = "LBL_StartupDialog"; //NON-NLS
 
-    // RJCTODO: Replace PropertyChangeSupport with AutopsyEventPublisher. 
-    private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
-    private static final Set<String> eventNames = Stream.of(Events.values())
-            .map(Events::toString)
-            .collect(Collectors.toSet());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
 
     /**
@@ -90,12 +87,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         /**
          * Property name that indicates the name of the current case has
-         * changed. When a case is opened, "old name" is empty string and "new
-         * name" is the name. When a case is closed, "old name" is the case name
-         * and "new name" is empty string. When a case is renamed, "old name"
-         * has the original name and "new name" has the new name.
+         * changed. The old value is the old case name, the new value is the new
+         * case name.
          */
-        // @@@ BC: I propose that this is no longer called for case open/close.
         NAME,
         /**
          * Property name that indicates the number of the current case has
@@ -205,16 +199,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.caseType = type;
         this.db = db;
         this.services = new Services(db);
-        if (CaseType.MULTI_USER_CASE == this.caseType) {
-            try {
-                eventPublisher.openRemoteEventChannel(name);
-            } catch (AutopsyEventException ex) {
-                logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
-                    MessageNotifyUtil.Message.error(NbBundle.getMessage(Case.class,
-                                                                        "Case.OpenEventChannel.ErrMsg",
-                                                                        name));
-            }
-        }
     }
 
     /**
@@ -261,58 +245,30 @@ public class Case implements SleuthkitCase.ErrorObserver {
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
         if (oldCase != null) {
-            doCaseChange(null); //closes windows, etc
-
-            try {
-                pcs.firePropertyChange(Events.CURRENT_CASE.toString(), oldCase, null);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                        NbBundle.getMessage(Case.class,
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
-            doCaseNameChange("");
-
-            try {
-                pcs.firePropertyChange(Events.NAME.toString(), oldCase.name, "");
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                        NbBundle.getMessage(Case.class,
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            doCaseChange(null); //closes windows, etc            
+            eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
+            if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
+                eventPublisher.closeRemoteEventChannel();
+            }            
         }
 
         if (newCase != null) {
             currentCase = newCase;
-
             Logger.setLogDirectory(currentCase.getLogDirectoryPath());
-
-            try {
-                pcs.firePropertyChange(Events.CURRENT_CASE.toString(), null, currentCase);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                        NbBundle.getMessage(Case.class,
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
             doCaseChange(currentCase);
-
-            try {
-                pcs.firePropertyChange(Events.NAME.toString(), "", currentCase.name);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                        NbBundle.getMessage(Case.class,
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
-            doCaseNameChange(currentCase.name);
-
+            updateMainWindowTitle(currentCase.name);
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+            if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
+                try {
+                    eventPublisher.openRemoteEventChannel(newCase.getName());
+                } catch (AutopsyEventException ex) {
+                    logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
+                    MessageNotifyUtil.Message.error(NbBundle.getMessage(Case.class,
+                            "Case.OpenEventChannel.ErrMsg",
+                            newCase.getName()));
+                }
+            }
+            eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
@@ -525,25 +481,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param imgPaths the paths of the image that being added
      * @param imgId the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
+     * @deprecated Use notifyNewDataSource() instead.
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
-        logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone}); //NON-NLS
-
         try {
-            Image newImage = db.getImageById(imgId);
-
-            try {
-                pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newImage); // the new value is the instance of the image
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                        NbBundle.getMessage(this.getClass(),
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
-            CoreComponentControl.openCoreWindows();
-            return newImage;
+            Image newDataSource = db.getImageById(imgId);
+            notifyNewDataSource(newDataSource);
+            return newDataSource;
         } catch (Exception ex) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.addImg.exception.msg"), ex);
         }
@@ -554,6 +499,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * reopens windows if needed.
      *
      * @param newDataSource new data source added
+     * @deprecated Use notifyNewDataSource() instead.
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
@@ -563,20 +509,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Notifies the UI that a new data source has been added.
      *
-     *
      * @param newDataSource new data source added
      */
     void notifyNewDataSource(Content newDataSource) {
-
-        try {
-            pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newDataSource);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                    NbBundle.getMessage(this.getClass(),
-                            "Case.changeCase.errListenToCaseUpdates.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
+        eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
         CoreComponentControl.openCoreWindows();
     }
 
@@ -603,9 +539,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public void closeCase() throws CaseActionException {
         changeCase(null);
         try {
-            if (CaseType.MULTI_USER_CASE == this.caseType) {
-                eventPublisher.closeRemoteEventChannel();
-            }
             services.close();
             this.xmlcm.close(); // close the xmlcm
             this.db.close();
@@ -655,17 +588,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
             xmlcm.setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
             RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
-            try {
-                pcs.firePropertyChange(Events.NAME.toString(), oldCaseName, newCaseName);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                        NbBundle.getMessage(this.getClass(),
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
-            doCaseNameChange(newCaseName);
-
+            eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
+            updateMainWindowTitle(newCaseName);
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseName.exception.msg"), e);
         }
@@ -681,15 +605,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             xmlcm.setCaseExaminer(newExaminer); // set the examiner
             examiner = newExaminer;
-            try {
-                pcs.firePropertyChange(Events.EXAMINER.toString(), oldExaminer, newExaminer);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                        NbBundle.getMessage(this.getClass(),
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            eventPublisher.publish(new AutopsyEvent(Events.EXAMINER.toString(), oldExaminer, newExaminer));
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateExaminer.exception.msg"), e);
         }
@@ -705,16 +621,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             xmlcm.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
-
-            try {
-                pcs.firePropertyChange(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                        NbBundle.getMessage(this.getClass(),
-                                "Case.changeCase.errListenToCaseUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber));
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseNum.exception.msg"), e);
         }
@@ -917,12 +824,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * get the PropertyChangeSupport of this class
+     * Gets a new PropertyChangeSupport object.
      *
-     * @return PropertyChangeSupport
+     * @return A new PropertyChangeSupport object with source set to null.
+     * @deprecated Do not use.
      */
+    @Deprecated
     public static PropertyChangeSupport getPropertyChangeSupport() {
-        return pcs;
+        return new PropertyChangeSupport(null);
     }
 
     /**
@@ -958,20 +867,35 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return timezones;
     }
 
-    // RJCTODO: Deprecate in favor of addEventSubscriber() and remove use of PropertyChangeSupport
+    /**
+     * Adds a subscriber to all case events from this Autopsy node and other
+     * Autopsy nodes. To subscribe to only specific events, use one of the
+     * overloads of addEventSubscriber().
+     *
+     * @param listener The subscriber to add.
+     */
     public static synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(listener);
-//        eventPublisher.addSubscriber(eventNames, listener);
-    }
-
-    // RJCTODO: Deprecate in favor of removeEventSubscriber() and remove use of PropertyChangeSupport
-    public static synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(listener);
-//        eventPublisher.removeSubscriber(eventNames, listener);
+        addEventSubscriber(Stream.of(Events.values())
+                .map(Events::toString)
+                .collect(Collectors.toSet()), listener);
     }
 
     /**
-     * Adds a subscriber to events from this Autopsy node and other Autopsy nodes.
+     * Removes a subscriber from all case events from this Autopsy node and
+     * other Autopsy nodes. To remove a subscription to only specific events,
+     * use one of the overloads of removeEventSubscriber().
+     *
+     * @param listener The subscriber to add.
+     */
+    public static synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+        removeEventSubscriber(Stream.of(Events.values())
+                .map(Events::toString)
+                .collect(Collectors.toSet()), listener);
+    }
+
+    /**
+     * Adds a subscriber to events from this Autopsy node and other Autopsy
+     * nodes.
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
@@ -981,7 +905,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Adds a subscriber to events from this Autopsy node and other Autopsy nodes.
+     * Adds a subscriber to events from this Autopsy node and other Autopsy
+     * nodes.
      *
      * @param eventNames The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
@@ -991,7 +916,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Adds a subscriber to events from this Autopsy node and other Autopsy nodes.
+     * Adds a subscriber to events from this Autopsy node and other Autopsy
+     * nodes.
      *
      * @param eventName The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
@@ -1001,7 +927,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Removes a subscriber to events from this Autopsy node and other Autopsy nodes.
+     * Removes a subscriber to events from this Autopsy node and other Autopsy
+     * nodes.
      *
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
@@ -1301,20 +1228,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     //case name change helper
-    private static void doCaseNameChange(String newCaseName) {
+    private static void updateMainWindowTitle(String newCaseName) {
         // update case name
         if (!newCaseName.equals("")) {
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
-        }
-    }
-
-    //delete image helper
-    private void doDeleteImage() {
-        // no more image left in this case
-        if (currentCase.hasData()) {
-            // close all top components
-            CoreComponentControl.closeCoreWindows();
         }
     }
 
@@ -1336,12 +1254,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         Report report = this.db.addReport(localPath, srcModuleName, reportName);
-        try {
-            Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
-        } catch (Exception ex) {
-            String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString()); //NON-NLS
-            logger.log(Level.SEVERE, errorMessage, ex);
-        }
+        eventPublisher.publish(new AutopsyEvent(Events.REPORT_ADDED.toString(), null, report));
     }
 
     public List<Report> getAllReports() throws TskCoreException {
