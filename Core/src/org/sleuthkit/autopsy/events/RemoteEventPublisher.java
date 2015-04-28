@@ -74,7 +74,7 @@ final class RemoteEventPublisher {
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic(eventChannelName);
             producer = session.createProducer(topic);
-            MessageConsumer consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true); // RJCTODO: Can I use the empty string?
+            MessageConsumer consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
             receiver = new MessageReceiver();
             consumer.setMessageListener(receiver);
         } catch (URISyntaxException | JMSException ex) {
