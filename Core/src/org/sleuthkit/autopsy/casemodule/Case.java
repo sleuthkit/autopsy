@@ -828,16 +828,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets a PropertyChangeSupport object with a null source. The
-     * PropertyChangeSupport object returned is not used by instances of this
-     * class and does not have any PropertyChangeListeners.
+     * Gets a PropertyChangeSupport object. The PropertyChangeSupport object
+     * returned is not used by instances of this class and does not have any
+     * PropertyChangeListeners.
      *
-     * @return A new PropertyChangeSupport object with source set to null.
+     * @return A new PropertyChangeSupport object.
      * @deprecated Do not use.
      */
     @Deprecated
     public static PropertyChangeSupport getPropertyChangeSupport() {
-        return new PropertyChangeSupport(null);
+        return new PropertyChangeSupport(Case.class);
     }
 
     /**
