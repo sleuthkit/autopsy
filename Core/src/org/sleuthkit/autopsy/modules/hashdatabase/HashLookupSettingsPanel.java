@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import javax.swing.table.TableCellRenderer;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
@@ -56,8 +57,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingPathText");
     private static final String ERROR_GETTING_INDEX_STATUS_TEXT = NbBundle
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
-    private HashDbManager hashSetManager = HashDbManager.getInstance();
-    private HashSetTableModel hashSetTableModel = new HashSetTableModel();
+    private final HashDbManager hashSetManager = HashDbManager.getInstance();
+    private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -69,13 +70,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (isIngestJobEvent(evt)) {
+                if (isLocalIngestJobEvent(evt)) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
                             updateComponents();
                         }
-                    });                                
+                    });
                 }
             }
         });
@@ -227,10 +228,17 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         return shortenedPath;
     }
 
-    private boolean isIngestJobEvent(PropertyChangeEvent evt) {
-        return evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())
-                || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString());
+    private boolean isLocalIngestJobEvent(PropertyChangeEvent evt) {
+        if (evt instanceof AutopsyEvent) {
+            AutopsyEvent event = (AutopsyEvent) evt;
+            if (event.getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                String eventType = event.getPropertyName();
+                return (eventType.equals(IngestManager.IngestJobEvent.STARTED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()));
+            }
+        }
+        return false;
     }
 
     @Override
@@ -277,7 +285,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
     }
-    
+
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
             hashSetManager.removeHashDatabaseInternal(hashDb);
@@ -306,7 +314,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
         int res = JOptionPane.showConfirmDialog(this, message,
                 NbBundle.getMessage(this.getClass(),
-                "HashDbConfigPanel.unindexedDbsMsg"),
+                        "HashDbConfigPanel.unindexedDbsMsg"),
                 JOptionPane.YES_NO_OPTION);
         if (res == JOptionPane.YES_OPTION) {
             ModalNoButtons indexingDialog = new ModalNoButtons(this, new Frame(), unindexed);
@@ -754,7 +762,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(),
-                "HashDbConfigPanel.deleteDbActionConfirmMsg"),
+                        "HashDbConfigPanel.deleteDbActionConfirmMsg"),
                 NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {

@@ -15,7 +15,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.messaging.MessageServiceConnectionInfo;
+import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 public final class MultiUserSettingsPanel extends javax.swing.JPanel {

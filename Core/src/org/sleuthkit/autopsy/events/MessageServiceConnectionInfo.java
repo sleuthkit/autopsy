@@ -16,14 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.messaging;
+package org.sleuthkit.autopsy.events;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.annotation.concurrent.Immutable;
 
 /**
- * Connection info for a Java Message Service (JMS) provider.
+ * Connection info for a Java Message Service (JMS) provider. Thread-safe.
  */
+@Immutable
 public final class MessageServiceConnectionInfo {
 
     private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s";
