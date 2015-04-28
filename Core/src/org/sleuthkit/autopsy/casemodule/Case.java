@@ -249,7 +249,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
                 eventPublisher.closeRemoteEventChannel();
-            }            
+            }
         }
 
         if (newCase != null) {
@@ -824,7 +824,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets a new PropertyChangeSupport object.
+     * Gets a PropertyChangeSupport object with a null source. The
+     * PropertyChangeSupport object returned is not used by instances of this
+     * class and does not have any PropertyChangeListeners.
      *
      * @return A new PropertyChangeSupport object with source set to null.
      * @deprecated Do not use.
