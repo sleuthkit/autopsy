@@ -70,7 +70,7 @@ public final class DataSourceAddedEvent extends AutopsyEvent implements Serializ
             return dataSource;
         }
         try {
-            long id = (Long) super.getOldValue();
+            long id = (Long) super.getNewValue();
             dataSource = Case.getCurrentCase().getSleuthkitCase().getContentById(id);
             return dataSource;
         } catch (IllegalStateException | TskCoreException ex) {
