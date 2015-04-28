@@ -77,6 +77,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static final String propStartup = "LBL_StartupDialog"; //NON-NLS
 
+    /**
+     * The event publisher is static so that subscribers only have to subscribe
+     * once to receive events for all cases.
+     */
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
 
     /**
