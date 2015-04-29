@@ -684,11 +684,8 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            outOfDatePromptAndRebuild();
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        outOfDatePromptAndRebuild();
                     });
                     break;
             }
@@ -702,20 +699,14 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ADDED:
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            outOfDatePromptAndRebuild();
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        outOfDatePromptAndRebuild();
                     });
                     break;
                 case CURRENT_CASE:
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            OpenTimelineAction.invalidateController();
-                            closeTimeLine();
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        OpenTimelineAction.invalidateController();
+                        closeTimeLine();
                     });
                     break;
             }

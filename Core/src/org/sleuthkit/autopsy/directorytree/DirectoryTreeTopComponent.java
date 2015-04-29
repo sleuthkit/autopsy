@@ -537,67 +537,43 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             // data model objects when a case is closed.
             if (oldValue != null && newValue == null) {
                 // The current case has been closed. Reset the ExplorerManager.
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        Node emptyNode = new AbstractNode(Children.LEAF);
-                        em.setRootContext(emptyNode);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    Node emptyNode = new AbstractNode(Children.LEAF);
+                    em.setRootContext(emptyNode);
                 });
             } else if (newValue != null) {
                 // A new case has been opened. Reset the ExplorerManager. 
                 Case newCase = (Case) newValue;
                 final String newCaseName = newCase.getName();
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        em.getRootContext().setName(newCaseName);
-                        em.getRootContext().setDisplayName(newCaseName);
+                SwingUtilities.invokeLater(() -> {
+                    em.getRootContext().setName(newCaseName);
+                    em.getRootContext().setDisplayName(newCaseName);
 
-                        // Reset the forward and back 
-                        // buttons. Note that a call to CoreComponentControl.openCoreWindows()
-                        // by the new Case object will lead to a componentOpened() call
-                        // that will repopulate the tree.
-                        // @@@ The repopulation of the tree in this fashion also merits
-                        // reconsideration.
-                        resetHistory();
-                    }
+                    // Reset the forward and back
+                    // buttons. Note that a call to CoreComponentControl.openCoreWindows()
+                    // by the new Case object will lead to a componentOpened() call
+                    // that will repopulate the tree.
+                    // @@@ The repopulation of the tree in this fashion also merits
+                    // reconsideration.
+                    resetHistory();
                 });
             }
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    componentOpened();
-                }
-            });
+            SwingUtilities.invokeLater(this::componentOpened);
         } // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    respondSelection((Node[]) oldValue, (Node[]) newValue);
-                }
+            SwingUtilities.invokeLater(() -> {
+                respondSelection((Node[]) oldValue, (Node[]) newValue);
             });
         } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
             // nothing to do here.
             // all nodes should be listening for these events and update accordingly.
         } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                 || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    refreshDataSourceTree();
-                }
-            });
+            SwingUtilities.invokeLater(this::refreshDataSourceTree);
         } else if (changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    refreshDataSourceTree();
-                }
-            });
+            SwingUtilities.invokeLater(this::refreshDataSourceTree);
         }
     }
 
