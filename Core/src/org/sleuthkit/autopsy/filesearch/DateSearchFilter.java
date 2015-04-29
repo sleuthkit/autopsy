@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
+ *
  * @author pmartel
  */
 class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
@@ -123,7 +124,6 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         final boolean changedChecked = panel.getChangedCheckBox().isSelected();
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
         final boolean createdChecked = panel.getAccessedCheckBox().isSelected();
-
 
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 
@@ -240,25 +240,18 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case CURRENT_CASE:
                     Object newValue = evt.getNewValue();
-                    if (null == newValue) {
+                    if (null != newValue) {
                         /**
-                         * Closing a case. Nothing to do.
+                         * Opening a new case.
                          */
-                        break;
+                        SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
                     }
-                    /**
-                     * Else opening a case, fall through.
-                     */
+                    break;
                 case DATA_SOURCE_ADDED:
                 case DATA_SOURCE_DELETED:
-                  SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            DateSearchFilter.this.updateTimeZoneList();
-                        }
-                    });            
+                    SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
                     break;
-            }            
+            }
         }
     }
 }
