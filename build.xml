@@ -47,17 +47,7 @@
         <fail unless="tskFound" message="TSK_HOME must be set as an environment variable."/>
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>
-    
-    <!-- Verify that the POSTGRESQL_HOME_64 env variable is set -->
-    <target name="findPostgresHome64">
-        <property environment="env"/>
-        <condition property="postgresFound">
-            <isset property="env.POSTGRESQL_HOME_64"/>
-        </condition>
-        <fail unless="postgresFound" message="POSTGRESQL_HOME_64 must be set as an environment variable."/>
-        <echo> POSTGRESQL_HOME_64: ${env.POSTGRESQL_HOME_64}</echo>
-    </target>
-        
+
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
       version number. -->
@@ -173,7 +163,7 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="findPostgresHome64, build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev. system" />
+    <target name="build" depends="build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
     <target name="build-brand" depends="-init">
         
