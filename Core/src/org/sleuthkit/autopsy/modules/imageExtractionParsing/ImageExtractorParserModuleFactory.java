@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.exif;
+package org.sleuthkit.autopsy.modules.imageExtractionParsing;
 
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -31,7 +31,7 @@ import org.openide.util.NbBundle;
  * associated with media files (e.g., JPEG format files).
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
+public class ImageExtractorParserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDisplayName() {
@@ -39,13 +39,13 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleName() {
-        return NbBundle.getMessage(ExifParserFileIngestModule.class,
+        return NbBundle.getMessage(ImageExtractorParserFileIngestModule.class,
                 "ExifParserFileIngestModule.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(ExifParserFileIngestModule.class,
+        return NbBundle.getMessage(ImageExtractorParserFileIngestModule.class,
                 "ExifParserFileIngestModule.getDesc.text");
     }
 
@@ -61,6 +61,6 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new ExifParserFileIngestModule();
+        return new ImageExtractorParserFileIngestModule();
     }
 }
