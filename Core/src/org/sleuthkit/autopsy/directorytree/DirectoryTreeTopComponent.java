@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,21 +84,14 @@ import org.sleuthkit.datamodel.TskException;
 // Registered as a service provider for DataExplorer in layer.xml
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
 
-    private transient ExplorerManager em = new ExplorerManager();
+    private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
+    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
             "DirectoryTreeTopComponent.title.text"));
-    private LinkedList<String[]> backList;
-    private LinkedList<String[]> forwardList;
-    /**
-     * path to the icon used by the component and its open action
-     */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
+    private final LinkedList<String[]> backList;
+    private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
-    private PropertyChangeSupport pcs;
-    // for error handling
-    private JPanel caller;
-    private String className = this.getClass().toString();
+    private final PropertyChangeSupport pcs;
     private static final Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private RootContentChildren contentChildren;
 
@@ -795,56 +788,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Refreshes the nodes in the tree to reflect updates in the database should
-     * be called in the gui thread
-     */
-//    public void refreshResultsTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
-//        //save current selection
-//        Node selectedNode = getSelectedNode();
-//        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-//
-//        //TODO: instead, we should choose a specific key to refresh? Maybe?
-//        //contentChildren.refreshKeys();
-//
-//        Children dirChilds = em.getRootContext().getChildren();
-//
-//        Node results = dirChilds.findChild(ResultsNode.NAME);
-//        if (results == null) {
-//            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree"); //NON-NLS
-//            return;
-//        }
-//        
-//        OriginalNode original = results.getLookup().lookup(OriginalNode.class);
-//        ResultsNode resultsNode = (ResultsNode) original.getNode();
-//        RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
-//        resultsNodeChilds.refreshKeys(types);
-//
-//        
-//        final TreeView tree = getTree();
-//        // @@@ tree.expandNode(results);
-//
-//        Children resultsChilds = results.getChildren();
-//        if (resultsChilds == null) { 
-//            return;
-//        }
-//
-//        Node childNode = resultsChilds.findChild(KeywordHits.NAME);
-//        if (childNode == null) { 
-//            return;
-//        }
-//        // @@@tree.expandNode(childNode);
-//
-//        childNode = resultsChilds.findChild(ExtractedContent.NAME);
-//        if (childNode == null) {
-//            return;
-//        }
-//        tree.expandNode(childNode);
-//
-//        //restores selection if it was under the Results node
-//        //@@@ setSelectedNode(selectedPath, ResultsNode.NAME);
-//        
-//    }
-    /**
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
@@ -1013,10 +956,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
-//    private class HistoryManager<T> {
-//        private Stack<T> past, future;
-//
-//    }
     @Override
     public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
