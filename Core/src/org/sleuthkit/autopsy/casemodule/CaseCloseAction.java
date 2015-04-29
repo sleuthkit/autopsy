@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,23 +24,6 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
-;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -83,21 +66,23 @@ import org.openide.util.actions.Presenter;
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (Case.existsCurrentCase() == false)
+        if (Case.existsCurrentCase() == false) {
             return;
-        
+        }
+
         Case result = Case.getCurrentCase();
         try {
             result.closeCase();
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    StartupWindowProvider.getInstance().open();
-                }
-            });
         } catch (Exception ex) {
-            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex); //NON-NLS
         }
+        
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                StartupWindowProvider.getInstance().open();
+            }
+        });
     }
 
     /**

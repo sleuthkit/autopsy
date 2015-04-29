@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -160,7 +160,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     private static List<String> createTimeZoneList() {
 
-        List<String> timeZones = new ArrayList<String>();
+        List<String> timeZones = new ArrayList<>();
 
         if (Case.existsCurrentCase()) {
             // get the latest case
@@ -241,7 +241,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
 
-            if (changed.equals(Case.Events.CURRENT_CASE.toString().toString())) {
+            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 // create or open a case
                 if (newValue != null) {
                     DateSearchFilter.this.updateTimeZoneList();

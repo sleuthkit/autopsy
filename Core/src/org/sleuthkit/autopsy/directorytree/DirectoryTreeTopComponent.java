@@ -27,6 +27,7 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -117,7 +118,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         subscribeToChangeEvents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
 
-
         this.pcs = new PropertyChangeSupport(this);
 
         // set the back & forward list and also disable the back & forward button
@@ -144,7 +144,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
         });
-        Case.addPropertyChangeListener(this);
+        Case.addEventSubscriber(new HashSet<>(Arrays.asList(Case.Events.CURRENT_CASE.toString(), Case.Events.DATA_SOURCE_ADDED.toString())), this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
         IngestManager.getInstance().addIngestModuleEventListener(this);
@@ -245,9 +245,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         forwardList.addLast(currentNodePath);
         forwardButton.setEnabled(true);
 
-        /* We peek instead of poll because we use its existence
-         * in the list later on so that we do not reset the forward list
-         * after the selection occurs. */
+        /*
+         * We peek instead of poll because we use its existence in the list
+         * later on so that we do not reset the forward list after the selection
+         * occurs.
+         */
         String[] newCurrentNodePath = backList.peekLast();
 
         // enable / disable the back and forward button
@@ -388,7 +390,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                     root = new DirectoryTreeFilterNode(root, true);
 
-
                     em.setRootContext(root);
                     em.getRootContext().setName(currentCase.getName());
                     em.getRootContext().setDisplayName(currentCase.getName());
@@ -407,7 +408,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
                     tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
 
-
                     Node views = childNodes.findChild(ViewsNode.NAME);
                     Children viewsChilds = views.getChildren();
                     for (Node n : viewsChilds.getNodes()) {
@@ -420,7 +420,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     if (!dataResult.isOpened()) {
                         dataResult.open(); // open the data result top component as well when the directory tree is opened
                     }
-
 
                     // select the first image node, if there is one
                     // (this has to happen after dataResult is opened, because the event
@@ -534,22 +533,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         String changed = evt.getPropertyName();
         Object oldValue = evt.getOldValue();
         Object newValue = evt.getNewValue();
-
-        // change in the case name
-        if (changed.equals(Case.Events.NAME.toString())) {
-            // set the main title of the window
-            String oldCaseName = oldValue.toString();
-            String newCaseName = newValue.toString();
-
-
-            // update the case name
-            if ((!oldCaseName.equals("")) && (!newCaseName.equals(""))) {
-                // change the root name and display name
-                em.getRootContext().setName(newCaseName);
-                em.getRootContext().setDisplayName(newCaseName);
-            }
-        } // changed current case
-        else if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
+        if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
             // When a case is closed, the old value of this property is the 
             // closed Case object and the new value is null. When a case is 
             // opened, the old value is null and the new value is the new Case
@@ -563,7 +547,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode);
             } else if (newValue != null) {
-                // A new case has been opened. Reset the forward and back 
+                // A new case has been opened. Reset the ExplorerManager. 
+                Case newCase = (Case) newValue;
+                String newCaseName = newCase.getName();
+                em.getRootContext().setName(newCaseName);
+                em.getRootContext().setDisplayName(newCaseName);
+
+                // Reset the forward and back 
                 // buttons. Note that a call to CoreComponentControl.openCoreWindows()
                 // by the new Case object will lead to a componentOpened() call
                 // that will repopulate the tree.
@@ -574,12 +564,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             componentOpened();
-        }
-        // change in node selection
+        } // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             respondSelection((Node[]) oldValue, (Node[]) newValue);
-        } 
-        else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
             // nothing to do here.
             // all nodes should be listening for these events and update accordingly.
         } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -615,7 +603,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
 
-
         // Some lock that prevents certain Node operations is set during the
         // ExplorerManager selection-change, so we must handle changes after the
         // selection-change event is processed.
@@ -630,7 +617,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                     // make sure dataResult is open, redundant?
                     //dataResult.open();
-
                     Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                     if (treeNode != null) {
                         DirectoryTreeFilterNode.OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
@@ -687,10 +673,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Node selectedNode = selectedNodes[0];
         String selectedNodeName = selectedNode.getName();
 
-        /* get the previous entry to make sure we don't duplicate it.
-         * Motivation for this is also that if we used the back button,
-         * then we already added the 'current' node to 'back' and we will 
-         * detect that and not reset the forward list. 
+        /*
+         * get the previous entry to make sure we don't duplicate it. Motivation
+         * for this is also that if we used the back button, then we already
+         * added the 'current' node to 'back' and we will detect that and not
+         * reset the forward list.
          */
         String[] currentLast = backList.peekLast();
         String lastNodeName = null;
@@ -783,7 +770,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         //final TreeView tree = getTree();
         //tree.expandNode(imagesNode);
-
         setSelectedNode(selectedPath, DataSourcesNode.NAME);
 
     }
@@ -838,7 +824,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 //        //@@@ setSelectedNode(selectedPath, ResultsNode.NAME);
 //        
 //    }
-
     /**
      * Set the selected node using a path to a previously selected node.
      *
@@ -975,11 +960,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
             treeNode = extractedChilds.findChild(type.getLabel());
         }
-        
+
         if (treeNode == null) {
             return;
         }
-        
+
         try {
             em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
@@ -1025,7 +1010,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
                     NbBundle.getMessage(this.getClass(),
-                    "DirectoryTreeTopComponent.moduleErr.msg"),
+                            "DirectoryTreeTopComponent.moduleErr.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }
