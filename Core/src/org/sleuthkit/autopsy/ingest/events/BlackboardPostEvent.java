@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest.events;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
@@ -60,11 +61,11 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
          */
         super(
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
-                new SerializableEventData(eventData.getModuleName(), eventData.getArtifactType(),
+                new SerializableEventData(eventData.getModuleName(), eventData.getArtifactType(), eventData.getArtifacts() != null ?
                         eventData.getArtifacts()
                         .stream()
                         .map(BlackboardArtifact::getArtifactID)
-                        .collect(Collectors.toList())),
+                        .collect(Collectors.toList()) : Collections.emptyList()),
                 null
         );
         this.eventData = eventData;
@@ -95,7 +96,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
             for (Long id : data.artifactIds) {
                 artifacts.add(Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(id));
             }
-            eventData = new ModuleDataEvent(data.moduleName, data.artifactType, artifacts);
+            eventData = new ModuleDataEvent(data.moduleName, data.artifactType, !artifacts.isEmpty() ? artifacts : null);
             return eventData;
         } catch (IllegalStateException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
