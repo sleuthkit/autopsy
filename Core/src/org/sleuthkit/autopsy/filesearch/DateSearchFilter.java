@@ -37,8 +37,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 
@@ -237,26 +237,28 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
-
-            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                // create or open a case
-                if (newValue != null) {
-                    DateSearchFilter.this.updateTimeZoneList();
-                }
-            }
-
-            // if the image is added to the case
-            if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                DateSearchFilter.this.updateTimeZoneList();
-            }
-
-            // if the image is removed from the case
-            if (changed.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
-                DateSearchFilter.this.updateTimeZoneList();
-            }
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE:
+                    Object newValue = evt.getNewValue();
+                    if (null == newValue) {
+                        /**
+                         * Closing a case. Nothing to do.
+                         */
+                        break;
+                    }
+                    /**
+                     * Else opening a case, fall through.
+                     */
+                case DATA_SOURCE_ADDED:
+                case DATA_SOURCE_DELETED:
+                  SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            DateSearchFilter.this.updateTimeZoneList();
+                        }
+                    });            
+                    break;
+            }            
         }
     }
 }
