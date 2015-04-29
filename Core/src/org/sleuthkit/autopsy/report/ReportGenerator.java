@@ -899,13 +899,20 @@ import org.sleuthkit.datamodel.TskData;
         // @@@ There is a bug in here.  We should use the tags in the below code
         // so that we only report the lists that we will later provide with real
         // hits.  If no keyord hits are tagged, then we make the page for nothing.
+        
+        String orderByClause;
+        if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+        } else {
+            orderByClause = "ORDER BY att.value_text ASC"; //NON-NLS
+        }
         String keywordListQuery = 
                 "SELECT att.value_text AS list " + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
                 "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
                 "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
-                "AND att.artifact_id = art.artifact_id " +  //NON-NLS
-                "GROUP BY list"; //NON-NLS
+                "AND att.artifact_id = art.artifact_id " + //NON-NLS
+                "GROUP BY list " + orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(keywordListQuery)) {
             ResultSet listsRs = dbQuery.getResultSet();
@@ -933,6 +940,14 @@ import org.sleuthkit.datamodel.TskData;
             return;
         }
         
+        if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+        } else {
+            orderByClause = "ORDER BY att3.value_text ASC, att1.value_text ASC, f.parent_path ASC, f.name ASC"; //NON-NLS
+        }
         // Query for keywords, grouped by list
         String keywordsQuery = 
                 "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
@@ -945,7 +960,7 @@ import org.sleuthkit.datamodel.TskData;
                 "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
                 "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
                 "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
-                "ORDER BY list, keyword, parent_path, name"; //NON-NLS
+                orderByClause; //NON-NLS
         
         try (CaseDbQuery dbQuery = skCase.executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
@@ -1041,13 +1056,19 @@ import org.sleuthkit.datamodel.TskData;
      */
     @SuppressWarnings("deprecation")
     private void writeHashsetHits(List<TableReportModule> tableModules,  String comment, HashSet<String> tagNamesFilter) {
+        String orderByClause;
+        if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+        } else {
+            orderByClause = "ORDER BY att.value_text ASC"; //NON-NLS
+        }
         String hashsetsQuery =
                 "SELECT att.value_text AS list " + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
                 "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
                 "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " + //NON-NLS
-                "AND att.artifact_id = art.artifact_id " +  //NON-NLS
-                "GROUP BY list"; //NON-NLS
+                "AND att.artifact_id = art.artifact_id " + //NON-NLS
+                "GROUP BY list " + orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetsQuery)) {
             // Query for hashsets
@@ -1070,6 +1091,14 @@ import org.sleuthkit.datamodel.TskData;
             return;
         }
         
+        if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "size ASC NULLS FIRST"; //NON-NLS
+        } else {
+            orderByClause = "ORDER BY att.value_text ASC, f.parent_path ASC, f.name ASC, size ASC"; //NON-NLS
+        }
         String hashsetHitsQuery =
                 "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
@@ -1077,7 +1106,7 @@ import org.sleuthkit.datamodel.TskData;
                 "AND (f.obj_id = art.obj_id) " + //NON-NLS
                 "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
                 "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") " + //NON-NLS
-                "ORDER BY setname, parent_path, name, size"; //NON-NLS
+                orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetHitsQuery)) {
             // Query for hashset hits
