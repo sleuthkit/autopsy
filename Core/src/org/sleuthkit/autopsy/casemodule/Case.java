@@ -46,6 +46,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
@@ -1260,7 +1261,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         Report report = this.db.addReport(localPath, srcModuleName, reportName);
-        eventPublisher.publish(new AutopsyEvent(Events.REPORT_ADDED.toString(), null, report));
+        eventPublisher.publish(new ReportAddedEvent(report));
     }
 
     public List<Report> getAllReports() throws TskCoreException {
