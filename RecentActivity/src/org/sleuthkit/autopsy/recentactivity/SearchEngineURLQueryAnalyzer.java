@@ -279,7 +279,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             
             for (BlackboardArtifact artifact : listArtifacts) {
                 if (context.dataSourceIngestIsCancelled()) {
-                    break;       //User cancled the process.
+                    break;       //User cancelled the process.
                 }
                 
                 //initializing default attributes
@@ -302,7 +302,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
 
                 SearchEngineURLQueryAnalyzer.SearchEngine se = null;
                 //from blackboard_attributes
-                Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where artifact_id = " + artifact.getArtifactID()); //NON-NLS
+                Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("WHERE artifact_id = " + artifact.getArtifactID()); //NON-NLS
 
                 for (BlackboardAttribute attribute : listAttributes) {
                     if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {

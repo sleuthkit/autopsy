@@ -227,7 +227,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return name;
     }
-    @SuppressWarnings("deprecation")
+
     private static String getHashSetHitsForFile(AbstractFile content) {
         String strList = "";
         SleuthkitCase skCase = content.getSleuthkitCase();
@@ -255,7 +255,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.WARNING, "Error getting hashset hits: ", ex); //NON-NLS
         }
-        
         return strList;
     }    
     

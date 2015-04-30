@@ -682,12 +682,12 @@ public final class ImageGalleryController {
 
             try {
                 //grab all files with supported extension or mime types
-                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " or tsk_files.obj_id in (select tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
-                        + " where  blackboard_artifacts.obj_id = tsk_files.obj_id"
-                        + " and blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
-                        + " and blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
-                        + " and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
-                        + " and blackboard_attributes.value_text in ('" + StringUtils.join(ImageGalleryModule.getSupportedMimes(), "','") + "'))");
+                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " OR tsk_files.obj_id IN (select tsk_files.obj_id FROM tsk_files , blackboard_artifacts,  blackboard_attributes"
+                        + " WHERE  blackboard_artifacts.obj_id = tsk_files.obj_id"
+                        + " AND blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
+                        + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
+                        + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
+                        + " AND blackboard_attributes.value_text IN ('" + StringUtils.join(ImageGalleryModule.getSupportedMimes(), "','") + "'))");
                 progressHandle.switchToDeterminate(files.size());
 
                 updateProgress(0.0);
@@ -807,7 +807,7 @@ public final class ImageGalleryController {
                     for (FileSystem fs : image.getFileSystems()) {
                         fsObjIds.add(fs.getId());
                     }
-                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
+                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " OR fs_obj_id = ") + ") ";
                 }
                 // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
                 // for them, we will not specify a fs_obj_id, which means we will grab files
@@ -816,7 +816,7 @@ public final class ImageGalleryController {
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
                 
-                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " and " + DRAWABLE_QUERY);
+                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction

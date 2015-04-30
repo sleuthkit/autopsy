@@ -65,7 +65,6 @@ genfiles.properties
 !/Testing/nbproject/project.properties
 *~
 /netbeans-plat
-/docs/doxygen/doxygen_docs
 /docs/doxygen-user/user-docs
 /jdiff-javadocs/*
 /jdiff-logs/*

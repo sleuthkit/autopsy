@@ -8,7 +8,7 @@ The basic idea is that you need an ingest module.  We've typically written mobil
 
 The ingest module has a basic flow of
 - Query for files using the org.sleuthkit.autopsy.casemodule.services.FileManager service
-- Parse them or open them with SQLite (you'll need to bring along a SQLite JAR file)
+- Parse them or open them with SQLite (you'll need to bring along a SQLite JAR file) or PostgreSQL
 - Create Blackboard Artifacts (see \ref platform_blackboard)
 
 The BlackBoard has standard artifacts for the standard cell phone forensics data types, such as BlackboardArtifact.TSK_CALLLOG. 

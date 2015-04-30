@@ -57,7 +57,7 @@ class ContactAnalyzer {
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name LIKE '%call_history%' "); //NON-NLS //get exact file names
-            if (absFiles.isEmpty()) { //asdfkjasfakljsdfhlaksdjfhasdlkjf
+            if (absFiles.isEmpty()) {
                 return;
             }
             for (AbstractFile AF : absFiles) {

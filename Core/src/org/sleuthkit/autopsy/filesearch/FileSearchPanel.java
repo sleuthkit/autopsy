@@ -151,7 +151,6 @@ import org.sleuthkit.datamodel.TskCoreException;
                 List<AbstractFile> contentList = null;
                 try {
                     SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                    //ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     contentList = tskDb.findAllFilesWhere(this.getQuery());
 
                 } catch (TskCoreException ex) {
@@ -205,11 +204,11 @@ import org.sleuthkit.datamodel.TskCoreException;
      */
     private String getQuery() throws FilterValidationException {
 
-        //String query = "select " + tempQuery + " from tsk_files where 1";
+        //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE 1";
         String query = " 1";
 
         for (FileSearchFilter f : this.getEnabledFilters()) {
-            query += " and (" + f.getPredicate() + ")"; //NON-NLS
+            query += " AND (" + f.getPredicate() + ")"; //NON-NLS
         }
 
         return query;

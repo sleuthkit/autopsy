@@ -67,7 +67,6 @@ import org.sleuthkit.datamodel.*;
      * @param progressPanel panel to update the report's progress
      */
     @Override
-    @SuppressWarnings("deprecation")
     public void generateReport(String path, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
@@ -85,7 +84,7 @@ import org.sleuthkit.datamodel.*;
                                + " AND name != '.' AND name != '..'"; //NON-NLS
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
-            List<FsContent> fs = skCase.findFilesWhere(query);
+            List<AbstractFile> fs = skCase.findAllFilesWhere(query);
             
             // Check if ingest has finished
             String ingestwarning = "";
@@ -103,7 +102,7 @@ import org.sleuthkit.datamodel.*;
                 out.write(ingestwarning);
                 // Loop files and write info to report
                 int count = 0;
-                for (FsContent file : fs) {
+                for (AbstractFile file : fs) {
                     if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                         break;
                     }
@@ -164,7 +163,7 @@ import org.sleuthkit.datamodel.*;
                     logger.log(Level.SEVERE, errorMessage, ex);
                 }                    
             }
-            progressPanel.complete();
+            progressPanel.complete(ReportStatus.COMPLETE);
         }  catch(TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         } 

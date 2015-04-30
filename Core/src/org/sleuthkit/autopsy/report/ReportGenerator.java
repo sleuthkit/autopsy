@@ -373,7 +373,7 @@ import org.sleuthkit.datamodel.TskData;
             List<AbstractFile> absFiles;
             try {
                 SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-                absFiles = skCase.findAllFilesWhere("NOT meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
+                absFiles = skCase.findAllFilesWhere("meta_type != " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
                 return absFiles;
             } catch (TskCoreException ex) {
                 MessageNotifyUtil.Notify.show(
