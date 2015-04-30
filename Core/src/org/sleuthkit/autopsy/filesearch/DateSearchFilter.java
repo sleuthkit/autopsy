@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,13 +37,14 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
+ *
  * @author pmartel
  */
 class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
@@ -124,7 +125,6 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
         final boolean createdChecked = panel.getAccessedCheckBox().isSelected();
 
-
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 
             String subQuery = "0";
@@ -160,7 +160,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     private static List<String> createTimeZoneList() {
 
-        List<String> timeZones = new ArrayList<String>();
+        List<String> timeZones = new ArrayList<>();
 
         if (Case.existsCurrentCase()) {
             // get the latest case
@@ -237,25 +237,20 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
-
-            if (changed.equals(Case.Events.CURRENT_CASE.toString().toString())) {
-                // create or open a case
-                if (newValue != null) {
-                    DateSearchFilter.this.updateTimeZoneList();
-                }
-            }
-
-            // if the image is added to the case
-            if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                DateSearchFilter.this.updateTimeZoneList();
-            }
-
-            // if the image is removed from the case
-            if (changed.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
-                DateSearchFilter.this.updateTimeZoneList();
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE:
+                    Object newValue = evt.getNewValue();
+                    if (null != newValue) {
+                        /**
+                         * Opening a new case.
+                         */
+                        SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
+                    }
+                    break;
+                case DATA_SOURCE_ADDED:
+                case DATA_SOURCE_DELETED:
+                    SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
+                    break;
             }
         }
     }

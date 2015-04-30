@@ -34,7 +34,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * event system.
  */
 public final class AutopsyEventPublisher {
-    
+
+    /**
+     * Composed of thread-safe objects.
+     */
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
     private final LocalEventPublisher localPublisher;
     private RemoteEventPublisher remotePublisher;
@@ -56,7 +59,7 @@ public final class AutopsyEventPublisher {
      * @param channelName The name of the event channel.
      * @throws AutopsyEventException if the channel was not opened.
      */
-    synchronized public void openRemoteEventChannel(String channelName) throws AutopsyEventException {
+    public void openRemoteEventChannel(String channelName) throws AutopsyEventException {
         if (null != remotePublisher) {
             closeRemoteEventChannel();
         }
@@ -64,8 +67,8 @@ public final class AutopsyEventPublisher {
             remotePublisher = new RemoteEventPublisher(channelName, localPublisher, UserPreferences.getMessageServiceConnectionInfo());
         } catch (URISyntaxException | JMSException ex) {
             String message = "Failed to open remote event channel"; //NON-NLS
-            logger.log(Level.SEVERE, message, ex);            
-            throw new AutopsyEventException(message, ex); 
+            logger.log(Level.SEVERE, message, ex);
+            throw new AutopsyEventException(message, ex);
         }
     }
 
@@ -73,7 +76,7 @@ public final class AutopsyEventPublisher {
      * Closes the event channel used for publishing events to and receiving
      * events from other Autopsy nodes.
      */
-    synchronized public void closeRemoteEventChannel() {
+    public void closeRemoteEventChannel() {
         if (null != remotePublisher) {
             try {
                 remotePublisher.stop();
@@ -90,7 +93,7 @@ public final class AutopsyEventPublisher {
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         localPublisher.addSubscriber(eventNames, subscriber);
     }
 
@@ -100,7 +103,7 @@ public final class AutopsyEventPublisher {
      * @param eventName The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
+    public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
         localPublisher.addSubscriber(eventName, subscriber);
     }
 
@@ -110,7 +113,7 @@ public final class AutopsyEventPublisher {
      * @param eventNames The events the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         localPublisher.removeSubscriber(eventNames, subscriber);
     }
 
@@ -120,23 +123,33 @@ public final class AutopsyEventPublisher {
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
+    public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
         localPublisher.removeSubscriber(eventName, subscriber);
     }
 
     /**
-     * Publishes an event.
+     * Publishes an event to this Autopsy node and other Autopsy nodes.
      *
      * @param event The event to publish.
-     * @throws JMSException
      */
-    synchronized public void publish(AutopsyEvent event) throws JMSException {
-        event.setSourceType(AutopsyEvent.SourceType.LOCAL);
-        localPublisher.publish(event);
+    public void publish(AutopsyEvent event) {
+        publishLocally(event);
         if (null != remotePublisher) {
-            event.setSourceType(AutopsyEvent.SourceType.REMOTE);
-            remotePublisher.send(event);
+            try {
+                remotePublisher.publish(event);
+            } catch (JMSException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
+            }
         }
+    }
+
+    /**
+     * Publishes an event to this Autopsy node only.
+     *
+     * @param event The event to publish.
+     */
+    public void publishLocally(AutopsyEvent event) {
+        localPublisher.publish(event);
     }
 
 }

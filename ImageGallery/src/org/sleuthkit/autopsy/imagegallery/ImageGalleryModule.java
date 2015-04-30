@@ -54,7 +54,7 @@ public class ImageGalleryModule {
     private static final Set<String> supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
     /** mime types of images we can display */
-    private static final Set<String> imageMimes = Sets.newHashSet("image/jpeg", "image/bmp", "image/gif", "image/png");
+    private static final Set<String> imageMimes = Sets.newHashSet("image/jpeg", "image/bmp", "image/gif", "image/png", "image/x-ms-bmp");
     /** mime types of videos we can display */
     private static final Set<String> videoMimes = Sets.newHashSet("video/mp4", "video/x-flv", "video/x-javafx");
     /** mime types of files we can display */

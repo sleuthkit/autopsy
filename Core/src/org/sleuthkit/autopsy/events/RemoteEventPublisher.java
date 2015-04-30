@@ -102,9 +102,9 @@ final class RemoteEventPublisher {
     /**
      * Sends an event message to the message service.
      *
-     * @param event The event to send.
+     * @param event The event to publish.
      */
-    synchronized void send(AutopsyEvent event) throws JMSException {
+    synchronized void publish(AutopsyEvent event) throws JMSException {
         ObjectMessage message = session.createObjectMessage();
         message.setStringProperty("events", ALL_MESSAGE_SELECTOR);
         message.setObject(event);
@@ -131,6 +131,7 @@ final class RemoteEventPublisher {
                     Object object = objectMessage.getObject();
                     if (object instanceof AutopsyEvent) {
                         AutopsyEvent event = (AutopsyEvent) object;
+                        event.setSourceType(AutopsyEvent.SourceType.REMOTE);
                         localPublisher.publish(event);
                     }
                 }

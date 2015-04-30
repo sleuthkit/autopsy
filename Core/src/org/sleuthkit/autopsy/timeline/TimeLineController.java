@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,7 +58,6 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -81,7 +80,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Controller in the MVC design along with model = {@link FilteredEventsModel}
+/**
+ * Controller in the MVC design along with model = {@link FilteredEventsModel}
  * and views = {@link TimeLineView}. Forwards interpreted user gestures form
  * views to model. Provides model to view. Is entry point for timeline module.
  *
@@ -100,7 +100,7 @@ public class TimeLineController {
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
     private static final String DO_REPOPULATE_MESSAGE = NbBundle.getMessage(TimeLineController.class,
-                                                                            "Timeline.do_repopulate.msg");
+            "Timeline.do_repopulate.msg");
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
@@ -234,7 +234,9 @@ public class TimeLineController {
         caseListener = new AutopsyCaseListener();
     }
 
-    /** @return a shared events model */
+    /**
+     * @return a shared events model
+     */
     public FilteredEventsModel getEventsModel() {
         return filteredEvents;
     }
@@ -312,7 +314,9 @@ public class TimeLineController {
         }
     }
 
-    /** show the timeline window and prompt for rebuilding database */
+    /**
+     * show the timeline window and prompt for rebuilding database
+     */
     synchronized void openTimeLine() {
 
         // listen for case changes (specifically images being added, and case changes).
@@ -359,7 +363,6 @@ public class TimeLineController {
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         String query = "SELECT MAX(artifact_id) AS max_id FROM blackboard_artifacts"; // NON-NLS
-        
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
@@ -481,12 +484,12 @@ public class TimeLineController {
         if (newLOD == DescriptionLOD.FULL && count > 10_000) {
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
-                                                                  NbBundle.getMessage(this.getClass(),
-                                                                                      "Timeline.pushDescrLOD.confdlg.msg",
-                                                                                      NumberFormat.getInstance().format(count)),
-                                                                  NbBundle.getMessage(TimeLineTopComponent.class,
-                                                                                      "Timeline.pushDescrLOD.confdlg.details"),
-                                                                  JOptionPane.YES_NO_OPTION);
+                    NbBundle.getMessage(this.getClass(),
+                            "Timeline.pushDescrLOD.confdlg.msg",
+                            NumberFormat.getInstance().format(count)),
+                    NbBundle.getMessage(TimeLineTopComponent.class,
+                            "Timeline.pushDescrLOD.confdlg.details"),
+                    JOptionPane.YES_NO_OPTION);
 
             shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
         }
@@ -634,7 +637,7 @@ public class TimeLineController {
         return JOptionPane.showConfirmDialog(mainFrame,
                 DO_REPOPULATE_MESSAGE,
                 NbBundle.getMessage(TimeLineTopComponent.class,
-                                    "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
+                        "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
 
@@ -663,17 +666,7 @@ public class TimeLineController {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
-                case CONTENT_CHANGED:
-//                    ((ModuleContentEvent)evt.getOldValue())????
-                    //ModuleContentEvent doesn't seem to provide any usefull information...
-                    break;
-                case DATA_ADDED:
-//                    Collection<BlackboardArtifact> artifacts = ((ModuleDataEvent) evt.getOldValue()).getArtifacts();
-                    //new artifacts, insert them into db
-                    break;
                 case FILE_DONE:
-//                    Long fileID = (Long) evt.getOldValue();
-                    //update file (known status) for file with id
                     Platform.runLater(() -> {
                         newEventsFlag.set(true);
                     });
@@ -690,8 +683,9 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    //if we are doing incremental updates, drop this
-                    outOfDatePromptAndRebuild();
+                    SwingUtilities.invokeLater(() -> {
+                        outOfDatePromptAndRebuild();
+                    });
                     break;
             }
         }
@@ -704,13 +698,15 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ADDED:
-//                    Content content = (Content) evt.getNewValue();
-                    //if we are doing incremental updates, drop this
-                    outOfDatePromptAndRebuild();
+                    SwingUtilities.invokeLater(() -> {
+                        outOfDatePromptAndRebuild();
+                    });
                     break;
                 case CURRENT_CASE:
-                    OpenTimelineAction.invalidateController();
-                    closeTimeLine();
+                    SwingUtilities.invokeLater(() -> {
+                        OpenTimelineAction.invalidateController();
+                        closeTimeLine();
+                    });
                     break;
             }
         }

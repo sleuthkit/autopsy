@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.jms.JMSException;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -283,15 +282,13 @@ public class IngestManager {
      * Subscribes this ingest manager to local and remote case-related events.
      */
     private void subscribeToCaseEvents() {
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
-                if (event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    if (event.getNewValue() != null) {
-                        handleCaseOpened();
-                    } else {
-                        handleCaseClosed();
-                    }
+                if (event.getNewValue() != null) {
+                    handleCaseOpened();
+                } else {
+                    handleCaseClosed();
                 }
             }
         });
@@ -309,16 +306,16 @@ public class IngestManager {
                 } catch (AutopsyEventException ex) {
                     logger.log(Level.SEVERE, "Failed to open remote job events channel", ex); //NON-NLS
                     MessageNotifyUtil.Message.error(NbBundle.getMessage(IngestManager.class,
-                                                                        "IngestManager.OpenEventChannel.ErrMsg",
-                                                                        caseName));
+                            "IngestManager.OpenEventChannel.ErrMsg",
+                            caseName));
                 }
                 try {
                     moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, caseName));
                 } catch (AutopsyEventException ex) {
                     logger.log(Level.SEVERE, "Failed to open remote module events channel", ex); //NON-NLS
                     MessageNotifyUtil.Message.error(NbBundle.getMessage(IngestManager.class,
-                                                                        "IngestManager.OpenEventChannel.ErrMsg",
-                                                                        caseName));
+                            "IngestManager.OpenEventChannel.ErrMsg",
+                            caseName));
                 }
             }
         } catch (IllegalStateException ex) {
@@ -887,11 +884,7 @@ public class IngestManager {
          */
         @Override
         public void run() {
-            try {
-                publisher.publish(event);
-            } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to publish %s event to remote subscribers", event.getPropertyName()), ex);
-            }
+            publisher.publish(event);
         }
 
     }
