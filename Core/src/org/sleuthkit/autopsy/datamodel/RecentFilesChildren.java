@@ -77,7 +77,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     //TODO add a generic query to SleuthkitCase
     private String createMaxQuery(String attr) {
-        return "SELECT MAX(" + attr + ") from tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000; //NON-NLS
+        return "SELECT MAX(" + attr + ") FROM tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000; //NON-NLS
     }
 
     @SuppressWarnings("deprecation")

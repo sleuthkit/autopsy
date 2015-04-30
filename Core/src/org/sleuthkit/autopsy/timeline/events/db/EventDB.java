@@ -274,9 +274,9 @@ public class EventDB {
         try (Statement stmt = con.createStatement();
              //You can't inject multiple values into one ? paramater in prepared statement,
              //so we make new statement each time...
-             ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
+             ResultSet rs = stmt.executeQuery("SELECT MIN(time), MAX(time) FROM events WHERE event_id IN (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
             while (rs.next()) {
-                span = new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC); // NON-NLS
+                span = new Interval(rs.getLong("MIN(time)"), rs.getLong("MAX(time)") + 1, DateTimeZone.UTC); // NON-NLS
 
             }
         } catch (SQLException ex) {
@@ -314,7 +314,7 @@ public class EventDB {
         int result = -1;
         dbReadLock();
         //TODO convert this to prepared statement -jm
-        try (ResultSet rs = con.createStatement().executeQuery("select count(*) as count from events")) { // NON-NLS
+        try (ResultSet rs = con.createStatement().executeQuery("SELECT count(*) AS count FROM events")) { // NON-NLS
             while (rs.next()) {
                 result = rs.getInt("count"); // NON-NLS
                 break;
@@ -444,7 +444,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         dbReadLock();
-        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT event_id FROM events WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + getSQLWhere(filter); // NON-NLS
         //System.out.println(query);
         try (Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -597,11 +597,11 @@ public class EventDB {
                         "INSERT INTO events (file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
                         + "VALUES (?,?,?,?,?,?,?,?,?)"); // NON-NLS
 
-                getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
-                getMinTimeStmt = prepareStatement("select Min(time) as min from events"); // NON-NLS
-                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?"); // NON-NLS
-                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)"); // NON-NLS
-                getDBInfoStmt = prepareStatement("select value from db_info where key = ?"); // NON-NLS
+                getMaxTimeStmt = prepareStatement("SELECT MAX(time) AS max FROM events"); // NON-NLS
+                getMinTimeStmt = prepareStatement("SELECT MIN(time) AS min FROM events"); // NON-NLS
+                getEventByIDStmt = prepareStatement("SELECT * FROM events WHERE event_id =  ?"); // NON-NLS
+                recordDBInfoStmt = prepareStatement("INSERT OR REPLACE INTO db_info (key, value) VALUES (?, ?)"); // NON-NLS
+                getDBInfoStmt = prepareStatement("SELECT value FROM db_info WHERE key = ?"); // NON-NLS
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
@@ -795,8 +795,8 @@ public class EventDB {
         final boolean useSubTypes = (zoomLevel == EventTypeZoomLevel.SUB_TYPE);
 
         //get some info about the range of dates requested
-        final String queryString = "select count(*), " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
-                + " from events where time >= " + startTime + " and time < " + endTime + " and " + getSQLWhere(filter) // NON-NLS
+        final String queryString = "SELECT count(*), " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
+                + " FROM events WHERE time >= " + startTime + " AND time < " + endTime + " AND " + getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN); // NON-NLS
 
         ResultSet rs = null;
@@ -876,10 +876,10 @@ public class EventDB {
 
         //get all agregate events in this time unit
         dbReadLock();
-        String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
-                + " from events where time >= " + start + " and time < " + end + " and " + getSQLWhere(filter) // NON-NLS
-                + " group by interval, " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) + " , " + descriptionColumn // NON-NLS
-                + " order by Min(time)"; // NON-NLS
+        String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
+                + " FROM events where time >= " + start + " AND time < " + end + " AND " + getSQLWhere(filter) // NON-NLS
+                + " GROUP BY interval, " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) + " , " + descriptionColumn // NON-NLS
+                + " ORDER BY MIN(time)"; // NON-NLS
         //System.out.println(query);
         ResultSet rs = null;
         try (Statement stmt = con.createStatement(); // scoop up requested events in groups organized by interval, type, and desription

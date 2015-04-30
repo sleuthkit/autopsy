@@ -84,7 +84,7 @@ class TangoMessageAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "Select conv_id, create_time,direction,payload FROM messages ORDER BY create_time DESC;"); //NON-NLS
+                    "SELECT conv_id, create_time,direction,payload FROM messages ORDER BY create_time DESC;"); //NON-NLS
 
             String conv_id; // seems to wrap around the message found in payload after decoding from base-64
             String direction; // 1 incoming, 2 outgoing
