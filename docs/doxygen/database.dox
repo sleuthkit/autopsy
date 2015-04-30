@@ -162,5 +162,16 @@ ORDER BY att.value_text ASC                                        // SQLite exa
 ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST   // PostgreSQL example, does not exist in SQLite
 \endcode
 <br>
+<br>
+- SQLite allows non-standard usage of the IS keyword. Standard usage of IS checks if something IS NULL or IS NOT NULL. It does not compare against specific values. Remember when comparing values to use = instead of the IS keyword. If you want to check for NULL, then IS NULL is the right tool. Example:
+\code{.java}
+WHERE value IS '4'        // Bad example. Works in SQLite, does not work in PostgreSQL
+WHERE value = '4'         // Good example. Works in both SQLite and PostgreSQL
+WHERE value != '4'        // Good example. Works in both SQLite and PostgreSQL
+WHERE value IS NULL       // Good example. Works in both SQLite and PostgreSQL
+WHERE value IS NOT NULL   // Good example. Works in both SQLite and PostgreSQL
+\endcode
+<br>
+
 
 */
