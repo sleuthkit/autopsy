@@ -60,27 +60,6 @@ public class ImageExtractor {
     private final IngestJobContext context;
     private String parentFileName;
     private final String UNKNOWN_NAME_PREFIX = "image_";
-    protected enum SupportedFormats {
-
-        DOC("application/msword"), 
-        DOCX("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
-        PPT("application/vnd.ms-powerpoint"), 
-        PPTX("application/vnd.openxmlformats-officedocument.presentationml.presentation"),
-        XLS("application/vnd.ms-excel"), 
-        XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-
-        private final String mimeType;
-
-        private SupportedFormats(final String mimeType) {
-            this.mimeType = mimeType;
-        };
-
-        @Override
-        public String toString() {
-            return this.mimeType;
-        }
-        // TODO Expand to support more formats
-    }
 
     ImageExtractor(IngestJobContext context) {
 
@@ -164,6 +143,11 @@ public class ImageExtractor {
         }
     }
 
+    /**
+     * Extract images from doc format files.
+     * @param af the file from which images are to be extracted.
+     * @return list of extracted images. Returns null in case no images were extracted.
+     */
     private List<ExtractedImage> extractImagesFromDoc(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
         HWPFDocument doc = null;
@@ -196,6 +180,11 @@ public class ImageExtractor {
         return listOfExtractedImages;
     }
 
+    /**
+     * Extract images from docx format files.
+     * @param af the file from which images are to be extracted.
+     * @return list of extracted images. Returns null in case no images were extracted.
+     */
     private List<ExtractedImage> extractImagesFromDocx(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
         XWPFDocument docx = null;
@@ -228,6 +217,11 @@ public class ImageExtractor {
         return listOfExtractedImages;
     }
 
+    /**
+     * Extract images from ppt format files.
+     * @param af the file from which images are to be extracted.
+     * @return list of extracted images. Returns null in case no images were extracted.
+     */
     private List<ExtractedImage> extractImagesFromPpt(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
         SlideShow ppt = null;
@@ -291,6 +285,11 @@ public class ImageExtractor {
         return listOfExtractedImages;
     }
 
+    /**
+     * Extract images from pptx format files.
+     * @param af the file from which images are to be extracted.
+     * @return list of extracted images. Returns null in case no images were extracted.
+     */
     private List<ExtractedImage> extractImagesFromPptx(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
         XMLSlideShow pptx;
@@ -330,6 +329,11 @@ public class ImageExtractor {
 
     }
 
+    /**
+     * Extract images from xls format files.
+     * @param af the file from which images are to be extracted.
+     * @return list of extracted images. Returns null in case no images were extracted.
+     */
     private List<ExtractedImage> extractImagesFromXls(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
 
@@ -367,6 +371,11 @@ public class ImageExtractor {
 
     }
 
+    /**
+     * Extract images from xlsx format files.
+     * @param af the file from which images are to be extracted.
+     * @return list of extracted images. Returns null in case no images were extracted.
+     */
     private List<ExtractedImage> extractImagesFromXlsx(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
         Workbook xlsx;
@@ -403,6 +412,11 @@ public class ImageExtractor {
 
     }
     
+    /**
+     * Writes image to the module output location.
+     * @param outputPath Path where images is written
+     * @param data byte representation of the data to be written to the specified location.
+     */
     private void writeExtractedImage(String outputPath, byte[] data) {
         try(FileOutputStream fos = new FileOutputStream(outputPath)) {
             fos.write(data);
@@ -453,6 +467,10 @@ public class ImageExtractor {
         return af.getName() + "_" + af.getId();
     }
 
+    /**
+     * Represents the image extracted using POI methods. Currently, POI is not capable of
+     * extracting ctime, crtime, mtime, and atime; these values are set to 0.
+     */
     private static class ExtractedImage {
         //String fileName, String localPath, long size, long ctime, long crtime, 
         //long atime, long mtime, boolean isFile, AbstractFile parentFile, String rederiveDetails, String toolName, String toolVersion, String otherDetails

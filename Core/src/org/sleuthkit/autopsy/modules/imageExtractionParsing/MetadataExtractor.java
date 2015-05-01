@@ -41,15 +41,17 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author sidhesh
- */
 public class MetadataExtractor {
     
     private static final Logger logger = Logger.getLogger(ImageExtractorParserModuleFactory.class.getName());
     private boolean filesToFire;
     
+    /**
+     * Calls the appropriate extraction method in this class.
+     * @param format name of the format as determined by tika.detect()
+     * @param abstractFile the file from which the metadata is to be extracted.
+     * @return Returns true if any metadata was extracted from the file. Else returns false.
+     */
     public boolean extractMetadata(SupportedParsingFormats format, AbstractFile abstractFile) {
         switch (format) {
             case JPEG:
@@ -59,6 +61,11 @@ public class MetadataExtractor {
         }
     }
 
+    /**
+     * Extracts metadata from JPEG files and posts it to blackboard.
+     * @param abstractFile
+     * @return Returns true if any metadata was extracted from the file. Else returns false.
+     */
     private boolean extractMetaDataFromJPEG(AbstractFile abstractFile) {
         InputStream in = null;
         BufferedInputStream bin = null;
@@ -123,22 +130,19 @@ public class MetadataExtractor {
                 bba.addAttributes(attributes);
                 this.filesToFire = true;
             }
-            
+
+            // TODO Remove this logger.log()
             logger.log(Level.INFO, log);
 
-//            return IngestModule.ProcessResult.OK;
             return filesToFire;
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
-//            return IngestModule.ProcessResult.ERROR;
             return filesToFire;
         } catch (ImageProcessingException ex) {
             logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{abstractFile.getParentPath(), abstractFile.getName(), ex.getLocalizedMessage()}); //NON-NLS
-//            return IngestModule.ProcessResult.ERROR;
             return filesToFire;
         } catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file: " + abstractFile.getParentPath() + "/" + abstractFile.getName(), ex); //NON-NLS
-//            return IngestModule.ProcessResult.ERROR;
             return filesToFire;
         } finally {
             try {
@@ -150,8 +154,6 @@ public class MetadataExtractor {
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to close InputStream.", ex); //NON-NLS
-//                return IngestModule.ProcessResult.ERROR;
-//                return filesToFire;
             }
         }
     }

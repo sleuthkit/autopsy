@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.modules.imageExtractionParsing;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.apache.tika.Tika;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -69,33 +68,6 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
     
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-//        //skip unalloc
-//        if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-//            return ProcessResult.OK;
-//        }
-//        
-//        if (content.isFile() == false) {
-//            return ProcessResult.OK;
-//        }
-//
-//        // skip known
-//        if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
-//            return ProcessResult.OK;
-//        }
-//
-//        // update the tree every 1000 files if we have EXIF data that is not being being displayed 
-//        final int filesProcessedValue = filesProcessed.incrementAndGet();
-//        if ((filesToFire) && (filesProcessedValue % 1000 == 0)) {
-//            services.fireModuleDataEvent(new ModuleDataEvent(ImageExtractorParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-//            filesToFire = false;
-//        }
-//
-//        //skip unsupported
-//        if (!parsableFormat(content)) {
-//            return ProcessResult.OK;
-//        }
-//
-//        return processFile(content);
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
         }
@@ -111,6 +83,8 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
         byte buf[] = readFileHeader(abstractFile);
         String mimeType = tika.detect(buf, abstractFile.getName());
         
+        // module data event fired for every file from which one or more image/s
+        // have been extracted.
         if(isExtractionSupported(mimeType)) {
             try {
                 if(!abstractFile.hasChildren()) {
@@ -122,6 +96,7 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
             }
         }
         
+        // module data event fired for every 100 files that have been parsed for metadata.
         if(isParsingSupported(mimeType)) {
             final int filesProcessedValue = filesProcessed.incrementAndGet();
             filesToFire = metadataExtractor.extractMetadata(abstractFileParsingFormat, abstractFile);
@@ -137,7 +112,7 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
      * This method returns true if the file format is currently supported. Else
      * it returns false.
      *
-     * @param abstractFile abstract files which need to be checked if supported.
+     * @param mimeType name of the file format as determined by tika.detect()
      * @return This method returns true if the file format is currently
      * supported. Else it returns false.
      */
@@ -151,6 +126,12 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
         return false;
     }
     
+    /**
+     * This method returns true if the file format is currently supported for
+     * metadata parsing. Else it returns false.
+     * @param mimeType name of the file format as determined by tika.detect()
+     * @return 
+     */
     private boolean isParsingSupported(String mimeType) {
         for (SupportedParsingFormats s : SupportedParsingFormats.values()) {
             if (s.toString().equals(mimeType)) {
@@ -161,6 +142,12 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
         return false;
     }
     
+    
+    /**
+     * Reads first 64 KB of the file content.
+     * @param abstractFile the file whose content is to e read.
+     * @return the first 64KB (or less) bytes of the file.
+     */
     private byte[] readFileHeader(AbstractFile abstractFile) {
         byte buf[];
         try {
@@ -176,18 +163,6 @@ public final class ImageExtractorParserFileIngestModule implements FileIngestMod
             logger.log(Level.WARNING, "Could not read the file header for " + abstractFile.getName(), ex);
             return null;
         }
-    }
-
-    /**
-     * Checks if should try to attempt to extract exif. Currently checks if JPEG
-     * image (by signature)
-     *
-     * @param f file to be checked
-     *
-     * @return true if to be processed
-     */
-    private boolean parsableFormat(AbstractFile f) {
-        return ImageUtils.isJpegFileHeader(f);
     }
 
     @Override
