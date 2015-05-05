@@ -67,6 +67,17 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             return new ImageFile<>(abstractFileById, analyzed);
         }
     }
+    
+    /**
+     * Skip the database query if we have already determined the file type.
+     */
+    public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed, boolean isVideo) {
+        if (isVideo) {
+            return new VideoFile<>(abstractFileById, analyzed);
+        } else {
+            return new ImageFile<>(abstractFileById, analyzed);
+        }
+    }    
 
     public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
 

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
@@ -65,6 +66,12 @@ abstract class AddTagAction {
      * comment to one or more a SleuthKit data model objects.
      */
     abstract protected void addTag(TagName tagName, String comment);
+    
+    /**
+     * Template method to allow derived classes to add the indicated tag and
+     * comment to a list of one or more file IDs.
+     */
+    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);    
 
     /**
      * Instances of this class implement a context menu user interface for

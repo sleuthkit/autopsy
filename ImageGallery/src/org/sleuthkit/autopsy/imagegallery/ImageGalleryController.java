@@ -155,6 +155,10 @@ public final class ImageGalleryController {
     public GroupManager getGroupManager() {
         return groupManager;
     }
+    
+    public DrawableDB getDatabase(){
+        return db;
+    }
 
     public void setListeningEnabled(boolean enabled) {
         listeningEnabled.set(enabled);
@@ -338,6 +342,7 @@ public final class ImageGalleryController {
         restartWorker();
         historyManager.clear();
         groupManager.setDB(db);
+        db.initializeImageList();
         SummaryTablePane.getDefault().handleCategoryChanged(Collections.emptyList());
     }
 
@@ -623,9 +628,9 @@ public final class ImageGalleryController {
         @Override
         public void run() {
             try{
-                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true);
+                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, db.isVideoFile(getFile()));
                 db.updateFile(drawableFile);
-            } catch (NullPointerException ex){
+            } catch (NullPointerException | TskCoreException ex){
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
                 if(Case.isCaseOpen()){
@@ -710,14 +715,14 @@ public final class ImageGalleryController {
                         if (hasMimeType == null) {
                             if (ImageGalleryModule.isSupported(f)) {
                                 //no mime type but supported =>  add as not analyzed
-                                db.insertFile(DrawableFile.create(f, false), tr);
+                                db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
                             } else {
                                 //no mime type, not supported  => remove ( should never get here)
                                 db.removeFile(f.getId(), tr);
                             }
                         } else {
                             if (hasMimeType) {  // supported mimetype => analyzed
-                                db.updateFile(DrawableFile.create(f, true), tr);
+                                db.updateFile(DrawableFile.create(f, true, db.isVideoFile(f)), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 db.removeFile(f.getId(), tr);
                             }
@@ -828,7 +833,7 @@ public final class ImageGalleryController {
                         progressHandle.finish();
                         break;
                     }
-                    db.insertFile(DrawableFile.create(f, false), tr);
+                    db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
                     units++;
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);

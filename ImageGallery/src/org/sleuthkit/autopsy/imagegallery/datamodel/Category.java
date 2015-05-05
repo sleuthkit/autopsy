@@ -66,11 +66,14 @@ public enum Category implements Comparable<Category> {
     private final static Set<CategoryListener> listeners = new HashSet<>();
 
     public static void fireChange(Collection<Long> ids) {
+        Set<CategoryListener> listenersCopy = new HashSet<CategoryListener>(listeners);
         synchronized (listeners) {
-            for (CategoryListener list : listeners) {
-                list.handleCategoryChanged(ids);
-            }
+            listenersCopy.addAll(listeners);
         }
+        for (CategoryListener list : listenersCopy) {
+            list.handleCategoryChanged(ids);
+        }
+      
     }
 
     public static void registerListener(CategoryListener aThis) {

@@ -531,42 +531,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @throws TskCoreException 
      */
     public int countFilesWithCategory(Category category) throws TskCoreException {
-        try {
-            if (category == Category.ZERO) {
-
-                // It is unlikely that Category Zero (Uncategorized) files will be tagged as such - 
-                // this is really just the default setting. So we count the number of files
-                // tagged with the other categories and subtract from the total.
-                int allOtherCatCount = 0;
-                TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
-                for (TagName tn : tns) {
-                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
-                    for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
-                            allOtherCatCount++;
-                        }
-                    }
-                }
-                return (db.countAllFiles() - allOtherCatCount);
-            } else {
-
-                int fileCount = 0;
-                List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
-                for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
-                        fileCount++;
-                    }
-                }
-
-                return fileCount;
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
-            throw ex;
-        } catch(IllegalStateException ex){
-            throw new TskCoreException("Case closed while getting files");
-        }
-    
+        return db.getCategoryCount(category);
     }
 
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
@@ -738,6 +703,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     TagUtils.fireChange(fileIDs);
                 }
                 break;
+            
         }
     }
 

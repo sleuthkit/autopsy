@@ -72,7 +72,11 @@ public class CategorizeAction extends AddTagAction {
     @Override
     public void addTag(TagName tagName, String comment) {
         Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
-
+        addTagsToFiles(tagName, comment, selectedFiles);
+    }
+      
+    @Override
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles){    
         //TODO: should this get submitted to controller rather than a swingworker ? -jm
         new SwingWorker<Object, Object>() {
 
@@ -97,9 +101,11 @@ public class CategorizeAction extends AddTagAction {
                             if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
                                 LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
                                 Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
+                                controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));
                             }
                         }
 
+                        controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName()));
                         if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
                             Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
                         }
