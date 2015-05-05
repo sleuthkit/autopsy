@@ -484,7 +484,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             // else, use FileType module to detect the format
             if (detectedFormat == null) {
                 try {
-                    new FileTypeDetector().detectAndPostToBlackboard(aFile);
+                    detectedFormat = new FileTypeDetector().detectAndPostToBlackboard(aFile);
                 } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
                     logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
                     return;
