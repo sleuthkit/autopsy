@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
 import javax.jms.Connection;
+import javax.jms.DeliveryMode;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
@@ -75,6 +76,7 @@ final class RemoteEventPublisher {
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic(eventChannelName);
             producer = session.createProducer(topic);
+            producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
             consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
             receiver = new MessageReceiver();
             consumer.setMessageListener(receiver);
