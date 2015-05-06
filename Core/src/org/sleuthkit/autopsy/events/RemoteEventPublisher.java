@@ -49,6 +49,7 @@ final class RemoteEventPublisher {
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
+    private MessageConsumer consumer;
     private final MessageReceiver receiver;
 
     /**
@@ -74,7 +75,7 @@ final class RemoteEventPublisher {
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic topic = session.createTopic(eventChannelName);
             producer = session.createProducer(topic);
-            MessageConsumer consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
+            consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
             receiver = new MessageReceiver();
             consumer.setMessageListener(receiver);
         } catch (URISyntaxException | JMSException ex) {
@@ -91,6 +92,12 @@ final class RemoteEventPublisher {
      * connection.
      */
     synchronized void stop() throws JMSException {
+        if (null != producer) {
+            producer.close();
+        }
+        if (null != consumer) {
+            consumer.close();
+        }        
         if (null != session) {
             session.close();
         }
