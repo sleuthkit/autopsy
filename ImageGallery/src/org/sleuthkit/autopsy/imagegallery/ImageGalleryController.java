@@ -357,6 +357,7 @@ public final class ImageGalleryController {
         Platform.runLater(() -> {
             historyManager.clear();
         });
+        Category.clearTagNames();
 
         Toolbar.getDefault().reset();
         groupManager.clear();

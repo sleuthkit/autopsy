@@ -153,6 +153,18 @@ public enum Category implements Comparable<Category> {
         });
         return menuItem;
     }
+    
+    /**
+     * Use when closing a case to make sure everything is re-initialized in the next case.
+     */
+    public static void clearTagNames(){
+        Category.ZERO.tagName = null;
+        Category.ONE.tagName = null;
+        Category.TWO.tagName = null;
+        Category.THREE.tagName = null;
+        Category.FOUR.tagName = null;
+        Category.FIVE.tagName = null;
+    }
 
     public static interface CategoryListener {
 
