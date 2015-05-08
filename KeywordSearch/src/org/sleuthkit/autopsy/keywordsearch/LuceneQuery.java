@@ -477,7 +477,11 @@ class LuceneQuery implements KeywordSearchQuery {
                 rightID = rightID.substring(0, index);
             }
 
-            return leftID.compareTo(rightID);
+            if(Integer.parseInt(leftID) < Integer.parseInt(rightID))
+                return -1;
+            if(Integer.parseInt(leftID) > Integer.parseInt(rightID))
+                return 1;
+            return 0;
         }
     }
 }
