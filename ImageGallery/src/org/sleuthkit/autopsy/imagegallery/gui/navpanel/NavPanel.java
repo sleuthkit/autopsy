@@ -158,6 +158,7 @@ public class NavPanel extends TabPane {
         initNavTree();
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+            boolean wasPermuted = false;
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
@@ -168,6 +169,24 @@ public class NavPanel extends TabPane {
                 for (DrawableGroup g : change.getRemoved()) {
                     removeFromNavTree(g);
                     removeFromHashTree(g);
+                }
+                if(change.wasPermutated()){
+                    // Handle this afterward
+                    wasPermuted = true;
+                }
+            }
+            
+            if(wasPermuted){
+                // Remove everything and add it again in the new order
+                for(DrawableGroup g:controller.getGroupManager().getAnalyzedGroups()){
+                    removeFromNavTree(g);
+                    removeFromHashTree(g);
+                }
+                for(DrawableGroup g:controller.getGroupManager().getAnalyzedGroups()){
+                    insertIntoNavTree(g);
+                    if (g.getFilesWithHashSetHitsCount() > 0) {
+                        insertIntoHashTree(g);
+                    }
                 }
             }
         });
@@ -310,37 +329,6 @@ public class NavPanel extends TabPane {
         Platform.runLater(() -> {
             navTree.setRoot(navTreeRoot);
             navTreeRoot.setExpanded(true);
-        });
-    }
-
-    @Deprecated
-    private void rebuildHashTree() {
-        hashTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().getSelectedItem());
-        //TODO: can we do this as db query?
-        List<String> hashSetNames = controller.getGroupManager().findValuesForAttribute(DrawableAttribute.HASHSET, GroupSortBy.NONE);
-        for (String name : hashSetNames) {
-            try {
-                List<Long> fileIDsInGroup = controller.getGroupManager().getFileIDsInGroup(new GroupKey<String>(DrawableAttribute.HASHSET, name));
-
-                for (Long fileId : fileIDsInGroup) {
-
-                    DrawableFile<?> file = controller.getFileFromId(fileId);
-                    Collection<GroupKey<?>> groupKeysForFile = controller.getGroupManager().getGroupKeysForFile(file);
-
-                    for (GroupKey<?> k : groupKeysForFile) {
-                        final DrawableGroup groupForKey = controller.getGroupManager().getGroupForKey(k);
-                        if (groupForKey != null) {
-                            insertIntoHashTree(groupForKey);
-                        }
-                    }
-                }
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        }
-        Platform.runLater(() -> {
-            hashTree.setRoot(hashTreeRoot);
-            hashTreeRoot.setExpanded(true);
         });
     }
 }
