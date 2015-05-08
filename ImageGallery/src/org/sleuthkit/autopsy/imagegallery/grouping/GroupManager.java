@@ -778,11 +778,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             // Sort the group list
             Collections.sort(groups, sortBy.getGrpComparator(sortOrder));
             
-            // Clear out the group map (populateAnalyzedGroup will refill it)
-            synchronized (groupMap) {
-                groupMap.clear();
-            }
-            
             // Officially add all groups in order
             for(DrawableGroup g:groups){
                 populateAnalyzedGroup(g, ReGroupTask.this);
