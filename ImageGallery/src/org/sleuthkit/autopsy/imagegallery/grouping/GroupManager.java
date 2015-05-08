@@ -317,8 +317,15 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
          * was still running) */
         if (task == null || (task.isCancelled() == false)) {
             DrawableGroup g = makeGroup(groupKey, filesInGroup);
-
-            final boolean groupSeen = db.isGroupSeen(groupKey);
+            
+            populateAnalyzedGroup(g, task);
+        }
+    }
+    
+    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<A> task) {
+    
+        if (task == null || (task.isCancelled() == false)) {
+            final boolean groupSeen = db.isGroupSeen(g.groupKey);
             Platform.runLater(() -> {
                 if (analyzedGroups.contains(g) == false) {
                     analyzedGroups.add(g);
@@ -411,21 +418,18 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     }
 
     /**
-     * find the distinct values for the given column (DrawableAttribute) in the
-     * order given by sortBy and sortOrder.
+     * find the distinct values for the given column (DrawableAttribute)
      *
      * These values represent the groups of files.
      *
-     * @param regroup
-     * @param sortBy
-     * @param sortOrder
+     * @param groupBy
      *
      * @return
      */
     @SuppressWarnings({"unchecked"})
-    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy) { 
+        List<A> values;
         try {
-            List<A> values;
             switch (groupBy.attrName) {
                 //these cases get special treatment
                 case CATEGORY:
@@ -447,28 +451,14 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     //otherwise do straight db query 
                     return db.findValuesForAttribute(groupBy, sortBy, sortOrder);
             }
-            //sort in memory
-            Collections.sort(values, sortBy.getValueComparator(groupBy, sortOrder));
 
             return values;
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-            return new ArrayList<>();
+        } catch(TskCoreException ex){
+            LOGGER.log(Level.WARNING, "TSK error getting list of type " + groupBy.getDisplayName());
+            return new ArrayList<A>();
         }
-    }
-
-    /**
-     * find the distinct values of the regroup attribute in the order given by
-     * sortBy with a ascending order
-     *
-     * @param regroup
-     * @param sortBy
-     *
-     * @return
-     */
-    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy) {
-        return findValuesForAttribute(groupBy, sortBy, SortOrder.ASCENDING);
-    }
+            
+    }  
 
     public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
         switch (groupKey.getAttribute().attrName) {
@@ -531,42 +521,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @throws TskCoreException 
      */
     public int countFilesWithCategory(Category category) throws TskCoreException {
-        try {
-            if (category == Category.ZERO) {
-
-                // It is unlikely that Category Zero (Uncategorized) files will be tagged as such - 
-                // this is really just the default setting. So we count the number of files
-                // tagged with the other categories and subtract from the total.
-                int allOtherCatCount = 0;
-                TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
-                for (TagName tn : tns) {
-                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
-                    for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
-                            allOtherCatCount++;
-                        }
-                    }
-                }
-                return (db.countAllFiles() - allOtherCatCount);
-            } else {
-
-                int fileCount = 0;
-                List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
-                for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
-                        fileCount++;
-                    }
-                }
-
-                return fileCount;
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
-            throw ex;
-        } catch(IllegalStateException ex){
-            throw new TskCoreException("Case closed while getting files");
-        }
-    
+        return db.getCategoryCount(category);
     }
 
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
@@ -648,6 +603,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
                 FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
+                FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
             });
         }
     }
@@ -738,6 +694,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     TagUtils.fireChange(fileIDs);
                 }
                 break;
+            
         }
     }
 
@@ -786,14 +743,17 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             synchronized (groupMap) {
                 groupMap.clear();
             }
-
-            //get a list of group key vals
-            final List<A> vals = findValuesForAttribute(groupBy, sortBy, sortOrder);
+            
+            // Get the list of group keys
+            final List<A> vals = findValuesForAttribute(groupBy);
+            
+            // Make a list of each group 
+            final List<DrawableGroup> groups = new ArrayList<>();
 
             groupProgress.start(vals.size());
 
             int p = 0;
-            //for each key value
+            // For each key value, partially create the group and add it to the list.
             for (final A val : vals) {
                 if (isCancelled()) {
                     return null;//abort
@@ -807,9 +767,22 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
                 List<Long> checkAnalyzed = checkAnalyzed(groupKey);
                 if (checkAnalyzed != null) { // != null => the group is analyzed, so add it to the ui
-                    populateAnalyzedGroup(groupKey, checkAnalyzed, ReGroupTask.this);
+                    
+                    // makeGroup will create the group and add it to the map groupMap, but does not
+                    // update anything else
+                    DrawableGroup g = makeGroup(groupKey, checkAnalyzed);
+                    groups.add(g);
                 }
             }
+            
+            // Sort the group list
+            Collections.sort(groups, sortBy.getGrpComparator(sortOrder));
+            
+            // Officially add all groups in order
+            for(DrawableGroup g:groups){
+                populateAnalyzedGroup(g, ReGroupTask.this);
+            }
+            
             updateProgress(1, 1);
             return null;
         }
