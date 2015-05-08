@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -277,8 +279,8 @@ public class GroupPane extends BorderPane implements GroupView {
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                selectAllFiles();
-                new CategorizeAction().addTag(cat.getTagName(), "");
+                Set<Long> fileIdSet = new HashSet<Long>(getGrouping().fileIds());
+                new CategorizeAction().addTagsToFiles(cat.getTagName(), "", fileIdSet);
 
                 grpCatSplitMenu.setText(cat.getDisplayName());
                 grpCatSplitMenu.setOnAction(this);
@@ -292,8 +294,8 @@ public class GroupPane extends BorderPane implements GroupView {
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                selectAllFiles();
-                AddDrawableTagAction.getInstance().addTag(tn, "");
+                Set<Long> fileIdSet = new HashSet<Long>(getGrouping().fileIds());
+                AddDrawableTagAction.getInstance().addTagsToFiles(tn, "", fileIdSet);
 
                 grpTagSplitMenu.setText(tn.getDisplayName());
                 grpTagSplitMenu.setOnAction(this);

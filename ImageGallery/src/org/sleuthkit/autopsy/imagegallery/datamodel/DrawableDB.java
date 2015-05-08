@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.Exceptions;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
@@ -555,9 +557,12 @@ public class DrawableDB {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
         }
+               
         dbWriteLock();
         try {
-
+            // Update the list of file IDs in memory
+            addImageFileToList(f.getId());
+            
             // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
             stmt.setString(2, f.getDrawablePath());
@@ -939,7 +944,8 @@ public class DrawableDB {
      */
     private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
-            return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id), analyzed);
+            AbstractFile f = controller.getSleuthKitCase().getAbstractFileById(id);
+            return DrawableFile.create(f, analyzed, isVideoFile(f));
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id, ex);
             return null;
@@ -956,8 +962,9 @@ public class DrawableDB {
      */
     public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
-            return DrawableFile.create(controller.getSleuthKitCase().getAbstractFileById(id),
-                    areFilesAnalyzed(Collections.singleton(id)));
+            AbstractFile f = controller.getSleuthKitCase().getAbstractFileById(id);
+            return DrawableFile.create(f,
+                    areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id);
             return null;
@@ -1038,7 +1045,8 @@ public class DrawableDB {
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile) {
-                    files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId())));
+                    files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId()),
+                            isVideoFile((AbstractFile) ct.getContent())));
                 }
             }
             return files;
@@ -1085,6 +1093,9 @@ public class DrawableDB {
         dbWriteLock();
 
         try {
+            // Update the list of file IDs in memory
+            removeImageFileFromList(id);
+            
             //"delete from drawable_files where (obj_id = " + id + ")"
             removeFileStmt.setLong(1, id);
             removeFileStmt.executeUpdate();
@@ -1105,6 +1116,138 @@ public class DrawableDB {
 
         public MultipleTransactionException() {
             super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO);
+        }
+    }
+    
+    /**
+     * For performance reasons, keep a list of all file IDs currently in the image database.
+     * Otherwise the database is queried many times to retrieve the same data.
+     */
+    @GuardedBy("fileIDlist")
+    private final Set<Long> fileIDlist = new HashSet<>();
+
+    public boolean isImageFile(Long id) {
+        synchronized (fileIDlist) {
+            return fileIDlist.contains(id);
+        }
+    }
+
+    public void addImageFileToList(Long id) {
+        synchronized (fileIDlist) {
+            fileIDlist.add(id);
+        }
+    }
+
+    public void removeImageFileFromList(Long id) {
+        synchronized (fileIDlist) {
+            fileIDlist.remove(id);
+        }
+    }
+    
+    public void initializeImageList(){
+        synchronized (fileIDlist){
+            dbReadLock();
+            try {
+                Statement stmt = con.createStatement();
+                ResultSet analyzedQuery = stmt.executeQuery("select obj_id from drawable_files");
+                while (analyzedQuery.next()) {
+                    addImageFileToList(analyzedQuery.getLong(OBJ_ID));
+                }
+
+            } catch (SQLException ex) {
+                LOGGER.log(Level.WARNING, "problem loading file IDs: ", ex);
+            } finally {
+                dbReadUnlock();
+            }
+        }
+    }
+    
+    /**
+     * For performance reasons, keep current category counts in memory
+     */    
+    @GuardedBy("categoryCounts")
+    private final Map<Category, Integer> categoryCounts = new HashMap<>();    
+    
+    public void incrementCategoryCount(Category cat) throws TskCoreException{
+        synchronized(categoryCounts){
+            int count = getCategoryCount(cat);
+            count++;
+            categoryCounts.put(cat, count);
+        }
+    }
+    
+    public void decrementCategoryCount(Category cat) throws TskCoreException{
+        synchronized(categoryCounts){
+            int count = getCategoryCount(cat);
+            count--;
+            categoryCounts.put(cat, count);            
+        }
+    }
+    
+    public int getCategoryCount(Category cat) throws TskCoreException{
+        synchronized(categoryCounts){
+            if(categoryCounts.containsKey(cat)){
+                return categoryCounts.get(cat);
+            }
+            else{
+                try {
+                    if (cat == Category.ZERO) {
+
+                        // Category Zero (Uncategorized) files will not be tagged as such - 
+                        // this is really just the default setting. So we count the number of files
+                        // tagged with the other categories and subtract from the total.
+                        int allOtherCatCount = 0;
+                        TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
+                        for (TagName tn : tns) {
+                            List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
+                            for (ContentTag ct : contentTags) {
+                                if(ct.getContent() instanceof AbstractFile){
+                                    AbstractFile f = (AbstractFile)ct.getContent();
+                                    if(this.isImageFile(f.getId())){
+                                        allOtherCatCount++;
+                                    }
+                                }
+                            }
+                        } 
+                        categoryCounts.put(cat, this.countAllFiles() - allOtherCatCount);
+                        return categoryCounts.get(cat);
+                    } else {
+
+                        int fileCount = 0;
+                        List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
+                        for (ContentTag ct : contentTags) {
+                            if(ct.getContent() instanceof AbstractFile){
+                                AbstractFile f = (AbstractFile)ct.getContent();
+                                if(this.isImageFile(f.getId())){
+                                    fileCount++;
+                                }
+                            }
+                        }
+                        categoryCounts.put(cat, fileCount);
+                        return fileCount;
+                    }
+                } catch(IllegalStateException ex){
+                    throw new TskCoreException("Case closed while getting files");
+                }
+            }
+        }
+    }
+    
+    /**
+     * For performance reasons, keep the file type in memory
+     */    
+    @GuardedBy("videoFileMap")
+    private final Map<Long, Boolean> videoFileMap = new HashMap<>(); 
+    
+    public boolean isVideoFile(AbstractFile f) throws TskCoreException{
+        synchronized(videoFileMap){
+            if(videoFileMap.containsKey(f.getId())){
+                return videoFileMap.get(f.getId());
+            }
+            
+            boolean isVideo = ImageGalleryModule.isVideoFile(f);
+            videoFileMap.put(f.getId(), isVideo);
+            return isVideo;
         }
     }
 

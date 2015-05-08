@@ -66,11 +66,14 @@ public enum Category implements Comparable<Category> {
     private final static Set<CategoryListener> listeners = new HashSet<>();
 
     public static void fireChange(Collection<Long> ids) {
+        Set<CategoryListener> listenersCopy = new HashSet<CategoryListener>(listeners);
         synchronized (listeners) {
-            for (CategoryListener list : listeners) {
-                list.handleCategoryChanged(ids);
-            }
+            listenersCopy.addAll(listeners);
         }
+        for (CategoryListener list : listenersCopy) {
+            list.handleCategoryChanged(ids);
+        }
+      
     }
 
     public static void registerListener(CategoryListener aThis) {
@@ -149,6 +152,18 @@ public enum Category implements Comparable<Category> {
             }
         });
         return menuItem;
+    }
+    
+    /**
+     * Use when closing a case to make sure everything is re-initialized in the next case.
+     */
+    public static void clearTagNames(){
+        Category.ZERO.tagName = null;
+        Category.ONE.tagName = null;
+        Category.TWO.tagName = null;
+        Category.THREE.tagName = null;
+        Category.FOUR.tagName = null;
+        Category.FIVE.tagName = null;
     }
 
     public static interface CategoryListener {
