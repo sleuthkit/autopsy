@@ -75,7 +75,11 @@ public class AddDrawableTagAction extends AddTagAction {
     @Override
     public void addTag(TagName tagName, String comment) {
         Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
+        addTagsToFiles(tagName, comment, selectedFiles);
+    }
         
+    @Override
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles){    
         new SwingWorker<Void, Void>() {
             
             @Override

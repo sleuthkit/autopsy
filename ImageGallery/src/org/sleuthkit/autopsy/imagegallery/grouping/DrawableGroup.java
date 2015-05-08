@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Represents a set of image/video files in a group. The UI listens to changes
  * to the group membership and updates itself accordingly.
  */
-public class DrawableGroup {
+public class DrawableGroup implements Comparable<DrawableGroup>{
 
     private static final Logger LOGGER = Logger.getLogger(DrawableGroup.class.getName());
 
@@ -116,5 +116,11 @@ public class DrawableGroup {
 
     synchronized public void removeFile(Long f) {
         fileIDs.removeAll(f);
+    }
+    
+    // By default, sort by group key name
+    @Override
+    public int compareTo(DrawableGroup other){
+        return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 }

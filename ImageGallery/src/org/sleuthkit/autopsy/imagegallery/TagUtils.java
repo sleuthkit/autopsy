@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -92,10 +94,12 @@ public class TagUtils {
     }
 
     public static void fireChange(Collection<Long> ids) {
+        Set<TagUtils.TagListener> listenersCopy = new HashSet<TagUtils.TagListener>(listeners);
         synchronized (listeners) {
-            for (TagListener list : listeners) {
-                list.handleTagsChanged(ids);
-            }
+            listenersCopy.addAll(listeners);
+        }
+        for (TagListener list : listenersCopy) {
+            list.handleTagsChanged(ids);
         }
     }
 
