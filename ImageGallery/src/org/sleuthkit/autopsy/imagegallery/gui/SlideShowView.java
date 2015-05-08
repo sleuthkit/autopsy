@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -200,13 +201,18 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
     @ThreadConfined(type = ThreadType.ANY)
     private void syncButtonVisibility() {
-        final boolean hasMultipleFiles = groupPane.getGrouping().fileIds().size() > 1;
-        Platform.runLater(() -> {
-            rightButton.setVisible(hasMultipleFiles);
-            leftButton.setVisible(hasMultipleFiles);
-            rightButton.setManaged(hasMultipleFiles);
-            leftButton.setManaged(hasMultipleFiles);
-        });
+        try{
+            final boolean hasMultipleFiles = groupPane.getGrouping().fileIds().size() > 1;
+            Platform.runLater(() -> {
+                rightButton.setVisible(hasMultipleFiles);
+                leftButton.setVisible(hasMultipleFiles);
+                rightButton.setManaged(hasMultipleFiles);
+                leftButton.setManaged(hasMultipleFiles);
+            });
+        } catch (NullPointerException ex){
+            // The case has likely been closed
+            LOGGER.log(Level.WARNING, "Error accessing groupPane");
+        }
     }
 
     SlideShowView(GroupPane gp) {

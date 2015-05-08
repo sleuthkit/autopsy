@@ -1071,7 +1071,7 @@ public class DrawableDB {
                 break;
             }
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Error accessing SQLite database");
         } finally {
             dbReadUnlock();
         }
