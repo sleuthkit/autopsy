@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.filetypeidentifier.FileTypeIdentifier;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -472,27 +473,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             
             
             // try to get the file type from the BB
-            String detectedFormat = null;
-            try {
-                ArrayList<BlackboardAttribute> attributes = aFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-                for (BlackboardAttribute attribute : attributes) {
-                    detectedFormat = attribute.getValueString();
-                    break;
-                }
-            } catch (TskCoreException ex) {
-            }
-            // else, use FileType module to detect the format
+            String detectedFormat = new FileTypeIdentifier().identify(aFile);
             if (detectedFormat == null) {
-                try {
-                    detectedFormat = new FileTypeDetector().detectAndPostToBlackboard(aFile);
-                } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
+                    logger.log(Level.WARNING, "Could not detect format using FileTypeIdentifier for file: {0}", aFile); //NON-NLS
                     return;
-                }
-                if (detectedFormat == null) {
-                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
-                } 
             }
 
             // we skip archive formats that are opened by the archive module. 
