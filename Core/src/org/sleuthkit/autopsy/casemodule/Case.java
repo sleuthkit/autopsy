@@ -270,15 +270,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
                      * Use the text index name as the remote event channel name
                      * prefix since it is unique, the same as the case database
                      * name for a multiuser case, and is readily available
-                     * through getTextIndexName() API.
+                     * through the Case.getTextIndexName() API.
                      */
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                 } catch (AutopsyEventException ex) {
                     logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
-                    /**
-                     * MessageNotifyUtil.Message.warn() does not work here,
-                     * don't know why.
-                     */
                     JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.ErrMsg"),
                             NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.Title"),
                             JOptionPane.WARNING_MESSAGE);

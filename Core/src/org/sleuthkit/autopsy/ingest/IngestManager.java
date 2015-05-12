@@ -300,8 +300,8 @@ public class IngestManager {
             /**
              * Use the text index name as the remote event channel name prefix
              * since it is unique, the same as the case database name for a
-             * multiuser case, and is readily available through
-             * getTextIndexName() API.
+             * multiuser case, and is readily available through the
+             * Case.getTextIndexName() API.
              */
             Case openedCase = Case.getCurrentCase();
             String channelPrefix = openedCase.getTextIndexName();
@@ -310,7 +310,7 @@ public class IngestManager {
                 moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
         } catch (IllegalStateException | AutopsyEventException ex) {
-            logger.log(Level.SEVERE, "Failed to open remote module events channel", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
             JOptionPane.showMessageDialog(null, NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.FailPopup.ErrMsg"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.FailPopup.Title"),
                     JOptionPane.WARNING_MESSAGE);
