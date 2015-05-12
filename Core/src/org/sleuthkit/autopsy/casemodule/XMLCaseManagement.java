@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -85,7 +87,7 @@ import org.xml.sax.SAXException;
     private String caseName;        // case name
     private String caseNumber;      // case number
     private String examiner;        // examiner name
-    private String schemaVersion = "1.0";
+    private String schemaVersion = "2.0";
     private String autopsySavedVersion;
     private CaseType caseType;      // The type of case: local or shared
     private String dbName;          // The name of the database    
@@ -344,13 +346,17 @@ import org.xml.sax.SAXException;
      *
      * @return caseDirPath the case directory path
      */
-    public String getCaseDirectory() {
-        if (doc == null) {
-            return "";
-        } else {
-            return caseDirPath;
-        }
-        // Note: change this to get the case name from the xml file if needed
+     public String getCaseDirectory() {
+         if (doc == null) {
+             return "";
+         } else {
+             File casePath = new File(caseDirPath);
+             if (!casePath.exists()) {
+                 casePath.mkdirs();
+             }
+             return caseDirPath;
+         }
+         // Note: change this to get the case name from the xml file if needed
     }
 
     /**
@@ -449,82 +455,140 @@ import org.xml.sax.SAXException;
             return null; // should throw error or exception
         }
     }
+    
+     /**
+      * Get the path to the case, with the host name in it if it's a multi-user
+      * case, without the host name if it's a single-user case.
+      *
+      * @param hostname The host name
+      * @param caseType The case type
+      * @return
+      */
+     public String getHostPath(String hostname, CaseType caseType) {
+         Path thePath;
+         if (caseType == CaseType.MULTI_USER_CASE) {
+             thePath = Paths.get(caseDirPath, hostname);
+         } else {
+             thePath = Paths.get(caseDirPath);
+         }
+         
+         if (!thePath.toFile().exists()) {
+             thePath.toFile().mkdirs();
+         }
+         return thePath.toString();
+     }
 
-    /**
-     * Gets the full path to the log directory
-     *
-     * @return logDir the full path of the "Log" directory
-     */
-    protected String getLogDir() {
-        if (doc != null) {
-            Element logElement = (Element) getCaseElement().getElementsByTagName(LOG_FOLDER_NAME).item(0);
-            if (logElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
-                return caseDirPath + File.separator + logElement.getTextContent();
-            } else {
-                return logElement.getTextContent();
-            }
-        } else {
-            return ""; // should throw error or exception
-        }
-    }
+     /**
+      * Gets the full path to the log directory
+      *
+      * @param hostname The hostname of this machine
+      * @param caseType The type of the case.
+      * @return logDir the full path of the "Log" directory
+      */
+     protected String getLogDir(String hostname, CaseType caseType) {
+         String thePath = getHostPath(hostname, caseType);
+         if (doc != null) {
+             Element logElement = (Element) getCaseElement().getElementsByTagName(LOG_FOLDER_NAME).item(0);
+             if (logElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
+                 thePath += File.separator + logElement.getTextContent();
+             } else {
+                 thePath = logElement.getTextContent();
+             }
+         } else {
+             thePath += File.separator + LOG_FOLDER_RELPATH;
+         }
 
-    /**
-     * Gets the full path to the temp directory
-     *
-     * @return tempDir the full path of the "Temp" directory
-     */
-    protected String getTempDir() {
-        if (doc != null) {
-            Element tempElement = (Element) getCaseElement().getElementsByTagName(TEMP_FOLDER_NAME).item(0);
-            if (tempElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
-                return caseDirPath + File.separator + tempElement.getTextContent();
-            } else {
-                return tempElement.getTextContent();
-            }
-        } else {
-            return ""; // should throw error or exception
-        }
-    }
+         File logPath = new File(thePath);
+         if (!logPath.exists()) {
+             logPath.mkdirs();
+         }
+         return thePath;
+     }
 
-    /**
-     * Gets the full path to the Export directory
-     *
-     * @return exportDir the full path of the "Export" directory
-     */
-    protected String getExportDir() {
-        if (doc != null) {
-            Element exportElement = (Element) getCaseElement().getElementsByTagName(EXPORT_FOLDER_NAME).item(0);
-            if (exportElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
-                return caseDirPath + File.separator + exportElement.getTextContent();
-            } else {
-                return exportElement.getTextContent();
-            }
-        } else {
-            return ""; // should throw error or exception
-        }
-    }
+     /**
+      * Gets the full path to the temp directory
+      *
+      * @param hostname The hostname of this machine
+      * @param caseType The type of the case.
+      * @return tempDir the full path of the "Temp" directory
+      */
+     protected String getTempDir(String hostname, CaseType caseType) {
+         String thePath = getHostPath(hostname, caseType);
+         if (doc != null) {
+             Element tempElement = (Element) getCaseElement().getElementsByTagName(TEMP_FOLDER_NAME).item(0);
+             if (tempElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
+                 thePath += File.separator + tempElement.getTextContent();
+             } else {
+                 thePath = tempElement.getTextContent();
+             }
+         } else {
+             thePath += File.separator + TEMP_FOLDER_RELPATH;
+         }
 
-    /**
-     * Gets the full path to the Cache directory
-     *
-     * @return cacheDir the full path of the "Cache" directory
-     */
-    protected String getCacheDir() {
-        if (doc != null) {
-            Element cacheElement = (Element) getCaseElement().getElementsByTagName(CACHE_FOLDER_NAME).item(0);
-            if (cacheElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
-                return caseDirPath + File.separator + cacheElement.getTextContent();
-            } else {
-                return cacheElement.getTextContent();
-            }
-        } else {
-            return ""; // should throw error or exception
-        }
-    }
+         File tempPath = new File(thePath);
+         if (!tempPath.exists()) {
+             tempPath.mkdirs();
+         }
+         return thePath;
+     }
+
+     /**
+      * Gets the full path to the Export directory
+      *
+      * @param hostname The hostname of this machine
+      * @param caseType The type of the case.
+      * @return exportDir the full path of the "Export" directory
+      */
+     protected String getExportDir(String hostname, CaseType caseType) {
+         String thePath = getHostPath(hostname, caseType);
+         if (doc != null) {
+             Element exportElement = (Element) getCaseElement().getElementsByTagName(EXPORT_FOLDER_NAME).item(0);
+             if (exportElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
+                 thePath += File.separator + exportElement.getTextContent();
+             } else {
+                 thePath = exportElement.getTextContent();
+             }
+         } else {
+             thePath += File.separator + EXPORT_FOLDER_RELPATH;
+         }
+
+         File exportPath = new File(thePath);
+         if (!exportPath.exists()) {
+             exportPath.mkdirs();
+         }
+         return thePath;
+     }
+
+     /**
+      * Gets the full path to the Cache directory
+      *
+      * @param hostname The hostname of this machine
+      * @param caseType The type of the case.
+      * @return cacheDir the full path of the "Cache" directory
+      */
+     protected String getCacheDir(String hostname, CaseType caseType) {
+         String thePath = getHostPath(hostname, caseType);
+         if (doc != null) {
+             Element cacheElement = (Element) getCaseElement().getElementsByTagName(CACHE_FOLDER_NAME).item(0);
+             if (cacheElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)) {
+                 thePath += File.separator + cacheElement.getTextContent();
+             } else {
+                 thePath = cacheElement.getTextContent();
+             }
+         } else {
+             thePath += File.separator + CACHE_FOLDER_RELPATH;
+         }
+
+         File cachePath = new File(thePath);
+         if (!cachePath.exists()) {
+             cachePath.mkdirs();
+         }
+         return thePath;
+     }
 
     /**
      * Initialize the basic values for a new case management file. Note: this is
-     * the schema version 1.0
+     * the schema version 2.0
      *
      * @param dirPath case directory path
      * @param caseName the name of the config file to be located in the case
@@ -532,7 +596,7 @@ import org.xml.sax.SAXException;
      * @param examiner examiner for the case (optional, can be empty string
      * @param caseNumber case number (optional), can be empty
      * @param dbName the name of the database. Could be a local path, could be
-     * a Postgre db name.
+     * a Postgres db name.
      * @param textIndexName The name of the index where extracted text is stored.
      */
     protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName, String textIndexName) throws CaseActionException {

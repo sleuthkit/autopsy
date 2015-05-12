@@ -122,7 +122,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 }
             };
             
-            fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export"));
+            fc.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
             fc.setDialogTitle(
                     NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
             fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -500,7 +500,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
             this.ImageId = img.getId();
             this.ImageName = img.getName();
             this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + 0 + ".dat"; //NON-NLS
-            this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
+            this.FileInstance = new File(Case.getCurrentCase().getExportDirectory() + File.separator + this.FileName);
             this.SizeInBytes = calcSizeInBytes();
         }
 
@@ -520,7 +520,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 this.ImageId = 0;
             }
             this.FileName = this.ImageName + "-Unalloc-" + this.ImageId + "-" + VolumeId + ".dat"; //NON-NLS
-            this.FileInstance = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + this.FileName);
+            this.FileInstance = new File(Case.getCurrentCase().getExportDirectory() + File.separator + this.FileName);
             this.llf = getUnallocFiles(volu);
             Collections.sort(llf, new SortObjId());
             this.SizeInBytes = calcSizeInBytes();

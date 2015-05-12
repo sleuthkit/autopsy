@@ -84,7 +84,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
         this.context = context;
         if (refCounter.incrementAndGet(context.getJobId()) == 1) {
             // Create an output directory for this job.
-            outputDirPath = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + moduleName; //NON-NLS
+            outputDirPath = Case.getCurrentCase().getModulesDirectory() + File.separator + moduleName; //NON-NLS
             File outputDir = new File(outputDirPath);
             if (outputDir.exists() == false) {
                 outputDir.mkdirs();

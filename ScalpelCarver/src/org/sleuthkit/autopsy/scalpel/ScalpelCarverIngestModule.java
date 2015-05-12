@@ -83,7 +83,7 @@ class ScalpelCarverIngestModule implements FileIngestModule {
         }
 
         // make sure module output directory exists; create it if it doesn't
-        moduleOutputDirPath = Case.getCurrentCase().getModulesOutputDirAbsPath()
+        moduleOutputDirPath = Case.getCurrentCase().getModulesDirectory()
                 + File.separator + MODULE_OUTPUT_DIR_NAME;
         File moduleOutputDir = new File(moduleOutputDirPath);
         if (!moduleOutputDir.exists()) {

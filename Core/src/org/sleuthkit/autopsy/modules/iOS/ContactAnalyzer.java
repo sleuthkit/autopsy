@@ -56,7 +56,7 @@ class ContactAnalyzer {
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            absFiles = skCase.findAllFilesWhere("LOWER(name) LIKE '%call_history%' "); //NON-NLS //get exact file names
+            absFiles = skCase.findAllFilesWhere("LOWER(name) LIKE LOWER('%call_history%') "); //NON-NLS //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }

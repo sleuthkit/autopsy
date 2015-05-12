@@ -234,7 +234,7 @@ public final class ExternalResultsImporter {
 
     private String getPathRelativeToCaseFolder(String localPath) {
         String relativePath = "";
-        String caseDirectoryPath = Case.getCurrentCase().getCaseDirectory();
+        String caseDirectoryPath = Case.getCurrentCase().getHostDirectory();
         Path path = Paths.get(localPath);
         if (path.isAbsolute()) {
             Path pathBase = Paths.get(caseDirectoryPath);

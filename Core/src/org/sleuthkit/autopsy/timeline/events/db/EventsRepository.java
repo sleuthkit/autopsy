@@ -107,7 +107,7 @@ public class EventsRepository {
 
     public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         //TODO: we should check that case is open, or get passed a case object/directory -jm
-        this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
+        this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getHostDirectory());
 
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
             //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());

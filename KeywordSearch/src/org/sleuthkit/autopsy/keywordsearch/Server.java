@@ -639,7 +639,7 @@ public class Server {
         logger.log(Level.INFO, "Validating keyword search index location"); //NON-NLS
         String properIndexPath = getIndexDirPath(theCase);
 
-        String legacyIndexPath = theCase.getCaseDirectory()
+        String legacyIndexPath = theCase.getHostDirectory()
                 + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
 
 
@@ -680,8 +680,8 @@ public class Server {
      * @return absolute path to index dir
      */
     String getIndexDirPath(Case theCase) {
-        String indexDir = theCase.getModulesOutputDirAbsPath()
-                + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
+        String indexDir = theCase.getModulesDirectory() +
+        File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         return indexDir;
     }
 

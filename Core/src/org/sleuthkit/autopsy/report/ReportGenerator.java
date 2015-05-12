@@ -110,7 +110,7 @@ import org.sleuthkit.datamodel.TskData;
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
+        this.reportPath = currentCase.getReportDirectory()+ File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
         
         this.errorList = new ArrayList<String>();
         
