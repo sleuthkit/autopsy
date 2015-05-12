@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -214,7 +215,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
 
                 // get the unique set of files with hits
-                Set<SolrDocument> uniqueSolrDocumentsWithHits = filterDuplicateSolrDocuments(resultList);
+                Set<SolrDocument> uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
 
                 allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
 
@@ -305,7 +306,24 @@ class LuceneQuery implements KeywordSearchQuery {
      * @param resultList
      * @return
      */
-    private Set<SolrDocument> filterDuplicateSolrDocuments(SolrDocumentList resultList) {
+    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
+        // sort the list so that we consistently pick the same chunk each time.
+        // note this sort is doing a string comparison and not an integer comparison, so 
+        // chunk 10 will be smaller than chunk 9. 
+        Collections.sort(resultList, new Comparator<SolrDocument>() {
+            @Override
+            public int compare(SolrDocument left, SolrDocument right) {
+                // ID is in the form of ObjectId_Chunk
+                String leftID = left.getFieldValue(Server.Schema.ID.toString()).toString();
+                String rightID = right.getFieldValue(Server.Schema.ID.toString()).toString();
+                return leftID.compareTo(rightID);
+            }
+        });
+               
+        // NOTE: We could probably just iterate through the list and compare each ID with the
+        // previous ID to get the unique documents faster than using this set now that the list
+        // is sorted.
+        
         Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparatorIgnoresChunkId());
         solrDocumentsWithMatches.addAll(resultList);
         return solrDocumentsWithMatches;
@@ -464,24 +482,26 @@ class LuceneQuery implements KeywordSearchQuery {
         public int compare(SolrDocument left, SolrDocument right) {
             // ID is in the form of ObjectId_Chunk
 
-            String idName = Server.Schema.ID.toString();
+            final String idName = Server.Schema.ID.toString();
+            
+            // get object id of left doc
             String leftID = left.getFieldValue(idName).toString();
             int index = leftID.indexOf(Server.ID_CHUNK_SEP);
             if (index != -1) {
                 leftID = leftID.substring(0, index);
             }
 
+            // get object id of right doc
             String rightID = right.getFieldValue(idName).toString();
             index = rightID.indexOf(Server.ID_CHUNK_SEP);
             if (index != -1) {
                 rightID = rightID.substring(0, index);
             }
-
-            if(Integer.parseInt(leftID) < Integer.parseInt(rightID))
-                return -1;
-            if(Integer.parseInt(leftID) > Integer.parseInt(rightID))
-                return 1;
-            return 0;
+            
+            Integer leftInt = new Integer(leftID);
+            Integer rightInt = new Integer(rightID);
+            return leftInt.compareTo(rightInt);
         }
     }
+    
 }
