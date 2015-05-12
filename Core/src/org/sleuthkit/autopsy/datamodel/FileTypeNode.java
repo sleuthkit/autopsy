@@ -153,7 +153,7 @@ public class FileTypeNode extends DisplayableItemNode {
             }
             query.append(" AND (NULL"); //NON-NLS
             for (String s : filter.getFilter()) {
-                query.append(" OR name LIKE '%").append(s).append("'"); //NON-NLS
+                query.append(" OR LOWER(name) LIKE LOWER('%").append(s).append("')"); //NON-NLS
             }
             query.append(')');
             return query.toString();

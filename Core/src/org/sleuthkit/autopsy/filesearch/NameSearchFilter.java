@@ -56,7 +56,7 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
         keyword.replace("'", "''"); // escape quotes in string        
         //TODO: escaping might not be enough, would ideally be part of a prepared statement
 
-        return "name like '%" + keyword + "%'"; //NON-NLS
+        return "LOWER(name) LIKE LOWER('%" + keyword + "%')"; //NON-NLS
     }
 
     @Override
