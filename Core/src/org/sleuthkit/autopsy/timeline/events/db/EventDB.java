@@ -204,7 +204,7 @@ public class EventDB {
             String strip = StringUtils.strip(filter.getText());
             return "((LOWER(" + MED_DESCRIPTION_COLUMN + ") LIKE LOWER('%" + strip + "%')) OR (LOWER(" // NON-NLS
                     + FULL_DESCRIPTION_COLUMN + ") LIKE LOWER('%" + strip + "%')) OR (LOWER(" // NON-NLS
-                    + SHORT_DESCRIPTION_COLUMN + ") LIKE LOWER('%" + strip + "%'))"; // NON-NLS
+                    + SHORT_DESCRIPTION_COLUMN + ") LIKE LOWER('%" + strip + "%')))"; // NON-NLS
         } else {
             return "1";
         }
