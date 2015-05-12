@@ -28,7 +28,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class MessageServiceConnectionInfo {
 
-    private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s";
+    private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0";
     private final String userName;
     private final String password;
     private final String host;
