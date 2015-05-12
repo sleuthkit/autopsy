@@ -202,9 +202,9 @@ public class EventDB {
                 return "1";
             }
             String strip = StringUtils.strip(filter.getText());
-            return "((" + MED_DESCRIPTION_COLUMN + " like '%" + strip + "%') or (" // NON-NLS
-                    + FULL_DESCRIPTION_COLUMN + " like '%" + strip + "%') or (" // NON-NLS
-                    + SHORT_DESCRIPTION_COLUMN + " like '%" + strip + "%'))"; // NON-NLS
+            return "((" + MED_DESCRIPTION_COLUMN + " LIKE '%" + strip + "%') OR (" // NON-NLS
+                    + FULL_DESCRIPTION_COLUMN + " LIKE '%" + strip + "%') OR (" // NON-NLS
+                    + SHORT_DESCRIPTION_COLUMN + " LIKE '%" + strip + "%'))"; // NON-NLS
         } else {
             return "1";
         }
