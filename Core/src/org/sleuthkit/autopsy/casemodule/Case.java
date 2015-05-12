@@ -73,6 +73,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
+    private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
 
     /**
@@ -272,12 +273,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
             if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
                 try {
-                    eventPublisher.openRemoteEventChannel(newCase.getName());
+                    /**
+                     * Use the text index name as the remote event channel name
+                     * prefix since it is unique, the same as the case database
+                     * name for a multiuser case, and is readily available
+                     * through the Case.getTextIndexName() API.
+                     */
+                    eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                 } catch (AutopsyEventException ex) {
                     logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
-                    MessageNotifyUtil.Message.error(NbBundle.getMessage(Case.class,
-                            "Case.OpenEventChannel.ErrMsg",
-                            newCase.getName()));
+                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.ErrMsg"),
+                            NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.Title"),
+                            JOptionPane.WARNING_MESSAGE);
                 }
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));

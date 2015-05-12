@@ -677,7 +677,7 @@ public final class ImageGalleryController {
      */
     class CopyAnalyzedFiles extends InnerTask {
 
-        final private String DRAWABLE_QUERY = "LOWER(name) LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or LOWER(name) LIKE '%.") + "'";
+        final private String DRAWABLE_QUERY = "LOWER(name) LIKE LOWER('%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "') or LOWER(name) LIKE LOWER('%.") + "')";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
@@ -779,7 +779,7 @@ public final class ImageGalleryController {
          * check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
-        private final String DRAWABLE_QUERY = "(LOWER(name) LIKE LOWER('%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "') or LOWER(name) LIKE '%.") + "') ";
+        private final String DRAWABLE_QUERY = "(LOWER(name) LIKE LOWER('%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "') or LOWER(name) LIKE LOWER('%.") + "')) ";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
