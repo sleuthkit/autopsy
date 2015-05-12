@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.events.BlackboardPostEvent;
@@ -298,28 +297,23 @@ public class IngestManager {
         this.jobCreationIsEnabled = true;
         clearIngestMessageBox();
         try {
+            /**
+             * Use the text index name as the remote event channel name prefix
+             * since it is unique, the same as the case database name for a
+             * multiuser case, and is readily available through the
+             * Case.getTextIndexName() API.
+             */
             Case openedCase = Case.getCurrentCase();
-            String caseName = openedCase.getName();
+            String channelPrefix = openedCase.getTextIndexName();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
-                try {
-                    jobEventPublisher.openRemoteEventChannel(String.format(JOB_EVENT_CHANNEL_NAME, caseName));
-                } catch (AutopsyEventException ex) {
-                    logger.log(Level.SEVERE, "Failed to open remote job events channel", ex); //NON-NLS
-                    MessageNotifyUtil.Message.error(NbBundle.getMessage(IngestManager.class,
-                            "IngestManager.OpenEventChannel.ErrMsg",
-                            caseName));
-                }
-                try {
-                    moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, caseName));
-                } catch (AutopsyEventException ex) {
-                    logger.log(Level.SEVERE, "Failed to open remote module events channel", ex); //NON-NLS
-                    MessageNotifyUtil.Message.error(NbBundle.getMessage(IngestManager.class,
-                            "IngestManager.OpenEventChannel.ErrMsg",
-                            caseName));
-                }
+                jobEventPublisher.openRemoteEventChannel(String.format(JOB_EVENT_CHANNEL_NAME, channelPrefix));
+                moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
-        } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "Could not get current case, failed to open remote event channels", ex); //NON-NLS
+        } catch (IllegalStateException | AutopsyEventException ex) {
+            logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
+            JOptionPane.showMessageDialog(null, NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.FailPopup.ErrMsg"),
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.FailPopup.Title"),
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 
