@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Executes a command line using an operating system process with a configurable
@@ -73,6 +74,23 @@ public final class ExecUtil {
             this.maxRunTimeInSeconds = maxRunTimeInSeconds;
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }
+        
+        /**
+         * Creates a process terminator that can be used to kill a process after
+         * it has run for a given period of time. Maximum allowable run time is set 
+         * via Autopsy Options panel. If the process termination functionality is 
+         * disabled then the maximum allowable time is set to MAX_INT seconds.
+         */
+        public TimedProcessTerminator() {
+            if (UserPreferences.getIsTimeOutEnabled() && UserPreferences.getProcessTimeOutHrs() > 0) {
+                // user specified time out
+                this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
+            } else {
+                // never time out
+                this.maxRunTimeInSeconds = Integer.MAX_VALUE;
+            }
+            this.startTimeInSeconds = (new Date().getTime()) / 1000;
+        }        
 
         /**
          * @inheritDoc

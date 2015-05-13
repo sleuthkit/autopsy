@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 
@@ -50,6 +51,21 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
         this(context);
         this.timedTerminator = new TimedProcessTerminator(maxRunTimeInSeconds);
     }
+    
+ 
+    /**
+     * Constructs a process terminator for a data source ingest module. Adds ability to 
+     * use global process termination time out.
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param useGlobalTimeOut Flag whether to use global process termination timeout.
+     */
+    public DataSourceIngestModuleProcessTerminator(IngestJobContext context, boolean useGlobalTimeOut) {
+        this(context);
+        if (useGlobalTimeOut) {
+            this.timedTerminator = new ExecUtil.TimedProcessTerminator();
+        }
+    }    
 
     /**
      * @inheritDoc
