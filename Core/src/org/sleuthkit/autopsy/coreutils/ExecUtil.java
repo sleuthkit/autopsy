@@ -38,6 +38,7 @@ public final class ExecUtil {
 
     private static final long DEFAULT_TIMEOUT = 5;
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
+    private static boolean neverTimeOut = false;
 
     /**
      * The execute() methods do a wait() with a timeout on the executing process
@@ -88,6 +89,7 @@ public final class ExecUtil {
             } else {
                 // never time out
                 this.maxRunTimeInSeconds = Integer.MAX_VALUE;
+                neverTimeOut = true;
             }
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }        
@@ -97,6 +99,9 @@ public final class ExecUtil {
          */
         @Override
         public boolean shouldTerminateProcess() {
+            if (neverTimeOut){
+                return false;
+            }
             long currentTimeInSeconds = (new Date().getTime()) / 1000;
             return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
         }
