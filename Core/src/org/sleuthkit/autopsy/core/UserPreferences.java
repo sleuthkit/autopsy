@@ -51,6 +51,9 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
+    public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS     
+    public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS  
+    private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;   
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -175,4 +178,41 @@ public final class UserPreferences {
                 preferences.get(MESSAGE_SERVICE_PORT, ""));
     }
 
+    /**
+     * Reads persisted process time out value. 
+     * @return int Process time out value (hours).
+     */    
+    public static int getProcessTimeOutHrs() {
+        int timeOut = preferences.getInt(PROCESS_TIME_OUT_HOURS, DEFAULT_PROCESS_TIMEOUT_HR);
+        if (timeOut < 0)
+            timeOut = 0;
+        return timeOut;
+    }
+
+    /**
+     * Stores persisted process time out value. 
+     * @param value Persisted process time out value (hours).
+     */        
+    public static void setProcessTimeOutHrs(int value) {
+        if (value < 0)
+            value = 0;            
+        preferences.putInt(PROCESS_TIME_OUT_HOURS, value);
+    }  
+    
+    /**
+     * Reads persisted setting of whether process time out functionality is enabled. 
+     * @return boolean True if process time out is functionality enabled, false otherwise.
+     */  
+    public static boolean getIsTimeOutEnabled() {
+        boolean enabled = preferences.getBoolean(PROCESS_TIME_OUT_ENABLED, false);
+        return enabled; 
+    }
+    
+    /**
+     * Stores persisted setting of whether process time out functionality is enabled. 
+     * @param enabled Persisted setting of whether process time out functionality is enabled.
+     */      
+    public static void setIsTimeOutEnabled(boolean enabled) {
+        preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
+    }    
 }
