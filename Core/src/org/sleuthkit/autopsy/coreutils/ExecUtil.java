@@ -85,7 +85,9 @@ public final class ExecUtil {
         public TimedProcessTerminator() {
             if (UserPreferences.getIsTimeOutEnabled() && UserPreferences.getProcessTimeOutHrs() > 0) {
                 // user specified time out
-                this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
+                //this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
+                // ELDELETE
+                this.maxRunTimeInSeconds = 20;
             } else {
                 // never time out
                 this.maxRunTimeInSeconds = Integer.MAX_VALUE;

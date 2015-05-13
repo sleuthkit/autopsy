@@ -173,7 +173,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             processAndSettings.redirectErrorStream(true);
             processAndSettings.redirectOutput(Redirect.appendTo(log));
 
-            int exitValue = ExecUtil.execute(processAndSettings, new FileIngestModuleProcessTerminator(this.context));
+            int exitValue = ExecUtil.execute(processAndSettings, new FileIngestModuleProcessTerminator(this.context, true));
             
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
