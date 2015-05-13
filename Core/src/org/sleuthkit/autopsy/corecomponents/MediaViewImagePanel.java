@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
     private boolean fxInited = false;
     
     private final List<String> supportedExtensions;
-    static private final List<String> supportedMimes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp"); //NON-NLS
+    static private final List<String> supportedMimes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp", "image/x-ms-bmp"); //NON-NLS
 
     /**
      * Creates new form MediaViewImagePanel
