@@ -211,6 +211,10 @@
                 <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jython-standalone-2.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jython-standalone-2.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
@@ -247,8 +251,13 @@
                 <binary-origin>release/modules/ext/xmpcore.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+<<<<<<< HEAD
                 <runtime-relative-path>ext/jython.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jython.jar</binary-origin>
+=======
+                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
+>>>>>>> upstream/develop
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
