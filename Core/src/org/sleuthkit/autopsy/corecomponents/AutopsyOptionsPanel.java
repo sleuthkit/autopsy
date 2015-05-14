@@ -177,7 +177,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(restartRequiredLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelSetProcessTimeOut, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelSetProcessTimeOut.text")); // NOI18N
-        jLabelSetProcessTimeOut.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelSetProcessTimeOut.toolTipText")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jCheckBoxEnableProcTimeout, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jCheckBoxEnableProcTimeout.text")); // NOI18N
         jCheckBoxEnableProcTimeout.addActionListener(new java.awt.event.ActionListener() {
@@ -189,7 +188,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(jLabelProcessTimeOutUnits, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelProcessTimeOutUnits.text")); // NOI18N
 
         jFormattedTextFieldProcTimeOutHrs.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jFormattedTextFieldProcTimeOutHrs.text")); // NOI18N
-        jFormattedTextFieldProcTimeOutHrs.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jFormattedTextFieldProcTimeOutHrs.toolTipText")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -228,7 +226,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                                 .addGap(10, 10, 10)
                                 .addComponent(jCheckBoxEnableProcTimeout)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabelProcessTimeOutUnits))
                             .addComponent(jLabelSetProcessTimeOut))
