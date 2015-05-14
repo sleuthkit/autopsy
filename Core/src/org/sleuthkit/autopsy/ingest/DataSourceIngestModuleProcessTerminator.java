@@ -31,6 +31,7 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
 
     private final IngestJobContext context;
     private TimedProcessTerminator timedTerminator;
+    private ExecUtil.ProcTerminationCode terminationCode;
 
     /**
      * Constructs a process terminator for a data source ingest module.
@@ -39,6 +40,7 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
      */
     public DataSourceIngestModuleProcessTerminator(IngestJobContext context) {
         this.context = context;
+        this.terminationCode = ExecUtil.ProcTerminationCode.NONE;
     }
 
     /**
@@ -74,10 +76,23 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
     public boolean shouldTerminateProcess() {
 
         if (this.context.dataSourceIngestIsCancelled()) {
+            this.terminationCode = ExecUtil.ProcTerminationCode.CANCELATION;
             return true;
         }
 
-        return this.timedTerminator != null ? this.timedTerminator.shouldTerminateProcess() : false;
+        if (this.timedTerminator != null && this.timedTerminator.shouldTerminateProcess()) {
+            this.terminationCode = ExecUtil.ProcTerminationCode.TIME_OUT;
+            return true;            
+        }
+        
+        return false;
     }
 
+    /**
+     * Returns process termination code.
+     * @return ExecUtil.ProcTerminationCode Process termination code.
+     */
+    public ExecUtil.ProcTerminationCode getTerminationCode(){
+        return this.terminationCode;
+    }    
 }

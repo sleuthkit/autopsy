@@ -39,11 +39,37 @@ public final class ExecUtil {
     private static final long DEFAULT_TIMEOUT = 5;
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
     private static boolean neverTimeOut = false;
+    
+    /**
+     * Process termination codes. 
+     */
+    public enum ProcTerminationCode {
+
+        /**
+         * Property name that indicates the process was not terminated or canceled. 
+         */
+        NONE,        
+        /**
+         * Property name that indicates the process was terminated due to exceeding
+         * maximum allowable run time. 
+         */
+        TIME_OUT,
+        /**
+         * Property name that indicates the process was canceled.
+         */
+        CANCELATION,
+        /**
+         * Property name that indicates the process was terminated via custom 
+         * implementation of ProcessTerminator.
+         */
+        CUSTOM;
+    };    
 
     /**
      * The execute() methods do a wait() with a timeout on the executing process
      * and query a process terminator each time the timeout expires to determine
-     * whether or not to kill the process.
+     * whether or not to kill the process. See DataSourceIngestModuleProcessTerminator 
+     * and FileIngestModuleProcessTerminator as examples of ProcessTerminator implementations.
      */
     public interface ProcessTerminator {
 
@@ -87,7 +113,7 @@ public final class ExecUtil {
                 // user specified time out
                 //this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
                 // ELDELETE
-                this.maxRunTimeInSeconds = 20;
+                this.maxRunTimeInSeconds = 5;
             } else {
                 // never time out
                 this.maxRunTimeInSeconds = Integer.MAX_VALUE;
