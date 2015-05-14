@@ -280,7 +280,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized static Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path = Paths.get(Case.getCurrentCase().getModulesDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        Path path = Paths.get(Case.getCurrentCase().getModulesOutputDirAbsPath(), PhotoRecCarverIngestModuleFactory.getModuleName());
         try {
             Files.createDirectory(path);
         }

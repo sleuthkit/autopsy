@@ -625,38 +625,8 @@ public class Server {
 
         Case currentCase = Case.getCurrentCase();
 
-        validateIndexLocation(currentCase);
-
         currentCore = openCore(currentCase);
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
-    }
-
-    /**
-     * Checks if index dir exists, and moves it to new location if needed (for
-     * backwards compatibility with older cases)
-     */
-    private void validateIndexLocation(Case theCase) {
-        logger.log(Level.INFO, "Validating keyword search index location"); //NON-NLS
-        String properIndexPath = getIndexDirPath(theCase);
-
-        String legacyIndexPath = theCase.getHostDirectory()
-                + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-
-
-        File properIndexDir = new File(properIndexPath);
-        File legacyIndexDir = new File(legacyIndexPath);
-        if (!properIndexDir.exists()
-                && legacyIndexDir.exists() && legacyIndexDir.isDirectory()) {
-            logger.log(Level.INFO, "Moving keyword search index location from: " //NON-NLS
-                    + legacyIndexPath + " to: " + properIndexPath); //NON-NLS
-            try {
-                Files.move(Paths.get(legacyIndexDir.getParent()), Paths.get(properIndexDir.getParent()));
-            } catch (IOException | SecurityException ex) {
-                logger.log(Level.WARNING, "Error moving keyword search index folder from: " //NON-NLS
-                        + legacyIndexPath + " to: " + properIndexPath //NON-NLS
-                        + " will recreate a new index.", ex); //NON-NLS
-            }
-        }
     }
 
     synchronized void closeCore() throws KeywordSearchModuleException {
@@ -680,7 +650,7 @@ public class Server {
      * @return absolute path to index dir
      */
     String getIndexDirPath(Case theCase) {
-        String indexDir = theCase.getModulesDirectory() +
+        String indexDir = theCase.getModulesOutputDirAbsPath() +
         File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         return indexDir;
     }

@@ -48,7 +48,7 @@ public final class OpenOutputFolderAction implements ActionListener {
         try {
             File outputDir;
             if (Case.isCaseOpen()) {
-                outputDir = new File(Case.getCurrentCase().getHostDirectory());
+                outputDir = new File(Case.getCurrentCase().getOutputDirectory());
                 if (outputDir.exists() == false) {
                     NotifyDescriptor d
                             = new NotifyDescriptor.Message(NbBundle.getMessage(this.getClass(),

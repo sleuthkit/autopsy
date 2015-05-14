@@ -75,7 +75,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -192,10 +192,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
-    private static String HOSTNAME;
-    private static String REPORTOUTPUT = "Reports";
-    private static String MODULEOUTPUT = "ModuleOutput";
+    private static String HostName;
+    private final static String CACHE_FOLDER = "Cache"; //NON-NLS
+    private final static String EXPORT_FOLDER = "Export"; //NON-NLS
+    private final static String LOG_FOLDER = "Log"; //NON-NLS
+    private final static String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
+    private final static String REPORTS_FOLDER = "Reports"; //NON-NLS
+    private final static String TEMP_FOLDER = "Temp"; //NON-NLS
 
+    
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
@@ -744,55 +749,59 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the temp directory of this case
+     * Gets the full path to the temp directory of this case. Will create it if
+     * it does not already exist.
      *
      * @return tempDirectoryPath
      */
     public String getTempDirectory() {
-        if (xmlcm == null) {
-            return "";
-        } else {
-            return xmlcm.getTempDir(HOSTNAME, caseType);
+        File tempPath = new File(getHostDirectory() + File.separator + TEMP_FOLDER);
+        if (!tempPath.exists()) {
+            tempPath.mkdirs();
         }
+        return tempPath.toString();
     }
 
     /**
-     * Gets the full path to the cache directory of this case
+     * Gets the full path to the cache directory of this case. Will create it if
+     * it does not already exist.
      *
      * @return cacheDirectoryPath
      */
     public String getCacheDirectory() {
-        if (xmlcm == null) {
-            return "";
-        } else {
-            return xmlcm.getCacheDir(HOSTNAME, caseType);
+        File cachePath = new File(getHostDirectory() + File.separator + CACHE_FOLDER);
+        if (!cachePath.exists()) {
+            cachePath.mkdirs();
         }
+        return cachePath.toString();
     }
 
     /**
-     * Gets the full path to the export directory of this case
+     * Gets the full path to the export directory of this case. Will create it
+     * if it does not already exist.
      *
-     * @return export DirectoryPath
+     * @return exportDirectoryPath
      */
     public String getExportDirectory() {
-        if (xmlcm == null) {
-            return "";
-        } else {
-            return xmlcm.getExportDir(HOSTNAME, caseType);
+        File exportPath = new File(getHostDirectory() + File.separator + EXPORT_FOLDER);
+        if (!exportPath.exists()) {
+            exportPath.mkdirs();
         }
+        return exportPath.toString();
     }
 
     /**
-     * Gets the full path to the log directory for this case.
+     * Gets the full path to the log directory of this case. Will create it if
+     * it does not already exist.
      *
-     * @return The log directory path.
+     * @return logDirectoryPath
      */
     public String getLogDirectoryPath() {
-        if (xmlcm == null) {
-            return "";
-        } else {
-            return xmlcm.getLogDir(HOSTNAME, caseType);
+        File logPath = new File(getHostDirectory() + File.separator + LOG_FOLDER);
+        if (!logPath.exists()) {
+            logPath.mkdirs();
         }
+        return logPath.toString();
     }
 
     /**
@@ -823,31 +832,51 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     /**
      * Get the host output directory path where modules should save their
-     * permanent data. If single-user case, the directory is a subdirectory of 
-     * the case directory. If multi-user case, the directory is a subdirectory 
-     * of HOSTNAME, which is a subdirectory of the case directory.
+     * permanent data. If single-user case, the directory is a subdirectory of
+     * the case directory. If multi-user case, the directory is a subdirectory
+     * of HostName, which is a subdirectory of the case directory.
      *
      * @return the path to the host output directory
      */
     public String getHostDirectory() {
-        if (xmlcm == null) {
-            return "";
+        String caseDirectory = getCaseDirectory();
+        Path hostPath;
+        if (caseType == CaseType.MULTI_USER_CASE) {
+            hostPath = Paths.get(caseDirectory, HostName);
         } else {
-            return xmlcm.getHostPath(HOSTNAME, this.getCaseType());
+            hostPath = Paths.get(caseDirectory);
         }
+        if (!hostPath.toFile().exists()) {
+            hostPath.toFile().mkdirs();
+        }
+        return hostPath.toString();
     }
 
+     /**
+     * Get the output directory path where modules should save their
+     * permanent data. If single-user case, the directory is a subdirectory of 
+     * the case directory. If multi-user case, the directory is a subdirectory 
+     * of HostName, which is a subdirectory of the case directory.
+     *
+     * @return the path to the host output directory
+     */
+    public String getOutputDirectory() {
+        return getHostDirectory();
+    }
+
+    
     /**
      * Get the reports directory path where modules should save their reports.
+     * Will create it if it does not already exist.
      *
      * @return absolute path to the report output directory
      */
     public String getReportDirectory() {
-        Path thePath = Paths.get(this.getHostDirectory(), REPORTOUTPUT);
-        if (!thePath.toFile().exists()) {
-            thePath.toFile().mkdirs();
+        File reportPath = new File(getHostDirectory() + File.separator + REPORTS_FOLDER);
+        if (!reportPath.exists()) {
+            reportPath.mkdirs();
         }
-        return thePath.toString();
+        return reportPath.toString();
     }
 
     /**
@@ -856,8 +885,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @return absolute path to the module output dir
      */
-    public String getModulesDirectory() {
-        Path thePath = Paths.get(this.getHostDirectory(), MODULEOUTPUT);
+    public String getModulesOutputDirAbsPath() {
+        Path thePath = Paths.get(this.getHostDirectory(), MODULE_FOLDER);
         if (!thePath.toFile().exists()) {
             thePath.toFile().mkdirs();
         }
@@ -874,9 +903,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public String getModuleOutputDirectoryRelativePath() {
         Path thePath;
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
-            thePath = Paths.get(HOSTNAME, MODULEOUTPUT);
+            thePath = Paths.get(HostName, MODULE_FOLDER);
         } else {
-            thePath = Paths.get(MODULEOUTPUT);
+            thePath = Paths.get(MODULE_FOLDER);
         }
         // Do not autocreate this relative path. It will have already been
         // created when the case was made.
@@ -1092,19 +1121,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * The methods below are used to manage the case directories (creating,
      * checking, deleting, etc)
      */
-    /**
-     * to create the case directory
-     *
-     * @param caseDir Path to the case directory (typically base + case name)
-     * @param caseName the case name (used only for error messages)
-     *
-     * @throws CaseActionException throw if could not create the case dir
-     * @Deprecated
-     */
-    static void createCaseDirectory(String caseDir, String caseName, CaseType caseType) throws CaseActionException {
-        createCaseDirectory(caseDir, caseType);
-
-    }
 
     /**
      * Create the case directory and its needed subfolders.
@@ -1135,12 +1151,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             // create the folders inside the case directory
             String hostClause = "";
-            if (HOSTNAME == null || HOSTNAME.isEmpty()) {
+            if (HostName == null || HostName.isEmpty()) {
                 setHostName();
             }
 
             if (caseType == CaseType.MULTI_USER_CASE) {
-                hostClause = File.separator + HOSTNAME;
+                hostClause = File.separator + HostName;
             }
             result = result && (new File(caseDir + hostClause + File.separator + XMLCaseManagement.EXPORT_FOLDER_RELPATH)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + XMLCaseManagement.LOG_FOLDER_RELPATH)).mkdirs()
@@ -1152,7 +1168,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", caseDir));
             }
 
-            final String modulesOutDir = caseDir + hostClause + File.separator + MODULEOUTPUT;
+            final String modulesOutDir = caseDir + hostClause + File.separator + MODULE_FOLDER;
             result = new File(modulesOutDir).mkdir();
             if (result == false) {
                 throw new CaseActionException(
@@ -1160,7 +1176,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                                 modulesOutDir));
             }
 
-            final String reportsOutDir = caseDir + hostClause + File.separator + REPORTOUTPUT;
+            final String reportsOutDir = caseDir + hostClause + File.separator + REPORTS_FOLDER;
             result = new File(reportsOutDir).mkdir();
             if (result == false) {
                 throw new CaseActionException(
@@ -1242,7 +1258,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param openedCase
      */
     private static void checkSubFolders(Case openedCase) {
-        String modulesOutputDir = openedCase.getModulesDirectory();
+        String modulesOutputDir = openedCase.getModulesOutputDirAbsPath();
         File modulesOutputDirF = new File(modulesOutputDir);
         if (!modulesOutputDirF.exists()) {
             logger.log(Level.INFO, "Creating modules output dir for the case."); //NON-NLS
@@ -1365,14 +1381,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     private static void setHostName() {
         try {
-            HOSTNAME = java.net.InetAddress.getLocalHost().getHostName();
+            HostName = java.net.InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException ex) {
             // getLocalHost().getHostName() can fail in some situations. 
             // Use environment variable if so.
-            HOSTNAME = System.getenv("COMPUTERNAME");
+            HostName = System.getenv("COMPUTERNAME");
         }
-        if (HOSTNAME == null || HOSTNAME.isEmpty()) {
-            HOSTNAME = System.getenv("COMPUTERNAME");
+        if (HostName == null || HostName.isEmpty()) {
+            HostName = System.getenv("COMPUTERNAME");
         }
     }
 }
