@@ -838,7 +838,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @return the path to the host output directory
      */
-    public String getHostDirectory() {
+    private String getHostDirectory() {
         String caseDirectory = getCaseDirectory();
         Path hostPath;
         if (caseType == CaseType.MULTI_USER_CASE) {
