@@ -75,7 +75,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-    
+
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -886,11 +886,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return absolute path to the module output dir
      */
     public String getModulesOutputDirAbsPath() {
-        Path thePath = Paths.get(this.getHostDirectory(), MODULE_FOLDER);
-        if (!thePath.toFile().exists()) {
-            thePath.toFile().mkdirs();
+        File modulePath = new File(this.getHostDirectory() + File.separator + MODULE_FOLDER);
+        if (!modulePath.exists()) {
+            modulePath.mkdirs();
         }
-        return thePath.toString();
+        return modulePath.toString();
     }
 
     /**
@@ -900,7 +900,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @return relative path to the module output dir
      */
-    public String getModuleOutputDirectoryRelativePath() {
+    public String getModulesOutputDirRelPath() {
         Path thePath;
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
             thePath = Paths.get(HostName, MODULE_FOLDER);

@@ -105,7 +105,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
 
         final Case currentCase = Case.getCurrentCase();
 
-        moduleDirRelative = currentCase.getModuleOutputDirectoryRelativePath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
+        moduleDirRelative = currentCase.getModulesOutputDirRelPath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
         moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + ArchiveFileExtractorModuleFactory.getModuleName();
 
         
