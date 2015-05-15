@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedSet;
@@ -33,8 +34,11 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AbstractFile.MimeMatchEnum;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -185,51 +189,59 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if a video file that can be displayed 
      */
     private boolean isVideoSupported(AbstractFile file) {
-        String name = file.getName().toLowerCase();
-        
-        if ((containsExt(name, AUDIO_EXTENSIONS) || containsExt(name, videoExtensions)) && 
-                (!videoMimes.isEmpty() && file.isMimeType(videoMimes) == MimeMatchEnum.TRUE)) {
-            return true;
+        if (videoMimes == null || videoMimes.isEmpty()) {
+            return false;
         }
-        return false;
+        try {
+            // check BB
+            ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                if (videoMimes.contains(attribute.getValueString())) {
+                    return true;
+                }
+            }
+            // use FileTypeDetector
+            if (videoMimes.contains(new FileTypeDetector().detectAndPostToBlackboard(file))) {
+                return true;
+            }
+        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            // return false;
+        }
+
+        // check extension
+        String name = file.getName().toLowerCase();
+        return containsExt(name, AUDIO_EXTENSIONS) || containsExt(name, videoExtensions);
+
     }
     
     /**
-     * 
+     *
      * @param file
-     * @return  True if an image file that can be displayed
+     * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-        String name = file.getName().toLowerCase();
-        
-        // blackboard
-        if (!imageMimes.isEmpty()) {
-            MimeMatchEnum mimeMatch = file.isMimeType(imageMimes);
-            if (mimeMatch == MimeMatchEnum.TRUE) {
+        if (imageMimes == null || imageMimes.isEmpty()) {
+            return false;
+        }
+        try {
+            // check BB
+            ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                if (imageMimes.contains(attribute.getValueString())) {
+                    return true;
+                }
+            }
+            // use FileTypeDetector
+            if (imageMimes.contains(new FileTypeDetector().detectAndPostToBlackboard(file))) {
                 return true;
             }
-            else if (mimeMatch == MimeMatchEnum.FALSE) {
-                return false;
-            }
+        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            return false;
         }
-        
-        // extension
-        if (containsExt(name, imageExtensions)) {
-            return true;
-        }
-        // our own signature checks for important types
-        else if (ImageUtils.isJpegFileHeader(file)) {
-            return true;
-        }
-        else if (ImageUtils.isPngFileHeader(file)) {
-            return true;
-        }
-        
-        //for gstreamer formats, check if initialized first, then
-        //support audio formats, and video formats
-        return false;
+        // check extension
+        String name = file.getName().toLowerCase();
+        return containsExt(name, imageExtensions);
     }
-    
     @Override
     public boolean isSupported(Node node) {
         if (node == null) {
