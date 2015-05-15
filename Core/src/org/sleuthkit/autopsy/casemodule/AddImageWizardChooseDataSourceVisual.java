@@ -38,6 +38,7 @@ import javax.swing.event.DocumentEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -55,6 +56,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
 
+    List<WizardPathValidator> pathValidatorList = new ArrayList<>();
+    
     List<String> coreDSPTypes = new ArrayList<>();
 
     /**
@@ -75,6 +78,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         typePanel.setLayout(new BorderLayout());
 
         discoverDataSourceProcessors();
+        
+        discoverWizardPathValidators();
 
         // set up the DSP type combobox
         typeComboBox.removeAllItems();
@@ -128,6 +133,12 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             }
         }
     }
+    
+    private void discoverWizardPathValidators() {
+        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
+            pathValidatorList.add(pathValidator);
+        }
+    }    
 
     private void dspSelectionChanged() {
         // update the current panel to selection
