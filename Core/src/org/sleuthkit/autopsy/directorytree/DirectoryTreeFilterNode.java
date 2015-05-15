@@ -112,31 +112,29 @@ class DirectoryTreeFilterNode extends FilterNode {
             VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
             // determine if the virtualDireory is at root-level (Logical File Set).
             boolean isRootVD = false;
-            if(virtualDirectory != null) {
+            if (virtualDirectory != null) {
                 try {
-                    if(virtualDirectory.getParent() == null)
+                    if (virtualDirectory.getParent() == null) {
                         isRootVD = true;
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
                 }
             }
 
-            // file search action only if the selected node is img node or a root level virtual directory.
+            // 'run ingest' action and 'file search' action are added only if the
+            // selected node is img node or a root level virtual directory.
             if (img != null || isRootVD) {
                 actions.add(new FileSearchAction(
                         NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
-            }
-
-            //ingest action only if the selected node is img node or a root level virtual directory.
-            if(img != null || isRootVD) {
                 actions.add(new AbstractAction(
-                    NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
-                            ingestDialog.display();
-                        }
-                    });
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                                ingestDialog.display();
+                            }
+                        });
             }
         }
 
