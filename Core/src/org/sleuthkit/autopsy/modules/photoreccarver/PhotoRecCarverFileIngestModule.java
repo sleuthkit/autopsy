@@ -239,7 +239,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      */
     @Override
     public void shutDown() {
-        if (refCounter.decrementAndGet(this.context.getJobId()) == 0) {
+        if (this.context != null && refCounter.decrementAndGet(this.context.getJobId()) == 0) {
             try {
                 // The last instance of this module for an ingest job cleans out 
                 // the working paths map entry for the job and deletes the temp dir.
