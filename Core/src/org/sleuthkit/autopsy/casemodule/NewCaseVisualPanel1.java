@@ -56,13 +56,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
             lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
         } else {
-            // if we cannot connect to the shared database, don't present the option
-            // but do not change the setting stored in the preferences file
             rbSingleUserCase.setEnabled(true);
             rbMultiUserCase.setEnabled(true);
             if (true == info.settingsValid()) {
                     rbMultiUserCase.setSelected(true); // default to multi-user if available
             } else {
+                // if we cannot connect to the shared database, don't present the option
                 lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
                 lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
                 rbSingleUserCase.setSelected(true);
