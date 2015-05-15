@@ -56,8 +56,11 @@ public class ImageUtils {
     private static final List<String> SUPP_MIME_TYPES;
     
     static {
-        SUPP_MIME_TYPES  = Arrays.asList(ImageIO.getReaderMIMETypes());
-        //SUPP_MIME_TYPES.add("image/x-ms-bmp");
+        SUPP_MIME_TYPES = new ArrayList();
+        for (String mimeType : Arrays.asList(ImageIO.getReaderMIMETypes())) {
+            SUPP_MIME_TYPES.add(mimeType);
+        }
+        SUPP_MIME_TYPES.add("image/x-ms-bmp");
     }
     
     /**
