@@ -44,7 +44,6 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
     public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS    
-    public static final String NEW_CASE_TYPE = "NewCaseType"; //NON-NLS
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
@@ -127,14 +126,6 @@ public final class UserPreferences {
         preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
 
-    public static int newCaseType() {
-        return preferences.getInt(NEW_CASE_TYPE, 0);
-    }
-
-    public static void setNewCaseType(int value) {
-        preferences.putInt(NEW_CASE_TYPE, value);
-    }
-    
     public static String getIndexingServerHost() {
         return preferences.get(INDEXING_SERVER_HOST, "");
     }

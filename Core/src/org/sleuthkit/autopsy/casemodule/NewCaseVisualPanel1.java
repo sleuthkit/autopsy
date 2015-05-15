@@ -52,23 +52,18 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         if (info.getDbType() == DbType.UNKNOWN) {
             rbSingleUserCase.setSelected(true);
             rbSingleUserCase.setEnabled(false);
-            rbSingleUserCase.setVisible(false);
             rbMultiUserCase.setEnabled(false);
-            rbMultiUserCase.setVisible(false);
+            lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
+            lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
         } else {
             // if we cannot connect to the shared database, don't present the option
             // but do not change the setting stored in the preferences file
             rbSingleUserCase.setEnabled(true);
             rbMultiUserCase.setEnabled(true);
-            rbSingleUserCase.setVisible(true);
-            rbMultiUserCase.setVisible(true);
             if (true == info.settingsValid()) {
-                if (UserPreferences.newCaseType() == CaseType.SINGLE_USER_CASE.ordinal()) {
-                    rbSingleUserCase.setSelected(true);
-                } else {
-                    rbMultiUserCase.setSelected(true);
-                }
+                    rbMultiUserCase.setSelected(true); // default to multi-user if available
             } else {
+                lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
                 lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
                 rbSingleUserCase.setSelected(true);
                 rbSingleUserCase.setEnabled(false);
