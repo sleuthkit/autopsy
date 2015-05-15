@@ -38,7 +38,6 @@ public final class ExecUtil {
 
     private static final long DEFAULT_TIMEOUT = 5;
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
-    private static boolean neverTimeOut = false;
     
     /**
      * Process termination codes. 
@@ -111,13 +110,10 @@ public final class ExecUtil {
         public TimedProcessTerminator() {
             if (UserPreferences.getIsTimeOutEnabled() && UserPreferences.getProcessTimeOutHrs() > 0) {
                 // user specified time out
-                //this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
-                // ELDELETE
-                this.maxRunTimeInSeconds = 5;
+                this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
             } else {
                 // never time out
-                this.maxRunTimeInSeconds = Integer.MAX_VALUE;
-                neverTimeOut = true;
+                this.maxRunTimeInSeconds = Long.MAX_VALUE;
             }
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }        
@@ -127,9 +123,6 @@ public final class ExecUtil {
          */
         @Override
         public boolean shouldTerminateProcess() {
-            if (neverTimeOut){
-                return false;
-            }
             long currentTimeInSeconds = (new Date().getTime()) / 1000;
             return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
         }

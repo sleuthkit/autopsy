@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -183,8 +184,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 return IngestModule.ProcessResult.OK;
             } else if (terminator.getTerminationCode() == ExecUtil.ProcTerminationCode.TIME_OUT) {
                 cleanup(outputDirPath, tempFilePath);
-                logger.log(Level.SEVERE, "PhotoRec carver process was terminated due to exceeding max allowable run time when scanning {0}", // NON-NLS
-                        file.getName()); // NON-NLS
+                String msg = NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.processTerminated") + file.getName(); // NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.moduleError"), msg); // NON-NLS                
+                logger.log(Level.SEVERE, msg);
                 return IngestModule.ProcessResult.ERROR;
             } else if (0 != exitValue) {
                 // if it failed or was cancelled by timeout, result is ERROR
