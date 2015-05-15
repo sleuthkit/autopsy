@@ -1127,7 +1127,8 @@ public class Server {
                 filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
             }
             q.addFilterQuery(filterQuery);
-            q.setFields(Schema.TEXT.toString());
+            // sort the TEXT field
+            q.setSortField(Schema.TEXT.toString(), SolrQuery.ORDER.asc);
             try {
                 // Get the first result. 
                 SolrDocument solrDocument = solrCore.query(q).getResults().get(0);
