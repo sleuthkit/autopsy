@@ -107,13 +107,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                 actions.add(ExtractAction.getInstance());
             }
 
-            // file search action
             final Image img = this.getLookup().lookup(Image.class);
-            if (img != null) {
-                actions.add(new FileSearchAction(
-                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
-            }
-
 
             VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
             // determine if the virtualDireory is at root-level (Logical File Set).
@@ -125,6 +119,12 @@ class DirectoryTreeFilterNode extends FilterNode {
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
                 }
+            }
+
+            // file search action only if the selected node is img node or a root level virtual directory.
+            if (img != null || isRootVD) {
+                actions.add(new FileSearchAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
             }
 
             //ingest action only if the selected node is img node or a root level virtual directory.
