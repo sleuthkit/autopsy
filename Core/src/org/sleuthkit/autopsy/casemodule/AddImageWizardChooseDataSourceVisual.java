@@ -311,7 +311,22 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      */
     public void updateUI(DocumentEvent e) {
         // Enable the Next button if the current DSP panel is valid
-        this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
+        if (!getCurrentDSProcessor().isPanelValid()) {
+            return;
+        }
+        
+        // check if the is a WizardPathValidator service provider
+        if (!pathValidatorList.isEmpty()){
+            // call WizardPathValidator service provider
+            String errorMsg = pathValidatorList.get(0).validateDataSourcePath("");            
+            if (errorMsg.isEmpty()) {
+                this.wizPanel.enableNextButton(true);
+            } else {            
+                // ELTODO - display error message
+            }
+        } else {
+            // validate locally
+        }
     }
 
     @SuppressWarnings("rawtypes")
