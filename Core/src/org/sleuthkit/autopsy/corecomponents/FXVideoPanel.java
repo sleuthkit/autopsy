@@ -478,28 +478,29 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             pauseButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent e) {
-                    if (mediaPlayer != null) {
-                        Status status = mediaPlayer.getStatus();
+                    if (mediaPlayer == null)
+                        return;
 
-                        switch (status) {
-                            // If playing, pause
-                            case PLAYING:
-                                mediaPlayer.pause();
-                                break;
-                            // If ready, paused or stopped, continue playing
-                            case READY:
-                            case PAUSED:
-                            case STOPPED:
-                                mediaPlayer.play();
-                                break;
-                            default:
-                                logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString()); //NON-NLS
-                                // If the MediaPlayer is in an unexpected state, stop playback.
-                                mediaPlayer.stop();
-                                setInfoLabelText(NbBundle.getMessage(this.getClass(),
-                                        "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
-                                break;
-                        }
+                    Status status = mediaPlayer.getStatus();
+
+                    switch (status) {
+                        // If playing, pause
+                        case PLAYING:
+                            mediaPlayer.pause();
+                            break;
+                        // If ready, paused or stopped, continue playing
+                        case READY:
+                        case PAUSED:
+                        case STOPPED:
+                            mediaPlayer.play();
+                            break;
+                        default:
+                            logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString()); //NON-NLS
+                            // If the MediaPlayer is in an unexpected state, stop playback.
+                            mediaPlayer.stop();
+                            setInfoLabelText(NbBundle.getMessage(this.getClass(),
+                                    "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
+                            break;
                     }
                 }
             });
@@ -507,16 +508,20 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             stopButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent e) {
-                    if (mediaPlayer != null) {
-                        mediaPlayer.stop();
-                    }
+                    if (mediaPlayer == null)
+                        return;
+
+                    mediaPlayer.stop();
                 }
             });
 
             progressSlider.valueProperty().addListener(new InvalidationListener() {
                 @Override
                 public void invalidated(Observable o) {
-                    if (progressSlider.isValueChanging() && mediaPlayer != null) {
+                    if(mediaPlayer == null)
+                        return;
+
+                    if (progressSlider.isValueChanging()) {
                         mediaPlayer.seek(duration.multiply(progressSlider.getValue() / 100.0));
                     }
                 }
@@ -563,6 +568,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * media.
          */
         private void updateProgress() {
+            if(mediaPlayer == null)
+                        return;
             Duration currentTime = mediaPlayer.getCurrentTime();
             updateSlider(currentTime);
             updateTime(currentTime);
@@ -638,19 +645,20 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
             @Override
             public void run() {
-                if (mediaPlayer != null) {
-                    duration = mediaPlayer.getMedia().getDuration();
-                    long durationInMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
+                if (mediaPlayer == null)
+                    return;
+                
+                duration = mediaPlayer.getMedia().getDuration();
+                long durationInMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
 
-                    // pick out the total hours, minutes, seconds
-                    long durationSeconds = (int) durationInMillis / 1000;
-                    totalHours = (int) durationSeconds / 3600;
-                    durationSeconds -= totalHours * 3600;
-                    totalMinutes = (int) durationSeconds / 60;
-                    durationSeconds -= totalMinutes * 60;
-                    totalSeconds = (int) durationSeconds;
-                    updateProgress();
-                }
+                // pick out the total hours, minutes, seconds
+                long durationSeconds = (int) durationInMillis / 1000;
+                totalHours = (int) durationSeconds / 3600;
+                durationSeconds -= totalHours * 3600;
+                totalMinutes = (int) durationSeconds / 60;
+                durationSeconds -= totalMinutes * 60;
+                totalSeconds = (int) durationSeconds;
+                updateProgress();
             }
         }
 
@@ -663,14 +671,15 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
             @Override
             public void run() {
-                if (mediaPlayer != null) {
-                    Duration beginning = mediaPlayer.getStartTime();
-                    mediaPlayer.stop();
-                    mediaPlayer.pause();
-                    pauseButton.setText(PLAY_TEXT);
-                    updateSlider(beginning);
-                    updateTime(beginning);
-                }
+                if (mediaPlayer == null)
+                    return;
+
+                Duration beginning = mediaPlayer.getStartTime();
+                mediaPlayer.stop();
+                mediaPlayer.pause();
+                pauseButton.setText(PLAY_TEXT);
+                updateSlider(beginning);
+                updateTime(beginning);
             }
         }
 
