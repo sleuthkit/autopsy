@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.android.AndroidModuleFactory;
 import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
+import org.sleuthkit.autopsy.modules.imageExtractionParsing.ImageExtractorParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
@@ -58,7 +58,7 @@ final class IngestModuleFactoryLoader {
             add(HashLookupModuleFactory.class.getCanonicalName());
             add(FileTypeIdModuleFactory.class.getCanonicalName());
             add(ArchiveFileExtractorModuleFactory.class.getCanonicalName());
-            add(ExifParserModuleFactory.class.getCanonicalName());
+            add(ImageExtractorParserModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
             add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
