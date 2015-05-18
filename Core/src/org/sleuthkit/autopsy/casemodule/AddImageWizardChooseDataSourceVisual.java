@@ -326,6 +326,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             }
         } else {
             // validate locally
+            this.wizPanel.enableNextButton(true);
         }
     }
 
