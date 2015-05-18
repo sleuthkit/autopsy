@@ -189,50 +189,33 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if a video file that can be displayed 
      */
     private boolean isVideoSupported(AbstractFile file) {
-        if (videoMimes == null || videoMimes.isEmpty()) {
-            return false;
-        }
-        try {
-            // check BB
-            ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            for (BlackboardAttribute attribute : attributes) {
-                if (videoMimes.contains(attribute.getValueString())) {
-                    return true;
-                }
-            }
-            // use FileTypeDetector
-            if (videoMimes.contains(new FileTypeDetector().detectAndPostToBlackboard(file))) {
-                return true;
-            }
-        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            // return false;
-        }
-
-        // check extension
-        String name = file.getName().toLowerCase();
-        return containsExt(name, AUDIO_EXTENSIONS) || containsExt(name, videoExtensions);
-
+        videoExtensions.addAll(AUDIO_EXTENSIONS);
+        return isMediaSupported(file, videoMimes, videoExtensions);
     }
-    
+
     /**
      *
      * @param file
      * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-        if (imageMimes == null || imageMimes.isEmpty()) {
+        return isMediaSupported(file, imageMimes, imageExtensions);
+    }
+
+    private boolean isMediaSupported(AbstractFile file, SortedSet<String> mediaMimes, SortedSet<String> mediaExtensions ) {
+        if (mediaMimes == null || mediaMimes.isEmpty()) {
             return false;
         }
         try {
             // check BB
             ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
             for (BlackboardAttribute attribute : attributes) {
-                if (imageMimes.contains(attribute.getValueString())) {
+                if (mediaMimes.contains(attribute.getValueString())) {
                     return true;
                 }
             }
             // use FileTypeDetector
-            if (imageMimes.contains(new FileTypeDetector().detectAndPostToBlackboard(file))) {
+            if (mediaMimes.contains(new FileTypeDetector().detectAndPostToBlackboard(file))) {
                 return true;
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
@@ -240,7 +223,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
         // check extension
         String name = file.getName().toLowerCase();
-        return containsExt(name, imageExtensions);
+        return containsExt(name, mediaExtensions);
+
     }
     @Override
     public boolean isSupported(Node node) {
