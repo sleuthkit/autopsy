@@ -241,7 +241,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         if (res2 != null && res2 == DialogDescriptor.YES_OPTION) {
                             // if user say yes
                             try {
-                                createDirectory(caseDirPath);
+                                createDirectory(caseDirPath, getComponent().getCaseType());
                             } catch (Exception ex) {
                                 String errorMsg = NbBundle.getMessage(this.getClass(),
                                                                       "NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg",
@@ -258,7 +258,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         }
                     } else {
                         try {
-                            createDirectory(caseDirPath);
+                            createDirectory(caseDirPath, getComponent().getCaseType());
                         } catch (Exception ex) {
                             String errorMsg = NbBundle
                                     .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.cantCreateDir");
@@ -283,11 +283,11 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     /*
      * create the directory and create a new case
      */
-    private void createDirectory(final String caseDirPath) throws WizardValidationException {
-        // try to create the directory with the case name in the choosen parent directory
+    private void createDirectory(final String caseDirPath, CaseType caseType) throws WizardValidationException {
+        // try to create the directory with the case name in the chosen parent directory
         boolean success = false;
         try {
-            Case.createCaseDirectory(caseDirPath);
+            Case.createCaseDirectory(caseDirPath, caseType);
             success = true;
         } catch (CaseActionException ex) {
             logger.log(Level.SEVERE, "Could not createDirectory for the case, ", ex); //NON-NLS

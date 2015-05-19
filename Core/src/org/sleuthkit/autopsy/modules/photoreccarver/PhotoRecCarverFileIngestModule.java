@@ -142,8 +142,10 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
 
             // Check that we have roughly enough disk space left to complete the operation
+            // Some network drives always return -1 for free disk space. 
+            // In this case, expect enough space and move on.
             long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
-            if ((file.getSize() * 2) > freeDiskSpace) {
+            if ((freeDiskSpace!=-1) && ((file.getSize() * 2) > freeDiskSpace)) {
                 logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to carve unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
@@ -278,7 +280,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized static Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path = Paths.get(Case.getCurrentCase().getModulesOutputDirAbsPath(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        Path path = Paths.get(Case.getCurrentCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
         try {
             Files.createDirectory(path);
         }

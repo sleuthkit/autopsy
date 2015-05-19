@@ -89,17 +89,6 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
                 if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     Case newCase = (Case) evt.getNewValue();
                     setEnabled(newCase != null);
-
-                    // Make the cases' Reoports folder, if it doesn't exist
-                    if (newCase != null) {
-                        boolean exists = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).exists();
-                        if (!exists) {
-                            boolean reportCreate = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).mkdirs();
-                            if (!reportCreate) {
-                                logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist."); //NON-NLS
-                            }
-                        }
-                    }
                 }
             }
         });

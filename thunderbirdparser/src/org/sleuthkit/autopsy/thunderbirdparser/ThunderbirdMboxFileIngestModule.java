@@ -252,7 +252,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     public static String getModuleOutputPath() {
-        String outDir = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator
+        String outDir = Case.getCurrentCase().getModuleDirectory() + File.separator
                 + EmailParserModuleFactory.getModuleName();
         File dir = new File(outDir);
         if (dir.exists() == false) {
@@ -262,7 +262,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     public static String getRelModuleOutputPath() {
-        return Case.getModulesOutputDirRelPath() + File.separator
+        return Case.getCurrentCase().getModuleOutputDirectoryRelativePath() + File.separator
                 + EmailParserModuleFactory.getModuleName();
     }
 

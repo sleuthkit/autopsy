@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,48 +24,48 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Action in menu to open the folder containing the log files
+ * Action in menu to open the folder containing the output files
  */
 @ActionRegistration(
-        displayName = "#CTL_OpenLogFolder", iconInMenu = true)
-@ActionReference(path = "Menu/Help", position = 1750)
-@ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
-public final class OpenLogFolderAction implements ActionListener {
+        displayName = "#CTL_OpenOutputFolder", iconInMenu = true)
+@ActionReference(path = "Menu/Help", position = 1850)
+@ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
+public final class OpenOutputFolderAction implements ActionListener {
 
-    private static final Logger logger = Logger.getLogger(OpenLogFolderAction.class.getName());
+    private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
+
         try {
-            File logDir;
+            File outputDir;
             if (Case.isCaseOpen()) {
-                logDir = new File(Case.getCurrentCase().getLogDirectoryPath());
+                outputDir = new File(Case.getCurrentCase().getOutputDirectory());
+                if (outputDir.exists() == false) {
+                    NotifyDescriptor d
+                            = new NotifyDescriptor.Message(NbBundle.getMessage(this.getClass(),
+                                            "OpenOutputFolder.error1", outputDir.getAbsolutePath()),
+                                    NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(d);
+                } else {
+                    Desktop.getDesktop().open(outputDir);
+                }
             } else {
-                logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
-            }
-            if (logDir.exists() == false) {
-                NotifyDescriptor d
-                        = new NotifyDescriptor.Message(
-                                NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
-                                NotifyDescriptor.ERROR_MESSAGE);
-                DialogDisplayer.getDefault().notify(d);
-            } else {
-                Desktop.getDesktop().open(logDir);
+                JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenLogFolder.CouldNotOpenLogFolder"), ex); //NON-NLS
-
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(),"OpenOutputFolder.CouldNotOpenOutputFolder") , ex); //NON-NLS
         }
     }
 }

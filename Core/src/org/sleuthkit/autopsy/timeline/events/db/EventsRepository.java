@@ -22,6 +22,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalNotification;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,6 +94,8 @@ public class EventsRepository {
 
     private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
 
+    private static final String TIMELINE = "Timeline";
+    
     public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
         return eventDB.getBoundingEventsInterval(timeRange, filter);
     }
@@ -107,7 +110,11 @@ public class EventsRepository {
 
     public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         //TODO: we should check that case is open, or get passed a case object/directory -jm
-        this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
+        File thePath = new File(Case.getCurrentCase().getModuleDirectory() + File.separator + TIMELINE);
+        if (!thePath.exists()) {
+            thePath.mkdirs();
+        }
+        this.eventDB = EventDB.getEventDB(thePath.toString());
 
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
             //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
