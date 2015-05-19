@@ -37,8 +37,6 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -134,7 +132,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.WARNING, "Error initializing FileTypeDetector", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error initializing FileTypeDetector", ex); // NON-NLS
             throw new IngestModuleException("Error initializing FileTypeDetector"); // NON-NLS
         }
         ingester = Server.getIngester();

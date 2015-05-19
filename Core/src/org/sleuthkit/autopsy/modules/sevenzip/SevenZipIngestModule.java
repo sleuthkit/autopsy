@@ -24,7 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -104,7 +103,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.WARNING, "Error initializing FileTypeDetector", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error initializing FileTypeDetector", ex); // NON-NLS
             throw new IngestModuleException("Error initializing FileTypeDetector"); // NON-NLS
         }
 
