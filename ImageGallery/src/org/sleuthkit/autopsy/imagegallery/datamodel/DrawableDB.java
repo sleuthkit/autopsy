@@ -278,6 +278,10 @@ public class DrawableDB {
     public static DrawableDB getDrawableDB(String dbPath, ImageGalleryController controller) {
 
         try {
+            File db = new File(dbPath);
+            if (!db.exists()) {
+                db.mkdirs();
+            }
             DrawableDB drawableDB = new DrawableDB(dbPath + File.separator + "drawable.db");
             drawableDB.controller = controller;
             return drawableDB;

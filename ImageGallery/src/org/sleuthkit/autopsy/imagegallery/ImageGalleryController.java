@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,6 +84,8 @@ import org.sleuthkit.datamodel.TskData;
 public final class ImageGalleryController {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
+
+    private static final String IMAGEGALLERY = "ImageGallery";
 
     private final Region infoOverLayBackground = new Region() {
         {
@@ -332,7 +335,7 @@ public final class ImageGalleryController {
      */
     public synchronized void setCase(Case c) {
 
-        this.db = DrawableDB.getDrawableDB(c.getCaseDirectory(), this);
+        this.db = DrawableDB.getDrawableDB(c.getModuleDirectory() + File.separator + IMAGEGALLERY, this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(c));
         setStale(ImageGalleryModule.isCaseStale(c));
