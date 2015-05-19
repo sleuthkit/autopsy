@@ -38,31 +38,6 @@ public final class ExecUtil {
 
     private static final long DEFAULT_TIMEOUT = 5;
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
-    
-    /**
-     * Process termination codes. 
-     */
-    public enum ProcTerminationCode {
-
-        /**
-         * Property name that indicates the process was not terminated or canceled. 
-         */
-        NONE,        
-        /**
-         * Property name that indicates the process was terminated due to exceeding
-         * maximum allowable run time. 
-         */
-        TIME_OUT,
-        /**
-         * Property name that indicates the process was canceled.
-         */
-        CANCELATION,
-        /**
-         * Property name that indicates the process was terminated via custom 
-         * implementation of ProcessTerminator.
-         */
-        CUSTOM;
-    };    
 
     /**
      * The execute() methods do a wait() with a timeout on the executing process

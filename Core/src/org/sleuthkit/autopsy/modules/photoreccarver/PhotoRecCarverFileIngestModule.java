@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 
@@ -182,7 +183,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 cleanup(outputDirPath, tempFilePath);
                 logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
                 return IngestModule.ProcessResult.OK;
-            } else if (terminator.getTerminationCode() == ExecUtil.ProcTerminationCode.TIME_OUT) {
+            } else if (terminator.getTerminationCode() == ProcTerminationCode.TIME_OUT) {
                 cleanup(outputDirPath, tempFilePath);
                 String msg = NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.processTerminated") + file.getName(); // NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.moduleError"), msg); // NON-NLS                

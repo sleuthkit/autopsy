@@ -30,7 +30,7 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
 
     private final IngestJobContext context;
     private ExecUtil.TimedProcessTerminator timedTerminator;
-    private ExecUtil.ProcTerminationCode terminationCode;
+    private ProcTerminationCode terminationCode;
 
     /**
      * Constructs a process terminator for a file ingest module.
@@ -39,7 +39,7 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
      */
     public FileIngestModuleProcessTerminator(IngestJobContext context) {
         this.context = context;
-        this.terminationCode = ExecUtil.ProcTerminationCode.NONE;
+        this.terminationCode = ProcTerminationCode.NONE;
     }
 
     /**
@@ -75,12 +75,12 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
     public boolean shouldTerminateProcess() {
 
         if (this.context.fileIngestIsCancelled()) {
-            this.terminationCode = ExecUtil.ProcTerminationCode.CANCELATION;
+            this.terminationCode = ProcTerminationCode.CANCELATION;
             return true;
         }
 
         if (this.timedTerminator != null && this.timedTerminator.shouldTerminateProcess()) {
-            this.terminationCode = ExecUtil.ProcTerminationCode.TIME_OUT;
+            this.terminationCode = ProcTerminationCode.TIME_OUT;
             return true;            
         }
         
@@ -89,9 +89,9 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
 
     /**
      * Returns process termination code.
-     * @return ExecUtil.ProcTerminationCode Process termination code.
+     * @return ProcTerminationCode Process termination code.
      */
-    public ExecUtil.ProcTerminationCode getTerminationCode(){
+    public ProcTerminationCode getTerminationCode(){
         return this.terminationCode;
     }
 }
