@@ -78,8 +78,10 @@ import org.sleuthkit.datamodel.TskData;
     @ServiceProvider(service = FrameCapture.class)
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
-
-    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"}; //NON-NLS
+    
+    // Refer to https://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html
+    // for Javafx supported formats 
+    private static final String[] EXTENSIONS = new String[]{".m4v", ".fxm", ".flv", ".m3u8", ".mp4", ".aif", ".aiff", ".mp3", "m4a", ".wav"}; //NON-NLS
     private static final List<String> MIMETYPES = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
 
