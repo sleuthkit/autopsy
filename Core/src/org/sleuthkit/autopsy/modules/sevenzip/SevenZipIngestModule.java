@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
+import org.sleuthkit.autopsy.modules.filetypeidentifier.FileTypeIdentifier;
 
 /**
  * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
@@ -657,24 +658,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
      * @return true if zip file, false otherwise
      */
     private boolean isZipFileHeader(AbstractFile file) {
-        if (file.getSize() < readHeaderSize) {
-            return false;
-        }
-
-        try {
-            int bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
-            if (bytesRead != readHeaderSize) {
-                return false;
-            }
-        } catch (TskCoreException ex) {
-            //ignore if can't read the first few bytes, not a ZIP
-            return false;
-        }
-
-        ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
-        int signature = bytes.getInt();
-
-        return signature == ZIP_SIGNATURE_BE;
+        return FileTypeIdentifier.matchHeader(file, readHeaderSize, ZIP_SIGNATURE_BE);
     }
 
     /**
