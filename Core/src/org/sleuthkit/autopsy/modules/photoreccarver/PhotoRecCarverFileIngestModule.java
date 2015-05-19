@@ -52,7 +52,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 
@@ -174,27 +176,24 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
             processAndSettings.redirectErrorStream(true);
             processAndSettings.redirectOutput(Redirect.appendTo(log));
-
-            int exitValue = ExecUtil.execute(processAndSettings, new FileIngestModuleProcessTerminator(this.context));
+            
+            FileIngestModuleProcessTerminator terminator = new FileIngestModuleProcessTerminator(this.context, true);
+            int exitValue = ExecUtil.execute(processAndSettings, terminator);
             
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
-                // cleanup the output path
-                FileUtil.deleteDir(new File(outputDirPath.toString()));
-                if (null != tempFilePath && Files.exists(tempFilePath)) {
-                    tempFilePath.toFile().delete();
-                }
+                cleanup(outputDirPath, tempFilePath);
                 logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
                 return IngestModule.ProcessResult.OK;
-            }
-
-            else if (0 != exitValue) {
+            } else if (terminator.getTerminationCode() == ProcTerminationCode.TIME_OUT) {
+                cleanup(outputDirPath, tempFilePath);
+                String msg = NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.processTerminated") + file.getName(); // NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.moduleError"), msg); // NON-NLS                
+                logger.log(Level.SEVERE, msg);
+                return IngestModule.ProcessResult.ERROR;
+            } else if (0 != exitValue) {
                 // if it failed or was cancelled by timeout, result is ERROR
-                // cleanup the output path
-                FileUtil.deleteDir(new File(outputDirPath.toString()));
-                if (null != tempFilePath && Files.exists(tempFilePath)) {
-                    tempFilePath.toFile().delete();
-                }
+                cleanup(outputDirPath, tempFilePath);
                 logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}", // NON-NLS
                         new Object[]{exitValue, file.getName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
@@ -234,6 +233,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
         return IngestModule.ProcessResult.OK;
 
+    }
+    
+    private void cleanup(Path outputDirPath, Path tempFilePath) {
+        // cleanup the output path
+        FileUtil.deleteDir(new File(outputDirPath.toString()));
+        if (null != tempFilePath && Files.exists(tempFilePath)) {
+            tempFilePath.toFile().delete();
+        }
     }
 
     /**

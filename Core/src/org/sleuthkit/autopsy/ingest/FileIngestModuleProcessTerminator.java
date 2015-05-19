@@ -30,6 +30,7 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
 
     private final IngestJobContext context;
     private ExecUtil.TimedProcessTerminator timedTerminator;
+    private ProcTerminationCode terminationCode;
 
     /**
      * Constructs a process terminator for a file ingest module.
@@ -38,6 +39,7 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
      */
     public FileIngestModuleProcessTerminator(IngestJobContext context) {
         this.context = context;
+        this.terminationCode = ProcTerminationCode.NONE;
     }
 
     /**
@@ -50,6 +52,21 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
         this(context);
         this.timedTerminator = new ExecUtil.TimedProcessTerminator(maxRunTimeInSeconds);
     }
+    
+    
+    /**
+     * Constructs a process terminator for a file ingest module. Adds ability to 
+     * use global process termination time out.
+     *
+     * @param context The ingest job context for the ingest module.
+     * @param useGlobalTimeOut Flag whether to use global process termination timeout.
+     */
+    public FileIngestModuleProcessTerminator(IngestJobContext context, boolean useGlobalTimeOut) {
+        this(context);
+        if (useGlobalTimeOut) {
+            this.timedTerminator = new ExecUtil.TimedProcessTerminator();
+        }
+    }    
 
     /**
      * @inheritDoc
@@ -58,10 +75,23 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
     public boolean shouldTerminateProcess() {
 
         if (this.context.fileIngestIsCancelled()) {
+            this.terminationCode = ProcTerminationCode.CANCELATION;
             return true;
         }
 
-        return this.timedTerminator != null ? this.timedTerminator.shouldTerminateProcess() : false;
+        if (this.timedTerminator != null && this.timedTerminator.shouldTerminateProcess()) {
+            this.terminationCode = ProcTerminationCode.TIME_OUT;
+            return true;            
+        }
+        
+        return false;
     }
 
+    /**
+     * Returns process termination code.
+     * @return ProcTerminationCode Process termination code.
+     */
+    public ProcTerminationCode getTerminationCode(){
+        return this.terminationCode;
+    }
 }
