@@ -53,13 +53,8 @@ public class ImageUtils {
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-    private static final List<String> SUPP_MIME_TYPES;
-    
+    private static final List<String> SUPP_MIME_TYPES = new ArrayList(Arrays.asList(ImageIO.getReaderMIMETypes()));
     static {
-        SUPP_MIME_TYPES = new ArrayList();
-        for (String mimeType : Arrays.asList(ImageIO.getReaderMIMETypes())) {
-            SUPP_MIME_TYPES.add(mimeType);
-        }
         SUPP_MIME_TYPES.add("image/x-ms-bmp");
     }
     
