@@ -34,6 +34,12 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * Action to open the New Case wizard.
@@ -91,26 +97,36 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         if (finished) {
             // now start the 'Add Image' wizard
             //TODO fix for local
-            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-            addImageAction.actionPerformed(null);
+            CaseType currentCaseType = CaseType.fromString(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, ModuleSettings.CURRENT_CASE_TYPE));
+            CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+            if ((currentCaseType==CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.UNKNOWN) && info.settingsValid())) {
+                AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+                addImageAction.actionPerformed(null);
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
+                        NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
+                        JOptionPane.ERROR_MESSAGE);
+                isCancelled = true;
+            }
         }
 
         // if Cancel button is pressed
         if (isCancelled) {
             String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-            if(createdDirectory != null) {
-                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
-                Case.deleteCaseDirectory(new File(createdDirectory));
-            }
             // if there's case opened, close the case
-            if (Case.existsCurrentCase()) {
-                // close the previous case if there's any
-                CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
-                closeCase.actionPerformed(null);
-            }
-        }
-        panels = null; // reset the panel
-    }
+             if (Case.existsCurrentCase()) {
+                 // close the previous case if there's any
+                 CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
+                 closeCase.actionPerformed(null);
+             }
+             if (createdDirectory != null) {
+                 logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
+                 Case.deleteCaseDirectory(new File(createdDirectory));
+             }
+         }
+         panels = null; // reset the panel
+     }
 
     /**
      * Initialize panels representing individual wizard's steps and sets
