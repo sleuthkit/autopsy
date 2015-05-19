@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -63,6 +65,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private volatile boolean filesToFire = false;
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private static FileTypeDetector fileTypeDetector;
         
     ExifParserFileIngestModule() {
     }
@@ -71,6 +74,11 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {    
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.WARNING, "Error initializing FileTypeDetector", ex); // NON-NLS
+        }
     }
 
     
@@ -197,7 +205,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        return ImageUtils.isJpegFileHeader(f);
+        return fileTypeDetector.getFileType(f).equals("image/jpeg");
     }
 
     @Override
