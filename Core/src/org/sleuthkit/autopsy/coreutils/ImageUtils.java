@@ -33,11 +33,9 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -55,7 +53,16 @@ public class ImageUtils {
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-    private static final List<String> SUPP_MIME_TYPES = Arrays.asList(ImageIO.getReaderMIMETypes());
+    private static final List<String> SUPP_MIME_TYPES;
+    
+    static {
+        SUPP_MIME_TYPES = new ArrayList();
+        for (String mimeType : Arrays.asList(ImageIO.getReaderMIMETypes())) {
+            SUPP_MIME_TYPES.add(mimeType);
+        }
+        SUPP_MIME_TYPES.add("image/x-ms-bmp");
+    }
+    
     /**
      * Get the default Icon, which is the icon for a file.
      * @return 
@@ -88,14 +95,17 @@ public class ImageUtils {
                     return true;
                 }
             }
+            // if the file type is known and we don't support it, bail
+            if (attributes.size() > 0) {
+                return false;
+            }
         } 
         catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
         }
         
-        final String extension = f.getNameExtension();
-        
         // if we have an extension, check it
+        final String extension = f.getNameExtension();
         if (extension.equals("") == false) {
             // Note: thumbnail generator only supports JPG, GIF, and PNG for now
             if (SUPP_EXTENSIONS.contains(extension)) {
@@ -109,7 +119,8 @@ public class ImageUtils {
 
    
     /**
-     * Get an icon of a specified size.
+     * Get a thumbnail of a specified size. Generates the image if it is 
+     * not already cached. 
      * 
      * @param content
      * @param iconSize
@@ -118,6 +129,7 @@ public class ImageUtils {
     public static Image getIcon(Content content, int iconSize) {
         Image icon;
         // If a thumbnail file is already saved locally
+        // @@@ Bug here in that we do not refer to size in the cache. 
         File file = getFile(content.getId());
         if (file.exists()) {
             try {
@@ -125,7 +137,7 @@ public class ImageUtils {
                 if (bicon == null) {
                     icon = DEFAULT_ICON;
                 } else if (bicon.getWidth() != iconSize) {
-                    icon = generateAndSaveIcon(content, iconSize);    
+                    icon = generateAndSaveIcon(content, iconSize, file);    
                 } else {
                     icon = bicon;    
                 }
@@ -134,18 +146,17 @@ public class ImageUtils {
                 icon = DEFAULT_ICON;
             }
         } else { // Make a new icon
-            icon = generateAndSaveIcon(content, iconSize);
+            icon = generateAndSaveIcon(content, iconSize, file);
         }
         return icon;
     }
     
     /**
-     * Get the cached file of the icon. Generates the icon and its file if it 
-     * doesn't already exist, so this method guarantees to return a file that
-     * exists.
+     * Get a thumbnail of a specified size. Generates the image if it is 
+     * not already cached. 
      * @param content
      * @param iconSize
-     * @return 
+     * @return File object for cached image. Is guaranteed to exist. 
      */
     public static File getIconFile(Content content, int iconSize) {
         if (getIcon(content, iconSize) != null) {
@@ -155,13 +166,12 @@ public class ImageUtils {
     }
     
     /**
-     * Get the cached file of the content object with the given id. 
-     * 
-     * The returned file may not exist.
+     * Get a file object for where the cached icon should exist.  The returned file may not exist.
      * 
      * @param id
      * @return 
      */
+    // TODO: This should be private and be renamed to something like  getCachedThumbnailLocation().
     public static File getFile(long id) {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
     }
@@ -223,18 +233,24 @@ public class ImageUtils {
     }
     
     
-    private static Image generateAndSaveIcon(Content content, int iconSize) { 
+    /**
+     * Generate an icon and save it to specified location. 
+     * @param content File to generate icon for
+     * @param iconSize
+     * @param saveFile Location to save thumbnail to
+     * @return Generated icon or null on error
+     */
+    private static Image generateAndSaveIcon(Content content, int iconSize, File saveFile) { 
         Image icon = null;
         try {
             icon = generateIcon(content, iconSize);
             if (icon == null) {
                 return DEFAULT_ICON;
             } else {
-                File f = getFile(content.getId());
-                if (f.exists()) {
-                    f.delete();
+                if (saveFile.exists()) {
+                    saveFile.delete();
                 }
-                ImageIO.write((BufferedImage) icon, "png", getFile(content.getId())); //NON-NLS
+                ImageIO.write((BufferedImage) icon, "png", saveFile); //NON-NLS
             }         
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
@@ -243,7 +259,7 @@ public class ImageUtils {
     }
     
     /*
-     * Generate a scaled image
+     * Generate and return a scaled image
      */
     private static BufferedImage generateIcon(Content content, int iconSize) {
 
