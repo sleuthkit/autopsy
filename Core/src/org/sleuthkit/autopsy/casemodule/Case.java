@@ -216,7 +216,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.caseType = type;
         this.db = db;
         this.services = new Services(db);
-        setHostName();
     }
 
     /**
@@ -755,11 +754,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return tempDirectoryPath
      */
     public String getTempDirectory() {
-        File tempPath = new File(getHostDirectory() + File.separator + TEMP_FOLDER);
-        if (!tempPath.exists()) {
-            tempPath.mkdirs();
-        }
-        return tempPath.toString();
+        return getDirectory(TEMP_FOLDER);
     }
 
     /**
@@ -769,11 +764,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return cacheDirectoryPath
      */
     public String getCacheDirectory() {
-        File cachePath = new File(getHostDirectory() + File.separator + CACHE_FOLDER);
-        if (!cachePath.exists()) {
-            cachePath.mkdirs();
-        }
-        return cachePath.toString();
+        return getDirectory(CACHE_FOLDER);
     }
 
     /**
@@ -783,11 +774,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return exportDirectoryPath
      */
     public String getExportDirectory() {
-        File exportPath = new File(getHostDirectory() + File.separator + EXPORT_FOLDER);
-        if (!exportPath.exists()) {
-            exportPath.mkdirs();
-        }
-        return exportPath.toString();
+        return getDirectory(EXPORT_FOLDER);
     }
 
     /**
@@ -797,11 +784,143 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return logDirectoryPath
      */
     public String getLogDirectoryPath() {
-        File logPath = new File(getHostDirectory() + File.separator + LOG_FOLDER);
-        if (!logPath.exists()) {
-            logPath.mkdirs();
+        return getDirectory(LOG_FOLDER);
+    }
+
+    /**
+     * Get the reports directory path where modules should save their reports.
+     * Will create it if it does not already exist.
+     *
+     * @return absolute path to the report output directory
+     */
+    public String getReportDirectory() {
+        return getDirectory(REPORTS_FOLDER);
+    }
+
+    /**
+     * Get module output directory path where modules should save their
+     * permanent data.
+     *
+     * @return absolute path to the module output directory
+     */
+    public String getModuleDirectory() {
+        return getDirectory(MODULE_FOLDER);
+    }
+
+    /**
+     * Get the output directory path where modules should save their permanent
+     * data. If single-user case, the directory is a subdirectory of the case
+     * directory. If multi-user case, the directory is a subdirectory of
+     * HostName, which is a subdirectory of the case directory.
+     *
+     * @return the path to the host output directory
+     */
+    public String getOutputDirectory() {
+        return getHostDirectory();
+    }
+
+    /**
+     * Get the specified directory path, create it if it does not already exist.
+     *
+     * @return absolute path to the directory
+     */
+    private String getDirectory(String input) {
+        File theDirectory = new File(getHostDirectory() + File.separator + input);
+        if (!theDirectory.exists()) {  // Create it if it doesn't exist already.
+            theDirectory.mkdirs();
         }
-        return logPath.toString();
+        return theDirectory.toString();
+    }
+
+    /**
+     * Get relative (with respect to case dir) module output directory path
+     * where modules should save their permanent data. The directory is a
+     * subdirectory of this case dir.
+     *
+     * @return relative path to the module output dir
+     */
+    public String getModuleOutputDirectoryRelativePath() {
+        Path thePath;
+        if (getCaseType() == CaseType.MULTI_USER_CASE) {
+            thePath = Paths.get(getLocalHostName(), MODULE_FOLDER);
+        } else {
+            thePath = Paths.get(MODULE_FOLDER);
+        }
+        // Do not autocreate this relative path. It will have already been
+        // created when the case was made.
+        return thePath.toString();
+    }
+
+    /**
+     * Get the host output directory path where modules should save their
+     * permanent data. If single-user case, the directory is a subdirectory of
+     * the case directory. If multi-user case, the directory is a subdirectory
+     * of HostName, which is a subdirectory of the case directory.
+     *
+     * @return the path to the host output directory
+     */
+    private String getHostDirectory() {
+        String caseDirectory = getCaseDirectory();
+        Path hostPath;
+        if (caseType == CaseType.MULTI_USER_CASE) {
+            hostPath = Paths.get(caseDirectory, getLocalHostName());
+        } else {
+            hostPath = Paths.get(caseDirectory);
+        }
+        if (!hostPath.toFile().exists()) {
+            hostPath.toFile().mkdirs();
+        }
+        return hostPath.toString();
+    }
+
+    /**
+     * Get module output directory path where modules should save their
+     * permanent data.
+     *
+     * @return absolute path to the module output directory
+     * @deprecated Use getModuleDirectory() instead.
+     */
+    @Deprecated
+    public String getModulesOutputDirAbsPath() {
+        return getModuleDirectory();
+    }
+
+    /**
+     * Get relative (with respect to case dir) module output directory path
+     * where modules should save their permanent data. The directory is a
+     * subdirectory of this case dir.
+     *
+     * @return relative path to the module output dir
+     * @deprecated Use getModuleOutputDirectoryRelativePath() instead
+     */
+    @Deprecated
+    public static String getModulesOutputDirRelPath() {
+        return "ModuleOutput"; //NON-NLS
+    }
+
+    /**
+     * Gets a PropertyChangeSupport object. The PropertyChangeSupport object
+     * returned is not used by instances of this class and does not have any
+     * PropertyChangeListeners.
+     *
+     * @return A new PropertyChangeSupport object.
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public static PropertyChangeSupport getPropertyChangeSupport() {
+        return new PropertyChangeSupport(Case.class);
+    }
+
+    /**
+     * Get the data model Content objects in the root of this case's hierarchy.
+     *
+     * @return a list of the root objects
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public List<Content> getDataSources() throws TskCoreException {
+        List<Content> list = db.getRootObjects();
+        hasData = (list.size() > 0);
+        return list;
     }
 
     /**
@@ -828,113 +947,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         } else {
             return xmlcm.getTextIndexName();
         }
-    }
-
-    /**
-     * Get the host output directory path where modules should save their
-     * permanent data. If single-user case, the directory is a subdirectory of
-     * the case directory. If multi-user case, the directory is a subdirectory
-     * of HostName, which is a subdirectory of the case directory.
-     *
-     * @return the path to the host output directory
-     */
-    private String getHostDirectory() {
-        String caseDirectory = getCaseDirectory();
-        Path hostPath;
-        if (caseType == CaseType.MULTI_USER_CASE) {
-            hostPath = Paths.get(caseDirectory, HostName);
-        } else {
-            hostPath = Paths.get(caseDirectory);
-        }
-        if (!hostPath.toFile().exists()) {
-            hostPath.toFile().mkdirs();
-        }
-        return hostPath.toString();
-    }
-
-     /**
-     * Get the output directory path where modules should save their
-     * permanent data. If single-user case, the directory is a subdirectory of 
-     * the case directory. If multi-user case, the directory is a subdirectory 
-     * of HostName, which is a subdirectory of the case directory.
-     *
-     * @return the path to the host output directory
-     */
-    public String getOutputDirectory() {
-        return getHostDirectory();
-    }
-
-    
-    /**
-     * Get the reports directory path where modules should save their reports.
-     * Will create it if it does not already exist.
-     *
-     * @return absolute path to the report output directory
-     */
-    public String getReportDirectory() {
-        File reportPath = new File(getHostDirectory() + File.separator + REPORTS_FOLDER);
-        if (!reportPath.exists()) {
-            reportPath.mkdirs();
-        }
-        return reportPath.toString();
-    }
-
-    /**
-     * Get module output directory path where modules should save their
-     * permanent data.
-     *
-     * @return absolute path to the module output dir
-     */
-    public String getModulesOutputDirAbsPath() {
-        File modulePath = new File(this.getHostDirectory() + File.separator + MODULE_FOLDER);
-        if (!modulePath.exists()) {
-            modulePath.mkdirs();
-        }
-        return modulePath.toString();
-    }
-
-    /**
-     * Get relative (with respect to case dir) module output directory path
-     * where modules should save their permanent data. The directory is a
-     * subdirectory of this case dir.
-     *
-     * @return relative path to the module output dir
-     */
-    public String getModulesOutputDirRelPath() {
-        Path thePath;
-        if (getCaseType() == CaseType.MULTI_USER_CASE) {
-            thePath = Paths.get(HostName, MODULE_FOLDER);
-        } else {
-            thePath = Paths.get(MODULE_FOLDER);
-        }
-        // Do not autocreate this relative path. It will have already been
-        // created when the case was made.
-        return thePath.toString();
-    }
-
-    /**
-     * Gets a PropertyChangeSupport object. The PropertyChangeSupport object
-     * returned is not used by instances of this class and does not have any
-     * PropertyChangeListeners.
-     *
-     * @return A new PropertyChangeSupport object.
-     * @deprecated Do not use.
-     */
-    @Deprecated
-    public static PropertyChangeSupport getPropertyChangeSupport() {
-        return new PropertyChangeSupport(Case.class);
-    }
-
-    /**
-     * Get the data model Content objects in the root of this case's hierarchy.
-     *
-     * @return a list of the root objects
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    public List<Content> getDataSources() throws TskCoreException {
-        List<Content> list = db.getRootObjects();
-        hasData = (list.size() > 0);
-        return list;
     }
 
     /**
@@ -1150,18 +1162,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
 
             // create the folders inside the case directory
-            String hostClause = "";
-            if (HostName == null || HostName.isEmpty()) {
-                setHostName();
-            }
-
+            String hostClause="";
+            
             if (caseType == CaseType.MULTI_USER_CASE) {
-                hostClause = File.separator + HostName;
+                hostClause = File.separator + getLocalHostName();
             }
-            result = result && (new File(caseDir + hostClause + File.separator + XMLCaseManagement.EXPORT_FOLDER_RELPATH)).mkdirs()
-                    && (new File(caseDir + hostClause + File.separator + XMLCaseManagement.LOG_FOLDER_RELPATH)).mkdirs()
-                    && (new File(caseDir + hostClause + File.separator + XMLCaseManagement.TEMP_FOLDER_RELPATH)).mkdirs()
-                    && (new File(caseDir + hostClause + File.separator + XMLCaseManagement.CACHE_FOLDER_RELPATH)).mkdirs();
+            result = result && (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
+                    && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
+                    && (new File(caseDir + hostClause + File.separator + TEMP_FOLDER)).mkdirs()
+                    && (new File(caseDir + hostClause + File.separator + CACHE_FOLDER)).mkdirs();
 
             if (result == false) {
                 throw new CaseActionException(
@@ -1258,7 +1267,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param openedCase
      */
     private static void checkSubFolders(Case openedCase) {
-        String modulesOutputDir = openedCase.getModulesOutputDirAbsPath();
+        String modulesOutputDir = openedCase.getModuleDirectory();
         File modulesOutputDirF = new File(modulesOutputDir);
         if (!modulesOutputDirF.exists()) {
             logger.log(Level.INFO, "Creating modules output dir for the case."); //NON-NLS
@@ -1377,18 +1386,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Have it read the environment variable if getHostName() is unsuccessful.
      * Also note that some calls into the Case class are static via Case.*, so
      * anywhere we use HOSTNAME prior to a Case class being instantiated, we
-     * must call setHostName() first.
+     * must call getLocalHostName() first.
      */
-    private static void setHostName() {
-        try {
-            HostName = java.net.InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException ex) {
-            // getLocalHost().getHostName() can fail in some situations. 
-            // Use environment variable if so.
-            HostName = System.getenv("COMPUTERNAME");
-        }
+    private static String getLocalHostName() {
         if (HostName == null || HostName.isEmpty()) {
-            HostName = System.getenv("COMPUTERNAME");
+            try {
+                HostName = java.net.InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException ex) {
+                // getLocalHost().getHostName() can fail in some situations. 
+                // Use environment variable if so.
+                HostName = System.getenv("COMPUTERNAME");
+            }
+            if (HostName == null || HostName.isEmpty()) {
+                HostName = System.getenv("COMPUTERNAME");
+            }
         }
+        return HostName;
     }
 }

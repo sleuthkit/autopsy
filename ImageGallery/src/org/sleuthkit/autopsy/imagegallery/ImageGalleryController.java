@@ -85,7 +85,7 @@ public final class ImageGalleryController {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
 
-    private static final String TIMELINE = "Timeline";
+    private static final String IMAGEGALLERY = "ImageGallery";
 
     private final Region infoOverLayBackground = new Region() {
         {
@@ -335,7 +335,7 @@ public final class ImageGalleryController {
      */
     public synchronized void setCase(Case c) {
 
-        this.db = DrawableDB.getDrawableDB(c.getModulesOutputDirAbsPath() + File.separator + TIMELINE, this);
+        this.db = DrawableDB.getDrawableDB(c.getModulesOutputDirAbsPath() + File.separator + IMAGEGALLERY, this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(c));
         setStale(ImageGalleryModule.isCaseStale(c));

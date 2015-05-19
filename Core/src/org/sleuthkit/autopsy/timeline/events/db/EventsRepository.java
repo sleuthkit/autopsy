@@ -110,7 +110,7 @@ public class EventsRepository {
 
     public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         //TODO: we should check that case is open, or get passed a case object/directory -jm
-        File thePath = new File(Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator + TIMELINE);
+        File thePath = new File(Case.getCurrentCase().getModuleDirectory() + File.separator + TIMELINE);
         if (!thePath.exists()) {
             thePath.mkdirs();
         }

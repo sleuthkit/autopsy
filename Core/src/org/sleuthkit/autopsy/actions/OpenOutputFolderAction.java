@@ -23,15 +23,16 @@ import java.awt.event.ActionListener;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Action in menu to open the folder containing the output files
@@ -41,6 +42,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionReference(path = "Menu/Help", position = 1850)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction implements ActionListener {
+
+    private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -52,7 +55,7 @@ public final class OpenOutputFolderAction implements ActionListener {
                 if (outputDir.exists() == false) {
                     NotifyDescriptor d
                             = new NotifyDescriptor.Message(NbBundle.getMessage(this.getClass(),
-                                    "OpenOutputFolder.error1", outputDir.getAbsolutePath()),
+                                            "OpenOutputFolder.error1", outputDir.getAbsolutePath()),
                                     NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                 } else {
@@ -62,7 +65,7 @@ public final class OpenOutputFolderAction implements ActionListener {
                 JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
             }
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(),"OpenOutputFolder.CouldNotOpenOutputFolder") , ex); //NON-NLS
         }
     }
 }

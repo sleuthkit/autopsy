@@ -262,7 +262,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     public static String getRelModuleOutputPath() {
-        return Case.getCurrentCase().getModulesOutputDirRelPath() + File.separator
+        return Case.getCurrentCase().getModuleOutputDirectoryRelativePath() + File.separator
                 + EmailParserModuleFactory.getModuleName();
     }
 

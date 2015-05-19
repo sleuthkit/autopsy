@@ -23,16 +23,16 @@ import java.awt.event.ActionListener;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Action in menu to open the folder containing the log files
@@ -43,19 +43,20 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
 public final class OpenLogFolderAction implements ActionListener {
 
+    private static final Logger logger = Logger.getLogger(OpenLogFolderAction.class.getName());
+
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
             File logDir;
             if (Case.isCaseOpen()) {
                 logDir = new File(Case.getCurrentCase().getLogDirectoryPath());
-            }
-            else {
+            } else {
                 logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
             }
             if (logDir.exists() == false) {
-                NotifyDescriptor d =
-                        new NotifyDescriptor.Message(
+                NotifyDescriptor d
+                        = new NotifyDescriptor.Message(
                                 NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
                                 NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(d);
@@ -63,7 +64,8 @@ public final class OpenLogFolderAction implements ActionListener {
                 Desktop.getDesktop().open(logDir);
             }
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenLogFolder.CouldNotOpenLogFolder"), ex); //NON-NLS
+
         }
     }
 }
