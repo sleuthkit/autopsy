@@ -37,8 +37,6 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -74,7 +72,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private Indexer indexer;
-    //only search images from current ingest, not images previously ingested/indexed
+    private static FileTypeDetector fileTypeDetector;
+//only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
@@ -130,6 +129,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         jobId = context.getJobId();  
         dataSourceId = context.getDataSource().getId();
         
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, "Error initializing FileTypeDetector", ex); // NON-NLS
+            throw new IngestModuleException("Error initializing FileTypeDetector"); // NON-NLS
+        }
         ingester = Server.getIngester();
         this.context = context;
 
@@ -470,30 +475,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            
-            
-            // try to get the file type from the BB
-            String detectedFormat = null;
-            try {
-                ArrayList<BlackboardAttribute> attributes = aFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-                for (BlackboardAttribute attribute : attributes) {
-                    detectedFormat = attribute.getValueString();
-                    break;
-                }
-            } catch (TskCoreException ex) {
-            }
-            // else, use FileType module to detect the format
+            String detectedFormat = fileTypeDetector.getFileType(aFile);
             if (detectedFormat == null) {
-                try {
-                    detectedFormat = new FileTypeDetector().detectAndPostToBlackboard(aFile);
-                } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
-                }
-                if (detectedFormat == null) {
-                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
-                } 
+                logger.log(Level.WARNING, "Could not detect format using fileTypeDetector for file: {0}", aFile); //NON-NLS
+                return;
             }
 
             // we skip archive formats that are opened by the archive module. 

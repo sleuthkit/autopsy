@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.logging.Level;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -37,6 +40,7 @@ public class FileTypeDetector {
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final Map<String, FileType> userDefinedFileTypes;
+    private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
 
     /**
      * Constructs an object that detects the type of a file by an inspection of
@@ -91,6 +95,47 @@ public class FileTypeDetector {
             return m.contains(mediaType);
         }
         return false;
+    }
+
+    /**
+     * This method returns a string representing the mimetype of the provided
+     * abstractFile. Blackboard-lookup is performed to check if the mimetype has
+     * been already detected. If not, mimetype is determined using Apache Tika.
+     *
+     * @param abstractFile the file whose mimetype is to be determined.
+     * @return mimetype of the abstractFile is returned. Empty String returned
+     * in case of error.
+     */
+    public synchronized String getFileType(AbstractFile abstractFile) {
+        String identifiedFileType = "";
+
+        // check BB
+        try {
+            ArrayList<BlackboardAttribute> attributes = abstractFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                identifiedFileType = attribute.getValueString();
+                break;
+            }
+            if (identifiedFileType != null && !identifiedFileType.isEmpty()) {
+                return identifiedFileType;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error performing mimetype blackboard-lookup for " + abstractFile.getName(), ex);
+        }
+
+        try {
+            // check UDF and TDF
+            identifiedFileType = detectAndPostToBlackboard(abstractFile);
+            if (identifiedFileType != null && !identifiedFileType.isEmpty()) {
+                return identifiedFileType;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error determining the mimetype for " + abstractFile.getName(), ex); // NON-NLS
+            return ""; // NON-NLS
+        }
+
+        logger.log(Level.WARNING, "Unable to determine the mimetype for {0}", abstractFile.getName()); // NON-NLS
+        return ""; // NON-NLS
     }
 
     /**
