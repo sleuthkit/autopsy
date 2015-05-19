@@ -78,6 +78,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             logger.log(Level.WARNING, "Error initializing FileTypeDetector", ex); // NON-NLS
+            throw new IngestModuleException("Error initializing FileTypeDetector"); // NON-NLS
         }
     }
 
