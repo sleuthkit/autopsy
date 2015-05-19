@@ -198,8 +198,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         settings.putProperty("caseParentDir", getComponent().getCaseParentDir()); //NON-NLS
         settings.putProperty("createdDirectory", createdDirectory); //NON-NLS
         settings.putProperty("caseType", caseType.ordinal()); //NON-NLS
-        UserPreferences.setNewCaseType(caseType.ordinal());
-       
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, ModuleSettings.CURRENT_CASE_TYPE, caseType.toString());
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
