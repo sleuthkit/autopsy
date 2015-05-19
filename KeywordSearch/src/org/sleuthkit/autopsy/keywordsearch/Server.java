@@ -650,7 +650,7 @@ public class Server {
      * @return absolute path to index dir
      */
     String getIndexDirPath(Case theCase) {
-        String indexDir = theCase.getModulesOutputDirAbsPath() +
+        String indexDir = theCase.getModuleDirectory() +
         File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         return indexDir;
     }

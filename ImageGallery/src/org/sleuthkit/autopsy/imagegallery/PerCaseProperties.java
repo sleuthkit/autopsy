@@ -114,7 +114,7 @@ class PerCaseProperties {
      * file doesn't exist.
      */
     private synchronized String getPropertyPath(String moduleName) {
-        return c.getModulesOutputDirAbsPath() + File.separator + moduleName + File.separator + moduleName + ".properties"; //NON-NLS
+        return c.getModuleDirectory() + File.separator + moduleName + File.separator + moduleName + ".properties"; //NON-NLS
     }
 
     /**

@@ -335,7 +335,7 @@ public final class ImageGalleryController {
      */
     public synchronized void setCase(Case c) {
 
-        this.db = DrawableDB.getDrawableDB(c.getModulesOutputDirAbsPath() + File.separator + IMAGEGALLERY, this);
+        this.db = DrawableDB.getDrawableDB(c.getModuleDirectory() + File.separator + IMAGEGALLERY, this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(c));
         setStale(ImageGalleryModule.isCaseStale(c));
