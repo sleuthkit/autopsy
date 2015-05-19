@@ -461,6 +461,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             // unallocated and unused blocks can only have strings extracted from them. 
             if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
                 extractStringsAndIndex(aFile);
+                return;
             }
 
             final long size = aFile.getSize();
