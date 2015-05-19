@@ -103,40 +103,39 @@ public class FileTypeDetector {
      * been already detected. If not, mimetype is determined using Apache Tika.
      *
      * @param abstractFile the file whose mimetype is to be determined.
-     * @return mimetype of the abstractFile is returned. Null value returned in
-     * case of error.
+     * @return mimetype of the abstractFile is returned. Empty String returned
+     * in case of error.
      */
     public synchronized String getFileType(AbstractFile abstractFile) {
-        String identifiedFileType = null;
+        String identifiedFileType = "";
 
         // check BB
-        ArrayList<BlackboardAttribute> attributes = null;
         try {
-            attributes = abstractFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            ArrayList<BlackboardAttribute> attributes = abstractFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
+                identifiedFileType = attribute.getValueString();
+                break;
+            }
+            if (identifiedFileType != null && !identifiedFileType.isEmpty()) {
+                return identifiedFileType;
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error performing mimetype blackboard-lookup for " + abstractFile.getName(), ex);
-        }
-        for (BlackboardAttribute attribute : attributes) {
-            identifiedFileType = attribute.getValueString();
-            break;
-        }
-
-        if (identifiedFileType != null) {
-            return identifiedFileType;
         }
 
         try {
             // check UDF and TDF
             identifiedFileType = detectAndPostToBlackboard(abstractFile);
-            if (identifiedFileType != null) {
+            if (identifiedFileType != null && !identifiedFileType.isEmpty()) {
                 return identifiedFileType;
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error determining the mimetype for " + abstractFile.getName(), ex);
-            return null;
+            logger.log(Level.WARNING, "Error determining the mimetype for " + abstractFile.getName(), ex); // NON-NLS
+            return ""; // NON-NLS
         }
 
-        return null;
+        logger.log(Level.WARNING, "Unable to determine the mimetype for {0}", abstractFile.getName()); // NON-NLS
+        return ""; // NON-NLS
     }
 
     /**
