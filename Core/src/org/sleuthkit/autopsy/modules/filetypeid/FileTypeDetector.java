@@ -106,7 +106,7 @@ public class FileTypeDetector {
      * @return mimetype of the abstractFile is returned. Empty String returned
      * in case of error.
      */
-    public synchronized String getFileType(AbstractFile abstractFile) {
+    public String getFileType(AbstractFile abstractFile) {
         String identifiedFileType = "";
 
         // check BB
@@ -147,7 +147,7 @@ public class FileTypeDetector {
      * @return The MIME type name id detection was successful, null otherwise.
      * @throws TskCoreException if there is an error posting to the blackboard.
      */
-    public synchronized String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
+    public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
         String mimeType = detect(file);
         if (null != mimeType) {
             /**

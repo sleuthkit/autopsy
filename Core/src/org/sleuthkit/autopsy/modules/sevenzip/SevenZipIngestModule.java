@@ -90,7 +90,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
     private IngestJobContext context;
     private long jobId;
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private static FileTypeDetector fileTypeDetector;
+    private FileTypeDetector fileTypeDetector;
 
     SevenZipIngestModule() {
     }

@@ -63,7 +63,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private volatile boolean filesToFire = false;
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private static FileTypeDetector fileTypeDetector;
+    private FileTypeDetector fileTypeDetector;
         
     ExifParserFileIngestModule() {
     }

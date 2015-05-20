@@ -72,7 +72,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private Indexer indexer;
-    private static FileTypeDetector fileTypeDetector;
+    private FileTypeDetector fileTypeDetector;
 //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
