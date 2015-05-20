@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.sevenzip;
+package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -31,10 +31,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * interface panels used to configure the settings for instances of the modules.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
+public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return NbBundle.getMessage(SevenZipIngestModule.class, "SevenZipIngestModule.moduleName");
+        return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class, "SevenZipIngestModule.moduleName");
     }
 
     @Override
@@ -44,7 +44,7 @@ public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(SevenZipIngestModule.class,
+        return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
                 "SevenZipIngestModule.moduleDesc.text");
     }
 
@@ -60,6 +60,6 @@ public class ArchiveFileExtractorModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new SevenZipIngestModule();
+        return new EmbeddedFileExtractorIngestModule();
     }
 }
