@@ -55,7 +55,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private JFileChooser fc = new JFileChooser();
 
     List<WizardPathValidator> pathValidatorList = new ArrayList<>();
-    private static final Pattern driveLetterPattern = Pattern.compile("^([Cc]):.*$");
+    private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
     
     // Externally supplied name is used to store settings 
     private String contextName;
@@ -295,7 +295,12 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         return (isExist || isPhysicalDrive || isPartition);
     }
     
-    
+    /**
+     * Validates path to selected data source. Calls WizardPathValidator service provider
+     * if one is available. Otherwise performs path validation locally.
+     * @param path Absolute path to the selected data source
+     * @return true if path is valid, false otherwise.
+     */
     private boolean isImagePathValid(String path){
         
         errorLabel.setVisible(false);
@@ -310,7 +315,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             if (Case.getCurrentCase().getCaseType() == CaseType.MULTI_USER_CASE) {
                 // check that path is not on "C:" drive
                 if (pathOnCDrive(path)) {
-                    errorString = NbBundle.getMessage(this.getClass(), "ImageFilePanel.DataSourceOnCDriveError.text");  //NON-NLS
+                    errorString = NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text");  //NON-NLS
                 } 
             } else {
                 // single user case - no validation needed
