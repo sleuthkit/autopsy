@@ -44,12 +44,10 @@ The blackboard allows modules to communicate with each other and the UI. It has 
 
 The blackboard is not unique to Autopsy.  It is part of The Sleuth Kit datamodel and The Sleuth Kit Framework.  In the name of reducing the amount of documentation that we need to maintain, we provide links here to those documentation sources. 
 
-- Details on the blackboard concepts (artifacts versus attributes) can be found at http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_bbpage.html. These documents are about the C++ implementation of the blackboard, but it is the same concepts.  
-- Details of the Java classes can be found in \ref jni_blackboard section of the The Sleuth Kit JNI documents (http://sleuthkit.org/sleuthkit/docs/jni-docs/). 
+- \ref mod_bbpage (http://sleuthkit.org/sleuthkit/docs/jni-docs/mod_bbpage.html)
 
 
-
-\subsection mod_dev_other_services Framework Services and Utilities
+\section mod_dev_other_services Framework Services and Utilities
 
 The following are basic services that are available to any module.  They are provided here to be used as a reference.  When you are developing your module and feel like something should be provided by the framework, then refer to this list to find out where it could be.  If you don't find it, let us know and we'll talk about adding it for other writers to benefit. 
 
