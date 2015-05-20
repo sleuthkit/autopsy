@@ -109,6 +109,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         pathTextField.getDocument().addDocumentListener(this);
     }
     
+    /**
+     * Discovers WizardPathValidator service providers
+     */
     private void discoverWizardPathValidators() {
         for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
             pathValidatorList.add(pathValidator);

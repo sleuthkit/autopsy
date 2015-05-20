@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 /**
@@ -69,9 +70,19 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     private void customInit() {
         localFileChooser.setMultiSelectionEnabled(true);
+        discoverWizardPathValidators(); 
+        errorLabel.setVisible(false);
         selectedPaths.setText("");
-        
     }
+    
+    /**
+     * Discovers WizardPathValidator service providers
+     */
+    private void discoverWizardPathValidators() {
+        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
+            pathValidatorList.add(pathValidator);
+        }
+    }       
     
     //@Override
     public String getContentPaths() {
@@ -178,6 +189,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
+        errorLabel.setVisible(false);
         
         //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }

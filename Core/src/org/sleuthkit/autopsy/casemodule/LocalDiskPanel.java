@@ -42,6 +42,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
@@ -99,11 +100,21 @@ final class LocalDiskPanel extends JPanel {
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
-
+        
+        errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
-
+        discoverWizardPathValidators(); 
     }
+    
+    /**
+     * Discovers WizardPathValidator service providers
+     */
+    private void discoverWizardPathValidators() {
+        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
+            pathValidatorList.add(pathValidator);
+        }
+    }       
 
     /**
      * This method is called from within the constructor to initialize the form.
