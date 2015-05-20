@@ -40,8 +40,8 @@ public interface DataSourceProcessor {
      * then react appropriately to the events
      */
     enum DSP_PANEL_EVENT {
-        UPDATE_UI,  // the content of JPanel has changed that MAY warrant updates to the caller UI
-        FOCUS_NEXT  // the caller UI may move focus the the next UI element, following the panel.
+        UPDATE_UI,  ///< the content of JPanel has changed that MAY warrant updates to the caller UI
+        FOCUS_NEXT  ///< the caller UI may move focus the the next UI element, following the panel.
     };
     
     
