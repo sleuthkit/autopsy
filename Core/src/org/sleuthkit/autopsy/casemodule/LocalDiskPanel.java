@@ -70,6 +70,7 @@ final class LocalDiskPanel extends JPanel {
     
     List<WizardPathValidator> pathValidatorList = new ArrayList<>();
     private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
+    private final int prePendedStringLength = 4; // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names
 
     /**
      * Creates new form LocalDiskPanel
@@ -250,9 +251,9 @@ final class LocalDiskPanel extends JPanel {
         errorLabel.setVisible(false);
         String errorString = "";
         String newPath = path;
-        if (path.length() > 4) {
+        if (path.length() > prePendedStringLength) {
             // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names
-            newPath = path.substring(4, path.length());
+            newPath = path.substring(prePendedStringLength, path.length());
         } 
 
         // check if the is a WizardPathValidator service provider
