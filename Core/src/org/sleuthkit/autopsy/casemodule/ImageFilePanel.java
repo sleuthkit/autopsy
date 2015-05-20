@@ -300,27 +300,20 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         
         errorLabel.setVisible(false);
         String errorString = "";
-        boolean valid = false;
 
         // check if the is a WizardPathValidator service provider
         if (!pathValidatorList.isEmpty()) {
             // call WizardPathValidator service provider
             errorString = pathValidatorList.get(0).validateDataSourcePath(path);
-            if (errorString.isEmpty()) {
-                valid = true;
-            }
         } else {
             // validate locally            
             if (Case.getCurrentCase().getCaseType() == CaseType.MULTI_USER_CASE) {
                 // check that path is not on "C:" drive
                 if (pathOnCDrive(path)) {
-                    errorString = "Path to data source is on \"C:\" drive";
-                } else {
-                    valid = true;
-                }
+                    errorString = NbBundle.getMessage(this.getClass(), "ImageFilePanel.DataSourceOnCDriveError.text");  //NON-NLS
+                } 
             } else {
-                // single user case - no validation
-                valid = true;
+                // single user case - no validation needed
             }
         }
         
@@ -328,9 +321,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         if (!errorString.isEmpty()){
             errorLabel.setVisible(true);
             errorLabel.setText(errorString);
+            return false;
         }
         
-        return valid;
+        return true;
     }
     
     /**
