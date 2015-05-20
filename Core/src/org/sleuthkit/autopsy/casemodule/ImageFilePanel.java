@@ -309,6 +309,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         errorLabel.setVisible(false);
         String errorString = "";
 
+        if (path.isEmpty()) {
+            return false;   // no need for error message as the module sets path to "" at startup
+        }
+                
         // check if the is a WizardPathValidator service provider
         if (!pathValidatorList.isEmpty()) {
             // call WizardPathValidator service provider

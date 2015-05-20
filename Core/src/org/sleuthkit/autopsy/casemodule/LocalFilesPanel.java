@@ -131,6 +131,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         errorLabel.setVisible(false);
         String errorString = "";
         
+        if (path.isEmpty()) {
+            return false;   // no need for error message as the module sets path to "" at startup
+        }           
+        
         // Path variable for "Local files" module is a coma separated string containg multiple paths
         List<String> pathsList = Arrays.asList(path.split(","));
 

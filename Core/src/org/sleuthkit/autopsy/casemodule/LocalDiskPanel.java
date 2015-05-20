@@ -261,9 +261,15 @@ final class LocalDiskPanel extends JPanel {
         
         errorLabel.setVisible(false);
         String errorString = "";
+        
+        if (path.isEmpty()) {
+            return false;   // no need for error message as the module sets path to "" at startup
+        }
+        
         String newPath = path;
         if (path.length() > prePendedStringLength) {
-            // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names
+            // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names.
+            // Path validators expect a "standard" path as input, i.e. one that starts with a drive letter.
             newPath = path.substring(prePendedStringLength, path.length());
         } 
 
