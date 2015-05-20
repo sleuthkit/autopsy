@@ -38,7 +38,6 @@ import javax.swing.event.DocumentEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -55,8 +54,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private JPanel currentPanel;
 
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
-
-    List<WizardPathValidator> pathValidatorList = new ArrayList<>();
     
     List<String> coreDSPTypes = new ArrayList<>();
 
@@ -78,8 +75,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         typePanel.setLayout(new BorderLayout());
 
         discoverDataSourceProcessors();
-        
-        discoverWizardPathValidators();
 
         // set up the DSP type combobox
         typeComboBox.removeAllItems();
@@ -132,13 +127,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
             }
         }
-    }
-    
-    private void discoverWizardPathValidators() {
-        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
-            pathValidatorList.add(pathValidator);
-        }
-    }    
+    } 
 
     private void dspSelectionChanged() {
         // update the current panel to selection
@@ -311,23 +300,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      */
     public void updateUI(DocumentEvent e) {
         // Enable the Next button if the current DSP panel is valid
-        if (!getCurrentDSProcessor().isPanelValid()) {
-            return;
-        }
-        
-        // check if the is a WizardPathValidator service provider
-        if (!pathValidatorList.isEmpty()){
-            // call WizardPathValidator service provider
-            String errorMsg = pathValidatorList.get(0).validateDataSourcePath("");            
-            if (errorMsg.isEmpty()) {
-                this.wizPanel.enableNextButton(true);
-            } else {            
-                // ELTODO - display error message
-            }
-        } else {
-            // validate locally
-            this.wizPanel.enableNextButton(true);
-        }
+        this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
     }
 
     @SuppressWarnings("rawtypes")

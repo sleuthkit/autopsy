@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.SimpleTimeZone;
@@ -36,6 +37,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -47,6 +53,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
+
+    List<WizardPathValidator> pathValidatorList = new ArrayList<>();
+    private static final Pattern driveLetterPattern = Pattern.compile("^([Cc]):.*$");
     
     // Externally supplied name is used to store settings 
     private String contextName;
@@ -62,6 +71,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
         
+        errorLabel.setVisible(false);
+        discoverWizardPathValidators(); 
+        
         boolean firstFilter = true;
         for (FileFilter filter: fileChooserFilters ) {
             if (firstFilter) {  // set the first on the list as the default selection
@@ -76,7 +88,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         this.contextName = context;
         pcs = new PropertyChangeSupport(this);
         
-        createTimeZoneList();
+        createTimeZoneList();       
     }
     
     /**
@@ -97,7 +109,11 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         pathTextField.getDocument().addDocumentListener(this);
     }
     
-
+    private void discoverWizardPathValidators() {
+        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
+            pathValidatorList.add(pathValidator);
+        }
+    }   
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -115,6 +131,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         timeZoneComboBox = new javax.swing.JComboBox<String>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         descLabel = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -139,6 +156,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.descLabel.text")); // NOI18N
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -158,7 +178,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     .addComponent(noFatOrphansCheckbox)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
-                        .addComponent(descLabel)))
+                        .addComponent(descLabel))
+                    .addComponent(errorLabel))
                 .addGap(0, 20, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -169,7 +190,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseButton)
                     .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addGap(3, 3, 3)
+                .addComponent(errorLabel)
+                .addGap(1, 1, 1)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -177,7 +200,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -211,6 +234,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel descLabel;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
@@ -263,9 +287,62 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
         boolean isPartition = Case.isPartition(path);
+               
+        if (!isImagePathValid(path)) {
+            return false;
+        }
         
         return (isExist || isPhysicalDrive || isPartition);
     }
+    
+    
+    private boolean isImagePathValid(String path){
+        
+        errorLabel.setVisible(false);
+        String errorString = "";
+        boolean valid = false;
+
+        // check if the is a WizardPathValidator service provider
+        if (!pathValidatorList.isEmpty()) {
+            // call WizardPathValidator service provider
+            errorString = pathValidatorList.get(0).validateDataSourcePath(path);
+            if (errorString.isEmpty()) {
+                valid = true;
+            }
+        } else {
+            // validate locally            
+            if (Case.getCurrentCase().getCaseType() == CaseType.MULTI_USER_CASE) {
+                // check that path is not on "C:" drive
+                if (pathOnCDrive(path)) {
+                    errorString = "Path to data source is on \"C:\" drive";
+                } else {
+                    valid = true;
+                }
+            } else {
+                // single user case - no validation
+                valid = true;
+            }
+        }
+        
+        // set error string
+        if (!errorString.isEmpty()){
+            errorLabel.setVisible(true);
+            errorLabel.setText(errorString);
+        }
+        
+        return valid;
+    }
+    
+    /**
+     * Checks whether a file path contains drive letter defined by pattern.
+     *
+     * @param filePath Input file absolute path
+     * @return true if path matches the pattern, false otherwise.
+     */
+    private boolean pathOnCDrive(String filePath) {
+        Matcher m = driveLetterPattern.matcher(filePath);
+        return m.find();
+    }    
 
 
     public void storeSettings() {
