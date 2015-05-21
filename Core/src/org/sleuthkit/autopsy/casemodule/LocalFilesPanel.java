@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 /**
@@ -137,18 +138,19 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         
         // Path variable for "Local files" module is a coma separated string containg multiple paths
         List<String> pathsList = Arrays.asList(path.split(","));
+        CaseType currentCaseType = Case.getCurrentCase().getCaseType();
 
         for (String currentPath : pathsList) {
             // check if the is a WizardPathValidator service provider
             if (!pathValidatorList.isEmpty()) {
                 // call WizardPathValidator service provider
-                errorString = pathValidatorList.get(0).validateDataSourcePath(currentPath);
+                errorString = pathValidatorList.get(0).validateDataSourcePath(currentPath, currentCaseType);
                 if (!errorString.isEmpty()) {
                     break;
                 }
             } else {
                 // validate locally            
-                if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+                if (currentCaseType == Case.CaseType.MULTI_USER_CASE) {
                     // check that path is not on "C:" drive
                     if (pathOnCDrive(currentPath)) {
                         errorString = NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text");  //NON-NLS

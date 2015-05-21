@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
+import org.sleuthkit.autopsy.casemodule.Case;
+
 /*
  * Defines an interface used by the Add DataSource wizard to validate path for selected
  * case and/or data source. 
@@ -36,17 +38,19 @@ public interface WizardPathValidator {
      * Validates case path.
      *
      * @param path Absolute path to case file.
+     * @param caseType Case type
      * @return String Error message if path is invalid, empty string otherwise.
      *
      */
-    String validateCasePath(String path);
+    String validateCasePath(String path, Case.CaseType caseType);
 
     /**
      * Validates data source path.
      *
      * @param path Absolute path to data source file.
+     * @param caseType Case type
      * @return String Error message if path is invalid, empty string otherwise.
      *
      */
-    String validateDataSourcePath(String path);
+    String validateDataSourcePath(String path, Case.CaseType caseType);
 }

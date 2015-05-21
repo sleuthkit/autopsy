@@ -276,7 +276,7 @@ final class LocalDiskPanel extends JPanel {
         // check if the is a WizardPathValidator service provider
         if (!pathValidatorList.isEmpty()) {
             // call WizardPathValidator service provider
-            errorString = pathValidatorList.get(0).validateDataSourcePath(newPath);
+            errorString = pathValidatorList.get(0).validateDataSourcePath(newPath, Case.getCurrentCase().getCaseType());
         } else {
             // validate locally            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {

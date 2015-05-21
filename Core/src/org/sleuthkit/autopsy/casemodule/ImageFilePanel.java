@@ -316,7 +316,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         // check if the is a WizardPathValidator service provider
         if (!pathValidatorList.isEmpty()) {
             // call WizardPathValidator service provider
-            errorString = pathValidatorList.get(0).validateDataSourcePath(path);
+            errorString = pathValidatorList.get(0).validateDataSourcePath(path, Case.getCurrentCase().getCaseType());
         } else {
             // validate locally            
             if (Case.getCurrentCase().getCaseType() == CaseType.MULTI_USER_CASE) {
