@@ -411,7 +411,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             if (getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // check that path is not on "C:" drive
                 if (pathOnCDrive(path)) {
-                    errorString = NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text");  //NON-NLS
+                    errorString = NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text");  //NON-NLS
                 } 
             } else {
                 // single user case - no validation needed
