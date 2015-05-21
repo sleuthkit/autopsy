@@ -273,8 +273,7 @@ public class ImageUtils {
         } catch (IllegalArgumentException e) {
             // if resizing does not work due to extremely small height/width ratio,
             // crop the image instead.
-            BufferedImage biCropped = ScalrWrapper.cropImage(bi, iconSize > bi.getWidth() ?
-                    bi.getWidth() : iconSize, iconSize > bi.getHeight() ? bi.getHeight() : iconSize);
+            BufferedImage biCropped = ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
             return biCropped;
         }
         catch (OutOfMemoryError e) {
