@@ -53,7 +53,7 @@ public class ImageUtils {
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-    private static final List<String> SUPP_MIME_TYPES = new ArrayList(Arrays.asList(ImageIO.getReaderMIMETypes()));
+    private static final List<String> SUPP_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
     static {
         SUPP_MIME_TYPES.add("image/x-ms-bmp");
     }
@@ -259,9 +259,10 @@ public class ImageUtils {
     private static BufferedImage generateIcon(Content content, int iconSize) {
 
         InputStream inputStream = null;
+        BufferedImage bi = null;
         try {
             inputStream = new ReadContentInputStream(content);
-            BufferedImage bi = ImageIO.read(inputStream);
+            bi = ImageIO.read(inputStream);
             if (bi == null) {
                 logger.log(Level.WARNING, "No image reader for file: " + content.getName()); //NON-NLS
                 return null;
@@ -269,7 +270,14 @@ public class ImageUtils {
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
 
             return biScaled;
-        } catch (OutOfMemoryError e) {
+        } catch (IllegalArgumentException e) {
+            // if resizing does not work due to extremely small height/width ratio,
+            // crop the image instead.
+            BufferedImage biCropped = ScalrWrapper.cropImage(bi, iconSize > bi.getWidth() ?
+                    bi.getWidth() : iconSize, iconSize > bi.getHeight() ? bi.getHeight() : iconSize);
+            return biCropped;
+        }
+        catch (OutOfMemoryError e) {
             logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e); //NON-NLS
             return null;
         } catch (Exception e) {
