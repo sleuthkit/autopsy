@@ -54,8 +54,6 @@ public class ImageExtractor {
     private final Case currentCase;
     private final FileManager fileManager;
     private final IngestServices services;
-    private final String moduleDirRelative; //relative to the case, to store in db
-    private final String moduleDirAbsolute; //absolute, to extract to
     private static final Logger logger = Logger.getLogger(ImageExtractor.class.getName());
     private final IngestJobContext context;
     private String parentFileName;
@@ -67,15 +65,13 @@ public class ImageExtractor {
         this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
-        this.moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName();
-        this.moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName();
-        File extractionDirectory = new File(moduleDirAbsolute);
+        File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
         if (!extractionDirectory.exists()) {
             try {
                 extractionDirectory.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
+                logger.log(Level.SEVERE, "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute, ex); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute)); //NON-NLS
                 throw new RuntimeException(ex);
             }
         }
@@ -97,7 +93,7 @@ public class ImageExtractor {
 
         List<ExtractedImage> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
-        this.parentFileName = getUniqueName(abstractFile);
+        this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
 
         switch (format) {
             case DOC:
@@ -447,7 +443,7 @@ public class ImageExtractor {
      * @return path to the image extraction folder for a given abstract file.
      */
     private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
+        String outputFolderPath = EmbeddedFileExtractorIngestModule.moduleDirAbsolute + File.separator + parentFileName;
         File outputFilePath = new File(outputFolderPath);
         if (!outputFilePath.exists()) {
             try {
@@ -470,17 +466,7 @@ public class ImageExtractor {
      */
     private String getFileRelativePath(String fileName) {
         // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
-    }
-
-    /**
-     * Generates unique name for abstract files.
-     *
-     * @param af
-     * @return
-     */
-    private String getUniqueName(AbstractFile af) {
-        return af.getName() + "_" + af.getId();
+        return "/" + EmbeddedFileExtractorIngestModule.moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
     }
 
     /**
