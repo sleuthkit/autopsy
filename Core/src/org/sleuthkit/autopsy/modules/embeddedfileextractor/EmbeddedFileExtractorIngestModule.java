@@ -39,13 +39,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
- * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
- * reschedules extracted DerivedFiles for ingest.
+ * Embedded File Extractor ingest module extracts embedded files from supported
+ * archives and documents, adds extracted embedded DerivedFiles, reschedules
+ * extracted DerivedFiles for ingest.
  */
 public final class EmbeddedFileExtractorIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(EmbeddedFileExtractorIngestModule.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
 
     //buffer for checking file headers and signatures
@@ -106,6 +107,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         this.context = context;
         jobId = context.getJobId();
         
+        // initialize the folder where the embedded files are extracted.
         File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
         if (!extractionDirectory.exists()) {
             try {
@@ -116,20 +118,24 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
                 throw new RuntimeException(ex);
             }
         }
+        // initialize the extraction modules.
         this.archiveExtractor = new ArchiveExtractor(context);
         this.imageExtractor = new ImageExtractor(context);
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
+        // skip the unallocated blocks
         if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
         }
 
+        // skip unknown files
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
+        // check if the file is supported by either of the two embedded file extractors.
         this.archivextraction = isArchiveExtractionSupported(abstractFile);
         try {
             this.imageExtraction = isImageExtractionSupported(new FileTypeDetector().detectAndPostToBlackboard(abstractFile));
@@ -159,6 +165,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
 
         logger.log(Level.INFO, "Processing with embedded file extractor: {0}", abstractFile.getName()); //NON-NLS
 
+        // call the archive extractor if archiveextraction flag is set.
         if (this.archivextraction) {
             List<AbstractFile> unpackedFiles = archiveExtractor.unpack(abstractFile);
             if (!unpackedFiles.isEmpty()) {
