@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class, "SevenZipIngestModule.moduleName");
+        return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName");
     }
 
     @Override
@@ -45,7 +45,7 @@ public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapt
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
-                "SevenZipIngestModule.moduleDesc.text");
+                "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleDesc.text");
     }
 
     @Override

@@ -59,7 +59,7 @@ public class SevenZipContentReadStream implements IInStream {
                 break;
             default:
                 throw new IllegalArgumentException(
-                        NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.seek.exception.invalidOrigin",
+                        NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.SevenZipContentReadStream.seek.exception.invalidOrigin",
                                             origin));
         }
         
@@ -85,7 +85,7 @@ public class SevenZipContentReadStream implements IInStream {
             return readBytes;
             
         } catch (IOException ex) {
-            String msg = NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.read.exception.errReadStream");
+            String msg = NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.SevenZipContentReadStream.read.exception.errReadStream");
             logger.log(Level.SEVERE, msg, ex);
             throw new SevenZipException(msg, ex);
         }
