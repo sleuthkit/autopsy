@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
@@ -30,6 +33,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
@@ -42,6 +50,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = ",";
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
+    
+    List<WizardPathValidator> pathValidatorList = new ArrayList<>();
+    private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
+    
     /**
      * Creates new form LocalFilesPanel
      */
@@ -59,9 +71,19 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     private void customInit() {
         localFileChooser.setMultiSelectionEnabled(true);
+        discoverWizardPathValidators(); 
+        errorLabel.setVisible(false);
         selectedPaths.setText("");
-        
     }
+    
+    /**
+     * Discovers WizardPathValidator service providers
+     */
+    private void discoverWizardPathValidators() {
+        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
+            pathValidatorList.add(pathValidator);
+        }
+    }       
     
     //@Override
     public String getContentPaths() {
@@ -91,8 +113,77 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     //@Override
     public boolean validatePanel() {
+        
+        if (!isImagePathValid(getContentPaths())) {
+            return false;
+        }
+        
         return enableNext;
     }
+    
+    /**
+     * Validates path to selected data source. Calls WizardPathValidator service provider
+     * if one is available. Otherwise performs path validation locally.
+     * @param path Absolute path to the selected data source
+     * @return true if path is valid, false otherwise.
+     */
+    private boolean isImagePathValid(String path){
+        
+        errorLabel.setVisible(false);
+        String errorString = "";
+        
+        if (path.isEmpty()) {
+            return false;   // no need for error message as the module sets path to "" at startup
+        }           
+        
+        // Path variable for "Local files" module is a coma separated string containg multiple paths
+        List<String> pathsList = Arrays.asList(path.split(","));
+        CaseType currentCaseType = Case.getCurrentCase().getCaseType();
+
+        for (String currentPath : pathsList) {
+            // check if the is a WizardPathValidator service provider
+            if (!pathValidatorList.isEmpty()) {
+                // call WizardPathValidator service provider
+                errorString = pathValidatorList.get(0).validateDataSourcePath(currentPath, currentCaseType);
+                if (!errorString.isEmpty()) {
+                    break;
+                }
+            } else {
+                // validate locally            
+                if (currentCaseType == Case.CaseType.MULTI_USER_CASE) {
+                    // check that path is not on "C:" drive
+                    if (pathOnCDrive(currentPath)) {
+                        errorString = NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text");  //NON-NLS
+                        if (!errorString.isEmpty()) {
+                            break;
+                        }
+                    }
+                } else {
+                    // single user case - no validation needed
+                }
+            }
+        }
+        
+        // set error string
+        if (!errorString.isEmpty()){
+            errorLabel.setVisible(true);
+            errorLabel.setText(errorString);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Checks whether a file path contains drive letter defined by pattern.
+     *
+     * @param filePath Input file absolute path
+     * @return true if path matches the pattern, false otherwise.
+     */
+    private boolean pathOnCDrive(String filePath) {
+        Matcher m = driveLetterPattern.matcher(filePath);
+        return m.find();
+    }      
 
     //@Override
     public void select() {
@@ -104,6 +195,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
+        errorLabel.setVisible(false);
         
         //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
@@ -149,6 +241,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         clearButton = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         selectedPaths = new javax.swing.JTextArea();
+        errorLabel = new javax.swing.JLabel();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -184,6 +277,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         selectedPaths.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectedPaths.toolTipText")); // NOI18N
         jScrollPane2.setViewportView(selectedPaths);
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -198,19 +294,23 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(2, 2, 2))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(errorLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(infoLabel)
                 .addGap(5, 5, 5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(selectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
-                        .addComponent(clearButton))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addGap(0, 0, 0))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(clearButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(errorLabel))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -258,6 +358,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel infoLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

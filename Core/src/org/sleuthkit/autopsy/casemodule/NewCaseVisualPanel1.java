@@ -22,13 +22,18 @@ import org.openide.util.NbBundle;
 
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -41,9 +46,13 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
     private JFileChooser fc = new JFileChooser();
     private NewCaseWizardPanel1 wizPanel;
+    java.util.List<WizardPathValidator> pathValidatorList = new ArrayList<>();
+    private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");    
 
     NewCaseVisualPanel1(NewCaseWizardPanel1 wizPanel) {
         initComponents();
+        discoverWizardPathValidators();
+        errorLabel.setVisible(false);
         lbBadMultiUserSettings.setText("");
         this.wizPanel = wizPanel;
         caseNameTextField.getDocument().addDocumentListener(this);
@@ -145,6 +154,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         rbSingleUserCase = new javax.swing.JRadioButton();
         rbMultiUserCase = new javax.swing.JRadioButton();
         lbBadMultiUserSettings = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
@@ -171,13 +181,26 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
         caseTypeButtonGroup.add(rbSingleUserCase);
         org.openide.awt.Mnemonics.setLocalizedText(rbSingleUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbSingleUserCase.text")); // NOI18N
+        rbSingleUserCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbSingleUserCaseActionPerformed(evt);
+            }
+        });
 
         caseTypeButtonGroup.add(rbMultiUserCase);
         org.openide.awt.Mnemonics.setLocalizedText(rbMultiUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbMultiUserCase.text")); // NOI18N
+        rbMultiUserCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbMultiUserCaseActionPerformed(evt);
+            }
+        });
 
         lbBadMultiUserSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(lbBadMultiUserSettings, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.lbBadMultiUserSettings.text")); // NOI18N
+
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.errorLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -186,27 +209,37 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(caseDirTextField, javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(0, 58, Short.MAX_VALUE)
+                                        .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 372, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addComponent(jLabel1)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addComponent(caseDirLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(caseParentDirTextField))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(caseNameLabel)
+                                        .addGap(26, 26, 26)
+                                        .addComponent(caseNameTextField)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(caseDirBrowseButton)))
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(rbSingleUserCase)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(rbMultiUserCase))
-                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(caseDirLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(caseParentDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(caseNameLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(caseNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(caseDirTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 372, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(caseDirBrowseButton)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(errorLabel))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -226,11 +259,13 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(caseDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rbSingleUserCase)
                     .addComponent(rbMultiUserCase))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(errorLabel)
+                .addGap(1, 1, 1)
                 .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -261,6 +296,16 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         }
     }//GEN-LAST:event_caseDirBrowseButtonActionPerformed
 
+    private void rbSingleUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbSingleUserCaseActionPerformed
+        this.wizPanel.fireChangeEvent();
+        updateUI(null); // DocumentEvent is not used inside updateUI
+    }//GEN-LAST:event_rbSingleUserCaseActionPerformed
+
+    private void rbMultiUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbMultiUserCaseActionPerformed
+        this.wizPanel.fireChangeEvent();
+        updateUI(null); // DocumentEvent is not used inside updateUI
+    }//GEN-LAST:event_rbMultiUserCaseActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton caseDirBrowseButton;
     private javax.swing.JLabel caseDirLabel;
@@ -269,6 +314,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.JTextField caseNameTextField;
     private javax.swing.JTextField caseParentDirTextField;
     private javax.swing.ButtonGroup caseTypeButtonGroup;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lbBadMultiUserSettings;
@@ -320,9 +366,17 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      * @param e the document event
      */
     public void updateUI(DocumentEvent e) {
+        
+        // Note: DocumentEvent e can be null when called from rbSingleUserCaseActionPerformed()
+        // and rbMultiUserCaseActionPerformed().
 
         String caseName = getCaseName();
         String parentDir = getCaseParentDir();
+        
+        if (!isImagePathValid(parentDir)) {
+            wizPanel.setIsFinish(false);
+            return;
+        }        
 
         if (!caseName.equals("") && !parentDir.equals("")) {
             caseDirTextField.setText(parentDir + caseName);
@@ -332,4 +386,65 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             wizPanel.setIsFinish(false);
         }
     }
+    
+    /**
+     * Validates path to selected data source. Calls WizardPathValidator service provider
+     * if one is available. Otherwise performs path validation locally.
+     * @param path Absolute path to the selected data source
+     * @return true if path is valid, false otherwise.
+     */
+    private boolean isImagePathValid(String path){
+        
+        errorLabel.setVisible(false);
+        String errorString = "";
+        
+        if (path.isEmpty()) {
+            return false;   // no need for error message as the module sets path to "" at startup
+        }
+
+        // check if the is a WizardPathValidator service provider
+        if (!pathValidatorList.isEmpty()) {
+            // call WizardPathValidator service provider
+            errorString = pathValidatorList.get(0).validateDataSourcePath(path, getCaseType());
+        } else {
+            // validate locally            
+            if (getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+                // check that path is not on "C:" drive
+                if (pathOnCDrive(path)) {
+                    errorString = NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text");  //NON-NLS
+                } 
+            } else {
+                // single user case - no validation needed
+            }
+        }
+        
+        // set error string
+        if (!errorString.isEmpty()){
+            errorLabel.setVisible(true);
+            errorLabel.setText(errorString);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Checks whether a file path contains drive letter defined by pattern.
+     *
+     * @param filePath Input file absolute path
+     * @return true if path matches the pattern, false otherwise.
+     */
+    private boolean pathOnCDrive(String filePath) {
+        Matcher m = driveLetterPattern.matcher(filePath);
+        return m.find();
+    }      
+    
+    /**
+     * Discovers WizardPathValidator service providers
+     */
+    private void discoverWizardPathValidators() {
+        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
+            pathValidatorList.add(pathValidator);
+        }
+    }     
 }
