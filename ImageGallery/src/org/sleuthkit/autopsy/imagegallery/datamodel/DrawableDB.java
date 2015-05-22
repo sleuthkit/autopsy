@@ -1121,6 +1121,16 @@ public class DrawableDB {
         }
     }
     
+    /*
+     * The following groups of functions are used to store information in memory instead
+     * of in the database. Due to the change listeners in the GUI, this data is requested
+     * many, many times when browsing the images, and especially when making any
+     * changes to things like categories.
+     *
+     * I don't like having multiple copies of the data, but these were causing major
+     * bottlenecks when they were all database lookups.
+     */
+    
     @GuardedBy("hashSetMap")
     private final Map<Long, Set<String>> hashSetMap = new HashMap<>();
     
