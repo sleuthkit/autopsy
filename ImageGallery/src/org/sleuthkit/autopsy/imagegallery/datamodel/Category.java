@@ -66,7 +66,7 @@ public enum Category implements Comparable<Category> {
     private final static Set<CategoryListener> listeners = new HashSet<>();
 
     public static void fireChange(Collection<Long> ids) {
-        Set<CategoryListener> listenersCopy = new HashSet<CategoryListener>(listeners);
+        Set<CategoryListener> listenersCopy = new HashSet<>();
         synchronized (listeners) {
             listenersCopy.addAll(listeners);
         }
