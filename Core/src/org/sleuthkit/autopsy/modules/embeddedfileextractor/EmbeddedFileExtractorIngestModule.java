@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
@@ -104,8 +105,17 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         jobId = context.getJobId();
-
-        // log potential exception?
+        
+        File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
+        if (!extractionDirectory.exists()) {
+            try {
+                extractionDirectory.mkdirs();
+            } catch (SecurityException ex) {
+                logger.log(Level.SEVERE, "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute, ex); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute)); //NON-NLS
+                throw new RuntimeException(ex);
+            }
+        }
         this.archiveExtractor = new ArchiveExtractor(context);
         this.imageExtractor = new ImageExtractor(context);
     }

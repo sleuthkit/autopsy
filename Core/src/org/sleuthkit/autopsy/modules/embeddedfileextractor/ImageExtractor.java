@@ -37,11 +37,11 @@ import org.apache.poi.xslf.usermodel.XSLFPictureData;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFPictureData;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorIngestModule.SupportedImageExtractionFormats;
@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class ImageExtractor {
 
-    private final Case currentCase;
     private final FileManager fileManager;
     private final IngestServices services;
     private static final Logger logger = Logger.getLogger(ImageExtractor.class.getName());
@@ -61,20 +60,9 @@ public class ImageExtractor {
 
     ImageExtractor(IngestJobContext context) {
 
-        this.currentCase = Case.getCurrentCase();
         this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
-        File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
-        if (!extractionDirectory.exists()) {
-            try {
-                extractionDirectory.mkdirs();
-            } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute, ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute)); //NON-NLS
-                throw new RuntimeException(ex);
-            }
-        }
     }
 
     /**
@@ -129,7 +117,7 @@ public class ImageExtractor {
                         extractedImage.getCtime(), extractedImage.getCrtime(), extractedImage.getAtime(), extractedImage.getAtime(),
                         true, abstractFile, null, EmbeddedFileExtractorModuleFactory.getModuleName(), null, null));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error adding derived files to the DB", ex); //NON-NLS
+                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImage.addToDB.exception.msg"), ex); //NON-NLS
             }
         }
         if (!listOfExtractedImages.isEmpty()) {
@@ -151,7 +139,7 @@ public class ImageExtractor {
         try {
             doc = new HWPFDocument(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "HWPFDocument container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
         PicturesTable pictureTable = doc.getPicturesTable();
@@ -163,7 +151,6 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
             return null;
         }
         listOfExtractedImages = new ArrayList<>();
@@ -190,7 +177,7 @@ public class ImageExtractor {
         try {
             docx = new XWPFDocument(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "XWPFDocument container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
         List<XWPFPictureData> listOfAllPictures = docx.getAllPictures();
@@ -204,7 +191,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
             return null;
         }
         listOfExtractedImages = new ArrayList<>();
@@ -229,7 +216,7 @@ public class ImageExtractor {
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "SlideShow container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -245,7 +232,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
             return null;
         }
 
@@ -299,7 +286,7 @@ public class ImageExtractor {
         try {
             pptx = new XMLSlideShow(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "SlideShow container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
         List<XSLFPictureData> listOfAllPictures = pptx.getAllPictures();
@@ -313,7 +300,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
             return null;
         }
 
@@ -346,7 +333,7 @@ public class ImageExtractor {
         try {
             xls = new HSSFWorkbook(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "HSSFWorkbook container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName(), ex); //NON-NLS
             return null;
         }
 
@@ -360,7 +347,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
             return null;
         }
 
@@ -389,7 +376,7 @@ public class ImageExtractor {
         try {
             xlsx = new XSSFWorkbook(new ReadContentInputStream(af));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "HSSFWorkbook container could not be instantiated while reading " + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -403,7 +390,7 @@ public class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, "Could not get path for image extraction from AbstractFile: {0}", af.getName()); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
             return null;
         }
 
@@ -449,7 +436,7 @@ public class ImageExtractor {
             try {
                 outputFilePath.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.WARNING, "Unable to create the output path to write the extracted image", ex); //NON-NLS
+                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.getOutputFolderPath.exception.msg", parentFileName), ex);
                 return null;
             }
         }
