@@ -30,6 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Detects the type of a file by an inspection of its contents.
@@ -143,12 +144,21 @@ public class FileTypeDetector {
      * succeeds.
      *
      * @param file The file to test.
-     * @param moduleName The name of the module posting to the blackboard.
      * @return The MIME type name id detection was successful, null otherwise.
      * @throws TskCoreException if there is an error posting to the blackboard.
      */
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
-        String mimeType = detect(file);
+
+        String mimeType;
+        // Consistently mark unallocated and unused space as file type application/octet-stream
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (file.isFile() == false)) {
+            mimeType = MimeTypes.OCTET_STREAM;
+        } else {
+            mimeType = detect(file);
+        }
+
         if (null != mimeType) {
             /**
              * Add the file type attribute to the general info artifact. Note

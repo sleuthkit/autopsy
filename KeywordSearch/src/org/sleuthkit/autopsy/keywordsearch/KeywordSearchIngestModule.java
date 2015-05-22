@@ -132,8 +132,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Error initializing FileTypeDetector", ex); // NON-NLS
-            throw new IngestModuleException("Error initializing FileTypeDetector"); // NON-NLS
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }
         ingester = Server.getIngester();
         this.context = context;

@@ -96,15 +96,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     public ProcessResult process(AbstractFile file) {
 
         /**
-         * Skip unallocated space and unused blocks files.
-         */
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (file.isFile() == false)) {
-            return ProcessResult.OK;
-        }
-
-        /**
          * Skip known files if configured to do so.
          */
         if (settings.skipKnownFiles() && (file.getKnown() == FileKnown.KNOWN)) {
