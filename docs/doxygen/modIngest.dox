@@ -100,10 +100,12 @@ Before we cover the specific interfaces of the two different types of modules, l
 
 To create a data source ingest module:
 -# Create the ingest module class by either:
- - Define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  If you are using Java, the NetBeans IDE 
+ - Copy and paste the sample modules from:
+  - Java: Core/src/org/sleuthkit/autopsy/examples/SampleDataSourceIngestModule.java
+  - Python: pythonExamples/dataSourceIngestModule.py (https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples)
+ - Or the manual approach is to define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  If you are using Java, the NetBeans IDE 
 will complain that you have not implemented one or more of the required methods.
 You can use its "hints" to automatically generate stubs for the missing methods.  
- - Copy and paste the sample modules from org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule or org.sleuthkit.autopsy.examples.ingestmodule.py. 
 -# Configure your factory class to create instances of the new ingest module class. To do this, you will need to change the isDataSourceIngestModuleFactory() method to return true and have the createDataSourceIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to this Java code:
 
 \code
@@ -119,8 +121,8 @@ You can use its "hints" to automatically generate stubs for the missing methods.
 \endcode
 -# Use this page, the sample, and the documentation for the 
 org.sleuthkit.autopsy.ingest.DataSourceIngestModule interfaces to implement the startUp() and process() methods. 
-
-The process() method is where all of the work of a data source ingest module is
+ - org.sleuthkit.autopsy.ingest.DataSourceIngestModule.startUp() is where any initialiation occurs.  If your module has a critical failure and will not be able to run, your startUp method should throw an IngestModuleException to stop ingest. 
+ - org.sleuthkit.autopsy.ingest.DataSourceIngestModule.process() is where all of the work of a data source ingest module is
 done. It will be called exactly once. The 
 process() method receives a reference to an org.sleuthkit.datamodel.Content object
 and an org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress object.
@@ -140,10 +142,12 @@ org.sleuthkit.autopsy.casemodule.services.FileManager class.  See
 To create a file ingest module:
 To create a data source ingest module:
 -# Create the ingest module class by either:
- - Define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.FileIngestModule.  If you are using Java, the NetBeans IDE 
+ - Copy and paste the sample modules from:
+  - Java: Core/src/org/sleuthkit/autopsy/examples/SampleFileIngestModule.java
+  - Python: pythonExamples/fileIngestModule.py (https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples)
+ - Or the manual approach is to define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.FileIngestModule.  If you are using Java, the NetBeans IDE 
 will complain that you have not implemented one or more of the required methods.
 You can use its "hints" to automatically generate stubs for the missing methods.  
- - Copy and paste the sample modules from org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule or org.sleuthkit.autopsy.examples.ingestmodule.py. 
 -# Configure your factory class to create instances of the new ingest module class. To do this, you will need to change the isFileIngestModuleFactory() method to return true and have the createFileIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to this Java code:
 
 \code
@@ -160,9 +164,8 @@ You can use its "hints" to automatically generate stubs for the missing methods.
 
 -# Use this page, the sample, and the documentation for the 
 org.sleuthkit.autopsy.ingest.FileIngestModule interface to implement the startUp(), and process(), and shutDown() methods. 
-
-
-The process() method is where all of the work of a file ingest module is
+ - org.sleuthkit.autopsy.ingest.FileIngestModule.startUp() should have any code that you need to initialize your module.  If you have any startup errors, be sure to throw a IngestModuleException exception to stop ingest. 
+ - org.sleuthkit.autopsy.ingest.FileIngestModule.process() is where all of the work of a file ingest module is
 done. It will be called repeatedly between startUp() and shutDown(), once for 
 each file Autopsy feeds into the pipeline of which the module instance is a part. The 
 process() method receives a reference to a org.sleuthkit.datamodel.AbstractFile 
