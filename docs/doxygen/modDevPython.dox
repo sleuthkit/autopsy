@@ -60,7 +60,7 @@ To distribute and share your Python module, ZIP up the folder and send it around
 Jython allows you to access all of the Java classes.  So, you should read the following sections of this document.  All you should ignore is the Java environment setup sections.
 
 There are only two types of modules that you can make with Python.  Those (along with a sample file) are listed below:
-- Ingest Modules (both file-level and data source-level): https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/ingestmodule.py
+- Ingest Modules (both file-level and data source-level): https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/
 - Report Modules: https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/reportmodule.py
 
 */
