@@ -35,9 +35,9 @@ import java.util.List;
      * Start the report. Open any output streams, initialize member variables,
      * write summary and navigation pages. Considered the "constructor" of the report.
      * 
-     * @param path String path to save the report
+     * @param baseReportDir Directory to save the report file into.  Report should go into baseReportDir + getRelativeFilePath().
      */
-    public void startReport(String path);
+    public void startReport(String baseReportDir);
     
     /**
      * End the report. Close all output streams and write any end-of-report
