@@ -27,25 +27,36 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+
+# Report module for Autopsy.
+#
+# Search for TODO for the things that you need to change
+# See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
+
 from java.lang import System
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.report import GeneralReportModuleAdapter
 
-# Sample module that writes a file with the number of files
-# created in the last 2 weeks.
+# TODO: Rename this to something more specific
 class SampleGeneralReportModule(GeneralReportModuleAdapter):
 
+    # TODO: Rename this.  Will be shown to users when making a report
     def getName(self):
         return "Sample Jython Report Module"
 
+    # TODO: rewrite this
     def getDescription(self):
         return "A sample Jython report module"
 
+    # TODO: Update this to reflect where the report file will be written to
     def getRelativeFilePath(self):
         return "sampleReport.txt"
 
-    def generateReport(self, reportPath, progressBar):
-            # Configure progress bar for 2 tasks 
+    # TODO: Update this method to make a report
+    def generateReport(self, baseReportDir, progressBar):
+        
+            # For an example, we write a file with the number of files created in the past 2 weeks
+            # Configure progress bar for 2 tasks
             progressBar.setIndeterminate(False)
             progressBar.start()
             progressBar.setMaximumProgress(2)
@@ -62,9 +73,10 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
             progressBar.increment()
             
             # Write the result to the report file.
-            report = open(reportPath + '\\' + self.getRelativeFilePath(), 'w')
+            report = open(baseReportDir + '\\' + self.getRelativeFilePath(), 'w')
             report.write("file count = %d" % fileCount)
             Case.getCurrentCase().addReport(report.name, "SampleGeneralReportModule", "Sample Python Report");
             report.close()
+            
             progressBar.increment()
             progressBar.complete()
