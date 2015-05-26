@@ -265,18 +265,18 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * @return true if a proper image has been selected, false otherwise
      */
     public boolean validatePanel() {
+        errorLabel.setVisible(false);
         String path = getContentPaths();
         if (path == null || path.isEmpty()) {
             return false;
         }
         
+        // display warning if there is one (but don't disable "next" button)
+        isImagePathValid(path);
+        
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
         boolean isPartition = Case.isPartition(path);
-               
-        if (!isImagePathValid(path)) {
-            return false;
-        }
         
         return (isExist || isPhysicalDrive || isPartition);
     }
@@ -286,8 +286,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * @param path Absolute path to the selected data source
      * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path){        
-        errorLabel.setVisible(false);                
+    private boolean isImagePathValid(String path){                      
         if (!MultiUserPathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));

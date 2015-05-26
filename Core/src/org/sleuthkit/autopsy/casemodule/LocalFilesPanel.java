@@ -97,9 +97,8 @@ import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
     //@Override
     public boolean validatePanel() {
         
-        if (!isImagePathValid(getContentPaths())) {
-            return false;
-        }
+        // display warning if there is one (but don't disable "next" button)
+        isImagePathValid(getContentPaths());        
         
         return enableNext;
     }

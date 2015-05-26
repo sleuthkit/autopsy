@@ -374,15 +374,14 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             wizPanel.setIsFinish(false);
         }
         
-        if (!isImagePathValid(parentDir)) {
-            wizPanel.setIsFinish(false);
-        }                
+        // display warning if there is one (but don't disable "next" button)
+        isImagePathValid(parentDir);              
     }
     
     /**
-     * Validates path to selected data source.
+     * Validates path to selected case output folder.
      *
-     * @param path Absolute path to the selected data source
+     * @param path Absolute path to the selected case folder
      * @return true if path is valid, false otherwise.
      */
     private boolean isImagePathValid(String path) {
