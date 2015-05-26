@@ -49,7 +49,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        if (info.getDbType() == DbType.UNKNOWN) {
+        if (info.getDbType() == DbType.SQLITE) {
             rbSingleUserCase.setSelected(true);
             rbSingleUserCase.setEnabled(false);
             rbMultiUserCase.setEnabled(false);

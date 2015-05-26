@@ -398,7 +398,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             tbIndexingServerPort.setText(indexingServerPort);
         }
         
-        if (dbInfo.getDbType() == DbType.UNKNOWN) {
+        if (dbInfo.getDbType() == DbType.SQLITE) {
             cbEnableMultiUser.setSelected(false);
         } else {
             cbEnableMultiUser.setSelected(true);
@@ -420,7 +420,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     void store() {
 
-        DbType dbType = DbType.UNKNOWN;
+        DbType dbType = DbType.SQLITE;
 
         if (cbEnableMultiUser.isSelected()) {
             dbType = DbType.POSTGRESQL;
