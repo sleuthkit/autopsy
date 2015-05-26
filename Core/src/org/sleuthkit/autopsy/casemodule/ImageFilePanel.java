@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.SimpleTimeZone;
@@ -37,12 +36,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
@@ -53,9 +48,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
-
-    List<WizardPathValidator> pathValidatorList = new ArrayList<>();
-    private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
     
     // Externally supplied name is used to store settings 
     private String contextName;
@@ -72,7 +64,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fc.setMultiSelectionEnabled(false);
         
         errorLabel.setVisible(false);
-        discoverWizardPathValidators(); 
         
         boolean firstFilter = true;
         for (FileFilter filter: fileChooserFilters ) {
@@ -109,14 +100,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         pathTextField.getDocument().addDocumentListener(this);
     }
     
-    /**
-     * Discovers WizardPathValidator service providers
-     */
-    private void discoverWizardPathValidators() {
-        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
-            pathValidatorList.add(pathValidator);
-        }
-    }   
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -299,58 +282,20 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     }
     
     /**
-     * Validates path to selected data source. Calls WizardPathValidator service provider
-     * if one is available. Otherwise performs path validation locally.
+     * Validates path to selected data source. 
      * @param path Absolute path to the selected data source
      * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path){
-        
-        errorLabel.setVisible(false);
-        String errorString = "";
-
-        if (path.isEmpty()) {
-            return false;   // no need for error message as the module sets path to "" at startup
-        }
-                
-        // check if the is a WizardPathValidator service provider
-        if (!pathValidatorList.isEmpty()) {
-            // call WizardPathValidator service provider
-            errorString = pathValidatorList.get(0).validateDataSourcePath(path, Case.getCurrentCase().getCaseType());
-        } else {
-            // validate locally            
-            if (Case.getCurrentCase().getCaseType() == CaseType.MULTI_USER_CASE) {
-                // check that path is not on "C:" drive
-                if (pathOnCDrive(path)) {
-                    errorString = NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text");  //NON-NLS
-                } 
-            } else {
-                // single user case - no validation needed
-            }
-        }
-        
-        // set error string
-        if (!errorString.isEmpty()){
+    private boolean isImagePathValid(String path){        
+        errorLabel.setVisible(false);                
+        if (!MultiUserPathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
-            errorLabel.setText(errorString);
+            errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
             return false;
         }
-        
         return true;
     }
     
-    /**
-     * Checks whether a file path contains drive letter defined by pattern.
-     *
-     * @param filePath Input file absolute path
-     * @return true if path matches the pattern, false otherwise.
-     */
-    private boolean pathOnCDrive(String filePath) {
-        Matcher m = driveLetterPattern.matcher(filePath);
-        return m.find();
-    }    
-
-
     public void storeSettings() {
         String imagePathName = getContentPaths();
         if (null != imagePathName ) {

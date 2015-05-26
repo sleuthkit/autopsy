@@ -31,8 +31,6 @@ import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.ComboBoxModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -42,13 +40,12 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
 import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -69,8 +66,6 @@ final class LocalDiskPanel extends JPanel {
 
     private boolean enableNext = false;
     
-    List<WizardPathValidator> pathValidatorList = new ArrayList<>();
-    private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
     private final int prePendedStringLength = 4; // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names
 
     /**
@@ -104,17 +99,7 @@ final class LocalDiskPanel extends JPanel {
         errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
-        discoverWizardPathValidators(); 
-    }
-    
-    /**
-     * Discovers WizardPathValidator service providers
-     */
-    private void discoverWizardPathValidators() {
-        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
-            pathValidatorList.add(pathValidator);
-        }
-    }       
+    }     
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -252,20 +237,11 @@ final class LocalDiskPanel extends JPanel {
     }
     
     /**
-     * Validates path to selected data source. Calls WizardPathValidator service provider
-     * if one is available. Otherwise performs path validation locally.
+     * Validates path to selected data source. 
      * @param path Absolute path to the selected data source
      * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path){
-        
-        errorLabel.setVisible(false);
-        String errorString = "";
-        
-        if (path.isEmpty()) {
-            return false;   // no need for error message as the module sets path to "" at startup
-        }
-        
+    private boolean isImagePathValid(String path){                
         String newPath = path;
         if (path.length() > prePendedStringLength) {
             // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names.
@@ -273,42 +249,14 @@ final class LocalDiskPanel extends JPanel {
             newPath = path.substring(prePendedStringLength, path.length());
         } 
 
-        // check if the is a WizardPathValidator service provider
-        if (!pathValidatorList.isEmpty()) {
-            // call WizardPathValidator service provider
-            errorString = pathValidatorList.get(0).validateDataSourcePath(newPath, Case.getCurrentCase().getCaseType());
-        } else {
-            // validate locally            
-            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-                // check that path is not on "C:" drive
-                if (pathOnCDrive(newPath)) {
-                    errorString = NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text");  //NON-NLS
-                } 
-            } else {
-                // single user case - no validation needed
-            }
-        }
-        
-        // set error string
-        if (!errorString.isEmpty()){
+        errorLabel.setVisible(false);                
+        if (!MultiUserPathValidator.isValid(newPath, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
-            errorLabel.setText(errorString);
+            errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
             return false;
-        }
-        
+        }        
         return true;
-    }
-    
-    /**
-     * Checks whether a file path contains drive letter defined by pattern.
-     *
-     * @param filePath Input file absolute path
-     * @return true if path matches the pattern, false otherwise.
-     */
-    private boolean pathOnCDrive(String filePath) {
-        Matcher m = driveLetterPattern.matcher(filePath);
-        return m.find();
-    }        
+    }    
 
     //@Override
     public void reset() {

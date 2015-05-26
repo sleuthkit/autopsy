@@ -22,18 +22,14 @@ import org.openide.util.NbBundle;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.corecomponentinterfaces.WizardPathValidator;
+import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -45,13 +41,10 @@ import org.sleuthkit.datamodel.TskData.DbType;
 final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
     private JFileChooser fc = new JFileChooser();
-    private NewCaseWizardPanel1 wizPanel;
-    java.util.List<WizardPathValidator> pathValidatorList = new ArrayList<>();
-    private final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");    
+    private NewCaseWizardPanel1 wizPanel;   
 
     NewCaseVisualPanel1(NewCaseWizardPanel1 wizPanel) {
         initComponents();
-        discoverWizardPathValidators();
         errorLabel.setVisible(false);
         lbBadMultiUserSettings.setText("");
         this.wizPanel = wizPanel;
@@ -373,11 +366,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         String caseName = getCaseName();
         String parentDir = getCaseParentDir();
         
-        if (!isImagePathValid(parentDir)) {
-            wizPanel.setIsFinish(false);
-            return;
-        }        
-
         if (!caseName.equals("") && !parentDir.equals("")) {
             caseDirTextField.setText(parentDir + caseName);
             wizPanel.setIsFinish(true);
@@ -385,66 +373,30 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             caseDirTextField.setText("");
             wizPanel.setIsFinish(false);
         }
+        
+        if (!isImagePathValid(parentDir)) {
+            wizPanel.setIsFinish(false);
+        }                
     }
     
     /**
-     * Validates path to selected data source. Calls WizardPathValidator service provider
-     * if one is available. Otherwise performs path validation locally.
+     * Validates path to selected data source.
+     *
      * @param path Absolute path to the selected data source
      * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path){
-        
+    private boolean isImagePathValid(String path) {
         errorLabel.setVisible(false);
-        String errorString = "";
-        
+
         if (path.isEmpty()) {
             return false;   // no need for error message as the module sets path to "" at startup
         }
 
-        // check if the is a WizardPathValidator service provider
-        if (!pathValidatorList.isEmpty()) {
-            // call WizardPathValidator service provider
-            errorString = pathValidatorList.get(0).validateDataSourcePath(path, getCaseType());
-        } else {
-            // validate locally            
-            if (getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-                // check that path is not on "C:" drive
-                if (pathOnCDrive(path)) {
-                    errorString = NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text");  //NON-NLS
-                } 
-            } else {
-                // single user case - no validation needed
-            }
-        }
-        
-        // set error string
-        if (!errorString.isEmpty()){
+        if (!MultiUserPathValidator.isValid(path, getCaseType())) {
             errorLabel.setVisible(true);
-            errorLabel.setText(errorString);
+            errorLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
             return false;
         }
-        
         return true;
-    }
-    
-    /**
-     * Checks whether a file path contains drive letter defined by pattern.
-     *
-     * @param filePath Input file absolute path
-     * @return true if path matches the pattern, false otherwise.
-     */
-    private boolean pathOnCDrive(String filePath) {
-        Matcher m = driveLetterPattern.matcher(filePath);
-        return m.find();
-    }      
-    
-    /**
-     * Discovers WizardPathValidator service providers
-     */
-    private void discoverWizardPathValidators() {
-        for (WizardPathValidator pathValidator : Lookup.getDefault().lookupAll(WizardPathValidator.class)) {
-            pathValidatorList.add(pathValidator);
-        }
-    }     
+    } 
 }
