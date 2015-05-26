@@ -65,18 +65,26 @@ public class DrawableGroup implements Comparable<DrawableGroup>{
         return getFilesWithHashSetHitsCount() / (double) getSize();
     }
 
-    synchronized public int getFilesWithHashSetHitsCount() {
+    /**
+     * Call to indicate that an image has been added or removed from the group,
+     * so the hash counts may not longer be accurate.
+     */
+    synchronized public void invalidateHashSetHitsCount(){
+        filesWithHashSetHitsCount = -1;
+    }
+    
+    synchronized public int getFilesWithHashSetHitsCount() { 
         //TODO: use the drawable db for this ? -jm
         if (filesWithHashSetHitsCount < 0) {
             filesWithHashSetHitsCount = 0;
             for (Long fileID : fileIds()) {
+
                 try {
-                    long artcount = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
-                    if (artcount > 0) {
+                    if(ImageGalleryController.getDefault().getDatabase().isInHashSet(fileID)){
                         filesWithHashSetHitsCount++;
                     }
-                } catch (IllegalStateException | TskCoreException ex) {
-                    LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()", ex);
+                } catch (IllegalStateException | NullPointerException ex) {
+                    LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
                     break;
                 }
             }
@@ -112,10 +120,12 @@ public class DrawableGroup implements Comparable<DrawableGroup>{
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
         }
+        invalidateHashSetHitsCount();
     }
 
     synchronized public void removeFile(Long f) {
         fileIDs.removeAll(f);
+        invalidateHashSetHitsCount();
     }
     
     // By default, sort by group key name

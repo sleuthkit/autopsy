@@ -370,7 +370,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
             } else {
                 Category.registerListener(this);
                 TagUtils.registerListener(this);
-
+ 
                 getFile();
                 updateSelectionState();
                 updateCategoryBorder();

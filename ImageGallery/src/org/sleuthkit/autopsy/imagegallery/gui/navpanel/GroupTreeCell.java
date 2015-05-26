@@ -60,7 +60,17 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 //if number of files in this group changes (eg file is recategorized), update counts
                 tNode.getGroup().fileIds().addListener((Observable o) -> {
                     Platform.runLater(() -> {
-                        setText(name + " (" + getNumerator() + getDenominator() + ")");
+                        
+                        String groupName; // The "name" variable set earlier is generally not correct at this point
+                        if((getItem() == null) || (getItem().getGroup() == null) ||
+                                (getItem().getGroup().groupKey == null)){
+                            groupName = "";
+                        }
+                        else{
+                            groupName = getItem().getGroup().groupKey.getValueDisplayName();
+                        }
+                        
+                        setText(groupName + " (" + getNumerator() + getDenominator() + ")");
                     });
                 });
 

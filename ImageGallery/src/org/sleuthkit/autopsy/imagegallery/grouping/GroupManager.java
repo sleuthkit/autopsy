@@ -281,18 +281,21 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         final DrawableGroup group = getGroupForKey(groupKey);
         if (group != null) {
             group.removeFile(fileID);
-            if (group.fileIds().isEmpty()) {
-                synchronized (groupMap) {
-                    groupMap.remove(groupKey, group);
-                }
-                Platform.runLater(() -> {
-                    analyzedGroups.remove(group);
-                    synchronized (unSeenGroups) {
-                        unSeenGroups.remove(group);
+            
+            // If we're grouping by category, we don't want to remove empty groups.
+            if(! group.groupKey.getValueDisplayName().startsWith("CAT-")){
+                if (group.fileIds().isEmpty()) {
+                    synchronized (groupMap) {
+                        groupMap.remove(groupKey, group);
                     }
-                });
+                    Platform.runLater(() -> {
+                        analyzedGroups.remove(group);
+                        synchronized (unSeenGroups) {
+                            unSeenGroups.remove(group);
+                        }
+                    });
+                }
             }
-
         }
     }
 
@@ -487,7 +490,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -499,7 +502,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                    if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+
                         files.add(ct.getContent().getId());
                     }
                 }
@@ -529,7 +533,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+
                     files.add(ct.getContent().getId());
                 }
             }
@@ -649,7 +654,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
-                        }                        
+                        }     
+                        else{
+                            g.invalidateHashSetHitsCount();
+                        }
                     }
                 }
 
@@ -668,6 +676,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                  * innertask? -jm
                  */
                 for (final long fileId : fileIDs) {
+                    
+                    db.updateHashSetsForFile(fileId);
 
                     //get grouping(s) this file would be in
                     Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
