@@ -150,15 +150,7 @@ public class FileTypeDetector {
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
 
         String mimeType;
-        // Consistently mark unallocated and unused space as file type application/octet-stream
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (file.isFile() == false)) {
-            mimeType = MimeTypes.OCTET_STREAM;
-        } else {
-            mimeType = detect(file);
-        }
-
+        mimeType = detect(file);
         if (null != mimeType) {
             /**
              * Add the file type attribute to the general info artifact. Note
@@ -180,6 +172,13 @@ public class FileTypeDetector {
      * @return The MIME type name id detection was successful, null otherwise.
      */
     public String detect(AbstractFile file) throws TskCoreException {
+        // Consistently mark unallocated and unused space as file type application/octet-stream
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (file.isFile() == false)) {
+            return MimeTypes.OCTET_STREAM;
+        }
+
         String fileType = detectUserDefinedType(file);
         if (null == fileType) {
             try {
