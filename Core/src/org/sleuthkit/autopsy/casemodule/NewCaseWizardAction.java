@@ -99,7 +99,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
             //TODO fix for local
             CaseType currentCaseType = CaseType.fromString(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, ModuleSettings.CURRENT_CASE_TYPE));
             CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-            if ((currentCaseType==CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.UNKNOWN) && info.settingsValid())) {
+            if ((currentCaseType==CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && info.settingsValid())) {
                 AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                 addImageAction.actionPerformed(null);
             } else {
