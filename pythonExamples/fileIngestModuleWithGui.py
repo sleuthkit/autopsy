@@ -40,6 +40,7 @@
 
 import jarray
 from java.lang import System
+from java.util.logging import Level
 from javax.swing import JCheckBox
 from javax.swing import BoxLayout
 from org.sleuthkit.autopsy.casemodule import Case
@@ -117,12 +118,12 @@ class SampleFileIngestModuleWithUI(FileIngestModule):
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.logger = Logger.getLogger(SampleFileIngestModuleWithUIFactory.moduleName)
-        
+
         # As an example, determine if user configured a flag in UI
         if self.local_settings.getFlag():
-            self.logger.info("flag is set")
+            self.logger.logp(Level.INFO, SampleFileIngestModuleWithUI.__name__, "startUp", "flag is set")
         else:
-            self.logger.info("flag is not set")
+            self.logger.logp(Level.INFO, SampleFileIngestModuleWithUI.__name__, "startUp", "flag is not set")
         
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
         # raise IngestModuleException(IngestModule(), "Oh No!")

@@ -33,6 +33,7 @@
 
 import jarray
 from java.lang import System
+from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
@@ -99,7 +100,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().find(".txt") != -1:
             
-            self.logger.info("Found a text file: " + file.getName())
+            self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", "Found a text file: " + file.getName())
             self.filesFound+=1
 			
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
