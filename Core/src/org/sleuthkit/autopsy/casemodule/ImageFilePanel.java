@@ -272,7 +272,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         
         // display warning if there is one (but don't disable "next" button)
-        isImagePathValid(path);
+        warnIfPathIsInvalid(path);
         
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
@@ -282,17 +282,14 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     }
     
     /**
-     * Validates path to selected data source. 
+     * Validates path to selected data source and displays warning if it is invalid.
      * @param path Absolute path to the selected data source
-     * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path){                      
+    private void warnIfPathIsInvalid(String path){                      
         if (!MultiUserPathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
-            return false;
         }
-        return true;
     }
     
     public void storeSettings() {

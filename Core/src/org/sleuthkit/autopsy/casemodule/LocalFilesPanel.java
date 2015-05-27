@@ -98,17 +98,16 @@ import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
     public boolean validatePanel() {
         
         // display warning if there is one (but don't disable "next" button)
-        isImagePathValid(getContentPaths());        
+        warnIfPathIsInvalid(getContentPaths());        
         
         return enableNext;
     }
     
     /**
-     * Validates path to selected data source. 
+     * Validates path to selected data source and displays warning if it is invalid. 
      * @param path Absolute path to the selected data source
-     * @return true if path is valid, false otherwise.
      */
-     private boolean isImagePathValid(String path) {
+     private void warnIfPathIsInvalid(String path) {
          errorLabel.setVisible(false);
 
          // Path variable for "Local files" module is a coma separated string containg multiple paths
@@ -119,10 +118,9 @@ import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
              if (!MultiUserPathValidator.isValid(currentPath, currentCaseType)) {
                  errorLabel.setVisible(true);
                  errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
-                 return false;
+                 return;
              }
          }
-         return true;
      } 
 
     //@Override

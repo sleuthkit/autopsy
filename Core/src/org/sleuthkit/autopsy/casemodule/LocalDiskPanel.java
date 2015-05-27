@@ -170,7 +170,7 @@ final class LocalDiskPanel extends JPanel {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -230,17 +230,16 @@ final class LocalDiskPanel extends JPanel {
     public boolean validatePanel() {
         
         // display warning if there is one (but don't disable "next" button)
-        isImagePathValid(getContentPaths());        
+        warnIfPathIsInvalid(getContentPaths());        
         
         return enableNext;
     }
     
     /**
-     * Validates path to selected data source. 
+     * Validates path to selected data source and displays warning if it is invalid. 
      * @param path Absolute path to the selected data source
-     * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path){                
+    private void warnIfPathIsInvalid(String path){                
         String newPath = path;
         if (path.length() > prePendedStringLength) {
             // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names.
@@ -252,9 +251,7 @@ final class LocalDiskPanel extends JPanel {
         if (!MultiUserPathValidator.isValid(newPath, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
-            return false;
         }        
-        return true;
     }    
 
     //@Override
