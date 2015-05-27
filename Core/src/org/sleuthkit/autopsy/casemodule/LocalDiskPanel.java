@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -64,6 +65,8 @@ final class LocalDiskPanel extends JPanel {
     private LocalDiskModel model;
 
     private boolean enableNext = false;
+    
+    private final int prePendedStringLength = 4; // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names
 
     /**
      * Creates new form LocalDiskPanel
@@ -92,11 +95,11 @@ final class LocalDiskPanel extends JPanel {
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
-
+        
+        errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
-
-    }
+    }     
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -225,8 +228,34 @@ final class LocalDiskPanel extends JPanel {
      */
     //@Override
     public boolean validatePanel() {
+        
+        // display warning if there is one (but don't disable "next" button)
+        isImagePathValid(getContentPaths());        
+        
         return enableNext;
     }
+    
+    /**
+     * Validates path to selected data source. 
+     * @param path Absolute path to the selected data source
+     * @return true if path is valid, false otherwise.
+     */
+    private boolean isImagePathValid(String path){                
+        String newPath = path;
+        if (path.length() > prePendedStringLength) {
+            // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names.
+            // Path validators expect a "standard" path as input, i.e. one that starts with a drive letter.
+            newPath = path.substring(prePendedStringLength, path.length());
+        } 
+
+        errorLabel.setVisible(false);                
+        if (!MultiUserPathValidator.isValid(newPath, Case.getCurrentCase().getCaseType())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+            return false;
+        }        
+        return true;
+    }    
 
     //@Override
     public void reset() {

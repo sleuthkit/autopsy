@@ -54,7 +54,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private JPanel currentPanel;
 
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
-
+    
     List<String> coreDSPTypes = new ArrayList<>();
 
     /**
@@ -127,7 +127,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
             }
         }
-    }
+    } 
 
     private void dspSelectionChanged() {
         // update the current panel to selection
