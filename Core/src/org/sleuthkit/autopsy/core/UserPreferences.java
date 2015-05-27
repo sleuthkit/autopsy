@@ -111,7 +111,7 @@ public final class UserPreferences {
         try {
             dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "UNKOWN"));
         } catch (Exception ex) {
-            dbType = DbType.UNKNOWN;
+            dbType = DbType.SQLITE;
         }
         return new CaseDbConnectionInfo(
                 preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
