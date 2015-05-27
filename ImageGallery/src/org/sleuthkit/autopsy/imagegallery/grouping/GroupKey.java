@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.grouping;
 
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
 
@@ -27,6 +28,7 @@ import org.sleuthkit.datamodel.TagName;
  * key identifying information of a {@link Grouping}. Used to look up groups in
  * {@link Map}s and from the db.
  */
+@Immutable
 public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>> {
 
     private final T val;

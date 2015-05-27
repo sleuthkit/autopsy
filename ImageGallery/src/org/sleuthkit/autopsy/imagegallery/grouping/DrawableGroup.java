@@ -50,6 +50,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     final public GroupKey<?> groupKey;
 
+    public GroupKey<?> getGroupKey() {
+        return groupKey;
+    }
+
     DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup) {
         this.groupKey = groupKey;
         fileIDs.setAll(filesInGroup);
