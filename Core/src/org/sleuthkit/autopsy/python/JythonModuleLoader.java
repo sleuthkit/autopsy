@@ -81,8 +81,9 @@ public final class JythonModuleLoader {
                                     objects.add( createObjectFromScript(script, className, interfaceClass));
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
+                                    // NOTE: using ex.toString() because the current version is always returning null for ex.getMessage().
                                     DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                                            NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.errorMessages.failedToLoadModule", className, script.getAbsolutePath()),
+                                            NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.errorMessages.failedToLoadModule", className, ex.toString()),
                                             NotifyDescriptor.ERROR_MESSAGE));
                                 }
                             }
