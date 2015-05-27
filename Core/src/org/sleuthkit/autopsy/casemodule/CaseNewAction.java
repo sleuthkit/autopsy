@@ -57,4 +57,15 @@ public final class CaseNewAction extends CallableSystemAction implements CaseNew
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
+    
+    /**
+     * Set this action to be enabled/disabled
+     *
+     * @param value  whether to enable this action or not
+     */
+    @Override
+    public void setEnabled(boolean value) {
+        super.setEnabled(value);
+        //toolbarButton.setEnabled(value);
+    }    
 }
