@@ -33,6 +33,7 @@
 
 import jarray
 from java.lang import System
+from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
@@ -113,7 +114,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         files = fileManager.findFiles(dataSource, "%test%")
 
         numFiles = len(files)
-        logger.info("found " + str(numFiles) + " files") 
+        logger.logp(Level.INFO, SampleJythonDataSourceIngestModule.__name__, "process", "found " + str(numFiles) + " files")
         progressBar.switchToDeterminate(numFiles)
         fileCount = 0;
         for file in files:
@@ -122,7 +123,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
 
-            logger.info("Processing file: " + file.getName())
+            logger.logp(Level.INFO, SampleJythonDataSourceIngestModule.__name__, "process", "Processing file: " + file.getName())
             fileCount += 1
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
