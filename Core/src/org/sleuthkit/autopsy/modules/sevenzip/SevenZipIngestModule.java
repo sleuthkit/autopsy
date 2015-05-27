@@ -24,7 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -62,6 +61,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
  * 7Zip ingest module extracts supported archives, adds extracted DerivedFiles,
@@ -87,13 +87,10 @@ public final class SevenZipIngestModule implements FileIngestModule {
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
     //counts archive depth
     private ArchiveDepthCountTree archiveDepthCountTree;
-    //buffer for checking file headers and signatures
-    private static final int readHeaderSize = 4;
-    private final byte[] fileHeaderBuffer = new byte[readHeaderSize];
-    private static final int ZIP_SIGNATURE_BE = 0x504B0304;
     private IngestJobContext context;
     private long jobId;
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private FileTypeDetector fileTypeDetector;
 
     SevenZipIngestModule() {
     }
@@ -102,6 +99,13 @@ public final class SevenZipIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         jobId = context.getJobId();
+
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+        }
 
         final Case currentCase = Case.getCurrentCase();
 
@@ -657,24 +661,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
      * @return true if zip file, false otherwise
      */
     private boolean isZipFileHeader(AbstractFile file) {
-        if (file.getSize() < readHeaderSize) {
-            return false;
-        }
-
-        try {
-            int bytesRead = file.read(fileHeaderBuffer, 0, readHeaderSize);
-            if (bytesRead != readHeaderSize) {
-                return false;
-            }
-        } catch (TskCoreException ex) {
-            //ignore if can't read the first few bytes, not a ZIP
-            return false;
-        }
-
-        ByteBuffer bytes = ByteBuffer.wrap(fileHeaderBuffer);
-        int signature = bytes.getInt();
-
-        return signature == ZIP_SIGNATURE_BE;
+        return fileTypeDetector.getFileType(file).equals("application/zip"); //NON-NLS
     }
 
     /**
