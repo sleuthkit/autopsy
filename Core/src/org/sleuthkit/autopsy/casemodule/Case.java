@@ -76,7 +76,8 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-
+    private static boolean firstTime=true;
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -229,7 +230,11 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
      */
     private void init() {
         db.addErrorObserver(this);
-        db.addSleuthkitCaseErrorObserver(this);
+        if(firstTime)
+        {
+            firstTime=false;
+            db.addSleuthkitCaseErrorObserver(this);
+        }
     }
 
     /**
