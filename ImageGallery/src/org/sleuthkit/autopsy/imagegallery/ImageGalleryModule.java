@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,11 @@ public class ImageGalleryModule {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryModule.class.getName());
 
-    static final String MODULE_NAME = ImageGalleryModule.class.getSimpleName();
+    private static final String MODULE_NAME = "Image Gallery";
+
+    public static String getModuleName() {
+        return MODULE_NAME;
+    }
 
     private static final Set<String> videoExtensions
             = Sets.newHashSet("aaf", "3gp", "asf", "avi", "m1v", "m2v", "m4v", "mp4",
