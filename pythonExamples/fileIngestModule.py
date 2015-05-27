@@ -27,42 +27,47 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+# Simple file-level ingest module for Autopsy.
+# Search for TODO for the things that you need to change
+# See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
+
 import jarray
 from java.lang import System
+from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.autopsy.ingest import IngestModule
+from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
 from org.sleuthkit.autopsy.ingest import FileIngestModule
 from org.sleuthkit.autopsy.ingest import IngestModuleFactoryAdapter
 from org.sleuthkit.autopsy.ingest import IngestMessage
 from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 
-# Sample factory that defines basic functionality and features of the module
-class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
+# Factory that defines the name and details of the module and allows Autopsy
+# to create instances of the modules that will do the anlaysis.
+# TODO: Rename this to something more specific.  Search and replace for it because it is used a few times
+class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 
+    # TODO: give it a unique name.  Will be shown in module list, logs, etc.
+    moduleName = "Sample file ingest Module"
+	
     def getModuleDisplayName(self):
-        return "Sample Jython ingest module"
+        return self.moduleName
 
+    # TODO: Give it a description
     def getModuleDescription(self):
-        return "Sample Jython Ingest Module without GUI example code"
+        return "Sample module that does X, Y, and Z."
 
     def getModuleVersionNumber(self):
         return "1.0"
-
-    # Return true if module wants to get passed in a data source
-    def isDataSourceIngestModuleFactory(self):
-        return True
-
-    # can return null if isDataSourceIngestModuleFactory returns false
-    def createDataSourceIngestModule(self, ingestOptions):
-        return SampleJythonDataSourceIngestModule()
 
     # Return true if module wants to get called for each file
     def isFileIngestModuleFactory(self):
@@ -73,74 +78,39 @@ class SampleJythonIngestModuleFactory(IngestModuleFactoryAdapter):
         return SampleJythonFileIngestModule()
 
 
-# Data Source-level ingest module.  One gets created per data source.
-# Queries for various files.
-# If you don't need a data source-level module, delete this class.
-class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
-
-    def __init__(self):
-        self.context = None
-
-    def startUp(self, context):
-        self.context = context
-
-    def process(self, dataSource, progressBar):
-        if self.context.isJobCancelled():
-            return IngestModule.ProcessResult.OK
-
-        # Configure progress bar for 2 tasks
-        progressBar.switchToDeterminate(2)
-
-        autopsyCase = Case.getCurrentCase()
-        sleuthkitCase = autopsyCase.getSleuthkitCase()
-        services = Services(sleuthkitCase)
-        fileManager = services.getFileManager()
-
-        # Get count of files with "test" in name.
-        fileCount = 0;
-        files = fileManager.findFiles(dataSource, "%test%")
-        for file in files:
-            fileCount += 1
-        progressBar.progress(1)
-
-        if self.context.isJobCancelled():
-            return IngestModule.ProcessResult.OK
-
-        # Get files by creation time.
-        currentTime = System.currentTimeMillis() / 1000
-        minTime = currentTime - (14 * 24 * 60 * 60) # Go back two weeks.
-        otherFiles = sleuthkitCase.findAllFilesWhere("crtime > %d" % minTime)
-        for otherFile in otherFiles:
-            fileCount += 1
-        progressBar.progress(1);
-
-        if self.context.isJobCancelled():
-            return IngestModule.ProcessResult.OK;
-
-        #Post a message to the ingest messages in box.
-        message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
-            "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
-        IngestServices.getInstance().postMessage(message)
-
-        return IngestModule.ProcessResult.OK;
-
-
 # File-level ingest module.  One gets created per thread.
+# TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 # Looks at the attributes of the passed in file.
-# if you don't need a file-level module, delete this class.
 class SampleJythonFileIngestModule(FileIngestModule):
 
+    # Where any setup and configuration is done
+    # TODO: Add any setup code that you need here.
     def startUp(self, context):
+        self.logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
+        self.filesFound = 0		
+
+        # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
+        # raise IngestModuleException(IngestModule(), "Oh No!")
         pass
 
+    # Where the analysis is done.  Each file will be passed into here.
+    # TODO: Add your analysis code in here.
     def process(self, file):
-        # If the file has a txt extension, post an artifact to the blackboard.
-        if file.getName().find("test") != -1:
+        
+        # For an example, we will flag files with .txt in the name and make a blackboard artifact.
+        if file.getName().find(".txt") != -1:
+            
+            self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", "Found a text file: " + file.getName())
+            self.filesFound+=1
+			
+            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+            # artfiact.  Refer to the developer docs for other examples.
             art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), "Sample Jython File Ingest Module", "Text Files")
+            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
 
-            # Read the contents of the file.
+
+            # To further the example, this code will read the contents of the file and count the number of bytes
             inputStream = ReadContentInputStream(file)
             buffer = jarray.zeros(1024, "b")
             totLen = 0
@@ -148,13 +118,12 @@ class SampleJythonFileIngestModule(FileIngestModule):
             while (len != -1):
                     totLen = totLen + len
                     len = inputStream.read(buffer)
-
-            # Send the size of the file to the ingest messages in box.
-            msgText = "Size of %s is %d bytes" % ((file.getName(), totLen))
-            message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, "Sample Jython File IngestModule", msgText)
-            ingestServices = IngestServices.getInstance().postMessage(message)
-
+            
         return IngestModule.ProcessResult.OK
 
+    # Where any shutdown code is run and resources are freed.
+    # TODO: Add any shutdown code that you need here.
     def shutDown(self):
-        pass
+        # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
+        message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName, str(self.filesFound) + " files found")
+        ingestServices = IngestServices.getInstance().postMessage(message)

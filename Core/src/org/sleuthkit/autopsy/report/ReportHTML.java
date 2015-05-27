@@ -299,14 +299,14 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     /**
      * Start this report by setting the path, refreshing member variables,
      * and writing the skeleton for the HTML report.
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      */
     @Override
-    public void startReport(String path) {
+    public void startReport(String baseReportDir) {
         // Refresh the HTML report
         refresh();
         // Setup the path for the HTML report
-        this.path = path + "HTML Report" + File.separator; //NON-NLS
+        this.path = baseReportDir + "HTML Report" + File.separator; //NON-NLS
         this.thumbsPath = this.path + "thumbs" + File.separator; //NON-NLS
         try {
             FileUtil.createFolder(new File(this.path));

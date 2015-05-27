@@ -70,18 +70,18 @@ class ReportKML implements GeneralReportModule {
     /**
      * Generates a body file format report for use with the MAC time tool.
      *
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
     @Override
-    public void generateReport(String path, ReportProgressPanel progressPanel) {
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
 
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
-        reportPath = path + "ReportKML.kml"; //NON-NLS
-        String reportPath2 = path + "ReportKML.txt"; //NON-NLS
+        reportPath = baseReportDir + "ReportKML.kml"; //NON-NLS
+        String reportPath2 = baseReportDir + "ReportKML.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
 

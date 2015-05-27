@@ -50,6 +50,8 @@ import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
@@ -1123,6 +1125,56 @@ public class DrawableDB {
         }
     }
     
+    /*
+     * The following groups of functions are used to store information in memory instead
+     * of in the database. Due to the change listeners in the GUI, this data is requested
+     * many, many times when browsing the images, and especially when making any
+     * changes to things like categories.
+     *
+     * I don't like having multiple copies of the data, but these were causing major
+     * bottlenecks when they were all database lookups.
+     */
+    
+    @GuardedBy("hashSetMap")
+    private final Map<Long, Set<String>> hashSetMap = new HashMap<>();
+    
+    @GuardedBy("hashSetMap")
+    public boolean isInHashSet(Long id){
+        if(! hashSetMap.containsKey(id)){
+            updateHashSetsForFile(id);
+        }
+        return (! hashSetMap.get(id).isEmpty());
+    }
+    
+    @GuardedBy("hashSetMap")
+    public Set<String> getHashSetsForFile(Long id){
+        if(! isInHashSet(id)){
+            updateHashSetsForFile(id);
+        }
+        return hashSetMap.get(id);
+    }
+
+    @GuardedBy("hashSetMap")
+    public void updateHashSetsForFile(Long id){
+        
+        try {
+            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
+            Set<String> hashNames = new HashSet<>();
+            for(BlackboardArtifact a:arts){
+                List<BlackboardAttribute> attrs = a.getAttributes();
+                for(BlackboardAttribute attr:attrs){
+                    if(attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()){
+                        hashNames.add(attr.getValueString());
+                    }
+                }
+            }
+            hashSetMap.put(id, hashNames);
+        } catch (IllegalStateException | TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "could not access case during updateHashSetsForFile()", ex);
+          
+        }
+    }
+    
     /**
      * For performance reasons, keep a list of all file IDs currently in the image database.
      * Otherwise the database is queried many times to retrieve the same data.
@@ -1145,6 +1197,12 @@ public class DrawableDB {
     public void removeImageFileFromList(Long id) {
         synchronized (fileIDlist) {
             fileIDlist.remove(id);
+        }
+    }
+    
+    public int getNumberOfImageFilesInList(){
+        synchronized (fileIDlist){
+            return fileIDlist.size();
         }
     }
     
@@ -1173,63 +1231,52 @@ public class DrawableDB {
     private final Map<Category, Integer> categoryCounts = new HashMap<>();    
     
     public void incrementCategoryCount(Category cat) throws TskCoreException{
-        synchronized(categoryCounts){
-            int count = getCategoryCount(cat);
-            count++;
-            categoryCounts.put(cat, count);
+        if(cat != Category.ZERO){
+            synchronized(categoryCounts){
+                int count = getCategoryCount(cat);
+                count++;
+                categoryCounts.put(cat, count);
+            }
         }
     }
     
     public void decrementCategoryCount(Category cat) throws TskCoreException{
-        synchronized(categoryCounts){
-            int count = getCategoryCount(cat);
-            count--;
-            categoryCounts.put(cat, count);            
+        if(cat != Category.ZERO){
+            synchronized(categoryCounts){
+                int count = getCategoryCount(cat);
+                count--;
+                categoryCounts.put(cat, count);            
+            }
         }
     }
     
     public int getCategoryCount(Category cat) throws TskCoreException{
         synchronized(categoryCounts){
-            if(categoryCounts.containsKey(cat)){
+            if(cat == Category.ZERO){
+                // Keeping track of the uncategorized files is a bit tricky while ingest
+                // is going on, so always use the list of file IDs we already have along with the
+                // other category counts instead of trying to track it separately.
+                int allOtherCatCount = getCategoryCount(Category.ONE) + getCategoryCount(Category.TWO) + getCategoryCount(Category.THREE) + 
+                        getCategoryCount(Category.FOUR) + getCategoryCount(Category.FIVE);
+                return getNumberOfImageFilesInList() - allOtherCatCount;
+            }
+            else if(categoryCounts.containsKey(cat)){
                 return categoryCounts.get(cat);
             }
             else{
                 try {
-                    if (cat == Category.ZERO) {
-
-                        // Category Zero (Uncategorized) files will not be tagged as such - 
-                        // this is really just the default setting. So we count the number of files
-                        // tagged with the other categories and subtract from the total.
-                        int allOtherCatCount = 0;
-                        TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
-                        for (TagName tn : tns) {
-                            List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
-                            for (ContentTag ct : contentTags) {
-                                if(ct.getContent() instanceof AbstractFile){
-                                    AbstractFile f = (AbstractFile)ct.getContent();
-                                    if(this.isImageFile(f.getId())){
-                                        allOtherCatCount++;
-                                    }
-                                }
-                            }
-                        } 
-                        categoryCounts.put(cat, this.countAllFiles() - allOtherCatCount);
-                        return categoryCounts.get(cat);
-                    } else {
-
-                        int fileCount = 0;
-                        List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
-                        for (ContentTag ct : contentTags) {
-                            if(ct.getContent() instanceof AbstractFile){
-                                AbstractFile f = (AbstractFile)ct.getContent();
-                                if(this.isImageFile(f.getId())){
-                                    fileCount++;
-                                }
+                    int fileCount = 0;
+                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
+                    for (ContentTag ct : contentTags) {
+                        if(ct.getContent() instanceof AbstractFile){
+                            AbstractFile f = (AbstractFile)ct.getContent();
+                            if(this.isImageFile(f.getId())){
+                                fileCount++;
                             }
                         }
-                        categoryCounts.put(cat, fileCount);
-                        return fileCount;
                     }
+                    categoryCounts.put(cat, fileCount);
+                    return fileCount;
                 } catch(IllegalStateException ex){
                     throw new TskCoreException("Case closed while getting files");
                 }

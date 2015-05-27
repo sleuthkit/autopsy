@@ -26,10 +26,10 @@ public interface GeneralReportModule extends ReportModule {
      * Called to generate the report.  Method is responsible for saving the file at the 
      * path specified and updating progress via the progressPanel object.
      * 
-     * @param reportPath path to save the report
+     * @param baseReportDir Base directory that reports are being stored in.   Report should go into baseReportDir + getRelativeFilePath().
      * @param progressPanel panel to update the report's progress with
      */
-    public void generateReport(String reportPath, ReportProgressPanel progressPanel);
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
     
     /**
      * Returns the configuration panel for the report, which is displayed in

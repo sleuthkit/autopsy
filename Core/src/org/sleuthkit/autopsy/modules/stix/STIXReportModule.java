@@ -96,16 +96,16 @@ public class STIXReportModule implements GeneralReportModule {
     /**
      * .
      *
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
     @Override
-    public void generateReport(String path, ReportProgressPanel progressPanel) {
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.readSTIX"));
-        reportPath = path + getRelativeFilePath();
+        reportPath = baseReportDir + getRelativeFilePath();
 
         // Check if the user wants to display all output or just hits
         reportAllResults = configPanel.getShowAllResults();

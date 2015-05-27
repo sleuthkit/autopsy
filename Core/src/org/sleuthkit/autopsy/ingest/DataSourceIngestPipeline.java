@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -110,6 +111,11 @@ final class DataSourceIngestPipeline {
                 logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                String msg = ex.getMessage();
+                // Jython run-time errors don't seem to have a message, but have details in toString.
+                if (msg == null)
+                    msg = ex.toString();
+                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
             if (this.job.isCancelled()) {
                 break;
