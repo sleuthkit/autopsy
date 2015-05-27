@@ -25,14 +25,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a set of image/video files in a group. The UI listens to changes
  * to the group membership and updates itself accordingly.
  */
-public class DrawableGroup implements Comparable<DrawableGroup>{
+public class DrawableGroup implements Comparable<DrawableGroup> {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableGroup.class.getName());
 
@@ -69,18 +67,18 @@ public class DrawableGroup implements Comparable<DrawableGroup>{
      * Call to indicate that an image has been added or removed from the group,
      * so the hash counts may not longer be accurate.
      */
-    synchronized public void invalidateHashSetHitsCount(){
+    synchronized public void invalidateHashSetHitsCount() {
         filesWithHashSetHitsCount = -1;
     }
-    
-    synchronized public int getFilesWithHashSetHitsCount() { 
+
+    synchronized public int getFilesWithHashSetHitsCount() {
         //TODO: use the drawable db for this ? -jm
         if (filesWithHashSetHitsCount < 0) {
             filesWithHashSetHitsCount = 0;
             for (Long fileID : fileIds()) {
 
                 try {
-                    if(ImageGalleryController.getDefault().getDatabase().isInHashSet(fileID)){
+                    if (ImageGalleryController.getDefault().getDatabase().isInHashSet(fileID)) {
                         filesWithHashSetHitsCount++;
                     }
                 } catch (IllegalStateException | NullPointerException ex) {
@@ -117,20 +115,20 @@ public class DrawableGroup implements Comparable<DrawableGroup>{
     }
 
     synchronized public void addFile(Long f) {
+        invalidateHashSetHitsCount();
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
         }
-        invalidateHashSetHitsCount();
     }
 
     synchronized public void removeFile(Long f) {
-        fileIDs.removeAll(f);
         invalidateHashSetHitsCount();
+        fileIDs.removeAll(f);
     }
-    
+
     // By default, sort by group key name
     @Override
-    public int compareTo(DrawableGroup other){
+    public int compareTo(DrawableGroup other) {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 }

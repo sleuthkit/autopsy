@@ -95,7 +95,6 @@ public class CategorizeAction extends AddTagAction {
                         //remove old category tag if necessary
                         List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
 
-                        boolean hadExistingCategory = false;
                         for (ContentTag ct : allContentTags) {
                             //this is bad: treating tags as categories as long as their names start with prefix
                             //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
@@ -103,7 +102,6 @@ public class CategorizeAction extends AddTagAction {
                                 //LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
                                 Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
                                 controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));
-                                hadExistingCategory = true;
                             }
                         }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
@@ -41,23 +40,21 @@ import javafx.scene.control.TreeView;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Display two trees. one shows all folders (groups) and calls out folders with
  * images. the user can select folders with images to see them in the main
  * GroupPane The other shows folders with hash set hits.
+ *
+ * //TODO: there is too much code duplication between the navTree and the
+ * hashTree. Extract the common code to some new class.
  */
 public class NavPanel extends TabPane {
 
@@ -170,24 +167,15 @@ public class NavPanel extends TabPane {
                     removeFromNavTree(g);
                     removeFromHashTree(g);
                 }
-                if(change.wasPermutated()){
+                if (change.wasPermutated()) {
                     // Handle this afterward
                     wasPermuted = true;
                 }
             }
-            
-            if(wasPermuted){
-                // Remove everything and add it again in the new order
-                for(DrawableGroup g:controller.getGroupManager().getAnalyzedGroups()){
-                    removeFromNavTree(g);
-                    removeFromHashTree(g);
-                }
-                for(DrawableGroup g:controller.getGroupManager().getAnalyzedGroups()){
-                    insertIntoNavTree(g);
-                    if (g.getFilesWithHashSetHitsCount() > 0) {
-                        insertIntoHashTree(g);
-                    }
-                }
+
+            if (wasPermuted) {
+                rebuildTrees();
+
             }
         });
 
@@ -205,6 +193,27 @@ public class NavPanel extends TabPane {
         });
     }
 
+    private void rebuildTrees() {
+        navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
+        hashTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
+
+        ObservableList<DrawableGroup> groups = controller.getGroupManager().getAnalyzedGroups();
+
+        for (DrawableGroup g : groups) {
+            insertIntoNavTree(g);
+            if (g.getFilesWithHashSetHitsCount() > 0) {
+                insertIntoHashTree(g);
+            }
+        }
+
+        Platform.runLater(() -> {
+            navTree.setRoot(navTreeRoot);
+            navTreeRoot.setExpanded(true);
+            hashTree.setRoot(hashTreeRoot);
+            hashTreeRoot.setExpanded(true);
+        });
+    }
+
     private void updateControllersGroup() {
         final TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem.getValue() != null && selectedItem.getValue().getGroup() != null) {
@@ -214,11 +223,6 @@ public class NavPanel extends TabPane {
 
     private void resortHashTree() {
         hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
-    }
-
-    private void insertIntoHashTree(DrawableGroup g) {
-        initHashTree();
-        hashTreeRoot.insert(g.groupKey.getValueDisplayName(), g, false);
     }
 
     /**
@@ -234,27 +238,29 @@ public class NavPanel extends TabPane {
         final GroupTreeItem treeItemForGroup = ((GroupTreeItem) activeTreeProperty.get().getRoot()).getTreeItemForPath(path);
 
         if (treeItemForGroup != null) {
-            /* When we used to run the below code on the FX thread, it would 
-             * get into infinite loops when the next group button was pressed quickly
-             * because the udpates became out of order and History could not keep
-             * track of what was current.  Currently (4/2/15), this method is 
-             * already on the FX thread, so it is OK. */
+            /* When we used to run the below code on the FX thread, it would
+             * get into infinite loops when the next group button was pressed
+             * quickly because the udpates became out of order and History could
+             * not
+             * keep track of what was current.
+             *
+             * Currently (4/2/15), this method is already on the FX thread, so
+             * it is OK. */
             //Platform.runLater(() -> {
-                TreeItem<TreeNode> ti = treeItemForGroup;
-                while (ti != null) {
-                    ti.setExpanded(true);
-                    ti = ti.getParent();
-                }
-                int row = activeTreeProperty.get().getRow(treeItemForGroup);
-                if (row != -1) {
-                    activeTreeProperty.get().getSelectionModel().select(treeItemForGroup);
-                    activeTreeProperty.get().scrollTo(row);
-                }
-            //});
+            TreeItem<TreeNode> ti = treeItemForGroup;
+            while (ti != null) {
+                ti.setExpanded(true);
+                ti = ti.getParent();
+            }
+            int row = activeTreeProperty.get().getRow(treeItemForGroup);
+            if (row != -1) {
+                activeTreeProperty.get().getSelectionModel().select(treeItemForGroup);
+                activeTreeProperty.get().scrollTo(row);
+            }
+            //});   //end Platform.runLater
         }
     }
 
-    @SuppressWarnings("fallthrough")
     private static List<String> groupingToPath(DrawableGroup g) {
 
         if (g.groupKey.getAttribute() == DrawableAttribute.PATH) {
@@ -269,11 +275,14 @@ public class NavPanel extends TabPane {
         }
     }
 
+    private void insertIntoHashTree(DrawableGroup g) {
+        initHashTree();
+        hashTreeRoot.insert(groupingToPath(g), g, false);
+    }
+
     private void insertIntoNavTree(DrawableGroup g) {
         initNavTree();
-        List<String> path = groupingToPath(g);
-
-        navTreeRoot.insert(path, g, true);
+        navTreeRoot.insert(groupingToPath(g), g, true);
     }
 
     private void removeFromNavTree(DrawableGroup g) {
@@ -312,23 +321,5 @@ public class NavPanel extends TabPane {
                 hashTreeRoot.setExpanded(true);
             });
         }
-    }
-
-    //these are not used anymore, but could be usefull at some point
-    //TODO: remove them or find a use and undeprecate
-    @Deprecated
-    private void rebuildNavTree() {
-        navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
-
-        ObservableList<DrawableGroup> groups = controller.getGroupManager().getAnalyzedGroups();
-
-        for (DrawableGroup g : groups) {
-            insertIntoNavTree(g);
-        }
-
-        Platform.runLater(() -> {
-            navTree.setRoot(navTreeRoot);
-            navTreeRoot.setExpanded(true);
-        });
     }
 }
