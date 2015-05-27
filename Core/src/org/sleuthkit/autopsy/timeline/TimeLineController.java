@@ -58,7 +58,6 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -100,7 +99,7 @@ public class TimeLineController {
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
     private static final String DO_REPOPULATE_MESSAGE = NbBundle.getMessage(TimeLineController.class,
-                                                                            "Timeline.do_repopulate.msg");
+            "Timeline.do_repopulate.msg");
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
@@ -359,7 +358,7 @@ public class TimeLineController {
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
-        
+
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
@@ -481,12 +480,12 @@ public class TimeLineController {
         if (newLOD == DescriptionLOD.FULL && count > 10_000) {
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
-                                                                  NbBundle.getMessage(this.getClass(),
-                                                                                      "Timeline.pushDescrLOD.confdlg.msg",
-                                                                                      NumberFormat.getInstance().format(count)),
-                                                                  NbBundle.getMessage(TimeLineTopComponent.class,
-                                                                                      "Timeline.pushDescrLOD.confdlg.details"),
-                                                                  JOptionPane.YES_NO_OPTION);
+                    NbBundle.getMessage(this.getClass(),
+                            "Timeline.pushDescrLOD.confdlg.msg",
+                            NumberFormat.getInstance().format(count)),
+                    NbBundle.getMessage(TimeLineTopComponent.class,
+                            "Timeline.pushDescrLOD.confdlg.details"),
+                    JOptionPane.YES_NO_OPTION);
 
             shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
         }
@@ -570,6 +569,12 @@ public class TimeLineController {
         monitorTask(selectTimeAndTypeTask);
     }
 
+    /**
+     * submit a task for execution and add it to the list of tasks whose
+     * progress is monitored and displayed in the progress bar
+     *
+     * @param task
+     */
     synchronized public void monitorTask(final Task<?> task) {
         if (task != null) {
             Platform.runLater(() -> {
@@ -603,9 +608,16 @@ public class TimeLineController {
                         break;
                     case SCHEDULED:
                     case RUNNING:
+
                     case SUCCEEDED:
                     case CANCELLED:
                     case FAILED:
+                        tasks.remove(task);
+                        if (tasks.isEmpty() == false) {
+                            progress.bind(tasks.get(0).progressProperty());
+                            message.bind(tasks.get(0).messageProperty());
+                            taskTitle.bind(tasks.get(0).titleProperty());
+                        }
                         break;
                 }
             });
@@ -634,7 +646,7 @@ public class TimeLineController {
         return JOptionPane.showConfirmDialog(mainFrame,
                 DO_REPOPULATE_MESSAGE,
                 NbBundle.getMessage(TimeLineTopComponent.class,
-                                    "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
+                        "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
 
