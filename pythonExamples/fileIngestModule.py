@@ -46,6 +46,7 @@ from org.sleuthkit.autopsy.ingest import FileIngestModule
 from org.sleuthkit.autopsy.ingest import IngestModuleFactoryAdapter
 from org.sleuthkit.autopsy.ingest import IngestMessage
 from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.ingest import NoIngestModuleIngestJobSettings
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
@@ -75,7 +76,7 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 
     # can return null if isFileIngestModuleFactory returns false
     def createFileIngestModule(self, ingestOptions):
-        return SampleJythonFileIngestModule()
+        return SampleJythonFileIngestModule(NoIngestModuleIngestJobSettings())
 
 
 # File-level ingest module.  One gets created per thread.
