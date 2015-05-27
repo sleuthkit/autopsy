@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
+import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
@@ -286,7 +286,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * @param path Absolute path to the selected data source
      */
     private void warnIfPathIsInvalid(String path){                      
-        if (!MultiUserPathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
         }

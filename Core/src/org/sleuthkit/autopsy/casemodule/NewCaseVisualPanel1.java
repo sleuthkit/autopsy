@@ -29,7 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
+import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -391,7 +391,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             return false;   // no need for error message as the module sets path to "" at startup
         }
 
-        if (!MultiUserPathValidator.isValid(path, getCaseType())) {
+        if (!PathValidator.isValid(path, getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
             return false;

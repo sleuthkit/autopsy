@@ -24,9 +24,9 @@ import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Validates absolute path to a data source depending on case type.
+ * Validates absolute path (e.g. to a data source or case output folder) depending on case type.
  */
-public final class MultiUserPathValidator {
+public final class PathValidator {
     
     private static final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");    
     public static boolean isValid(String path, Case.CaseType caseType) {

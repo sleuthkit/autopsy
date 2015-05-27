@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
+import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
@@ -115,7 +115,7 @@ import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
          CaseType currentCaseType = Case.getCurrentCase().getCaseType();
 
          for (String currentPath : pathsList) {
-             if (!MultiUserPathValidator.isValid(currentPath, currentCaseType)) {
+             if (!PathValidator.isValid(currentPath, currentCaseType)) {
                  errorLabel.setVisible(true);
                  errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
                  return;

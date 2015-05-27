@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.MultiUserPathValidator;
+import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -248,7 +248,7 @@ final class LocalDiskPanel extends JPanel {
         } 
 
         errorLabel.setVisible(false);                
-        if (!MultiUserPathValidator.isValid(newPath, Case.getCurrentCase().getCaseType())) {
+        if (!PathValidator.isValid(newPath, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
         }        
