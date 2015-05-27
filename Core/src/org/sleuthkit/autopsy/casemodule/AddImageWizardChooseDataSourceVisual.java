@@ -97,10 +97,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         // now add any addtional DSPs that haven't already been added
         for (String dspType : dspTypes) {
             if (!coreDSPTypes.contains(dspType)) {
-                // Local disk processing is not allowed for multi-user cases
-                if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE || !dspType.contains(LocalDiskDSProcessor.getType())) {
-                    typeComboBox.addItem(dspType);
-                }
+                addDataSourceProcessorToComboBox(dspType);
             }
         }
 
@@ -121,6 +118,13 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         };
         typeComboBox.addActionListener(cbActionListener);
         typeComboBox.setSelectedIndex(0);
+    }
+    
+    private void addDataSourceProcessorToComboBox(String dspType) {
+        // Local disk processing is not allowed for multi-user cases
+        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE || !dspType.contains(LocalDiskDSProcessor.getType())) {
+            typeComboBox.addItem(dspType);
+        }
     }
 
     private void discoverDataSourceProcessors() {
