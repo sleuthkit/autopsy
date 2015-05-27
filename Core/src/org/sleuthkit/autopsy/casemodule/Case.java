@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -748,24 +747,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return this.caseType;
     }
 
-    /**
-     * Get the case type within an .aut file. Defaults to single-user case if 
-     * there is a problem.
-     *
-     * @param thePath the path to the file, example: C:\folder\case.aut
-     * @return The case type contained in the .aut file.
-     */
-    public static CaseType getCaseType(Path thePath) {
-        try {
-            XMLCaseManagement xmlcm = new XMLCaseManagement();
-            xmlcm.open(thePath.toString());
-            return xmlcm.getCaseType();
-        } catch (CaseActionException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(Case.class, "Case.GetCaseTypeGivenPath.Failure"), ex); // NON-NLS
-            return CaseType.SINGLE_USER_CASE;
-        }
-    }
-    
     /**
      * Gets the full path to the temp directory of this case. Will create it if
      * it does not already exist.
