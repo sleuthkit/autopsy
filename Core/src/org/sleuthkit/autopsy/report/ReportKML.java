@@ -131,12 +131,14 @@ class ReportKML implements GeneralReportModule {
                     if (lon != 0 && lat != 0) {
                         aFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
 
-                        extractedToPath = reportPath + aFile.getName();
-                        geoPath = extractedToPath;
-                        f = new File(extractedToPath);
-                        f.createNewFile();
-                        copyFileUsingStream(aFile, f);
-                        imageName = aFile.getName();
+                        if(aFile != null){
+                            extractedToPath = reportPath + aFile.getName();
+                            geoPath = extractedToPath;
+                            f = new File(extractedToPath);
+                            f.createNewFile();
+                            copyFileUsingStream(aFile, f);
+                            imageName = aFile.getName();
+                        }
                         out.write(String.valueOf(lat));
                         out.write(";");
                         out.write(String.valueOf(lon));

@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -129,7 +130,11 @@ public enum MiscTypes implements EventType, ArtifactEventType {
          (BlackboardArtifact t,
           Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> u) -> {
              try {
-                 return t.getSleuthkitCase().getAbstractFileById(t.getObjectID()).getName();
+                 AbstractFile f = t.getSleuthkitCase().getAbstractFileById(t.getObjectID());
+                 if(f != null){
+                    return f.getName();
+                 }
+                 return " error loading file name"; // NON-NLS
              } catch (TskCoreException ex) {
                  Exceptions.printStackTrace(ex);
                  return " error loading file name"; // NON-NLS

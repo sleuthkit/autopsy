@@ -101,6 +101,11 @@ class ContactAnalyzer {
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
+            if(f == null){
+                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+                return;
+            }
+            
             try {
                 // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
                 //sorted by name, so phonenumber/email would be consecutive for a person if they exist.
