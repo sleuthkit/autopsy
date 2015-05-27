@@ -83,8 +83,11 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
         // make a list of core DSPs
         // ensure that the core DSPs are at the top and in a fixed order
-        coreDSPTypes.add(ImageDSProcessor.getType());
-        coreDSPTypes.add(LocalDiskDSProcessor.getType());
+        coreDSPTypes.add(ImageDSProcessor.getType());        
+        // Local disk processing is not allowed for multi-user cases
+        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE){
+            coreDSPTypes.add(LocalDiskDSProcessor.getType());
+        }        
         coreDSPTypes.add(LocalFilesDSProcessor.getType());
 
         for (String dspType : coreDSPTypes) {
@@ -94,7 +97,10 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         // now add any addtional DSPs that haven't already been added
         for (String dspType : dspTypes) {
             if (!coreDSPTypes.contains(dspType)) {
-                typeComboBox.addItem(dspType);
+                // Local disk processing is not allowed for multi-user cases
+                if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE || !dspType.contains(LocalDiskDSProcessor.getType())) {
+                    typeComboBox.addItem(dspType);
+                }
             }
         }
 
