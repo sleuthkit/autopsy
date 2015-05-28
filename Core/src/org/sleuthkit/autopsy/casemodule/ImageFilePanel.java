@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
@@ -62,6 +63,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
         
+        errorLabel.setVisible(false);
+        
         boolean firstFilter = true;
         for (FileFilter filter: fileChooserFilters ) {
             if (firstFilter) {  // set the first on the list as the default selection
@@ -76,7 +79,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         this.contextName = context;
         pcs = new PropertyChangeSupport(this);
         
-        createTimeZoneList();
+        createTimeZoneList();       
     }
     
     /**
@@ -98,7 +101,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     }
     
 
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -115,6 +117,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         timeZoneComboBox = new javax.swing.JComboBox<String>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         descLabel = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -139,6 +142,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.descLabel.text")); // NOI18N
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -158,7 +164,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     .addComponent(noFatOrphansCheckbox)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
-                        .addComponent(descLabel)))
+                        .addComponent(descLabel))
+                    .addComponent(errorLabel))
                 .addGap(0, 20, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -169,7 +176,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseButton)
                     .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addGap(3, 3, 3)
+                .addComponent(errorLabel)
+                .addGap(1, 1, 1)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -177,7 +186,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -211,6 +220,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel descLabel;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
@@ -255,10 +265,14 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * @return true if a proper image has been selected, false otherwise
      */
     public boolean validatePanel() {
+        errorLabel.setVisible(false);
         String path = getContentPaths();
         if (path == null || path.isEmpty()) {
             return false;
         }
+        
+        // display warning if there is one (but don't disable "next" button)
+        warnIfPathIsInvalid(path);
         
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
@@ -266,8 +280,18 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         
         return (isExist || isPhysicalDrive || isPartition);
     }
-
-
+    
+    /**
+     * Validates path to selected data source and displays warning if it is invalid.
+     * @param path Absolute path to the selected data source
+     */
+    private void warnIfPathIsInvalid(String path){                      
+        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+        }
+    }
+    
     public void storeSettings() {
         String imagePathName = getContentPaths();
         if (null != imagePathName ) {

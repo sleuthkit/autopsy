@@ -54,7 +54,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private JPanel currentPanel;
 
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
-
+    
     List<String> coreDSPTypes = new ArrayList<>();
 
     /**
@@ -83,8 +83,14 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
         // make a list of core DSPs
         // ensure that the core DSPs are at the top and in a fixed order
-        coreDSPTypes.add(ImageDSProcessor.getType());
-        coreDSPTypes.add(LocalDiskDSProcessor.getType());
+        coreDSPTypes.add(ImageDSProcessor.getType());        
+        // Local disk processing is not allowed for multi-user cases
+        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE){
+            coreDSPTypes.add(LocalDiskDSProcessor.getType());
+        } else {
+            // remove LocalDiskDSProcessor from list of DSPs
+            datasourceProcessorsMap.remove(LocalDiskDSProcessor.getType());
+        }
         coreDSPTypes.add(LocalFilesDSProcessor.getType());
 
         for (String dspType : coreDSPTypes) {
@@ -127,7 +133,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
             }
         }
-    }
+    } 
 
     private void dspSelectionChanged() {
         // update the current panel to selection
