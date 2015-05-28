@@ -153,10 +153,13 @@ public class FileTypeDetector {
         ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
         for (BlackboardAttribute attribute : attributes) {
             /**
-             * There should be at most one TSK_FILE_TYPE_SIG attribute.
+             * There should be at most one TSK_FILE_TYPE_SIG attribute...
              */
-            fileType = attribute.getValueString();
-            break;
+            String postedFileType = attribute.getValueString();
+            if (null != postedFileType && !postedFileType.isEmpty()) {
+                fileType = postedFileType;
+                break;
+            }
         }
         return fileType;
     }
