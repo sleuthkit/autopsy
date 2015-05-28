@@ -375,27 +375,19 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         }
         
         // display warning if there is one (but don't disable "next" button)
-        isImagePathValid(parentDir);              
+        warnIfPathIsInvalid(parentDir);              
     }
     
     /**
-     * Validates path to selected case output folder.
+     * Validates path to selected case output folder. Displays warning if path is invalid.
      *
      * @param path Absolute path to the selected case folder
-     * @return true if path is valid, false otherwise.
      */
-    private boolean isImagePathValid(String path) {
+    private void warnIfPathIsInvalid(String path) {
         errorLabel.setVisible(false);
-
-        if (path.isEmpty()) {
-            return false;   // no need for error message as the module sets path to "" at startup
-        }
-
         if (!PathValidator.isValid(path, getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
-            return false;
         }
-        return true;
     } 
 }

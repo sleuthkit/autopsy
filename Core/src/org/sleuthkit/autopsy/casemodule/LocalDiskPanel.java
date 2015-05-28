@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -65,8 +64,6 @@ final class LocalDiskPanel extends JPanel {
     private LocalDiskModel model;
 
     private boolean enableNext = false;
-    
-    private final int prePendedStringLength = 4; // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names
 
     /**
      * Creates new form LocalDiskPanel
@@ -227,32 +224,9 @@ final class LocalDiskPanel extends JPanel {
      * @return true
      */
     //@Override
-    public boolean validatePanel() {
-        
-        // display warning if there is one (but don't disable "next" button)
-        warnIfPathIsInvalid(getContentPaths());        
-        
+    public boolean validatePanel() {        
         return enableNext;
     }
-    
-    /**
-     * Validates path to selected data source and displays warning if it is invalid. 
-     * @param path Absolute path to the selected data source
-     */
-    private void warnIfPathIsInvalid(String path){                
-        String newPath = path;
-        if (path.length() > prePendedStringLength) {
-            // "Local Disk" panel pre-pends "\\.\" in front of all drive letter and drive names.
-            // Path validators expect a "standard" path as input, i.e. one that starts with a drive letter.
-            newPath = path.substring(prePendedStringLength, path.length());
-        } 
-
-        errorLabel.setVisible(false);                
-        if (!PathValidator.isValid(newPath, Case.getCurrentCase().getCaseType())) {
-            errorLabel.setVisible(true);
-            errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
-        }        
-    }    
 
     //@Override
     public void reset() {
