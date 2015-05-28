@@ -82,9 +82,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            String errorMessage = "Failed to create file type detector"; //NON-NLS
-            logger.log(Level.SEVERE, errorMessage, ex);
-            throw new IngestModuleException(errorMessage);
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }        
     }
 

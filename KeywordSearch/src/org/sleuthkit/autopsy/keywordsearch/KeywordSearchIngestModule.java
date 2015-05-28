@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -132,7 +133,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }
         ingester = Server.getIngester();
@@ -475,9 +475,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            String detectedFormat = fileTypeDetector.getFileType(aFile);
-            if (detectedFormat == null) {
-                logger.log(Level.WARNING, "Could not detect format using fileTypeDetector for file: {0}", aFile); //NON-NLS
+            String detectedFormat;
+            try {
+                detectedFormat = fileTypeDetector.detectAndPostToBlackboard(aFile);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
                 return;
             }
 
