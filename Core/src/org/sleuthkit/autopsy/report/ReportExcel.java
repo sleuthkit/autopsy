@@ -58,12 +58,12 @@ import org.sleuthkit.datamodel.TskCoreException;
     /**
      * Start the Excel report by creating the Workbook, initializing styles,
      * and writing the summary.
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      */
     @Override
-    public void startReport(String path) {        
+    public void startReport(String baseReportDir) {        
         // Set the path and save it for when the report is written to disk.
-        this.reportPath = path + getRelativeFilePath();
+        this.reportPath = baseReportDir + getRelativeFilePath();
                 
         // Make a workbook.
         wb = new XSSFWorkbook();

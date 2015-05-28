@@ -281,18 +281,23 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         final DrawableGroup group = getGroupForKey(groupKey);
         if (group != null) {
             group.removeFile(fileID);
-            if (group.fileIds().isEmpty()) {
-                synchronized (groupMap) {
-                    groupMap.remove(groupKey, group);
-                }
-                Platform.runLater(() -> {
-                    analyzedGroups.remove(group);
-                    synchronized (unSeenGroups) {
-                        unSeenGroups.remove(group);
-                    }
-                });
-            }
 
+            // If we're grouping by category, we don't want to remove empty groups.
+            if (group.groupKey.getValueDisplayName().startsWith("CAT-")) {
+                return;
+            } else {
+                if (group.fileIds().isEmpty()) {
+                    synchronized (groupMap) {
+                        groupMap.remove(groupKey, group);
+                    }
+                    Platform.runLater(() -> {
+                        analyzedGroups.remove(group);
+                        synchronized (unSeenGroups) {
+                            unSeenGroups.remove(group);
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -317,13 +322,13 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
          * was still running) */
         if (task == null || (task.isCancelled() == false)) {
             DrawableGroup g = makeGroup(groupKey, filesInGroup);
-            
+
             populateAnalyzedGroup(g, task);
         }
     }
-    
+
     private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<A> task) {
-    
+
         if (task == null || (task.isCancelled() == false)) {
             final boolean groupSeen = db.isGroupSeen(g.groupKey);
             Platform.runLater(() -> {
@@ -427,7 +432,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @return
      */
     @SuppressWarnings({"unchecked"})
-    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy) { 
+    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy) {
         List<A> values;
         try {
             switch (groupBy.attrName) {
@@ -453,12 +458,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             }
 
             return values;
-        } catch(TskCoreException ex){
+        } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "TSK error getting list of type " + groupBy.getDisplayName());
             return new ArrayList<A>();
         }
-            
-    }  
+
+    }
 
     public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
         switch (groupKey.getAttribute().attrName) {
@@ -487,7 +492,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -499,7 +504,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                    if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+
                         files.add(ct.getContent().getId());
                     }
                 }
@@ -511,14 +517,17 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             throw ex;
         }
     }
-    
+
     /**
      * Count the number of files with the given category.
      * This is faster than getFileIDsWithCategory and should be used if only the
      * counts are needed and not the file IDs.
+     *
      * @param category Category to match against
+     *
      * @return Number of files with the given category
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     public int countFilesWithCategory(Category category) throws TskCoreException {
         return db.getCategoryCount(category);
@@ -529,7 +538,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && ImageGalleryModule.isSupportedAndNotKnown((AbstractFile) ct.getContent())) {
+                if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+
                     files.add(ct.getContent().getId());
                 }
             }
@@ -576,10 +586,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      */
     public <A extends Comparable<A>> void regroup(final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
 
-        if(! Case.isCaseOpen()){
+        if (!Case.isCaseOpen()) {
             return;
         }
-        
+
         //only re-query the db if the group by attribute changed or it is forced
         if (groupBy != getGroupBy() || force == true) {
             setGroupBy(groupBy);
@@ -608,14 +618,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
-   
-
     /**
      * an executor to submit async ui related background tasks to.
      */
     final ExecutorService regroupExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build());
-
-  
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regroupProgress.getReadOnlyProperty();
@@ -624,6 +630,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     /**
      * handle {@link FileUpdateEvent} sent from Db when files are
      * inserted/updated
+     *
+     * TODO: why isn't this just two methods!
      *
      * @param evt
      */
@@ -638,10 +646,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
                     for (GroupKey<?> gk : groupsForFile) {
                         removeFromGroup(gk, fileId);
-                        
+
                         DrawableGroup g = getGroupForKey(gk);
 
-                        if (g == null){
+                        if (g == null) {
                             // It may be that this was the last unanalyzed file in the group, so test
                             // whether the group is now fully analyzed.
                             //TODO: use method in groupmanager ?
@@ -649,7 +657,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
-                        }                        
+                        } else {
+                            g.invalidateHashSetHitsCount();
+                        }
                     }
                 }
 
@@ -668,6 +678,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                  * innertask? -jm
                  */
                 for (final long fileId : fileIDs) {
+
+                    db.updateHashSetsForFile(fileId);
 
                     //get grouping(s) this file would be in
                     Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
@@ -688,13 +700,13 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         }
                     }
                 }
-
-                Category.fireChange(fileIDs);
+                if (evt.getChangedAttribute() == DrawableAttribute.CATEGORY) {
+                    Category.fireChange(fileIDs);
+                }
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);
                 }
                 break;
-            
         }
     }
 
@@ -743,10 +755,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             synchronized (groupMap) {
                 groupMap.clear();
             }
-            
+
             // Get the list of group keys
             final List<A> vals = findValuesForAttribute(groupBy);
-            
+
             // Make a list of each group 
             final List<DrawableGroup> groups = new ArrayList<>();
 
@@ -767,22 +779,22 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
                 List<Long> checkAnalyzed = checkAnalyzed(groupKey);
                 if (checkAnalyzed != null) { // != null => the group is analyzed, so add it to the ui
-                    
+
                     // makeGroup will create the group and add it to the map groupMap, but does not
                     // update anything else
                     DrawableGroup g = makeGroup(groupKey, checkAnalyzed);
                     groups.add(g);
                 }
             }
-            
+
             // Sort the group list
             Collections.sort(groups, sortBy.getGrpComparator(sortOrder));
-            
+
             // Officially add all groups in order
-            for(DrawableGroup g:groups){
+            for (DrawableGroup g : groups) {
                 populateAnalyzedGroup(g, ReGroupTask.this);
             }
-            
+
             updateProgress(1, 1);
             return null;
         }

@@ -63,16 +63,17 @@ import org.sleuthkit.datamodel.*;
 
     /**
      * Generates a body file format report for use with the MAC time tool.
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
     @Override
-    public void generateReport(String path, ReportProgressPanel progressPanel) {
+    @SuppressWarnings("deprecation")
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
-        reportPath = path + "BodyFile.txt"; //NON-NLS
+        reportPath = baseReportDir + "BodyFile.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
         

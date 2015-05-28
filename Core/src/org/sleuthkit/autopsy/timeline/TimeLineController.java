@@ -362,7 +362,7 @@ public class TimeLineController {
     @SuppressWarnings("deprecation")
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
-        String query = "SELECT MAX(artifact_id) AS max_id FROM blackboard_artifacts"; // NON-NLS
+        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
@@ -573,6 +573,12 @@ public class TimeLineController {
         monitorTask(selectTimeAndTypeTask);
     }
 
+    /**
+     * submit a task for execution and add it to the list of tasks whose
+     * progress is monitored and displayed in the progress bar
+     *
+     * @param task
+     */
     synchronized public void monitorTask(final Task<?> task) {
         if (task != null) {
             Platform.runLater(() -> {
@@ -606,9 +612,16 @@ public class TimeLineController {
                         break;
                     case SCHEDULED:
                     case RUNNING:
+
                     case SUCCEEDED:
                     case CANCELLED:
                     case FAILED:
+                        tasks.remove(task);
+                        if (tasks.isEmpty() == false) {
+                            progress.bind(tasks.get(0).progressProperty());
+                            message.bind(tasks.get(0).messageProperty());
+                            taskTitle.bind(tasks.get(0).titleProperty());
+                        }
                         break;
                 }
             });

@@ -38,7 +38,7 @@ public abstract class GeneralReportModuleAdapter implements GeneralReportModule 
     }
 
     @Override
-    public abstract void generateReport(String reportPath, ReportProgressPanel progressPanel);
+    public abstract void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
 
     @Override
     public JPanel getConfigurationPanel() {

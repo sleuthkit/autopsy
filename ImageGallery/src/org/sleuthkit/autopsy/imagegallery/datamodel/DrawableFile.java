@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -97,8 +98,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     private final SimpleObjectProperty<Category> category = new SimpleObjectProperty<>(null);
 
-    private Collection<String> hashHitSetNames;
-
     private String make;
 
     private String model;
@@ -116,14 +115,9 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public abstract boolean isVideo();
 
-    public Collection<String> getHashHitSetNames() {
-        updateHashSets();
+    synchronized public Collection<String> getHashHitSetNames() {
+        Collection<String> hashHitSetNames = ImageGalleryController.getDefault().getDatabase().getHashSetsForFile(getId());
         return hashHitSetNames;
-    }
-
-    @SuppressWarnings("unchecked")
-    private void updateHashSets() {
-        hashHitSetNames = (Collection<String>) getValuesOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
     }
 
     @Override

@@ -35,7 +35,6 @@ import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**

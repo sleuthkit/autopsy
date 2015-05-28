@@ -54,8 +54,8 @@ import org.sleuthkit.datamodel.AbstractFile;
     }
     
     @Override
-    public void startReport(String path) {
-        this.reportPath = path + FILE_NAME;
+    public void startReport(String baseReportDir) {
+        this.reportPath = baseReportDir + FILE_NAME;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
         } catch (IOException ex) {
