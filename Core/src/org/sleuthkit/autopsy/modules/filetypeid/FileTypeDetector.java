@@ -173,8 +173,7 @@ public class FileTypeDetector {
      */
     private String detectFileType(AbstractFile file) throws TskCoreException {
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (file.isFile() == false)) {
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
             return MimeTypes.OCTET_STREAM;
         }
 
