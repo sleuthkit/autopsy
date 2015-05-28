@@ -101,7 +101,8 @@ public class FileTypeDetector {
      *
      * @param file The file to test.
      * @return The MIME type name id detection was successful, null otherwise.
-     * @throws TskCoreException if there is an error posting to the blackboard.
+     * @throws TskCoreException if there is an error posting to or reading from
+     * the blackboard.
      */
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
         String mimeType = lookupFileType(file);
@@ -128,6 +129,8 @@ public class FileTypeDetector {
      *
      * @param file The file to test.
      * @return The MIME type name if detection was successful, null otherwise.
+     * @throws TskCoreException if there is an error reading from the
+     * blackboard.
      */
     public String detect(AbstractFile file) throws TskCoreException {
         String mimeType = lookupFileType(file);
@@ -142,13 +145,15 @@ public class FileTypeDetector {
      *
      * @param file The file to test.
      * @return The MIME type name if look up was successful, null otherwise.
+     * @throws TskCoreException if there is an error reading from the
+     * blackboard.
      */
     private String lookupFileType(AbstractFile file) throws TskCoreException {
         String fileType = null;
         ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
         for (BlackboardAttribute attribute : attributes) {
             /**
-             * There should be at most TSK_FILE_TYPE_SIG attribute.
+             * There should be at most one TSK_FILE_TYPE_SIG attribute.
              */
             fileType = attribute.getValueString();
             break;
@@ -161,6 +166,7 @@ public class FileTypeDetector {
      *
      * @param file The file to test.
      * @return The MIME type name if detection was successful, null otherwise.
+     * @throws TskCoreException if there is a case database error.
      */
     private String detectFileType(AbstractFile file) throws TskCoreException {
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
@@ -208,6 +214,7 @@ public class FileTypeDetector {
      *
      * @param file The file to test.
      * @return The file type name string or null, if no match is detected.
+     * @throws TskCoreException if there is a case database error.
      */
     private String detectUserDefinedType(AbstractFile file) throws TskCoreException {
         for (FileType fileType : userDefinedFileTypes.values()) {
