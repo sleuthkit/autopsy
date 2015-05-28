@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,9 +58,9 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
@@ -158,8 +158,8 @@ public final class ImageGalleryController {
     public GroupManager getGroupManager() {
         return groupManager;
     }
-    
-    public DrawableDB getDatabase(){
+
+    public DrawableDB getDatabase() {
         return db;
     }
 
@@ -180,7 +180,7 @@ public final class ImageGalleryController {
             stale.set(b);
         });
         if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.STALE, b.toString());
+            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
         }
     }
 
@@ -201,7 +201,7 @@ public final class ImageGalleryController {
         });
 
         groupManager.getAnalyzedGroups().addListener((Observable o) -> {
-            if(Case.isCaseOpen()){
+            if (Case.isCaseOpen()) {
                 checkForGroups();
             }
         });
@@ -335,7 +335,7 @@ public final class ImageGalleryController {
      */
     public synchronized void setCase(Case c) {
 
-        this.db = DrawableDB.getDrawableDB(c.getModuleDirectory() + File.separator + IMAGEGALLERY, this);
+        this.db = DrawableDB.getDrawableDB(c.getModulesOutputDirAbsPath() + File.separator + ImageGalleryModule.getModuleName(), this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(c));
         setStale(ImageGalleryModule.isCaseStale(c));
@@ -517,7 +517,7 @@ public final class ImageGalleryController {
                 try {
                     // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
-                    
+
                     if (it.cancelled == false) {
                         it.run();
                     }
@@ -631,16 +631,16 @@ public final class ImageGalleryController {
          */
         @Override
         public void run() {
-            try{
+            try {
                 DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, db.isVideoFile(getFile()));
                 db.updateFile(drawableFile);
-            } catch (NullPointerException | TskCoreException ex){
+            } catch (NullPointerException | TskCoreException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
-                if(Case.isCaseOpen()){
+                if (Case.isCaseOpen()) {
                     Logger.getLogger(UpdateFileTask.class.getName()).log(Level.SEVERE, "Error in UpdateFile task");
                 }
-            }    
+            }
         }
     }
 
@@ -658,16 +658,16 @@ public final class ImageGalleryController {
          */
         @Override
         public void run() {
-            try{
-              db.removeFile(getFile().getId());
-            } catch (NullPointerException ex){
+            try {
+                db.removeFile(getFile().getId());
+            } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
-                if(Case.isCaseOpen()){
+                if (Case.isCaseOpen()) {
                     Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Case was closed out from underneath RemoveFile task");
                 }
             }
-            
+
         }
     }
 
@@ -774,8 +774,9 @@ public final class ImageGalleryController {
      * netbeans and ImageGallery progress/status
      */
     class PrePopulateDataSourceFiles extends InnerTask {
+
         private final Content dataSource;
-        
+
         /**
          * here we grab by extension but in file_done listener we look at file
          * type id attributes but fall back on jpeg signatures and extensions to
@@ -787,7 +788,7 @@ public final class ImageGalleryController {
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
         /**
-         
+         *
          * @param dataSourceId Data source object ID
          */
         public PrePopulateDataSourceFiles(Content dataSource) {
@@ -809,23 +810,22 @@ public final class ImageGalleryController {
             final List<AbstractFile> files;
             try {
                 List<Long> fsObjIds = new ArrayList<>();
-                
+
                 String fsQuery;
                 if (dataSource instanceof Image) {
-                    Image image = (Image)dataSource;
+                    Image image = (Image) dataSource;
                     for (FileSystem fs : image.getFileSystems()) {
                         fsObjIds.add(fs.getId());
                     }
-                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " OR fs_obj_id = ") + ") ";
-                }
-                // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
+                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
+                } // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
                 // for them, we will not specify a fs_obj_id, which means we will grab files
                 // from another data source, but the drawable DB is smart enough to de-dupe them.
                 else {
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
-                
-                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);
+
+                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " and " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction
@@ -853,7 +853,7 @@ public final class ImageGalleryController {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException | NullPointerException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "Case was closed out from underneath prepopulating database");
-            } 
+            }
 
             progressHandle.finish();
         }

@@ -101,13 +101,18 @@ public class EventRootNode extends DisplayableItemNode {
             if (eventID >= 0) {
                 final TimeLineEvent eventById = filteredEvents.getEventById(eventID);
                 try {
-                    if (eventById.getType().getSuperType() == BaseTypes.FILE_SYSTEM) {
-                        return new EventNode(eventById, Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID()));
-                    } else {
-                        AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
-                        BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(eventById.getArtifactID());
+                    AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
+                    if(file != null){
+                        if (eventById.getType().getSuperType() == BaseTypes.FILE_SYSTEM) {
+                            return new EventNode(eventById, file);
+                        } else {
+                            BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(eventById.getArtifactID());
 
-                        return new EventNode(eventById, file, blackboardArtifact);
+                            return new EventNode(eventById, file, blackboardArtifact);
+                        }
+                    } else {
+                        LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
+                        return null; 
                     }
 
                 } catch (TskCoreException tskCoreException) {

@@ -250,32 +250,37 @@ public class EventsRepository {
                 } else {
                     try {
                         AbstractFile f = skCase.getAbstractFileById(fID);
-                        //TODO: This is broken for logical files? fix -jm
-                        //TODO: logical files don't necessarily have valid timestamps, so ... -jm
-                        final String uniquePath = f.getUniquePath();
-                        final String parentPath = f.getParentPath();
-                        String datasourceName = StringUtils.substringBefore(StringUtils.stripStart(uniquePath, "/"), parentPath);
-                        String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
-                        String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
-                        String medD = datasourceName  + parentPath;
+                        
+                        if(f != null){
+                            //TODO: This is broken for logical files? fix -jm
+                            //TODO: logical files don't necessarily have valid timestamps, so ... -jm
+                            final String uniquePath = f.getUniquePath();
+                            final String parentPath = f.getParentPath();
+                            String datasourceName = StringUtils.substringBefore(StringUtils.stripStart(uniquePath, "/"), parentPath);
+                            String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
+                            String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
+                            String medD = datasourceName  + parentPath;
 
-                        //insert it into the db if time is > 0  => time is legitimate (drops logical files)
-                        if (f.getAtime() > 0) {
-                            eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
-                        }
-                        if (f.getMtime() > 0) {
-                            eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
-                        }
-                        if (f.getCtime() > 0) {
-                            eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
-                        }
-                        if (f.getCrtime() > 0) {
-                            eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
-                        }
+                            //insert it into the db if time is > 0  => time is legitimate (drops logical files)
+                            if (f.getAtime() > 0) {
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                            }
+                            if (f.getMtime() > 0) {
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                            }
+                            if (f.getCtime() > 0) {
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                            }
+                            if (f.getCrtime() > 0) {
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                            }
 
-                        process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                                                                NbBundle.getMessage(this.getClass(),
-                                                                                                    "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
+                            process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
+                                                                                                NbBundle.getMessage(this.getClass(),
+                                                                                                        "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
+                        } else {
+                            LOGGER.log(Level.WARNING, "failed to look up data for file : " + fID); // NON-NLS
+                        }
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
                     }
