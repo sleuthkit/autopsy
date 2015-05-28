@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
@@ -50,7 +51,7 @@ public final class CaseNewAction extends CallableSystemAction implements CaseNew
 
     @Override
     public String getName() {
-        return "New Case";
+        return NbBundle.getMessage(CaseNewAction.class, "CTL_CaseNewAction");
     }
 
     @Override
