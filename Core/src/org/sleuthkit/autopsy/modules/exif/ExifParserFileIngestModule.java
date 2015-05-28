@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +60,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
-    private AtomicInteger filesProcessed = new AtomicInteger(0);
+    private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -76,12 +76,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }
     }
-
-    
+  
     @Override
     public ProcessResult process(AbstractFile content) {
         //skip unalloc
@@ -205,7 +203,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        return fileTypeDetector.getFileType(f).equals("image/jpeg");
+        try {
+            return fileTypeDetector.detect(f).equals("image/jpeg");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
+            return false;
+        }
     }
 
     @Override

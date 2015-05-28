@@ -103,7 +103,6 @@ public final class SevenZipIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "SevenZipIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }
 
@@ -288,7 +287,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
         }     
         
         if (detectedFormat == null) {
-            logger.log(Level.WARNING, "Could not detect format for file: " + archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Could not detect format for file: {0}", archiveFile); //NON-NLS
             
             // if we don't have attribute info then use file extension
             String extension = archiveFile.getNameExtension();
@@ -661,7 +660,12 @@ public final class SevenZipIngestModule implements FileIngestModule {
      * @return true if zip file, false otherwise
      */
     private boolean isZipFileHeader(AbstractFile file) {
-        return fileTypeDetector.getFileType(file).equals("application/zip"); //NON-NLS
+        try {
+            return fileTypeDetector.detect(file).equals("application/zip"); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
+            return false;
+        }
     }
 
     /**
