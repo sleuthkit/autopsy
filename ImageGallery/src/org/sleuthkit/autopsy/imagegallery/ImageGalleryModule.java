@@ -44,7 +44,7 @@ public class ImageGalleryModule {
 
     private static final String MODULE_NAME = "Image Gallery";
 
-    public static String getModuleName() {
+    static String getModuleName() {
         return MODULE_NAME;
     }
 
@@ -64,7 +64,7 @@ public class ImageGalleryModule {
     /** mime types of files we can display */
     private static final Set<String> supportedMimes = Sets.union(imageMimes, videoMimes);
 
-    public static Set<String> getSupportedMimes() {
+    static Set<String> getSupportedMimes() {
         return Collections.unmodifiableSet(supportedMimes);
     }
 
@@ -103,8 +103,8 @@ public class ImageGalleryModule {
         }
     }
 
-    public static Set<String> getAllSupportedExtensions() {
-        return supportedExtensions;
+    static Set<String> getAllSupportedExtensions() {
+        return Collections.unmodifiableSet(supportedExtensions);
     }
 
     /** is the given file suported by image analyzer: ie, does it have a
@@ -115,7 +115,7 @@ public class ImageGalleryModule {
      *
      * @return true if this file is supported or false if not
      */
-    public static Boolean isSupported(AbstractFile file) {
+    static Boolean isSupported(AbstractFile file) {
         //if there were no file type attributes, or we failed to read it, fall back on extension and jpeg header
         return Optional.ofNullable(hasSupportedMimeType(file)).orElseGet(() -> {
             return supportedExtensions.contains(getFileExtension(file))
@@ -131,7 +131,7 @@ public class ImageGalleryModule {
      *         TSK_GEN_INFO that is in the supported list. False if there was an
      *         unsupported attribute, null if no attributes were found
      */
-    public static Boolean hasSupportedMimeType(AbstractFile file) {
+    static Boolean hasSupportedMimeType(AbstractFile file) {
         try {
             ArrayList<BlackboardAttribute> fileSignatureAttrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
             if (fileSignatureAttrs.isEmpty() == false) {
@@ -174,7 +174,7 @@ public class ImageGalleryModule {
      * @return true if the given {@link AbstractFile} is 'supported' and not
      *         'known', else false
      */
-    static public boolean isSupportedAndNotKnown(AbstractFile abstractFile) {
+    public static boolean isSupportedAndNotKnown(AbstractFile abstractFile) {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && ImageGalleryModule.isSupported(abstractFile);
     }
 }
