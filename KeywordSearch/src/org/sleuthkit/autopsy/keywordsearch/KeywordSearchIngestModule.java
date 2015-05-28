@@ -477,7 +477,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             String detectedFormat;
             try {
-                detectedFormat = fileTypeDetector.detectAndPostToBlackboard(aFile);
+                detectedFormat = fileTypeDetector.getFileType(aFile);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
                 return;
