@@ -165,8 +165,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
      * Gets all the unallocated files in a given Content.
      *
      * @param c Content to get Unallocated Files from
-     * @return A list<LayoutFile> if it didn't crash List may be empty. Returns
-     * null on failure.
+     * @return A list<LayoutFile> if it didn't crash List may be empty.
      */
     private List<LayoutFile> getUnallocFiles(Content c) {
         UnallocVisitor uv = new UnallocVisitor();
