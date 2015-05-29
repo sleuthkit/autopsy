@@ -101,7 +101,7 @@ public class FileTypeDetector {
      * detection succeeds.
      *
      * @param file The file to test.
-     * @return The MIME type name id detection was successful, null otherwise.
+     * @return The MIME type name if detection was successful, null otherwise.
      * @throws TskCoreException
      */
     public String getFileType(AbstractFile file) throws TskCoreException {
@@ -152,11 +152,11 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     public String detect(AbstractFile file) throws TskCoreException {
-        if (!file.isFile() || file.getSize() <= 0) {
-            return null;
-        }
-
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+        // consistently mark non-regular files (refer TskData.TSK_FS_META_TYPE_ENUM),
+        // 0 sized files, unallocated, and unused blocks (refer TskData.TSK_DB_FILES_TYPE_ENUM)
+        // as octet-stream.
+        if (!file.isFile() || file.getSize() <= 0
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
             return MimeTypes.OCTET_STREAM;
         }
