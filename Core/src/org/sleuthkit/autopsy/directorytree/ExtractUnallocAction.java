@@ -165,8 +165,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
      * Gets all the unallocated files in a given Content.
      *
      * @param c Content to get Unallocated Files from
-     * @return A list<LayoutFile> if it didn't crash List may be empty. Returns
-     * null on failure.
+     * @return A list<LayoutFile> if it didn't crash List may be empty.
      */
     private List<LayoutFile> getUnallocFiles(Content c) {
         UnallocVisitor uv = new UnallocVisitor();
@@ -178,7 +177,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
         } catch (TskCoreException tce) {
             logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at sending out the visitor ", tce); //NON-NLS
         }
-        return null;
+        return Collections.emptyList();
     }
 
     /**
@@ -372,7 +371,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
          * return the single instance of unallocated space.
          *
          * @param lf the LayoutFile the visitor encountered
-         * @return A list<LayoutFile> of size 1, returns null if it fails
+         * @return A list<LayoutFile> of size 1
          */
         @Override
         public List<LayoutFile> visit(final org.sleuthkit.datamodel.LayoutFile lf) {
@@ -389,7 +388,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
          *
          * @param fs the FileSystem the visitor encountered
          * @return A list<LayoutFile> containing the layout files from
-         * subsequent Visits(), returns null if it fails
+         * subsequent Visits(), or an empty list
          */
         @Override
         public List<LayoutFile> visit(FileSystem fs) {
@@ -402,7 +401,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting FileSystem " + fs.getId(), tce); //NON-NLS
             }
-            return null;
+            return Collections.emptyList();
         }
 
         /**
@@ -410,12 +409,12 @@ import org.sleuthkit.datamodel.VolumeSystem;
          *
          * @param vd VirtualDirectory the visitor encountered
          * @return A list<LayoutFile> containing all the LayoutFile in ld,
-         * returns null if it fails
+         * or an empty list.
          */
         @Override
         public List<LayoutFile> visit(VirtualDirectory vd) {
             try {
-                List<LayoutFile> lflst = new ArrayList<LayoutFile>();
+                List<LayoutFile> lflst = new ArrayList<>();
                 for (Content layout : vd.getChildren()) {
                     lflst.add((LayoutFile) layout);
                 }
@@ -423,7 +422,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Could not get list of Layout Files, failed at visiting Layout Directory", tce); //NON-NLS
             }
-            return null;
+            return Collections.emptyList();
         }
 
         /**
@@ -432,7 +431,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
          *
          * @param dir the directory this visitor encountered
          * @return A list<LayoutFile> containing LayoutFiles encountered during
-         * subsequent Visits(), returns null if it fails
+         * subsequent Visits(), or an empty list.
          */
         @Override
         public List<LayoutFile> visit(Directory dir) {
@@ -445,12 +444,12 @@ import org.sleuthkit.datamodel.VolumeSystem;
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting Directory " + dir.getId(), tce); //NON-NLS
             }
-            return null;
+            return Collections.emptyList();
         }
 
         @Override
         protected List<LayoutFile> defaultVisit(Content cntnt) {
-            return null;
+            return Collections.emptyList();
         }
     }
 
