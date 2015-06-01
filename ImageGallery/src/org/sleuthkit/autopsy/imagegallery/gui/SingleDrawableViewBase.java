@@ -83,24 +83,21 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * An abstract base class for {@link DrawableTile} and {@link SlideShowView},
  * since they share a similar node tree and many behaviors, other implementers
- * of {@link  DrawableView}s should implement the interface directly
+ * of {@link DrawableView}s should implement the interface directly
  *
  */
 public abstract class SingleDrawableViewBase extends AnchorPane implements DrawableView {
 
     private static final Logger LOGGER = Logger.getLogger(SingleDrawableViewBase.class.getName());
 
-    private static final Border UNSELECTED_ORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
+    private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
-    //TODO: should this stuff be done in CSS? -jm
+    //TODO: do this in CSS? -jm
     protected static final Image videoIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/video-file.png");
-
     protected static final Image hashHitIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png");
-
     protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
-
     protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png");
 
     protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
@@ -271,7 +268,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                 try {
                     // remove file from old category group
                     controller.getGroupManager().removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, TagUtils.getFollowUpTagName()), fileID);
-                
+
                     List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(getFile());
                     for (ContentTag ct : contentTagsByContent) {
                         if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
@@ -296,13 +293,13 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                     file = ImageGalleryController.getDefault().getFileFromId(fileID);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileID, ex);
-                    return null;
+                    file = null;
                 }
             }
+            return file;
         } else {
             return null;
         }
-        return file;
     }
 
     protected boolean hasFollowUp() throws TskCoreException {
@@ -359,7 +356,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         if (Objects.equals(fileID, this.fileID) == false) {
             this.fileID = fileID;
             disposeContent();
-            
+
             if (this.fileID == null || Case.isCaseOpen() == false) {
                 Category.unregisterListener(this);
                 TagUtils.unregisterListener(this);
@@ -370,7 +367,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
             } else {
                 Category.registerListener(this);
                 TagUtils.registerListener(this);
- 
+
                 getFile();
                 updateSelectionState();
                 updateCategoryBorder();
@@ -389,7 +386,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     private void updateSelectionState() {
         final boolean selected = globalSelectionModel.isSelected(fileID);
         Platform.runLater(() -> {
-            SingleDrawableViewBase.this.setBorder(selected ? SELECTED_BORDER : UNSELECTED_ORDER);
+            SingleDrawableViewBase.this.setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
         });
     }
 
