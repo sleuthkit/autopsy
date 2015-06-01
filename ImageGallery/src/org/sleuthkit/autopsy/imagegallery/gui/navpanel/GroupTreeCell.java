@@ -81,7 +81,7 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 setGraphic(null);
             });
         } else {
-            final String groupName = StringUtils.defaultIfBlank(tNode.getPath(), DrawableGroup.UNKNOWN);
+            final String groupName = StringUtils.defaultIfBlank(tNode.getPath(), DrawableGroup.getBlankGroupName());
 
             if (isNull(tNode.getGroup())) {
                 //"dummy" group in file system tree <=>  a folder with no drawables
@@ -119,7 +119,7 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 .map((DrawableGroup t) -> {
                     return " (" + ((t.groupKey.getAttribute() == DrawableAttribute.HASHSET)
                             ? Integer.toString(t.getSize())
-                            : t.getFilesWithHashSetHitsCount() + "/" + t.getSize()) + ")";
+                            : t.getHashSetHitsCount() + "/" + t.getSize()) + ")";
                 }).orElse(""); //if item is null or group is null
 
         return counts;
