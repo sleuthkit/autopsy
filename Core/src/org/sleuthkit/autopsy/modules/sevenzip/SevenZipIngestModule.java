@@ -661,7 +661,7 @@ public final class SevenZipIngestModule implements FileIngestModule {
      */
     private boolean isZipFileHeader(AbstractFile file) {
         try {
-            return fileTypeDetector.detect(file).equals("application/zip"); //NON-NLS
+            return fileTypeDetector.getFileType(file).equals("application/zip"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
             return false;
