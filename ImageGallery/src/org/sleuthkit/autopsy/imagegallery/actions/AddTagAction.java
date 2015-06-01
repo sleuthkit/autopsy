@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +32,9 @@ import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -43,17 +44,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract class AddTagAction {
 
+    /**
+     * The way the "directory tree" currently works, a new tags sub-tree
+     * needs to be made to reflect the results of invoking tag Actions.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     protected void refreshDirectoryTree() {
-        // The way the "directory tree" currently works, a new tags sub-tree 
-        // needs to be made to reflect the results of invoking tag Actions. 
         SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
-
     }
 
     protected static final String NO_COMMENT = "";
-
-    AddTagAction() {
-    }
 
     /**
      * Template method to allow derived classes to provide a string for for a
@@ -66,12 +66,12 @@ abstract class AddTagAction {
      * comment to one or more a SleuthKit data model objects.
      */
     abstract protected void addTag(TagName tagName, String comment);
-    
+
     /**
      * Template method to allow derived classes to add the indicated tag and
      * comment to a list of one or more file IDs.
      */
-    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);    
+    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);
 
     /**
      * Instances of this class implement a context menu user interface for

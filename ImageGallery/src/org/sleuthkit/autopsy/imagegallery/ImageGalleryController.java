@@ -374,6 +374,7 @@ public final class ImageGalleryController {
      * @param innerTask
      */
     public final void queueDBWorkerTask(InnerTask innerTask) {
+
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
             restartWorker();
@@ -513,7 +514,6 @@ public final class ImageGalleryController {
                     return;
                 }
                 try {
-                    // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
 
                     if (it.cancelled == false) {
