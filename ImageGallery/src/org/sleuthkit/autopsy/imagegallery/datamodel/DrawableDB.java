@@ -1172,13 +1172,14 @@ public class DrawableDB {
     }
     
     /**
-     * For performance reasons, keep a list of all file IDs currently in the image database.
+     * For performance reasons, keep a list of all file IDs currently in the
+     * drawable database.
      * Otherwise the database is queried many times to retrieve the same data.
      */
     @GuardedBy("fileIDlist")
     private final Set<Long> fileIDlist = new HashSet<>();
 
-    public boolean isImageFile(Long id) {
+    public boolean isDrawableFile(Long id) {
         synchronized (fileIDlist) {
             return fileIDlist.contains(id);
         }
@@ -1266,7 +1267,7 @@ public class DrawableDB {
                     for (ContentTag ct : contentTags) {
                         if(ct.getContent() instanceof AbstractFile){
                             AbstractFile f = (AbstractFile)ct.getContent();
-                            if(this.isImageFile(f.getId())){
+                            if (this.isDrawableFile(f.getId())) {
                                 fileCount++;
                             }
                         }

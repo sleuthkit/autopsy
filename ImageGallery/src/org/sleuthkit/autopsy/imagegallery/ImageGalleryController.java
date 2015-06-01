@@ -373,7 +373,7 @@ public final class ImageGalleryController {
      *
      * @param innerTask
      */
-    final void queueDBWorkerTask(InnerTask innerTask) {
+    public final void queueDBWorkerTask(InnerTask innerTask) {
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
             restartWorker();
@@ -542,7 +542,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    static private abstract class InnerTask implements Runnable {
+    static public abstract class InnerTask implements Runnable {
 
         public double getProgress() {
             return progress.get();
@@ -600,7 +600,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for tasks associated with a file in the database
      */
-    static private abstract class FileTask extends InnerTask {
+    static public abstract class FileTask extends InnerTask {
 
         private final AbstractFile file;
 
