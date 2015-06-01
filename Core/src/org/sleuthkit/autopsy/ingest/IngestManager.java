@@ -496,11 +496,8 @@ public class IngestManager {
             handle.cancel(true);
         }
 
-        // Cancel all the jobs already created. Force a stack trace for the log
-        // message.
-        logger.log(Level.INFO, String.format("Cancelling all ingest jobs called with %d jobs in jobsById map", this.jobsById.size()), new Exception("Cancelling all ingest jobs"));
+        // Cancel all the jobs already created. 
         for (IngestJob job : this.jobsById.values()) {
-            logger.log(Level.INFO, "Cancelling ingest job {0}, already cancelled is {1}", new Object[]{job.getId(), job.isCancelled()});
             job.cancel();
         }
     }
