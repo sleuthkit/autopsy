@@ -465,7 +465,6 @@ public class GroupPane extends BorderPane implements GroupView {
             }
         });
 
-//        Platform.runLater(() -> {
         ActionUtils.configureButton(nextGroupAction, nextButton);
         final EventHandler<ActionEvent> onAction = nextButton.getOnAction();
         nextButton.setOnAction((ActionEvent event) -> {
@@ -476,7 +475,7 @@ public class GroupPane extends BorderPane implements GroupView {
 
         ActionUtils.configureButton(forwardAction, forwardButton);
         ActionUtils.configureButton(backAction, backButton);
-//        });
+
 
         nextGroupAction.disabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             nextButton.setEffect(newValue ? null : DROP_SHADOW);

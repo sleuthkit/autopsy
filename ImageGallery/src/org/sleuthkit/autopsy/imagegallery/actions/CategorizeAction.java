@@ -74,10 +74,11 @@ public class CategorizeAction extends AddTagAction {
         Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
         addTagsToFiles(tagName, comment, selectedFiles);
     }
-      
+
     @Override
-    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles){    
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
         //TODO: should this get submitted to controller rather than a swingworker ? -jm
+
         new SwingWorker<Object, Object>() {
 
             @Override
@@ -86,31 +87,31 @@ public class CategorizeAction extends AddTagAction {
                 for (Long fileID : selectedFiles) {
 
                     try {
-                        DrawableFile<?> file = controller.getFileFromId(fileID);
+                        DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
 
                         Category oldCat = file.getCategory();
                         // remove file from old category group
-                        controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);
+                        controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
 
                         //remove old category tag if necessary
-                        List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
+                        List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);  //tsk db
 
                         for (ContentTag ct : allContentTags) {
                             //this is bad: treating tags as categories as long as their names start with prefix
                             //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
                             if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
                                 //LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
-                                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
-                                controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));
+                                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
+                                controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
                             }
                         }
 
-                        controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName()));
+                        controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
                         if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
-                            Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
+                            Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
                         }
                         //make sure rest of ui  hears category change.
-                        controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
+                        controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
 
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Error categorizing result", ex);

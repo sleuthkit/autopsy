@@ -492,7 +492,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -504,7 +504,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                    if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
 
                         files.add(ct.getContent().getId());
                     }
@@ -538,7 +538,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
 
                     files.add(ct.getContent().getId());
                 }
