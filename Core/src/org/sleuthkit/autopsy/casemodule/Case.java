@@ -233,7 +233,7 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
         if(firstTime)
         {
             firstTime=false;
-            db.addSleuthkitCaseErrorObserver(this);
+            SleuthkitCase.addSleuthkitCaseErrorObserver(this);
         }
     }
 
