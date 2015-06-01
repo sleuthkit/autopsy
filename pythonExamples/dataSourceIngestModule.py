@@ -32,6 +32,7 @@
 # See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
 
 import jarray
+import inspect
 from java.lang import System
 from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
@@ -82,6 +83,11 @@ class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
+    logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
+
+    def python_logger(self, level, msg):
+        self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+
     def __init__(self):
         self.context = None
 
@@ -97,8 +103,6 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
     def process(self, dataSource, progressBar):
         if self.context.isJobCancelled():
             return IngestModule.ProcessResult.OK
-			
-        logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)	
 
         # we don't know how much work there is yet
         progressBar.switchToIndeterminate()
@@ -114,7 +118,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         files = fileManager.findFiles(dataSource, "%test%")
 
         numFiles = len(files)
-        logger.logp(Level.INFO, SampleJythonDataSourceIngestModule.__name__, "process", "found " + str(numFiles) + " files")
+        self.python_logger(Level.INFO, "found " + str(numFiles) + " files")
         progressBar.switchToDeterminate(numFiles)
         fileCount = 0;
         for file in files:
@@ -123,7 +127,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
 
-            logger.logp(Level.INFO, SampleJythonDataSourceIngestModule.__name__, "process", "Processing file: " + file.getName())
+            self.python_logger(Level.INFO, "Processing file: " + file.getName())
             fileCount += 1
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
