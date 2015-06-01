@@ -77,46 +77,15 @@ public class CategorizeAction extends AddTagAction {
 
     @Override
     public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
-        //TODO: should this get submitted to controller rather than a swingworker ? -jm
 
         new SwingWorker<Object, Object>() {
 
             @Override
             protected Object doInBackground() throws Exception {
                 Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
+
                 for (Long fileID : selectedFiles) {
-
-                    try {
-                        DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
-
-                        Category oldCat = file.getCategory();
-                        // remove file from old category group
-                        controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
-
-                        //remove old category tag if necessary
-                        List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);  //tsk db
-
-                        for (ContentTag ct : allContentTags) {
-                            //this is bad: treating tags as categories as long as their names start with prefix
-                            //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
-                            if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                                //LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
-                                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
-                                controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
-                            }
-                        }
-
-                        controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
-                        if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
-                            Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
-                        }
-                        //make sure rest of ui  hears category change.
-                        controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
-
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
-                        JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                    controller.queueDBWorkerTask(new CategorizeTask(fileID, tagName, comment));
                 }
 
                 refreshDirectoryTree();
@@ -160,4 +129,53 @@ public class CategorizeAction extends AddTagAction {
             }
         }
     }
+
+    private class CategorizeTask extends ImageGalleryController.InnerTask {
+
+        private final long fileID;
+        private final TagName tagName;
+        private final String comment;
+
+        public CategorizeTask(long fileID, TagName tagName, String comment) {
+            super();
+            this.fileID = fileID;
+            this.tagName = tagName;
+            this.comment = comment;
+        }
+
+        @Override
+        public void run() {
+            try {
+                DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
+                Category oldCat = file.getCategory();
+                // remove file from old category group
+                controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
+
+                //remove old category tag if necessary
+                List<ContentTag> allContentTags;
+
+                allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file); //tsk db
+                for (ContentTag ct : allContentTags) {
+                    //this is bad: treating tags as categories as long as their names start with prefix
+                    //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
+                    if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
+                        Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
+                        controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
+                    }
+                    controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+                    if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
+                        Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
+                    }
+                    //make sure rest of ui  hears category change.
+                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
+
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
+                JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }
+
 }
