@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -32,7 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Provides access to per case module properties
+ * Provides access to per-case module properties/settings.
  */
 class PerCaseProperties {
 
@@ -40,13 +41,10 @@ class PerCaseProperties {
 
     public static final String STALE = "stale";
 
-    private final Case c;
+    private final Case theCase;
 
-    /**
-     * the constructor
-     */
     PerCaseProperties(Case c) {
-        this.c = c;
+        this.theCase = c;
     }
 
     /**
@@ -56,19 +54,21 @@ class PerCaseProperties {
      * @param moduleName - The name of the config file to make
      *
      * @return True if successfully created, false if already exists or an error
-     * is thrown.
+     *         is thrown.
      */
     public synchronized boolean makeConfigFile(String moduleName) {
         if (!configExists(moduleName)) {
-            File propPath = new File(getPropertyPath(moduleName));
-            File parent = new File(propPath.getParent());
-            if (!parent.exists()) {
-                parent.mkdirs();
-            }
+            Path propPath = getPropertyPath(moduleName);
+            Path parent = propPath.getParent();
+
             Properties props = new Properties();
             try {
-                propPath.createNewFile();
-                try (FileOutputStream fos = new FileOutputStream(propPath)) {
+                if (!Files.exists(parent)) {
+                    Files.createDirectories(parent);
+                }
+                Files.createFile(propPath);
+
+                try (OutputStream fos = Files.newOutputStream(propPath)) {
                     props.store(fos, "");
                 }
             } catch (IOException e) {
@@ -88,8 +88,8 @@ class PerCaseProperties {
      * @return true if the config exists, false otherwise.
      */
     public synchronized boolean configExists(String moduleName) {
-        File f = new File(c.getCaseDirectory() + File.separator + moduleName + ".properties");
-        return f.exists();
+        Path get = Paths.get(theCase.getModulesOutputDirAbsPath(), moduleName, theCase.getName() + ".properties");
+        return Files.exists(get);
     }
 
     public synchronized boolean settingExists(String moduleName, String settingName) {
@@ -111,16 +111,16 @@ class PerCaseProperties {
      * @param moduleName - The name of the config file to evaluate
      *
      * @return The path of the given config file. Returns null if the config
-     * file doesn't exist.
+     *         file doesn't exist.
      */
-    private synchronized String getPropertyPath(String moduleName) {
-        return c.getCaseDirectory() + File.separator + moduleName + ".properties"; //NON-NLS
+    private synchronized Path getPropertyPath(String moduleName) {
+        return Paths.get(theCase.getModulesOutputDirAbsPath(), moduleName, theCase.getName() + ".properties"); //NON-NLS
     }
 
     /**
      * Returns the given properties file's setting as specific by settingName.
      *
-     * @param moduleName - The name of the config file to read from.
+     * @param moduleName  - The name of the config file to read from.
      * @param settingName - The setting name to retrieve.
      *
      * @return - the value associated with the setting.
@@ -150,7 +150,7 @@ class PerCaseProperties {
      * @param moduleName - the name of the config file to read from.
      *
      * @return - the map of all key:value pairs representing the settings of the
-     * config.
+     *         config.
      *
      * @throws IOException
      */
@@ -181,8 +181,8 @@ class PerCaseProperties {
      * Sets the given properties file to the given setting map.
      *
      * @param moduleName - The name of the module to be written to.
-     * @param settings - The mapping of all key:value pairs of settings to add
-     * to the config.
+     * @param settings   - The mapping of all key:value pairs of settings to add
+     *                   to the config.
      */
     public synchronized void setConfigSettings(String moduleName, Map<String, String> settings) {
         if (!configExists(moduleName)) {
@@ -196,8 +196,7 @@ class PerCaseProperties {
                 props.setProperty(kvp.getKey(), kvp.getValue());
             }
 
-            File path = new File(getPropertyPath(moduleName));
-            try (FileOutputStream fos = new FileOutputStream(path)) {
+            try (OutputStream fos = Files.newOutputStream(getPropertyPath(moduleName))) {
                 props.store(fos, "Changed config settings(batch)"); //NON-NLS
             }
         } catch (IOException e) {
@@ -208,9 +207,9 @@ class PerCaseProperties {
     /**
      * Sets the given properties file to the given settings.
      *
-     * @param moduleName - The name of the module to be written to.
+     * @param moduleName  - The name of the module to be written to.
      * @param settingName - The name of the setting to be modified.
-     * @param settingVal - the value to set the setting to.
+     * @param settingVal  - the value to set the setting to.
      */
     public synchronized void setConfigSetting(String moduleName, String settingName, String settingVal) {
         if (!configExists(moduleName)) {
@@ -223,8 +222,7 @@ class PerCaseProperties {
 
             props.setProperty(settingName, settingVal);
 
-            File path = new File(getPropertyPath(moduleName));
-            try (FileOutputStream fos = new FileOutputStream(path)) {
+            try (OutputStream fos = Files.newOutputStream(getPropertyPath(moduleName))) {
                 props.store(fos, "Changed config settings(single)"); //NON-NLS
             }
         } catch (IOException e) {
@@ -236,7 +234,7 @@ class PerCaseProperties {
      * Removes the given key from the given properties file.
      *
      * @param moduleName - The name of the properties file to be modified.
-     * @param key - the name of the key to remove.
+     * @param key        - the name of the key to remove.
      */
     public synchronized void removeProperty(String moduleName, String key) {
         if (!configExists(moduleName)) {
@@ -249,8 +247,7 @@ class PerCaseProperties {
                 Properties props = fetchProperties(moduleName);
 
                 props.remove(key);
-                File path = new File(getPropertyPath(moduleName));
-                try (FileOutputStream fos = new FileOutputStream(path)) {
+                try (OutputStream fos = Files.newOutputStream(getPropertyPath(moduleName))) {
                     props.store(fos, "Removed " + key); //NON-NLS
                 }
             }
@@ -274,7 +271,7 @@ class PerCaseProperties {
             Logger.getLogger(PerCaseProperties.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]"); //NON-NLS NON-NLS
         }
         Properties props;
-        try (InputStream inputStream = new FileInputStream(getPropertyPath(moduleName))) {
+        try (InputStream inputStream = Files.newInputStream(getPropertyPath(moduleName))) {
             props = new Properties();
             props.load(inputStream);
         }

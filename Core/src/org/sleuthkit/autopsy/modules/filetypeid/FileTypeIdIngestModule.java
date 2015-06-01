@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
@@ -83,9 +82,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            String errorMessage = "Failed to create file type detector"; //NON-NLS
-            logger.log(Level.SEVERE, errorMessage, ex);
-            throw new IngestModuleException(errorMessage);
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }        
     }
 
@@ -94,15 +91,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
-
-        /**
-         * Skip unallocated space and unused blocks files.
-         */
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (file.isFile() == false)) {
-            return ProcessResult.OK;
-        }
 
         /**
          * Skip known files if configured to do so.
@@ -118,7 +106,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          */
         try {
             long startTime = System.currentTimeMillis();
-            fileTypeDetector.detectAndPostToBlackboard(file);
+            fileTypeDetector.getFileType(file);
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
         } catch (Exception e) {
