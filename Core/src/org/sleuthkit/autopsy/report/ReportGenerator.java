@@ -806,7 +806,10 @@ import org.sleuthkit.datamodel.TskData;
                 logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex); //NON-NLS
                 return;
             }
-            checkIfFileIsImage(file);
+            
+            if(file != null){
+                checkIfFileIsImage(file);
+            }
         }
         
         /**
@@ -993,8 +996,11 @@ import org.sleuthkit.datamodel.TskData;
                 String list = resultSet.getString("list"); //NON-NLS
                 String uniquePath = "";
 
-                 try {
-                    uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                try {
+                    AbstractFile f = skCase.getAbstractFileById(objId);
+                    if(f != null){
+                        uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                    }
                 } catch (TskCoreException ex) {
                     errorList.add(
                             NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
@@ -1138,7 +1144,10 @@ import org.sleuthkit.datamodel.TskData;
                 String uniquePath = "";
                 
                 try {
-                    uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                    AbstractFile f = skCase.getAbstractFileById(objId);
+                    if(f != null){
+                        uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                    }
                 } catch (TskCoreException ex) {
                     errorList.add(
                             NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileFromID"));
@@ -1801,15 +1810,23 @@ import org.sleuthkit.datamodel.TskData;
                      break;
                 case TSK_EXT_MISMATCH_DETECTED:
                     AbstractFile file = skCase.getAbstractFileById(getObjectID());
-                    orderedRowData.add(file.getName());
-                    orderedRowData.add(file.getNameExtension());
-                    List<BlackboardAttribute> attrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-                    if (!attrs.isEmpty()) {
-                        orderedRowData.add(attrs.get(0).getValueString());
+                    if(file != null){
+                        orderedRowData.add(file.getName());
+                        orderedRowData.add(file.getNameExtension());
+                        List<BlackboardAttribute> attrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+                        if (!attrs.isEmpty()) {
+                            orderedRowData.add(attrs.get(0).getValueString());
+                        } else {
+                            orderedRowData.add("");
+                        }                   
+                        orderedRowData.add(file.getUniquePath());
                     } else {
-                        orderedRowData.add("");
-                    }                   
-                    orderedRowData.add(file.getUniquePath());
+                        // Make empty rows to make sure the formatting is correct
+                        orderedRowData.add(null);
+                        orderedRowData.add(null);
+                        orderedRowData.add(null);
+                        orderedRowData.add(null);
+                    }
                     break;
                 case TSK_OS_INFO:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID()));

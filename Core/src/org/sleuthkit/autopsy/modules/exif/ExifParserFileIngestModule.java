@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,13 +34,14 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -59,10 +60,11 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
-    private AtomicInteger filesProcessed = new AtomicInteger(0);
+    private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private FileTypeDetector fileTypeDetector;
         
     ExifParserFileIngestModule() {
     }
@@ -71,9 +73,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {    
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+        }
     }
-
-    
+  
     @Override
     public ProcessResult process(AbstractFile content) {
         //skip unalloc
@@ -197,7 +203,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        return ImageUtils.isJpegFileHeader(f);
+        try {
+            return fileTypeDetector.getFileType(f).equals("image/jpeg");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
+            return false;
+        }
     }
 
     @Override

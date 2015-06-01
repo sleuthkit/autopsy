@@ -20,6 +20,9 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -29,7 +32,7 @@ import org.openide.util.lookup.ServiceProvider;
  * @author jantonius
  */
 @ServiceProvider(service = CaseNewActionInterface.class)
-public final class CaseNewAction implements CaseNewActionInterface {
+public final class CaseNewAction extends CallableSystemAction implements CaseNewActionInterface {
 
     private NewCaseWizardAction wizard = SystemAction.get(NewCaseWizardAction.class);
 
@@ -41,4 +44,18 @@ public final class CaseNewAction implements CaseNewActionInterface {
     public void actionPerformed(ActionEvent e) {
         wizard.performAction();
     }
+
+    @Override
+    public void performAction() {
+    }
+
+    @Override
+    public String getName() {
+        return NbBundle.getMessage(CaseNewAction.class, "CTL_CaseNewAction");
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }   
 }

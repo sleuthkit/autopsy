@@ -78,8 +78,10 @@ import org.sleuthkit.datamodel.TskData;
     @ServiceProvider(service = FrameCapture.class)
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
-
-    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"}; //NON-NLS
+    
+    // Refer to https://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html
+    // for Javafx supported formats 
+    private static final String[] EXTENSIONS = new String[]{".m4v", ".fxm", ".flv", ".m3u8", ".mp4", ".aif", ".aiff", ".mp3", "m4a", ".wav"}; //NON-NLS
     private static final List<String> MIMETYPES = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
 
@@ -478,6 +480,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             pauseButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent e) {
+                    if (mediaPlayer == null) {
+                        return;
+                    }
+
                     Status status = mediaPlayer.getStatus();
 
                     switch (status) {
@@ -496,7 +502,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                             // If the MediaPlayer is in an unexpected state, stop playback.
                             mediaPlayer.stop();
                             setInfoLabelText(NbBundle.getMessage(this.getClass(),
-                                                                 "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
+                                    "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
                             break;
                     }
                 }
@@ -505,6 +511,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             stopButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent e) {
+                    if (mediaPlayer == null) {
+                        return;
+                    }
+
                     mediaPlayer.stop();
                 }
             });
@@ -512,6 +522,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             progressSlider.valueProperty().addListener(new InvalidationListener() {
                 @Override
                 public void invalidated(Observable o) {
+                    if (mediaPlayer == null) {
+                        return;
+                    }
+
                     if (progressSlider.isValueChanging()) {
                         mediaPlayer.seek(duration.multiply(progressSlider.getValue() / 100.0));
                     }
@@ -559,6 +573,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * media.
          */
         private void updateProgress() {
+            if (mediaPlayer == null) {
+                return;
+            }
             Duration currentTime = mediaPlayer.getCurrentTime();
             updateSlider(currentTime);
             updateTime(currentTime);
@@ -634,6 +651,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
             @Override
             public void run() {
+                if (mediaPlayer == null) {
+                    return;
+                }
+                
                 duration = mediaPlayer.getMedia().getDuration();
                 long durationInMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
 
@@ -657,6 +678,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
             @Override
             public void run() {
+                if (mediaPlayer == null) {
+                    return;
+                }
+
                 Duration beginning = mediaPlayer.getStartTime();
                 mediaPlayer.stop();
                 mediaPlayer.pause();

@@ -98,7 +98,7 @@ class SampleFileIngestModule implements FileIngestModule {
 
     @Override
     public IngestModule.ProcessResult process(AbstractFile file) {
-        if (attrId != -1) {
+        if (attrId == -1) {
             return IngestModule.ProcessResult.ERROR;
         }
 

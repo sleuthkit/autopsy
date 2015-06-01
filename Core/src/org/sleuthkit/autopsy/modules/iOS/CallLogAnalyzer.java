@@ -85,6 +85,11 @@ class CallLogAnalyzer {
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
+            if(f == null){
+                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+                return;
+            }
+            
             try {
                 resultSet = statement.executeQuery(
                         "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;"); //NON-NLS

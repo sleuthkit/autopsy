@@ -1,6 +1,7 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
 import java.util.Collection;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
@@ -9,6 +10,7 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -56,7 +58,14 @@ public interface DrawableView extends Category.CategoryListener, TagUtils.TagLis
     void handleTagsChanged(Collection<Long> ids);
 
     default boolean hasHashHit() {
-        return getFile().getHashHitSetNames().isEmpty() == false;
+        try{
+            return getFile().getHashHitSetNames().isEmpty() == false;
+        } catch (NullPointerException ex){
+            // I think this happens when we're in the process of removing images from the view while
+            // also trying to update it? 
+            Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits");
+            return false;
+        }
     }
 
     static Border getCategoryBorder(Category category) {

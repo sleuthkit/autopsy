@@ -29,9 +29,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  interface FileReportModule extends ReportModule {
     /** 
      * Initialize the report which will be stored at the given path.
-     * @param path 
+     * @param baseReportDir Base directory to store the report file in.   Report should go into baseReportDir + getRelativeFilePath().
      */
-    public void startReport(String path);
+    public void startReport(String baseReportDir);
     
     /**
      * End the report. 

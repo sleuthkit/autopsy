@@ -340,7 +340,6 @@ class LuceneQuery implements KeywordSearchQuery {
             List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
             // list is null if there wasn't a snippet
             if (snippetList != null) {
-                snippetList.sort(null);
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }
@@ -440,7 +439,6 @@ class LuceneQuery implements KeywordSearchQuery {
         //docs says makes sense for the original Highlighter only, but not really
         //analyze all content SLOW! consider lowering
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);  //NON-NLS
-        q.setParam("hl.preserveMulti", true); //NON-NLS
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -453,8 +451,6 @@ class LuceneQuery implements KeywordSearchQuery {
             if (contentHighlights == null) {
                 return "";
             } else {
-                // Sort contentHighlights in order to get consistently same snippet.
-                contentHighlights.sort(null);
                 // extracted content is HTML-escaped, but snippet goes in a plain text field
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }

@@ -130,7 +130,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         ImageGalleryPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
         ImageGalleryController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
         if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
+            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         }
     }
 

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -119,6 +120,11 @@ final class FileIngestPipeline {
                 module.process(file);
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                String msg = ex.getMessage();
+                // Jython run-time errors don't seem to have a message, but have details in toString.
+                if (msg == null)
+                    msg = ex.toString();
+                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
             if (this.job.isCancelled()) {
                 break;
@@ -144,6 +150,11 @@ final class FileIngestPipeline {
                 module.shutDown();
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                String msg = ex.getMessage();
+                // Jython run-time errors don't seem to have a message, but have details in toString.
+                if (msg == null)
+                    msg = ex.toString();
+                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
         }
         this.running = false;

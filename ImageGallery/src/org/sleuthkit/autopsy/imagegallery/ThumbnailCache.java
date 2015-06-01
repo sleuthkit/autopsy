@@ -153,6 +153,7 @@ public enum ThumbnailCache {
     }
 
     private static File getCacheFile(long id) {
+        // @@@ should use ImageUtils.getFile();
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
     }
 
