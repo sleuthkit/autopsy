@@ -87,7 +87,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang3.StringUtils;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
@@ -290,17 +290,9 @@ public class GroupPane extends BorderPane implements GroupView {
 
     /** create the string to display in the group header */
     protected String getHeaderString() {
-        if (getGrouping() == null) {
-            return "";
-        } else {
-            String groupName = (getGrouping().groupKey.getAttribute() == DrawableAttribute.TAGS)
-                    ? ((TagName) getGrouping().groupKey.getValue()).getDisplayName()
-                    : getGrouping().groupKey.getValue().toString();
-            return StringUtils.defaultIfBlank(groupName, DrawableGroup.UNKNOWN) + " -- "
-                    + getGrouping().getFilesWithHashSetHitsCount() + " hash set hits / "
-                    + getGrouping().getSize() + " files";
-
-        }
+        return isNull(getGrouping()) ? ""
+                : defaultIfBlank(getGrouping().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
+                + getGrouping().getHashSetHitsCount() + " hash set hits / " + getGrouping().getSize() + " files";
     }
 
     ContextMenu getContextMenu() {
@@ -475,7 +467,6 @@ public class GroupPane extends BorderPane implements GroupView {
 
         ActionUtils.configureButton(forwardAction, forwardButton);
         ActionUtils.configureButton(backAction, backButton);
-
 
         nextGroupAction.disabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             nextButton.setEffect(newValue ? null : DROP_SHADOW);
