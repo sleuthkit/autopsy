@@ -101,27 +101,34 @@ public final class JythonModuleLoader {
     }
         
     private static <T> T createObjectFromScript(File script, String className, Class<T> interfaceClass) {
-        // Make a "fresh" interpreter every time to avoid name collisions, etc.
-        PythonInterpreter interpreter = new PythonInterpreter();
-
+        T obj;
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
         // with it.
-        interpreter.exec("import sys"); //NON-NLS
-        String path = Matcher.quoteReplacement(script.getParent());
-        interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
+        try ( // Make a "fresh" interpreter every time to avoid name collisions, etc.
+                PythonInterpreter interpreter = new PythonInterpreter()) {
+            // Add the directory where the Python script resides to the Python
+            // module search path to allow the script to use other scripts bundled
+            // with it.
+            interpreter.exec("import sys"); //NON-NLS
+            String path = Matcher.quoteReplacement(script.getParent());
+            interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
+            String moduleName = script.getName().replaceAll(".py", ""); //NON-NLS
 
-        // Execute the script and create an instance of the desired class.
-        interpreter.execfile(script.getAbsolutePath());
-        // Importing the appropriate class from the Py Script which contains multiple classes.
-        interpreter.exec("from " + script.getName().replaceAll(".py", "") + " import " + className);
-        interpreter.exec("obj = " + className + "()"); //NON-NLS
-        
-        T obj = interpreter.get("obj", interfaceClass); //NON-NLS
+            // reload the module so that the changes made to it can be loaded.
+            // in case, reloading fails, just use the existing modules.
+            interpreter.exec("import " + moduleName); //NON-NLS
+            interpreter.exec("try:\n\treload(" + moduleName + ")\n\t\nexcept:\n\tpass"); //NON-NLS
 
-        // Remove the directory where the Python script resides from the Python
-        // module search path.
-        interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
+            // Execute the script and create an instance of the desired class.
+            // Importing the appropriate class from the Py Script which contains multiple classes.
+            interpreter.exec("from " + moduleName + " import " + className);
+            interpreter.exec("obj = " + className + "()"); //NON-NLS
+            obj = interpreter.get("obj", interfaceClass); //NON-NLS
+            // Remove the directory where the Python script resides from the Python
+            // module search path.
+            interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
+        } //NON-NLS
 
         return obj;
     }
