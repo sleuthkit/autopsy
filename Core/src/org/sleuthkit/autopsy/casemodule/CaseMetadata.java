@@ -65,7 +65,7 @@ public final class CaseMetadata {
      *
      * @return The case type.
      */
-    public Case.CaseType getCaseType(Path thePath) {
+    public Case.CaseType getCaseType() {
         return this.caseType;
     }
 
