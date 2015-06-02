@@ -147,9 +147,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Some network drives always return -1 for free disk space. 
             // In this case, expect enough space and move on.
             long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
-            if ((freeDiskSpace!=-1) && ((file.getSize() * 2) > freeDiskSpace)) {
+            if ((freeDiskSpace != -1) && ((file.getSize() * 1.2) > freeDiskSpace)) {
                 logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to carve unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.UnableToCarve"),
+                        NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.NotEnoughDiskSpace"));
                 return IngestModule.ProcessResult.ERROR;
             }
 

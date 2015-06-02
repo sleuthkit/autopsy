@@ -96,7 +96,8 @@ public class SolrSearchService implements KeywordSearchService {
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), abstractFile));
+
+                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
             }
             else
                 artifactContents.append(attribute.getDisplayString());
