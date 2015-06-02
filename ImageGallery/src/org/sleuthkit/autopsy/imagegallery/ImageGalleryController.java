@@ -676,7 +676,7 @@ public final class ImageGalleryController {
      * 'analyzed'. Grabs all files with supported image/video mime types, and
      * adds them to the Drawable DB
      */
-    class CopyAnalyzedFiles extends InnerTask {
+    private class CopyAnalyzedFiles extends InnerTask {
 
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
 

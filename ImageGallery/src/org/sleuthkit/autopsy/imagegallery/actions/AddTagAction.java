@@ -40,16 +40,15 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract base class for Actions that allow users to tag SleuthKit data
+ * An abstract base class for actions that allow users to tag SleuthKit data
  * model objects.
+ *
+ * //TODO: this class started as a cut and paste from
+ * org.sleuthkit.autopsy.actions.AddTagAction and needs to be
+ * refactor or reintegrated to the AddTagAction hierarchy of Autopysy.
  */
 abstract class AddTagAction {
 
-    /**
-     * Derived classes should call this method any time a tag is created,
-     * updated
-     * or deleted outside of an actionPerformed() call.
-     */
     @SuppressWarnings("deprecation")
     protected void refreshDirectoryTree() {
 
@@ -63,7 +62,7 @@ abstract class AddTagAction {
     protected static final String NO_COMMENT = "";
 
     /**
-     * Template method to allow derived classes to provide a string for for a
+     * Template method to allow derived classes to provide a string for a
      * menu item label.
      */
     abstract protected String getActionDisplayName();
