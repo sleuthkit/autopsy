@@ -22,8 +22,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import org.openide.DialogDisplayer;
@@ -65,9 +68,16 @@ public final class JythonModuleLoader {
 
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
         List<T> objects = new ArrayList<>();
-        File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
-        File[] files = pythonModulesDir.listFiles();
-        for (File file : files) {
+        Set<File> pythonModuleDirs = new HashSet<>();
+
+        // add possible python modules from 'modules' folders
+        for(File f : PlatformUtil.getPythonModulesLocations()) {
+            Collections.addAll(pythonModuleDirs, f.listFiles());
+        }
+        // add python modules from 'testuserdir/python_modules' folder
+        Collections.addAll(pythonModuleDirs, new File(PlatformUtil.getUserPythonModulesPath()).listFiles());
+
+        for (File file : pythonModuleDirs) {
             if (file.isDirectory()) {
                 File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
                 for (File script : pythonScripts) {
