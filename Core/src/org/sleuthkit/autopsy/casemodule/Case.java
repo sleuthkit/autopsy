@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -71,12 +70,12 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * case.
  */
 @SuppressWarnings("deprecation") // TODO: Remove this when ErrorObserver is replaced.
-public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.SleuthkitCaseErrorObserver {
+public class Case {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-    private static boolean firstTime=true;
+    private static IntervalErrorReportData tskErrorReporter = null;
     
     /**
      * Name for the property that determines whether to show the dialog at
@@ -89,10 +88,6 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
      * once to receive events for all cases.
      */
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
-
-    private final IntervalErrorReportData databaseErrorReporter = new IntervalErrorReportData(
-            60, // No less than 60 seconds between warnings for database errors
-            NbBundle.getMessage(Case.class, "CaseIntervalErrorReport.ErrorText"));
 
     /**
      * Events that the case module will fire. Event listeners can get the event
@@ -229,12 +224,6 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
      * constructor.
      */
     private void init() {
-        db.addErrorObserver(this);
-        if(firstTime)
-        {
-            firstTime=false;
-            SleuthkitCase.addSleuthkitCaseErrorObserver(this);
-        }
     }
 
     /**
@@ -269,6 +258,8 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
      *
      */
     private static void changeCase(Case newCase) {
+        // force static initialization of error reporter
+        tskErrorReporter = IntervalErrorReportData.getInstance();
         // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
@@ -1347,88 +1338,6 @@ public class Case implements SleuthkitCase.ErrorObserver, SleuthkitCase.Sleuthki
         if (!newCaseName.equals("")) {
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
-        }
-    }
-
-    @Override
-    public void receiveError(String context, String errorMessage) {
-        MessageNotifyUtil.Notify.error(context, errorMessage);
-    }
-
-    @Override
-    public void receiveSleuthkitCaseError(SleuthkitCase.SleuthkitCaseErrorObserver.TypeOfError typeOfError, String errorMessage) {
-        if (typeOfError == SleuthkitCase.SleuthkitCaseErrorObserver.TypeOfError.DATABASE) {
-            databaseErrorReporter.addProblems(1, errorMessage);
-        }
-    }
-
-    /**
-     * This class enables capturing errors and batching them for reporting on a
-     * no-more-than-x number of seconds basis. When created, you specify what
-     * type of error it will be batching, and the minimum time between user
-     * notifications. When the time between notifications has expired, the next
-     * error encountered will cause a report to be shown to the user.
-     */
-    public class IntervalErrorReportData {
-
-        private long newProblems;
-        private long totalProblems;
-        private boolean firstErrorSent;
-        private long lastReportedDate;
-        private final int milliSecondsBetweenReports;
-        private final String message;
-
-        /**
-         * Create a new IntervalErrorReprotData instance.
-         *
-         * @param secondsBetweenReports Minimum number of seconds between
-         * reports. It will not warn more frequently than this.
-         * @param message The message that will be shown when warning the user
-         */
-        public IntervalErrorReportData(int secondsBetweenReports, String message) {
-            this.newProblems = 0;
-            this.totalProblems = 0;
-            this.firstErrorSent = false;
-            this.lastReportedDate = System.currentTimeMillis();
-            this.milliSecondsBetweenReports = secondsBetweenReports * 1000;  // convert to milliseconds
-            this.message = message;
-        }
-
-        /**
-         * Call this to add problems to the class. When the time threshold is
-         * met (or if this is the first problem encountered), a warning will be
-         * shown to the user.
-         *
-         * @param newProblems the newProblems to set
-         * @param errorMessage the message for this specific error
-         */
-        public void addProblems(long newProblems, String errorMessage) {
-            this.newProblems += newProblems;
-            this.totalProblems += newProblems;
-
-            if (firstErrorSent == false) {
-                firstErrorSent = true;
-                this.lastReportedDate = System.currentTimeMillis();
-                MessageNotifyUtil.Notify.error(message, errorMessage + " "
-                        + this.newProblems + " "
-                        + NbBundle.getMessage(Case.class, "CaseIntervalErrorReport.NewIssues")
-                        + " " + this.totalProblems + " "
-                        + NbBundle.getMessage(Case.class, "CaseIntervalErrorReport.TotalIssues")
-                        + ".");
-
-                this.newProblems = 0;
-            }
-            long currentTimeStamp = System.currentTimeMillis();
-            if ((currentTimeStamp - lastReportedDate) > milliSecondsBetweenReports) {
-                this.lastReportedDate = currentTimeStamp;
-                MessageNotifyUtil.Notify.error(message, errorMessage + " "
-                        + this.newProblems + " "
-                        + NbBundle.getMessage(Case.class, "CaseIntervalErrorReport.NewIssues")
-                        + " " + this.totalProblems + " "
-                        + NbBundle.getMessage(Case.class, "CaseIntervalErrorReport.TotalIssues")
-                        + ".");
-                this.newProblems = 0;
-            }
         }
     }
 
