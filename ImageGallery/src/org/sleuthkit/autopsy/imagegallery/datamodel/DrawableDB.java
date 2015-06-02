@@ -713,28 +713,22 @@ public class DrawableDB {
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
             }
-            /*
-             * // Old method
-             * try (Statement stmt = con.createStatement();
-             * //Can't make this a preprared statement because of the IN ( ...
-             * )
-             * ResultSet analyzedQuery = stmt.executeQuery("select
-             * count(analyzed) as analyzed from drawable_files where analyzed =
-             * 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") +
-             * ")")) {
-             * while (analyzedQuery.next()) {
-             * return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
-             * }
-             * } catch (SQLException ex) {
-             * LOGGER.log(Level.WARNING, "problem counting analyzed files: ",
-             * ex);
-             * } */
+
+            //// Old method
+            //try (Statement stmt = con.createStatement();
+            //        //Can't make this a preprared statement because of the IN ( ... )
+            //        ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
+            //    while (analyzedQuery.next()) {
+            //        return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
+            //    }
+            //} catch (SQLException ex) {
+            //    LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
+            //}
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException);
         } finally {
             dbReadUnlock();
         }
-
         return false;
     }
 
@@ -745,7 +739,8 @@ public class DrawableDB {
      * @param sqlWhereClause a SQL where clause appropriate for the desired
      *                       files (do not begin the WHERE clause with the word WHERE!)
      *
-     * @return a list of file ids each of which satisfy the given WHERE clause
+     * @return a list of file ids each of which satisfy the given WHERE
+     *         clause
      *
      * @throws TskCoreException
      */
@@ -1136,15 +1131,17 @@ public class DrawableDB {
 
     /*
      * The following groups of functions are used to store information in memory
-     * instead
-     * of in the database. Due to the change listeners in the GUI, this data is
-     * requested
-     * many, many times when browsing the images, and especially when making any
-     * changes to things like categories.
+     * instead of in the database. Due to the change listeners in the GUI,
+     * this data is requested many, many times when browsing the images, and
+     * especially when making any changes to things like categories.
      *
      * I don't like having multiple copies of the data, but these were causing
-     * major
-     * bottlenecks when they were all database lookups.
+     * major bottlenecks when they were all database lookups.
+     *
+     * TODO: factor these out to seperate classes such as HashSetHitCache or
+     * CategoryCountCache
+     *
+     * TODO: use guava Caches for this instead of lower level HashMaps
      */
     @GuardedBy("hashSetMap")
     private final Map<Long, Set<String>> hashSetMap = new HashMap<>();
