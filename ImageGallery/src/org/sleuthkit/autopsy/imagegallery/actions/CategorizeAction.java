@@ -22,14 +22,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
@@ -74,73 +72,22 @@ public class CategorizeAction extends AddTagAction {
         Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
         addTagsToFiles(tagName, comment, selectedFiles);
     }
-      
+
     @Override
-    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles){    
-        //TODO: should this get submitted to controller rather than a swingworker ? -jm
-        new SwingWorker<Object, Object>() {
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
 
-            @Override
-            protected Object doInBackground() throws Exception {
-                Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
-                for (Long fileID : selectedFiles) {
+        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
 
-                    try {
-                        DrawableFile<?> file = controller.getFileFromId(fileID);
-
-                        Category oldCat = file.getCategory();
-                        // remove file from old category group
-                        controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);
-
-                        //remove old category tag if necessary
-                        List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
-
-                        for (ContentTag ct : allContentTags) {
-                            //this is bad: treating tags as categories as long as their names start with prefix
-                            //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
-                            if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                                //LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
-                                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
-                                controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));
-                            }
-                        }
-
-                        controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName()));
-                        if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
-                            Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
-                        }
-                        //make sure rest of ui  hears category change.
-                        controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
-
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
-                        JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-
-                refreshDirectoryTree();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "unexpected exception while categorizing files", ex);
-                }
-            }
-
-        }.execute();
-
+        for (Long fileID : selectedFiles) {
+            controller.queueDBWorkerTask(new CategorizeTask(fileID, tagName, comment));
+        }
     }
 
     /**
      * Instances of this class implement a context menu user interface for
      * selecting a category
      */
-    static protected class CategoryMenu extends Menu {
+    static private class CategoryMenu extends Menu {
 
         CategoryMenu() {
             super("Categorize");
@@ -157,6 +104,54 @@ public class CategorizeAction extends AddTagAction {
                 categoryItem.setAccelerator(new KeyCodeCombination(cat.getHotKeycode()));
                 getItems().add(categoryItem);
             }
+        }
+    }
+
+    private class CategorizeTask extends ImageGalleryController.InnerTask {
+
+        private final long fileID;
+        private final TagName tagName;
+        private final String comment;
+
+        public CategorizeTask(long fileID, TagName tagName, String comment) {
+            super();
+            this.fileID = fileID;
+            this.tagName = tagName;
+            this.comment = comment;
+        }
+
+        @Override
+        public void run() {
+            try {
+                DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
+                Category oldCat = file.getCategory();
+                // remove file from old category group
+                controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
+
+                //remove old category tag if necessary
+                List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file); //tsk db
+                for (ContentTag ct : allContentTags) {
+                    //this is bad: treating tags as categories as long as their names start with prefix
+                    //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
+                    if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
+                        Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
+                        controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
+                    }
+
+                }
+                controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+                if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
+                    Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
+                }
+                //make sure rest of ui  hears category change.
+                controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
+
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
+                JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+            refreshDirectoryTree();
         }
     }
 }

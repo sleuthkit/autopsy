@@ -373,7 +373,8 @@ public final class ImageGalleryController {
      *
      * @param innerTask
      */
-    final void queueDBWorkerTask(InnerTask innerTask) {
+    public final void queueDBWorkerTask(InnerTask innerTask) {
+
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
             restartWorker();
@@ -513,7 +514,6 @@ public final class ImageGalleryController {
                     return;
                 }
                 try {
-                    // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
 
                     if (it.cancelled == false) {
@@ -542,7 +542,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    static private abstract class InnerTask implements Runnable {
+    static public abstract class InnerTask implements Runnable {
 
         public double getProgress() {
             return progress.get();
@@ -600,7 +600,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for tasks associated with a file in the database
      */
-    static private abstract class FileTask extends InnerTask {
+    static public abstract class FileTask extends InnerTask {
 
         private final AbstractFile file;
 
@@ -676,7 +676,7 @@ public final class ImageGalleryController {
      * 'analyzed'. Grabs all files with supported image/video mime types, and
      * adds them to the Drawable DB
      */
-    class CopyAnalyzedFiles extends InnerTask {
+    private class CopyAnalyzedFiles extends InnerTask {
 
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
 
