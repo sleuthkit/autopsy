@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.report.GeneralReportModule;
 public final class JythonModuleLoader {
 
     private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName());
+    private static PythonInterpreter interpreter;
 
     /**
      * Get ingest module factories implemented using Jython.
@@ -50,6 +51,7 @@ public final class JythonModuleLoader {
      * interface.
      */
     public static List<IngestModuleFactory> getIngestModuleFactories() {
+        interpreter = new PythonInterpreter();
         return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
     }
 
@@ -60,6 +62,7 @@ public final class JythonModuleLoader {
      * interface.
      */
     public static List<GeneralReportModule> getGeneralReportModules() {
+        interpreter = new PythonInterpreter();
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
 
@@ -97,38 +100,33 @@ public final class JythonModuleLoader {
                 }
             }
         }
+        interpreter.close();
         return objects;
     }
         
     private static <T> T createObjectFromScript(File script, String className, Class<T> interfaceClass) {
-        T obj;
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
         // with it.
-        try ( // Make a "fresh" interpreter every time to avoid name collisions, etc.
-                PythonInterpreter interpreter = new PythonInterpreter()) {
-            // Add the directory where the Python script resides to the Python
-            // module search path to allow the script to use other scripts bundled
-            // with it.
-            interpreter.exec("import sys"); //NON-NLS
-            String path = Matcher.quoteReplacement(script.getParent());
-            interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
-            String moduleName = script.getName().replaceAll(".py", ""); //NON-NLS
+        interpreter.exec("import sys"); //NON-NLS
+        String path = Matcher.quoteReplacement(script.getParent());
+        interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
+        String moduleName = script.getName().replaceAll(".py", ""); //NON-NLS
 
-            // reload the module so that the changes made to it can be loaded.
-            // in case, reloading fails, just use the existing modules.
-            interpreter.exec("import " + moduleName); //NON-NLS
-            interpreter.exec("try:\n\treload(" + moduleName + ")\n\t\nexcept:\n\tpass"); //NON-NLS
+        // reload the module so that the changes made to it can be loaded.
+        // in case, reloading fails, just use the existing modules.
+        interpreter.exec("import " + moduleName); //NON-NLS
+        interpreter.exec("try:\n\treload(" + moduleName + ")\n\t\nexcept:\n\tpass"); //NON-NLS
 
-            // Execute the script and create an instance of the desired class.
-            // Importing the appropriate class from the Py Script which contains multiple classes.
-            interpreter.exec("from " + moduleName + " import " + className);
-            interpreter.exec("obj = " + className + "()"); //NON-NLS
-            obj = interpreter.get("obj", interfaceClass); //NON-NLS
-            // Remove the directory where the Python script resides from the Python
-            // module search path.
-            interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
-        } //NON-NLS
+        // Execute the script and create an instance of the desired class.
+        // Importing the appropriate class from the Py Script which contains multiple classes.
+        interpreter.exec("from " + moduleName + " import " + className);
+        interpreter.exec("obj = " + className + "()"); //NON-NLS
+        T obj = interpreter.get("obj", interfaceClass); //NON-NLS
+
+        // Remove the directory where the Python script resides from the Python
+        // module search path.
+        interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
 
         return obj;
     }

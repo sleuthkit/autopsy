@@ -83,10 +83,10 @@ class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
-    logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
+    _logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
 
-    def python_logger(self, level, msg):
-        self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+    def log(self, level, msg):
+        self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
 
     def __init__(self):
         self.context = None
@@ -118,7 +118,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         files = fileManager.findFiles(dataSource, "%test%")
 
         numFiles = len(files)
-        self.python_logger(Level.INFO, "found " + str(numFiles) + " files")
+        self.log(Level.INFO, "found " + str(numFiles) + " files")
         progressBar.switchToDeterminate(numFiles)
         fileCount = 0;
         for file in files:
@@ -127,7 +127,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
 
-            self.python_logger(Level.INFO, "Processing file: " + file.getName())
+            self.log(Level.INFO, "Processing file: " + file.getName())
             fileCount += 1
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of

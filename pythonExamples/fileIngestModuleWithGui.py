@@ -110,10 +110,10 @@ class SampleFileIngestModuleWithUIFactory(IngestModuleFactoryAdapter):
 # Looks at the attributes of the passed in file.
 class SampleFileIngestModuleWithUI(FileIngestModule):
 
-    logger = Logger.getLogger(SampleFileIngestModuleWithUIFactory.moduleName)
+    _logger = Logger.getLogger(SampleFileIngestModuleWithUIFactory.moduleName)
 
-    def python_logger(self, level, msg):
-        self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+    def log(self, level, msg):
+        self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
 
     # Autopsy will pass in the settings from the UI panel
     def __init__(self, settings):
@@ -125,9 +125,9 @@ class SampleFileIngestModuleWithUI(FileIngestModule):
     def startUp(self, context):
         # As an example, determine if user configured a flag in UI
         if self.local_settings.getFlag():
-            self.python_logger(Level.INFO, "flag is set")
+            self.log(Level.INFO, "flag is set")
         else:
-            self.python_logger(Level.INFO, "flag is not set")
+            self.log(Level.INFO, "flag is not set")
         
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
         # raise IngestModuleException(IngestModule(), "Oh No!")

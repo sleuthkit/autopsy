@@ -84,10 +84,10 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 # Looks at the attributes of the passed in file.
 class SampleJythonFileIngestModule(FileIngestModule):
 
-    logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
+    _logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
 
-    def python_logger(self, level, msg):
-        self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+    def log(self, level, msg):
+        self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
 
     # Where any setup and configuration is done
     # TODO: Add any setup code that you need here.
@@ -105,7 +105,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().find(".txt") != -1:
             
-            self.python_logger(Level.INFO, "Found a text file: " + file.getName())
+            self.log(Level.INFO, "Found a text file: " + file.getName())
             self.filesFound+=1
 			
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
