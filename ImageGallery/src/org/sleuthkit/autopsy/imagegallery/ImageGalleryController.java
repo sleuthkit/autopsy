@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -327,16 +326,15 @@ public final class ImageGalleryController {
     }
 
     /**
-     * onStart the controller for a specific case.
+     * configure the controller for a specific case.
      *
-     * @param c
+     * @param theNewCase the case to configure the controller for
      */
-    public synchronized void setCase(Case c) {
+    public synchronized void setCase(Case theNewCase) {
+        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
 
-        this.db = DrawableDB.getDrawableDB(c.getModulesOutputDirAbsPath() + File.separator + ImageGalleryModule.getModuleName(), this);
-
-        setListeningEnabled(ImageGalleryModule.isEnabledforCase(c));
-        setStale(ImageGalleryModule.isCaseStale(c));
+        setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
+        setStale(ImageGalleryModule.isCaseStale(theNewCase));
 
         // if we add this line icons are made as files are analyzed rather than on demand.
         // db.addUpdatedFileListener(IconCache.getDefault());

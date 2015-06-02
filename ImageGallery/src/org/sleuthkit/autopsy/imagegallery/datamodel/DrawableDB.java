@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -38,7 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -129,7 +131,7 @@ public class DrawableDB {
 
     private ImageGalleryController controller;
 
-    private final String dbPath;
+    private final Path dbPath;
 
     volatile private Connection con;
 
@@ -192,9 +194,10 @@ public class DrawableDB {
      *
      * @throws SQLException if there is problem creating or configuring the db
      */
-    private DrawableDB(String dbPath) throws SQLException, ExceptionInInitializerError {
-        this.dbPath = dbPath;
+    private DrawableDB(Path dbPath) throws SQLException, ExceptionInInitializerError, IOException {
 
+        this.dbPath = dbPath;
+        Files.createDirectories(dbPath.getParent());
         if (initializeDB()) {
             updateFileStmt = prepareStatement(
                     "INSERT OR REPLACE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) "
@@ -254,7 +257,7 @@ public class DrawableDB {
      *
      * @param stmtString the string representation of the sqlite statement to
      *                   prepare
-     * @param attr the {@link DrawableAttribute} this query groups by
+     * @param attr       the {@link DrawableAttribute} this query groups by
      *
      * @return the prepared statement
      *
@@ -277,16 +280,18 @@ public class DrawableDB {
      *
      * @return
      */
-    public static DrawableDB getDrawableDB(String dbPath, ImageGalleryController controller) {
+    public static DrawableDB getDrawableDB(Path dbPath, ImageGalleryController controller) {
 
         try {
-            DrawableDB drawableDB = new DrawableDB(dbPath + File.separator + "drawable.db");
+            Path dbFilePath = dbPath.resolve("drawable.db");
+
+            DrawableDB drawableDB = new DrawableDB(dbFilePath);
             drawableDB.controller = controller;
             return drawableDB;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex);
             return null;
-        } catch (ExceptionInInitializerError ex) {
+        } catch (ExceptionInInitializerError | IOException ex) {
             LOGGER.log(Level.SEVERE, "error creating database connection", ex);
             return null;
         }
@@ -321,7 +326,7 @@ public class DrawableDB {
         try {
             LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode",
                     SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                    ? "native" : "pure-java"));
+                            ? "native" : "pure-java"));
         } catch (Exception exception) {
             LOGGER.log(Level.WARNING, "exception while checking sqlite-jdbc version and mode", exception);
         }
@@ -332,7 +337,7 @@ public class DrawableDB {
      * create the table and indices if they don't already exist
      *
      * @return the number of rows in the table , count > 0 indicating an
-     * existing table
+     *         existing table
      */
     private boolean initializeDB() {
         try {
@@ -457,7 +462,7 @@ public class DrawableDB {
     public void openDBCon() {
         try {
             if (con == null || con.isClosed()) {
-                con = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+                con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString());
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to open connection to drawable.db", ex);
@@ -559,12 +564,12 @@ public class DrawableDB {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
         }
-               
+
         dbWriteLock();
         try {
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
-            
+
             // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
             stmt.setString(2, f.getDrawablePath());
@@ -614,7 +619,7 @@ public class DrawableDB {
         } catch (SQLException | NullPointerException ex) {
             // This is one of the places where we get an error if the case is closed during processing,
             // which doesn't need to be reported here.
-            if(Case.isCaseOpen()){
+            if (Case.isCaseOpen()) {
                 LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
             }
         } finally {
@@ -709,16 +714,21 @@ public class DrawableDB {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
             }
             /*
-             // Old method
-             try (Statement stmt = con.createStatement();
-             //Can't make this a preprared statement because of the IN ( ... )
-             ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
-             while (analyzedQuery.next()) {
-             return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
-             }
-             } catch (SQLException ex) {
-             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
-             }*/
+             * // Old method
+             * try (Statement stmt = con.createStatement();
+             * //Can't make this a preprared statement because of the IN ( ...
+             * )
+             * ResultSet analyzedQuery = stmt.executeQuery("select
+             * count(analyzed) as analyzed from drawable_files where analyzed =
+             * 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") +
+             * ")")) {
+             * while (analyzedQuery.next()) {
+             * return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
+             * }
+             * } catch (SQLException ex) {
+             * LOGGER.log(Level.WARNING, "problem counting analyzed files: ",
+             * ex);
+             * } */
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException);
         } finally {
@@ -733,7 +743,7 @@ public class DrawableDB {
      * clause
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     * files (do not begin the WHERE clause with the word WHERE!)
+     *                       files (do not begin the WHERE clause with the word WHERE!)
      *
      * @return a list of file ids each of which satisfy the given WHERE clause
      *
@@ -776,8 +786,10 @@ public class DrawableDB {
      * Return the number of files matching the given clause.
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     * files (do not begin the WHERE clause with the word WHERE!)
+     *                       files (do not begin the WHERE clause with the word WHERE!)
+     *
      * @return Number of files matching the given where clause
+     *
      * @throws TskCoreException
      */
     public long countFilesWhere(String sqlWhereClause) throws TskCoreException {
@@ -813,6 +825,7 @@ public class DrawableDB {
      * Count the total number of files in the database..
      *
      * @return Total number of files in the database
+     *
      * @throws TskCoreException
      */
     public long countFiles() throws TskCoreException {
@@ -927,7 +940,7 @@ public class DrawableDB {
             insertGroupStmt.execute();
         } catch (SQLException sQLException) {
             // Don't need to report it if the case was closed
-            if(Case.isCaseOpen()){
+            if (Case.isCaseOpen()) {
                 LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException);
             }
         } finally {
@@ -936,13 +949,13 @@ public class DrawableDB {
     }
 
     /**
-     * @param id the obj_id of the file to return
+     * @param id       the obj_id of the file to return
      * @param analyzed the analyzed state of the file
      *
      * @return a DrawableFile for the given obj_id and analyzed state
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     * {@link SleuthkitCase}
+     *                          {@link SleuthkitCase}
      */
     private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
@@ -960,7 +973,7 @@ public class DrawableDB {
      * @return a DrawableFile for the given obj_id
      *
      * @throws TskCoreException if unable to get a file from the currently open
-     * {@link SleuthkitCase}
+     *                          {@link SleuthkitCase}
      */
     public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
@@ -1097,7 +1110,7 @@ public class DrawableDB {
         try {
             // Update the list of file IDs in memory
             removeImageFileFromList(id);
-            
+
             //"delete from drawable_files where (obj_id = " + id + ")"
             removeFileStmt.setLong(1, id);
             removeFileStmt.executeUpdate();
@@ -1120,46 +1133,48 @@ public class DrawableDB {
             super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO);
         }
     }
-    
+
     /*
-     * The following groups of functions are used to store information in memory instead
-     * of in the database. Due to the change listeners in the GUI, this data is requested
+     * The following groups of functions are used to store information in memory
+     * instead
+     * of in the database. Due to the change listeners in the GUI, this data is
+     * requested
      * many, many times when browsing the images, and especially when making any
      * changes to things like categories.
      *
-     * I don't like having multiple copies of the data, but these were causing major
+     * I don't like having multiple copies of the data, but these were causing
+     * major
      * bottlenecks when they were all database lookups.
      */
-    
     @GuardedBy("hashSetMap")
     private final Map<Long, Set<String>> hashSetMap = new HashMap<>();
-    
+
     @GuardedBy("hashSetMap")
-    public boolean isInHashSet(Long id){
-        if(! hashSetMap.containsKey(id)){
+    public boolean isInHashSet(Long id) {
+        if (!hashSetMap.containsKey(id)) {
             updateHashSetsForFile(id);
         }
-        return (! hashSetMap.get(id).isEmpty());
+        return (!hashSetMap.get(id).isEmpty());
     }
-    
+
     @GuardedBy("hashSetMap")
-    public Set<String> getHashSetsForFile(Long id){
-        if(! isInHashSet(id)){
+    public Set<String> getHashSetsForFile(Long id) {
+        if (!isInHashSet(id)) {
             updateHashSetsForFile(id);
         }
         return hashSetMap.get(id);
     }
 
     @GuardedBy("hashSetMap")
-    public void updateHashSetsForFile(Long id){
-        
+    public void updateHashSetsForFile(Long id) {
+
         try {
             List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
             Set<String> hashNames = new HashSet<>();
-            for(BlackboardArtifact a:arts){
+            for (BlackboardArtifact a : arts) {
                 List<BlackboardAttribute> attrs = a.getAttributes();
-                for(BlackboardAttribute attr:attrs){
-                    if(attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()){
+                for (BlackboardAttribute attr : attrs) {
+                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         hashNames.add(attr.getValueString());
                     }
                 }
@@ -1167,10 +1182,10 @@ public class DrawableDB {
             hashSetMap.put(id, hashNames);
         } catch (IllegalStateException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "could not access case during updateHashSetsForFile()", ex);
-          
+
         }
     }
-    
+
     /**
      * For performance reasons, keep a list of all file IDs currently in the
      * drawable database.
@@ -1196,15 +1211,15 @@ public class DrawableDB {
             fileIDlist.remove(id);
         }
     }
-    
-    public int getNumberOfImageFilesInList(){
-        synchronized (fileIDlist){
+
+    public int getNumberOfImageFilesInList() {
+        synchronized (fileIDlist) {
             return fileIDlist.size();
         }
     }
-    
-    public void initializeImageList(){
-        synchronized (fileIDlist){
+
+    public void initializeImageList() {
+        synchronized (fileIDlist) {
             dbReadLock();
             try {
                 Statement stmt = con.createStatement();
@@ -1220,53 +1235,51 @@ public class DrawableDB {
             }
         }
     }
-    
+
     /**
      * For performance reasons, keep current category counts in memory
-     */    
+     */
     @GuardedBy("categoryCounts")
-    private final Map<Category, Integer> categoryCounts = new HashMap<>();    
-    
-    public void incrementCategoryCount(Category cat) throws TskCoreException{
-        if(cat != Category.ZERO){
-            synchronized(categoryCounts){
+    private final Map<Category, Integer> categoryCounts = new HashMap<>();
+
+    public void incrementCategoryCount(Category cat) throws TskCoreException {
+        if (cat != Category.ZERO) {
+            synchronized (categoryCounts) {
                 int count = getCategoryCount(cat);
                 count++;
                 categoryCounts.put(cat, count);
             }
         }
     }
-    
-    public void decrementCategoryCount(Category cat) throws TskCoreException{
-        if(cat != Category.ZERO){
-            synchronized(categoryCounts){
+
+    public void decrementCategoryCount(Category cat) throws TskCoreException {
+        if (cat != Category.ZERO) {
+            synchronized (categoryCounts) {
                 int count = getCategoryCount(cat);
                 count--;
-                categoryCounts.put(cat, count);            
+                categoryCounts.put(cat, count);
             }
         }
     }
-    
-    public int getCategoryCount(Category cat) throws TskCoreException{
-        synchronized(categoryCounts){
-            if(cat == Category.ZERO){
+
+    public int getCategoryCount(Category cat) throws TskCoreException {
+        synchronized (categoryCounts) {
+            if (cat == Category.ZERO) {
                 // Keeping track of the uncategorized files is a bit tricky while ingest
                 // is going on, so always use the list of file IDs we already have along with the
                 // other category counts instead of trying to track it separately.
-                int allOtherCatCount = getCategoryCount(Category.ONE) + getCategoryCount(Category.TWO) + getCategoryCount(Category.THREE) + 
-                        getCategoryCount(Category.FOUR) + getCategoryCount(Category.FIVE);
+                int allOtherCatCount = getCategoryCount(Category.ONE) + getCategoryCount(Category.TWO) + getCategoryCount(Category.THREE)
+                        + getCategoryCount(Category.FOUR) + getCategoryCount(Category.FIVE);
                 return getNumberOfImageFilesInList() - allOtherCatCount;
-            }
-            else if(categoryCounts.containsKey(cat)){
+            } else if (categoryCounts.containsKey(cat)) {
                 return categoryCounts.get(cat);
-            }
-            else{
+            } else {
                 try {
                     int fileCount = 0;
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
                     for (ContentTag ct : contentTags) {
-                        if(ct.getContent() instanceof AbstractFile){
-                            AbstractFile f = (AbstractFile)ct.getContent();
+                        if (ct.getContent() instanceof AbstractFile) {
+                            AbstractFile f = (AbstractFile) ct.getContent();
                             if (this.isDrawableFile(f.getId())) {
                                 fileCount++;
                             }
@@ -1274,25 +1287,25 @@ public class DrawableDB {
                     }
                     categoryCounts.put(cat, fileCount);
                     return fileCount;
-                } catch(IllegalStateException ex){
+                } catch (IllegalStateException ex) {
                     throw new TskCoreException("Case closed while getting files");
                 }
             }
         }
     }
-    
+
     /**
      * For performance reasons, keep the file type in memory
-     */    
+     */
     @GuardedBy("videoFileMap")
-    private final Map<Long, Boolean> videoFileMap = new HashMap<>(); 
-    
-    public boolean isVideoFile(AbstractFile f) throws TskCoreException{
-        synchronized(videoFileMap){
-            if(videoFileMap.containsKey(f.getId())){
+    private final Map<Long, Boolean> videoFileMap = new HashMap<>();
+
+    public boolean isVideoFile(AbstractFile f) throws TskCoreException {
+        synchronized (videoFileMap) {
+            if (videoFileMap.containsKey(f.getId())) {
                 return videoFileMap.get(f.getId());
             }
-            
+
             boolean isVideo = ImageGalleryModule.isVideoFile(f);
             videoFileMap.put(f.getId(), isVideo);
             return isVideo;
@@ -1358,10 +1371,9 @@ public class DrawableDB {
                         fireRemovedFiles(removedFiles);
                     }
                 } catch (SQLException ex) {
-                    if(Case.isCaseOpen()){
+                    if (Case.isCaseOpen()) {
                         LOGGER.log(Level.SEVERE, "Error commiting drawable.db.", ex);
-                    }
-                    else{
+                    } else {
                         LOGGER.log(Level.WARNING, "Error commiting drawable.db - case is closed.");
                     }
                     rollback();
@@ -1374,10 +1386,9 @@ public class DrawableDB {
                 try {
                     con.setAutoCommit(true);
                 } catch (SQLException ex) {
-                    if(Case.isCaseOpen()){
+                    if (Case.isCaseOpen()) {
                         LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex);
-                    }
-                    else{
+                    } else {
                         LOGGER.log(Level.SEVERE, "Error setting auto-commit to true - case is closed");
                     }
                 } finally {
