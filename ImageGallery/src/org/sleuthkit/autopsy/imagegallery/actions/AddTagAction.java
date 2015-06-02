@@ -32,9 +32,10 @@ import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,14 +46,20 @@ import org.sleuthkit.datamodel.TskCoreException;
 abstract class AddTagAction {
 
     /**
-     * The way the "directory tree" currently works, a new tags sub-tree
-     * needs to be made to reflect the results of invoking tag Actions.
+     * Derived classes should call this method any time a tag is created,
+     * updated
+     * or deleted outside of an actionPerformed() call.
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
+    @SuppressWarnings("deprecation")
     protected void refreshDirectoryTree() {
-        SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
-    }
 
+        /* Note: this is a hack. In an ideal world, TagsManager would fire
+         * events so that the directory tree would refresh. But, we haven't
+         * had a chance to add that so, we fire these events and the tree
+         * refreshes based on them.
+         */
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
+    }
     protected static final String NO_COMMENT = "";
 
     /**

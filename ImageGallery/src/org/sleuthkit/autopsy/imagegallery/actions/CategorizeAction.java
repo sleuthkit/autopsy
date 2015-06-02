@@ -129,9 +129,7 @@ public class CategorizeAction extends AddTagAction {
                 controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
 
                 //remove old category tag if necessary
-                List<ContentTag> allContentTags;
-
-                allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file); //tsk db
+                List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file); //tsk db
                 for (ContentTag ct : allContentTags) {
                     //this is bad: treating tags as categories as long as their names start with prefix
                     //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
@@ -139,14 +137,15 @@ public class CategorizeAction extends AddTagAction {
                         Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
                         controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
                     }
-                    controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
-                    if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
-                        Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
-                    }
-                    //make sure rest of ui  hears category change.
-                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
 
                 }
+                controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+                if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
+                    Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
+                }
+                //make sure rest of ui  hears category change.
+                controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
+
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
                 JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
