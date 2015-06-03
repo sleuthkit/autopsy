@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.Optional;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.Observable;
+import javafx.beans.binding.ObjectExpression;
 import javafx.event.ActionEvent;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
@@ -31,24 +31,43 @@ import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
  *
  */
 public class NextUnseenGroup extends Action {
-
+    
     private final ImageGalleryController controller;
-
+    
     public NextUnseenGroup(ImageGalleryController controller) {
         super("Next Unseen group");
         this.controller = controller;
         setGraphic(new ImageView("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
-        disabledProperty().bind(Bindings.isEmpty(controller.getGroupManager().getUnSeenGroups()));
-
+        
+        controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
+            updateDisabledStatus();
+        });
+        
         setEventHandler((ActionEvent t) -> {
             Optional.ofNullable(controller.viewState())
-                    .map((ReadOnlyObjectProperty<GroupViewState> t1) -> t1.get())
+                    .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
                     .ifPresent(controller.getGroupManager()::markGroupSeen);
-
-            if (controller.getGroupManager().getUnSeenGroups().isEmpty() == false) {
+            
+            if (controller.getGroupManager().getUnSeenGroups().size() <= 1) {
+                setText("Mark Group Seen");
+                setGraphic(new ImageView("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png"));
+                if (!controller.getGroupManager().getUnSeenGroups().isEmpty()) {
+                    controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
+                }
+            } else {
+                setText("Next Unseen group");
+                setGraphic(new ImageView("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
+                setDisabled(false);
                 controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
             }
+            updateDisabledStatus();
         });
+        
+        updateDisabledStatus();
+    }
+    
+    private void updateDisabledStatus() {
+        disabledProperty().set(controller.getGroupManager().getUnSeenGroups().isEmpty());
     }
 }

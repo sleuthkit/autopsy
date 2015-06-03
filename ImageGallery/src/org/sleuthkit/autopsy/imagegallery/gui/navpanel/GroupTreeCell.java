@@ -50,7 +50,8 @@ class GroupTreeCell extends TreeCell<TreeNode> {
      * reference to listener that allows us to remove it from a group when a new
      * group is assigned to this Cell
      */
-    private InvalidationListener listener;
+    private InvalidationListener fileListener;
+    private InvalidationListener seenListener;
 
     public GroupTreeCell() {
         //TODO: move this to .css file
@@ -70,8 +71,9 @@ class GroupTreeCell extends TreeCell<TreeNode> {
         if (Objects.nonNull(listener)) {
             Optional.ofNullable(getItem())
                     .map(TreeNode::getGroup)
-                    .ifPresent((DrawableGroup t) -> {
-                        t.fileIds().removeListener(listener);
+                .ifPresent(group -> {
+                    group.fileIds().removeListener(fileListener);
+                    group.seenProperty().removeListener(seenListener);
                     });
         }
 
@@ -82,6 +84,7 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 setTooltip(null);
                 setText(null);
                 setGraphic(null);
+                setStyle("");
             });
         } else {
             final String groupName = StringUtils.defaultIfBlank(tNode.getPath(), DrawableGroup.getBlankGroupName());
@@ -92,28 +95,43 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                     setTooltip(new Tooltip(groupName));
                     setText(groupName);
                     setGraphic(new ImageView(EMPTY_FOLDER_ICON));
+                    setStyle("");
                 });
 
             } else {
-                listener = (Observable o) -> {
+                fileListener = (Observable o) -> {
                     final String countsText = getCountsText();
                     Platform.runLater(() -> {
                         setText(groupName + countsText);
                     });
                 };
                 //if number of files in this group changes (eg file is recategorized), update counts via listener
-                tNode.getGroup().fileIds().addListener(listener);
+                tNode.getGroup().fileIds().addListener(fileListener);
+
+                seenListener = (Observable observable) -> {
+                    final String style = getSeenStyle();
+                    Platform.runLater(() -> {
+                        setStyle(style);
+                    });
+                };
+                tNode.getGroup().seenProperty().addListener(seenListener);
 
                 //... and use icon corresponding to group type
                 final Image icon = tNode.getGroup().groupKey.getAttribute().getIcon();
                 final String countsText = getCountsText();
+                final String style = getSeenStyle();
                 Platform.runLater(() -> {
                     setTooltip(new Tooltip(groupName));
                     setGraphic(new ImageView(icon));
                     setText(groupName + countsText);
+                    setStyle(style);
                 });
             }
         }
+    }
+
+    private String getSeenStyle() {
+        return getItem().getGroup().isSeen() ? "" : "-fx-font-weight:bold;";
     }
 
     private synchronized String getCountsText() {

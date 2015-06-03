@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.grouping;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -35,7 +36,6 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableGroup.class.getName());
 
-
     public static String getBlankGroupName() {
         return "unknown";
     }
@@ -44,6 +44,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     //cache the number of files in this groups with hashset hits
     private int hashSetHitsCount = -1;
+    private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
     synchronized public ObservableList<Long> fileIds() {
         return fileIDs;
@@ -147,5 +148,17 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     @Override
     public int compareTo(DrawableGroup other) {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
+    }
+
+    void setSeen() {
+        this.seen.set(true);
+    }
+
+    public ReadOnlyBooleanWrapper seenProperty() {
+        return seen;
+    }
+
+    public boolean isSeen() {
+        return seen.get();
     }
 }
