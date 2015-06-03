@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
@@ -536,7 +537,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public void notifyNewDataSource(Content newDataSource) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
-        CoreComponentControl.openCoreWindows();
+        if (IngestManager.getInstance().isRunningInteractively()) {
+            CoreComponentControl.openCoreWindows();
+        }
     }
 
     /**
