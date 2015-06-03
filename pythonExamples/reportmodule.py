@@ -36,6 +36,8 @@
 from java.lang import System
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.report import GeneralReportModuleAdapter
+import subprocess
+import os
 
 # TODO: Rename this to something more specific
 class SampleGeneralReportModule(GeneralReportModuleAdapter):
@@ -54,7 +56,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
 
     # TODO: Update this method to make a report
     def generateReport(self, baseReportDir, progressBar):
-        
+
             # For an example, we write a file with the number of files created in the past 2 weeks
             # Configure progress bar for 2 tasks
             progressBar.setIndeterminate(False)
@@ -71,9 +73,17 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
             for otherFile in otherFiles:
                     fileCount += 1
             progressBar.increment()
-            
+
             # Write the result to the report file.
             report = open(baseReportDir + '\\' + self.getRelativeFilePath(), 'w')
+            report.write("System Info: ")
+            report.flush()
+            # __file__ gives the path of the current file. The following line of code can be used to find the path
+            # of an exe which is packaged along with the python module. In this example, we execute systeminfo.exe
+            # and write its output to the report. We further write the calculated fileCount to the report.
+            path_to_exe = os.path.join(os.path.abspath(__file__), "..", "systeminfo.exe")
+            if os.path.exists(path_to_exe):
+                subprocess.Popen(path_to_exe, stdout=report).communicate()[0]
             report.write("file count = %d" % fileCount)
             Case.getCurrentCase().addReport(report.name, "SampleGeneralReportModule", "Sample Python Report");
             report.close()
