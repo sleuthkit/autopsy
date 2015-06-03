@@ -540,7 +540,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param newDataSource new data source added
      */
-    void notifyNewDataSource(Content newDataSource) {
+    public void notifyNewDataSource(Content newDataSource) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
         CoreComponentControl.openCoreWindows();
     }
