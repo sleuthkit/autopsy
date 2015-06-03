@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -70,8 +71,9 @@ public final class JythonModuleLoader {
         List<T> objects = new ArrayList<>();
         Set<File> pythonModuleDirs = new HashSet<>();
 
-        // add possible python modules from 'modules' folders
-        for(File f : PlatformUtil.getPythonModulesLocations()) {
+        // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
+        // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
+        for(File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", PlatformUtil.class.getPackage().getName(), false)) {
             Collections.addAll(pythonModuleDirs, f.listFiles());
         }
         // add python modules from 'testuserdir/python_modules' folder

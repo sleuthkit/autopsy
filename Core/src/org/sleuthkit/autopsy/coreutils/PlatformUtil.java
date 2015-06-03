@@ -34,9 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.swing.filechooser.FileSystemView;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.ptql.ProcessFinder;
@@ -119,16 +117,6 @@ public class PlatformUtil {
     }
 
     /**
-     * Get locations where python modules might be located.
-     *
-     * @return An array of location where python modules might be located.
-     */
-    public static File[] getPythonModulesLocations() {
-        Set<File> folders = InstalledFileLocator.getDefault().locateAll("InternalPythonModules", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
-        return folders.toArray(new File[folders.size()]);
-    }
-
-    /**+
      * get file path to the java executable binary use embedded java if
      * available, otherwise use system java in PATH no validation is done if
      * java exists in PATH
