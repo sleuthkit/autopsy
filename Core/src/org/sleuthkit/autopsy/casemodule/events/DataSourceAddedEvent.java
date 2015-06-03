@@ -79,4 +79,12 @@ public final class DataSourceAddedEvent extends AutopsyEvent implements Serializ
         }
     }
 
+    /**
+     * Gets the data source that was added.
+     *
+     * @return The data source.
+     */
+    public Content getDataSource() {
+        return (Content)getNewValue();
+    }
 }

@@ -114,6 +114,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
          */
         EXAMINER,
         /**
+         * Property name used for a property change event that indicates a new
+         * data source (image, local/logical file or local disk) is being added
+         * to the current case. The new value field of the property change event
+         * is the path of the data source. 
+         */
+        ADDING_DATA_SOURCE,
+        /**
          * Property name that indicates a new data source (image, disk or local
          * file) has been added to the current case. The new value is the
          * newly-added instance of the new data source, and the old value is
@@ -200,7 +207,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private final static String REPORTS_FOLDER = "Reports"; //NON-NLS
     private final static String TEMP_FOLDER = "Temp"; //NON-NLS
 
-    
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
@@ -1133,7 +1139,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * The methods below are used to manage the case directories (creating,
      * checking, deleting, etc)
      */
-
     /**
      * Create the case directory and its needed subfolders.
      *
@@ -1162,8 +1167,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
 
             // create the folders inside the case directory
-            String hostClause="";
-            
+            String hostClause = "";
+
             if (caseType == CaseType.MULTI_USER_CASE) {
                 hostClause = File.separator + getLocalHostName();
             }
@@ -1192,7 +1197,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateReportsDir",
                                 modulesOutDir));
             }
-            
+
         } catch (Exception e) {
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.gen", caseDir), e);
@@ -1379,7 +1384,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
         return hasData;
     }
-    
+
     /**
      * Set the host name variable. Sometimes the network can be finicky, so the
      * answer returned by getHostName() could throw an exception or be null.
