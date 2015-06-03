@@ -124,7 +124,7 @@ public class PlatformUtil {
      * @return An array of location where python modules might be located.
      */
     public static File[] getPythonModulesLocations() {
-        Set<File> folders = InstalledFileLocator.getDefault().locateAll("modules", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
+        Set<File> folders = InstalledFileLocator.getDefault().locateAll("InternalPythonModules", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
         return folders.toArray(new File[folders.size()]);
     }
 
