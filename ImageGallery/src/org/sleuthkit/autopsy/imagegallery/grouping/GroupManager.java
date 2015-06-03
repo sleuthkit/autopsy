@@ -81,26 +81,17 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     /**
      * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
-     * not
-     * fully analyzed or not visible groups could be in this map
+     * not fully analyzed or not visible groups) could be in this map
      */
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
-    /**
-     * list of all analyzed groups
-     */
+    /** list of all analyzed groups */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
 
-    private final ObservableList<DrawableGroup> publicAnalyzedGroupsWrapper = FXCollections.unmodifiableObservableList(analyzedGroups);
-    /**
-     * list of unseen groups
-     */
+    /** list of unseen groups */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
-
-//    private final SortedList<Grouping> sortedUnSeenGroups = new SortedList<>(unSeenGroups);
-    private final ObservableList<DrawableGroup> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
@@ -110,7 +101,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
 
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
-    private ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
+    private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
 
     public void setDB(DrawableDB db) {
         this.db = db;
@@ -119,12 +110,13 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     }
 
     public ObservableList<DrawableGroup> getAnalyzedGroups() {
-        return publicAnalyzedGroupsWrapper;
+        return FXCollections.unmodifiableObservableList(analyzedGroups);
     }
 
     @ThreadConfined(type = ThreadType.JFX)
     public ObservableList<DrawableGroup> getUnSeenGroups() {
-        return publicSortedUnseenGroupsWrapper;
+        return FXCollections.unmodifiableObservableList(unSeenGroups);
+
     }
 
     /**
@@ -258,14 +250,13 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * 'mark' the given group as seen. This removes it from the queue of groups
      * to review, and is persisted in the drawable db.
      *
-     *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
     public void markGroupSeen(DrawableGroup group) {
+        db.markGroupSeen(group.getGroupKey());
         synchronized (unSeenGroups) {
             unSeenGroups.remove(group);
         }
-        db.markGroupSeen(group.groupKey);
     }
 
     /**

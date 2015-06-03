@@ -205,7 +205,7 @@ public final class ImageGalleryController {
 
         groupManager.getUnSeenGroups().addListener((Observable observable) -> {
             //if there are unseen groups and none being viewed
-            if (groupManager.getUnSeenGroups().size() > 0 && (getViewState() == null || getViewState().getGroup() == null)) {
+            if (groupManager.getUnSeenGroups().isEmpty() == false && (getViewState() == null || getViewState().getGroup() == null)) {
                 advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)));
             }
         });

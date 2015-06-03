@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import javafx.beans.Observable;
+import java.util.Optional;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
@@ -36,16 +38,15 @@ public class NextUnseenGroup extends Action {
         super("Next Unseen group");
         this.controller = controller;
         setGraphic(new ImageView("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
-        disabledProperty().set(controller.getGroupManager().getUnSeenGroups().size() <= 1);
-        controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
-            disabledProperty().set(controller.getGroupManager().getUnSeenGroups().size() <= 1);
-        });
+        disabledProperty().bind(Bindings.isEmpty(controller.getGroupManager().getUnSeenGroups()));
 
         setEventHandler((ActionEvent t) -> {
-            if (controller.viewState() != null && controller.viewState().get() != null && controller.viewState().get().getGroup() != null) {
-                controller.getGroupManager().markGroupSeen(controller.viewState().get().getGroup());
-            }
-            if (controller.getGroupManager().getUnSeenGroups().size() > 0) {
+            Optional.ofNullable(controller.viewState())
+                    .map((ReadOnlyObjectProperty<GroupViewState> t1) -> t1.get())
+                    .map(GroupViewState::getGroup)
+                    .ifPresent(controller.getGroupManager()::markGroupSeen);
+
+            if (controller.getGroupManager().getUnSeenGroups().isEmpty() == false) {
                 controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
             }
         });
