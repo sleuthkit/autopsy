@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -33,26 +31,28 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 public final class AddingDataSourceEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final UUID uuid;
-    private List<String> dataSourceFileNames;
+    private final UUID dataSourceId;
 
     /**
      * Constructs an event published when a data source is being added to a
      * case.
      *
-     * @param dataSourceFileNames
-     * @param uuid
+     * @param dataSourceId A unique identifier associated with the data source.
+     * Used to pair this AddindDataSourceEvent with a DataSoruceAddedEvent.
      */
-    public AddingDataSourceEvent(List<String> dataSourceFileNames, UUID uuid) {
+    public AddingDataSourceEvent(UUID dataSourceId) {
         super(Case.Events.ADDING_DATA_SOURCE.toString(), null, null);
-        this.uuid = uuid;
+        this.dataSourceId = dataSourceId;
     }
-    
-    public UUID getUUID() {
-        return uuid;
+
+    /**
+     * Gets the unique id for the data source used to pair this
+     * AddindDataSourceEvent with a DataSoruceAddedEvent.
+     *
+     * @return The unique id.
+     */
+    public UUID getDataSourceId() {
+        return dataSourceId;
     }
-    
-    public List<String> getDataSourceFileNames() {
-        return new ArrayList<>(dataSourceFileNames);
-    } 
+
 }

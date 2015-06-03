@@ -25,20 +25,15 @@ import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -175,7 +170,7 @@ final class CollaborationMonitor {
             executor.shutdownNow();
             try {
                 while (!executor.awaitTermination(EXECUTOR_TERMINATION_WAIT_SECS, TimeUnit.SECONDS)) {
-                    logger.log(Level.WARNING, "Waited at least thirty seconds for {0} executor to shut down, continuing to wait", name); //NON-NLS
+                    logger.log(Level.WARNING, "Waited at least thirty seconds for {0} executor to shut down, continuing to wait", name); //NON-NLS RJCTODO
                 }
             } catch (InterruptedException ex) {
                 // RJCTODO:
@@ -190,7 +185,7 @@ final class CollaborationMonitor {
     private final class LocalTasksManager implements PropertyChangeListener {
 
         private final AtomicLong nextTaskId;
-        private final Map<String, Task> pathsToAddDataSourceTasks;
+        private final Map<Integer, Task> uuidsToAddDataSourceTasks;
         private final Map<Long, Task> jobIdsTodataSourceAnalysisTasks;
 
         /**
@@ -200,7 +195,7 @@ final class CollaborationMonitor {
          */
         LocalTasksManager() {
             nextTaskId = new AtomicLong(0L);
-            pathsToAddDataSourceTasks = new HashMap<>();
+            uuidsToAddDataSourceTasks = new HashMap<>();
             jobIdsTodataSourceAnalysisTasks = new HashMap<>();
         }
 
@@ -217,49 +212,54 @@ final class CollaborationMonitor {
                 addDataSourceAddTask(evt);
             } else if (eventName.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                 addDataSourceAddTask(evt);
+            } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED.toString())) {
+                addDataSourceAnalysisTask(evt);
+            } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
+                removeDataSourceAnalysisTask(evt);
+            } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_CANCELLED.toString())) {
+                removeDataSourceAnalysisTask(evt);
             }
-
-            /**
-             * RJCTODO: When local ADDING_DATA_SOURCE (new) event is received,
-             * create a new task. When local DATA_SOURCE_ADDED event is
-             * received, delete the task. The new ADDING_DATA_SOURCE events can
-             * have full image paths to match up with the Content objects on the
-             * DATA_SOURCE_ADDED events.
-             */
-            /**
-             * RJCTODO: When local DATA_SOURCE_INGEST_STARTED event (new) is
-             * received, create new data source analysis tasks. When local
-             * DATA_SOURCE_INGEST_COMPLETED (new) or
-             * DATA_SOURCE_INGEST_CANCELLED (new) is received, delete the task.
-             * These new events can have data source ingest job ids and data
-             * source names.
-             */
         }
 
+        /**
+         * Add a task for adding the data source and publishes the updated local
+         * tasks list to any collaborating nodes.
+         *
+         * @param evt RJCTODO
+         */
         synchronized void addDataSourceAddTask(PropertyChangeEvent evt) {
-            String dataSourcePath = (String) evt.getNewValue();
-            String taskStatus = String.format("Adding data source %s", dataSourcePath); // RJCTODO: Bundle
-            // RJCTODO: This probably will not work, path needs to be sanitized
-            pathsToAddDataSourceTasks.put(dataSourcePath, new Task(nextTaskId.getAndIncrement(), taskStatus));
+            AddingDataSourceEvent event = (AddingDataSourceEvent) evt;
+            String status = String.format("%s adding data source", hostName); // RJCTODO: Bundle
+            uuidsToAddDataSourceTasks.put(event.getDataSourceId().hashCode(), new Task(nextTaskId.getAndIncrement(), status));
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
+        /**
+         * Removes the task for adding the data source and publishes the updated
+         * local tasks list to any collaborating nodes.
+         *
+         * @param evt RJCTODO
+         */
         synchronized void removeDataSourceAddTask(PropertyChangeEvent evt) {
             DataSourceAddedEvent event = (DataSourceAddedEvent) evt;
-            Content dataSource = event.getDataSource();
-            try {
-                pathsToAddDataSourceTasks.remove(dataSource.getUniquePath());
-            } catch (TskCoreException ex) {
-                // RJCTODO
-            }
+            uuidsToAddDataSourceTasks.remove(event.getDataSourceId().hashCode());
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
+        /**
+         * RJCTODO
+         *
+         * @param evt
+         */
         synchronized void addDataSourceAnalysisTask(PropertyChangeEvent evt) {
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
-
         }
 
+        /**
+         * RJCTODO
+         *
+         * @param evt
+         */
         synchronized void removeDataSourceAnalysisTask(PropertyChangeEvent evt) {
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
@@ -271,7 +271,7 @@ final class CollaborationMonitor {
          */
         synchronized Map<Long, Task> getCurrentTasks() {
             Map<Long, Task> currentTasks = new HashMap<>();
-            pathsToAddDataSourceTasks.values().stream().forEach((task) -> {
+            uuidsToAddDataSourceTasks.values().stream().forEach((task) -> {
                 currentTasks.put(task.getId(), task);
             });
             jobIdsTodataSourceAnalysisTasks.values().stream().forEach((task) -> {

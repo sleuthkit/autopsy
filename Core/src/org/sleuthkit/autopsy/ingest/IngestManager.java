@@ -171,6 +171,18 @@ public class IngestManager {
          * and the new value is set to null.
          */
         CANCELLED,
+        /**
+         * RJCTODO
+         */
+        DATA_SOURCE_ANALYSIS_STARTED,
+        /**
+         * RJCTODO
+         */
+        DATA_SOURCE_ANALYSIS_COMPLETED,
+        /**
+         * RJCTODO
+         */
+        DATA_SOURCE_ANALYSIS_CANCELLED
     };
 
     /**

@@ -25,6 +25,7 @@ import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -237,10 +238,12 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
          // get the selected DSProcessor
         dsProcessor =  dataSourcePanel.getComponent().getCurrentDSProcessor();
         
+        final UUID dataSourceId = UUID.randomUUID();
+        Case.getCurrentCase().notifyAddingNewDataSource(dataSourceId);
         DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback () {
             @Override
             public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents)  {
-                dataSourceProcessorDone(result, errList, contents );
+                dataSourceProcessorDone(dataSourceId, result, errList, contents );
             }
             
         };
@@ -263,7 +266,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Callback for the data source processor. 
      * Invoked by the DSP on the EDT thread, when it finishes processing the data source.
      */
-    private void dataSourceProcessorDone(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents) {
+    private void dataSourceProcessorDone(UUID dataSourceId, DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents) {
          
          // disable the cleanup task
         cleanupTask.disable();
@@ -304,9 +307,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         newContents.addAll(contents);
         
         //notify the UI of the new content added to the case
-        if (!newContents.isEmpty()) {
-            
-             Case.getCurrentCase().notifyNewDataSource(newContents.get(0));
+        if (!newContents.isEmpty()) {            
+             Case.getCurrentCase().notifyNewDataSource(newContents.get(0), dataSourceId);
+        } else {
+             Case.getCurrentCase().notifyNewDataSource(null, dataSourceId);   // RJCTODO: Update for null scenario         
         }
 
         

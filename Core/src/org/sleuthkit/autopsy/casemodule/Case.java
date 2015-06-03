@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -117,7 +119,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * Property name used for a property change event that indicates a new
          * data source (image, local/logical file or local disk) is being added
          * to the current case. The new value field of the property change event
-         * is the path of the data source. 
+         * is the path of the data source.
          */
         ADDING_DATA_SOURCE,
         /**
@@ -516,7 +518,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
         try {
             Image newDataSource = db.getImageById(imgId);
-            notifyNewDataSource(newDataSource);
+            notifyNewDataSource(newDataSource, UUID.randomUUID());
             return newDataSource;
         } catch (Exception ex) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.addImg.exception.msg"), ex);
@@ -532,16 +534,32 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
-        notifyNewDataSource(newDataSource);
+        notifyNewDataSource(newDataSource, UUID.randomUUID());
     }
 
     /**
-     * Notifies the UI that a new data source has been added.
+     * Notifies case event subscribers (property change listeners) that a data
+     * source is being added to the case database.
      *
-     * @param newDataSource new data source added
+     * @param dataSourceId A unique identifier for the data source. This UUID
+     * should be used to call notifyNewDataSource() after the data source is
+     * added.
      */
-    public void notifyNewDataSource(Content newDataSource) {
-        eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
+    public void notifyAddingNewDataSource(UUID dataSourceId) {
+        eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
+    }
+
+    /**
+     * Notifies case event subscribers (property change listeners) that a data
+     * source is being added to the case database.
+     *
+     * @param newDataSource New data source added.
+     * @param dataSourceId A unique identifier for the data source. Should be
+     * the same UUID used to call notifyAddingNewDataSource() when the process
+     * of adding the data source began.
+     */
+    public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
+        eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
         CoreComponentControl.openCoreWindows();
     }
 
