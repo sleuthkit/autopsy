@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,6 +68,19 @@ public class ImageGalleryModule {
 
     static Set<String> getSupportedMimes() {
         return Collections.unmodifiableSet(supportedMimes);
+    }
+
+    /**
+     * get the Path to the Case's ImageGallery ModuleOutput subfolder; ie
+     * ".../[CaseName]/ModuleOutput/Image Gallery/"
+     *
+     * @param theCase the case to get the ImageGallery ModuleOutput subfolder
+     *                for
+     *
+     * @return the Path to the ModuleOuput subfolder for Image Gallery
+     */
+    static Path getModuleOutputDir(Case theCase) {
+        return Paths.get(theCase.getModulesOutputDirAbsPath(), getModuleName());
     }
 
     /** provides static utilities, can not be instantiated */
