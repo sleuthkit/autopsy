@@ -54,7 +54,7 @@ public final class JythonModuleLoader {
      * interface.
      */
     public static List<IngestModuleFactory> getIngestModuleFactories() {
-        return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
+        return getInterfaceImplementations(new PythonInterpreter(), new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
     }
 
     /**
@@ -64,10 +64,10 @@ public final class JythonModuleLoader {
      * interface.
      */
     public static List<GeneralReportModule> getGeneralReportModules() {
-        return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
+        return getInterfaceImplementations(new PythonInterpreter(), new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
 
-    private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
+    private static <T> List<T> getInterfaceImplementations(PythonInterpreter interpreter, LineFilter filter, Class<T> interfaceClass) {
         List<T> objects = new ArrayList<>();
         Set<File> pythonModuleDirs = new HashSet<>();
 
@@ -90,7 +90,7 @@ public final class JythonModuleLoader {
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    objects.add( createObjectFromScript(script, className, interfaceClass));
+                                    objects.add( createObjectFromScript(interpreter, script, className, interfaceClass));
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     // NOTE: using ex.toString() because the current version is always returning null for ex.getMessage().
@@ -109,26 +109,28 @@ public final class JythonModuleLoader {
                 }
             }
         }
+        interpreter.close();
         return objects;
     }
         
-    private static <T> T createObjectFromScript(File script, String className, Class<T> interfaceClass) {
-        // Make a "fresh" interpreter every time to avoid name collisions, etc.
-        PythonInterpreter interpreter = new PythonInterpreter();
-
+    private static <T> T createObjectFromScript(PythonInterpreter interpreter, File script, String className, Class<T> interfaceClass) {
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
         // with it.
         interpreter.exec("import sys"); //NON-NLS
         String path = Matcher.quoteReplacement(script.getParent());
         interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
+        String moduleName = script.getName().replaceAll(".py", ""); //NON-NLS
+
+        // reload the module so that the changes made to it can be loaded.
+        // in case, reloading fails, just use the existing modules.
+        interpreter.exec("import " + moduleName); //NON-NLS
+        interpreter.exec("reload(" + moduleName + ")"); //NON-NLS
 
         // Execute the script and create an instance of the desired class.
-        interpreter.execfile(script.getAbsolutePath());
         // Importing the appropriate class from the Py Script which contains multiple classes.
-        interpreter.exec("from " + script.getName().replaceAll(".py", "") + " import " + className);
+        interpreter.exec("from " + moduleName + " import " + className);
         interpreter.exec("obj = " + className + "()"); //NON-NLS
-        
         T obj = interpreter.get("obj", interfaceClass); //NON-NLS
 
         // Remove the directory where the Python script resides from the Python

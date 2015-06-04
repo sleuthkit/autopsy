@@ -32,6 +32,7 @@
 # See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
 
 import jarray
+import inspect
 from java.lang import System
 from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
@@ -83,10 +84,14 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 # Looks at the attributes of the passed in file.
 class SampleJythonFileIngestModule(FileIngestModule):
 
+    _logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
+
+    def log(self, level, msg):
+        self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+
     # Where any setup and configuration is done
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
-        self.logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
         self.filesFound = 0		
 
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
@@ -100,7 +105,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().find(".txt") != -1:
             
-            self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", "Found a text file: " + file.getName())
+            self.log(Level.INFO, "Found a text file: " + file.getName())
             self.filesFound+=1
 			
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
