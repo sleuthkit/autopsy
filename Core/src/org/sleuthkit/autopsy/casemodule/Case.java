@@ -75,7 +75,8 @@ public class Case {
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-
+    private static IntervalErrorReportData tskErrorReporter = null;
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -219,13 +220,6 @@ public class Case {
     }
 
     /**
-     * Does initialization that would leak a reference to this if done in the
-     * constructor.
-     */
-    private void init() {
-    }
-
-    /**
      * Gets the currently opened case, if there is one.
      *
      * @return the current open case
@@ -257,6 +251,8 @@ public class Case {
      *
      */
     private static void changeCase(Case newCase) {
+        // force static initialization of error reporter
+        tskErrorReporter = IntervalErrorReportData.getInstance();
         // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
@@ -373,8 +369,6 @@ public class Case {
          * constructor.
          */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
-        newCase.init();
-
         changeCase(newCase);
     }
 
@@ -433,8 +427,6 @@ public class Case {
              * constructor.
              */
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
-            openedCase.init();
-
             changeCase(openedCase);
 
         } catch (Exception ex) {
