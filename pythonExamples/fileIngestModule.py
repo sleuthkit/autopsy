@@ -115,13 +115,13 @@ class SampleJythonFileIngestModule(FileIngestModule):
             # attributes for that artifact. Again, the attributeList should not be empty since we have added a new
             # attribute - "Text Files" - (Line 111, 112).
             # We iterate through the attributeList and log every attribute.
+            # NOTE: Empty list (which may be returned by getArtifacts()/getAttributes()) is not coerced into non-iterable
+            # NoneType. Hence null check is not necessary.
             artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            if(artifactList):
-                for artifact in artifactList:
-                    attributeList = artifact.getAttributes();
-                    if(attributeList):
-                        for attrib in attributeList:
-                            self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", attrib.toString())
+            for artifact in artifactList:
+                attributeList = artifact.getAttributes();
+                for attrib in attributeList:
+                    self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", attrib.toString())
 
             # To further the example, this code will read the contents of the file and count the number of bytes
             inputStream = ReadContentInputStream(file)
