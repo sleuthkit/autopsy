@@ -87,7 +87,6 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
@@ -775,7 +774,7 @@ public class GroupPane extends BorderPane implements GroupView {
         if (shiftDown) {
             //TODO: do more hear to implement slicker multiselect
             int endIndex = grouping.get().fileIds().indexOf(newFileID);
-            int startIndex = IntStream.of(grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
+            int startIndex = IntStream.of(0, grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
             endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
             List<Long> subList = grouping.get().fileIds().subList(startIndex, endIndex + 1);
 
