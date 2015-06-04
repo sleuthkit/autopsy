@@ -203,9 +203,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         groupBy = DrawableAttribute.PATH;
         sortOrder = SortOrder.ASCENDING;
         Platform.runLater(() -> {
-            synchronized (unSeenGroups) {
-                unSeenGroups.clear();
-            }
+            unSeenGroups.clear();
             analyzedGroups.clear();
         });
         synchronized (groupMap) {
@@ -260,13 +258,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
+    @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group) {
-
         db.markGroupSeen(group.getGroupKey());
         group.setSeen();
-        synchronized (unSeenGroups) {
-            unSeenGroups.remove(group);
-        }
+        unSeenGroups.removeAll(group);
+
     }
 
     /**
@@ -284,20 +281,17 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             group.removeFile(fileID);
 
             // If we're grouping by category, we don't want to remove empty groups.
-            if (group.groupKey.getValueDisplayName().startsWith("CAT-")) {
-                return;
-            } else {
+            if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
                 if (group.fileIds().isEmpty()) {
                     synchronized (groupMap) {
                         groupMap.remove(groupKey, group);
                     }
                     Platform.runLater(() -> {
                         analyzedGroups.remove(group);
-                        synchronized (unSeenGroups) {
-                            unSeenGroups.remove(group);
-                        }
+                        unSeenGroups.remove(group);
                     });
                 }
+            } else {
             }
         }
     }
@@ -323,24 +317,26 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
          * was still running) */
         if (task == null || (task.isCancelled() == false)) {
             DrawableGroup g = makeGroup(groupKey, filesInGroup);
-
             populateAnalyzedGroup(g, task);
         }
     }
 
-    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<A> task) {
+    private synchronized void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<?> task) {
 
         if (task == null || (task.isCancelled() == false)) {
-            final boolean groupSeen = db.isGroupSeen(g.groupKey);
+            final boolean groupSeen = db.isGroupSeen(g.getGroupKey());
+            if (groupSeen) {
+                g.setSeen();
+            }
             Platform.runLater(() -> {
                 if (analyzedGroups.contains(g) == false) {
                     analyzedGroups.add(g);
                 }
-                synchronized (unSeenGroups) {
-                    if (groupSeen == false && unSeenGroups.contains(g) == false) {
-                        unSeenGroups.add(g);
-                        FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
-                    }
+                if (groupSeen) {
+                    unSeenGroups.removeAll(g);
+                } else if (unSeenGroups.contains(g) == false) {
+                    unSeenGroups.add(g);
+                    FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
                 }
             });
         }
@@ -351,7 +347,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @param groupKey
      *
-     * @return null if this group is not analyzed or a list of file ids in this
+     * @return null if this group is not analyzed or a list of file ids in
+     *         this
      *         group if they are all analyzed
      */
     public List<Long> checkAnalyzed(final GroupKey<?> groupKey) {

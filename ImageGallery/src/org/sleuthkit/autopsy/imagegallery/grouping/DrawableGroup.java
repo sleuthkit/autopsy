@@ -134,6 +134,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     synchronized public void addFile(Long f) {
         invalidateHashSetHitsCount();
+        seen.set(false);
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
         }
@@ -141,6 +142,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     synchronized public void removeFile(Long f) {
         invalidateHashSetHitsCount();
+        seen.set(false);
         fileIDs.removeAll(f);
     }
 
