@@ -350,6 +350,15 @@ public class IngestManager {
     }
 
     /**
+     * The ingest manager can be directed to forgo use of message boxes, the
+     * ingest message box, NetBeans progress handles, etc. Running interactively
+     * is the default.
+     */
+    public synchronized boolean isRunningInteractively() {
+        return this.runInteractively;
+    }
+    
+    /**
      * Called by the custom installer for this package once the window system is
      * initialized, allowing the ingest manager to get the top component used to
      * display ingest messages.

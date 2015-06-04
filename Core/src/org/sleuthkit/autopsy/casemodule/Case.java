@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
@@ -71,13 +72,13 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
-@SuppressWarnings("deprecation") // TODO: Remove this when ErrorObserver is replaced.
-public class Case implements SleuthkitCase.ErrorObserver {
+public class Case {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-
+    private static IntervalErrorReportData tskErrorReporter = null;
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -227,14 +228,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Does initialization that would leak a reference to this if done in the
-     * constructor.
-     */
-    private void init() {
-        db.addErrorObserver(this);
-    }
-
-    /**
      * Gets the currently opened case, if there is one.
      *
      * @return the current open case
@@ -266,6 +259,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      */
     private static void changeCase(Case newCase) {
+        // force static initialization of error reporter
+        tskErrorReporter = IntervalErrorReportData.getInstance();
         // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
@@ -382,8 +377,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * constructor.
          */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
-        newCase.init();
-
         changeCase(newCase);
     }
 
@@ -442,8 +435,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
              * constructor.
              */
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
-            openedCase.init();
-
             changeCase(openedCase);
 
         } catch (Exception ex) {
@@ -558,9 +549,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * the same UUID used to call notifyAddingNewDataSource() when the process
      * of adding the data source began.
      */
-    public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
-        eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
-        CoreComponentControl.openCoreWindows();
+    public void notifyNewDataSource(Content newDataSource) {
+        eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
+        if (IngestManager.getInstance().isRunningInteractively()) {
+            CoreComponentControl.openCoreWindows();
+        }
     }
 
     /**
@@ -1360,11 +1353,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
         }
-    }
-
-    @Override
-    public void receiveError(String context, String errorMessage) {
-        MessageNotifyUtil.Notify.error(context, errorMessage);
     }
 
     /**
