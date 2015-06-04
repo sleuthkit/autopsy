@@ -78,7 +78,7 @@ public class Case {
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
     private static IntervalErrorReportData tskErrorReporter = null;
-    
+
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -125,16 +125,17 @@ public class Case {
         ADDING_DATA_SOURCE,
         /**
          * Property name that indicates a new data source (image, disk or local
-         * file) has been added to the current case. The new value is the
-         * newly-added instance of the new data source, and the old value is
-         * always null.
+         * file) has been added to the current case. The old and new values of
+         * the PropertyChangeEvent are null - cast the PropertyChangeEvent to
+         * org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent to
+         * access event data.
          */
         DATA_SOURCE_ADDED,
         /**
          * Property name that indicates a data source has been removed from the
          * current case. The "old value" is the (int) content ID of the data
          * source that was removed, the new value is the instance of the data
-         * source.
+         * source. RJCTODO: Improve this doc
          */
         DATA_SOURCE_DELETED,
         /**
@@ -213,6 +214,8 @@ public class Case {
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
 
+    private CollaborationMonitor collaborationMonitor;
+    
     /**
      * Constructor for the Case class
      */
@@ -270,6 +273,9 @@ public class Case {
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
                 eventPublisher.closeRemoteEventChannel();
             }
+
+            // RJCTODO: Figure out how best to do this
+            currentCase.collaborationMonitor.stop();
         }
 
         if (newCase != null) {
@@ -295,6 +301,14 @@ public class Case {
                 }
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
+            
+            try {
+                // RJCTODO: Figure out how best to do this
+                currentCase.collaborationMonitor = new CollaborationMonitor();
+            } catch (CollaborationMonitor.CollaborationMonitorException ex) {
+                // RJCTODO
+            }
+            
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
@@ -549,8 +563,8 @@ public class Case {
      * the same UUID used to call notifyAddingNewDataSource() when the process
      * of adding the data source began.
      */
-    public void notifyNewDataSource(Content newDataSource) {
-        eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
+    public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
+        eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
         if (IngestManager.getInstance().isRunningInteractively()) {
             CoreComponentControl.openCoreWindows();
         }

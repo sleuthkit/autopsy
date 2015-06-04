@@ -25,11 +25,14 @@ import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -40,38 +43,26 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 
 /**
- * A monitor needs to listen to local event messages so that it can create and
- * delete (possibly even update) a list of current tasks. Each task will have a
- * unique task id and a task description string. Periodically, the monitor
- * broadcasts its current tasks.
- *
- * When a collaborating monitor gets a tasks message from another monitor, it
- * must start or update a tasks list for the host. Inspecting the tasks in the
- * message, it must do the following:
- *
- * - If there is a new task, start a progress bar.
- *
- * - If there is a task that already is in progress, update the progress bar.
- *
- * - If a task is no longer in the tasks lists finish, the progress bar.
- *
- * Each time a tasks message is received, the time of the message is recorded.
- * If a certain interval without a message occurs, the tasks for that host are
- * flushed.
+ * Listens to local events and tracks them as collaboration tasks that can be
+ * broadcast to collaborating nodes, receives event messages from collaborating
+ * nodes and translates them into case activity indicators for the user, and
+ * monitors the health of the services needed for collaboration so that users
+ * can be informed if those service become unavailable.
  */
-/**
- * RJCTODO
- */
+// TODO: This class probably has too many responsibilities!
 final class CollaborationMonitor {
 
     private static final String EVENT_CHANNEL_NAME = "%s-Collaboration-Monitor-Events";
     private static final String COLLABORATION_MONITOR_EVENT = "COLLABORATION_MONITOR_EVENT";
+    private static final Set<String> CASE_EVENTS_OF_INTEREST = new HashSet<>(Arrays.asList(new String[]{Case.Events.ADDING_DATA_SOURCE.toString(), Case.Events.DATA_SOURCE_ADDED.toString()}));
     private static final String HEARTBEAT_THREAD_NAME = "collab-monitor-heartbeat-%d";
     private static final long MINUTES_BETWEEN_HEARTBEATS = 1;
+    private static final String STALE_TASKS_DETECTION_THREAD_NAME = "collab-monitor-stale-remote-tasks-detector-%d";
+    private static final long STALE_TASKS_DETECTION_INTERVAL_SECS = 60;
     private static final String CRASH_DETECTION_THREAD_NAME = "collab-monitor-crash-detector-%d";
     private static final long CRASH_DETECTION_INTERVAL_SECS = 60;
     private static final long EXECUTOR_TERMINATION_WAIT_SECS = 30;
@@ -81,120 +72,136 @@ final class CollaborationMonitor {
     private final RemoteTasksManager remoteTasksManager;
     private final AutopsyEventPublisher eventPublisher;
     private final ScheduledThreadPoolExecutor heartbeatExecutor;
+    private final ScheduledThreadPoolExecutor staleTasksCheckExecutor;
     private final ScheduledThreadPoolExecutor crashDetectionExecutor;
 
     /**
-     * RJCTODO
+     * Constructs an object that listens to local events and tracks them as
+     * collaboration tasks that can be broadcast to collaborating nodes,
+     * receives event messages from collaborating nodes and translates them into
+     * case activity indicators for the user, and monitors the health of the
+     * services needed for collaboration so that users can be informed if those
+     * service become unavailable.
      */
     CollaborationMonitor() throws CollaborationMonitorException {
-        hostName = getLocalHostName();
-        remoteTasksManager = new RemoteTasksManager();
+        hostName = getHostName();
+
+        /**
+         * Create an Autopsy event publisher for the current case. This will be
+         * used to communicate with collaboration monitors on other Autopsy
+         * nodes working on the case.
+         */
         eventPublisher = new AutopsyEventPublisher();
-        eventPublisher.addSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
         try {
             eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, Case.getCurrentCase().getName()));
         } catch (AutopsyEventException ex) {
-            // RJCTODO:
             throw new CollaborationMonitorException("Failed to initialize", ex);
         }
 
-        heartbeatExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(HEARTBEAT_THREAD_NAME).build());
-        heartbeatExecutor.scheduleAtFixedRate(new HeartbeatTask(), MINUTES_BETWEEN_HEARTBEATS, MINUTES_BETWEEN_HEARTBEATS, TimeUnit.MINUTES);
-        crashDetectionExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(CRASH_DETECTION_THREAD_NAME).build());
-        heartbeatExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_SECS, CRASH_DETECTION_INTERVAL_SECS, TimeUnit.SECONDS);
+        /**
+         * Create a remote tasks manager to track and display the progress of
+         * tasks other Autopsy nodes as reported by their collaboration
+         * monitors.
+         */
+        remoteTasksManager = new RemoteTasksManager();
+        eventPublisher.addSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
 
+        /**
+         * Create a local tasks manager to keep track of and broadcast the
+         * events happening on this Autopsy node to the collaboration monitors
+         * on other nodes.
+         */
         localTasksManager = new LocalTasksManager();
         IngestManager.getInstance().addIngestJobEventListener(localTasksManager);
-        Case.addEventSubscriber("", localTasksManager); // RJCTODO: Fill in events of interest                        
+        Case.addEventSubscriber(CASE_EVENTS_OF_INTEREST, localTasksManager);
+
+        // RJCTODO: Do we really need three ScheduledThreadPoolExecutors?
+        // Perhaps one is enough....
+        /**
+         * Start a periodic task on its own thread that will send heartbeat
+         * messages to the collaboration monitors on other nodes.
+         */
+        heartbeatExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(HEARTBEAT_THREAD_NAME).build());
+        heartbeatExecutor.scheduleAtFixedRate(new HeartbeatTask(), MINUTES_BETWEEN_HEARTBEATS, MINUTES_BETWEEN_HEARTBEATS, TimeUnit.MINUTES);
+
+        /**
+         * Start a periodic task on its own thread that will check for stale
+         * remote tasks.
+         */
+        staleTasksCheckExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(STALE_TASKS_DETECTION_THREAD_NAME).build());
+        staleTasksCheckExecutor.scheduleAtFixedRate(new StaleTaskDetectionTask(), STALE_TASKS_DETECTION_INTERVAL_SECS, STALE_TASKS_DETECTION_INTERVAL_SECS, TimeUnit.SECONDS);
+
+        /**
+         * Start a periodic task on its own thread that will report on the
+         * availability of key collaboration services.
+         */
+        crashDetectionExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(CRASH_DETECTION_THREAD_NAME).build());
+        crashDetectionExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_SECS, CRASH_DETECTION_INTERVAL_SECS, TimeUnit.SECONDS);
     }
 
     /**
-     * RJCTODO
+     * Determines the name of the local host for use in describing local tasks.
      *
-     * @return
+     * @return The host name of this Autopsy node.
      */
-    private static String getLocalHostName() {
-        String hostName;
+    private String getHostName() {
+        String name;
         try {
-            hostName = java.net.InetAddress.getLocalHost().getHostName();
+            name = java.net.InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException ex) {
             // RJCTODO: Log info message
-            hostName = System.getenv("COMPUTERNAME");
+            name = System.getenv("COMPUTERNAME");
         }
-        return hostName;
+        return name;
     }
 
     /**
-     *
-     */
-    private void subscribeToRemoteEvents() {
-
-    }
-
-    /**
-     *
-     */
-    private void subscribeToLocalEvents() {
-    }
-
-    /**
-     * RJCTODO
+     * Shuts down this collaboration monitor.
      */
     void stop() {
         stopExecutor(crashDetectionExecutor, CRASH_DETECTION_THREAD_NAME);
         stopExecutor(heartbeatExecutor, HEARTBEAT_THREAD_NAME);
+        // RJCTODO: Shut down other stuff
         eventPublisher.removeSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
         eventPublisher.closeRemoteEventChannel();
     }
 
-    private void updateDataSourceTasks(AutopsyEvent event) {
-
-    }
-
     /**
-     * RJCTODO
-     *
-     * @param event
-     */
-    private void updateCollaboratorTasks(CollaborationEvent event) {
-        /**
-         * RJCTODO
-         */
-    }
-
-    /**
-     * RJCTODO
+     * Gracefully shuts down a scheduled thread pool executor.
      */
     private static void stopExecutor(ScheduledThreadPoolExecutor executor, String name) {
         if (null != executor) {
             executor.shutdownNow();
             try {
                 while (!executor.awaitTermination(EXECUTOR_TERMINATION_WAIT_SECS, TimeUnit.SECONDS)) {
-                    logger.log(Level.WARNING, "Waited at least thirty seconds for {0} executor to shut down, continuing to wait", name); //NON-NLS RJCTODO
+                    logger.log(Level.WARNING, "Waited at least {0} seconds for {1} executor to shut down, continuing to wait", new Object[]{EXECUTOR_TERMINATION_WAIT_SECS, name}); //NON-NLS
                 }
             } catch (InterruptedException ex) {
-                // RJCTODO:
+                logger.log(Level.SEVERE, "Unexpected interrupt while stopping thread executor", ex); //NON-NLS
+                // RJCTODO: Reset?
             }
         }
     }
 
     /**
-     * The local tasks manager listens to local events and tracks them as
-     * collaboration tasks that can be broadcast to collaborating nodes.
+     * The local tasks manager listens to local events and translates them into
+     * tasks it broadcasts to collaborating nodes. Note that all access to the
+     * task collections is synchronized since they may be accessed by both the
+     * threads publishing property change events and by the heartbeat thread.
      */
     private final class LocalTasksManager implements PropertyChangeListener {
 
-        private final AtomicLong nextTaskId;
+        private long nextTaskId;
         private final Map<Integer, Task> uuidsToAddDataSourceTasks;
         private final Map<Long, Task> jobIdsTodataSourceAnalysisTasks;
 
         /**
          * Constructs a local tasks manager that listens to local events and
-         * tracks them as collaboration tasks that can be broadcast to
-         * collaborating nodes.
+         * translates them into tasks that can be broadcast to collaborating
+         * nodes.
          */
         LocalTasksManager() {
-            nextTaskId = new AtomicLong(0L);
+            nextTaskId = 0;
             uuidsToAddDataSourceTasks = new HashMap<>();
             jobIdsTodataSourceAnalysisTasks = new HashMap<>();
         }
@@ -203,34 +210,31 @@ final class CollaborationMonitor {
          * Updates the collection of tasks this node is performing in response
          * to receiving an event in the form of a property change.
          *
-         * @param evt A PropertyChangeEvent.
+         * @param event A PropertyChangeEvent.
          */
         @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String eventName = evt.getPropertyName();
+        public void propertyChange(PropertyChangeEvent event) {
+            String eventName = event.getPropertyName();
             if (eventName.equals(Case.Events.ADDING_DATA_SOURCE.toString())) {
-                addDataSourceAddTask(evt);
+                addDataSourceAddTask((AddingDataSourceEvent) event);
             } else if (eventName.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                addDataSourceAddTask(evt);
+                removeDataSourceAddTask((DataSourceAddedEvent) event);
             } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED.toString())) {
-                addDataSourceAnalysisTask(evt);
+                addDataSourceAnalysisTask((DataSourceAnalysisStartedEvent) event);
             } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
-                removeDataSourceAnalysisTask(evt);
-            } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_CANCELLED.toString())) {
-                removeDataSourceAnalysisTask(evt);
+                removeDataSourceAnalysisTask((DataSourceAnalysisCompletedEvent) event);
             }
         }
 
         /**
-         * Add a task for adding the data source and publishes the updated local
-         * tasks list to any collaborating nodes.
+         * Adds a task for tracking adding the data source and publishes the
+         * updated local tasks list to any collaborating nodes.
          *
-         * @param evt RJCTODO
+         * @param evt An adding data source event.
          */
-        synchronized void addDataSourceAddTask(PropertyChangeEvent evt) {
-            AddingDataSourceEvent event = (AddingDataSourceEvent) evt;
+        synchronized void addDataSourceAddTask(AddingDataSourceEvent event) {
             String status = String.format("%s adding data source", hostName); // RJCTODO: Bundle
-            uuidsToAddDataSourceTasks.put(event.getDataSourceId().hashCode(), new Task(nextTaskId.getAndIncrement(), status));
+            uuidsToAddDataSourceTasks.put(event.getDataSourceId().hashCode(), new Task(++nextTaskId, status));
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
@@ -238,10 +242,9 @@ final class CollaborationMonitor {
          * Removes the task for adding the data source and publishes the updated
          * local tasks list to any collaborating nodes.
          *
-         * @param evt RJCTODO
+         * @param evt A data source added event
          */
-        synchronized void removeDataSourceAddTask(PropertyChangeEvent evt) {
-            DataSourceAddedEvent event = (DataSourceAddedEvent) evt;
+        synchronized void removeDataSourceAddTask(DataSourceAddedEvent event) {
             uuidsToAddDataSourceTasks.remove(event.getDataSourceId().hashCode());
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
@@ -251,7 +254,9 @@ final class CollaborationMonitor {
          *
          * @param evt
          */
-        synchronized void addDataSourceAnalysisTask(PropertyChangeEvent evt) {
+        synchronized void addDataSourceAnalysisTask(DataSourceAnalysisStartedEvent event) {
+            String status = String.format("%s analyzing %s", hostName, event.getDataSource().getName()); // RJCTODO: Bundle
+            jobIdsTodataSourceAnalysisTasks.put(event.getDataSourceIngestJobId(), new Task(++nextTaskId, status));
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
@@ -260,7 +265,8 @@ final class CollaborationMonitor {
          *
          * @param evt
          */
-        synchronized void removeDataSourceAnalysisTask(PropertyChangeEvent evt) {
+        synchronized void removeDataSourceAnalysisTask(DataSourceAnalysisCompletedEvent event) {
+            jobIdsTodataSourceAnalysisTasks.remove(event.getDataSourceIngestJobId());
             eventPublisher.publish(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
@@ -282,7 +288,9 @@ final class CollaborationMonitor {
     }
 
     /**
-     * RJCTODO
+     * The remote tasks manager listens to events broadcast by collaboration
+     * monitors on other nodes and translates them into remote tasks represented
+     * using progress bars.
      */
     private final class RemoteTasksManager implements PropertyChangeListener {
 
@@ -300,27 +308,33 @@ final class CollaborationMonitor {
             }
         }
 
+        /**
+         * RJCTODO
+         *
+         * @param event
+         */
         synchronized void updateTasks(CollaborationEvent event) {
+            // RJCTODO: This is a little hard to understand, consider some renaming
             RemoteTasks tasks = hostToTasks.get(event.getHostName());
             if (null != tasks) {
-                // Update time stamp
+                tasks.update(event);
             } else {
-                hostToTasks.put(event.getHostName(), new RemoteTasks(event)); // Pass in task list
+                hostToTasks.put(event.getHostName(), new RemoteTasks(event));
             }
-            // Lookup the RemoteTasks for this host.
-            // If found
-            //      update the time stamp
-            //      for each key in task keyset
-            //          if task id not in current list
-            //              finish progress, discard task
-            //          else
-            //              update progress bar with new text
-            //              update time stamp
-            //          endif
+        }
 
-            // if none found
-            //      add to task map for host
-            // else
+        /**
+         * RJCTODO
+         */
+        synchronized void finshStaleTasks() {
+            for (Iterator<Map.Entry<String, RemoteTasks>> it = hostToTasks.entrySet().iterator(); it.hasNext();) {
+                Map.Entry<String, RemoteTasks> entry = it.next();
+                RemoteTasks tasks = entry.getValue();
+                if (tasks.isStale()) {
+                    tasks.finishAllTasks();
+                    it.remove();
+                }
+            }
         }
 
         /**
@@ -350,7 +364,7 @@ final class CollaborationMonitor {
             }
 
             /**
-             * Updates this remotes tasks collection.
+             * Updates this remote tasks collection.
              *
              * @param event A collaboration event from the collaborating node
              * associated with these tasks.
@@ -391,6 +405,13 @@ final class CollaborationMonitor {
                 }
             }
 
+            void finishAllTasks() {
+                taskIdsToProgressBars.values().stream().forEach((progress) -> {
+                    progress.finish();
+                });
+                taskIdsToProgressBars.clear();
+            }
+
             /**
              * Determines whether or not the time since the last update of this
              * remote tasks collection is greater than the maximum acceptable
@@ -407,10 +428,10 @@ final class CollaborationMonitor {
 
     /**
      * A Runnable task that periodically publishes the local tasks in progress
-     * for the current case on this node, providing a heartbeat message for
+     * on this node, providing a heartbeat message for collaboration monitors on
      * other nodes. The current local tasks are included in the heartbeat
      * message so that nodes that have just joined the event channel know what
-     * this node is doing when they join the collaboration on the current case.
+     * this node is doing, even if they join after the current tasks are begun.
      */
     private final class HeartbeatTask implements Runnable {
 
@@ -426,19 +447,37 @@ final class CollaborationMonitor {
     /**
      * RJCTODO
      */
-    private final class CrashDetectionTask implements Runnable {
+    private final class StaleTaskDetectionTask implements Runnable {
 
         /**
          * RJCTODO
          */
         @Override
         public void run() {
-            // RJCTODO: Check for crashed collaborators and services
+            remoteTasksManager.finshStaleTasks();
         }
     }
 
     /**
-     * RJCTODO
+     * A Runnable task that periodically checks the availability of
+     * collaboration resources (PostgreSQL server, Solr server, Active MQ
+     * message broker) and reports status to the user in case of a gap in
+     * service.
+     */
+    private final class CrashDetectionTask implements Runnable {
+
+        /**
+         * Monitor the availability of collaboration resources
+         */
+        @Override
+        public void run() {
+            // RJCTODO: Implement this.
+        }
+    }
+
+    /**
+     * An Autopsy event to be sent in event messages to the collaboration
+     * monitors on other Autopsy nodes.
      */
     private static final class CollaborationEvent extends AutopsyEvent implements Serializable {
 
@@ -447,10 +486,11 @@ final class CollaborationMonitor {
         private final Map<Long, Task> currentTasks;
 
         /**
-         * RJCTODO
+         * Constructs an Autopsy event to be sent in event messages to the
+         * collaboration monitors on other Autopsy nodes.
          *
-         * @param hostName
-         * @param currentTasks
+         * @param hostName The name of the host sending the event.
+         * @param currentTasks The tasks in progress for this Autopsy node.
          */
         CollaborationEvent(String hostName, Map<Long, Task> currentTasks) {
             super(COLLABORATION_MONITOR_EVENT, null, null);
@@ -459,18 +499,19 @@ final class CollaborationMonitor {
         }
 
         /**
-         * RJCTODO
+         * Gets the host name of the Autopsy node that published this event.
          *
-         * @return
+         * @return The host name.
          */
         String getHostName() {
             return hostName;
         }
 
         /**
-         * RJCTODO
+         * Gets the current tasks for the Autopsy node that published this
+         * event.
          *
-         * @return
+         * @return A mapping of task IDs to current tasks
          */
         Map<Long, Task> getCurrentTasks() {
             return currentTasks;
@@ -479,7 +520,7 @@ final class CollaborationMonitor {
     }
 
     /**
-     * RJCTODO
+     * A representation of a task in progress on this Autopsy node.
      */
     private static final class Task implements Serializable {
 
@@ -487,15 +528,33 @@ final class CollaborationMonitor {
         private final long id;
         private final String status;
 
+        /**
+         * Constructs a representation of a task in progress on this Autopsy
+         * node.
+         *
+         * @param id
+         * @param status
+         */
         Task(long id, String status) {
             this.id = id;
             this.status = status;
         }
 
+        /**
+         * Gets ID of this task.
+         *
+         * @return A task id, unique to this task for this case and this Autopsy
+         * node.
+         */
         long getId() {
             return id;
         }
 
+        /**
+         * Gets the status of the task at the time this object was constructed.
+         *
+         * @return A task status string.
+         */
         String getStatus() {
             return status;
         }

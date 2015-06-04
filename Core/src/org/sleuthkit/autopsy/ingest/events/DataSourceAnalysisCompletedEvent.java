@@ -27,10 +27,21 @@ import org.sleuthkit.datamodel.Content;
  */
 public class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEvent implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    public enum Reason {
+        COMPLETED,
+        CANCELLED
+    }
     
-    public DataSourceAnalysisCompletedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+    private static final long serialVersionUID = 1L;
+    private final Reason reason;
+    
+    public DataSourceAnalysisCompletedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource, Reason reason) {
         super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED, ingestJobId, dataSourceIngestJobId, dataSource);
+        this.reason = reason;
+    }
+    
+    public Reason getResult() {
+        return reason;
     }
     
 }

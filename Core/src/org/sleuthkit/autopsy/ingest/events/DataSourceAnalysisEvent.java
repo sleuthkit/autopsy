@@ -31,8 +31,16 @@ public abstract class DataSourceAnalysisEvent extends AutopsyEvent implements Se
     private static final long serialVersionUID = 1L;
     private final long ingestJobId;
     private final long dataSourceIngestJobId;
-    private transient Content dataSource;
-        
+    private transient Content dataSource; // RJCTODO: Make able to be published remotely
+
+    /**
+     * RJCTOD
+     *
+     * @param eventType
+     * @param ingestJobId
+     * @param dataSourceIngestJobId
+     * @param dataSource
+     */
     public DataSourceAnalysisEvent(IngestManager.IngestJobEvent eventType, long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         super(eventType.toString(), null, null);
         this.ingestJobId = ingestJobId;
@@ -40,4 +48,30 @@ public abstract class DataSourceAnalysisEvent extends AutopsyEvent implements Se
         this.dataSource = dataSource;
     }
 
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    public long getIngestJobId() {
+        return ingestJobId;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    public long getDataSourceIngestJobId() {
+        return dataSourceIngestJobId;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    public Content getDataSource() {
+        return dataSource;
+    }
 }

@@ -179,10 +179,6 @@ public class IngestManager {
          * RJCTODO
          */
         DATA_SOURCE_ANALYSIS_COMPLETED,
-        /**
-         * RJCTODO
-         */
-        DATA_SOURCE_ANALYSIS_CANCELLED
     };
 
     /**
