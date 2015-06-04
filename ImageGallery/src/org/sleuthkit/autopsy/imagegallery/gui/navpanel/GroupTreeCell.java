@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
+import java.util.Objects;
 import static java.util.Objects.isNull;
 import java.util.Optional;
 import javafx.application.Platform;
@@ -66,11 +67,13 @@ class GroupTreeCell extends TreeCell<TreeNode> {
     @Override
     protected synchronized void updateItem(final TreeNode tNode, boolean empty) {
         //if there was a previous group, remove the listener
-        Optional.ofNullable(getItem())
-                .map(TreeNode::getGroup)
-                .ifPresent((DrawableGroup t) -> {
-                    t.fileIds().removeListener(listener);
-                });
+        if (Objects.nonNull(listener)) {
+            Optional.ofNullable(getItem())
+                    .map(TreeNode::getGroup)
+                    .ifPresent((DrawableGroup t) -> {
+                        t.fileIds().removeListener(listener);
+                    });
+        }
 
         super.updateItem(tNode, empty);
 
