@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * notifications. When the time between notifications has expired, the next
  * error encountered will cause a report to be shown to the user.
  */
-public class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
+class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
 
     private static volatile IntervalErrorReportData instance;
     private long newProblems;
