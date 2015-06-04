@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,20 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 import javafx.animation.Interpolator;
@@ -43,7 +45,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -82,12 +83,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.TilePane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
@@ -122,11 +121,11 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A GroupPane displays the contents of a {@link DrawableGroup}. It support both a
- * {@link  TilePane} based view and a {@link  SlideShowView} view by swapping out
- * its internal components.
+ * A GroupPane displays the contents of a {@link DrawableGroup}. It supports
+ * both a {@link  GridView} based view and a {@link  SlideShowView} view by
+ * swapping out its internal components.
  *
- * TODO: review for synchronization issues. TODO: Extract the The TilePane
+ * TODO: review for synchronization issues. TODO: Extract the The GridView
  * instance to a separate class analogous to the SlideShow
  */
 public class GroupPane extends BorderPane implements GroupView {
@@ -144,12 +143,6 @@ public class GroupPane extends BorderPane implements GroupView {
     private final Back backAction;
 
     private final Forward forwardAction;
-
-    @FXML
-    private URL location;
-
-    @FXML
-    private ResourceBundle resources;
 
     @FXML
     private SplitMenuButton grpCatSplitMenu;
@@ -212,11 +205,12 @@ public class GroupPane extends BorderPane implements GroupView {
     /**
      * map from fileIDs to their assigned cells in the tile view. This is used
      * to determine whether fileIDs are visible or are offscreen. No entry
-     * indicates the given fileID is not displayed on screenDrawableCells
-     * responsible for adding and removing themselves from this map
+     * indicates the given fileID is not displayed on screen. DrawableCells are
+     * responsible for adding and removing themselves from this map.
      */
     @ThreadConfined(type = ThreadType.UI)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
+    private FilesSyncListener filesSyncListener;
 
     public GroupPane(ImageGalleryController controller) {
         this.controller = controller;
@@ -236,10 +230,10 @@ public class GroupPane extends BorderPane implements GroupView {
 
         //assign last selected file or if none first file in group
         if (slideShowFileId == null || grouping.get().fileIds().contains(slideShowFileId) == false) {
-            slideShowFileId = grouping.get().fileIds().get(0);
+            slideShowPane.setFile(grouping.get().fileIds().get(0));
+        } else {
+            slideShowPane.setFile(slideShowFileId);
         }
-
-        slideShowPane.setFile(slideShowFileId);
         setCenter(slideShowPane);
         slideShowPane.requestFocus();
     }
@@ -259,27 +253,12 @@ public class GroupPane extends BorderPane implements GroupView {
         return grouping.get();
     }
 
-    /**
-     * @return the text to display as part of the header
-     */
-    public String getHeaderString() {
-        int size = grouping.get().getSize();
-        int hashHitCount = grouping.get().getFilesWithHashSetHitsCount();
-        String groupName;
-        if (grouping.get().groupKey.getAttribute() == DrawableAttribute.TAGS) {
-            groupName = ((TagName) grouping.get().groupKey.getValue()).getDisplayName();
-        } else {
-            groupName = grouping.get().groupKey.getValue().toString();
-        }
-        return StringUtils.defaultIfBlank(groupName, DrawableGroup.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
-    }
-
     private MenuItem createGrpCatMenuItem(final Category cat) {
         final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                Set<Long> fileIdSet = new HashSet<Long>(getGrouping().fileIds());
+                Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
                 new CategorizeAction().addTagsToFiles(cat.getTagName(), "", fileIdSet);
 
                 grpCatSplitMenu.setText(cat.getDisplayName());
@@ -294,7 +273,7 @@ public class GroupPane extends BorderPane implements GroupView {
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                Set<Long> fileIdSet = new HashSet<Long>(getGrouping().fileIds());
+                Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
                 AddDrawableTagAction.getInstance().addTagsToFiles(tn, "", fileIdSet);
 
                 grpTagSplitMenu.setText(tn.getDisplayName());
@@ -308,28 +287,11 @@ public class GroupPane extends BorderPane implements GroupView {
         globalSelectionModel.clearAndSelectAll(getGrouping().fileIds());
     }
 
-    /**
-     * reset the text and icons to represent the currently filtered files
-     */
-    protected void resetHeaderString() {
-        if (grouping.get() == null) {
-            Platform.runLater(() -> {
-                groupLabel.setText("");
-            });
-        } else {
-            int size = grouping.get().getSize();
-            int hashHitCount = grouping.get().getFilesWithHashSetHitsCount();
-            String groupName;
-            if (grouping.get().groupKey.getAttribute() == DrawableAttribute.TAGS) {
-                groupName = ((TagName) grouping.get().groupKey.getValue()).getDisplayName();
-            } else {
-                groupName = grouping.get().groupKey.getValue().toString();
-            }
-            final String headerString = StringUtils.defaultIfBlank(groupName, DrawableGroup.UNKNOWN) + " -- " + hashHitCount + " hash set hits / " + size + " files";
-            Platform.runLater(() -> {
-                groupLabel.setText(headerString);
-            });
-        }
+    /** create the string to display in the group header */
+    protected String getHeaderString() {
+        return isNull(getGrouping()) ? ""
+                : defaultIfBlank(getGrouping().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
+                + getGrouping().getHashSetHitsCount() + " hash set hits / " + getGrouping().getSize() + " files";
     }
 
     ContextMenu getContextMenu() {
@@ -354,42 +316,6 @@ public class GroupPane extends BorderPane implements GroupView {
         assert segButton != null : "fx:id=\"previewList\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-
-        grouping.addListener(new InvalidationListener() {
-            private void updateFiles() {
-                final ObservableList<Long> fileIds = grouping.get().fileIds();
-                Platform.runLater(() -> {
-                    gridView.setItems(FXCollections.observableArrayList(fileIds));
-                });
-                resetHeaderString();
-            }
-
-            @Override
-            public void invalidated(Observable o) {
-                getScrollBar().ifPresent((scrollBar) -> {
-                    scrollBar.setValue(0);
-                });
-
-                //set the embeded header
-                resetHeaderString();
-                //and assign fileIDs to gridView
-                if (grouping.get() == null) {
-                    Platform.runLater(gridView.getItems()::clear);            
-                    // Reset the DrawableCell listeners from the old case
-                    if(! Case.isCaseOpen()){
-                        for(GroupPane.DrawableCell cell:cellMap.values()){
-                            cell.resetItem();
-                        }
-                    }
-                } else {
-                    grouping.get().fileIds().addListener((Observable observable) -> {
-                        updateFiles();
-                    });
-
-                    updateFiles();
-                }
-            }
-        });
 
         //configure flashing glow animation on next unseen group button
         flashAnimation.setCycleCount(Timeline.INDEFINITE);
@@ -530,7 +456,6 @@ public class GroupPane extends BorderPane implements GroupView {
             }
         });
 
-//        Platform.runLater(() -> {
         ActionUtils.configureButton(nextGroupAction, nextButton);
         final EventHandler<ActionEvent> onAction = nextButton.getOnAction();
         nextButton.setOnAction((ActionEvent event) -> {
@@ -541,7 +466,6 @@ public class GroupPane extends BorderPane implements GroupView {
 
         ActionUtils.configureButton(forwardAction, forwardButton);
         ActionUtils.configureButton(backAction, backButton);
-//        });
 
         nextGroupAction.disabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             nextButton.setEffect(newValue ? null : DROP_SHADOW);
@@ -634,26 +558,51 @@ public class GroupPane extends BorderPane implements GroupView {
      * @param grouping the new grouping assigned to this group
      */
     void setViewState(GroupViewState viewState) {
-        if (viewState == null) {
+        if (nonNull(getGrouping())) {
+            getGrouping().fileIds().removeListener(filesSyncListener);
+        }
+
+        if (isNull(viewState) || isNull(viewState.getGroup())) {
             this.grouping.set(null);
+            final List<Long> fileIds = Collections.emptyList();
+            final String header = "";
             Platform.runLater(() -> {
                 setCenter(null);
-                groupLabel.setText(null);
+                gridView.getItems().setAll(fileIds);
+                groupLabel.setText(header);
+                resetScrollBar();
+                if (false == Case.isCaseOpen()) {
+                    cellMap.values().stream().forEach(DrawableCell::resetItem);
+                }
             });
-            
+
         } else {
             if (this.grouping.get() != viewState.getGroup()) {
                 this.grouping.set(viewState.getGroup());
+                filesSyncListener = new FilesSyncListener();
+                this.getGrouping().fileIds().addListener(filesSyncListener);
 
-            }
-
-            if (viewState.getMode() == GroupViewMode.TILE) {
-                activateTileViewer();
-            } else {
-                activateSlideShowViewer(viewState.getSlideShowfileID().orElse(null));
-
+                final String header = getHeaderString();
+                final ObservableList<Long> fileIds = getGrouping().fileIds();
+                Platform.runLater(() -> {
+                    gridView.getItems().setAll(fileIds);
+                    groupLabel.setText(header);
+                    resetScrollBar();
+                    if (viewState.getMode() == GroupViewMode.TILE) {
+                        activateTileViewer();
+                    } else {
+                        activateSlideShowViewer(viewState.getSlideShowfileID().orElse(null));
+                    }
+                });
             }
         }
+    }
+
+    @ThreadConfined(type = ThreadType.JFX)
+    private void resetScrollBar() {
+        getScrollBar().ifPresent((scrollBar) -> {
+            scrollBar.setValue(0);
+        });
     }
 
     private class DrawableCell extends GridCell<Long> {
@@ -667,15 +616,15 @@ public class GroupPane extends BorderPane implements GroupView {
                     tile.setFile(null);
                 }
                 if (newValue != null) {
-                    if(cellMap.containsKey(newValue)){
-                        if(tile != null){
+                    if (cellMap.containsKey(newValue)) {
+                        if (tile != null) {
                             // Clear out the old value to prevent out-of-date listeners
                             // from activating.
                             cellMap.get(newValue).tile.setFile(null);
                         }
                     }
                     cellMap.put(newValue, DrawableCell.this);
-                    
+
                 }
             });
 
@@ -687,8 +636,8 @@ public class GroupPane extends BorderPane implements GroupView {
             super.updateItem(item, empty);
             tile.setFile(item);
         }
-        
-        void resetItem(){
+
+        void resetItem() {
             tile.setFile(null);
         }
     }
@@ -812,6 +761,7 @@ public class GroupPane extends BorderPane implements GroupView {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private Optional<ScrollBar> getScrollBar() {
         if (gridView == null || gridView.getSkin() == null) {
             return Optional.empty();
@@ -824,7 +774,7 @@ public class GroupPane extends BorderPane implements GroupView {
         if (shiftDown) {
             //TODO: do more hear to implement slicker multiselect
             int endIndex = grouping.get().fileIds().indexOf(newFileID);
-            int startIndex = IntStream.of(grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
+            int startIndex = IntStream.of(0, grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
             endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
             List<Long> subList = grouping.get().fileIds().subList(startIndex, endIndex + 1);
 
@@ -833,6 +783,19 @@ public class GroupPane extends BorderPane implements GroupView {
         } else {
             selectionAnchorIndex = null;
             globalSelectionModel.clearAndSelect(newFileID);
+        }
+    }
+
+    private class FilesSyncListener implements InvalidationListener {
+
+        @Override
+        public void invalidated(Observable observable) {
+            final String header = getHeaderString();
+            final List<Long> fileIds = ImmutableList.copyOf(getGrouping().fileIds());
+            Platform.runLater(() -> {
+                gridView.getItems().setAll(fileIds);
+                groupLabel.setText(header);
+            });
         }
     }
 }

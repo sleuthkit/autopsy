@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -327,16 +326,15 @@ public final class ImageGalleryController {
     }
 
     /**
-     * onStart the controller for a specific case.
+     * configure the controller for a specific case.
      *
-     * @param c
+     * @param theNewCase the case to configure the controller for
      */
-    public synchronized void setCase(Case c) {
+    public synchronized void setCase(Case theNewCase) {
+        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
 
-        this.db = DrawableDB.getDrawableDB(c.getModulesOutputDirAbsPath() + File.separator + ImageGalleryModule.getModuleName(), this);
-
-        setListeningEnabled(ImageGalleryModule.isEnabledforCase(c));
-        setStale(ImageGalleryModule.isCaseStale(c));
+        setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
+        setStale(ImageGalleryModule.isCaseStale(theNewCase));
 
         // if we add this line icons are made as files are analyzed rather than on demand.
         // db.addUpdatedFileListener(IconCache.getDefault());
@@ -373,7 +371,8 @@ public final class ImageGalleryController {
      *
      * @param innerTask
      */
-    final void queueDBWorkerTask(InnerTask innerTask) {
+    public final void queueDBWorkerTask(InnerTask innerTask) {
+
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
             restartWorker();
@@ -513,7 +512,6 @@ public final class ImageGalleryController {
                     return;
                 }
                 try {
-                    // @@@ Could probably do something more fancy here and check if we've been canceled every now and then
                     InnerTask it = workQueue.take();
 
                     if (it.cancelled == false) {
@@ -542,7 +540,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    static private abstract class InnerTask implements Runnable {
+    static public abstract class InnerTask implements Runnable {
 
         public double getProgress() {
             return progress.get();
@@ -600,7 +598,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for tasks associated with a file in the database
      */
-    static private abstract class FileTask extends InnerTask {
+    static public abstract class FileTask extends InnerTask {
 
         private final AbstractFile file;
 
@@ -676,7 +674,7 @@ public final class ImageGalleryController {
      * 'analyzed'. Grabs all files with supported image/video mime types, and
      * adds them to the Drawable DB
      */
-    class CopyAnalyzedFiles extends InnerTask {
+    private class CopyAnalyzedFiles extends InnerTask {
 
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
 

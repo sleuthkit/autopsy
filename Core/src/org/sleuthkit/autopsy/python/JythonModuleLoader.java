@@ -22,12 +22,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -68,9 +72,17 @@ public final class JythonModuleLoader {
 
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
         List<T> objects = new ArrayList<>();
-        File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
-        File[] files = pythonModulesDir.listFiles();
-        for (File file : files) {
+        Set<File> pythonModuleDirs = new HashSet<>();
+
+        // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
+        // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
+        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", JythonModuleLoader.class.getPackage().getName(), false)) {
+            Collections.addAll(pythonModuleDirs, f.listFiles());
+        }
+        // add python modules from 'testuserdir/python_modules' folder
+        Collections.addAll(pythonModuleDirs, new File(PlatformUtil.getUserPythonModulesPath()).listFiles());
+
+        for (File file : pythonModuleDirs) {
             if (file.isDirectory()) {
                 File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
                 for (File script : pythonScripts) {
