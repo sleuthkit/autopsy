@@ -70,8 +70,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
-@SuppressWarnings("deprecation") // TODO: Remove this when ErrorObserver is replaced.
-public class Case implements SleuthkitCase.ErrorObserver {
+public class Case {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
@@ -224,7 +223,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * constructor.
      */
     private void init() {
-        db.addErrorObserver(this);
     }
 
     /**
@@ -1340,11 +1338,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
         }
-    }
-
-    @Override
-    public void receiveError(String context, String errorMessage) {
-        MessageNotifyUtil.Notify.error(context, errorMessage);
     }
 
     /**
