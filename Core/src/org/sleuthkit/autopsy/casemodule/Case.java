@@ -69,7 +69,6 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
-@SuppressWarnings("deprecation") // TODO: Remove this when ErrorObserver is replaced.
 public class Case {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
