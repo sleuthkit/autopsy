@@ -79,7 +79,7 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
      * @param newProblems the newProblems to set
      * @param ex the exception for this error
      */
-    public void addProblems(long newProblems, Exception ex) {
+    private void addProblems(long newProblems, Exception ex) {
         this.newProblems += newProblems;
         this.totalProblems += newProblems;
 

@@ -219,13 +219,6 @@ public class Case {
     }
 
     /**
-     * Does initialization that would leak a reference to this if done in the
-     * constructor.
-     */
-    private void init() {
-    }
-
-    /**
      * Gets the currently opened case, if there is one.
      *
      * @return the current open case
@@ -375,8 +368,6 @@ public class Case {
          * constructor.
          */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
-        newCase.init();
-
         changeCase(newCase);
     }
 
@@ -435,8 +426,6 @@ public class Case {
              * constructor.
              */
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
-            openedCase.init();
-
             changeCase(openedCase);
 
         } catch (Exception ex) {
