@@ -698,9 +698,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         }
                     }
                 }
-                if (evt.getChangedAttribute() == DrawableAttribute.CATEGORY) {
-                    Category.fireChange(fileIDs);
-                }
+
+                //we fire this event for all files so that the category counts get updated during initial db population
+                Category.fireChange(fileIDs);
+
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);
                 }
