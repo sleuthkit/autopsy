@@ -353,6 +353,8 @@ final class CollaborationMonitor {
                  * Set the initial value of the last update time stamp.
                  */
                 lastUpdateTime = Instant.now();
+                
+                taskIdsToProgressBars = new HashMap<>();
                 event.getCurrentTasks().values().stream().forEach((task) -> {
                     ProgressHandle progress = ProgressHandleFactory.createHandle(event.getHostName());
                     progress.start();
