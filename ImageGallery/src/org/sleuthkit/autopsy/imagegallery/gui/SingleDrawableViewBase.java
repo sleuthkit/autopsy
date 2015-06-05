@@ -60,7 +60,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -76,6 +75,9 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -260,7 +262,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                 try {
                     AddDrawableTagAction.getInstance().addTag(TagUtils.getFollowUpTagName(), "");
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    LOGGER.log(Level.SEVERE, "Failed to add follow up tag.  Could not load TagName.", ex);
                 }
             } else {
                 //TODO: convert this to an action!
@@ -273,13 +275,12 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                     for (ContentTag ct : contentTagsByContent) {
                         if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
                             Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
-                            SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
                         }
                     }
-
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
                     controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
                 }
             }
         });

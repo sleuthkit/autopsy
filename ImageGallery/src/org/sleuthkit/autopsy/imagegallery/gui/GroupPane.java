@@ -85,6 +85,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
