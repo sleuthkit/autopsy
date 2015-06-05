@@ -32,6 +32,7 @@
 # See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
 
 import jarray
+import inspect
 from java.lang import System
 from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
@@ -58,11 +59,11 @@ from org.sleuthkit.autopsy.casemodule.services import FileManager
 class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 
     # TODO: give it a unique name.  Will be shown in module list, logs, etc.
-    moduleName = "Sample Data Source Module" 
-	
+    moduleName = "Sample Data Source Module"
+
     def getModuleDisplayName(self):
         return self.moduleName
-    
+
     # TODO: Give it a description
     def getModuleDescription(self):
         return "Sample module that does X, Y, and Z."
@@ -82,6 +83,11 @@ class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
+    _logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
+
+    def log(self, level, msg):
+        self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+
     def __init__(self):
         self.context = None
 
@@ -91,14 +97,12 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         self.context = context
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
 		# raise IngestModuleException(IngestModule(), "Oh No!")
-        
+
     # Where the analysis is done.
     # TODO: Add your analysis code in here.
     def process(self, dataSource, progressBar):
         if self.context.isJobCancelled():
             return IngestModule.ProcessResult.OK
-			
-        logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)	
 
         # we don't know how much work there is yet
         progressBar.switchToIndeterminate()
@@ -108,13 +112,13 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         services = Services(sleuthkitCase)
         fileManager = services.getFileManager()
 
-        # For our example, we will use FileManager to get all 
+        # For our example, we will use FileManager to get all
         # files with the word "test"
         # in the name and then count and read them
         files = fileManager.findFiles(dataSource, "%test%")
 
         numFiles = len(files)
-        logger.logp(Level.INFO, SampleJythonDataSourceIngestModule.__name__, "process", "found " + str(numFiles) + " files")
+        self.log(Level.INFO, "found " + str(numFiles) + " files")
         progressBar.switchToDeterminate(numFiles)
         fileCount = 0;
         for file in files:
@@ -123,7 +127,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
 
-            logger.logp(Level.INFO, SampleJythonDataSourceIngestModule.__name__, "process", "Processing file: " + file.getName())
+            self.log(Level.INFO, "Processing file: " + file.getName())
             fileCount += 1
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
@@ -132,7 +136,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file")
             art.addAttribute(att)
 
-            
+
             # To further the example, this code will read the contents of the file and count the number of bytes
             inputStream = ReadContentInputStream(file)
             buffer = jarray.zeros(1024, "b")
