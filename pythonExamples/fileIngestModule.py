@@ -58,7 +58,7 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 
     # TODO: give it a unique name.  Will be shown in module list, logs, etc.
     moduleName = "Sample file ingest Module"
-	
+
     def getModuleDisplayName(self):
         return self.moduleName
 
@@ -87,7 +87,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
-        self.filesFound = 0		
+        self.filesFound = 0
 
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
         # raise IngestModuleException(IngestModule(), "Oh No!")
@@ -96,19 +96,32 @@ class SampleJythonFileIngestModule(FileIngestModule):
     # Where the analysis is done.  Each file will be passed into here.
     # TODO: Add your analysis code in here.
     def process(self, file):
-        
+
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().find(".txt") != -1:
-            
+
             self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", "Found a text file: " + file.getName())
             self.filesFound+=1
-			
+
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artfiact.  Refer to the developer docs for other examples.
             art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
             att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
 
+            # For the current file, we get all the artifacts. The artifactList should not be empty since we have added
+            # a new artifact - TSK_INTERESTING_FILE_HIT - (Line 110).
+            # We iterate through the artifactList(other modules might have added artifacts for the same file) and get
+            # attributes for that artifact. Again, the attributeList should not be empty since we have added a new
+            # attribute - "Text Files" - (Line 111, 112).
+            # We iterate through the attributeList and log every attribute.
+            # NOTE: Empty list (which may be returned by getArtifacts()/getAttributes()) is not coerced into non-iterable
+            # NoneType. Hence null check is not necessary.
+            artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+            for artifact in artifactList:
+                attributeList = artifact.getAttributes();
+                for attrib in attributeList:
+                    self.logger.logp(Level.INFO, SampleJythonFileIngestModule.__name__, "process", attrib.toString())
 
             # To further the example, this code will read the contents of the file and count the number of bytes
             inputStream = ReadContentInputStream(file)
@@ -118,7 +131,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             while (len != -1):
                     totLen = totLen + len
                     len = inputStream.read(buffer)
-            
+
         return IngestModule.ProcessResult.OK
 
     # Where any shutdown code is run and resources are freed.
