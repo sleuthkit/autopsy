@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +39,6 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -210,7 +208,15 @@ public class GroupPane extends BorderPane implements GroupView {
      */
     @ThreadConfined(type = ThreadType.UI)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
-    private FilesSyncListener filesSyncListener;
+
+    private final InvalidationListener filesSyncListener = (observable) -> {
+        final String header = getHeaderString();
+        final List<Long> fileIds = getGrouping().fileIds();
+        Platform.runLater(() -> {
+            gridView.getItems().setAll(fileIds);
+            groupLabel.setText(header);
+        });
+    };
 
     public GroupPane(ImageGalleryController controller) {
         this.controller = controller;
@@ -579,7 +585,7 @@ public class GroupPane extends BorderPane implements GroupView {
         } else {
             if (this.grouping.get() != viewState.getGroup()) {
                 this.grouping.set(viewState.getGroup());
-                filesSyncListener = new FilesSyncListener();
+
                 this.getGrouping().fileIds().addListener(filesSyncListener);
 
                 final String header = getHeaderString();
@@ -786,16 +792,4 @@ public class GroupPane extends BorderPane implements GroupView {
         }
     }
 
-    private class FilesSyncListener implements InvalidationListener {
-
-        @Override
-        public void invalidated(Observable observable) {
-            final String header = getHeaderString();
-            final List<Long> fileIds = ImmutableList.copyOf(getGrouping().fileIds());
-            Platform.runLater(() -> {
-                gridView.getItems().setAll(fileIds);
-                groupLabel.setText(header);
-            });
-        }
-    }
 }

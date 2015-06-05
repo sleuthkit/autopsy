@@ -1,0 +1,12 @@
+.groupTreeCell{
+
+    -fx-indent:5; /* default indent is 10 */
+}
+
+.unseen{
+    -fx-font-weight:bold;
+}
+
+.seen{
+    -fx-font-weight:normal;
+}

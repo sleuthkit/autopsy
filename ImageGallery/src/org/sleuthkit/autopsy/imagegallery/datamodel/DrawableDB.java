@@ -525,7 +525,7 @@ public class DrawableDB {
             updateGroupStmt.setString(2, gk.getAttribute().attrName.toString());
             updateGroupStmt.execute();
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Error marking group as seen", ex);
         } finally {
             dbWriteUnlock();
         }
