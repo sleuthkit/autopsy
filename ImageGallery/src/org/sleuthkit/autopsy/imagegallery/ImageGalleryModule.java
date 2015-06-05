@@ -109,7 +109,7 @@ public class ImageGalleryModule {
      * @return true if the drawable db is out of date for the given case, false
      *         otherwise
      */
-    public static boolean isCaseStale(Case c) {
+    public static boolean isDrawableDBStale(Case c) {
         if (c != null) {
             String stale = new PerCaseProperties(c).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.STALE);
             return StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : true;
