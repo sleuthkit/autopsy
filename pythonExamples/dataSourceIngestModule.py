@@ -86,13 +86,20 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         self.context = None
 
     # Where any setup and configuration is done
+    # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.context = context
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
 		# raise IngestModuleException(IngestModule(), "Oh No!")
         
+        
     # Where the analysis is done.
+    # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
+    # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
     # TODO: Add your analysis code in here.
     def process(self, dataSource, progressBar):
         if self.context.isJobCancelled():

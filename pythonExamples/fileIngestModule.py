@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
+from org.sleuthkit.datamodel import TskData
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
@@ -84,6 +85,8 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 class SampleJythonFileIngestModule(FileIngestModule):
 
     # Where any setup and configuration is done
+    # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
@@ -94,8 +97,14 @@ class SampleJythonFileIngestModule(FileIngestModule):
         pass
 
     # Where the analysis is done.  Each file will be passed into here.
+    # The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     # TODO: Add your analysis code in here.
     def process(self, file):
+        
+        # Skip non-files
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or (file.isFile() == False)):
+            return IngestModule.ProcessResult.OK
 
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().find(".txt") != -1:
@@ -109,14 +118,9 @@ class SampleJythonFileIngestModule(FileIngestModule):
             att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
 
-            # For the current file, we get all the artifacts. The artifactList should not be empty since we have added
-            # a new artifact - TSK_INTERESTING_FILE_HIT - (Line 110).
-            # We iterate through the artifactList(other modules might have added artifacts for the same file) and get
-            # attributes for that artifact. Again, the attributeList should not be empty since we have added a new
-            # attribute - "Text Files" - (Line 111, 112).
-            # We iterate through the attributeList and log every attribute.
-            # NOTE: Empty list (which may be returned by getArtifacts()/getAttributes()) is not coerced into non-iterable
-            # NoneType. Hence null check is not necessary.
+            # For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
+            # by other modules. We then iterate over its attributes.  We'll just print them, but you would probably
+            # want to do something with them. 
             artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
             for artifact in artifactList:
                 attributeList = artifact.getAttributes();
