@@ -21,8 +21,12 @@ package org.sleuthkit.autopsy.casemodule;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -34,17 +38,28 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import javax.jms.Connection;
+import javax.jms.JMSException;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
  * A collaboration monitor listens to local events and represents them as
@@ -130,12 +145,15 @@ final class CollaborationMonitor {
      *
      * @return The host name of this Autopsy node.
      */
-    private String getHostName() {
+    private static String getHostName() {
         String name;
         try {
             name = java.net.InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException notUsed) {
             name = System.getenv("COMPUTERNAME");
+        }
+        if (name.isEmpty()) {
+            name = "Collaborator";
         }
         return name;
     }
@@ -155,19 +173,21 @@ final class CollaborationMonitor {
             }
         }
 
+        Case.removeEventSubscriber(CASE_EVENTS_OF_INTEREST, localTasksManager);
+        eventPublisher.removeSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
+
         if (null != eventPublisher) {
             eventPublisher.removeSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
             eventPublisher.closeRemoteEventChannel();
         }
-
-        // RJCTODO: Shut down other stuff?
     }
 
     /**
      * The local tasks manager listens to local events and translates them into
      * tasks it broadcasts to collaborating nodes. Note that all access to the
      * task collections is synchronized since they may be accessed by both the
-     * threads publishing property change events and by the heartbeat thread.
+     * threads publishing property change events and by the heartbeat task
+     * thread.
      */
     private final class LocalTasksManager implements PropertyChangeListener {
 
@@ -213,7 +233,7 @@ final class CollaborationMonitor {
          * @param event An adding data source event.
          */
         synchronized void addDataSourceAddTask(AddingDataSourceEvent event) {
-            String status = String.format("%s adding data source", hostName); // RJCTODO: Bundle
+            String status = NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.addingDataSourceStatus.msg", hostName);
             uuidsToAddDataSourceTasks.put(event.getDataSourceId().hashCode(), new Task(++nextTaskId, status));
             eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
         }
@@ -236,7 +256,7 @@ final class CollaborationMonitor {
          * @param event A data source analysis started event.
          */
         synchronized void addDataSourceAnalysisTask(DataSourceAnalysisStartedEvent event) {
-            String status = String.format("%s analyzing %s", hostName, event.getDataSource().getName()); // RJCTODO: Bundle
+            String status = NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.analyzingDataSourceStatus.msg", hostName, event.getDataSource().getName());
             jobIdsTodataSourceAnalysisTasks.put(event.getDataSourceIngestJobId(), new Task(++nextTaskId, status));
             eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
         }
@@ -274,8 +294,8 @@ final class CollaborationMonitor {
      * Listens for collaboration event messages broadcast by collaboration
      * monitors on other nodes and translates them into remote tasks represented
      * locally using progress bars. Note that all access to the remote tasks is
-     * synchronized since it may be accessed by a JMS thread running code in the
-     * Autopsy event publisher and by a thread running periodic checks for
+     * synchronized since it may be accessed by both the threads publishing
+     * property change events and by the thread running periodic checks for
      * "stale" tasks.
      */
     private final class RemoteTasksManager implements PropertyChangeListener {
@@ -292,7 +312,7 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Update the remote tasks based to reflect a collaboration event
+         * Updates the remote tasks based to reflect a collaboration event
          * received from another node.
          *
          * @param event A collaboration event.
@@ -305,9 +325,10 @@ final class CollaborationMonitor {
         }
 
         /**
-         * RJCTODO
+         * Updates the remote tasks based to reflect a collaboration event
+         * received from another node.
          *
-         * @param event
+         * @param event A collaboration event.
          */
         synchronized void updateTasks(CollaborationEvent event) {
             // RJCTODO: This is a little hard to understand, consider some renaming
@@ -320,7 +341,9 @@ final class CollaborationMonitor {
         }
 
         /**
-         * RJCTODO
+         * Finishes any remote tasks that have gone stale, i.e., tasks for which
+         * updates have ceased, presumably because the collaborating node has
+         * gone down or there is a network issue.
          */
         synchronized void finishStaleTasks() {
             for (Iterator<Map.Entry<String, RemoteTasks>> it = hostsToTasks.entrySet().iterator(); it.hasNext();) {
@@ -353,7 +376,7 @@ final class CollaborationMonitor {
                  * Set the initial value of the last update time stamp.
                  */
                 lastUpdateTime = Instant.now();
-                
+
                 taskIdsToProgressBars = new HashMap<>();
                 event.getCurrentTasks().values().stream().forEach((task) -> {
                     ProgressHandle progress = ProgressHandleFactory.createHandle(event.getHostName());
@@ -374,7 +397,6 @@ final class CollaborationMonitor {
                  * Update the last update timestamp.
                  */
                 lastUpdateTime = Instant.now();
-
 
                 /**
                  * Create or update the progress bars for the current tasks of
@@ -412,7 +434,7 @@ final class CollaborationMonitor {
             }
 
             /**
-             * Unconditionally finishes the entire set or remote tasks. To be 
+             * Unconditionally finishes the entire set or remote tasks. To be
              * used when a host drops off unexpectedly.
              */
             void finishAllTasks() {
@@ -455,12 +477,14 @@ final class CollaborationMonitor {
     }
 
     /**
-     * RJCTODO
+     * A Runnable task that periodically deals with any remote tasks that have
+     * gone stale, i.e., tasks for which updates have ceased, presumably because
+     * the collaborating node has gone down or there is a network issue.
      */
     private final class StaleTaskDetectionTask implements Runnable {
 
         /**
-         * RJCTODO
+         * Check for stale remote tasks and clean them up, if found.
          */
         @Override
         public void run() {
@@ -481,8 +505,34 @@ final class CollaborationMonitor {
          */
         @Override
         public void run() {
-            // RJCTODO: Implement this.
+            CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
+            try {
+                DriverManager.getConnection("jdbc:postgresql://" + dbInfo.getHost() + ":" + dbInfo.getPort() + "/" + "postgres", dbInfo.getUserName(), dbInfo.getUserName()); // NON-NLS
+            } catch (SQLException ex) {
+                MessageNotifyUtil.Notify.error("Collaboration Failure", "Lost connection to database server"); // RJCTODO: Bundle
+            }
+
+            // RJCTODO: Can this be made to work...seems to wander off on line 519 and never comes back...
+//            try {
+//                String host = UserPreferences.getIndexingServerHost();
+//                String port = UserPreferences.getIndexingServerPort();
+//                HttpSolrServer solr = new HttpSolrServer("http://" + host + ":" + port + "/solr/" + Case.getCurrentCase().getTextIndexName());
+//                CoreAdminRequest.getStatus(Case.getCurrentCase().getTextIndexName(), solr);
+//            } catch (SolrServerException | IOException ex) {
+//                MessageNotifyUtil.Notify.error("Collaboration Failure", "Lost connection to keyword search server"); // RJCTODO: Bundle
+//            }
+
+            MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
+            try {
+                ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());
+                Connection connection = connectionFactory.createConnection();
+                connection.start();
+                connection.close();
+            } catch (URISyntaxException | JMSException ex) {
+                MessageNotifyUtil.Notify.error("Collaboration Failure", "Lost connection to messaging server"); // RJCTODO: Bundle
+            }
         }
+
     }
 
     /**
@@ -570,12 +620,28 @@ final class CollaborationMonitor {
         }
     }
 
+    /**
+     * Custom exception class for the collaboration monitor.
+     */
     static final class CollaborationMonitorException extends Exception {
 
+        /**
+         * Constructs and instance of the custom exception class for the
+         * collaboration monitor.
+         *
+         * @param message Exception message.
+         */
         CollaborationMonitorException(String message) {
             super(message);
         }
 
+        /**
+         * Constructs and instance of the custom exception class for the
+         * collaboration monitor.
+         *
+         * @param message Exception message.
+         * @param throwable Exception cause.
+         */
         CollaborationMonitorException(String message, Throwable throwable) {
             super(message, throwable);
         }

@@ -138,7 +138,7 @@ public class MessageNotifyUtil {
     }
 
     /**
-     * Utility to display notifications with baloons
+     * Utility to display notifications with balloons
      */
     public static class Notify {
 

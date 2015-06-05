@@ -271,11 +271,11 @@ public class Case {
             doCaseChange(null); //closes windows, etc            
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
+                if (null != oldCase.collaborationMonitor) {
+                    oldCase.collaborationMonitor.stop();
+                }
                 eventPublisher.closeRemoteEventChannel();
             }
-
-            // RJCTODO: Figure out how best to do this
-            currentCase.collaborationMonitor.stop();
         }
 
         if (newCase != null) {
@@ -293,22 +293,14 @@ public class Case {
                      * through the Case.getTextIndexName() API.
                      */
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
-                } catch (AutopsyEventException ex) {
-                    logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
-                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.ErrMsg"),
-                            NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.Title"),
-                            JOptionPane.WARNING_MESSAGE);
+                    currentCase.collaborationMonitor = new CollaborationMonitor();
+                } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
+                    logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
-            
-            try {
-                // RJCTODO: Figure out how best to do this
-                currentCase.collaborationMonitor = new CollaborationMonitor();
-            } catch (CollaborationMonitor.CollaborationMonitorException ex) {
-                // RJCTODO
-            }
-            
+                      
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
