@@ -70,7 +70,7 @@ final class CollaborationMonitor {
     private static final String EVENT_CHANNEL_NAME = "%s-Collaboration-Monitor-Events";
     private static final String COLLABORATION_MONITOR_EVENT = "COLLABORATION_MONITOR_EVENT";
     private static final Set<String> CASE_EVENTS_OF_INTEREST = new HashSet<>(Arrays.asList(new String[]{Case.Events.ADDING_DATA_SOURCE.toString(), Case.Events.DATA_SOURCE_ADDED.toString()}));
-    private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
+    private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 3;
     private static final String PERIODIC_TASK_THREAD_NAME = "collab-monitor-periodic-tasks-%d";
     private static final long HEARTBEAT_INTERVAL_MINUTES = 1;
     private static final long MAX_MISSED_HEARTBEATS = 5;
