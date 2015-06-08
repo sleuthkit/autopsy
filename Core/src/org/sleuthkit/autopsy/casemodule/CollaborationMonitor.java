@@ -369,7 +369,7 @@ final class CollaborationMonitor {
          */
         class RemoteTasks {
 
-            private final Duration MAX_MINUTES_WITHOUT_UPDATE = Duration.ofSeconds(HEARTBEAT_INTERVAL_MINUTES * MAX_MISSED_HEARTBEATS);
+            private final long MAX_MINUTES_WITHOUT_UPDATE = HEARTBEAT_INTERVAL_MINUTES * MAX_MISSED_HEARTBEATS;
             private Instant lastUpdateTime;
             private Map<Long, ProgressHandle> taskIdsToProgressBars;
 
@@ -460,7 +460,7 @@ final class CollaborationMonitor {
              * @return True or false.
              */
             boolean isStale() {
-                return MAX_MINUTES_WITHOUT_UPDATE.compareTo(Duration.between(lastUpdateTime, Instant.now())) >= 0;
+                return Duration.between(lastUpdateTime, Instant.now()).toMinutes() >= MAX_MINUTES_WITHOUT_UPDATE;
             }
         }
 
