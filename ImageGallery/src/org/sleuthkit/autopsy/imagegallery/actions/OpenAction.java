@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 
 @ActionID(category = "Tools",
-          id = "org.sleuthkit.autopsy.imagegallery.OpenAction")
+        id = "org.sleuthkit.autopsy.imagegallery.OpenAction")
 @ActionReference(path = "Menu/Tools" /* , position = 333 */)
 @ActionRegistration( //        iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png",
         lazy = false,
@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 @Messages("CTL_OpenAction=View Images/Videos")
 public final class OpenAction extends CallableSystemAction {
 
-    private final String Analyze_Images_Videos = "View Images/Videos";
+    private static final String VIEW_IMAGES_VIDEOS = "View Images/Videos";
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
@@ -65,7 +65,7 @@ public final class OpenAction extends CallableSystemAction {
     @Override
     public Component getToolbarPresenter() {
         JButton toolbarButton = new JButton(this);
-        toolbarButton.setText(Analyze_Images_Videos);
+        toolbarButton.setText(VIEW_IMAGES_VIDEOS);
         toolbarButton.addActionListener(this);
 
         return toolbarButton;
@@ -81,13 +81,13 @@ public final class OpenAction extends CallableSystemAction {
         }
         final Case currentCase = Case.getCurrentCase();
 
-        if (ImageGalleryModule.isCaseStale(currentCase)) {
-            //case is stale, ask what to do
-            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), "The image / video databse may be out of date. "
-                                                       + "Do you want to update and listen for further ingest results?\n"
-                                                       + "  Choosing 'no' will display the out of date results."
-                                                       + " Choosing 'cancel' will close the image /video gallery",
-                                                       "The image / video database may be out of date. ", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (ImageGalleryModule.isDrawableDBStale(currentCase)) {
+            //drawable db is stale, ask what to do
+            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), "The image / video database may be out of date. " + "Do you want to update and listen for further ingest results?\n"
+                    + "Choosing 'yes' will update the database and enable listening to future ingests."
+                    + "  Choosing 'no' will display the out of date results."
+                    + "  Choosing 'cancel' will close the image /video gallery",
+                    "Image Gallery", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
             switch (answer) {
                 case JOptionPane.YES_OPTION:
@@ -100,14 +100,14 @@ public final class OpenAction extends CallableSystemAction {
                     break; //do nothing
             }
         } else {
-            //case is not stale, just open it
+            //drawable db is not stale, just open it
             ImageGalleryTopComponent.openTopComponent();
         }
     }
 
     @Override
     public String getName() {
-        return Analyze_Images_Videos;
+        return VIEW_IMAGES_VIDEOS;
     }
 
     @Override

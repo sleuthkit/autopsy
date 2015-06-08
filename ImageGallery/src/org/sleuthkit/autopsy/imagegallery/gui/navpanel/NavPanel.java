@@ -159,7 +159,7 @@ public class NavPanel extends TabPane {
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
-                    if (g.getFilesWithHashSetHitsCount() > 0) {
+                    if (g.getHashSetHitsCount() > 0) {
                         insertIntoHashTree(g);
                     }
                 }
@@ -181,7 +181,7 @@ public class NavPanel extends TabPane {
 
         for (DrawableGroup g : controller.getGroupManager().getAnalyzedGroups()) {
             insertIntoNavTree(g);
-            if (g.getFilesWithHashSetHitsCount() > 0) {
+            if (g.getHashSetHitsCount() > 0) {
                 insertIntoHashTree(g);
             }
         }
@@ -201,7 +201,7 @@ public class NavPanel extends TabPane {
 
         for (DrawableGroup g : groups) {
             insertIntoNavTree(g);
-            if (g.getFilesWithHashSetHitsCount() > 0) {
+            if (g.getHashSetHitsCount() > 0) {
                 insertIntoHashTree(g);
             }
         }

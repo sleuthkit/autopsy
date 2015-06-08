@@ -22,8 +22,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  *
- * The {@link OnStart} annotation tells NetBeans to invoke this class's
- * {@link OnStart#run()} method
+ * The {@link org.openide.modules.OnStart} annotation tells NetBeans to invoke
+ * this class's {@link OnStart#run()} method
  */
 @org.openide.modules.OnStart
 public class OnStart implements Runnable {
@@ -31,7 +31,7 @@ public class OnStart implements Runnable {
     static private final Logger LOGGER = Logger.getLogger(OnStart.class.getName());
 
     /**
-
+     *
      *
      * This method is invoked by virtue of the {@link OnStart} annotation on the
      * {@link ImageGalleryModule} class

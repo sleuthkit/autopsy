@@ -39,6 +39,7 @@
 
 
 import jarray
+import inspect
 from java.lang import System
 from java.util.logging import Level
 from javax.swing import JCheckBox
@@ -68,10 +69,10 @@ class SampleFileIngestModuleWithUIFactory(IngestModuleFactoryAdapter):
 
     # TODO: give it a unique name.  Will be shown in module list, logs, etc.
     moduleName = "Sample Data Source Module with UI"
-    
+
     def getModuleDisplayName(self):
         return self.moduleName
-    
+
     # TODO: Give it a description
     def getModuleDescription(self):
         return "Sample module that does X, Y, and Z."
@@ -109,6 +110,11 @@ class SampleFileIngestModuleWithUIFactory(IngestModuleFactoryAdapter):
 # Looks at the attributes of the passed in file.
 class SampleFileIngestModuleWithUI(FileIngestModule):
 
+    _logger = Logger.getLogger(SampleFileIngestModuleWithUIFactory.moduleName)
+
+    def log(self, level, msg):
+        self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+
     # Autopsy will pass in the settings from the UI panel
     def __init__(self, settings):
         self.local_settings = settings
@@ -117,14 +123,12 @@ class SampleFileIngestModuleWithUI(FileIngestModule):
     # Where any setup and configuration is done
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
-        self.logger = Logger.getLogger(SampleFileIngestModuleWithUIFactory.moduleName)
-
         # As an example, determine if user configured a flag in UI
         if self.local_settings.getFlag():
-            self.logger.logp(Level.INFO, SampleFileIngestModuleWithUI.__name__, "startUp", "flag is set")
+            self.log(Level.INFO, "flag is set")
         else:
-            self.logger.logp(Level.INFO, SampleFileIngestModuleWithUI.__name__, "startUp", "flag is not set")
-        
+            self.log(Level.INFO, "flag is not set")
+
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
         # raise IngestModuleException(IngestModule(), "Oh No!")
         pass
@@ -171,7 +175,7 @@ class SampleFileIngestModuleWithUISettingsPanel(IngestModuleIngestJobSettingsPan
     # is present, it creates a read-only 'settings' property. This auto-
     # generated read-only property overshadows the instance-variable -
     # 'settings'
-    
+
     # We get passed in a previous version of the settings so that we can
     # prepopulate the UI
     # TODO: Update this for your UI
@@ -179,7 +183,7 @@ class SampleFileIngestModuleWithUISettingsPanel(IngestModuleIngestJobSettingsPan
         self.local_settings = settings
         self.initComponents()
         self.customizeComponents()
-    
+
     # TODO: Update this for your UI
     def checkBoxEvent(self, event):
         if self.checkbox.isSelected():
@@ -200,5 +204,4 @@ class SampleFileIngestModuleWithUISettingsPanel(IngestModuleIngestJobSettingsPan
     # Return the settings used
     def getSettings(self):
         return self.local_settings
-
 

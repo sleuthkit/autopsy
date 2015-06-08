@@ -342,7 +342,7 @@ public class IngestManager {
      * ingest message box, NetBeans progress handles, etc. Running interactively
      * is the default.
      */
-    public synchronized boolean isRunningInteractively() {
+    synchronized boolean isRunningInteractively() {
         return this.runInteractively;
     }
     
@@ -536,9 +536,8 @@ public class IngestManager {
             handle.cancel(true);
         }
 
-        // Cancel all the jobs already created.
+        // Cancel all the jobs already created. 
         for (IngestJob job : this.jobsById.values()) {
-            logger.log(Level.INFO, "Cancelling ingest job {0}, already cancelled is {1}", new Object[]{job.getId(), job.isCancelled()});
             job.cancel();
         }
     }

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.sevenzip;
+package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -30,13 +30,13 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Adapter from ReadContentInputStream to 
  * net.sf.sevenzipjbinding.IInStream stream interface
  */
-public class SevenZipContentReadStream implements IInStream {
-    
+class SevenZipContentReadStream implements IInStream {
+
     private ReadContentInputStream wrapped;
     private long length;
-    
+
     private static final Logger logger = Logger.getLogger(SevenZipContentReadStream.class.getName());
-    
+
     public SevenZipContentReadStream(ReadContentInputStream wrapped) {
         this.wrapped = wrapped;
         this.length = wrapped.getLength();
@@ -62,9 +62,9 @@ public class SevenZipContentReadStream implements IInStream {
                         NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.seek.exception.invalidOrigin",
                                             origin));
         }
-        
+
         return newPosition;
-        
+
     }
 
     @Override
@@ -76,21 +76,21 @@ public class SevenZipContentReadStream implements IInStream {
         if (bytes.length == 0) {
             return 0;
         }
-        
+
         try {
             int readBytes =  wrapped.read(bytes);
             if (readBytes < 1) {
                 return 0;
             }
             return readBytes;
-            
+
         } catch (IOException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.read.exception.errReadStream");
             logger.log(Level.SEVERE, msg, ex);
             throw new SevenZipException(msg, ex);
         }
     }
-   
+
     /**
      * Close the stream
      * @throws IOException 
