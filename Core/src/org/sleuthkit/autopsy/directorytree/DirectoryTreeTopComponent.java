@@ -52,6 +52,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -560,6 +561,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                CoreComponentControl.openCoreWindows();
+            }
             SwingUtilities.invokeLater(this::componentOpened);
         } // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
