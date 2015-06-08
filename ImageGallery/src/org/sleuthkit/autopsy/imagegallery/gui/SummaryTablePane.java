@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -35,12 +33,10 @@ import javafx.scene.layout.Priority;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -50,12 +46,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class SummaryTablePane extends AnchorPane implements Category.CategoryListener {
 
     private static SummaryTablePane instance;
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
 
     @FXML
     private TableColumn<Pair<Category, Integer>, String> catColumn;
@@ -98,7 +88,6 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         if (instance == null) {
             instance = new SummaryTablePane();
         }
-
         return instance;
     }
 
@@ -107,9 +96,8 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
      */
     @Override
     public void handleCategoryChanged(Collection<Long> ids) {
+        final ObservableList<Pair<Category, Integer>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
-            final ObservableList<Pair<Category, Integer>> data = FXCollections.observableArrayList();
-
             for (Category cat : Category.values()) {
                 try {
                     data.add(new Pair<>(cat, ImageGalleryController.getDefault().getGroupManager().countFilesWithCategory(cat)));
@@ -117,11 +105,11 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
                     Logger.getLogger(SummaryTablePane.class.getName()).log(Level.WARNING, "Error performing category file count");
                 }
             }
-            Platform.runLater(() -> {
-                if (tableView != null) {
-                    tableView.setItems(data);
-                }
-            });
         }
+        Platform.runLater(() -> {
+            if (tableView != null) {
+                tableView.setItems(data);
+            }
+        });
     }
 }

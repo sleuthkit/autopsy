@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -89,7 +90,7 @@ public enum ThumbnailCache {
     public final void clearCache() {
         cache.invalidateAll();
     }
-    
+
     /** get the cached thumbnail for the given file or generate a new one if
      * needed
      *
@@ -101,8 +102,8 @@ public enum ThumbnailCache {
     public Image get(DrawableFile<?> file) {
         try {
             return cache.get(file.getId(), () -> load(file)).orElse(null);
-        } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
-            LOGGER.log(Level.WARNING, "failed to load icon for file: " + file.getName(), ex);
+        } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
+            LOGGER.log(Level.WARNING, "failed to load icon for file: " + file.getName(), ex.getCause());
             return null;
         }
     }

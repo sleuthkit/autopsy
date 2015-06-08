@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.grouping;
 
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
 
@@ -27,9 +28,17 @@ import org.sleuthkit.datamodel.TagName;
  * key identifying information of a {@link Grouping}. Used to look up groups in
  * {@link Map}s and from the db.
  */
+@Immutable
 public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>> {
 
     private final T val;
+
+    private final DrawableAttribute<T> attr;
+
+    public GroupKey(DrawableAttribute<T> attr, T val) {
+        this.attr = attr;
+        this.val = val;
+    }
 
     public T getValue() {
         return val;
@@ -39,11 +48,15 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         return attr;
     }
 
-    private final DrawableAttribute<T> attr;
+    public String getValueDisplayName() {
+        return Objects.equals(attr, DrawableAttribute.TAGS)
+                ? ((TagName) getValue()).getDisplayName()
+                : getValue().toString();
+    }
 
-    public GroupKey(DrawableAttribute<T> attr, T val) {
-        this.attr = attr;
-        this.val = val;
+    @Override
+    public String toString() {
+        return "GroupKey: " + getAttribute() + " = " + getValue();
     }
 
     @Override
@@ -72,24 +85,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
     @Override
     public int compareTo(GroupKey<T> o) {
-        if (val instanceof Comparable) {
-            return ((Comparable<T>) val).compareTo(o.val);
-        } else {
-            return Integer.compare(val.hashCode(), o.val.hashCode());
-        }
-
+        return val.compareTo(o.val);
     }
 
-    public String getValueDisplayName() {
-        if (attr == DrawableAttribute.TAGS) {
-            return ((TagName) getValue()).getDisplayName();
-        } else {
-            return getValue().toString();
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "GroupKey: " + getAttribute() + " = " + getValue();
-    }
 }
