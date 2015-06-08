@@ -781,9 +781,9 @@ public class GroupPane extends BorderPane implements GroupView {
         if (shiftDown) {
             //TODO: do more hear to implement slicker multiselect
             int endIndex = grouping.get().fileIds().indexOf(newFileID);
-            int startIndex = IntStream.of(0, grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
+            int startIndex = IntStream.of(grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
             endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
-            List<Long> subList = grouping.get().fileIds().subList(startIndex, endIndex + 1);
+            List<Long> subList = grouping.get().fileIds().subList(Math.max(0, startIndex), Math.min(endIndex, grouping.get().fileIds().size()) + 1);
 
             globalSelectionModel.clearAndSelectAll(subList.toArray(new Long[subList.size()]));
             globalSelectionModel.select(newFileID);

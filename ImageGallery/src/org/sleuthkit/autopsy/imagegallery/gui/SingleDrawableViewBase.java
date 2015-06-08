@@ -255,6 +255,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
     protected abstract String getLabelText();
 
+    @SuppressWarnings("deprecation")
     protected void initialize() {
         followUpToggle.setOnAction((ActionEvent t) -> {
             if (followUpToggle.isSelected() == true) {
