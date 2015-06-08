@@ -60,8 +60,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     private static final Case currentCase = Case.getCurrentCase();
-    protected static final String moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
-    protected static final String moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
+    protected static final String moduleDirRelative = currentCase.getModuleOutputDirectoryRelativePath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
+    protected static final String moduleDirAbsolute = currentCase.getModuleDirectory() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
 
     private boolean archivextraction;
     private boolean imageExtraction;

@@ -342,7 +342,7 @@ public class IngestManager {
      * ingest message box, NetBeans progress handles, etc. Running interactively
      * is the default.
      */
-    public synchronized boolean isRunningInteractively() {
+    synchronized boolean isRunningInteractively() {
         return this.runInteractively;
     }
     
