@@ -51,6 +51,8 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.events.BlackboardPostEvent;
 import org.sleuthkit.autopsy.ingest.events.ContentChangedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -171,6 +173,24 @@ public class IngestManager {
          * and the new value is set to null.
          */
         CANCELLED,
+        /**
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is started. Both the old and new values of
+         * the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent to
+         * access event data.
+         */
+        DATA_SOURCE_ANALYSIS_STARTED,
+        /**
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is completed. Both the old and new values
+         * of the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent
+         * to access event data.
+         */
+        DATA_SOURCE_ANALYSIS_COMPLETED,
     };
 
     /**
@@ -345,7 +365,7 @@ public class IngestManager {
     public synchronized boolean isRunningInteractively() {
         return this.runInteractively;
     }
-    
+
     /**
      * Called by the custom installer for this package once the window system is
      * initialized, allowing the ingest manager to get the top component used to
@@ -631,6 +651,42 @@ public class IngestManager {
      */
     void fireIngestJobCancelled(long ingestJobId) {
         AutopsyEvent event = new AutopsyEvent(IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
+    }
+
+    /**
+     * Fire an ingest event signifying analysis of a data source started.
+     *
+     * @param ingestJobId The ingest job id.
+     * @param dataSourceIngestJobId The data source ingest job id.
+     * @param dataSource The data source.
+     */
+    void fireDataSourceAnalysisStarted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSourceIngestJobId, dataSource);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
+    }
+
+    /**
+     * Fire an ingest event signifying analysis of a data source finished.
+     *
+     * @param ingestJobId The ingest job id.
+     * @param dataSourceIngestJobId The data source ingest job id.
+     * @param dataSource The data source.
+     */
+    void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
+    }
+
+    /**
+     * Fire an ingest event signifying analysis of a data source was canceled.
+     *
+     * @param ingestJobId The ingest job id.
+     * @param dataSourceIngestJobId The data source ingest job id.
+     * @param dataSource The data source.
+     */
+    void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 

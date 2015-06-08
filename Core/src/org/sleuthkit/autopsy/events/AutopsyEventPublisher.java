@@ -134,13 +134,7 @@ public final class AutopsyEventPublisher {
      */
     public void publish(AutopsyEvent event) {
         publishLocally(event);
-        if (null != remotePublisher) {
-            try {
-                remotePublisher.publish(event);
-            } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
-            }
-        }
+        publishRemotely(event);
     }
 
     /**
@@ -152,4 +146,19 @@ public final class AutopsyEventPublisher {
         localPublisher.publish(event);
     }
 
+    /**
+     * Publishes an event to other Autopsy nodes only.
+     *
+     * @param event The event to publish.
+     */
+    public void publishRemotely(AutopsyEvent event) {
+        if (null != remotePublisher) {
+            try {
+                remotePublisher.publish(event);
+            } catch (JMSException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
+            }
+        }        
+    }
+    
 }
