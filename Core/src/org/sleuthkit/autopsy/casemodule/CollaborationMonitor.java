@@ -75,7 +75,7 @@ final class CollaborationMonitor {
     private static final long HEARTBEAT_INTERVAL_MINUTES = 1;
     private static final long MAX_MISSED_HEARTBEATS = 5;
     private static final long STALE_TASKS_DETECTION_INTERVAL_MINUTES = 2;
-    private static final long CRASH_DETECTION_INTERVAL_MINUTES = 5;
+    private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
     private static final long EXECUTOR_TERMINATION_WAIT_SECS = 30;
     private static final Logger logger = Logger.getLogger(CollaborationMonitor.class.getName());
     private final String hostName;
@@ -506,46 +506,77 @@ final class CollaborationMonitor {
      * message broker) and reports status to the user in case of a gap in
      * service.
      */
-    private final class CrashDetectionTask implements Runnable {
+    private final static class CrashDetectionTask implements Runnable {
+
+        private static boolean dbServerIsRunning = true;
+        private static boolean solrServerIsRunning = true;
+        private static boolean messageServerIsRunning = true;
+        private static final Object lock = new Object();
 
         /**
          * Monitor the availability of collaboration resources
          */
         @Override
         public void run() {
-            CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
-            try {
-                DriverManager.getConnection("jdbc:postgresql://" + dbInfo.getHost() + ":" + dbInfo.getPort() + "/" + "postgres", dbInfo.getUserName(), dbInfo.getUserName()); // NON-NLS
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Failed to connect to PostgreSQL", ex);
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
-            }
+            synchronized (lock) {
+                CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
+                try {
+                    DriverManager.getConnection("jdbc:postgresql://" + dbInfo.getHost() + ":" + dbInfo.getPort() + "/" + "postgres", dbInfo.getUserName(), dbInfo.getUserName()); // NON-NLS
+                    if (!dbServerIsRunning) {
+                        dbServerIsRunning = true;
+                        logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
+                    }
+                } catch (SQLException ex) {
+                    if (dbServerIsRunning) {
+                        dbServerIsRunning = false;
+                        logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server", ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
+                    }
+                }
 
-            /**
-             * TODO: Figure out what is wrong with this code. The call to
-             * construct the HttpSolrServer object never returns. Perhaps this
-             * is the result of a dependency of the solr-solrj-4.91.jar that is
-             * not satisfied. Removing the jar from wrapped jars for now.
-             */
+                /**
+                 * TODO: Figure out what is wrong with this code. The call to
+                 * construct the HttpSolrServer object never returns. Perhaps
+                 * this is the result of a dependency of the solr-solrj-4.91.jar
+                 * that is not satisfied. Removing the jar from wrapped jars for
+                 * now.
+                 */
 //            try {
 //                String host = UserPreferences.getIndexingServerHost();
 //                String port = UserPreferences.getIndexingServerPort();
-//                HttpSolrServer solr = new HttpSolrServer("http://" + host + ":" + port + "/solr");
+//                HttpSolrServer solr = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
 //                CoreAdminRequest.getStatus(Case.getCurrentCase().getTextIndexName(), solr);
+//                if (!solrServerIsRunning) {
+//                    solrServerIsRunning = true;
+//                    logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
+//                    MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
+//                }
 //            } catch (SolrServerException | IOException ex) {
-//                logger.log(Level.SEVERE, "Failed to connect to Solr", ex);
-//                MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+//                if (solrServerIsRunning) {
+//                    solrServerIsRunning = false;
+//                    logger.log(Level.SEVERE, "Failed to connect to Solr server", ex); //NON-NLS
+//                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+//                }
 //            }
-            
-            MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
-            try {
-                ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());
-                Connection connection = connectionFactory.createConnection();
-                connection.start();
-                connection.close();
-            } catch (URISyntaxException | JMSException ex) {
-                logger.log(Level.SEVERE, "Failed to connect to ActiveMQ", ex);
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
+                MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
+                try {
+                    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());
+                    Connection connection = connectionFactory.createConnection();
+                    connection.start();
+                    connection.close();
+                    if (!messageServerIsRunning) {
+                        messageServerIsRunning = true;
+                        logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
+                    }
+                } catch (URISyntaxException | JMSException ex) {
+                    if (messageServerIsRunning) {
+                        messageServerIsRunning = false;
+                        logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
+                    }
+                }
             }
         }
 
@@ -555,7 +586,7 @@ final class CollaborationMonitor {
      * An Autopsy event to be sent in event messages to the collaboration
      * monitors on other Autopsy nodes.
      */
-    private static final class CollaborationEvent extends AutopsyEvent implements Serializable {
+    private final static class CollaborationEvent extends AutopsyEvent implements Serializable {
 
         private static final long serialVersionUID = 1L;
         private final String hostName;
@@ -599,7 +630,7 @@ final class CollaborationMonitor {
     /**
      * A representation of a task in progress on this Autopsy node.
      */
-    private static final class Task implements Serializable {
+    private final static class Task implements Serializable {
 
         private static final long serialVersionUID = 1L;
         private final long id;
@@ -640,7 +671,7 @@ final class CollaborationMonitor {
     /**
      * Custom exception class for the collaboration monitor.
      */
-    static final class CollaborationMonitorException extends Exception {
+    final static class CollaborationMonitorException extends Exception {
 
         /**
          * Constructs and instance of the custom exception class for the
