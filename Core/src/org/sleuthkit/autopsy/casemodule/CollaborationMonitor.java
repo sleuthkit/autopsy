@@ -213,17 +213,19 @@ final class CollaborationMonitor {
          */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
-            String eventName = event.getPropertyName();
-            if (eventName.equals(Case.Events.ADDING_DATA_SOURCE.toString())) {
-                addDataSourceAddTask((AddingDataSourceEvent) event);
-            } else if (eventName.equals(Case.Events.ADDING_DATA_SOURCE_FAILED.toString())) {
-                removeDataSourceAddTask(((AddingDataSourceFailedEvent) event).getDataSourceId());
-            } else if (eventName.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                removeDataSourceAddTask(((DataSourceAddedEvent) event).getDataSourceId());
-            } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED.toString())) {
-                addDataSourceAnalysisTask((DataSourceAnalysisStartedEvent) event);
-            } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
-                removeDataSourceAnalysisTask((DataSourceAnalysisCompletedEvent) event);
+            if (AutopsyEvent.SourceType.LOCAL == ((AutopsyEvent) event).getSourceType()) {
+                String eventName = event.getPropertyName();
+                if (eventName.equals(Case.Events.ADDING_DATA_SOURCE.toString())) {
+                    addDataSourceAddTask((AddingDataSourceEvent) event);
+                } else if (eventName.equals(Case.Events.ADDING_DATA_SOURCE_FAILED.toString())) {
+                    removeDataSourceAddTask(((AddingDataSourceFailedEvent) event).getDataSourceId());
+                } else if (eventName.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    removeDataSourceAddTask(((DataSourceAddedEvent) event).getDataSourceId());
+                } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED.toString())) {
+                    addDataSourceAnalysisTask((DataSourceAnalysisStartedEvent) event);
+                } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
+                    removeDataSourceAnalysisTask((DataSourceAnalysisCompletedEvent) event);
+                }
             }
         }
 
