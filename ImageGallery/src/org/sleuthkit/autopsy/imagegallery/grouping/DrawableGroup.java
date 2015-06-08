@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.imagegallery.grouping;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 
 /**
  * Represents a set of image/video files in a group. The UI listens to changes
@@ -34,21 +36,37 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableGroup.class.getName());
 
-    /**
-     * the string to use when the groupkey is 'empty'
-     */
-    public static final String UNKNOWN = "unknown";
+    public static String getBlankGroupName() {
+        return "unknown";
+    }
 
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
 
     //cache the number of files in this groups with hashset hits
-    private int filesWithHashSetHitsCount = -1;
+    private int hashSetHitsCount = -1;
+    private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
     synchronized public ObservableList<Long> fileIds() {
         return fileIDs;
     }
 
     final public GroupKey<?> groupKey;
+
+    public GroupKey<?> getGroupKey() {
+        return groupKey;
+    }
+
+    public DrawableAttribute<?> getGroupByAttribute() {
+        return groupKey.getAttribute();
+    }
+
+    public Object getGroupByValue() {
+        return groupKey.getValue();
+    }
+
+    public String getGroupByValueDislpayName() {
+        return groupKey.getValueDisplayName();
+    }
 
     DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup) {
         this.groupKey = groupKey;
@@ -60,7 +78,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     public double getHashHitDensity() {
-        return getFilesWithHashSetHitsCount() / (double) getSize();
+        return getHashSetHitsCount() / (double) getSize();
     }
 
     /**
@@ -68,18 +86,18 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
      * so the hash counts may not longer be accurate.
      */
     synchronized public void invalidateHashSetHitsCount() {
-        filesWithHashSetHitsCount = -1;
+        hashSetHitsCount = -1;
     }
 
-    synchronized public int getFilesWithHashSetHitsCount() {
+    synchronized public int getHashSetHitsCount() {
         //TODO: use the drawable db for this ? -jm
-        if (filesWithHashSetHitsCount < 0) {
-            filesWithHashSetHitsCount = 0;
+        if (hashSetHitsCount < 0) {
+            hashSetHitsCount = 0;
             for (Long fileID : fileIds()) {
 
                 try {
                     if (ImageGalleryController.getDefault().getDatabase().isInHashSet(fileID)) {
-                        filesWithHashSetHitsCount++;
+                        hashSetHitsCount++;
                     }
                 } catch (IllegalStateException | NullPointerException ex) {
                     LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
@@ -87,7 +105,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 }
             }
         }
-        return filesWithHashSetHitsCount;
+        return hashSetHitsCount;
     }
 
     @Override
@@ -116,6 +134,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     synchronized public void addFile(Long f) {
         invalidateHashSetHitsCount();
+        seen.set(false);
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
         }
@@ -123,6 +142,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     synchronized public void removeFile(Long f) {
         invalidateHashSetHitsCount();
+        seen.set(false);
         fileIDs.removeAll(f);
     }
 
@@ -130,5 +150,17 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     @Override
     public int compareTo(DrawableGroup other) {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
+    }
+
+    void setSeen() {
+        this.seen.set(true);
+    }
+
+    public ReadOnlyBooleanWrapper seenProperty() {
+        return seen;
+    }
+
+    public boolean isSeen() {
+        return seen.get();
     }
 }

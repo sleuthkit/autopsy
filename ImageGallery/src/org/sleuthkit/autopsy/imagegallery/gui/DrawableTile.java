@@ -54,12 +54,7 @@ public class DrawableTile extends SingleDrawableViewBase implements Category.Cat
      * the central ImageView that shows a thumbnail of the represented file
      */
     @FXML
-    @ThreadConfined(type = ThreadType.UI)
     private ImageView imageView;
-
-    public ImageView getImageView() {
-        return imageView;
-    }
 
     @FXML
     private ResourceBundle resources;
@@ -89,9 +84,9 @@ public class DrawableTile extends SingleDrawableViewBase implements Category.Cat
         imageView.fitWidthProperty().bind(Toolbar.getDefault().sizeSliderValue());
 
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
-            try{
+            try {
                 setEffect(Objects.equals(newValue, fileID) ? LAST_SELECTED_EFFECT : null);
-            } catch (java.lang.IllegalStateException ex){
+            } catch (java.lang.IllegalStateException ex) {
                 Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile");
             }
         });
