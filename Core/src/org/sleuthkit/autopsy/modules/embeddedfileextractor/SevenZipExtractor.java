@@ -486,12 +486,6 @@ class SevenZipExtractor {
                 unpackedTree.addDerivedFilesToCase();
                 unpackedFiles = unpackedTree.getAllFileObjects();
 
-                if (!unpackedFiles.isEmpty()) {
-                    //currently sending a single event for all new files
-                    services.fireModuleContentEvent(new ModuleContentEvent(archiveFile));
-                    context.addFilesToJob(unpackedFiles);
-                }
-
                 //check if children are archives, update archive depth tracking
                 for (AbstractFile unpackedFile : unpackedFiles) {
                     if (isSevenZipExtractionSupported(unpackedFile)) {
@@ -562,6 +556,13 @@ class SevenZipExtractor {
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.encrFileDetected.details",
                     archiveFile.getName(), EmbeddedFileExtractorModuleFactory.getModuleName());
             services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
+        }
+
+        // adding unpacked extracted derived files to the job after closing relevant resources.
+         if (!unpackedFiles.isEmpty()) {
+            //currently sending a single event for all new files
+            services.fireModuleContentEvent(new ModuleContentEvent(archiveFile));
+            context.addFilesToJob(unpackedFiles);
         }
     }
 
