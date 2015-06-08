@@ -561,7 +561,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-            CoreComponentControl.openCoreWindows();
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                CoreComponentControl.openCoreWindows();
+            }
             SwingUtilities.invokeLater(this::componentOpened);
         } // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
