@@ -206,6 +206,8 @@ public class GroupPane extends BorderPane implements GroupView {
      * to determine whether fileIDs are visible or are offscreen. No entry
      * indicates the given fileID is not displayed on screen. DrawableCells are
      * responsible for adding and removing themselves from this map.
+     *
+     * TODO: use ConcurrentHashMap ?
      */
     @ThreadConfined(type = ThreadType.UI)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
@@ -500,30 +502,35 @@ public class GroupPane extends BorderPane implements GroupView {
     @ThreadConfined(type = ThreadType.UI)
     private void scrollToFileID(final Long newFileID) {
         if (newFileID == null) {
-            //scrolling to no file doesn't make sense, so abort.
-            return;
+            return;   //scrolling to no file doesn't make sense, so abort.
         }
 
-        int selectedIndex = grouping.get().fileIds().indexOf(newFileID);
-
+        final ObservableList<Long> fileIds = getGrouping().fileIds();
+        int selectedIndex = fileIds.indexOf(newFileID);
         if (selectedIndex == -1) {
             //somehow we got passed a file id that isn't in the curent group.
             //this should never happen, but if it does everything is going to fail, so abort.
             return;
         }
 
-        Optional<ScrollBar> scrollBarOptional = getScrollBar();
-        scrollBarOptional.ifPresent((ScrollBar scrollBar) -> {
+        getScrollBar().ifPresent(scrollBar -> {
             DrawableCell cell = cellMap.get(newFileID);
 
             //while there is no tile/cell for the given id, scroll based on index in group
-            while (cell == null) {
+            while (isNull(cell)) {
+                //TODO:  can we maintain a cached mapping from fileID-> index to speed up performance
+                //get the min and max index of files that are in the cellMap
                 Integer minIndex = cellMap.keySet().stream()
-                        .map(grouping.get().fileIds()::indexOf)
-                        .min(Integer::compare).get();
+                        .mapToInt(fileID -> fileIds.indexOf(fileID))
+                        .min().getAsInt();
                 Integer maxIndex = cellMap.keySet().stream()
-                        .map(grouping.get().fileIds()::indexOf)
-                        .max(Integer::compare).get();
+                        .mapToInt(fileID -> fileIds.indexOf(fileID))
+                        .max().getAsInt();
+
+                //[minIndex, maxIndex] is the range of indexes in the fileIDs list that are currently displayed
+                if (minIndex < 0 && maxIndex < 0) {
+                    return;
+                }
 
                 if (selectedIndex < minIndex) {
                     scrollBar.decrement();
@@ -535,18 +542,14 @@ public class GroupPane extends BorderPane implements GroupView {
                     scrollBar.adjustValue(.5);
                 }
                 cell = cellMap.get(newFileID);
-
             }
 
             final Bounds gridViewBounds = gridView.localToScene(gridView.getBoundsInLocal());
-
             Bounds tileBounds = cell.localToScene(cell.getBoundsInLocal());
 
             //while the cell is not within the visisble bounds of the gridview, scroll based on screen coordinates
             int i = 0;
-
-            while (gridViewBounds.contains(tileBounds)
-                    == false && (i++ < 100)) {
+            while (gridViewBounds.contains(tileBounds) == false && (i++ < 100)) {
 
                 if (tileBounds.getMinY() < gridViewBounds.getMinY()) {
                     scrollBar.decrement();
