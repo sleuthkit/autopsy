@@ -527,9 +527,6 @@ public class Case {
      */
     public void notifyNewDataSource(Content newDataSource) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
-        if (IngestManager.getInstance().isRunningInteractively()) {
-            CoreComponentControl.openCoreWindows();
-        }
     }
 
     /**
