@@ -23,14 +23,25 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * RJCTODO
+ * Event published when analysis (ingest) of a data source included in an ingest
+ * job is started.
  */
 public class DataSourceAnalysisStartedEvent extends DataSourceAnalysisEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Constructs an event published when analysis (ingest) of a data source
+     * included in an ingest job is started.
+     *
+     * @param ingestJobId The identifier of the ingest job, specific to this
+     * node.
+     * @param dataSourceIngestJobId The identifier of the data source ingest
+     * job,specific to this node.
+     * @param dataSource The data source.
+     */
     public DataSourceAnalysisStartedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, ingestJobId, dataSourceIngestJobId, dataSource);
     }
-    
+
 }

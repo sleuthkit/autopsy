@@ -25,31 +25,29 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
- * Event published when a data source is being added to a case.
+ * Event published when an attempt to add a data source to a case fails.
  */
 @Immutable
-public final class AddingDataSourceEvent extends AutopsyEvent implements Serializable {
+public final class AddingDataSourceFailedEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final UUID dataSourceId;
 
     /**
-     * Constructs an event published when a data source is being added to a
-     * case.
+     * Constructs an event published when an attempt to add a data source to a
+     * case fails.
      *
      * @param dataSourceId A unique identifier associated with the data source.
-     * Used to pair this AddingDataSourceEvent with a DataSourceAddedEvent or a
-     * AddingDataSourceFailedEvent.
+     * Used to pair this AddingDataSourceFailedEvent with a AddingDataSourceEvent.
      */
-    public AddingDataSourceEvent(UUID dataSourceId) {
-        super(Case.Events.ADDING_DATA_SOURCE.toString(), null, null);
+    public AddingDataSourceFailedEvent(UUID dataSourceId) {
+        super(Case.Events.ADDING_DATA_SOURCE_FAILED.toString(), null, null);
         this.dataSourceId = dataSourceId;
     }
 
     /**
      * Gets the unique id for the data source used to pair this
-     * AddindDataSourceEvent with a a DataSourceAddedEvent or a
-     * AddingDataSourceFailedEvent.
+     * AddingDataSourceFailedEvent with a AddingDataSourceEvent.
      *
      * @return The unique id.
      */

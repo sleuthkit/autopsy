@@ -310,7 +310,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         if (!newContents.isEmpty()) {            
              Case.getCurrentCase().notifyNewDataSource(newContents.get(0), dataSourceId);
         } else {
-             Case.getCurrentCase().notifyNewDataSource(null, dataSourceId);   // RJCTODO: Update for null scenario         
+             Case.getCurrentCase().notifyFailedAddingNewDataSource(dataSourceId);
         }
 
         

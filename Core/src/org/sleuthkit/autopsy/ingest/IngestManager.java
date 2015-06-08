@@ -174,11 +174,21 @@ public class IngestManager {
          */
         CANCELLED,
         /**
-         * RJCTODO
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is started. Both the old and new values of
+         * the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent to
+         * access event data.
          */
         DATA_SOURCE_ANALYSIS_STARTED,
         /**
-         * RJCTODO
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is completed. Both the old and new values
+         * of the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent
+         * to access event data.
          */
         DATA_SOURCE_ANALYSIS_COMPLETED,
     };
@@ -355,7 +365,7 @@ public class IngestManager {
     synchronized boolean isRunningInteractively() {
         return this.runInteractively;
     }
-    
+
     /**
      * Called by the custom installer for this package once the window system is
      * initialized, allowing the ingest manager to get the top component used to
@@ -664,7 +674,7 @@ public class IngestManager {
      * @param dataSource The data source.
      */
     void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.COMPLETED);
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -676,7 +686,7 @@ public class IngestManager {
      * @param dataSource The data source.
      */
     void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.CANCELLED);
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 

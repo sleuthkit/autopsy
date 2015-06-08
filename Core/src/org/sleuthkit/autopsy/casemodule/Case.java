@@ -50,6 +50,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
+import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -119,23 +120,33 @@ public class Case {
         /**
          * Property name used for a property change event that indicates a new
          * data source (image, local/logical file or local disk) is being added
-         * to the current case. The new value field of the property change event
-         * is the path of the data source.
+         * to the current case. The old and new values of the
+         * PropertyChangeEvent are null - cast the PropertyChangeEvent to
+         * org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent to
+         * access event data.
          */
         ADDING_DATA_SOURCE,
         /**
+         * Property name used for a property change event that indicates a
+         * failure adding a new data source (image, local/logical file or local
+         * disk) to the current case. The old and new values of the
+         * PropertyChangeEvent are null - cast the PropertyChangeEvent to
+         * org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent
+         * to access event data.
+         */
+        ADDING_DATA_SOURCE_FAILED,
+        /**
          * Property name that indicates a new data source (image, disk or local
-         * file) has been added to the current case. The old and new values of
-         * the PropertyChangeEvent are null - cast the PropertyChangeEvent to
-         * org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent to
-         * access event data.
+         * file) has been added to the current case. The new value is the
+         * newly-added instance of the new data source, and the old value is
+         * always null.
          */
         DATA_SOURCE_ADDED,
         /**
          * Property name that indicates a data source has been removed from the
          * current case. The "old value" is the (int) content ID of the data
          * source that was removed, the new value is the instance of the data
-         * source. RJCTODO: Improve this doc
+         * source.
          */
         DATA_SOURCE_DELETED,
         /**
@@ -215,7 +226,7 @@ public class Case {
     private boolean hasData = false;
 
     private CollaborationMonitor collaborationMonitor;
-    
+
     /**
      * Constructor for the Case class
      */
@@ -295,12 +306,13 @@ public class Case {
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                     currentCase.collaborationMonitor = new CollaborationMonitor();
                 } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
+                    currentCase.collaborationMonitor.stop();
                     logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
-                      
+
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
@@ -546,6 +558,16 @@ public class Case {
         eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
     }
 
+    /**
+     * Notifies case event subscribers (property change listeners) that a data
+     * source failed to be added to the case database.
+     *
+     * @param dataSourceId A unique identifier for the data source.
+     */
+    public void notifyFailedAddingNewDataSource(UUID dataSourceId) {
+        eventPublisher.publish(new AddingDataSourceFailedEvent(dataSourceId));
+    }
+    
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
