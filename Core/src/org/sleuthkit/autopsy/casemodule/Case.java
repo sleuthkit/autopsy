@@ -555,8 +555,8 @@ public class Case {
      * the same UUID used to call notifyAddingNewDataSource() when the process
      * of adding the data source began.
      */
-    public void notifyNewDataSource(Content newDataSource) {
-        eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
+    public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
+        eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
     }
 
     /**
