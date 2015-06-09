@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
@@ -34,6 +35,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import static org.sleuthkit.autopsy.imagegallery.gui.SingleDrawableViewBase.globalSelectionModel;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label
@@ -98,9 +100,18 @@ public class DrawableTile extends SingleDrawableViewBase implements TagUtils.Tag
     }
 
     @Override
-    @ThreadConfined(type = ThreadType.UI)
+    @ThreadConfined(type = ThreadType.JFX)
     protected void clearContent() {
         imageView.setImage(null);
+    }
+
+    @Override
+    protected void updateSelectionState() {
+        super.updateSelectionState();
+        final boolean lastSelected = Objects.equals(globalSelectionModel.lastSelectedProperty().get(), fileID);
+        Platform.runLater(() -> {
+            setEffect(lastSelected ? LAST_SELECTED_EFFECT : null);
+        });
     }
 
     @Override
