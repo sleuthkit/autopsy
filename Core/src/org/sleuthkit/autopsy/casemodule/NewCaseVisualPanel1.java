@@ -60,7 +60,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         } else {
             rbSingleUserCase.setEnabled(true);
             rbMultiUserCase.setEnabled(true);
-            if (true == info.settingsValid()) {
+            if (true == info.canConnect()) {
                     rbMultiUserCase.setSelected(true); // default to multi-user if available
             } else {
                 // if we cannot connect to the shared database, don't present the option
