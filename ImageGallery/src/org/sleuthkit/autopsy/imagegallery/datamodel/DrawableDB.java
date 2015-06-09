@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -54,6 +55,7 @@ import static org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy.GROUP_BY_V
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
@@ -1166,21 +1168,26 @@ public class DrawableDB {
     public void updateHashSetsForFile(Long id) {
 
         try {
-            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
-            Set<String> hashNames = new HashSet<>();
-            for (BlackboardArtifact a : arts) {
-                List<BlackboardAttribute> attrs = a.getAttributes();
-                for (BlackboardAttribute attr : attrs) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                        hashNames.add(attr.getValueString());
-                    }
-                }
-            }
+            Set<String> hashNames = getHashSetsForFileHelper(id);
             hashSetMap.put(id, hashNames);
         } catch (IllegalStateException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "could not access case during updateHashSetsForFile()", ex);
 
         }
+    }
+
+    private Set<String> getHashSetsForFileHelper(Long id) throws TskCoreException, IllegalStateException {
+        List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
+        Set<String> hashNames = new HashSet<>();
+        for (BlackboardArtifact a : arts) {
+            List<BlackboardAttribute> attrs = a.getAttributes();
+            for (BlackboardAttribute attr : attrs) {
+                if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                    hashNames.add(attr.getValueString());
+                }
+            }
+        }
+        return hashNames;
     }
 
     /**
@@ -1224,7 +1231,6 @@ public class DrawableDB {
                 while (analyzedQuery.next()) {
                     addImageFileToList(analyzedQuery.getLong(OBJ_ID));
                 }
-
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem loading file IDs: ", ex);
             } finally {
@@ -1233,80 +1239,29 @@ public class DrawableDB {
         }
     }
 
-    /**
-     * For performance reasons, keep current category counts in memory
-     */
-    @GuardedBy("categoryCounts")
-    private final Map<Category, Integer> categoryCounts = new HashMap<>();
+    public long getCategoryCount(Category t) {
+        try {
+            return Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(t.getTagName()).stream()
+                    .map(ContentTag::getContent)
+                    .map(Content::getId)
+                    .filter(this::isDrawableFile)
+                    .count();
 
-    public void incrementCategoryCount(Category cat) throws TskCoreException {
-        if (cat != Category.ZERO) {
-            synchronized (categoryCounts) {
-                int count = getCategoryCount(cat);
-                count++;
-                categoryCounts.put(cat, count);
-            }
+        } catch (IllegalStateException ex) {
+            LOGGER.log(Level.WARNING, "Case closed while getting files");
+        } catch (TskCoreException ex1) {
+            LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
         }
-    }
-
-    public void decrementCategoryCount(Category cat) throws TskCoreException {
-        if (cat != Category.ZERO) {
-            synchronized (categoryCounts) {
-                int count = getCategoryCount(cat);
-                count--;
-                categoryCounts.put(cat, count);
-            }
-        }
-    }
-
-    public int getCategoryCount(Category cat) throws TskCoreException {
-        synchronized (categoryCounts) {
-            if (cat == Category.ZERO) {
-                // Keeping track of the uncategorized files is a bit tricky while ingest
-                // is going on, so always use the list of file IDs we already have along with the
-                // other category counts instead of trying to track it separately.
-                int allOtherCatCount = getCategoryCount(Category.ONE) + getCategoryCount(Category.TWO) + getCategoryCount(Category.THREE)
-                        + getCategoryCount(Category.FOUR) + getCategoryCount(Category.FIVE);
-                return getNumberOfImageFilesInList() - allOtherCatCount;
-            } else if (categoryCounts.containsKey(cat)) {
-                return categoryCounts.get(cat);
-            } else {
-                try {
-                    int fileCount = 0;
-                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
-                    for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile) {
-                            AbstractFile f = (AbstractFile) ct.getContent();
-                            if (this.isDrawableFile(f.getId())) {
-                                fileCount++;
-                            }
-                        }
-                    }
-                    categoryCounts.put(cat, fileCount);
-                    return fileCount;
-                } catch (IllegalStateException ex) {
-                    throw new TskCoreException("Case closed while getting files");
-                }
-            }
-        }
+        return -1;
     }
 
     /**
      * For performance reasons, keep the file type in memory
      */
-    @GuardedBy("videoFileMap")
-    private final Map<Long, Boolean> videoFileMap = new HashMap<>();
+    private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
 
     public boolean isVideoFile(AbstractFile f) throws TskCoreException {
-        synchronized (videoFileMap) {
-            if (videoFileMap.containsKey(f.getId())) {
-                return videoFileMap.get(f.getId());
-            }
-
-            boolean isVideo = ImageGalleryModule.isVideoFile(f);
-            videoFileMap.put(f.getId(), isVideo);
-            return isVideo;
-        }
+        return videoFileMap.computeIfAbsent(f, ImageGalleryModule::isVideoFile);
     }
 
     /**

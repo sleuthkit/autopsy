@@ -78,7 +78,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private DrawableDB db;
 
     private final ImageGalleryController controller;
-
+    private CategoryCache categoryCache;
     /**
      * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
      * not
@@ -136,6 +136,20 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
 
+    }
+
+    public void incrementCategoryCount(Category cat) {
+        if (categoryCache == null) {
+            categoryCache = new CategoryCache(db);
+        }
+        categoryCache.incrementCategoryCount(cat);
+    }
+
+    public void decrementCategoryCount(Category cat) {
+        if (categoryCache == null) {
+            categoryCache = new CategoryCache(db);
+        }
+        categoryCache.decrementCategoryCount(cat);
     }
 
     /**
@@ -527,8 +541,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @throws TskCoreException
      */
-    public int countFilesWithCategory(Category category) throws TskCoreException {
-        return db.getCategoryCount(category);
+    public long countFilesWithCategory(Category category) throws TskCoreException {
+        return categoryCache.getCategoryCount(category);
     }
 
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {

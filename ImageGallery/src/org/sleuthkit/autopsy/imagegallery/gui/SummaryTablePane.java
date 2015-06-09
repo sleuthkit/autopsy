@@ -48,13 +48,13 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
     private static SummaryTablePane instance;
 
     @FXML
-    private TableColumn<Pair<Category, Integer>, String> catColumn;
+    private TableColumn<Pair<Category, Long>, String> catColumn;
 
     @FXML
-    private TableColumn<Pair<Category, Integer>, Integer> countColumn;
+    private TableColumn<Pair<Category, Long>, Long> countColumn;
 
     @FXML
-    private TableView<Pair<Category, Integer>> tableView;
+    private TableView<Pair<Category, Long>> tableView;
 
     @FXML
     void initialize() {
@@ -68,10 +68,10 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         tableView.prefHeightProperty().set(7 * 25);
 
         //set up columns
-        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Integer>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
+        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
         catColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
-        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Integer>, Integer> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
+        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, Long> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
         countColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
         tableView.getColumns().setAll(Arrays.asList(catColumn, countColumn));
@@ -96,7 +96,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
      */
     @Override
     public void handleCategoryChanged(Collection<Long> ids) {
-        final ObservableList<Pair<Category, Integer>> data = FXCollections.observableArrayList();
+        final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {
                 try {
