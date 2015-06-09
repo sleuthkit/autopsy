@@ -85,7 +85,6 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
@@ -499,13 +498,13 @@ public class GroupPane extends BorderPane implements GroupView {
         setViewState(controller.viewState().get());
     }
 
-    @ThreadConfined(type = ThreadType.UI)
+    @ThreadConfined(type = ThreadType.JFX)
     private void scrollToFileID(final Long newFileID) {
         if (newFileID == null) {
             return;   //scrolling to no file doesn't make sense, so abort.
         }
 
-        final ObservableList<Long> fileIds = getGrouping().fileIds();
+        final ObservableList<Long> fileIds = gridView.getItems();
         int selectedIndex = fileIds.indexOf(newFileID);
         if (selectedIndex == -1) {
             //somehow we got passed a file id that isn't in the curent group.
