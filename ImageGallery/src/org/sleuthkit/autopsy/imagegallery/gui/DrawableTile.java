@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import java.net.URL;
 import java.util.Objects;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -35,17 +33,17 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
-import static org.sleuthkit.autopsy.imagegallery.gui.SingleDrawableViewBase.globalSelectionModel;
+import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSelectionModel;
 
 /**
- * GUI component that represents a single image as a tile with an icon, a label
+ * GUI component that represents a single image as a tile with an icon, a label,
  * a color coded border and possibly other controls. Designed to be in a
  * {@link GroupPane}'s TilePane or SlideShow.
  *
  *
  * TODO: refactor this to extend from {@link Control}? -jm
  */
-public class DrawableTile extends SingleDrawableViewBase implements TagUtils.TagListener {
+public class DrawableTile extends DrawableViewBase implements TagUtils.TagListener {
 
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 
@@ -56,12 +54,6 @@ public class DrawableTile extends SingleDrawableViewBase implements TagUtils.Tag
      */
     @FXML
     private ImageView imageView;
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
 
     @Override
     protected void disposeContent() {
@@ -105,6 +97,9 @@ public class DrawableTile extends SingleDrawableViewBase implements TagUtils.Tag
         imageView.setImage(null);
     }
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
     protected void updateSelectionState() {
         super.updateSelectionState();

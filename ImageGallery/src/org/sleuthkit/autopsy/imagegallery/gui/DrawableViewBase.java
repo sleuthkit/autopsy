@@ -89,9 +89,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * of {@link DrawableView}s should implement the interface directly
  *
  */
-public abstract class SingleDrawableViewBase extends AnchorPane implements DrawableView {
+public abstract class DrawableViewBase extends AnchorPane implements DrawableView {
 
-    private static final Logger LOGGER = Logger.getLogger(SingleDrawableViewBase.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DrawableViewBase.class.getName());
 
     private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
@@ -142,11 +142,11 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     protected Long fileID;
 
     /**
-     * the groupPane this {@link SingleDrawableViewBase} is embedded in
+     * the groupPane this {@link DrawableViewBase} is embedded in
      */
     protected GroupPane groupPane;
 
-    protected SingleDrawableViewBase() {
+    protected DrawableViewBase() {
 
         globalSelectionModel.getSelected().addListener((Observable observable) -> {
             updateSelectionState();
@@ -187,7 +187,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                             groupContextMenu.hide();
                         }
                         contextMenu = buildContextMenu();
-                        contextMenu.show(SingleDrawableViewBase.this, t.getScreenX(), t.getScreenY());
+                        contextMenu.show(DrawableViewBase.this, t.getScreenX(), t.getScreenY());
 
                         break;
                 }
@@ -386,10 +386,14 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         }
     }
 
+    /**
+     * update the visual representation of the selection state of this
+     * DrawableView
+     */
     protected void updateSelectionState() {
         final boolean selected = globalSelectionModel.isSelected(fileID);
         Platform.runLater(() -> {
-            SingleDrawableViewBase.this.setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
+            setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
         });
     }
 
@@ -399,6 +403,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     }
 
     @Subscribe
+    @Override
     public void handleCategoryChanged(CategoryChangeEvent evt) {
         if (evt.getIds().contains(fileID)) {
             updateCategoryBorder();

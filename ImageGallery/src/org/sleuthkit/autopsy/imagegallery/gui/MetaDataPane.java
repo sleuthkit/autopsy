@@ -20,17 +20,13 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 
 import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -47,7 +43,6 @@ import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
@@ -59,7 +54,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Shows details of the selected file.
  */
 public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, DrawableView {
 
@@ -71,12 +66,6 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
 
     @FXML
     private ImageView imageView;
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
 
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, DrawableAttribute<?>> attributeColumn;
@@ -133,7 +122,7 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
                         .filter((String t) -> t.startsWith(Category.CATEGORY_PREFIX) == false)
                         .collect(Collectors.joining(" ; ", "", "")));
             } else {
-                return new SimpleStringProperty(StringUtils.join((Collection<?>) p.getValue().getValue(), " ; "));
+                return new SimpleStringProperty(StringUtils.join((Iterable<?>) p.getValue().getValue(), " ; "));
             }
         });
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
@@ -194,15 +183,8 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
             try {
                 file = controller.getFileFromId(fileID);
                 updateUI();
-
-                file.categoryProperty().addListener(new ChangeListener<Category>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Category> ov, Category t, final Category t1) {
-                        updateUI();
-                    }
-                });
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.WARNING, "Failed to get drawable file from ID", ex);
             }
         }
     }
@@ -238,6 +220,7 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
         return imageBorder;
     }
 
+    /** {@inheritDoc } */
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryChangeEvent evt) {

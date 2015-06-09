@@ -16,11 +16,14 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
 /**
- * TODO: extract common interface out of {@link SingleImageView} and
- * {@link MetaDataPane}
+ * Interface for classes that are views of a single DrawableFile. Implementation
+ * of DrawableView must be registered with {@link CategoryManager#registerListener(java.lang.Object)
+ * } to have there {@link DrawableView#handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent)
+ * } method invoked
  */
 public interface DrawableView extends TagUtils.TagListener {
 
@@ -53,6 +56,14 @@ public interface DrawableView extends TagUtils.TagListener {
 
     Long getFileID();
 
+    /**
+     * update the visual representation of the category of the assigned file.
+     * Implementations of {@link DrawableView} must register themselves with
+     * {@link CategoryManager#registerListener(java.lang.Object)} to ahve this
+     * method invoked
+     *
+     * @param evt the CategoryChangeEvent to handle
+     */
     @Subscribe
     void handleCategoryChanged(CategoryChangeEvent evt);
 

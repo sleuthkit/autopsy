@@ -20,14 +20,20 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.util.Collection;
 import java.util.Collections;
+import javax.annotation.concurrent.Immutable;
 
 /**
- *
+ * Event broadcast to various UI componenets when one or more files' category
+ * has been changed
  */
+@Immutable
 public class CategoryChangeEvent {
 
     private final Collection<Long> ids;
 
+    /**
+     * @return the fileIDs of the files whose categories have changed
+     */
     public Collection<Long> getIds() {
         return Collections.unmodifiableCollection(ids);
     }
@@ -35,5 +41,4 @@ public class CategoryChangeEvent {
     public CategoryChangeEvent(Collection<Long> ids) {
         this.ids = ids;
     }
-
 }

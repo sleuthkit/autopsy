@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 
 import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
-import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -34,13 +33,10 @@ import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays summary statistics (counts) for each group
@@ -105,11 +101,7 @@ public class SummaryTablePane extends AnchorPane {
         final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {
-                try {
-                    data.add(new Pair<>(cat, ImageGalleryController.getDefault().getCategoryManager().getCategoryCount(cat)));
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(SummaryTablePane.class.getName()).log(Level.WARNING, "Error performing category file count");
-                }
+                data.add(new Pair<>(cat, ImageGalleryController.getDefault().getCategoryManager().getCategoryCount(cat)));
             }
         }
         Platform.runLater(() -> {

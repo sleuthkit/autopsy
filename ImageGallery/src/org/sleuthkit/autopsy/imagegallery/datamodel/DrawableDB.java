@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
@@ -67,10 +68,10 @@ import org.sqlite.SQLiteJDBCLoader;
  * database. This class borrows a lot of ideas and techniques (for good or ill)
  * from {@link  SleuthkitCase}.
  *
- * TODO: Creating an abstract base class for sqlite databases* may make sense in
- * the future. see also {@link EventsDB}
+ * TODO: Creating an abstract base class for sqlite databases may make sense in
+ * the future. see also {@link EventsDB} in the timeline viewer.
  */
-public class DrawableDB {
+public final class DrawableDB {
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(DrawableDB.class.getName());
 
@@ -129,9 +130,7 @@ public class DrawableDB {
      */
     private final HashSet<FileUpdateEvent.FileUpdateListener> updateListeners = new HashSet<>();
 
-    private GroupManager manager;
-
-    private ImageGalleryController controller;
+    private GroupManager groupManager;
 
     private final Path dbPath;
 
@@ -148,6 +147,7 @@ public class DrawableDB {
             LOGGER.log(Level.SEVERE, "Failed to load sqlite JDBC driver", ex);
         }
     }
+    private final SleuthkitCase tskCase;
 
     //////////////general database logic , mostly borrowed from sleuthkitcase
     /**
@@ -196,11 +196,11 @@ public class DrawableDB {
      *
      * @throws SQLException if there is problem creating or configuring the db
      */
-    private DrawableDB(Path dbPath) throws SQLException, ExceptionInInitializerError, IOException {
-
+    private DrawableDB(Path dbPath, SleuthkitCase tskCase) throws SQLException, ExceptionInInitializerError, IOException {
         this.dbPath = dbPath;
+        this.tskCase = tskCase;
         Files.createDirectories(dbPath.getParent());
-        if (initializeDB()) {
+        if (initializeDBSchema()) {
             updateFileStmt = prepareStatement(
                     "INSERT OR REPLACE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) "
                     + "VALUES (?,?,?,?,?,?,?,?)");
@@ -230,9 +230,11 @@ public class DrawableDB {
 
             insertHashHitStmt = prepareStatement("insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)");
 
+            initializeImageList();
         } else {
             throw new ExceptionInInitializerError();
         }
+
     }
 
     /**
@@ -282,14 +284,10 @@ public class DrawableDB {
      *
      * @return
      */
-    public static DrawableDB getDrawableDB(Path dbPath, ImageGalleryController controller) {
+    public static DrawableDB getDrawableDB(Path dbPath, SleuthkitCase tskCase) {
 
         try {
-            Path dbFilePath = dbPath.resolve("drawable.db");
-
-            DrawableDB drawableDB = new DrawableDB(dbFilePath);
-            drawableDB.controller = controller;
-            return drawableDB;
+            return new DrawableDB(dbPath.resolve("drawable.db"), tskCase);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex);
             return null;
@@ -341,7 +339,7 @@ public class DrawableDB {
      * @return the number of rows in the table , count > 0 indicating an
      *         existing table
      */
-    private boolean initializeDB() {
+    private boolean initializeDBSchema() {
         try {
             if (isClosed()) {
                 openDBCon();
@@ -956,7 +954,7 @@ public class DrawableDB {
      */
     private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
-            AbstractFile f = controller.getSleuthKitCase().getAbstractFileById(id);
+            AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f, analyzed, isVideoFile(f));
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id, ex);
@@ -974,7 +972,7 @@ public class DrawableDB {
      */
     public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
         try {
-            AbstractFile f = controller.getSleuthKitCase().getAbstractFileById(id);
+            AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f,
                     areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (IllegalStateException ex) {
@@ -988,9 +986,9 @@ public class DrawableDB {
         if (groupKey.getAttribute().isDBColumn) {
             switch (groupKey.getAttribute().attrName) {
                 case CATEGORY:
-                    return manager.getFileIDsWithCategory((Category) groupKey.getValue());
+                    return groupManager.getFileIDsWithCategory((Category) groupKey.getValue());
                 case TAGS:
-                    return manager.getFileIDsWithTag((TagName) groupKey.getValue());
+                    return groupManager.getFileIDsWithTag((TagName) groupKey.getValue());
             }
         }
         List<Long> files = new ArrayList<>();
@@ -1131,19 +1129,24 @@ public class DrawableDB {
         }
     }
 
-    /*
-     * The following groups of functions are used to store information in memory
-     * instead of in the database. Due to the change listeners in the GUI,
-     * this data is requested many, many times when browsing the images, and
-     * especially when making any changes to things like categories.
+    /**
+     * For the given fileID, get the names of all the hashsets that the file is
+     * in.
      *
-     * I don't like having multiple copies of the data, but these were causing
-     * major bottlenecks when they were all database lookups.
+     * @param fileID the fileID to file all the hash sets for
+     *
+     * @return a set of names, each of which is a hashset that the given file is
+     *         in.
+     *
+     *
+     * //TODO: why does this go to the SKC? don't we already have this in =fo
+     * in the drawable db?
      */
-    Set<String> getHashSetsForFile(Long id) {
+    @Nonnull
+    Set<String> getHashSetsForFile(long fileID) {
         try {
             Set<String> hashNames = new HashSet<>();
-            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
+            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
             for (BlackboardArtifact a : arts) {
                 List<BlackboardAttribute> attrs = a.getAttributes();
                 for (BlackboardAttribute attr : attrs) {
@@ -1161,38 +1164,38 @@ public class DrawableDB {
 
     /**
      * For performance reasons, keep a list of all file IDs currently in the
-     * drawable database.
-     * Otherwise the database is queried many times to retrieve the same data.
+     * drawable database. Otherwise the database is queried many times to
+     * retrieve the same data.
      */
     @GuardedBy("fileIDlist")
-    private final Set<Long> fileIDlist = new HashSet<>();
+    private final Set<Long> fileIDsInDB = new HashSet<>();
 
-    public boolean isDrawableFile(Long id) {
-        synchronized (fileIDlist) {
-            return fileIDlist.contains(id);
+    public boolean isInDB(Long id) {
+        synchronized (fileIDsInDB) {
+            return fileIDsInDB.contains(id);
         }
     }
 
-    public void addImageFileToList(Long id) {
-        synchronized (fileIDlist) {
-            fileIDlist.add(id);
+    private void addImageFileToList(Long id) {
+        synchronized (fileIDsInDB) {
+            fileIDsInDB.add(id);
         }
     }
 
-    public void removeImageFileFromList(Long id) {
-        synchronized (fileIDlist) {
-            fileIDlist.remove(id);
+    private void removeImageFileFromList(Long id) {
+        synchronized (fileIDsInDB) {
+            fileIDsInDB.remove(id);
         }
     }
 
     public int getNumberOfImageFilesInList() {
-        synchronized (fileIDlist) {
-            return fileIDlist.size();
+        synchronized (fileIDsInDB) {
+            return fileIDsInDB.size();
         }
     }
 
-    public void initializeImageList() {
-        synchronized (fileIDlist) {
+    private void initializeImageList() {
+        synchronized (fileIDsInDB) {
             dbReadLock();
             try {
                 Statement stmt = con.createStatement();
@@ -1208,12 +1211,36 @@ public class DrawableDB {
         }
     }
 
-    public long getCategoryCount(Category t) {
+    /**
+     * For performance reasons, keep the file type in memory
+     */
+    private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
+
+    public boolean isVideoFile(AbstractFile f) {
+        return videoFileMap.computeIfAbsent(f, ImageGalleryModule::isVideoFile);
+    }
+
+    /**
+     * get the number of files with the given category.
+     *
+     * NOTE: although the category data is stored in autopsy as Tags, this
+     * method is provided on DrawableDb to provide a single point of access for
+     * ImageGallery data.
+     *
+     * //TODO: think about moving this and similar methods that don't actually
+     * get their data form the drawabledb to a layer wrapping the drawable db:
+     * something like ImageGalleryCaseData?
+     *
+     * @param cat the category to count the number of files for
+     *
+     * @return the number of the with the given category
+     */
+    public long getCategoryCount(Category cat) {
         try {
-            return Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(t.getTagName()).stream()
+            return Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName()).stream()
                     .map(ContentTag::getContent)
                     .map(Content::getId)
-                    .filter(this::isDrawableFile)
+                    .filter(this::isInDB)
                     .count();
 
         } catch (IllegalStateException ex) {
@@ -1222,15 +1249,6 @@ public class DrawableDB {
             LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
         }
         return -1;
-    }
-
-    /**
-     * For performance reasons, keep the file type in memory
-     */
-    private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
-
-    public boolean isVideoFile(AbstractFile f) throws TskCoreException {
-        return videoFileMap.computeIfAbsent(f, ImageGalleryModule::isVideoFile);
     }
 
     /**

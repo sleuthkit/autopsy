@@ -29,29 +29,25 @@ enum TreeNodeComparators implements Comparator<TreeItem<TreeNode>>, NonNullCompa
 
     ALPHABETICAL("Group Name") {
                 @Override
-        public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
-
+                public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
                     return o1.getValue().getGroup().groupKey.getValue().toString().compareTo(o2.getValue().getGroup().groupKey.getValue().toString());
                 }
             },
     HIT_COUNT("Hit Count") {
                 @Override
                 public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
-
                     return -Long.compare(o1.getValue().getGroup().getHashSetHitsCount(), o2.getValue().getGroup().getHashSetHitsCount());
                 }
             },
     FILE_COUNT("Group Size") {
                 @Override
                 public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
-
                     return -Integer.compare(o1.getValue().getGroup().getSize(), o2.getValue().getGroup().getSize());
                 }
             },
     HIT_FILE_RATIO("Hit Density") {
                 @Override
                 public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
-
                     return -Double.compare(o1.getValue().getGroup().getHashSetHitsCount() / (double) o1.getValue().getGroup().getSize(),
                             o2.getValue().getGroup().getHashSetHitsCount() / (double) o2.getValue().getGroup().getSize());
                 }

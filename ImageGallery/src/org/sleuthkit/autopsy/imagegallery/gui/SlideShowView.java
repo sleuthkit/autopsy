@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends SingleDrawableViewBase implements TagUtils.TagListener {
+public class SlideShowView extends DrawableViewBase implements TagUtils.TagListener {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 

@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -101,7 +102,7 @@ public class CategorizeAction extends AddTagAction {
                     final CategorizeAction categorizeAction = new CategorizeAction();
                     categorizeAction.addTag(cat.getTagName(), NO_COMMENT);
                 });
-                categoryItem.setAccelerator(new KeyCodeCombination(cat.getHotKeycode()));
+                categoryItem.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(cat.getCategoryNumber()))));
                 getItems().add(categoryItem);
             }
         }

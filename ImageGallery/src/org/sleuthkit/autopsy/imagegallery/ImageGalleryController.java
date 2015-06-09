@@ -125,14 +125,14 @@ public final class ImageGalleryController {
     private DrawableDB db;
 
     private final GroupManager groupManager = new GroupManager(this);
+    private final HashSetManager hashSetManager = new HashSetManager();
+    private final CategoryManager categoryManager = new CategoryManager();
 
     private StackPane fullUIStackPane;
 
     private StackPane centralStackPane;
 
     private Node infoOverlay;
-    private final HashSetManager hashSetManager = new HashSetManager();
-    private final CategoryManager categoryManager = new CategoryManager();
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -344,7 +344,7 @@ public final class ImageGalleryController {
      * @param theNewCase the case to configure the controller for
      */
     public synchronized void setCase(Case theNewCase) {
-        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
+        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), getSleuthKitCase());
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
         setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
@@ -356,7 +356,6 @@ public final class ImageGalleryController {
         groupManager.setDB(db);
         hashSetManager.setDb(db);
         categoryManager.setDb(db);
-        db.initializeImageList();
         SummaryTablePane.getDefault().refresh();
     }
 
@@ -386,7 +385,7 @@ public final class ImageGalleryController {
      *
      * @param innerTask
      */
-    public final void queueDBWorkerTask(InnerTask innerTask) {
+    public void queueDBWorkerTask(InnerTask innerTask) {
 
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
@@ -405,7 +404,7 @@ public final class ImageGalleryController {
         Platform.runLater(this::checkForGroups);
     }
 
-    public final ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
+    public ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
         return queueSizeProperty.getReadOnlyProperty();
     }
 
@@ -653,7 +652,7 @@ public final class ImageGalleryController {
             try {
                 DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, db.isVideoFile(getFile()));
                 db.updateFile(drawableFile);
-            } catch (NullPointerException | TskCoreException ex) {
+            } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
                 if (Case.isCaseOpen()) {

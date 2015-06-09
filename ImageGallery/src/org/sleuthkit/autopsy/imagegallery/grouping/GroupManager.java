@@ -435,7 +435,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             switch (groupBy.attrName) {
                 //these cases get special treatment
                 case CATEGORY:
-                    values = (List<A>) Category.valuesList();
+                    values = (List<A>) Arrays.asList(Category.values());
                     break;
                 case TAGS:
                     values = (List<A>) Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse().stream()
@@ -446,7 +446,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     values = (List<A>) Arrays.asList(false, true);
                     break;
                 case HASHSET:
-                    TreeSet<A> names = new TreeSet<>((Set<A>) db.getHashSetNames());
+                    TreeSet<A> names = new TreeSet<>((Collection<? extends A>) db.getHashSetNames());
                     values = new ArrayList<>(names);
                     break;
                 default:
@@ -456,8 +456,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
             return values;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting list of type " + groupBy.getDisplayName());
-            return new ArrayList<A>();
+            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName());
+            return Collections.emptyList();
         }
 
     }
@@ -489,7 +489,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -501,8 +501,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
-
+                    if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                         files.add(ct.getContent().getId());
                     }
                 }
@@ -520,7 +519,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
+                if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
 
                     files.add(ct.getContent().getId());
                 }

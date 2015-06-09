@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
     synchronized public ObservableList<Long> fileIds() {
-        return fileIDs;
+        return FXCollections.unmodifiableObservableList(fileIDs);
     }
 
     final public GroupKey<?> groupKey;
@@ -82,23 +82,23 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     /**
-     * Call to indicate that an image has been added or removed from the group,
-     * so the hash counts may not longer be accurate.
+     * Call to indicate that an file has been added or removed from the group,
+     * so the hash counts may no longer be accurate.
      */
-    synchronized public void invalidateHashSetHitsCount() {
+    synchronized private void invalidateHashSetHitsCount() {
         hashSetHitsCount = -1;
     }
 
+    /**
+     * @return the number of files in this group that have hash set hits
+     */
     synchronized public long getHashSetHitsCount() {
-        //TODO: use the drawable db for this ? -jm
         if (hashSetHitsCount < 0) {
             try {
-                hashSetHitsCount
-                        = fileIDs.stream()
-                        .map(fileID -> ImageGalleryController.getDefault().getHashSetManager().isInHashSet(fileID))
+                hashSetHitsCount = fileIDs.stream()
+                        .map(fileID -> ImageGalleryController.getDefault().getHashSetManager().isInAnyHashSet(fileID))
                         .filter(Boolean::booleanValue)
                         .count();
-
             } catch (IllegalStateException | NullPointerException ex) {
                 LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
             }
