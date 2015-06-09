@@ -211,6 +211,14 @@
                 <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
