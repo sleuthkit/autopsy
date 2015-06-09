@@ -1,5 +1,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -14,6 +15,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
@@ -21,7 +23,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
  * TODO: extract common interface out of {@link SingleImageView} and
  * {@link MetaDataPane}
  */
-public interface DrawableView extends CategoryManager.CategoryListener, TagUtils.TagListener {
+public interface DrawableView extends TagUtils.TagListener {
 
     //TODO: do this all in css? -jm
     static final int CAT_BORDER_WIDTH = 10;
@@ -52,8 +54,8 @@ public interface DrawableView extends CategoryManager.CategoryListener, TagUtils
 
     Long getFileID();
 
-    @Override
-    void handleCategoryChanged(Collection<Long> ids);
+    @Subscribe
+    void handleCategoryChanged(CategoryChangeEvent evt);
 
     @Override
     void handleTagsChanged(Collection<Long> ids);

@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -38,13 +38,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays summary statistics (counts) for each group
  */
-public class SummaryTablePane extends AnchorPane implements CategoryManager.CategoryListener {
+public class SummaryTablePane extends AnchorPane {
 
     private static SummaryTablePane instance;
 
@@ -95,8 +96,12 @@ public class SummaryTablePane extends AnchorPane implements CategoryManager.Cate
     /**
      * listen to Category updates and rebuild the table
      */
-    @Override
-    public void handleCategoryChanged(Collection<Long> ids) {
+    @Subscribe
+    public void handleCategoryChanged(CategoryChangeEvent evt) {
+        refresh();
+    }
+
+    public void refresh() {
         final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {

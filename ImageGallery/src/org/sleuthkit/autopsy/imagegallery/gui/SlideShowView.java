@@ -53,7 +53,6 @@ import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
@@ -65,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends SingleDrawableViewBase implements TagUtils.TagListener, CategoryManager.CategoryListener {
+public class SlideShowView extends SingleDrawableViewBase implements TagUtils.TagListener {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 

@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,6 +72,8 @@ import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
@@ -396,9 +399,9 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         return imageBorder;
     }
 
-    @Override
-    public void handleCategoryChanged(Collection<Long> ids) {
-        if (ids.contains(fileID)) {
+    @Subscribe
+    public void handleCategoryChanged(CategoryChangeEvent evt) {
+        if (evt.getIds().contains(fileID)) {
             updateCategoryBorder();
         }
     }

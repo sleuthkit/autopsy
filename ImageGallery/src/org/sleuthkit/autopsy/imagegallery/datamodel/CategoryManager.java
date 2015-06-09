@@ -3,12 +3,11 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.eventbus.EventBus;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
-import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -19,6 +18,7 @@ public class CategoryManager {
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
     private DrawableDB db;
+    private final EventBus categoryEventBus = new EventBus("Category Event Bus");
 
     public void setDb(DrawableDB db) {
         this.db = db;
@@ -94,35 +94,19 @@ public class CategoryManager {
         }
         return longAdder;
     }
-    @GuardedBy("listeners")
-    private final Set<CategoryListener> listeners = new HashSet<>();
 
     public void fireChange(Collection<Long> ids) {
-        Set<CategoryListener> listenersCopy = new HashSet<>();
-        synchronized (listeners) {
-            listenersCopy.addAll(listeners);
-        }
-        for (CategoryListener list : listenersCopy) {
-            list.handleCategoryChanged(ids);
-        }
+
+        categoryEventBus.post(new CategoryChangeEvent(ids));
 
     }
 
-    public void registerListener(CategoryListener aThis) {
-        synchronized (listeners) {
-            listeners.add(aThis);
-        }
+    public void registerListener(Object aThis) {
+        categoryEventBus.register(aThis);
     }
 
-    public void unregisterListener(CategoryListener aThis) {
-        synchronized (listeners) {
-            listeners.remove(aThis);
-        }
+    public void unregisterListener(Object aThis) {
+        categoryEventBus.unregister(aThis);
     }
 
-    public static interface CategoryListener {
-
-        public void handleCategoryChanged(Collection<Long> ids);
-
-    }
 }

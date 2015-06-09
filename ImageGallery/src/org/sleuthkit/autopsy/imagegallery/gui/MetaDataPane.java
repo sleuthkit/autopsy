@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -51,6 +52,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -60,7 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class MetaDataPane extends AnchorPane implements CategoryManager.CategoryListener, TagUtils.TagListener, DrawableView {
+public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, DrawableView {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
@@ -237,9 +239,10 @@ public class MetaDataPane extends AnchorPane implements CategoryManager.Category
         return imageBorder;
     }
 
+    @Subscribe
     @Override
-    public void handleCategoryChanged(Collection<Long> ids) {
-        if (getFile() != null && ids.contains(getFileID())) {
+    public void handleCategoryChanged(CategoryChangeEvent evt) {
+        if (getFile() != null && evt.getIds().contains(getFileID())) {
             updateUI();
         }
     }
