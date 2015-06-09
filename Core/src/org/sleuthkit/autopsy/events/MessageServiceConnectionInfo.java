@@ -95,7 +95,7 @@ public final class MessageServiceConnectionInfo {
      * @throws URISyntaxException if the connection info is not for a valid TCP
      * URI.
      */
-    URI getURI() throws URISyntaxException {
+    public URI getURI() throws URISyntaxException {
         return new URI(String.format(MESSAGE_SERVICE_URI, host, port));
     }
 

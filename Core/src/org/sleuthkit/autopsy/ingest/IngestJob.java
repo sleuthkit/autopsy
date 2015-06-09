@@ -94,13 +94,13 @@ public final class IngestJob {
      * @return A collection of ingest module start up errors, empty on success.
      */
     synchronized List<IngestModuleError> start() {
-        List<IngestModuleError> errors = new ArrayList<>();        
+        List<IngestModuleError> errors = new ArrayList<>();
         if (started) {
             errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
             return errors;
         }
         started = true;
-                
+
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
             if (!errors.isEmpty()) {
@@ -116,15 +116,20 @@ public final class IngestJob {
          * startup is going to fail, it will likely fail for the first child
          * data source ingest job.
          */
-        if (!errors.isEmpty()) {
-            for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
+        if (errors.isEmpty()) {
+            IngestManager ingestManager = IngestManager.getInstance();
+            this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
+                ingestManager.fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
+            });
+        } else {
+            this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
                 dataSourceJob.cancel();
-            }
+            });
         }
 
         return errors;
     }
-    
+
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
@@ -142,7 +147,7 @@ public final class IngestJob {
     public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
         return new ProgressSnapshot(getIngestTasksSnapshot);
     }
-    
+
     /**
      * Gets snapshots of the progress of each of this ingest job's child data
      * source ingest jobs.
@@ -151,9 +156,9 @@ public final class IngestJob {
      */
     List<DataSourceIngestJob.Snapshot> getDataSourceIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapshots = new ArrayList<>();
-        for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
+        this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
             snapshots.add(dataSourceJob.getSnapshot(true));
-        }
+        });
         return snapshots;
     }
 
@@ -164,9 +169,11 @@ public final class IngestJob {
      * pipelines respond by stopping processing.
      */
     public void cancel() {
-        for (DataSourceIngestJob job : this.dataSourceJobs.values()) {
+        IngestManager ingestManager = IngestManager.getInstance();
+        this.dataSourceJobs.values().stream().forEach((job) -> {
             job.cancel();
-        }
+            ingestManager.fireDataSourceAnalysisCancelled(id, job.getId(), job.getDataSource());
+        });
         this.cancelled = true;
     }
 
@@ -184,11 +191,13 @@ public final class IngestJob {
      * Provides a callback for completed data source ingest jobs, allowing this
      * ingest job to notify the ingest manager when it is complete.
      *
-     * @param dataSourceIngestJob A completed data source ingest job.
+     * @param job A completed data source ingest job.
      */
-    void dataSourceJobFinished(DataSourceIngestJob dataSourceIngestJob) {
+    void dataSourceJobFinished(DataSourceIngestJob job) {
+        IngestManager ingestManager = IngestManager.getInstance();
+        ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
         if (incompleteJobsCount.decrementAndGet() == 0) {
-            IngestManager.getInstance().finishIngestJob(this);
+            ingestManager.finishIngestJob(this);
         }
     }
 

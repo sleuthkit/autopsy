@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
+import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -76,7 +79,7 @@ public class Case {
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
     private static IntervalErrorReportData tskErrorReporter = null;
-    
+
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -114,6 +117,24 @@ public class Case {
          * no examiner set.
          */
         EXAMINER,
+        /**
+         * Property name used for a property change event that indicates a new
+         * data source (image, local/logical file or local disk) is being added
+         * to the current case. The old and new values of the
+         * PropertyChangeEvent are null - cast the PropertyChangeEvent to
+         * org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent to
+         * access event data.
+         */
+        ADDING_DATA_SOURCE,
+        /**
+         * Property name used for a property change event that indicates a
+         * failure adding a new data source (image, local/logical file or local
+         * disk) to the current case. The old and new values of the
+         * PropertyChangeEvent are null - cast the PropertyChangeEvent to
+         * org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent
+         * to access event data.
+         */
+        ADDING_DATA_SOURCE_FAILED,
         /**
          * Property name that indicates a new data source (image, disk or local
          * file) has been added to the current case. The new value is the
@@ -201,9 +222,10 @@ public class Case {
     private final static String REPORTS_FOLDER = "Reports"; //NON-NLS
     private final static String TEMP_FOLDER = "Temp"; //NON-NLS
 
-    
     // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
     private boolean hasData = false;
+
+    private CollaborationMonitor collaborationMonitor;
 
     /**
      * Constructor for the Case class
@@ -260,6 +282,9 @@ public class Case {
             doCaseChange(null); //closes windows, etc            
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
+                if (null != oldCase.collaborationMonitor) {
+                    oldCase.collaborationMonitor.stop();
+                }
                 eventPublisher.closeRemoteEventChannel();
             }
         }
@@ -279,14 +304,15 @@ public class Case {
                      * through the Case.getTextIndexName() API.
                      */
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
-                } catch (AutopsyEventException ex) {
-                    logger.log(Level.SEVERE, "Failed to start remote event publisher", ex);
-                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.ErrMsg"),
-                            NbBundle.getMessage(Case.class, "Case.OpenEventChannel.FailPopup.Title"),
-                            JOptionPane.WARNING_MESSAGE);
+                    currentCase.collaborationMonitor = new CollaborationMonitor();
+                } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
+                    currentCase.collaborationMonitor.stop();
+                    logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
+
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
@@ -501,7 +527,7 @@ public class Case {
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
         try {
             Image newDataSource = db.getImageById(imgId);
-            notifyNewDataSource(newDataSource);
+            notifyNewDataSource(newDataSource, UUID.randomUUID());
             return newDataSource;
         } catch (Exception ex) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.addImg.exception.msg"), ex);
@@ -517,16 +543,42 @@ public class Case {
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
-        notifyNewDataSource(newDataSource);
+        notifyNewDataSource(newDataSource, UUID.randomUUID());
     }
 
     /**
-     * Notifies the UI that a new data source has been added.
+     * Notifies case event subscribers (property change listeners) that a data
+     * source is being added to the case database.
      *
-     * @param newDataSource new data source added
+     * @param dataSourceId A unique identifier for the data source. This UUID
+     * should be used to call notifyNewDataSource() after the data source is
+     * added.
      */
-    public void notifyNewDataSource(Content newDataSource) {
-        eventPublisher.publish(new DataSourceAddedEvent(newDataSource));
+    public void notifyAddingNewDataSource(UUID dataSourceId) {
+        eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
+    }
+
+    /**
+     * Notifies case event subscribers (property change listeners) that a data
+     * source failed to be added to the case database.
+     *
+     * @param dataSourceId A unique identifier for the data source.
+     */
+    public void notifyFailedAddingNewDataSource(UUID dataSourceId) {
+        eventPublisher.publish(new AddingDataSourceFailedEvent(dataSourceId));
+    }
+    
+    /**
+     * Notifies case event subscribers (property change listeners) that a data
+     * source is being added to the case database.
+     *
+     * @param newDataSource New data source added.
+     * @param dataSourceId A unique identifier for the data source. Should be
+     * the same UUID used to call notifyAddingNewDataSource() when the process
+     * of adding the data source began.
+     */
+    public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
+        eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
     }
 
     /**
@@ -1123,7 +1175,6 @@ public class Case {
      * The methods below are used to manage the case directories (creating,
      * checking, deleting, etc)
      */
-
     /**
      * Create the case directory and its needed subfolders.
      *
@@ -1152,8 +1203,8 @@ public class Case {
             }
 
             // create the folders inside the case directory
-            String hostClause="";
-            
+            String hostClause = "";
+
             if (caseType == CaseType.MULTI_USER_CASE) {
                 hostClause = File.separator + getLocalHostName();
             }
@@ -1182,7 +1233,7 @@ public class Case {
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateReportsDir",
                                 modulesOutDir));
             }
-            
+
         } catch (Exception e) {
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.gen", caseDir), e);
@@ -1364,7 +1415,7 @@ public class Case {
         }
         return hasData;
     }
-    
+
     /**
      * Set the host name variable. Sometimes the network can be finicky, so the
      * answer returned by getHostName() could throw an exception or be null.
