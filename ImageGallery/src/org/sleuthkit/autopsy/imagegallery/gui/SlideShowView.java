@@ -193,9 +193,11 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
         groupPane.grouping().addListener((Observable observable) -> {
             syncButtonVisibility();
-            groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
-                syncButtonVisibility();
-            });
+            if (groupPane.getGrouping() != null) {
+                groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
+                    syncButtonVisibility();
+                });
+            }
         });
     }
 
