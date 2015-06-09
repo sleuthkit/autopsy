@@ -43,7 +43,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
 
     //cache the number of files in this groups with hashset hits
-    private int hashSetHitsCount = -1;
+    private long hashSetHitsCount = -1;
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
     synchronized public ObservableList<Long> fileIds() {
@@ -89,22 +89,21 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         hashSetHitsCount = -1;
     }
 
-    synchronized public int getHashSetHitsCount() {
+    synchronized public long getHashSetHitsCount() {
         //TODO: use the drawable db for this ? -jm
         if (hashSetHitsCount < 0) {
-            hashSetHitsCount = 0;
-            for (Long fileID : fileIds()) {
+            try {
+                hashSetHitsCount
+                        = fileIDs.stream()
+                        .map(fileID -> ImageGalleryController.getDefault().getHashSetManager().isInHashSet(fileID))
+                        .filter(Boolean::booleanValue)
+                        .count();
 
-                try {
-                    if (ImageGalleryController.getDefault().getDatabase().isInHashSet(fileID)) {
-                        hashSetHitsCount++;
-                    }
-                } catch (IllegalStateException | NullPointerException ex) {
-                    LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
-                    break;
-                }
+            } catch (IllegalStateException | NullPointerException ex) {
+                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
             }
         }
+
         return hashSetHitsCount;
     }
 

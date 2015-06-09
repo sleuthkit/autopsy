@@ -14,13 +14,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
 /**
  * TODO: extract common interface out of {@link SingleImageView} and
  * {@link MetaDataPane}
  */
-public interface DrawableView extends Category.CategoryListener, TagUtils.TagListener {
+public interface DrawableView extends CategoryManager.CategoryListener, TagUtils.TagListener {
 
     //TODO: do this all in css? -jm
     static final int CAT_BORDER_WIDTH = 10;
@@ -58,9 +59,9 @@ public interface DrawableView extends Category.CategoryListener, TagUtils.TagLis
     void handleTagsChanged(Collection<Long> ids);
 
     default boolean hasHashHit() {
-        try{
+        try {
             return getFile().getHashHitSetNames().isEmpty() == false;
-        } catch (NullPointerException ex){
+        } catch (NullPointerException ex) {
             // I think this happens when we're in the process of removing images from the view while
             // also trying to update it? 
             Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits");
@@ -90,8 +91,8 @@ public interface DrawableView extends Category.CategoryListener, TagUtils.TagLis
     default Category updateCategoryBorder() {
         final Category category = getFile().getCategory();
         final Border border = hasHashHit() && (category == Category.ZERO)
-                              ? HASH_BORDER
-                              : DrawableView.getCategoryBorder(category);
+                ? HASH_BORDER
+                : DrawableView.getCategoryBorder(category);
 
         Platform.runLater(() -> {
             getBorderable().setBorder(border);

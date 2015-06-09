@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label
@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
  *
  * TODO: refactor this to extend from {@link Control}? -jm
  */
-public class DrawableTile extends SingleDrawableViewBase implements Category.CategoryListener, TagUtils.TagListener {
+public class DrawableTile extends SingleDrawableViewBase implements CategoryManager.CategoryListener, TagUtils.TagListener {
 
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 

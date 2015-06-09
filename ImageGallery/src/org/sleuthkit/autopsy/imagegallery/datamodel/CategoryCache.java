@@ -1,29 +1,35 @@
-package org.sleuthkit.autopsy.imagegallery.grouping;
+package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
-class CategoryCache {
+public class CategoryManager {
 
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryCache.class.getName());
-    private final DrawableDB db;
+    private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
+    private DrawableDB db;
 
-    public CategoryCache(DrawableDB db) {
+    public void setDb(DrawableDB db) {
         this.db = db;
+        categoryCounts.invalidateAll();
+        Category.clearTagNames();
     }
 
     /**
      * For performance reasons, keep current category counts in memory
      */
-    private final ConcurrentHashMap<Category, LongAdder> categoryCounts = new ConcurrentHashMap<>();
+    private final LoadingCache<Category, LongAdder> categoryCounts = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
 
     /**
      *
@@ -42,7 +48,7 @@ class CategoryCache {
             long allOtherCatCount = getCategoryCount(Category.ONE) + getCategoryCount(Category.TWO) + getCategoryCount(Category.THREE) + getCategoryCount(Category.FOUR) + getCategoryCount(Category.FIVE);
             return db.getNumberOfImageFilesInList() - allOtherCatCount;
         } else {
-            return categoryCounts.computeIfAbsent(cat, this::getCategoryCountHelper).sum();
+            return categoryCounts.getUnchecked(cat).sum();
         }
     }
 
@@ -55,7 +61,7 @@ class CategoryCache {
      */
     public void incrementCategoryCount(Category cat) {
         if (cat != Category.ZERO) {
-            categoryCounts.computeIfAbsent(cat, this::getCategoryCountHelper).increment();
+            categoryCounts.getUnchecked(cat).increment();
         }
     }
 
@@ -68,7 +74,7 @@ class CategoryCache {
      */
     public void decrementCategoryCount(Category cat) {
         if (cat != Category.ZERO) {
-            categoryCounts.computeIfAbsent(cat, this::getCategoryCountHelper).decrement();
+            categoryCounts.getUnchecked(cat).decrement();
         }
     }
 
@@ -87,5 +93,36 @@ class CategoryCache {
             LOGGER.log(Level.WARNING, "Case closed while getting files");
         }
         return longAdder;
+    }
+    @GuardedBy("listeners")
+    private final Set<CategoryListener> listeners = new HashSet<>();
+
+    public void fireChange(Collection<Long> ids) {
+        Set<CategoryListener> listenersCopy = new HashSet<>();
+        synchronized (listeners) {
+            listenersCopy.addAll(listeners);
+        }
+        for (CategoryListener list : listenersCopy) {
+            list.handleCategoryChanged(ids);
+        }
+
+    }
+
+    public void registerListener(CategoryListener aThis) {
+        synchronized (listeners) {
+            listeners.add(aThis);
+        }
+    }
+
+    public void unregisterListener(CategoryListener aThis) {
+        synchronized (listeners) {
+            listeners.remove(aThis);
+        }
+    }
+
+    public static interface CategoryListener {
+
+        public void handleCategoryChanged(Collection<Long> ids);
+
     }
 }

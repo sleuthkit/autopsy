@@ -78,7 +78,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private DrawableDB db;
 
     private final ImageGalleryController controller;
-    private CategoryCache categoryCache;
     /**
      * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
      * not
@@ -136,20 +135,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
 
-    }
-
-    public void incrementCategoryCount(Category cat) {
-        if (categoryCache == null) {
-            categoryCache = new CategoryCache(db);
-        }
-        categoryCache.incrementCategoryCount(cat);
-    }
-
-    public void decrementCategoryCount(Category cat) {
-        if (categoryCache == null) {
-            categoryCache = new CategoryCache(db);
-        }
-        categoryCache.decrementCategoryCount(cat);
     }
 
     /**
@@ -530,21 +515,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
-    /**
-     * Count the number of files with the given category.
-     * This is faster than getFileIDsWithCategory and should be used if only the
-     * counts are needed and not the file IDs.
-     *
-     * @param category Category to match against
-     *
-     * @return Number of files with the given category
-     *
-     * @throws TskCoreException
-     */
-    public long countFilesWithCategory(Category category) throws TskCoreException {
-        return categoryCache.getCategoryCount(category);
-    }
-
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
         try {
             List<Long> files = new ArrayList<>();
@@ -669,8 +639,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
-                        } else {
-                            g.invalidateHashSetHitsCount();
                         }
                     }
                 }
@@ -691,7 +659,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                  */
                 for (final long fileId : fileIDs) {
 
-                    db.updateHashSetsForFile(fileId);
+                    controller.getHashSetManager().invalidateHashSetsForFile(fileId);
 
                     //get grouping(s) this file would be in
                     Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
@@ -714,7 +682,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 }
 
                 //we fire this event for all files so that the category counts get updated during initial db population
-                Category.fireChange(fileIDs);
+                controller.getCategoryManager().fireChange(fileIDs);
 
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);

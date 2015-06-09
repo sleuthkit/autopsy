@@ -38,12 +38,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays summary statistics (counts) for each group
  */
-public class SummaryTablePane extends AnchorPane implements Category.CategoryListener {
+public class SummaryTablePane extends AnchorPane implements CategoryManager.CategoryListener {
 
     private static SummaryTablePane instance;
 
@@ -77,7 +78,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         tableView.getColumns().setAll(Arrays.asList(catColumn, countColumn));
 
 //        //register for category events
-        Category.registerListener(this);
+        ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
     }
 
     private SummaryTablePane() {
@@ -100,7 +101,7 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {
                 try {
-                    data.add(new Pair<>(cat, ImageGalleryController.getDefault().getGroupManager().countFilesWithCategory(cat)));
+                    data.add(new Pair<>(cat, ImageGalleryController.getDefault().getCategoryManager().getCategoryCount(cat)));
                 } catch (TskCoreException ex) {
                     Logger.getLogger(SummaryTablePane.class.getName()).log(Level.WARNING, "Error performing category file count");
                 }

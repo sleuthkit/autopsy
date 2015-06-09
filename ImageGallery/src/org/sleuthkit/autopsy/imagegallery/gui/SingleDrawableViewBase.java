@@ -71,7 +71,6 @@ import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
@@ -360,14 +359,14 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
             disposeContent();
 
             if (this.fileID == null || Case.isCaseOpen() == false) {
-                Category.unregisterListener(this);
+                ImageGalleryController.getDefault().getCategoryManager().unregisterListener(this);
                 TagUtils.unregisterListener(this);
                 file = null;
                 Platform.runLater(() -> {
                     clearContent();
                 });
             } else {
-                Category.registerListener(this);
+                ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
                 TagUtils.registerListener(this);
 
                 getFile();

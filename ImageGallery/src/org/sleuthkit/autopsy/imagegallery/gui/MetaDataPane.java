@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.TagName;
@@ -59,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class MetaDataPane extends AnchorPane implements Category.CategoryListener, TagUtils.TagListener, DrawableView {
+public class MetaDataPane extends AnchorPane implements CategoryManager.CategoryListener, TagUtils.TagListener, DrawableView {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
@@ -102,7 +103,7 @@ public class MetaDataPane extends AnchorPane implements Category.CategoryListene
         assert tableView != null : "fx:id=\"tableView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert valueColumn != null : "fx:id=\"valueColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         TagUtils.registerListener(this);
-        Category.registerListener(this);
+        ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
 
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setPlaceholder(new Label("Select a file to show its details here."));

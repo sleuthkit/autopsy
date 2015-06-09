@@ -1139,55 +1139,24 @@ public class DrawableDB {
      *
      * I don't like having multiple copies of the data, but these were causing
      * major bottlenecks when they were all database lookups.
-     *
-     * TODO: factor these out to seperate classes such as HashSetHitCache or
-     * CategoryCountCache
-     *
-     * TODO: use guava Caches for this instead of lower level HashMaps
      */
-    @GuardedBy("hashSetMap")
-    private final Map<Long, Set<String>> hashSetMap = new HashMap<>();
-
-    @GuardedBy("hashSetMap")
-    public boolean isInHashSet(Long id) {
-        if (!hashSetMap.containsKey(id)) {
-            updateHashSetsForFile(id);
-        }
-        return (!hashSetMap.get(id).isEmpty());
-    }
-
-    @GuardedBy("hashSetMap")
-    public Set<String> getHashSetsForFile(Long id) {
-        if (!isInHashSet(id)) {
-            updateHashSetsForFile(id);
-        }
-        return hashSetMap.get(id);
-    }
-
-    @GuardedBy("hashSetMap")
-    public void updateHashSetsForFile(Long id) {
-
+    Set<String> getHashSetsForFile(Long id) {
         try {
-            Set<String> hashNames = getHashSetsForFileHelper(id);
-            hashSetMap.put(id, hashNames);
-        } catch (IllegalStateException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "could not access case during updateHashSetsForFile()", ex);
-
-        }
-    }
-
-    private Set<String> getHashSetsForFileHelper(Long id) throws TskCoreException, IllegalStateException {
-        List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
-        Set<String> hashNames = new HashSet<>();
-        for (BlackboardArtifact a : arts) {
-            List<BlackboardAttribute> attrs = a.getAttributes();
-            for (BlackboardAttribute attr : attrs) {
-                if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    hashNames.add(attr.getValueString());
+            Set<String> hashNames = new HashSet<>();
+            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, id);
+            for (BlackboardArtifact a : arts) {
+                List<BlackboardAttribute> attrs = a.getAttributes();
+                for (BlackboardAttribute attr : attrs) {
+                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                        hashNames.add(attr.getValueString());
+                    }
                 }
+                return hashNames;
             }
+        } catch (TskCoreException tskCoreException) {
+            throw new IllegalStateException(tskCoreException);
         }
-        return hashNames;
+        return Collections.emptySet();
     }
 
     /**

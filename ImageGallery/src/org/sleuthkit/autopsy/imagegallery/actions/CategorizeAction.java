@@ -135,11 +135,11 @@ public class CategorizeAction extends AddTagAction {
                     //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
                     if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
                         Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
-                        controller.getGroupManager().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
+                        controller.getCategoryManager().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
                     }
 
                 }
-                controller.getGroupManager().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+                controller.getCategoryManager().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
                 if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
                     Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
                 }

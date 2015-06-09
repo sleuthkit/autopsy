@@ -19,12 +19,9 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -33,7 +30,6 @@ import javafx.scene.control.SplitMenuButton;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
-import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
@@ -62,31 +58,7 @@ public enum Category implements Comparable<Category> {
         }
     }
 
-    @GuardedBy("listeners")
-    private final static Set<CategoryListener> listeners = new HashSet<>();
-
-    public static void fireChange(Collection<Long> ids) {
-        Set<CategoryListener> listenersCopy = new HashSet<>();
-        synchronized (listeners) {
-            listenersCopy.addAll(listeners);
-        }
-        for (CategoryListener list : listenersCopy) {
-            list.handleCategoryChanged(ids);
-        }
-      
-    }
-
-    public static void registerListener(CategoryListener aThis) {
-        synchronized (listeners) {
-            listeners.add(aThis);
-        }
-    }
-
-    public static void unregisterListener(CategoryListener aThis) {
-        synchronized (listeners) {
-            listeners.remove(aThis);
-        }
-    }
+  
   
     public KeyCode getHotKeycode() {
         return KeyCode.getKeyCode(Integer.toString(id));
@@ -164,11 +136,5 @@ public enum Category implements Comparable<Category> {
         Category.THREE.tagName = null;
         Category.FOUR.tagName = null;
         Category.FIVE.tagName = null;
-    }
-
-    public static interface CategoryListener {
-
-        public void handleCategoryChanged(Collection<Long> ids);
-
     }
 }
