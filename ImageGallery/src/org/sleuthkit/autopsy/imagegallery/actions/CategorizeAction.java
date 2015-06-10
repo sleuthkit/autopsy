@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -101,7 +102,7 @@ public class CategorizeAction extends AddTagAction {
                     final CategorizeAction categorizeAction = new CategorizeAction();
                     categorizeAction.addTag(cat.getTagName(), NO_COMMENT);
                 });
-                categoryItem.setAccelerator(new KeyCodeCombination(cat.getHotKeycode()));
+                categoryItem.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(cat.getCategoryNumber()))));
                 getItems().add(categoryItem);
             }
         }
@@ -135,11 +136,11 @@ public class CategorizeAction extends AddTagAction {
                     //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
                     if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
                         Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
-                        controller.getDatabase().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
+                        controller.getCategoryManager().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
                     }
 
                 }
-                controller.getDatabase().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+                controller.getCategoryManager().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
                 if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
                     Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
                 }

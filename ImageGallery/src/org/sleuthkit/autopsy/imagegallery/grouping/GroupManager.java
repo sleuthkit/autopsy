@@ -78,7 +78,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private DrawableDB db;
 
     private final ImageGalleryController controller;
-
     /**
      * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
      * not
@@ -436,7 +435,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             switch (groupBy.attrName) {
                 //these cases get special treatment
                 case CATEGORY:
-                    values = (List<A>) Category.valuesList();
+                    values = (List<A>) Arrays.asList(Category.values());
                     break;
                 case TAGS:
                     values = (List<A>) Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse().stream()
@@ -447,7 +446,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     values = (List<A>) Arrays.asList(false, true);
                     break;
                 case HASHSET:
-                    TreeSet<A> names = new TreeSet<>((Set<A>) db.getHashSetNames());
+                    TreeSet<A> names = new TreeSet<>((Collection<? extends A>) db.getHashSetNames());
                     values = new ArrayList<>(names);
                     break;
                 default:
@@ -457,8 +456,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
             return values;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting list of type " + groupBy.getDisplayName());
-            return new ArrayList<A>();
+            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName());
+            return Collections.emptyList();
         }
 
     }
@@ -490,7 +489,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -502,8 +501,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
-
+                    if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                         files.add(ct.getContent().getId());
                     }
                 }
@@ -516,27 +514,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
-    /**
-     * Count the number of files with the given category.
-     * This is faster than getFileIDsWithCategory and should be used if only the
-     * counts are needed and not the file IDs.
-     *
-     * @param category Category to match against
-     *
-     * @return Number of files with the given category
-     *
-     * @throws TskCoreException
-     */
-    public int countFilesWithCategory(Category category) throws TskCoreException {
-        return db.getCategoryCount(category);
-    }
-
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
         try {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
+                if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
 
                     files.add(ct.getContent().getId());
                 }
@@ -655,8 +638,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
-                        } else {
-                            g.invalidateHashSetHitsCount();
                         }
                     }
                 }
@@ -677,7 +658,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                  */
                 for (final long fileId : fileIDs) {
 
-                    db.updateHashSetsForFile(fileId);
+                    controller.getHashSetManager().invalidateHashSetsForFile(fileId);
 
                     //get grouping(s) this file would be in
                     Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
@@ -700,7 +681,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 }
 
                 //we fire this event for all files so that the category counts get updated during initial db population
-                Category.fireChange(fileIDs);
+                controller.getCategoryManager().fireChange(fileIDs);
 
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);

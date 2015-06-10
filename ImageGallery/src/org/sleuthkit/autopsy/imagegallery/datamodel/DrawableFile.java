@@ -68,7 +68,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             return new ImageFile<>(abstractFileById, analyzed);
         }
     }
-    
+
     /**
      * Skip the database query if we have already determined the file type.
      */
@@ -78,7 +78,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         } else {
             return new ImageFile<>(abstractFileById, analyzed);
         }
-    }    
+    }
 
     public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
 
@@ -105,7 +105,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     protected DrawableFile(T file, Boolean analyzed) {
         /* @TODO: the two 'new Integer(0).shortValue()' values and null are
          * placeholders because the super constructor expects values i can't get
-         * easily at the moment.  I assume this is related to why ReadContentInputStream can't read from DrawableFiles.*/
+         * easily at the moment. I assume this is related to why
+         * ReadContentInputStream can't read from DrawableFiles. */
 
         super(file.getSleuthkitCase(), file.getId(), file.getAttrType(), file.getAttrId(), file.getName(), file.getType(), file.getMetaAddr(), (int) file.getMetaSeq(), file.getDirType(), file.getMetaType(), null, new Integer(0).shortValue(), file.getSize(), file.getCtime(), file.getCrtime(), file.getAtime(), file.getMtime(), new Integer(0).shortValue(), file.getUid(), file.getGid(), file.getMd5Hash(), file.getKnown(), file.getParentPath());
         this.analyzed = new SimpleBooleanProperty(analyzed);
@@ -115,9 +116,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public abstract boolean isVideo();
 
-    synchronized public Collection<String> getHashHitSetNames() {
-        Collection<String> hashHitSetNames = ImageGalleryController.getDefault().getDatabase().getHashSetsForFile(getId());
-        return hashHitSetNames;
+    public Collection<String> getHashHitSetNames() {
+        return ImageGalleryController.getDefault().getHashSetManager().getHashSetsForFile(getId());
     }
 
     @Override
@@ -290,10 +290,10 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
-        } catch (IllegalStateException ex){
+        } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
-        
+
     }
 
     public abstract Image getThumbnail();

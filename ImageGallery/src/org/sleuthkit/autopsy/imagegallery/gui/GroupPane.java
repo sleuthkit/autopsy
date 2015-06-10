@@ -85,6 +85,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
@@ -123,8 +124,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * both a {@link  GridView} based view and a {@link  SlideShowView} view by
  * swapping out its internal components.
  *
- * TODO: review for synchronization issues. TODO: Extract the The GridView
- * instance to a separate class analogous to the SlideShow
+ *
+ * TODO: Extract the The GridView instance to a separate class analogous to the
+ * SlideShow. Move selection model into controlsfx GridView and submit pull
+ * request to them.
+ * https://bitbucket.org/controlsfx/controlsfx/issue/4/add-a-multipleselectionmodel-to-gridview
+ *
+ *
  */
 public class GroupPane extends BorderPane implements GroupView {
 
@@ -205,10 +211,8 @@ public class GroupPane extends BorderPane implements GroupView {
      * to determine whether fileIDs are visible or are offscreen. No entry
      * indicates the given fileID is not displayed on screen. DrawableCells are
      * responsible for adding and removing themselves from this map.
-     *
-     * TODO: use ConcurrentHashMap ?
      */
-    @ThreadConfined(type = ThreadType.UI)
+    @ThreadConfined(type = ThreadType.JFX)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
 
     private final InvalidationListener filesSyncListener = (observable) -> {
@@ -298,7 +302,7 @@ public class GroupPane extends BorderPane implements GroupView {
     /** create the string to display in the group header */
     protected String getHeaderString() {
         return isNull(getGrouping()) ? ""
-                : defaultIfBlank(getGrouping().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
+                : StringUtils.defaultIfBlank(getGrouping().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
                 + getGrouping().getHashSetHitsCount() + " hash set hits / " + getGrouping().getSize() + " files";
     }
 
@@ -505,6 +509,7 @@ public class GroupPane extends BorderPane implements GroupView {
         }
 
         final ObservableList<Long> fileIds = gridView.getItems();
+
         int selectedIndex = fileIds.indexOf(newFileID);
         if (selectedIndex == -1) {
             //somehow we got passed a file id that isn't in the curent group.
@@ -527,10 +532,6 @@ public class GroupPane extends BorderPane implements GroupView {
                         .max().getAsInt();
 
                 //[minIndex, maxIndex] is the range of indexes in the fileIDs list that are currently displayed
-                if (minIndex < 0 && maxIndex < 0) {
-                    return;
-                }
-
                 if (selectedIndex < minIndex) {
                     scrollBar.decrement();
                 } else if (selectedIndex > maxIndex) {
@@ -647,6 +648,7 @@ public class GroupPane extends BorderPane implements GroupView {
         }
 
         void resetItem() {
+            updateItem(null, true);
             tile.setFile(null);
         }
     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,11 +43,11 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
 
     //cache the number of files in this groups with hashset hits
-    private int hashSetHitsCount = -1;
+    private long hashSetHitsCount = -1;
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
     synchronized public ObservableList<Long> fileIds() {
-        return fileIDs;
+        return FXCollections.unmodifiableObservableList(fileIDs);
     }
 
     final public GroupKey<?> groupKey;
@@ -82,29 +82,28 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     /**
-     * Call to indicate that an image has been added or removed from the group,
-     * so the hash counts may not longer be accurate.
+     * Call to indicate that an file has been added or removed from the group,
+     * so the hash counts may no longer be accurate.
      */
-    synchronized public void invalidateHashSetHitsCount() {
+    synchronized private void invalidateHashSetHitsCount() {
         hashSetHitsCount = -1;
     }
 
-    synchronized public int getHashSetHitsCount() {
-        //TODO: use the drawable db for this ? -jm
+    /**
+     * @return the number of files in this group that have hash set hits
+     */
+    synchronized public long getHashSetHitsCount() {
         if (hashSetHitsCount < 0) {
-            hashSetHitsCount = 0;
-            for (Long fileID : fileIds()) {
-
-                try {
-                    if (ImageGalleryController.getDefault().getDatabase().isInHashSet(fileID)) {
-                        hashSetHitsCount++;
-                    }
-                } catch (IllegalStateException | NullPointerException ex) {
-                    LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
-                    break;
-                }
+            try {
+                hashSetHitsCount = fileIDs.stream()
+                        .map(fileID -> ImageGalleryController.getDefault().getHashSetManager().isInAnyHashSet(fileID))
+                        .filter(Boolean::booleanValue)
+                        .count();
+            } catch (IllegalStateException | NullPointerException ex) {
+                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
             }
         }
+
         return hashSetHitsCount;
     }
 

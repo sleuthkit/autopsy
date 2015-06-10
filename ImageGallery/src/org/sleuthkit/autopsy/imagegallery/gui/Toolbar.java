@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -29,6 +27,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -44,9 +43,10 @@ import javax.swing.SortOrder;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
+import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
@@ -54,17 +54,11 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Controller for the  ToolBar
+ * Controller for the ToolBar
  */
 public class Toolbar extends ToolBar {
 
     private static final int SIZE_SLIDER_DEFAULT = 100;
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
 
     @FXML
     private ComboBox<DrawableAttribute<?>> groupByBox;
@@ -175,14 +169,14 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        catSelectedMenuButton.setOnAction(Category.FIVE.createSelCatMenuItem(catSelectedMenuButton).getOnAction());
+        catSelectedMenuButton.setOnAction(createSelCatMenuItem(Category.FIVE, catSelectedMenuButton).getOnAction());
         catSelectedMenuButton.setText(Category.FIVE.getDisplayName());
         catSelectedMenuButton.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
         catSelectedMenuButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> categoryMenues = new ArrayList<>();
                 for (final Category cat : Category.values()) {
-                    MenuItem menuItem = cat.createSelCatMenuItem(catSelectedMenuButton);
+                    MenuItem menuItem = createSelCatMenuItem(cat, catSelectedMenuButton);
                     categoryMenues.add(menuItem);
                 }
                 catSelectedMenuButton.getItems().setAll(categoryMenues);
@@ -229,5 +223,18 @@ public class Toolbar extends ToolBar {
 
     private Toolbar() {
         FXMLConstructor.construct(this, "Toolbar.fxml");
+    }
+
+    private static MenuItem createSelCatMenuItem(Category cat, final SplitMenuButton catSelectedMenuButton) {
+        final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        menuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+                new CategorizeAction().addTag(cat.getTagName(), "");
+                catSelectedMenuButton.setText(cat.getDisplayName());
+                catSelectedMenuButton.setOnAction(this);
+            }
+        });
+        return menuItem;
     }
 }

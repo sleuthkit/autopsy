@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -58,8 +57,10 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
@@ -124,6 +125,8 @@ public final class ImageGalleryController {
     private DrawableDB db;
 
     private final GroupManager groupManager = new GroupManager(this);
+    private final HashSetManager hashSetManager = new HashSetManager();
+    private final CategoryManager categoryManager = new CategoryManager();
 
     private StackPane fullUIStackPane;
 
@@ -341,7 +344,7 @@ public final class ImageGalleryController {
      * @param theNewCase the case to configure the controller for
      */
     public synchronized void setCase(Case theNewCase) {
-        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
+        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), getSleuthKitCase());
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
         setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
@@ -351,8 +354,9 @@ public final class ImageGalleryController {
         restartWorker();
         historyManager.clear();
         groupManager.setDB(db);
-        db.initializeImageList();
-        SummaryTablePane.getDefault().handleCategoryChanged(Collections.emptyList());
+        hashSetManager.setDb(db);
+        categoryManager.setDb(db);
+        SummaryTablePane.getDefault().refresh();
     }
 
     /**
@@ -381,7 +385,7 @@ public final class ImageGalleryController {
      *
      * @param innerTask
      */
-    public final void queueDBWorkerTask(InnerTask innerTask) {
+    public void queueDBWorkerTask(InnerTask innerTask) {
 
         // @@@ We could make a lock for the worker thread
         if (dbWorkerThread == null) {
@@ -400,7 +404,7 @@ public final class ImageGalleryController {
         Platform.runLater(this::checkForGroups);
     }
 
-    public final ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
+    public ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
         return queueSizeProperty.getReadOnlyProperty();
     }
 
@@ -474,6 +478,14 @@ public final class ImageGalleryController {
                     break;
             }
         });
+    }
+
+    public HashSetManager getHashSetManager() {
+        return hashSetManager;
+    }
+
+    public CategoryManager getCategoryManager() {
+        return categoryManager;
     }
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
@@ -640,7 +652,7 @@ public final class ImageGalleryController {
             try {
                 DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, db.isVideoFile(getFile()));
                 db.updateFile(drawableFile);
-            } catch (NullPointerException | TskCoreException ex) {
+            } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
                 if (Case.isCaseOpen()) {
