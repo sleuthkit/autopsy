@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Utilities for creating and manipulating thumbnail and icon images.
  *
- * @author jwallace
  */
 public class ImageUtils {
 
@@ -66,9 +65,30 @@ public class ImageUtils {
     private static final List<String> SUPP_IMAGE_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes())); // final
     private static final List<String> SUPP_VIDEO_EXTENSIONS = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp", "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265", "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg", "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf", "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc", "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg", "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm", "flm", "tmv", "4xm");
     private static final List<String> SUPP_VIDEO_MIME_TYPES = Arrays.asList("video/avi", "video/msvideo", "video/x-msvideo", "video/mp4", "video/x-ms-wmv", "mpeg", "asf");
+    private static final boolean openCVLoaded;
 
     static {
         SUPP_IMAGE_MIME_TYPES.add("image/x-ms-bmp");
+
+        //load opencv libraries
+        boolean openCVLoadedTemp;
+        try {
+            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) {
+                System.loadLibrary("opencv_ffmpeg248_64");
+            } else {
+                System.loadLibrary("opencv_ffmpeg248");
+            }
+
+            openCVLoadedTemp = true;
+        } catch (UnsatisfiedLinkError e) {
+            openCVLoadedTemp = false;
+            Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "OpenCV Native code library failed to load", e);
+            //TODO: show warning bubble
+
+        }
+
+        openCVLoaded = openCVLoadedTemp;
     }
 
     /**
@@ -199,9 +219,7 @@ public class ImageUtils {
      *
      * @return
      *
-     * @deprecated
      */
-    @Deprecated // TODO: This should be private and be renamed to something like getCachedThumbnailLocation().
     public static File getFile(long id) {
         return getCachedThumbnailLocation(id);
     }
@@ -275,78 +293,80 @@ public class ImageUtils {
                 && ((fileHeaderBuffer[7] & 0xff) == 0x0A));
     }
 
-    private static Image generateVideoIcon(Content content, int iconSize) {
+    private static Image generateVideoIcon(AbstractFile file, int iconSize) {
 
-        //load opencv libraries
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-        try {
-            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) {
-                System.loadLibrary("opencv_ffmpeg248_64");
-            } else {
-                System.loadLibrary("opencv_ffmpeg248");
-            }
-        } catch (UnsatisfiedLinkError e) {
-            Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "OpenCV Native code library failed to load", e);
-            return DEFAULT_ICON;
-        }
-        AbstractFile f = (AbstractFile) content;
-        final String extension = f.getNameExtension();
-        String fileName = content.getId() + "." + extension;
-        java.io.File jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), fileName);
+        final String extension = file.getNameExtension();
+
+        String tempFileName = file.getId() + "." + extension;
+        java.io.File tempFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), tempFileName);
 
         try {
-            copyFileUsingStream(content, jFile); //create small file in TEMP directory from the content object
-        } catch (Exception ex) {
+            copyFileUsingStream(file, tempFile); //create small file in TEMP directory from the content object
+        } catch (IOException ex) {
             return DEFAULT_ICON;
         }
-        fileName = jFile.toString(); //store filepath as String
+
+        tempFileName = tempFile.toString(); //store filepath as String
         VideoCapture videoFile = new VideoCapture(); // will contain the video     
 
-        if (!videoFile.open(fileName)) {
+        if (!videoFile.open(tempFileName)) {
             return DEFAULT_ICON;
         }
-        double fps = videoFile.get(5); // gets frame per second
-        double totalFrames = videoFile.get(7); // gets total frames
-        if (fps == 0 || totalFrames == 0) {
+        double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
+        double totalFrames = videoFile.get(CV_CAP_PROP_FRAME_COUNT); // gets total frames
+        if (fps <= 0 || totalFrames <= 0) {
             return DEFAULT_ICON;
         }
         double milliseconds = 1000 * (totalFrames / fps); //total milliseconds
-        if (milliseconds <= 0) {
-            return DEFAULT_ICON;
-        }
 
-        Mat mat = new Mat();
-        double timestamp = (milliseconds < 500) ? milliseconds : 500; //default time to check for is 500ms, unless the files is extremely small
+        double timestamp = Math.min(milliseconds, 500); //default time to check for is 500ms, unless the files is extremely small
 
-        if (!videoFile.set(0, timestamp)) {
-            return DEFAULT_ICON;
-        }
-        if (!videoFile.read(mat)) {
-            return DEFAULT_ICON; //if the image for some reason is bad, return default icon
-        }
-        byte[] data = new byte[mat.rows() * mat.cols() * (int) (mat.elemSize())];
-        mat.get(0, 0, data);
+        int framkeskip = Double.valueOf(Math.floor(timestamp / 9)).intValue();
 
-        if (mat.channels() == 3) {
-            for (int k = 0; k < data.length; k += 3) {
-                byte temp = data[k];
-                data[k] = data[k + 2];
-                data[k + 2] = temp;
+        Mat imageMatrix = new Mat();
+        BufferedImage bufferedImage = null;
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip)) {
+                    return DEFAULT_ICON;
+                }
+                if (!videoFile.read(imageMatrix)) { //read the frame into the image/matrix
+                    return DEFAULT_ICON; //if the image for some reason is bad, return default icon
+                }
+
+                if (bufferedImage == null) {
+                    bufferedImage = new BufferedImage(imageMatrix.cols() * 3, imageMatrix.rows() * 3, BufferedImage.TYPE_3BYTE_BGR);
+                }
+
+                byte[] data = new byte[imageMatrix.rows() * imageMatrix.cols() * (int) (imageMatrix.elemSize())];
+                imageMatrix.get(0, 0, data); //copy the image to data
+
+                //todo: this looks like we are swapping the first and third channels.  so we can use  BufferedImage.TYPE_3BYTE_BGR
+                if (imageMatrix.channels() == 3) {
+                    for (int k = 0; k < data.length; k += 3) {
+                        byte temp = data[k];
+                        data[k] = data[k + 2];
+                        data[k + 2] = temp;
+                    }
+                }
+
+                bufferedImage.getRaster().setDataElements(imageMatrix.cols() * x, imageMatrix.rows() * y, imageMatrix.cols(), imageMatrix.rows(), data);
             }
         }
-        BufferedImage B_image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
-        B_image.getRaster().setDataElements(0, 0, mat.cols(), mat.rows(), data);
 
-        //image = SwingFXUtils.toFXImage(B_image, null); //convert bufferedImage to Image
         videoFile.release(); // close the file
-        //if (image==null) return DEFAULT_ICON;
-        B_image = ScalrWrapper.resizeFast(B_image, iconSize);
-        if (B_image == null) {
+
+        bufferedImage = ScalrWrapper.resizeFast(bufferedImage, iconSize);
+        if (bufferedImage == null) {
             return DEFAULT_ICON;
         } else {
-            return B_image;
+            return bufferedImage;
         }
     }
+
+    private static final int CV_CAP_PROP_POS_MSEC = 0;
+    private static final int CV_CAP_PROP_FRAME_COUNT = 7;
+    private static final int CV_CAP_PROP_FPS = 5;
 
     /**
      * Generate an icon and save it to specified location.
@@ -363,7 +383,11 @@ public class ImageUtils {
         Image icon = null;
         try {
             if (SUPP_VIDEO_EXTENSIONS.contains(extension)) {
-                icon = generateVideoIcon(content, iconSize);
+                if (openCVLoaded) {
+                    icon = generateVideoIcon((AbstractFile) content, iconSize);
+                } else {
+                    return DEFAULT_ICON;
+                }
             } else if (SUPP_IMAGE_EXTENSIONS.contains(extension)) {
                 icon = generateIcon(content, iconSize);
             }
@@ -427,6 +451,14 @@ public class ImageUtils {
 
     }
 
+    /**
+     * copy the first 500kb to a temporary file
+     *
+     * @param file
+     * @param jFile
+     *
+     * @throws IOException
+     */
     public static void copyFileUsingStream(Content file, java.io.File jFile) throws IOException {
         InputStream is = new ReadContentInputStream(file);
         // copy the file data to the temporary file
@@ -439,7 +471,7 @@ public class ImageUtils {
             while ((length = is.read(buffer)) != -1) {
                 os.write(buffer, 0, length);
                 counter++;
-                if (counter == 63) {
+                if (counter >= 63) {
                     break; //after saving 500 KB (63*8192)
                 }
             }
